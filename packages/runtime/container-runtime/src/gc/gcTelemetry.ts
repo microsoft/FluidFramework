@@ -69,7 +69,7 @@ interface INodeUsageProps extends ICommonProps {
  * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector. There are 4 types of
  * telemetry logged:
  * 1. inactiveObject telemetry - When an inactive node is used - A node that has been unreferenced for inactiveTimeoutMs.
- * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for sweepTimeoutMs.
+ * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for tombstoneTimeoutMs.
  * 3. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
  * 4. Sweep / deleted telemetry - When a node is detected as sweep ready in the sweep phase.
  * 5. Unknown outbound reference telemetry - When a node is referenced but GC is not explicitly notified of it.
@@ -147,11 +147,11 @@ export class GCTelemetryTracker {
 				case UnreferencedState.Inactive:
 					return this.configs.inactiveTimeoutMs;
 				case UnreferencedState.TombstoneReady:
-					return this.configs.sweepTimeoutMs;
+					return this.configs.tombstoneTimeoutMs;
 				case UnreferencedState.SweepReady:
 					return (
-						this.configs.sweepTimeoutMs &&
-						this.configs.sweepTimeoutMs + this.configs.sweepGracePeriodMs
+						this.configs.tombstoneTimeoutMs &&
+						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
 					);
 				default:
 					return undefined;

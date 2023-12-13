@@ -32,7 +32,8 @@ import { configProvider } from "./gcUnitTestHelpers";
 
 describe("Garbage Collection Stats", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
+	const tombstoneTimeoutMs =
+		defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
@@ -334,7 +335,7 @@ describe("Garbage Collection Stats", () => {
 			);
 
 			// Advance the clock past sweep timeout so that unreferenced nodes are marked sweep ready.
-			clock.tick(sweepTimeoutMs + 1);
+			clock.tick(tombstoneTimeoutMs + 1);
 
 			// There shouldn't be any nodes whose reference state updated.
 			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
@@ -385,7 +386,7 @@ describe("Garbage Collection Stats", () => {
 			let previousGCMessagesCount = gcMessagesCount;
 
 			// Advance the clock past sweep timeout so that unreferenced nodes are marked sweep ready.
-			clock.tick(sweepTimeoutMs + 1);
+			clock.tick(tombstoneTimeoutMs + 1);
 
 			// There shouldn't be any nodes whose reference state updated.
 			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
@@ -423,7 +424,7 @@ describe("Garbage Collection Stats", () => {
 			assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 2");
 
 			// Advance the clock past sweep timeout again so that unreferenced node is sweep ready.
-			clock.tick(sweepTimeoutMs + 1);
+			clock.tick(tombstoneTimeoutMs + 1);
 
 			// No nodes are updated since the last run.
 			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
@@ -470,7 +471,7 @@ describe("Garbage Collection Stats", () => {
 			);
 
 			// Advance the clock past sweep timeout so that unreferenced nodes are sweep ready.
-			clock.tick(sweepTimeoutMs + 1);
+			clock.tick(tombstoneTimeoutMs + 1);
 
 			// The 2 sweep ready nodes / data stores should now show up deleted.
 			// There shouldn't be any nodes whose reference state updated.
@@ -499,7 +500,7 @@ describe("Garbage Collection Stats", () => {
 			);
 
 			// Advance the clock past sweep timeout so that unreferenced nodes are sweep ready.
-			clock.tick(sweepTimeoutMs + 1);
+			clock.tick(tombstoneTimeoutMs + 1);
 
 			// The 2 sweep ready nodes / data stores should now show up deleted.
 			// There shouldn't be any nodes whose reference state updated.
@@ -525,7 +526,7 @@ describe("Garbage Collection Stats", () => {
 			assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 2");
 
 			// Advance the clock past sweep timeout again so that unreferenced node is sweep ready.
-			clock.tick(sweepTimeoutMs + 1);
+			clock.tick(tombstoneTimeoutMs + 1);
 
 			// No nodes are updated since the last run.
 			// The sweep ready node / data store should show up as deleted.

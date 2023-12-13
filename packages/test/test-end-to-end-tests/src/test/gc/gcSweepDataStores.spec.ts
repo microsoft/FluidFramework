@@ -39,10 +39,10 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  */
 describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
-	const sweepTimeoutMs = 200;
+	const tombstoneTimeoutMs = 200;
 	assert(
-		remainingTimeUntilSweepMs < sweepTimeoutMs,
-		"remainingTimeUntilSweepMs should be < sweepTimeoutMs",
+		remainingTimeUntilSweepMs < tombstoneTimeoutMs,
+		"remainingTimeUntilSweepMs should be < tombstoneTimeoutMs",
 	);
 	const settings = {};
 
@@ -70,7 +70,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	async function loadContainer(summaryVersion: string) {
@@ -169,7 +169,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	};
 
 	describe("Using swept data stores not allowed", () => {
-		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+		// If this test starts failing due to runtime is closed errors try first adjusting `tombstoneTimeoutMs` above
 		itExpects(
 			"Send ops fails for swept datastores in summarizing container loaded before sweep timeout",
 			[
@@ -185,7 +185,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { summarizerDataObject, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 
 				// The datastore should be swept now
 				await summarize(summarizer);
@@ -221,7 +221,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { summarizerDataObject, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 
 				// The datastore should be swept now
 				await summarize(summarizer);
@@ -263,7 +263,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// The datastore should be swept now
@@ -344,7 +344,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summarizingContainer,
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
-				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				} = await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
@@ -416,7 +416,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summarizingContainer,
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
-				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				} = await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const sendingDataObject =
@@ -519,7 +519,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
@@ -548,7 +548,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
 
 				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
@@ -589,7 +589,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that

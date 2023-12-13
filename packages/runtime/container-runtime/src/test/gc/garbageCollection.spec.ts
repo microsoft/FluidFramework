@@ -378,7 +378,7 @@ describe("Garbage Collection Tests", () => {
 				baseSnapshot?: ISnapshotTree,
 				gcBlobsMap?: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase>,
 			) => {
-				const sweepTimeoutMs =
+				const tombstoneTimeoutMs =
 					mode === "tombstone"
 						? timeout
 						: mode === "sweep"
@@ -386,7 +386,7 @@ describe("Garbage Collection Tests", () => {
 						: undefined;
 				const gcOptions = { sweepGracePeriodMs };
 				return createGarbageCollector({ baseSnapshot, gcOptions }, gcBlobsMap, {
-					sweepTimeoutMs,
+					tombstoneTimeoutMs,
 				});
 			};
 
@@ -1023,7 +1023,7 @@ describe("Garbage Collection Tests", () => {
 			await garbageCollector.collectGarbage({});
 			validateUnreferencedStates({ 2: "Inactive", 3: "Inactive" });
 
-			// Advance the clock to trigger sweepTimeoutMs and validate that we get tombstone ready events.
+			// Advance the clock to trigger tombstoneTimeoutMs and validate that we get tombstone ready events.
 			clock.tick(defaultSweepTimeoutMs - inactiveTimeoutMs);
 			await garbageCollector.collectGarbage({});
 			validateUnreferencedStates({ 2: "TombstoneReady", 3: "TombstoneReady" });
@@ -1760,7 +1760,7 @@ describe("Garbage Collection Tests", () => {
 			[attributesBlobId, {}],
 		]);
 		const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap, {
-			sweepTimeoutMs: defaultSweepTimeoutMs,
+			tombstoneTimeoutMs: defaultSweepTimeoutMs,
 		});
 
 		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.

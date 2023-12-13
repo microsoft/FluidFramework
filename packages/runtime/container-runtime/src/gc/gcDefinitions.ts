@@ -149,7 +149,7 @@ export interface IGCMetadata {
 	/** If this is present, the session for this container will expire after this time and the container will close */
 	readonly sessionExpiryTimeoutMs?: number;
 	/** How long to wait after an object is unreferenced before deleting it via GC Sweep */
-	readonly sweepTimeoutMs?: number;
+	readonly sweepTimeoutMs?: number; //* Explain about tombstoneTimeoutMs
 }
 
 /**
@@ -447,7 +447,7 @@ export interface IGarbageCollectorConfigs {
 	/** The time in ms to expire a session for a client for gc. */
 	readonly sessionExpiryTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is ready to be swept. */
-	readonly sweepTimeoutMs: number | undefined;
+	readonly tombstoneTimeoutMs: number | undefined;
 	/**
 	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
 	 * Sweep is implemented in an eventually-consistent way so this is acceptable.

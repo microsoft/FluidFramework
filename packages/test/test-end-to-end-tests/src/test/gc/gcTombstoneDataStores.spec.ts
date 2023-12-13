@@ -48,10 +48,10 @@ import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestS
  */
 describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
-	const sweepTimeoutMs = 200;
+	const tombstoneTimeoutMs = 200;
 	assert(
-		remainingTimeUntilSweepMs < sweepTimeoutMs,
-		"remainingTimeUntilSweepMs should be < sweepTimeoutMs",
+		remainingTimeUntilSweepMs < tombstoneTimeoutMs,
+		"remainingTimeUntilSweepMs should be < tombstoneTimeoutMs",
 	);
 	const settings = {};
 
@@ -80,7 +80,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	async function loadContainer(
@@ -260,7 +260,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		}
 	}
 
-	// If these tests start failing due to "runtime is closed" errors try first adjusting `sweepTimeoutMs` above
+	// If these tests start failing due to "runtime is closed" errors try first adjusting `tombstoneTimeoutMs` above
 	describe("Using tombstone data stores not allowed (per config)", () => {
 		beforeEach(() => {
 			// Allow Loading but not Usage
@@ -280,7 +280,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			],
 			async () => {
 				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
@@ -316,7 +316,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			],
 			async () => {
 				const { unreferencedId, summarizer, summaryVersion, summarizingContainer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				// Load this container from a summary that had not yet tombstoned the datastore so that the datastore loads.
 				const container = await loadContainer(summaryVersion);
 				// Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
@@ -361,7 +361,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			],
 			async () => {
 				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
 
@@ -409,7 +409,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			],
 			async () => {
 				const { unreferencedId, summarizer, summaryVersion } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				// The datastore should be tombstoned now
 				await summarize(summarizer);
 
@@ -444,7 +444,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		);
 	});
 
-	// If these tests start failing due to "runtime is closed" errors try first adjusting `sweepTimeoutMs` above
+	// If these tests start failing due to "runtime is closed" errors try first adjusting `tombstoneTimeoutMs` above
 	describe("Loading tombstone data stores not allowed (per config)", () => {
 		const expectedHeadersLogged = {
 			request: "{}",
@@ -486,7 +486,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
-						sweepTimeoutMs,
+						tombstoneTimeoutMs,
 						/* includeDds */ true,
 					);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
@@ -576,7 +576,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			async function () {
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
@@ -626,7 +626,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
@@ -679,7 +679,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			],
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
@@ -774,7 +774,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
-						sweepTimeoutMs - remainingTimeUntilSweepMs,
+						tombstoneTimeoutMs - remainingTimeUntilSweepMs,
 					);
 				// Wait enough time so that the datastore is sweep ready
 				await delay(remainingTimeUntilSweepMs);
@@ -881,7 +881,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 			const { unreferencedId, summarizingContainer, summarizer } =
-				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 			// The datastore should be tombstoned now
@@ -974,7 +974,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			validateTombstoneState(summary.summaryTree, undefined /* tombstones */, []);
 
 			// Wait for sweep timeout so that the data stores are tombstoned.
-			await delay(sweepTimeoutMs + 10);
+			await delay(tombstoneTimeoutMs + 10);
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
 			await provider.ensureSynchronized();
@@ -1015,7 +1015,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			validateTombstoneState(summary.summaryTree, undefined /* tombstones */, []);
 
 			// Wait for sweep timeout so that the blob is tombstoned.
-			await delay(sweepTimeoutMs + 10);
+			await delay(tombstoneTimeoutMs + 10);
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
 			await provider.ensureSynchronized();
@@ -1100,7 +1100,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				validateTombstoneState(summary.summaryTree, undefined /* tombstones */, []);
 
 				// Wait for sweep timeout so that the data stores are tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				await delay(tombstoneTimeoutMs + 10);
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
 				await provider.ensureSynchronized();
@@ -1187,7 +1187,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			);
 
 			// Wait for sweep timeout so that the data stores are tombstoned.
-			await delay(sweepTimeoutMs + 10);
+			await delay(tombstoneTimeoutMs + 10);
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
 			await provider.ensureSynchronized();
@@ -1251,7 +1251,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				validateTombstoneState(summary.summaryTree, undefined /* tombstones */, []);
 
 				// Wait for sweep timeout so that the data stores are tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				await delay(tombstoneTimeoutMs + 10);
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
 				await provider.ensureSynchronized();
@@ -1329,7 +1329,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Wait for sweep timeout and send an op to update current reference timestamp. The next summary
 				// will have dataStore2 and dataStore3 as tombstones.
-				await delay(sweepTimeoutMs + 100);
+				await delay(tombstoneTimeoutMs + 100);
 				defaultDataObject._root.set("update", "timestamp");
 				await provider.ensureSynchronized();
 				const { summaryVersion } = await summarize(summarizer);
@@ -1426,7 +1426,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Wait for sweep timeout and send an op to update current reference timestamp. The next summary
 				// will have dataStore2 and dataStore3 as tombstones.
-				await delay(sweepTimeoutMs + 100);
+				await delay(tombstoneTimeoutMs + 100);
 				defaultDataObject._root.set("update", "timestamp");
 				await provider.ensureSynchronized();
 				const { summaryVersion: summaryVersion1 } = await summarize(summarizer1);
@@ -1557,7 +1557,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Wait for sweep timeout and send an op to update current reference timestamp. The next summary
 				// will have dataStore2 as tombstone.
-				await delay(sweepTimeoutMs + 100);
+				await delay(tombstoneTimeoutMs + 100);
 				defaultDataObject._root.set("update", "timestamp");
 				await provider.ensureSynchronized();
 				const { summaryVersion: summaryVersion1 } = await summarize(summarizer1);

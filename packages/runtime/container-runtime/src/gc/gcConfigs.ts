@@ -54,7 +54,7 @@ export function generateGCConfigs(
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean;
 	let sessionExpiryTimeoutMs: number | undefined;
-	let sweepTimeoutMs: number | undefined;
+	let tombstoneTimeoutMs: number | undefined;
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 	let gcVersionInBaseSnapshot: GCVersion | undefined;
 
@@ -71,7 +71,7 @@ export function generateGCConfigs(
 		// other existing documents, GC is enabled.
 		gcEnabled = gcVersionInBaseSnapshot > 0;
 		sessionExpiryTimeoutMs = createParams.metadata?.sessionExpiryTimeoutMs;
-		sweepTimeoutMs =
+		tombstoneTimeoutMs =
 			createParams.metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
 		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
@@ -89,7 +89,8 @@ export function generateGCConfigs(
 			sessionExpiryTimeoutMs =
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
-		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
+		tombstoneTimeoutMs =
+			testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
 		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
 		if (gcGeneration !== undefined) {
@@ -139,7 +140,7 @@ export function generateGCConfigs(
 	 * These conditions can be overridden via the RunSweep feature flag.
 	 */
 	const shouldRunSweep =
-		!shouldRunGC || sweepTimeoutMs === undefined
+		!shouldRunGC || tombstoneTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
@@ -151,7 +152,7 @@ export function generateGCConfigs(
 		defaultInactiveTimeoutMs;
 
 	// Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
-	if (sweepTimeoutMs !== undefined && inactiveTimeoutMs > sweepTimeoutMs) {
+	if (tombstoneTimeoutMs !== undefined && inactiveTimeoutMs > tombstoneTimeoutMs) {
 		throw new UsageError("inactive timeout should not be greater than the sweep timeout");
 	}
 
@@ -190,7 +191,7 @@ export function generateGCConfigs(
 		testMode,
 		tombstoneMode,
 		sessionExpiryTimeoutMs,
-		sweepTimeoutMs,
+		tombstoneTimeoutMs,
 		sweepGracePeriodMs,
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
