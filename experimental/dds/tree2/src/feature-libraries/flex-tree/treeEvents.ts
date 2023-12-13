@@ -38,7 +38,7 @@ export interface ITreeEvent {
 /**
  * {@inheritDoc ITreeEvent}
  *
- * @alpha
+ * @internal
  */
 export class TreeEvent implements ITreeEvent {
 	/**

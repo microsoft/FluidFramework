@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core";
 import { capitalize } from "../util";
 import {

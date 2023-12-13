@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type TypedEventEmitter } from "@fluid-internal/client-utils";
 // TODO: remove flexible types from "schema-aware", and just accept cursors.
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
@@ -127,10 +127,15 @@ export enum TreeStatus {
 }
 
 /**
- * {@inheritdoc TreeNode.[onNextChange]}
+ * Symbol key for {@link FlexTreeNode#[onNextChange]}.
+ * See the documentation of that member for more details.
  */
 export const onNextChange = Symbol("onNextChange");
 
+/**
+ * Symbol key for {@link FlexTreeNode#[internalEmitterSymbol]}.
+ * See the documentation of that member for more details.
+ */
 export const internalEmitterSymbol = Symbol("internalEmitter");
 
 /**
