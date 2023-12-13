@@ -124,7 +124,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/** If false, loading or using a Tombstoned object should merely log, not fail */
 	public get tombstoneEnforcementAllowed(): boolean {
-		return this.configs.tombstoneEnforcementAllowed;
+		return this.configs.sweepEnabled;
 	}
 	/** If true, throw an error when a tombstone data store is retrieved */
 	public get throwOnTombstoneLoad(): boolean {
@@ -1179,7 +1179,7 @@ export class GarbageCollector implements IGarbageCollector {
 		sweepPhaseStats.lifetimeDataStoreCount += sweepPhaseStats.deletedDataStoreCount;
 		sweepPhaseStats.lifetimeAttachmentBlobCount += sweepPhaseStats.deletedAttachmentBlobCount;
 
-		if (this.configs.sweepEnabled) {
+		if (this.configs.shouldRunSweep) {
 			return sweepPhaseStats;
 		}
 

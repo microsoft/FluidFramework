@@ -9,51 +9,14 @@ import {
 	type IHostLoader,
 } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { create404Response } from "@fluidframework/runtime-utils";
-import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IDetachedModel, IModelLoader } from "./interfaces";
 import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory";
 
 // This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
 // request format with the model object.  Here we export a helper function for those container authors to align to
 // that contract -- the container author provides a ModelMakerCallback that will produce the model given a container
 // runtime and container, and this helper will appropriately translate to/from the request/response format.
-
-const modelUrl = "model";
-
-interface IModelRequest extends IRequest {
-	url: typeof modelUrl;
-	headers: {
-		containerRef: IContainer;
-	};
-}
-
-const isModelRequest = (request: IRequest): request is IModelRequest =>
-	request.url === modelUrl && request.headers?.containerRef !== undefined;
-
-/**
- * A helper function for container authors, which generates the request handler they need to align with the
- * ModelLoader contract.
- * @param modelMakerCallback - A callback that will produce the model for the container
- * @returns A request handler that can be provided to the container runtime factory
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
- */
-export const makeModelRequestHandler = <ModelType>(
-	modelMakerCallback: ModelMakerCallback<ModelType>,
-) => {
-	return async (request: IRequest, runtime: IContainerRuntime): Promise<IResponse> => {
-		// The model request format is for an empty path (i.e. "") and passing a reference to the container in the
-		// header as containerRef.
-		if (isModelRequest(request)) {
-			const container: IContainer = request.headers.containerRef;
-			const model = await modelMakerCallback(runtime, container);
-			return { status: 200, mimeType: "fluid/object", value: model };
-		}
-		return create404Response(request);
-	};
-};
 
 /**
  * @internal
