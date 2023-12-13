@@ -109,12 +109,10 @@ steps:
                 fi
             else
               feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
-              echo "FeedName: $feedName"
-              echo "Release: $release"
-              echo "Release from pipeline: $(release)"
-              if [[ $feedName == "test-absander" ]]; then
+              
+              if [[ "$(release)" == "release" && $feedName == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
-                echo "PackageVersion: $packageVersion"
+
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
                   scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
                   for scope in "${scopes[@]}"; do

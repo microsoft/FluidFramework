@@ -27,7 +27,7 @@ stages:
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
-      feedUrl: $(ado-feeds-test-absander) # Comes from the ado-feeds variable group
+      feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
       feedKind: internal-test
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
@@ -52,36 +52,36 @@ stages:
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.
-# - ${{ if eq(parameters.isReleaseGroup, true) }}:
-#   - stage: publish_npm_internal_dev
-#     dependsOn: build
-#     displayName: Publish to internal dev feed
-#     # This condition should match the condition for publish_npm_internal_build
-#     condition: and(succeeded(), eq(variables['testBuild'], false))
-#     variables:
-#     - group: ado-feeds
-#     jobs:
-#     - template: include-publish-npm-package-deployment.yml
-#       parameters:
-#         feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
-#         feedKind: internal-dev
-#         # Environment should match the condition for publish_npm_internal_build
-#         environment: package-build-feed
-#         pool: ${{ parameters.pool }}
+- ${{ if eq(parameters.isReleaseGroup, true) }}:
+  - stage: publish_npm_internal_dev
+    dependsOn: build
+    displayName: Publish to internal dev feed
+    # This condition should match the condition for publish_npm_internal_build
+    condition: and(succeeded(), eq(variables['testBuild'], false))
+    variables:
+    - group: ado-feeds
+    jobs:
+    - template: include-publish-npm-package-deployment.yml
+      parameters:
+        feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+        feedKind: internal-dev
+        # Environment should match the condition for publish_npm_internal_build
+        environment: package-build-feed
+        pool: ${{ parameters.pool }}
 
-# - stage: publish_npm_public
-#   dependsOn: build
-#   displayName: Publish to public npmjs.org
-#   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
-#   variables:
-#   - group: ado-feeds
-#   jobs:
-#   - template: include-publish-npm-package-deployment.yml
-#     parameters:
-#       feedUrl: https://registry.npmjs.org
-#       feedKind: public
-#       environment: package-npmjs-feed
-#       pool: ${{ parameters.pool }}
-#       customEndPoint: npmjs
-#       publishFlags: --access public
-#       tagName: ${{ parameters.tagName }}
+- stage: publish_npm_public
+  dependsOn: build
+  displayName: Publish to public npmjs.org
+  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  variables:
+  - group: ado-feeds
+  jobs:
+  - template: include-publish-npm-package-deployment.yml
+    parameters:
+      feedUrl: https://registry.npmjs.org
+      feedKind: public
+      environment: package-npmjs-feed
+      pool: ${{ parameters.pool }}
+      customEndPoint: npmjs
+      publishFlags: --access public
+      tagName: ${{ parameters.tagName }}
