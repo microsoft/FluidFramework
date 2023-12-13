@@ -10,6 +10,7 @@ const { ContainerProperty } = require("./containerProperty");
 
 /**
  * A property object that allows to add child properties dynamically.
+ * @internal
  */
 export class NodeProperty extends ContainerProperty {
 	/**

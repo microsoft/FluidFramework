@@ -284,6 +284,7 @@ class Document {
 
 /**
  * All the logic of replay tool
+ * @internal
  */
 export class ReplayTool {
 	private storage: ISnapshotWriterStorage;

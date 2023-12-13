@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/app-insights-logger",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -51,7 +51,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"@types/sinon": "^7.0.13",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

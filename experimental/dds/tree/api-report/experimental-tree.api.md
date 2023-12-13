@@ -20,30 +20,29 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISharedTree } from '@fluid-experimental/tree2';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import type { Serializable } from '@fluidframework/datastore-definitions';
+import { ITree } from '@fluid-experimental/tree2';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { SharedTreeFactory as SharedTreeFactory_2 } from '@fluid-experimental/tree2';
+import { TreeFactory } from '@fluid-experimental/tree2';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export function areRevisionViewsSemanticallyEqual(treeViewA: TreeView, idConverterA: NodeIdConverter, treeViewB: TreeView, idConverterB: NodeIdConverter): boolean;
 
-// @public
+// @internal
 export type AttributionId = UuidString;
 
-// @public
+// @internal
 export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValidationResult.Valid>;
 
-// @public
+// @internal
 export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValidationResultKind.Valid>;
 
-// @public
+// @internal
 export interface Build {
     // (undocumented)
     readonly destination: number;
@@ -53,13 +52,13 @@ export interface Build {
     readonly type: typeof ChangeType.Build;
 }
 
-// @public
+// @internal
 export interface BuildInternal extends Omit<BuildInternal_0_0_2, 'source'> {
     // (undocumented)
     readonly source: TreeNodeSequence<BuildNodeInternal>;
 }
 
-// @public
+// @internal
 export interface BuildInternal_0_0_2 {
     // (undocumented)
     readonly destination: DetachedSequenceId;
@@ -69,16 +68,16 @@ export interface BuildInternal_0_0_2 {
     readonly type: typeof ChangeTypeInternal.Build;
 }
 
-// @public
+// @internal
 export type BuildNode = BuildTreeNode | number;
 
-// @public
+// @internal
 export type BuildNodeInternal = TreeNode<BuildNodeInternal, NodeId> | DetachedSequenceId;
 
-// @public
+// @internal
 export type BuildNodeInternal_0_0_2 = TreeNode<BuildNodeInternal_0_0_2, StableNodeId> | DetachedSequenceId;
 
-// @public
+// @internal
 export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
     // (undocumented)
     definition: string;
@@ -88,10 +87,10 @@ export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
     payload?: Payload;
 }
 
-// @public
+// @internal
 export type Change = Insert | Detach | Build | SetValue | Constraint;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const Change: {
     build: (source: BuildNode | TreeNodeSequence<BuildNode>, destination: number) => Build;
     insert: (source: number, destination: StablePlace) => Insert;
@@ -104,10 +103,10 @@ export const Change: {
     move: (source: StableRange, destination: StablePlace) => Change[];
 };
 
-// @public
+// @internal
 export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | SetValueInternal | ConstraintInternal;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const ChangeInternal: {
     build: (source: TreeNodeSequence<BuildNodeInternal>, destination: DetachedSequenceId) => BuildInternal;
     insert: (source: DetachedSequenceId, destination: StablePlaceInternal) => InsertInternal;
@@ -120,16 +119,16 @@ export const ChangeInternal: {
     move: (source: StableRangeInternal, destination: StablePlaceInternal) => ChangeInternal[];
 };
 
-// @public
+// @internal
 export type ChangeNode = TreeNode<ChangeNode, NodeId>;
 
-// @public
+// @internal
 export type ChangeNode_0_0_2 = TreeNode<ChangeNode_0_0_2, StableNodeId>;
 
-// @public
+// @internal
 export type ChangeResult = Result<TransactionView, TransactionFailure>;
 
-// @public
+// @internal
 export enum ChangeType {
     // (undocumented)
     Build = 2,
@@ -143,7 +142,7 @@ export enum ChangeType {
     SetValue = 3
 }
 
-// @public
+// @internal
 export enum ChangeTypeInternal {
     // (undocumented)
     Build = 2,
@@ -159,7 +158,7 @@ export enum ChangeTypeInternal {
     SetValue = 3
 }
 
-// @public
+// @internal
 export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
     protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler);
     abortEdit(): void;
@@ -179,7 +178,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     // (undocumented)
     getEditStatus(): EditStatus;
     protected handleNewEdit(id: EditId, result: ValidEditingResult): void;
-    // @internal (undocumented)
+    // (undocumented)
     hasOpenEdit(): boolean;
     protected hintKnownEditingResult(edit: Edit<ChangeInternal>, result: ValidEditingResult): void;
     protected abstract get latestCommittedView(): RevisionView;
@@ -199,18 +198,18 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     abstract waitForPendingUpdates(): Promise<void>;
 }
 
-// @public
+// @internal
 export enum CheckoutEvent {
     ViewChange = "viewChange"
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function comparePayloads(a: Payload, b: Payload): boolean;
 
-// @public
+// @internal
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
-// @public
+// @internal
 export interface Constraint {
     readonly contentHash?: UuidString;
     readonly effect: ConstraintEffect;
@@ -222,20 +221,20 @@ export interface Constraint {
     readonly type: typeof ChangeType.Constraint;
 }
 
-// @public
+// @internal
 export enum ConstraintEffect {
     InvalidAndDiscard = 0,
     InvalidRetry = 1,
     ValidRetry = 2
 }
 
-// @public
+// @internal
 export interface ConstraintInternal extends Omit<ConstraintInternal_0_0_2, 'toConstrain' | 'parentNode'> {
     readonly parentNode?: NodeId;
     readonly toConstrain: StableRangeInternal;
 }
 
-// @public
+// @internal
 export interface ConstraintInternal_0_0_2 {
     readonly contentHash?: UuidString;
     readonly effect: ConstraintEffect;
@@ -247,19 +246,19 @@ export interface ConstraintInternal_0_0_2 {
     readonly type: typeof ChangeTypeInternal.Constraint;
 }
 
-// @public
+// @internal
 export type Definition = UuidString & {
     readonly Definition: 'c0ef9488-2a78-482d-aeed-37fba996354c';
 };
 
-// @public
+// @internal
 export interface Delta<NodeId> {
     readonly added: readonly NodeId[];
     readonly changed: readonly NodeId[];
     readonly removed: readonly NodeId[];
 }
 
-// @public
+// @internal
 export interface Detach {
     // (undocumented)
     readonly destination?: number;
@@ -269,18 +268,18 @@ export interface Detach {
     readonly type: typeof ChangeType.Detach;
 }
 
-// @public
+// @internal
 export type DetachedSequenceId = number & {
     readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d';
 };
 
-// @public
+// @internal
 export interface DetachInternal extends Omit<DetachInternal_0_0_2, 'source'> {
     // (undocumented)
     readonly source: StableRangeInternal;
 }
 
-// @public
+// @internal
 export interface DetachInternal_0_0_2 {
     // (undocumented)
     readonly destination?: DetachedSequenceId;
@@ -290,7 +289,7 @@ export interface DetachInternal_0_0_2 {
     readonly type: typeof ChangeTypeInternal.Detach;
 }
 
-// @public @sealed
+// @internal @sealed
 export class EagerCheckout extends Checkout {
     constructor(tree: SharedTree);
     // (undocumented)
@@ -301,12 +300,12 @@ export class EagerCheckout extends Checkout {
     waitForPendingUpdates(): Promise<void>;
 }
 
-// @public
+// @internal
 export interface Edit<TChange> extends EditBase<TChange> {
     readonly id: EditId;
 }
 
-// @public
+// @internal
 export type EditApplicationOutcome = {
     readonly view: RevisionView;
     readonly status: EditStatus.Applied;
@@ -315,23 +314,23 @@ export type EditApplicationOutcome = {
     readonly status: EditStatus.Invalid | EditStatus.Malformed;
 };
 
-// @public
+// @internal
 export interface EditBase<TChange> {
     readonly changes: readonly TChange[];
     readonly pastAttemptCount?: number;
 }
 
-// @public
+// @internal
 export interface EditCommittedEventArguments {
     readonly editId: EditId;
     readonly local: boolean;
     readonly tree: SharedTree;
 }
 
-// @public
+// @internal
 export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
-// @public @deprecated
+// @internal @deprecated
 export interface EditHandle<TChange> {
     // (undocumented)
     readonly baseHandle: FluidEditHandle;
@@ -339,15 +338,15 @@ export interface EditHandle<TChange> {
     readonly get: () => Promise<EditWithoutId<TChange>[]>;
 }
 
-// @public
+// @internal
 export type EditId = UuidString & {
     readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
 };
 
-// @public
+// @internal
 export type EditingResult = FailedEditingResult | ValidEditingResult;
 
-// @public
+// @internal
 export interface EditingResultBase {
     readonly before: RevisionView;
     readonly changes: readonly ChangeInternal[];
@@ -355,7 +354,7 @@ export interface EditingResultBase {
     readonly steps: readonly ReconciliationChange[];
 }
 
-// @public
+// @internal
 export interface EditLogSummary<TChange, THandle> {
     readonly editChunks: readonly {
         readonly startRevision: number;
@@ -364,26 +363,26 @@ export interface EditLogSummary<TChange, THandle> {
     readonly editIds: readonly EditId[];
 }
 
-// @public
+// @internal
 export enum EditStatus {
     Applied = 2,
     Invalid = 1,
     Malformed = 0
 }
 
-// @public
+// @internal
 export enum EditValidationResult {
     Invalid = 1,
     Malformed = 0,
     Valid = 2
 }
 
-// @public
+// @internal
 export interface EditWithoutId<TChange> extends EditBase<TChange> {
     readonly id?: never;
 }
 
-// @public
+// @internal
 export interface FailedEditingResult extends EditingResultBase {
     readonly changes: readonly ChangeInternal[];
     readonly failure: TransactionInternal.Failure;
@@ -391,20 +390,20 @@ export interface FailedEditingResult extends EditingResultBase {
     readonly steps: readonly ReconciliationChange[];
 }
 
-// @public
+// @internal
 export interface FailingTransactionState extends TransactionFailure {
     readonly changes: readonly ChangeInternal[];
     readonly steps: readonly ReconciliationChange[];
     readonly view: TransactionView;
 }
 
-// @public
+// @internal
 export type FinalCompressedId = number & {
     readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d';
     readonly OpNormalized: '9209432d-a959-4df7-b2ad-767ead4dbcae';
 };
 
-// @public
+// @internal
 export interface FluidEditHandle {
     // (undocumented)
     readonly absolutePath: string;
@@ -412,7 +411,7 @@ export interface FluidEditHandle {
     readonly get: () => Promise<ArrayBuffer>;
 }
 
-// @public
+// @internal
 export class Forest {
     add(nodes: Iterable<ForestNode>): Forest;
     assertConsistent(): void;
@@ -439,13 +438,13 @@ export class Forest {
     tryGetParent(id: NodeId): ParentData | undefined;
 }
 
-// @public
+// @internal
 export interface ForestNode extends NodeData<NodeId> {
     // (undocumented)
     readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 
-// @public
+// @internal
 export class GenericTransaction {
     constructor(view: RevisionView, policy: GenericTransactionPolicy);
     applyChange(change: ChangeInternal, path?: ReconciliationPath): this;
@@ -462,28 +461,28 @@ export class GenericTransaction {
     get view(): TransactionView;
 }
 
-// @public
+// @internal
 export interface GenericTransactionPolicy {
     dispatchChange(state: SucceedingTransactionState, change: ChangeInternal): ChangeResult;
     tryResolveChange(state: SucceedingTransactionState, change: ChangeInternal, path: ReconciliationPath): Result<ChangeInternal, TransactionFailure>;
     validateOnClose(state: SucceedingTransactionState): ChangeResult;
 }
 
-// @public @deprecated
+// @internal @deprecated
 function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string>;
 export { getSerializedUploadedEditChunkContents }
 export { getSerializedUploadedEditChunkContents as getUploadedEditChunkContents }
 
-// @public
+// @internal
 export function getTraitLocationOfRange(view: TreeView, range: StableRange): TraitLocation;
 
-// @public
+// @internal
 export interface HasTraits<TChild> {
     // (undocumented)
     readonly traits: TraitMap<TChild>;
 }
 
-// @public
+// @internal
 export interface HasVariadicTraits<TChild> {
     // (undocumented)
     readonly traits?: {
@@ -491,7 +490,7 @@ export interface HasVariadicTraits<TChild> {
     };
 }
 
-// @public
+// @internal
 export interface ICheckoutEvents extends IErrorEvent {
     // (undocumented)
     (event: 'viewChange', listener: (before: TreeView, after: TreeView) => void): any;
@@ -502,10 +501,10 @@ export interface IMigrationEvent extends IEvent {
     (event: 'migrated', listener: () => void): any;
 }
 
-// @public
+// @internal
 export const initialTree: ChangeNode_0_0_2;
 
-// @public
+// @internal
 export interface Insert {
     // (undocumented)
     readonly destination: StablePlace;
@@ -515,13 +514,13 @@ export interface Insert {
     readonly type: typeof ChangeType.Insert;
 }
 
-// @public
+// @internal
 export interface InsertInternal extends Omit<InsertInternal_0_0_2, 'destination'> {
     // (undocumented)
     readonly destination: StablePlaceInternal;
 }
 
-// @public
+// @internal
 export interface InsertInternal_0_0_2 {
     // (undocumented)
     readonly destination: StablePlaceInternal_0_0_2;
@@ -531,13 +530,13 @@ export interface InsertInternal_0_0_2 {
     readonly type: typeof ChangeTypeInternal.Insert;
 }
 
-// @public
+// @internal
 export interface InternalizedChange {
     // (undocumented)
     InternalChangeBrand: '2cae1045-61cf-4ef7-a6a3-8ad920cb7ab3';
 }
 
-// @public
+// @internal
 export type InternedStringId = number & {
     readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c';
 };
@@ -545,7 +544,7 @@ export type InternedStringId = number & {
 // @internal
 export function isDetachedSequenceId(node: DetachedSequenceId | object): node is DetachedSequenceId;
 
-// @public
+// @internal
 export interface ISharedTreeEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: 'committedEdit', listener: EditCommittedHandler): any;
@@ -558,15 +557,15 @@ export interface IShim extends IChannel {
     // (undocumented)
     create(): void;
     // (undocumented)
-    currentTree: ISharedTree | SharedTree;
+    currentTree: ITree | SharedTree;
     // (undocumented)
     load(channelServices: IChannelServices): Promise<void>;
 }
 
-// @public
+// @internal
 export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 
-// @public @sealed
+// @internal @sealed
 export class LazyCheckout extends Checkout {
     constructor(tree: SharedTree);
     // (undocumented)
@@ -579,12 +578,12 @@ export class LazyCheckout extends Checkout {
     waitForPendingUpdates(): Promise<void>;
 }
 
-// @public
+// @internal
 export type LocalCompressedId = number & {
     readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
 } & SessionUnique;
 
-// @public
+// @internal
 export interface LogViewer {
     // @deprecated
     getRevisionView(revision: Revision): Promise<RevisionView>;
@@ -593,7 +592,7 @@ export interface LogViewer {
     getRevisionViewInSession(revision: Revision): RevisionView;
 }
 
-// @public
+// @internal
 export interface MergeHealthStats {
     badPlaceCount: number;
     badRangeCount: number;
@@ -621,7 +620,7 @@ export interface MergeHealthStats {
 
 // @internal
 export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent> implements IShim {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: SharedTreeFactory_2, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ISharedTree) => void);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: TreeFactory, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ITree) => void);
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
@@ -629,7 +628,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
     // (undocumented)
     create(): void;
     // (undocumented)
-    get currentTree(): SharedTree | ISharedTree;
+    get currentTree(): SharedTree | ITree;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
@@ -652,34 +651,34 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 
 // @internal @sealed
 export class MigrationShimFactory implements IChannelFactory {
-    constructor(oldFactory: SharedTreeFactory, newFactory: SharedTreeFactory_2, populateNewChannelFn: (oldChannel: SharedTree, newChannel: ISharedTree) => void);
+    constructor(oldFactory: SharedTreeFactory, newFactory: TreeFactory, populateNewChannelFn: (oldChannel: SharedTree, newChannel: ITree) => void);
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<MigrationShim>;
     get type(): string;
 }
 
-// @public
+// @internal
 export interface NodeData<TId> {
     readonly definition: Definition;
     readonly identifier: TId;
     readonly payload?: Payload;
 }
 
-// @public
+// @internal
 export type NodeId = number & SessionSpaceCompressedId & NodeIdBrand;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface NodeIdBrand {
     // (undocumented)
     readonly NodeId: 'e53e7d6b-c8b9-431a-8805-4843fc639342';
 }
 
-// @public
+// @internal
 export interface NodeIdContext extends NodeIdGenerator, NodeIdConverter {
 }
 
-// @public
+// @internal
 export interface NodeIdConverter {
     convertToNodeId(id: StableNodeId): NodeId;
     convertToStableNodeId(id: NodeId): StableNodeId;
@@ -687,12 +686,12 @@ export interface NodeIdConverter {
     tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined;
 }
 
-// @public
+// @internal
 export interface NodeIdGenerator {
     generateNodeId(override?: string): NodeId;
 }
 
-// @public
+// @internal
 export interface NodeInTrait {
     // (undocumented)
     readonly index: TraitNodeIndex;
@@ -700,7 +699,7 @@ export interface NodeInTrait {
     readonly trait: TraitLocation;
 }
 
-// @public @sealed
+// @internal @sealed
 export interface OrderedEditSet<TChange = unknown> {
     readonly editIds: readonly EditId[];
     // @deprecated (undocumented)
@@ -722,7 +721,7 @@ export interface OrderedEditSet<TChange = unknown> {
     tryGetIndexOfId(editId: EditId): number | undefined;
 }
 
-// @public
+// @internal
 export interface ParentData {
     // (undocumented)
     readonly parentId: NodeId;
@@ -730,21 +729,21 @@ export interface ParentData {
     readonly traitParent: TraitLabel;
 }
 
-// @public
-export type Payload = Serializable;
+// @internal
+export type Payload = any;
 
-// @public
+// @internal
 export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace;
 
-// @public
+// @internal
 export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>, NodeId> | TPlaceholder;
 
-// @public
+// @internal
 export type PlaceIndex = number & {
     readonly PlaceIndex: unique symbol;
 };
 
-// @public
+// @internal
 export enum PlaceValidationResult {
     // (undocumented)
     Malformed = "Malformed",
@@ -758,17 +757,17 @@ export enum PlaceValidationResult {
     Valid = "Valid"
 }
 
-// @public
+// @internal
 export function rangeFromStableRange(view: TreeView, range: StableRange): TreeViewRange;
 
-// @public
+// @internal
 export type RangeValidationResult = RangeValidationResultKind.Valid | RangeValidationResultKind.PlacesInDifferentTraits | RangeValidationResultKind.Inverted | {
     kind: RangeValidationResultKind.BadPlace;
     place: StablePlaceInternal;
     placeFailure: BadPlaceValidationResult;
 };
 
-// @public
+// @internal
 export enum RangeValidationResultKind {
     // (undocumented)
     BadPlace = "BadPlace",
@@ -780,13 +779,13 @@ export enum RangeValidationResultKind {
     Valid = "Valid"
 }
 
-// @public
+// @internal
 export interface ReconciliationChange {
     readonly after: TransactionView;
     readonly resolvedChange: ChangeInternal;
 }
 
-// @public
+// @internal
 export interface ReconciliationEdit {
     readonly [index: number]: ReconciliationChange;
     readonly after: TreeView;
@@ -794,16 +793,16 @@ export interface ReconciliationEdit {
     readonly length: number;
 }
 
-// @public
+// @internal
 export interface ReconciliationPath {
     readonly [index: number]: ReconciliationEdit;
     readonly length: number;
 }
 
-// @public
+// @internal
 export type Result<TOk, TError> = Result.Ok<TOk> | Result.Error<TError>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export namespace Result {
     export interface Error<TError> {
         // (undocumented)
@@ -829,10 +828,10 @@ export namespace Result {
     }
 }
 
-// @public
+// @internal
 export type Revision = number;
 
-// @public
+// @internal
 export class RevisionView extends TreeView {
     // (undocumented)
     equals(view: TreeView): boolean;
@@ -841,7 +840,7 @@ export class RevisionView extends TreeView {
     openForTransaction(): TransactionView;
 }
 
-// @public
+// @internal
 export interface SequencedEditAppliedEventArguments {
     readonly edit: Edit<ChangeInternal>;
     readonly logger: ITelemetryLoggerExt;
@@ -851,22 +850,22 @@ export interface SequencedEditAppliedEventArguments {
     readonly wasLocal: boolean;
 }
 
-// @public
+// @internal
 export type SequencedEditAppliedHandler = (args: SequencedEditAppliedEventArguments) => void;
 
-// @public
+// @internal
 export type SessionSpaceCompressedId = CompressedId & SessionUnique;
 
-// @public
+// @internal
 export interface SessionUnique {
     // (undocumented)
     readonly SessionUnique: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
 }
 
-// @public
+// @internal
 export function setTrait(trait: TraitLocation, nodes: BuildNode | TreeNodeSequence<BuildNode>): Change[];
 
-// @public
+// @internal
 export interface SetValue {
     // (undocumented)
     readonly nodeToModify: NodeId;
@@ -875,13 +874,13 @@ export interface SetValue {
     readonly type: typeof ChangeType.SetValue;
 }
 
-// @public
+// @internal
 export interface SetValueInternal extends Omit<SetValueInternal_0_0_2, 'nodeToModify'> {
     // (undocumented)
     readonly nodeToModify: NodeId;
 }
 
-// @public
+// @internal
 export interface SetValueInternal_0_0_2 {
     // (undocumented)
     readonly nodeToModify: StableNodeId;
@@ -890,14 +889,13 @@ export interface SetValueInternal_0_0_2 {
     readonly type: typeof ChangeTypeInternal.SetValue;
 }
 
-// @public
+// @internal
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_1_1>);
     applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
     // (undocumented)
     applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
-    // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
     protected applyStashedOp(op: unknown): StashedLocalOpMetadata;
     attributeNodeId(id: NodeId): AttributionId;
@@ -909,7 +907,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get currentView(): RevisionView;
     // (undocumented)
     get edits(): OrderedEditSet<InternalizedChange>;
-    // @internal
     equals(sharedTree: SharedTree): boolean;
     generateNodeId(override?: string): NodeId;
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
@@ -919,13 +916,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     getRuntime(): IFluidDataStoreRuntime;
     getWriteFormat(): WriteFormat;
-    // @internal
     internalizeChange(change: Change): ChangeInternal;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // @internal
     loadSerializedSummary(blobData: string): ITelemetryProperties;
-    // @internal
     loadSummary(summary: SharedTreeSummaryBase): void;
     readonly logger: ITelemetryLoggerExt;
     get logViewer(): LogViewer;
@@ -939,13 +933,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void;
     revert(editId: EditId): EditId | undefined;
-    // @internal
     revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
-    // @internal
     saveSerializedSummary(options?: {
         serializer?: IFluidSerializer;
     }): string;
-    // @internal
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
     summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
@@ -953,19 +944,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined;
 }
 
-// @public
+// @internal
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
-// @public
+// @internal
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
-// @public
+// @internal
 export interface SharedTreeBaseOptions {
     editEvictionFrequency?: number;
     inMemoryHistorySize?: number;
 }
 
-// @public
+// @internal
 export enum SharedTreeDiagnosticEvent {
     AppliedEdit = "appliedEdit",
     CatchUpBlobUploaded = "uploadedCatchUpBlob",
@@ -976,13 +967,13 @@ export enum SharedTreeDiagnosticEvent {
     WriteVersionChanged = "writeVersionChanged"
 }
 
-// @public
+// @internal
 export enum SharedTreeEvent {
     EditCommitted = "committedEdit",
     SequencedEditApplied = "sequencedEditApplied"
 }
 
-// @public
+// @internal
 export class SharedTreeFactory implements IChannelFactory {
     constructor(...args: SharedTreeArgs);
     // (undocumented)
@@ -998,7 +989,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public
+// @internal
 export class SharedTreeMergeHealthTelemetryHeartbeat {
     attachTree(tree: SharedTree): void;
     clearData(): void;
@@ -1011,15 +1002,15 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
     stopHeartbeat(): void;
 }
 
-// @public
+// @internal
 export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = SharedTreeBaseOptions & Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
 
-// @public
+// @internal
 export interface SharedTreeOptions_0_0_2 {
     summarizeHistory?: boolean;
 }
 
-// @public
+// @internal
 export interface SharedTreeOptions_0_1_1 {
     attributionId?: AttributionId;
     summarizeHistory?: false | {
@@ -1029,7 +1020,7 @@ export interface SharedTreeOptions_0_1_1 {
 
 // @internal
 export class SharedTreeShim implements IShim {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, sharedTreeFactory: SharedTreeFactory_2);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, sharedTreeFactory: TreeFactory);
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
@@ -1037,7 +1028,7 @@ export class SharedTreeShim implements IShim {
     // (undocumented)
     create(): void;
     // (undocumented)
-    get currentTree(): ISharedTree;
+    get currentTree(): ITree;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
@@ -1055,26 +1046,26 @@ export class SharedTreeShim implements IShim {
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
     // (undocumented)
-    readonly sharedTreeFactory: SharedTreeFactory_2;
+    readonly sharedTreeFactory: TreeFactory;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
 // @internal @sealed
 export class SharedTreeShimFactory implements IChannelFactory {
-    constructor(factory: SharedTreeFactory_2);
+    constructor(factory: TreeFactory);
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedTreeShim>;
     get type(): string;
 }
 
-// @public
+// @internal
 export interface SharedTreeSummaryBase {
     readonly version: WriteFormat;
 }
 
-// @public
+// @internal
 export enum Side {
     // (undocumented)
     After = 1,
@@ -1082,19 +1073,19 @@ export enum Side {
     Before = 0
 }
 
-// @public
+// @internal
 export type StableNodeId = string & {
     readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151';
 };
 
-// @public
+// @internal
 export interface StablePlace {
     readonly referenceSibling?: NodeId;
     readonly referenceTrait?: TraitLocation;
     readonly side: Side;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const StablePlace: {
     before: (node: NodeData<NodeId> | NodeId) => StablePlace;
     after: (node: NodeData<NodeId> | NodeId) => StablePlace;
@@ -1102,13 +1093,13 @@ export const StablePlace: {
     atEndOf: (trait: TraitLocation) => StablePlace;
 };
 
-// @public
+// @internal
 export interface StablePlaceInternal extends Omit<StablePlaceInternal_0_0_2, 'referenceSibling' | 'referenceTrait'> {
     readonly referenceSibling?: NodeId;
     readonly referenceTrait?: TraitLocationInternal;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const StablePlaceInternal: {
     before: (node: NodeData<NodeId> | NodeId) => StablePlaceInternal;
     after: (node: NodeData<NodeId> | NodeId) => StablePlaceInternal;
@@ -1116,14 +1107,14 @@ export const StablePlaceInternal: {
     atEndOf: (trait: TraitLocationInternal) => StablePlaceInternal;
 };
 
-// @public
+// @internal
 export interface StablePlaceInternal_0_0_2 {
     readonly referenceSibling?: StableNodeId;
     readonly referenceTrait?: TraitLocationInternal_0_0_2;
     readonly side: Side;
 }
 
-// @public
+// @internal
 export interface StableRange {
     // (undocumented)
     readonly end: StablePlace;
@@ -1131,7 +1122,7 @@ export interface StableRange {
     readonly start: StablePlace;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const StableRange: {
     from: (start: StablePlace) => {
         to: (end: StablePlace) => StableRange;
@@ -1140,7 +1131,7 @@ export const StableRange: {
     all: (trait: TraitLocation) => StableRange;
 };
 
-// @public
+// @internal
 export interface StableRangeInternal {
     // (undocumented)
     readonly end: StablePlaceInternal;
@@ -1148,7 +1139,7 @@ export interface StableRangeInternal {
     readonly start: StablePlaceInternal;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const StableRangeInternal: {
     from: (start: StablePlaceInternal) => {
         to: (end: StablePlaceInternal) => StableRangeInternal;
@@ -1157,7 +1148,7 @@ export const StableRangeInternal: {
     all: (trait: TraitLocationInternal) => StableRangeInternal;
 };
 
-// @public
+// @internal
 export interface StableRangeInternal_0_0_2 {
     // (undocumented)
     readonly end: StablePlaceInternal_0_0_2;
@@ -1165,12 +1156,12 @@ export interface StableRangeInternal_0_0_2 {
     readonly start: StablePlaceInternal_0_0_2;
 }
 
-// @public
+// @internal
 export interface StashedLocalOpMetadata {
     transformedEdit?: Edit<ChangeInternal>;
 }
 
-// @public
+// @internal
 export interface StringInterner {
     // (undocumented)
     getInternedId(input: string): InternedStringId | undefined;
@@ -1180,7 +1171,7 @@ export interface StringInterner {
     getString(internedId: number): string;
 }
 
-// @public
+// @internal
 export interface SucceedingTransactionState {
     readonly changes: readonly ChangeInternal[];
     readonly status: EditStatus.Applied;
@@ -1188,12 +1179,12 @@ export interface SucceedingTransactionState {
     readonly view: TransactionView;
 }
 
-// @public
+// @internal
 export type TraitLabel = UuidString & {
     readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3';
 };
 
-// @public
+// @internal
 export interface TraitLocation {
     // (undocumented)
     readonly label: TraitLabel;
@@ -1201,13 +1192,13 @@ export interface TraitLocation {
     readonly parent: NodeId;
 }
 
-// @public
+// @internal
 export interface TraitLocationInternal extends Omit<TraitLocationInternal_0_0_2, 'parent'> {
     // (undocumented)
     readonly parent: NodeId;
 }
 
-// @public
+// @internal
 export interface TraitLocationInternal_0_0_2 {
     // (undocumented)
     readonly label: TraitLabel;
@@ -1215,18 +1206,18 @@ export interface TraitLocationInternal_0_0_2 {
     readonly parent: StableNodeId;
 }
 
-// @public
+// @internal
 export interface TraitMap<TChild> {
     // (undocumented)
     readonly [key: string]: TreeNodeSequence<TChild>;
 }
 
-// @public
+// @internal
 export type TraitNodeIndex = number & {
     readonly TraitNodeIndex: unique symbol;
 };
 
-// @public
+// @internal
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
     constructor(tree: SharedTree);
     apply(...changes: readonly Change[]): EditStatus;
@@ -1241,24 +1232,24 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
     readonly tree: SharedTree;
 }
 
-// @public
+// @internal
 export enum TransactionEvent {
     ViewChange = "viewChange"
 }
 
-// @public
+// @internal
 export interface TransactionEvents extends IErrorEvent {
     // (undocumented)
     (event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void): any;
 }
 
-// @public
+// @internal
 export interface TransactionFailure {
     readonly failure: TransactionInternal.Failure;
     readonly status: EditStatus.Invalid | EditStatus.Malformed;
 }
 
-// @public
+// @internal
 export namespace TransactionInternal {
     export interface BadPlaceFailure {
         readonly change: ChangeInternal;
@@ -1350,10 +1341,10 @@ export namespace TransactionInternal {
         {};
 }
 
-// @public
+// @internal
 export type TransactionState = SucceedingTransactionState | FailingTransactionState;
 
-// @public
+// @internal
 export class TransactionView extends TreeView {
     addNodes(sequence: Iterable<TreeViewNode>): TransactionView;
     attachRange(nodesToAttach: readonly NodeId[], place: TreeViewPlace): TransactionView;
@@ -1368,11 +1359,11 @@ export class TransactionView extends TreeView {
     setNodeValue(nodeId: NodeId, value: Payload): TransactionView;
 }
 
-// @public
+// @internal
 export interface TreeNode<TChild, TId> extends NodeData<TId>, HasTraits<TChild> {
 }
 
-// @public
+// @internal
 export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
     constructor(view: TreeView, nodeId: NodeId);
     // (undocumented)
@@ -1386,10 +1377,10 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
     get traits(): TraitMap<TreeNodeHandle>;
 }
 
-// @public
+// @internal
 export type TreeNodeSequence<TChild> = readonly TChild[];
 
-// @public
+// @internal
 export abstract class TreeView {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<TreeViewNode>;
@@ -1434,13 +1425,13 @@ export abstract class TreeView {
     tryGetViewNode(id: NodeId): TreeViewNode | undefined;
 }
 
-// @public
+// @internal
 export interface TreeViewNode extends NodeData<NodeId> {
     readonly parentage?: TraitLocation;
     readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 
-// @public
+// @internal
 export interface TreeViewPlace {
     // (undocumented)
     readonly sibling?: NodeId;
@@ -1450,7 +1441,7 @@ export interface TreeViewPlace {
     readonly trait: TraitLocation;
 }
 
-// @public
+// @internal
 export interface TreeViewRange {
     // (undocumented)
     readonly end: TreeViewPlace;
@@ -1458,23 +1449,23 @@ export interface TreeViewRange {
     readonly start: TreeViewPlace;
 }
 
-// @public
+// @internal
 export function useFailedSequencedEditTelemetry(tree: SharedTree): {
     disable: () => void;
 };
 
-// @public
+// @internal
 export type UuidString = string & {
     readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
 };
 
-// @public
+// @internal
 export interface ValidEditingResult extends EditingResultBase {
     readonly after: RevisionView;
     readonly status: EditStatus.Applied;
 }
 
-// @public
+// @internal
 export enum WriteFormat {
     v0_0_2 = "0.0.2",
     v0_1_1 = "0.1.1"

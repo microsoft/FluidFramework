@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree-react-api",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Experimental SharedTree API for React integration.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/sinon": "^7.0.13",
 		"c8": "^7.7.1",

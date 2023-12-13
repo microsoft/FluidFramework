@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-local-service",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,6 +25,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
@@ -45,6 +46,7 @@
 		"tinylicious": "^2.0.2"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",

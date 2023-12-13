@@ -19,3 +19,4 @@ List of technical/design documents (to be organized into appropriate sections at
 -   [Undo](./main/undo.md)
 -   [V1 Undo Example Flow](./main/v1-undo-example-flow.md)
 -   [V1 Undo](./main/v1-undo.md)
+-   [Compatibility](./main/compatibility.md)

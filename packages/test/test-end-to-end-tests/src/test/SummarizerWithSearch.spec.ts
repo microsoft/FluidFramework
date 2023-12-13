@@ -21,7 +21,7 @@ import {
 	neverCancelledSummaryToken,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
@@ -31,7 +31,7 @@ import {
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
 	wrapDocumentServiceFactory,
@@ -39,7 +39,7 @@ import {
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 interface ProvideSearchContent {
@@ -229,7 +229,7 @@ class TestDataObject1 extends DataObject implements SearchContent {
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider) => {
+describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataStoreFactory1 = new DataObjectFactory(
 		TestDataObjectType1,
@@ -250,8 +250,6 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 	const runtimeOptions: IContainerRuntimeOptions = {
 		gcOptions: { gcAllowed: true },
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
@@ -259,7 +257,6 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory1,
 		registryEntries: registryStoreEntries,
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});
 	const logger = createChildLogger();

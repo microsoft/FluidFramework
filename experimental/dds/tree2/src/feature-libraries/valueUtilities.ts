@@ -76,7 +76,7 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
 ): asserts value is Value {
-	assert(isAllowedValue(value), "invalid value");
+	assert(isAllowedValue(value), 0x843 /* invalid value */);
 }
 
 export function isAllowedValue(value: undefined | FluidSerializableReadOnly): value is Value {

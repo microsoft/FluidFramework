@@ -47,8 +47,7 @@ import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-de
  * Default: 3600 (1 hour).
  * @param ver - See {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
  * Default: `1.0`.
- *
- * @public
+ * @internal
  */
 export function generateToken(
 	tenantId: string,

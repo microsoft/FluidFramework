@@ -11,12 +11,10 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
-describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
+describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
 		public get _root() {
 			return this.root;
@@ -30,14 +28,11 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 		[],
 		[],
 	);
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			requestHandlers: [innerRequestHandler],
 			// Disable summaries so the summarizer client doesn't interfere with the audience
 			runtimeOptions: {
 				summaryOptions: {

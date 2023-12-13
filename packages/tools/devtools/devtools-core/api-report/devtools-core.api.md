@@ -89,13 +89,13 @@ export namespace ContainerDevtoolsFeatures {
     }
 }
 
-// @public
+// @internal
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
 }
 
-// @public
+// @internal
 export type ContainerKey = string;
 
 // @internal
@@ -207,7 +207,7 @@ export namespace DevtoolsFeatures {
     }
 }
 
-// @public @sealed
+// @internal @sealed
 export class DevtoolsLogger implements ITelemetryBaseLogger {
     constructor(baseLogger?: ITelemetryBaseLogger);
     send(event: ITelemetryBaseEvent): void;
@@ -250,7 +250,7 @@ export const EditType: {
 // @internal
 export type EditType = (typeof EditType)[keyof typeof EditType];
 
-// @public
+// @internal
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
@@ -371,7 +371,7 @@ export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>,
 // @internal
 export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
-// @public
+// @internal
 export interface HasContainerKey {
     containerKey: ContainerKey;
 }
@@ -387,7 +387,7 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @public
+// @internal
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
@@ -408,7 +408,7 @@ export interface InboundHandlers {
     [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
-// @public
+// @internal
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
@@ -442,7 +442,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
+export type Primitive = number | boolean | null | string | undefined;
 
 // @internal
 export namespace RootDataVisualizations {

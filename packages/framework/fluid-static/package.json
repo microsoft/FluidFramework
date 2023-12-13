@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-static",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,18 +11,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		}
-	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
@@ -36,6 +24,7 @@
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -79,6 +68,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -88,6 +78,7 @@
 		"@fluidframework/runtime-utils": "workspace:~"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.28.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
@@ -98,7 +89,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"c8": "^7.7.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
@@ -125,6 +116,22 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_FluidContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_ServiceAudience": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IRootDataObject": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

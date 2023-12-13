@@ -10,12 +10,13 @@ import {
 	ChangeRebaser,
 	TaggedChange,
 	AnchorSet,
-	Delta,
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
 	RevisionTag,
 	deltaForSet,
+	DeltaFieldMap,
+	DeltaRoot,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
@@ -164,7 +165,7 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap {
+function toDelta({ change, revision }: TaggedChange<TestChange>): DeltaFieldMap {
 	if (change.intentions.length > 0) {
 		const hasMajor: { major?: RevisionTag } = {};
 		if (revision !== undefined) {
@@ -224,7 +225,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		assert.fail("Unexpected call to rebase");
 	}
 }
@@ -234,17 +235,17 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public invertedCount = 0;
 	public composedCount = 0;
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		this.rebasedCount += 1;
 		return change;
 	}
 
-	public invert(change: TaggedChange<TestChange>): TestChange {
+	public override invert(change: TaggedChange<TestChange>): TestChange {
 		this.invertedCount += 1;
 		return change.change;
 	}
 
-	public compose(changes: TaggedChange<TestChange>[]): TestChange {
+	public override compose(changes: TaggedChange<TestChange>[]): TestChange {
 		this.composedCount += changes.length;
 		return changes.length === 0 ? emptyChange : changes[0].change;
 	}
@@ -260,7 +261,7 @@ export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 		super();
 	}
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		assert(this.constraint(change, over));
 		return super.rebase(change, over);
 	}
@@ -276,12 +277,12 @@ export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;
 const rootKey: FieldKey = brand("root");
 
 /**
- * This is a hack to encode arbitrary information (the intentions) into a Delta.
+ * This is a hack to encode arbitrary information (the intentions) into a Delta
  * The resulting Delta does not represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
-export function asDelta(intentions: number[]): Delta.Root {
+export function asDelta(intentions: number[]): DeltaRoot {
 	return intentions.length === 0
 		? emptyDelta
 		: {

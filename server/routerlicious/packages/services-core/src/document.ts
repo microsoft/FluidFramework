@@ -13,11 +13,17 @@ import { IGitCache, ISession } from "@fluidframework/server-services-client";
 import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
+/**
+ * @internal
+ */
 export interface IDocumentDetails {
 	existing: boolean;
 	value: IDocument;
 }
 
+/**
+ * @internal
+ */
 export interface IDocumentStaticProperties {
 	// Schema version
 	version: string;
@@ -28,6 +34,9 @@ export interface IDocumentStaticProperties {
 	isEphemeralContainer?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IDocumentStorage {
 	getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
@@ -57,6 +66,9 @@ export interface IDocumentStorage {
 	): Promise<IDocumentDetails>;
 }
 
+/**
+ * @internal
+ */
 export interface IClientSequenceNumber {
 	// Whether or not the client can expire
 	canEvict: boolean;
@@ -69,6 +81,9 @@ export interface IClientSequenceNumber {
 	serverMetadata?: any;
 }
 
+/**
+ * @internal
+ */
 export interface IDeliState {
 	// List of connected clients
 	clients: IClientSequenceNumber[] | undefined;
@@ -105,6 +120,9 @@ export interface IDeliState {
 }
 
 // TODO: We should probably rename this to IScribeState
+/**
+ * @internal
+ */
 export interface IScribe {
 	// Kafka checkpoint that maps to the below stored data
 	logOffset: number;
@@ -132,6 +150,9 @@ export interface IScribe {
 	isCorrupt: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface IDocument {
 	// Schema version
 	version: string;
@@ -163,6 +184,9 @@ export interface IDocument {
 	isEphemeralContainer?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface ICheckpoint {
 	_id: string;
 

@@ -11,9 +11,6 @@ import {
 	ITelemetryProperties,
 	TelemetryEventCategory,
 	IRequest,
-	IResponse,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	FluidObject,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
@@ -237,6 +234,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
+ * @internal
  */
 export async function waitContainerToCatchUp(container: IContainer) {
 	// Make sure we stop waiting if container is closed.
@@ -600,14 +598,6 @@ export class Container
 		return this._deltaManager.connectionManager.connectionMode;
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter(): IFluidRouter {
-		return this;
-	}
-
 	public get resolvedUrl(): IResolvedUrl | undefined {
 		/**
 		 * All attached containers will have a document service,
@@ -717,14 +707,14 @@ export class Container
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
-	public async getEntryPoint(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
 			return this._runtime.getEntryPoint?.();
 		}
-		return new Promise<FluidObject | undefined>((resolve, reject) => {
+		return new Promise<FluidObject>((resolve, reject) => {
 			const runtimeInstantiatedHandler = () => {
 				assert(
 					this._runtime !== undefined,
@@ -1351,18 +1341,6 @@ export class Container
 				}
 			},
 			{ start: true, end: true, cancel: "generic" },
-		);
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public async request(path: IRequest): Promise<IResponse> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "Request" },
-			async () => this.runtime.request(path),
-			{ end: true, cancel: "error" },
 		);
 	}
 
@@ -2543,7 +2521,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @alpha
+ * @internal
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2551,16 +2529,12 @@ export interface IContainerExperimental extends IContainer {
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @alpha misuse of this API can result in duplicate op submission and potential document corruption
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
-	 * @alpha
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

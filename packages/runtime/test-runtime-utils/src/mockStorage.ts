@@ -11,6 +11,7 @@ import { convertSummaryTreeToITree, listBlobsAtTreePath } from "@fluidframework/
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.
+ * @internal
  */
 export class MockStorage implements IChannelStorageService {
 	public static createFromSummary(summaryTree: ISummaryTree) {

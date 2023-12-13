@@ -6,18 +6,13 @@
 // This file contains several lambdas that do a simple property access
 /* eslint-disable import/no-internal-modules */
 
-import { strict as assert } from "node:assert";
-
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../domains";
 import { boxedIterator } from "../../feature-libraries/flex-tree";
-import {
-	createRawObjectNode,
-	extractRawNodeContent,
-	rawObjectErrorMessage,
-} from "../../simple-tree/rawObjectNode";
 import { brand } from "../../util";
 import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils";
+import { createRawNode, extractRawNodeContent } from "../../simple-tree/rawNode";
+import { ObjectNodeSchema } from "../../feature-libraries";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {
@@ -35,14 +30,11 @@ describe("raw object nodes", () => {
 		});
 
 		assert(context.root.is(rootFieldSchema));
-		let node = context.root.content;
-		const rawObjectNode = createRawObjectNode(objectSchema, {
+		const rawObjectNode = createRawNode(objectSchema as ObjectNodeSchema, {
 			foo: 42,
 			bar: undefined,
 			baz: [],
 		});
-		// This assignment checks that the raw node is assignable to the same type as the real node
-		node = rawObjectNode;
 		return { rawObjectNode, objectSchema };
 	}
 
@@ -59,28 +51,20 @@ describe("raw object nodes", () => {
 
 	it("disallow reading most node properties", () => {
 		const { rawObjectNode, objectSchema } = getRawObjectNode();
-		assertThrowsRawNodeError(() => rawObjectNode.context);
-		assertThrowsRawNodeError(() => rawObjectNode.parentField);
-		assertThrowsRawNodeError(() => rawObjectNode.tryGetField(brand("foo")));
-		assertThrowsRawNodeError(() => rawObjectNode[boxedIterator]());
-		assertThrowsRawNodeError(() => rawObjectNode.on("changing", () => {}));
-		assertThrowsRawNodeError(() => rawObjectNode.is(objectSchema));
-		assertThrowsRawNodeError(() => rawObjectNode.treeStatus());
-		assertThrowsRawNodeError(() => rawObjectNode.localNodeKey);
+		assert.throws(() => rawObjectNode.context);
+		assert.throws(() => rawObjectNode.parentField);
+		assert.throws(() => rawObjectNode.tryGetField(brand("foo")));
+		assert.throws(() => rawObjectNode[boxedIterator]());
+		assert.throws(() => rawObjectNode.on("changing", () => {}));
+		assert.throws(() => rawObjectNode.treeStatus());
+		assert.throws(() => rawObjectNode.localNodeKey);
 	});
 
 	it("disallow reading fields", () => {
 		const { rawObjectNode } = getRawObjectNode();
-		assertThrowsRawNodeError(() => rawObjectNode.foo);
-		assertThrowsRawNodeError(() => rawObjectNode.bar);
-		assertThrowsRawNodeError(() => rawObjectNode.baz);
-	});
-
-	it("disallow reading boxed fields", () => {
-		const { rawObjectNode } = getRawObjectNode();
-		assertThrowsRawNodeError(() => rawObjectNode.boxedFoo);
-		assertThrowsRawNodeError(() => rawObjectNode.boxedBar);
-		assertThrowsRawNodeError(() => rawObjectNode.boxedBaz);
+		assert.throws(() => rawObjectNode.tryGetField(brand("foo")));
+		assert.throws(() => rawObjectNode.tryGetField(brand("bar")));
+		assert.throws(() => rawObjectNode.tryGetField(brand("baz")));
 	});
 
 	it("expose their contents", () => {
@@ -91,10 +75,6 @@ describe("raw object nodes", () => {
 	it("can only have their contents read once", () => {
 		const { rawObjectNode } = getRawObjectNode();
 		assert.notEqual(extractRawNodeContent(rawObjectNode), undefined);
-		assert.equal(extractRawNodeContent(rawObjectNode), undefined);
+		assert.throws(() => extractRawNodeContent(rawObjectNode));
 	});
-
-	function assertThrowsRawNodeError(f: () => void): void {
-		assert.throws(f, (e: Error) => validateAssertionError(e, rawObjectErrorMessage));
-	}
 });

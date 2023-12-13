@@ -17,8 +17,8 @@ import type { ChangeCompressor } from './ChangeCompression';
 /**
  * An ordered set of Edits associated with a SharedTree.
  * Supports fast lookup of edits by ID and enforces idempotence.
- * @public
  * @sealed
+ * @internal
  */
 export interface OrderedEditSet<TChange = unknown> {
 	/**
@@ -147,7 +147,7 @@ export interface EditChunk<TChange> {
  * EditHandles are used to load edit chunks stored outside of the EditLog.
  * This is typically implemented by a wrapper around an IFluidHandle<ArrayBufferLike>.
  * @deprecated Edit virtualization is no longer supported.
- * @public
+ * @internal
  */
 export interface EditHandle<TChange> {
 	readonly get: () => Promise<EditWithoutId<TChange>[]>;

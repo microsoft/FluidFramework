@@ -7,8 +7,9 @@ import { assert } from "@fluidframework/core-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
-	Delta,
+	DeltaFieldChanges,
 	RevisionInfo,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -38,7 +39,7 @@ export function composeNoVerify(
 
 export function compose(
 	changes: TaggedChange<TestChangeset>[],
-	revInfos?: RevisionInfo[],
+	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 	childComposer?: (childChanges: TaggedChange<TestChange>[]) => TestChange,
 ): TestChangeset {
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
@@ -71,7 +72,7 @@ export function shallowCompose<T>(
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
-	revInfos?: RevisionInfo[],
+	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
@@ -81,7 +82,9 @@ function composeI<T>(
 		idAllocator,
 		moveEffects,
 		revInfos !== undefined
-			? revisionMetadataSourceFromInfo(revInfos)
+			? Array.isArray(revInfos)
+				? revisionMetadataSourceFromInfo(revInfos)
+				: revInfos
 			: defaultRevisionMetadataFromChanges(changes),
 	);
 
@@ -144,7 +147,7 @@ export function rebaseOverChanges(
 	revInfos?: RevisionInfo[],
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosForRebase(change, baseChanges);
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
 	for (const base of baseChanges) {
 		currChange = tagChange(
 			rebase(
@@ -157,37 +160,6 @@ export function rebaseOverChanges(
 	}
 
 	return currChange;
-}
-
-function defaultRevInfosForRebase(
-	change: TaggedChange<TestChangeset>,
-	baseChanges: TaggedChange<TestChangeset>[],
-): RevisionInfo[] {
-	const revInfos: RevisionInfo[] = [];
-	const rollForwards: RevisionTag[] = [];
-	for (const baseChange of baseChanges) {
-		if (baseChange.revision !== undefined) {
-			revInfos.push({
-				revision: baseChange.revision,
-				rollbackOf: baseChange.rollbackOf,
-			});
-
-			if (baseChange.rollbackOf !== undefined) {
-				rollForwards.push(baseChange.rollbackOf);
-			}
-		}
-	}
-
-	rollForwards.reverse();
-	for (const revision of rollForwards) {
-		revInfos.push({ revision });
-	}
-
-	if (change.revision !== undefined) {
-		assert(change.rollbackOf === undefined, "Should not rebase rollback changes");
-		revInfos.push({ revision: change.revision });
-	}
-	return revInfos;
 }
 
 export function rebaseOverComposition(
@@ -237,7 +209,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange, revision)),
@@ -270,12 +242,13 @@ export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>
 export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	const factory = new SF.MarkListFactory<T>();
 	for (const mark of changeset) {
-		if (mark.cellId?.lineage === undefined) {
+		if (mark.cellId?.lineage === undefined && mark.cellId?.adjacentCells === undefined) {
 			factory.push(mark);
 		} else {
 			const cloned = SF.cloneMark(mark);
 			assert(cloned.cellId !== undefined, "Should have cell ID");
 			delete cloned.cellId.lineage;
+			delete cloned.cellId.adjacentCells;
 			factory.push(cloned);
 		}
 	}
