@@ -8,7 +8,12 @@ import { v4 as uuid } from "uuid";
 import { SinonSpiedInstance, restore, spy } from "sinon";
 import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-services-client";
 import { ISummaryTestMode } from "./utils";
-import { GitWholeSummaryManager, IsomorphicGitManagerFactory, MemFsManagerFactory } from "../utils";
+import {
+	GitWholeSummaryManager,
+	IRepositoryManager,
+	IsomorphicGitManagerFactory,
+	MemFsManagerFactory,
+} from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
 import {
 	sampleChannelSummaryUpload,
@@ -76,7 +81,20 @@ testModes.forEach((testMode) => {
 		const memfsManagerFactory = new MemFsManagerFactory();
 		const tenantId = "gitrest-summaries-test";
 		let documentId: string;
-		let wholeSummaryManager: GitWholeSummaryManager;
+		let repoManager: IRepositoryManager;
+		const getWholeSummaryManager = () => {
+			// Always create a new WholeSummaryManager to reset internal caches.
+			return new GitWholeSummaryManager(
+				documentId,
+				repoManager,
+				{ documentId, tenantId },
+				false /* externalStorageEnabled */,
+				{
+					enableLowIoWrite: testMode.enableLowIoWrite,
+					optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
+				},
+			);
+		};
 		let memfsVolumeSpy: SinonSpiedInstance<Volume>;
 		beforeEach(async () => {
 			documentId = uuid();
@@ -96,21 +114,11 @@ testModes.forEach((testMode) => {
 				testMode.enableSlimGitInit,
 				undefined /* apiMetricsSamplingPeriod */,
 			);
-			const repoManager = await repoManagerFactory.create({
+			repoManager = await repoManagerFactory.create({
 				repoOwner: tenantId,
 				repoName: documentId,
 				storageRoutingId: { tenantId, documentId },
 			});
-			wholeSummaryManager = new GitWholeSummaryManager(
-				uuid(),
-				repoManager,
-				{ documentId, tenantId },
-				false /* externalStorageEnabled */,
-				{
-					enableLowIoWrite: testMode.enableLowIoWrite,
-					optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
-				},
-			);
 		});
 
 		afterEach(() => {
@@ -122,16 +130,8 @@ testModes.forEach((testMode) => {
 			const callCounts: { [K in keyof Volume]?: number } = {
 				readFile: memfsVolumeSpy.readFile.callCount,
 				writeFile: memfsVolumeSpy.writeFile.callCount,
-				unlink: memfsVolumeSpy.unlink.callCount,
-				readdir: memfsVolumeSpy.readdir.callCount,
 				mkdir: memfsVolumeSpy.mkdir.callCount,
-				rmdir: memfsVolumeSpy.rmdir.callCount,
 				stat: memfsVolumeSpy.stat.callCount,
-				lstat: memfsVolumeSpy.lstat.callCount,
-				readlink: memfsVolumeSpy.readlink.callCount,
-				symlink: memfsVolumeSpy.symlink.callCount,
-				chmod: memfsVolumeSpy.chmod.callCount,
-				rm: memfsVolumeSpy.rm.callCount,
 			};
 			process.stdout.write(
 				`\nFinal storage call counts: ${JSON.stringify(callCounts, undefined, 2)}\n`,
@@ -143,7 +143,7 @@ testModes.forEach((testMode) => {
 		});
 
 		it("Can create and read an initial summary and a subsequent incremental summary", async () => {
-			const initialWriteResponse = await wholeSummaryManager.writeSummary(
+			const initialWriteResponse = await getWholeSummaryManager().writeSummary(
 				sampleInitialSummaryUpload,
 				true,
 			);
@@ -158,14 +158,28 @@ testModes.forEach((testMode) => {
 				"Initial summary write response should match expected response.",
 			);
 
-			const initialReadResponse = await wholeSummaryManager.readSummary(LatestSummaryId);
+			const callCounts: { [K in keyof Volume]?: number } = {
+				readFile: memfsVolumeSpy.readFile.callCount,
+				writeFile: memfsVolumeSpy.writeFile.callCount,
+				mkdir: memfsVolumeSpy.mkdir.callCount,
+				stat: memfsVolumeSpy.stat.callCount,
+			};
+			process.stdout.write(
+				`\nInitial Write storage call counts: ${JSON.stringify(
+					callCounts,
+					undefined,
+					2,
+				)}\n`,
+			);
+
+			const initialReadResponse = await getWholeSummaryManager().readSummary(LatestSummaryId);
 			assertEqualSummaries(
 				initialReadResponse,
 				sampleInitialSummaryResponse,
 				"Initial summary read response should match expected response.",
 			);
 
-			const channelWriteResponse = await wholeSummaryManager.writeSummary(
+			const channelWriteResponse = await getWholeSummaryManager().writeSummary(
 				sampleChannelSummaryUpload,
 				false,
 			);
@@ -176,14 +190,15 @@ testModes.forEach((testMode) => {
 			);
 
 			// Latest should still be the initial summary.
-			const postChannelReadResponse = await wholeSummaryManager.readSummary(LatestSummaryId);
+			const postChannelReadResponse =
+				await getWholeSummaryManager().readSummary(LatestSummaryId);
 			assertEqualSummaries(
 				postChannelReadResponse,
 				sampleInitialSummaryResponse,
 				"Channel summary read response should match expected initial container summary response.",
 			);
 
-			const containerWriteResponse = await wholeSummaryManager.writeSummary(
+			const containerWriteResponse = await getWholeSummaryManager().writeSummary(
 				// Replace the referenced channel summary with the one we just wrote.
 				// This matters when low-io write is enabled, because it alters how the tree is stored.
 				JSON.parse(
@@ -205,7 +220,8 @@ testModes.forEach((testMode) => {
 				"Container summary write response should match expected response.",
 			);
 
-			const containerReadResponse = await wholeSummaryManager.readSummary(LatestSummaryId);
+			const containerReadResponse =
+				await getWholeSummaryManager().readSummary(LatestSummaryId);
 			assertEqualSummaries(
 				containerReadResponse,
 				sampleContainerSummaryResponse,
@@ -213,7 +229,7 @@ testModes.forEach((testMode) => {
 			);
 
 			// And we should still be able to read the initial summary when referenced by ID.
-			const initialLaterReadResponse = await wholeSummaryManager.readSummary(
+			const initialLaterReadResponse = await getWholeSummaryManager().readSummary(
 				initialWriteResponse.writeSummaryResponse.id,
 			);
 			assertEqualSummaries(
