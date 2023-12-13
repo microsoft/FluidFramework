@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
-import { OptionsMatrix } from "@fluid-internal/test-pairwise-generator";
+import { IRandom } from "@fluid-private/stochastic-test-utils";
+import { OptionsMatrix } from "@fluid-private/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
