@@ -80,7 +80,7 @@ export class RedisFs implements IFileSystemPromises {
 	 */
 	public async readFile(
 		filepath: PathLike | FileHandle,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		options?: { encoding?: null | undefined; flag?: OpenMode | undefined } | null,
 	): Promise<Buffer>;
 	public async readFile(
@@ -89,7 +89,7 @@ export class RedisFs implements IFileSystemPromises {
 	): Promise<string>;
 	public async readFile(
 		path: PathLike | FileHandle,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		options?: (ObjectEncodingOptions & { flag?: OpenMode | undefined }) | BufferEncoding | null,
 	): Promise<Buffer | string>;
 	public async readFile(
@@ -135,7 +135,7 @@ export class RedisFs implements IFileSystemPromises {
 					flag?: OpenMode | undefined;
 			  } & Abortable)
 			| BufferEncoding
-            // eslint-disable-next-line @rushstack/no-new-null
+			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<void> {
 		const filepathString = filepath.toString();
@@ -193,7 +193,7 @@ export class RedisFs implements IFileSystemPromises {
 		options?:
 			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
 			| BufferEncoding
-            // eslint-disable-next-line @rushstack/no-new-null
+			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<string[]>;
 	public async readdir(
@@ -205,7 +205,7 @@ export class RedisFs implements IFileSystemPromises {
 		options?:
 			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
 			| BufferEncoding
-            // eslint-disable-next-line @rushstack/no-new-null
+			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<string[] | Buffer[]>;
 	public async readdir(
@@ -245,17 +245,17 @@ export class RedisFs implements IFileSystemPromises {
 	): Promise<string | undefined>;
 	public async mkdir(
 		folderpath: PathLike,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		options?: Mode | (MakeDirectoryOptions & { recursive?: false | undefined }) | null,
 	): Promise<void>;
 	public async mkdir(
 		path: PathLike,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		options?: Mode | MakeDirectoryOptions | null,
 	): Promise<string | undefined>;
 	public async mkdir(
 		folderpath: PathLike,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		options?: Mode | MakeDirectoryOptions | null,
 	): Promise<undefined | string | void> {
 		const folderpathString = folderpath.toString();
@@ -431,13 +431,13 @@ export class RedisFs implements IFileSystemPromises {
 	 */
 	public async readlink(
 		filepath: PathLike,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		options?: ObjectEncodingOptions | BufferEncoding | null,
 	): Promise<string>;
 	public async readlink(filepath: PathLike, options: BufferEncodingOption): Promise<Buffer>;
 	public async readlink(
 		filepath: PathLike,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		options?: ObjectEncodingOptions | string | null,
 	): Promise<string | Buffer>;
 	public async readlink(filepath: PathLike, options: any): Promise<string | Buffer> {
@@ -455,7 +455,7 @@ export class RedisFs implements IFileSystemPromises {
 	public async symlink(
 		target: PathLike,
 		filepath: PathLike,
-        // eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null
 		type?: string | null,
 	): Promise<void> {
 		throw Error("Not implemented");
