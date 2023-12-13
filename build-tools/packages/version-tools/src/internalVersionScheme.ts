@@ -126,7 +126,7 @@ export function toInternalScheme(
 	publicVersion: semver.SemVer | string,
 	version: semver.SemVer | string,
 	allowPrereleases = false,
-	prereleaseIdentifier = ALLOWED_PRERELEASE_IDENTIFIERS[0],
+	prereleaseIdentifier = DEFAULT_PRERELEASE_IDENTIFIER,
 ): semver.SemVer {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
@@ -173,7 +173,7 @@ export function validateVersionScheme(
 	// eslint-disable-next-line @rushstack/no-new-null
 	version: semver.SemVer | string | null,
 	allowPrereleases = false,
-	prereleaseIdentifiers?: string[],
+	prereleaseIdentifiers?: readonly string[],
 ) {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
