@@ -45,13 +45,13 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
     // (undocumented)
     static getFactory(): Json1Factory;
     // (undocumented)
-    insert(path: Path, value: Serializable): void;
+    insert<T>(path: Path, value: Serializable<T>): void;
     // (undocumented)
     move(from: Path, to: Path): void;
     // (undocumented)
     remove(path: Path, value?: boolean): void;
     // (undocumented)
-    replace(path: Path, oldValue: Serializable, newValue: Serializable): void;
+    replace<T, U>(path: Path, oldValue: Serializable<T>, newValue: Serializable<U>): void;
     // (undocumented)
     protected transform(input: JSONOp, transform: JSONOp): JSONOp;
 }

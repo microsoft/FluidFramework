@@ -1,5 +1,21 @@
 # @fluidframework/undo-redo
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   sequence: Add experimental support for the obliterate operation [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    This change adds experimental support for _obliterate_, a form of _remove_ that deletes concurrently inserted segments.
+    To use, enable the `mergeTreeEnableObliterate` feature flag and call the new `obliterateRange` functions.
+
+    Note: this change may cause compilation errors for those attaching event listeners. As long as obliterate isn't used in
+    current handlers, their current implementation is sound.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

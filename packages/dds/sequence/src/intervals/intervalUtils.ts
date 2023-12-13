@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable no-bitwise */
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	PropertiesManager,
 	PropertySet,
@@ -125,10 +125,6 @@ export type IIntervalDeltaOp =
  */
 export enum IntervalType {
 	Simple = 0x0,
-	/**
-	 * @deprecated this functionality is no longer supported and will be removed
-	 */
-	Nest = 0x1,
 
 	/**
 	 * SlideOnRemove indicates that the ends of the interval will slide if the segment
@@ -262,6 +258,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
+		// eslint-disable-next-line import/no-deprecated
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,

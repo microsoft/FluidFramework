@@ -100,33 +100,6 @@ export function createRuntimeAttributor(): IRuntimeAttributor {
  */
 export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime) =>
 	class ContainerRuntimeWithAttributor extends Base {
-		public static async load(
-			context: IContainerContext,
-			registryEntries: NamedFluidDataStoreRegistryEntries,
-			requestHandler?:
-				| ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>)
-				| undefined,
-			runtimeOptions: IContainerRuntimeOptions | undefined = {},
-			containerScope: FluidObject | undefined = context.scope,
-			existing?: boolean | undefined,
-			containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
-		): Promise<ContainerRuntime> {
-			return this.loadRuntime({
-				context,
-				registryEntries,
-				existing: existing ?? false,
-				requestHandler,
-				runtimeOptions,
-				containerScope,
-				containerRuntimeCtor,
-				provideEntryPoint: async () => {
-					throw new UsageError(
-						"ContainerRuntime.load is deprecated and should no longer be used",
-					);
-				},
-			});
-		}
-
 		public static async loadRuntime(params: {
 			context: IContainerContext;
 			registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -134,7 +107,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			runtimeOptions?: IContainerRuntimeOptions;
 			containerScope?: FluidObject;
 			containerRuntimeCtor?: typeof ContainerRuntime;
-			/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+			/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		}): Promise<ContainerRuntime> {
