@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	cursorForJsonableTreeNode,
 	makeSchemaCodec,
@@ -316,6 +317,49 @@ describe("SharedTree", () => {
 		});
 	});
 
+	it("Uses handles in the summary when there are no schema changes since the last summary.", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+
+		await provider.ensureSynchronized();
+		const tree1 = provider.trees[0].schematizeInternal({
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: ["B"],
+		});
+
+		await provider.ensureSynchronized();
+		await provider.summarize();
+
+		tree1.editableTree.insertAt(0, ["A"]);
+
+		await provider.ensureSynchronized();
+		const { summaryTree } = await provider.getSummaryInfo();
+		assert(
+			summaryTree.tree[".channels"].type === SummaryType.Tree,
+			"Runtime summary tree not created for blob dds test",
+		);
+		const dataObjectTree = summaryTree.tree[".channels"].tree.default;
+		assert(
+			dataObjectTree.type === SummaryType.Tree,
+			"Data store summary tree not created for blob dds test",
+		);
+		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
+		assert(
+			dataObjectChannelsTree.type === SummaryType.Tree,
+			"Data store channels tree not created for blob dds test",
+		);
+		const ddsTree = dataObjectChannelsTree.tree[provider.trees[0].id];
+		assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
+		const indexes = ddsTree.tree.indexes;
+		assert(indexes.type === SummaryType.Tree, "Blob Indexes tree not created");
+		const schema = indexes.tree.Schema;
+		assert(schema.type === SummaryType.Tree, "Blob Schema tree not created");
+		assert(
+			schema.tree.SchemaString.type === SummaryType.Handle,
+			"schemaString should be a handle",
+		);
+	});
+
 	it("can process ops after loading from summary", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const tree2 = await provider.createTree();
@@ -364,11 +408,8 @@ describe("SharedTree", () => {
 		// Ensure all trees are now caught up
 		await provider.ensureSynchronized();
 
-		const test = await provider.createTree();
-		const testSummary = test.getAttachSummary();
-		await provider.ensureSynchronized();
 		// Load the last summary (state: "AC") and process the deletion of Z and insertion of B
-		const tree4 = assertSchema(test, stringSequenceRootSchema);
+		const tree4 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
 
 		// Ensure tree4 has a chance to process trailing ops.
 		await provider.ensureSynchronized();

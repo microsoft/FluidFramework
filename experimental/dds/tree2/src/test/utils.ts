@@ -317,6 +317,15 @@ export class TestTreeProvider {
 		await summarizeNow(this.summarizer, "TestTreeProvider");
 	}
 
+	public async getSummaryInfo() {
+		assert(
+			this.summarizer !== undefined,
+			"can't summarize because summarizeOnDemand was not set to true.",
+		);
+		const summary = await summarizeNow(this.summarizer, "TestTreeProvider");
+		return summary;
+	}
+
 	public [Symbol.iterator](): IterableIterator<ISharedTree> {
 		return this.trees[Symbol.iterator]();
 	}
