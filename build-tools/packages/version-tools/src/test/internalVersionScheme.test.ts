@@ -136,7 +136,7 @@ describe("internalScheme", () => {
 		});
 
 		// This test case should fail but it doesn't. "Fluid internal version ranges" should always have a prerelease
-		// identifier that matches between the upper and lower bount. It's skipped because I think the case it guards
+		// identifier that matches between the upper and lower bound. It's skipped because I think the case it guards
 		// against isn't likely, so I don't think it's worth the cost of fixing it.
 		//
 		// The reason the code behaves wrong is because it only checks the lower bound of the range to see if it's an
