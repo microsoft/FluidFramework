@@ -39,7 +39,6 @@ describe("List", () => {
 		return Array.from({ length }, (_, i) => String.fromCodePoint(0x41 + i));
 	}
 
-	// TODO: Consider combining createList helpers now that unions are supported.
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
 		const list = getRoot(
@@ -50,7 +49,6 @@ describe("List", () => {
 		return list;
 	}
 
-	// TODO: Consider combining createList helpers now that unions are supported.
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
 		const list = getRoot(
