@@ -14,4 +14,4 @@ export {
 	InternalClassTreeTypes,
 } from "./class-tree";
 
-export { TreeListNodeBase } from "./simple-tree";
+export { TreeArrayNodeBase } from "./simple-tree";
