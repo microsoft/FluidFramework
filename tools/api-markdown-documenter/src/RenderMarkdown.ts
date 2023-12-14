@@ -6,11 +6,11 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
-import { ApiItemTransformationConfiguration, transformApiModel } from "./api-item-transforms";
-import { DocumentNode } from "./documentation-domain";
-import { Logger } from "./Logging";
-import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./renderers";
-import { FileSystemConfiguration } from "./FileSystemConfiguration";
+import { type ApiItemTransformationConfiguration, transformApiModel } from "./api-item-transforms";
+import { type DocumentNode } from "./documentation-domain";
+import { type Logger } from "./Logging";
+import { type MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./renderers";
+import { type FileSystemConfiguration } from "./FileSystemConfiguration";
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.

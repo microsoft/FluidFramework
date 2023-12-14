@@ -95,6 +95,13 @@ export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly, TValida
 }
 
 /**
+ * TODO: properly integrate context
+ */
+export type IJsonCodecWithContext<TDecoded, TEncoded, TValidate, TContext> = (
+	context: TContext,
+) => IJsonCodec<TDecoded, TEncoded, TValidate>;
+
+/**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
  */
 export interface IBinaryCodec<TDecoded>
@@ -310,11 +317,12 @@ export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
 	TEncodedFormat = JsonCompatibleReadOnly,
+	TValidate = TEncodedFormat,
 >(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat>,
+	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate>,
 	validator?: JsonValidator,
-): IJsonCodec<TInMemoryFormat, TEncodedFormat> {
+): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate> {
 	if (!validator) {
 		return codec;
 	}
@@ -327,11 +335,12 @@ export function withSchemaValidation<
 			}
 			return encoded;
 		},
-		decode: (encoded: TEncodedFormat) => {
+		decode: (encoded: TValidate) => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
-			return codec.decode(encoded) as unknown as TInMemoryFormat;
+			// TODO: would be nice to provide a more specific validate type to the inner codec than the outer one gets.
+			return codec.decode(encoded);
 		},
 	};
 }

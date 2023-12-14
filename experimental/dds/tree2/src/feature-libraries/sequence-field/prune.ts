@@ -5,7 +5,8 @@
 
 import { Changeset } from "./types";
 import { MarkListFactory } from "./markListFactory";
-import { omitMarkEffect, withNodeChange } from "./utils";
+import { withNodeChange } from "./utils";
+import { VestigialEndpoint, isVestigialEndpoint } from "./helperTypes";
 
 export type NodeChangePruner<TNodeChange> = (change: TNodeChange) => TNodeChange | undefined;
 
@@ -15,11 +16,11 @@ export function prune<TNodeChange>(
 ): Changeset<TNodeChange> {
 	const pruned = new MarkListFactory<TNodeChange>();
 	for (let mark of changeset) {
+		if (isVestigialEndpoint(mark)) {
+			delete (mark as Partial<VestigialEndpoint>).vestigialEndpoint;
+		}
 		if (mark.changes !== undefined) {
 			mark = withNodeChange(mark, pruneNode(mark.changes));
-		}
-		if (mark.type === "Placeholder") {
-			mark = omitMarkEffect(mark);
 		}
 		pruned.push(mark);
 	}
