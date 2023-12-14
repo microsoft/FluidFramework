@@ -43,30 +43,30 @@ export namespace SummaryType {
 
 	/**
 	 * Represents a sub-tree in the summary.
-     * @public
-     */
+	 * @public
+	 */
 	export const Tree: Tree = 1 as const;
 
 	/**
 	 * Represents a blob of data that is added to the summary.
 	 * Such as the user data that is added to the DDS or metadata added by runtime
 	 * such as data store / channel attributes.
-     * @public
-     */
+	 * @public
+	 */
 	export const Blob: Blob = 2 as const;
 
 	/**
 	 * Path to a summary tree object from the last successful summary.
-     * @public
-     */
+	 * @public
+	 */
 	export const Handle: Handle = 3 as const;
 
 	/**
 	 * Unique identifier to larger blobs uploaded outside of the summary.
 	 * Ex. DDS has large images or video that will be uploaded by the BlobManager and
 	 * receive an Id that can be used in the summary.
-     * @public
-     */
+	 * @public
+	 */
 	export const Attachment: Attachment = 4 as const;
 }
 
