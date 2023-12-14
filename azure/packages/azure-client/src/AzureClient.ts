@@ -305,13 +305,11 @@ export class AzureClient {
 	}
 
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> | undefined =
-			await container.getEntryPoint();
-		assert(rootDataObject !== undefined, "entryPoint must exist");
-		// ! This "if" is needed for back-compat (older instances of IRootDataObject may not have the IRootDataObject property)
-		if (rootDataObject.IRootDataObject === undefined) {
-			return rootDataObject as IRootDataObject;
-		}
+		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		assert(
+			rootDataObject.IRootDataObject !== undefined,
+			"entryPoint must be of type IRootDataObject",
+		);
 		return rootDataObject.IRootDataObject;
 	}
 	// #endregion

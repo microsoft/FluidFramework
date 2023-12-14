@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition, ReferencePosition } from "@fluidframework/merge-tree";
+import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence";
 import { DocSegmentKind, getDocSegmentKind } from "../document/index.js";
 import { clamp, Dom, hasTagName, TagName } from "../util/index.js";
 import { updateRef } from "../util/localref.js";

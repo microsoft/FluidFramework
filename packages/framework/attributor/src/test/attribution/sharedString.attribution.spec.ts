@@ -32,7 +32,7 @@ import {
 	IFluidDataStoreRuntime,
 	Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IClient, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
@@ -362,11 +362,82 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
 	return { operations, generator };
 }
 
-function readJson(filepath: string): Jsonable {
-	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" }));
+/**
+ * Type constraint for types that are likely deserializable from JSON or have a custom
+ * alternate type.
+ */
+type JsonDeserializedTypeWith<T> =
+	| null
+	| boolean
+	| number
+	| string
+	| T
+	| { [P in string]: JsonDeserializedTypeWith<T> }
+	| JsonDeserializedTypeWith<T>[];
+
+type NonSymbolWithDefinedNonFunctionPropertyOf<T extends object> = Exclude<
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		[K in keyof T]: undefined extends T[K] ? never : T[K] extends Function ? never : K;
+	}[keyof T],
+	undefined | symbol
+>;
+type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		[K in keyof T]: undefined extends T[K] ? (T[K] extends Function ? never : K) : never;
+	}[keyof T],
+	undefined | symbol
+>;
+
+/**
+ * Used to constrain a type `T` to types that are deserializable from JSON.
+ *
+ * When used as a filter to inferred generic `T`, a compile-time error can be
+ * produced trying to assign `JsonDeserialized<T>` to `T`.
+ *
+ * Deserialized JSON never contains `undefined` values, so properties with
+ * `undefined` values become optional. If the original property was not already
+ * optional, then compilation of assignment will fail.
+ *
+ * Similarly, function valued properties are removed.
+ */
+type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean extends (
+	T extends never ? true : false
+)
+	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
+	: /* test for 'unknown' */ unknown extends T
+	? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
+	: /* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
+	? /* primitive types => */ T
+	: // eslint-disable-next-line @typescript-eslint/ban-types
+	/* test for not a function */ Extract<T, Function> extends never
+	? /* not a function => test for object */ T extends object
+		? /* object => test for array */ T extends (infer E)[]
+			? /* array => */ JsonDeserialized<E, TReplaced>[]
+			: /* property bag => */
+			  /* properties with symbol keys or function values are removed */
+			  {
+					/* properties with defined values are recursed */
+					[K in NonSymbolWithDefinedNonFunctionPropertyOf<T>]: JsonDeserialized<
+						T[K],
+						TReplaced
+					>;
+			  } & {
+					/* properties that may have undefined values are optional */
+					[K in NonSymbolWithUndefinedNonFunctionPropertyOf<T>]?: JsonDeserialized<
+						T[K],
+						TReplaced
+					>;
+			  }
+		: /* not an object => */ never
+	: /* function => */ never;
+
+function readJson<T>(filepath: string): JsonDeserialized<T> {
+	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" })) as JsonDeserialized<T>;
 }
 
-function writeJson(filepath: string, content: Jsonable) {
+function writeJson<T>(filepath: string, content: Jsonable<T>) {
 	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf-8" });
 }
 
@@ -403,7 +474,37 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 	});
 }
 
-const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => {
+// ISummaryTree is not serializable due to Uint8Array content in ISummaryBlob.
+// SerializableISummaryTree is a version of ISummaryTree with Uint8Array content removed.
+type SerializableISummaryTree = ExcludeDeeply<ISummaryTree, Uint8Array>;
+
+type ExcludeDeeply<T, Exclusion, TBase = Exclude<T, Exclusion>> = TBase extends object
+	? { [K in keyof TBase]: ExcludeDeeply<TBase[K], Exclusion> }
+	: TBase;
+
+/**
+ * Validates that summary tree does not have a blob with a Uint8Array as content.
+ *
+ * @param summary - Summary tree to validate
+ */
+function assertSerializableSummary(
+	summary: ISummaryTree,
+): asserts summary is SerializableISummaryTree {
+	Object.values(summary.tree).forEach((value) => {
+		switch (value.type) {
+			case SummaryType.Tree:
+				assertSerializableSummary(value);
+				break;
+			case SummaryType.Blob:
+				assert(typeof value.content === "string");
+				break;
+			default:
+				break;
+		}
+	});
+}
+
+const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
 	state.containerRuntimeFactory.processAllMessages();
 	const { sharedString } = state.clients[0];
 	const { summary } = await sharedString.summarize();
@@ -412,6 +513,7 @@ const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => 
 	if (state.attributor && state.serializer) {
 		(summary as any).attribution = state.serializer.encode(state.attributor);
 	}
+	assertSerializableSummary(summary);
 	return summary;
 };
 
@@ -578,7 +680,7 @@ describe("SharedString Attribution", () => {
 				let operations: Operation[];
 				before(() => {
 					paths = getDocumentPaths(document);
-					operations = readJson(paths.operations);
+					operations = readJson<Operation[]>(paths.operations);
 				});
 
 				for (const { filename, factory } of dataGenerators) {

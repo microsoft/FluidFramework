@@ -12,7 +12,7 @@ import {
 	ISummarizer,
 	ISummarizeResults,
 } from "@fluidframework/container-runtime";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { seqFromTree } from "@fluidframework/runtime-utils";
 import {
@@ -23,7 +23,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -72,8 +72,6 @@ const dataStoreFactory1 = new DataObjectFactory(
 	[],
 	[],
 );
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
@@ -87,7 +85,6 @@ const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 	{
 		defaultFactory: dataStoreFactory1,
 		registryEntries: registryStoreEntries,
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	},
 );
@@ -144,7 +141,7 @@ describeCompat(
 		});
 
 		function getAndIncrementCellValue(
-			sharedMatrix: SharedMatrix,
+			sharedMatrix: SharedMatrix<string>,
 			row: number,
 			column: number,
 			initialValue?: string,

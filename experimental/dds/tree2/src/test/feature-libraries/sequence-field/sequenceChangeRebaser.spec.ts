@@ -760,3 +760,22 @@ describe("SequenceField - Composed sandwich rebasing", () => {
 		assert.deepEqual(insertB2.change, insertB.change);
 	});
 });
+
+describe("SequenceField - Examples", () => {
+	it("a detach can end up with a redetachId that contains lineage", () => {
+		const revive = tagChange([Mark.revive(1, { revision: tag1, localId: brand(0) })], tag3);
+		const concurrentRemove = tagChange([Mark.delete(1, brand(42))], tag2);
+		const rebasedRevive = rebaseTagged(revive, concurrentRemove);
+		const redetach = invert(rebasedRevive);
+		const expected = [
+			Mark.delete(1, brand(0), {
+				redetachId: {
+					revision: tag1,
+					localId: brand(0),
+					lineage: [{ revision: tag2, id: brand(42), count: 1, offset: 0 }],
+				},
+			}),
+		];
+		assert.deepEqual(redetach, expected);
+	});
+});

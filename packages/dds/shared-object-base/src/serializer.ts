@@ -66,7 +66,7 @@ export interface IFluidSerializer {
 
 /**
  * Data Store serializer implementation
- * @alpha
+ * @internal
  */
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
