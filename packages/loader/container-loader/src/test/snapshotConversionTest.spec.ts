@@ -86,7 +86,6 @@ describe("Dehydrate Container", () => {
 		// 	"The root sub-tree's content is incorrect",
 		// );
 
-    
 		assert.strictEqual(
 			snapshotTree.trees.default.trees.root.unreferenced,
 			undefined,

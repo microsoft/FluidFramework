@@ -17,10 +17,7 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import {
-	IDocumentAttributes,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
@@ -66,7 +63,7 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 		const id = subtree.blobs[key];
 		assert(id, `blob id for ${key} missing`);
 		const contents = blobs[id];
-      
+
 		assert(contents, `blob contents for ${key} missing`);
 		return JSON.parse(contents) as T;
 	}
@@ -205,7 +202,6 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			// 	"Blobs should contain attributes blob",
 			// );
 
-      
 			// Check for default dataStore
 			const { datastoreTree: snapshotDefaultDataStore } = assertDatastoreTree(
 				snapshotTree,
