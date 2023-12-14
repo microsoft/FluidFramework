@@ -12,6 +12,7 @@ import {
 	cursorForJsonableTreeNode,
 	TreeChunk,
 	cursorForJsonableTreeField,
+	intoStoredSchemaCollection,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
@@ -48,7 +49,8 @@ const valueField = SchemaBuilder.required(leaf.number);
 const structValue = builder.object("structValue", { x: valueField });
 const optionalField = builder.optional(leaf.number);
 const structOptional = builder.object("structOptional", { x: optionalField });
-const schema = builder.intoLibrary();
+const schemaView = builder.intoLibrary();
+const schema = intoStoredSchemaCollection(schemaView);
 
 function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 	assert.deepEqual(a, b);
