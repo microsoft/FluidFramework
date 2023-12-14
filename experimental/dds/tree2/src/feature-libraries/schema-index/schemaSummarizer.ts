@@ -16,7 +16,7 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../codec";
+import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../../codec";
 import {
 	TreeFieldStoredSchema,
 	TreeStoredSchema,
@@ -25,10 +25,15 @@ import {
 	TreeNodeSchemaIdentifier,
 	schemaDataIsEmpty,
 	SchemaEvents,
-} from "../core";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../util";
-import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
+} from "../../core";
+import {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "../../shared-tree-core";
+import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../../util";
+import { Format } from "./format";
+import { encodeRepo, makeSchemaCodec } from "./codec";
 
 /**
  * The storage key for the blob in the summary containing schema data

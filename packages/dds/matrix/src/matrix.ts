@@ -18,7 +18,6 @@ import {
 	makeHandlesSerializable,
 	parseHandles,
 	SharedObject,
-	SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -543,7 +542,7 @@ export class SharedMatrix<T = any>
 	 * Runs serializer on the GC data for this SharedMatrix.
 	 * All the IFluidHandle's stored in the cells represent routes to other objects.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		for (let row = 0; row < this.rowCount; row++) {
 			for (let col = 0; col < this.colCount; col++) {
 				serializer.stringify(this.getCell(row, col), this.handle);

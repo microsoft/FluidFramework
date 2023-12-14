@@ -8,7 +8,6 @@ import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/te
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	cursorForJsonableTreeNode,
-	makeSchemaCodec,
 	jsonableTreeFromCursor,
 	Any,
 	TreeStatus,
@@ -62,17 +61,13 @@ import {
 	rootFieldKey,
 	UpPath,
 	moveToDetachedField,
-	TreeStoredSchema,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { leaf, SchemaBuilder } from "../../domains";
-import { noopValidator } from "../../codec";
 import { SchemaFactory, TreeConfiguration } from "../../class-tree";
-
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 const fooKey: FieldKey = brand("foo");
 
@@ -294,7 +289,6 @@ describe("SharedTree", () => {
 		assert(provider.trees[1].isAttached());
 
 		const value = "42";
-		const expectedSchema = schemaCodec.encode(intoStoredSchema(stringSequenceRootSchema));
 
 		// Apply an edit to the first tree which inserts a node with a value
 		const view1 = provider.trees[0].schematizeInternal({
@@ -305,7 +299,10 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.deepEqual(view1.editableTree.asArray, [value]);
-		assert.deepEqual(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
+		expectSchemaEqual(
+			provider.trees[0].storedSchema,
+			intoStoredSchema(stringSequenceRootSchema),
+		);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		validateTreeConsistency(provider.trees[0], provider.trees[1]);
@@ -1265,20 +1262,15 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const otherLoadedTree = provider.trees[1];
-			expectSchemaEquality(
+			expectSchemaEqual(
 				tree.contentSnapshot().schema,
 				intoStoredSchema(stringSequenceRootSchema),
 			);
-			expectSchemaEquality(
+			expectSchemaEqual(
 				otherLoadedTree.storedSchema,
 				intoStoredSchema(stringSequenceRootSchema),
 			);
 		});
-
-		function expectSchemaEquality(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
-			const codec = makeSchemaCodec({ jsonValidator: noopValidator });
-			assert.deepEqual(codec.encode(actual), codec.encode(expected));
-		}
 	});
 
 	describe.skip("Fuzz Test fail cases", () => {
