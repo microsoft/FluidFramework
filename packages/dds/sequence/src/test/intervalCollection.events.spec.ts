@@ -233,6 +233,21 @@ describe("SharedString interval collection event spec", () => {
 			assert.equal(eventLog.length, 0);
 		});
 
+		it("is emitted on change of properties and endpoints", () => {
+			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ interval, previousEndpoints, local, op, slide }] = eventLog;
+				assert.deepEqual(interval, { start: 2, end: 3 });
+				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
+				assert.equal(local, true);
+				assert.equal(op, undefined);
+				assert.equal(slide, false);
+			}
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
+		});
+
 		describe("is emitted on a change due to an endpoint sliding", () => {
 			it("on ack of a segment remove containing a ref", () => {
 				sharedString.removeRange(1, 3);
@@ -358,6 +373,19 @@ describe("SharedString interval collection event spec", () => {
 				assert.equal((op?.contents as { type?: unknown }).type, "act");
 				assert.deepEqual(deltas, { applies: null });
 			}
+		});
+		it("is emitted on change of properties and endpoints", () => {
+			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ id, deltas, local, op }] = eventLog;
+				assert.equal(id, intervalId);
+				assert.equal(local, true);
+				assert.equal(op, undefined);
+				assert.deepEqual(deltas, { foo: null });
+			}
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
 		});
 	});
 });

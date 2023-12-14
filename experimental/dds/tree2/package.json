@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree2",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -74,10 +74,12 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@sinclair/typebox": "^0.29.4",
 		"@ungap/structured-clone": "^1.2.0",
 		"sorted-btree": "^1.8.0",
@@ -95,7 +97,6 @@
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",

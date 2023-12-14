@@ -1,7 +1,6 @@
 {
 	"name": "@fluid-experimental/odsp-end-to-end-tests",
-	"version": "2.0.0-internal.7.4.0",
-	"private": true,
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Odsp client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {

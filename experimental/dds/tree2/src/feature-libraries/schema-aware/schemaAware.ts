@@ -5,7 +5,6 @@
 
 import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core";
 import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
-import { Multiplicity } from "../modular-schema";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -19,6 +18,7 @@ import {
 	LazyItem,
 } from "../typed-schema";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";
+import { Multiplicity } from "../multiplicity";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.

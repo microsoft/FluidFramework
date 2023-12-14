@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { RevisionTag } from "../../core";
+import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../../util";
 import { Mark } from "./types";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
@@ -20,7 +20,7 @@ export class MarkQueue<T> {
 		private readonly moveEffects: MoveEffectTable<T>,
 		private readonly consumeEffects: boolean,
 		private readonly genId: IdAllocator,
-		private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
+		private readonly composeChanges?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 	) {
 		this.list = list;
 	}

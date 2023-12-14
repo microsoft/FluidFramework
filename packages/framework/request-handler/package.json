@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/request-handler",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "A simple request handling library for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -110,6 +110,23 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedVariableDeclaration_createFluidObjectResponse": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_rootDataStoreRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_handleFromLegacyUri": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

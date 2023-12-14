@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,6 +68,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -115,6 +116,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MockFluidDataStoreRuntime": {
+				"backCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreContext": {
+				"backCompat": false
+			}
+		}
 	}
 }

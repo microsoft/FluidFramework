@@ -27,6 +27,7 @@ import {
 	makeEncodingTestSuite,
 } from "../../utils";
 import { IJsonCodec } from "../../../codec";
+import { RevisionTagCodec } from "../../../shared-tree-core";
 import { singleJsonCursor } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
@@ -420,7 +421,9 @@ describe("Generic FieldKind", () => {
 			decode: unexpectedDelegate,
 		};
 
-		const leafCodec = valueHandler.codecsFactory(throwCodec).resolve(0).json;
+		const leafCodec = valueHandler
+			.codecsFactory(throwCodec, new RevisionTagCodec())
+			.resolve(0).json;
 		const childCodec: IJsonCodec<NodeChangeset> = {
 			encode: (nodeChange) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
@@ -433,7 +436,7 @@ describe("Generic FieldKind", () => {
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(childCodec),
+			genericFieldKind.changeHandler.codecsFactory(childCodec, new RevisionTagCodec()),
 			encodingTestData,
 		);
 	});
@@ -449,7 +452,7 @@ describe("Generic FieldKind", () => {
 
 	it("relevantRemovedRoots", () => {
 		const actual = genericFieldKind.changeHandler.relevantRemovedRoots(
-			[
+			makeAnonChange([
 				{
 					index: 0,
 					nodeChange: nodeChange0To1,
@@ -458,7 +461,7 @@ describe("Generic FieldKind", () => {
 					index: 2,
 					nodeChange: nodeChange1To2,
 				},
-			],
+			]),
 			(child) =>
 				child === nodeChange0To1
 					? [{ minor: 42 }]
