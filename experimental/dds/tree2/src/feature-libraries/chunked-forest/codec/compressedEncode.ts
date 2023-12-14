@@ -33,17 +33,17 @@ import {
 import { FieldBatch } from "./fieldBatch";
 
 /**
- * Encode data from `cursor` in into an `EncodedChunk`.
+ * Encode data from `FieldBatch` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
  *
  * Most of the compression strategy comes from the policy provided via `cache`.
  */
-export function compressedEncode(cursors: FieldBatch, cache: EncoderCache): EncodedFieldBatch {
+export function compressedEncode(fieldBatch: FieldBatch, cache: EncoderCache): EncodedFieldBatch {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
-	for (const cursor of cursors) {
+	for (const cursor of fieldBatch) {
 		const buffer: BufferFormat = [];
 		anyFieldEncoder.encodeField(cursor, cache, buffer);
 		batchBuffer.push(buffer);

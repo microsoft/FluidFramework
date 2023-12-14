@@ -16,12 +16,12 @@ import { ChunkDecoder, StreamCursor, getChecked, readStream } from "./chunkCodec
 export function decode<TEncodedShape extends object, TCache>(
 	decoderLibrary: DiscriminatedUnionDispatcher<TEncodedShape, [cache: TCache], ChunkDecoder>,
 	cache: TCache,
-	chunk: EncodedFieldBatchGeneric<TEncodedShape>,
+	batch: EncodedFieldBatchGeneric<TEncodedShape>,
 	rootDecoder: ChunkDecoder,
 ): TreeChunk[] {
-	const decoders = chunk.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
+	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
 	const chunks: TreeChunk[] = [];
-	for (const field of chunk.data) {
+	for (const field of batch.data) {
 		const stream = { data: field, offset: 0 };
 		const result = rootDecoder.decode(decoders, stream);
 		assert(

@@ -28,7 +28,7 @@ import { NodeShape } from "./nodeShape";
 import { FieldBatch } from "./fieldBatch";
 
 /**
- * Encode data from `cursor` in into an `EncodedChunk`.
+ * Encode data from `fieldBatch` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
  * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
@@ -36,9 +36,9 @@ import { FieldBatch } from "./fieldBatch";
 export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-	cursor: FieldBatch,
+	fieldBatch: FieldBatch,
 ): EncodedFieldBatch {
-	return compressedEncode(cursor, buildCache(schema, policy));
+	return compressedEncode(fieldBatch, buildCache(schema, policy));
 }
 
 export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
