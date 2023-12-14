@@ -1,5 +1,61 @@
 # @fluidframework/aqueduct
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   aqueduct: Removed getDefaultObjectFromContainer, getObjectWithIdFromContainer and getObjectFromContainer [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` helper methods have been removed from @fluidframework/aqueduct. Please move all code usage to the new `entryPoint` pattern.
+
+    See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+-   data-object-base: Removed IFluidRouter from DataObject interfaces and classes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `IFluidRouter` property has been removed from a number of DataObject related classes:
+
+    -   `PureDataObject`
+    -   `LazyLoadedDataObject`
+    -   `TestFluidObject`
+
+    Please migrate to the new `entryPoint` pattern or use the relevant `request` method as necessary.
+
+    See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+-   aqueduct: Removed IRootDataObjectFactory [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `IRootDataObjectFactory` interface has been removed. Please remove all usage of it.
+
+-   aqueduct: Removed requestHandler utilities [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The following `requestHandler` utilities have been removed:
+
+    -   `makeModelRequestHandler`
+    -   `defaultFluidObjectRequestHandler`
+    -   `defaultRouteRequestHandler`
+    -   `mountableViewRequestHandler`
+    -   `createFluidObjectResponse`
+    -   `rootDataStoreRequestHandler`
+    -   `handleFromLegacyUri`
+    -   `RuntimeRequestHandlerBuilder`
+
+    Please migrate all usage to the new `entryPoint` pattern.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   aqueduct: Deprecated IRootDataObjectFactory ([#18565](https://github.com/microsoft/FluidFramework/issues/18565)) [030ab7adf9](https://github.com/microsoft/FluidFramework/commits/030ab7adf991d2d983437544600a191ac15ca5a5)
+
+    The `IRootDataObjectFactory` interface has been deprecated and will be removed in a future major release. Please remove
+    all usage of it.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

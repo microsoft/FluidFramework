@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { BrandedType } from "../../../util";
 import { DiscriminatedUnionDispatcher } from "../../../codec";
 import { TreeChunk } from "../chunk";
-import { EncodedChunkGeneric, IdentifierOrIndex } from "./formatGeneric";
+import { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric";
 import { ChunkDecoder, StreamCursor, getChecked, readStream } from "./chunkCodecUtilities";
 
 /**
@@ -16,17 +16,22 @@ import { ChunkDecoder, StreamCursor, getChecked, readStream } from "./chunkCodec
 export function decode<TEncodedShape extends object, TCache>(
 	decoderLibrary: DiscriminatedUnionDispatcher<TEncodedShape, [cache: TCache], ChunkDecoder>,
 	cache: TCache,
-	chunk: EncodedChunkGeneric<TEncodedShape>,
+	batch: EncodedFieldBatchGeneric<TEncodedShape>,
 	rootDecoder: ChunkDecoder,
-): TreeChunk {
-	const decoders = chunk.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
-	const stream = { data: chunk.data, offset: 0 };
-	const result = rootDecoder.decode(decoders, stream);
-	assert(
-		stream.offset === stream.data.length,
-		0x73a /* expected decode to consume full stream */,
-	);
-	return result;
+): TreeChunk[] {
+	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
+	const chunks: TreeChunk[] = [];
+	for (const field of batch.data) {
+		const stream = { data: field, offset: 0 };
+		const result = rootDecoder.decode(decoders, stream);
+		assert(
+			stream.offset === stream.data.length,
+			0x73a /* expected decode to consume full stream */,
+		);
+		chunks.push(result);
+	}
+
+	return chunks;
 }
 
 /**

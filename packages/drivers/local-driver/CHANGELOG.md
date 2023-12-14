@@ -1,5 +1,19 @@
 # @fluidframework/local-driver
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   local-driver: LocalDocumentStorageService class property type changes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `repositoryUrl` property on the `LocalDocumentStorageService` class has changed from a property getter to a
+    `readonly` field. While this is an API change, there should be no changes required on the consumer side since calling
+    code should remain the same.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

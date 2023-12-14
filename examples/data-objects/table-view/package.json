@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-view",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"private": true,
 	"description": "Chaincode component that provides a view for a table-document.",
 	"homepage": "https://fluidframework.com",
@@ -51,6 +51,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
 		"@tiny-calc/micro": "0.0.0-alpha.5",
+		"@tiny-calc/nano": "0.0.0-alpha.5",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

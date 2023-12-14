@@ -9,8 +9,8 @@ import structuredClone from "@ungap/structured-clone";
 import {
 	generateStableId as runtimeGenerateStableId,
 	assertIsStableId,
-} from "@fluidframework/container-runtime";
-import { StableId } from "@fluidframework/runtime-definitions";
+	StableId,
+} from "@fluidframework/id-compressor";
 
 /**
  * Subset of Map interface.
@@ -432,6 +432,17 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
 		});
 	}
 	return output;
+}
+
+/**
+ * Make an inverted copy of a map.
+ *
+ * @returns a map which can look up the keys from the values of the original map.
+ */
+export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
+	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
+	assert(result.size === input.size, "all values in a map must be unique to invert it");
+	return result;
 }
 
 /**

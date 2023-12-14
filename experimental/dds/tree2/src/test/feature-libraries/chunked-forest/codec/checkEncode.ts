@@ -15,10 +15,13 @@ import {
 import { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
 // eslint-disable-next-line import/no-internal-modules
 import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-// eslint-disable-next-line import/no-internal-modules
-import { EncodedChunk, version } from "../../../../feature-libraries/chunked-forest/codec/format";
+import {
+	EncodedFieldBatch,
+	version,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format";
 import { JsonableTree } from "../../../../core";
-import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
+import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities";
 import {
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
@@ -37,7 +40,7 @@ export function checkNodeEncode(
 	shape.encodeNode(cursor, cache, buffer);
 
 	// Check round-trip
-	checkDecode(buffer, [tree]);
+	checkDecode([buffer], [[tree]]);
 
 	return buffer.slice(1);
 }
@@ -52,12 +55,12 @@ export function checkFieldEncode(
 	shape.encodeField(cursor, cache, buffer);
 
 	// Check round-trip
-	checkDecode(buffer, tree);
+	checkDecode([buffer], [tree]);
 
 	return buffer.slice(1);
 }
 
-function checkDecode(buffer: BufferFormat, tree: JsonableTree[]): void {
+function checkDecode(buffer: BufferFormat[], tree: JsonableTree[][]): void {
 	// Check round-trips with identifiers inline and out of line
 	testDecode(buffer, tree, () => false);
 	testDecode(buffer, tree, () => true);
@@ -71,23 +74,29 @@ function cloneArrays<T>(data: readonly T[]): T[] {
 }
 
 function testDecode(
-	buffer: BufferFormat,
-	tree: JsonableTree[],
+	buffer: BufferFormat[],
+	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
-): EncodedChunk {
+): EncodedFieldBatch {
 	const chunk = handleShapesAndIdentifiers(version, cloneArrays(buffer), identifierFilter);
 
 	// TODO: check chunk matches schema
 
 	// Check decode
 	const result = decode(chunk);
-	assertChunkCursorEquals(result, tree);
+	assertChunkCursorBatchEquals(result, expectedTree);
 
 	// handles can't be roundtripped through JSON. the FluidSerializer can't be
 	// used to roundtrip handles in this case either, as doing so changes the
 	// contents of the handle compared to the original object. avoid the below
 	// roundtripping in that case.
-	if (chunk.data.some(isFluidHandle)) {
+	function hasHandle(data: unknown): boolean {
+		if (Array.isArray(data)) {
+			return data.some(hasHandle);
+		}
+		return isFluidHandle(data);
+	}
+	if (hasHandle(chunk.data)) {
 		return chunk;
 	}
 

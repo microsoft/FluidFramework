@@ -44,7 +44,7 @@ const detach: Populated<Detach> = {
 	id: brand(0),
 	revision: tag,
 	finalEndpoint: atomId,
-	detachIdOverride: atomId,
+	redetachId: atomId,
 };
 
 export const populatedMarks: PopulatedMark[] = [
@@ -68,7 +68,7 @@ export const populatedMarks: PopulatedMark[] = [
 		id: brand(0),
 		revision: tag,
 		finalEndpoint: atomId,
-		detachIdOverride: atomId,
+		redetachId: atomId,
 	},
 	{
 		type: "Delete",
@@ -77,7 +77,7 @@ export const populatedMarks: PopulatedMark[] = [
 		changes,
 		id: brand(0),
 		revision: tag,
-		detachIdOverride: atomId,
+		redetachId: atomId,
 	},
 	{
 		type: "AttachAndDetach",

@@ -58,7 +58,7 @@ Fluid Devtools as necessary.
 import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools-core";
 
 // Instantiate the logger
-const devtoolsLogger = new DevtoolsLogger();
+const devtoolsLogger = createDevtoolsLogger();
 
 // Pass the logger when instantiating the Loader
 const loader = new Loader({
@@ -99,7 +99,7 @@ import { DevtoolsLogger } from "@fluid-experimental/devtools-core";
 // Your application's logger
 const yourApplicationLogger = getInstanceOfYourApplicationLogger();
 
-const devtoolsLogger = new DevtoolsLogger(yourApplicationLogger);
+const devtoolsLogger = createDevtoolsLogger(yourApplicationLogger);
 
 // Pass devtoolsLogger to initializeDevtools() and to your application as described above
 ```

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-core",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -127,6 +127,57 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DevtoolsLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ContainerDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidHandleNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_TreeNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_UnknownObjectNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ValueNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_VisualNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_VisualTreeNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_VisualValueNode": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_Primitive": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_RootHandleNode": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_VisualChildNode": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_VisualNode": {
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_DevtoolsLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 import {
-	ApiCallSignature,
-	ApiClass,
-	ApiConstructSignature,
-	ApiConstructor,
-	ApiEntryPoint,
-	ApiEnum,
-	ApiEnumMember,
-	ApiFunction,
-	ApiIndexSignature,
-	ApiInterface,
-	ApiItem,
-	ApiMethod,
-	ApiMethodSignature,
-	ApiModel,
-	ApiNamespace,
-	ApiPropertyItem,
-	ApiTypeAlias,
-	ApiVariable,
+	type ApiCallSignature,
+	type ApiClass,
+	type ApiConstructSignature,
+	type ApiConstructor,
+	type ApiEntryPoint,
+	type ApiEnum,
+	type ApiEnumMember,
+	type ApiFunction,
+	type ApiIndexSignature,
+	type ApiInterface,
+	type ApiItem,
+	type ApiMethod,
+	type ApiMethodSignature,
+	type ApiModel,
+	type ApiNamespace,
+	type ApiPropertyItem,
+	type ApiTypeAlias,
+	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
+import { type SectionNode } from "../../documentation-domain";
 import * as DefaultTransformationImplementations from "../default-implementations";
-import { ApiItemTransformationConfiguration } from "./Configuration";
+import { type ApiItemTransformationConfiguration } from "./Configuration";
 
 /**
  * Signature for a function which generates one or more {@link SectionNode}s describing an

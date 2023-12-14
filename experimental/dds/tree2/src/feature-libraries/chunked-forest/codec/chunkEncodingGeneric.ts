@@ -6,7 +6,7 @@
 import { TreeValue } from "../../../core";
 import { fail } from "../../../util";
 import { FluidSerializableReadOnly } from "../../valueUtilities";
-import { EncodedChunkGeneric } from "./formatGeneric";
+import { EncodedFieldBatchGeneric } from "./formatGeneric";
 import {
 	Counter,
 	CounterFilter,
@@ -49,9 +49,9 @@ export type BufferFormat<TEncodedShape> = (
  */
 export function handleShapesAndIdentifiers<TEncodedShape>(
 	version: number,
-	buffer: BufferFormat<TEncodedShape>,
+	buffer: BufferFormat<TEncodedShape>[],
 	identifierFilter: CounterFilter<string> = jsonMinimizingFilter,
-): EncodedChunkGeneric<TEncodedShape> {
+): EncodedFieldBatchGeneric<TEncodedShape> {
 	const identifiers = new Counter<string>();
 	const shapes = new Counter<Shape<TEncodedShape>>();
 	// Shapes can reference other shapes (and identifiers), so we need to traverse the shape graph.
@@ -121,7 +121,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 		// TODO: fix readonly typing issues to remove this cast.
 		identifiers: identifierTable.indexToValue as string[],
 		shapes: encodedShapes,
-		data: buffer as TreeValue[],
+		data: buffer as TreeValue[][],
 	};
 }
 

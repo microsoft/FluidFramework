@@ -40,7 +40,7 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
  * Base class from which all shared objects derive.
- * @alpha
+ * @public
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends EventEmitterWithErrorHandling<TEvent>
@@ -581,7 +581,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
- * @alpha
+ * @public
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -716,7 +716,7 @@ export abstract class SharedObject<
 	 * Calls the serializer over all data in this object that reference other GC nodes.
 	 * Derived classes must override this to provide custom list of references to other GC nodes.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		// We run the full summarize logic to get the list of outbound routes from this object. This is a little
 		// expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
 		// See: https://github.com/microsoft/FluidFramework/issues/4547
