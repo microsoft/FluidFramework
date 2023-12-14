@@ -127,7 +127,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 export namespace FluidDebugger {
     // @internal
     export function createFromService(documentService: IDocumentService): Promise<IDocumentService>;
-    // @internal (undocumented)
+    // (undocumented)
     export function createFromServiceFactory(documentServiceFactory: IDocumentServiceFactory): Promise<IDocumentServiceFactory>;
 }
 
