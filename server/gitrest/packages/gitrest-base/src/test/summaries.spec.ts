@@ -30,6 +30,7 @@ import {
 	checkFullStorageAccessBaselinePerformance,
 	checkInitialWriteStorageAccessBaselinePerformance,
 } from "./storageAccess";
+import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
 
 // Github Copilot wizardry.
 function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
@@ -113,7 +114,9 @@ testFileSystems.forEach((fileSystem) => {
 			const tenantId = "gitrest-summaries-test";
 			let documentId: string;
 			let repoManager: IRepositoryManager;
-			const getWholeSummaryManager = () => {
+			const getWholeSummaryManager = (
+				featureFlagOverrides?: Partial<ISummaryWriteFeatureFlags>,
+			) => {
 				// Always create a new WholeSummaryManager to reset internal caches.
 				return new GitWholeSummaryManager(
 					documentId,
@@ -123,6 +126,7 @@ testFileSystems.forEach((fileSystem) => {
 					{
 						enableLowIoWrite: testMode.enableLowIoWrite,
 						optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
+						...featureFlagOverrides,
 					},
 				);
 			};
@@ -165,6 +169,7 @@ testFileSystems.forEach((fileSystem) => {
 				restore();
 			});
 
+			// Test standard summary flow and storage access frequency.
 			it("Can create and read an initial summary and a subsequent incremental summary", async () => {
 				const initialWriteResponse = await getWholeSummaryManager().writeSummary(
 					sampleInitialSummaryUpload,
@@ -269,6 +274,92 @@ testFileSystems.forEach((fileSystem) => {
 						`Storage size should be <= ${expectedMaxStorageSizeKb}kb. Got ${finalStorageSizeKb}`,
 					);
 				}
+			});
+
+			// Test cross-compat between low-io and non-low-io write modes for same summary.
+			[true, false].forEach((enableLowIoWrite) => {
+				it(`Can read from and write to an initial summary stored ${
+					enableLowIoWrite ? "with" : "without"
+				} low-io write`, async () => {
+					await getWholeSummaryManager({
+						enableLowIoWrite,
+					}).writeSummary(sampleInitialSummaryUpload, true);
+
+					const initialReadResponse =
+						await getWholeSummaryManager().readSummary(LatestSummaryId);
+					assertEqualSummaries(
+						initialReadResponse,
+						sampleInitialSummaryResponse,
+						"Initial summary read response should match expected response.",
+					);
+					const channelWriteResponse = await getWholeSummaryManager().writeSummary(
+						sampleChannelSummaryUpload,
+						false,
+					);
+					const containerWriteResponse = await getWholeSummaryManager().writeSummary(
+						// Replace the referenced channel summary with the one we just wrote.
+						// This matters when low-io write is enabled, because it alters how the tree is stored.
+						JSON.parse(
+							JSON.stringify(sampleContainerSummaryUpload).replace(
+								sampleChannelSummaryResult.id,
+								channelWriteResponse.writeSummaryResponse.id,
+							),
+						),
+						false,
+					);
+					assert.strictEqual(
+						containerWriteResponse.isNew,
+						false,
+						"Container summary write `isNew` should be `false`.",
+					);
+					assertEqualSummaries(
+						containerWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+						sampleContainerSummaryResponse,
+						"Container summary write response should match expected response.",
+					);
+				});
+
+				it(`Can read an incremental summary stored ${
+					enableLowIoWrite ? "with" : "without"
+				} low-io write`, async () => {
+					await getWholeSummaryManager({
+						enableLowIoWrite,
+					}).writeSummary(sampleInitialSummaryUpload, true);
+					const channelWriteResponse = await getWholeSummaryManager({
+						enableLowIoWrite,
+					}).writeSummary(sampleChannelSummaryUpload, false);
+					const containerWriteResponse = await getWholeSummaryManager({
+						enableLowIoWrite,
+					}).writeSummary(
+						// Replace the referenced channel summary with the one we just wrote.
+						// This matters when low-io write is enabled, because it alters how the tree is stored.
+						JSON.parse(
+							JSON.stringify(sampleContainerSummaryUpload).replace(
+								sampleChannelSummaryResult.id,
+								channelWriteResponse.writeSummaryResponse.id,
+							),
+						),
+						false,
+					);
+
+					const latestContainerReadResponse =
+						await getWholeSummaryManager().readSummary(LatestSummaryId);
+					assertEqualSummaries(
+						latestContainerReadResponse,
+						sampleContainerSummaryResponse,
+						"Latest container summary read response should match expected response.",
+					);
+
+					// And we should still be able to read the initial summary when referenced by ID.
+					const shaContainerReadResponse = await getWholeSummaryManager().readSummary(
+						containerWriteResponse.writeSummaryResponse.id,
+					);
+					assertEqualSummaries(
+						shaContainerReadResponse,
+						sampleContainerSummaryResponse,
+						"Sha container summary read response should match expected response.",
+					);
+				});
 			});
 		});
 	});
