@@ -11,7 +11,6 @@ import {
 	RevisionMetadataSource,
 	TaggedChange,
 	mapTaggedChange,
-	rebaseChangeOverChanges,
 } from "../core";
 import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
 import { Mutable, fail } from "../util";
