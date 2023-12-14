@@ -17,6 +17,8 @@ export interface SharedTreeChange {
 	/**
 	 * The changes to apply.
 	 * @remarks while not expressable in TypeScript, these changes should never have two `ModularChangeset`s adjacent in the list.
+	 * This restriction exists because this change type should preserve the composition behavior of `ModularChangeFamily`, which
+	 * always composes runs of `ModularChangeset`s into a single `ModularChangeset`.
 	 */
 	readonly changes: readonly SharedTreeInnerChange[];
 }
