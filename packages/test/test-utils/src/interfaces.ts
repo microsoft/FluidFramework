@@ -12,14 +12,14 @@ import {
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideTestFluidObject {
 	readonly ITestFluidObject: ITestFluidObject;
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
 	root: ISharedMap;

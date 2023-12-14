@@ -15,23 +15,26 @@
  * create copies.
  */
 
-const chalk = require("chalk");
 const cpy = require("cpy");
 const fs = require("fs-extra");
 const path = require("path");
 const replace = require("replace-in-file");
 
-const originalPath = path.resolve(process.argv[2]);
-const targetPath = path.resolve(process.argv.length > 3 ? process.argv[3] : originalPath);
-const stagingPath = path.join(targetPath, "_staging");
-const outputPath = path.join(targetPath, "_build");
+/**
+ * This purpose of this method is to transfer the api json content from originalPath to targetPath.
+ * Currently, the paths are configured such that originalPath is the _api-extractor-temp-{version}-doc-models
+ * directory in the root of the repo (where the content either downloaded or generated with api-extractor). 
+ * targetPath is currently configured to be docs/_api-extractor-temp/{version}/(_build or _staging) 
+ */
+const main = async (originalPath, targetPath) => {
+	const stagingPath = path.join(targetPath, "_staging");
+	const outputPath = path.join(targetPath, "_build");
 
-const main = async () => {
 	// Clear output folders.
 	await fs.emptyDir(stagingPath);
 	await fs.emptyDir(outputPath);
 
-	const apiExtractorInputDir = path.resolve("..", "_api-extractor-temp", "doc-models");
+	const apiExtractorInputDir = originalPath;
 
 	// Copy all the files to staging that need to be present for member processing.
 	await cpy(apiExtractorInputDir, stagingPath);
@@ -61,13 +64,6 @@ const main = async () => {
 	});
 };
 
-main().then(
-	() => {
-		console.log(chalk.green("SUCCESS: API log files staged!"));
-		process.exit(0);
-	},
-	(error) => {
-		console.error("FAILURE: API log files could not be staged due to an error.", error);
-		process.exit(1);
-	},
-);
+module.exports = {
+	main,
+};

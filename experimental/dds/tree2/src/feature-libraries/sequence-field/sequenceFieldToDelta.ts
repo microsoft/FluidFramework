@@ -4,9 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { fail, Mutable } from "../../util";
+import { Mutable } from "../../util";
 import {
-	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
@@ -37,7 +36,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 ): DeltaFieldChanges {
 	const local: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
-	const build: DeltaDetachedNodeBuild[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];
 
 	for (const mark of change) {
@@ -169,8 +167,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						local.push(deltaMark);
 					}
 					break;
-				case "Placeholder":
-					fail("Should not have placeholders in a changeset being converted to delta");
 				default:
 					unreachableCase(type);
 			}
@@ -194,9 +190,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 	}
 	if (global.length > 0) {
 		delta.global = global;
-	}
-	if (build.length > 0) {
-		delta.build = build;
 	}
 	if (rename.length > 0) {
 		delta.rename = rename;

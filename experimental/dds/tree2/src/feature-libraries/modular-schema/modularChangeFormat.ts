@@ -15,6 +15,7 @@ import {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 } from "../../util";
+import { EncodedFieldBatch } from "../chunked-forest";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -102,7 +103,7 @@ export const EncodedNodeChangeset = Type.Object(
  */
 export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 
-const EncodedRevisionInfo = Type.Object(
+export const EncodedRevisionInfo = Type.Object(
 	{
 		revision: Type.Readonly(RevisionTagSchema),
 		rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
@@ -110,13 +111,32 @@ const EncodedRevisionInfo = Type.Object(
 	noAdditionalProps,
 );
 
+export type EncodedRevisionInfo = Static<typeof EncodedRevisionInfo>;
+
+/**
+ * Index of field in an EncodedFieldBatch.
+ */
+export const EncodedTreeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
+
 // TODO:YA6307 adopt more efficient encoding, likely based on contiguous runs of IDs
-export const EncodedBuilds = Type.Array(
+export const EncodedBuildsArray = Type.Array(
 	Type.Union([
-		Type.Tuple([ChangesetLocalIdSchema, Type.Any()]),
-		Type.Tuple([RevisionTagSchema, ChangesetLocalIdSchema, Type.Any()]),
+		Type.Tuple([ChangesetLocalIdSchema, EncodedTreeIndex]),
+		Type.Tuple([RevisionTagSchema, ChangesetLocalIdSchema, EncodedTreeIndex]),
 	]),
 );
+
+export type EncodedBuildsArray = Static<typeof EncodedBuildsArray>;
+
+export const EncodedBuilds = Type.Object({
+	builds: EncodedBuildsArray,
+	/**
+	 * Fields indexed by the EncodedTreeIndexes above.
+	 * TODO: Strongly typing this here may result in redundant schema validation of this data.
+	 */
+	trees: EncodedFieldBatch,
+});
+
 export type EncodedBuilds = Static<typeof EncodedBuilds>;
 
 export const EncodedModularChangeset = Type.Object(

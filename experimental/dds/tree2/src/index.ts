@@ -224,7 +224,7 @@ export {
 	MapFieldSchema,
 } from "./feature-libraries";
 
-export { TreeListNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
+export { TreeArrayNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
 
 export {
 	ISharedTree,
@@ -259,6 +259,14 @@ export {
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
 	NodeFromSchema,
+	TreeMapNode,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+
+	// experimental @alpha APIs:
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
 
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,

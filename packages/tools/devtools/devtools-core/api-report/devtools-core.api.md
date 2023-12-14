@@ -156,6 +156,9 @@ export interface ContainerStateMetadata extends HasContainerKey {
 }
 
 // @internal
+export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
+
+// @internal
 export namespace DataEdit {
     const MessageType = "DATA_EDIT";
     export function createMessage(data: MessageData): Message;
@@ -207,12 +210,6 @@ export namespace DevtoolsFeatures {
     }
 }
 
-// @internal @sealed
-export class DevtoolsLogger implements ITelemetryBaseLogger {
-    constructor(baseLogger?: ITelemetryBaseLogger);
-    send(event: ITelemetryBaseEvent): void;
-}
-
 // @internal
 export const devtoolsMessageSource: string;
 
@@ -253,7 +250,7 @@ export type EditType = (typeof EditType)[keyof typeof EditType];
 // @internal
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
-    logger?: DevtoolsLogger;
+    logger?: IDevtoolsLogger;
 }
 
 // @internal
@@ -381,6 +378,10 @@ export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
 }
 
+// @internal @sealed
+export interface IDevtoolsLogger extends ITelemetryBaseLogger {
+}
+
 // @internal
 export interface IDevtoolsMessage<TData = unknown> {
     data: TData;
@@ -442,7 +443,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
+export type Primitive = number | boolean | null | string | undefined;
 
 // @internal
 export namespace RootDataVisualizations {

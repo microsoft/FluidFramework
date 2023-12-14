@@ -40,9 +40,15 @@ describe("Fuzz - Top-Level", () => {
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
-		insert: 1,
-		delete: 1,
-		move: 1,
+		insert: 5,
+		delete: 5,
+		move: 5,
+		start: 1,
+		commit: 1,
+		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
+		// repair data content in places it already exists. This should be fixed by pending work to generate forest deltas
+		// which destroy trees for rollbacks. See AB#6456 for more information.
+		abort: 0,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -77,7 +83,8 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			skip: [26],
+			// TODO:AB#6298: Support transactions in optional field.
+			skip: [4, 12, 46, 48],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -106,7 +113,8 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			skip: [42],
+			// TODO:AB#6298: Support transactions in optional field.
+			skip: [41],
 		};
 		createDDSFuzzSuite(model, options);
 	});

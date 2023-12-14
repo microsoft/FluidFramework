@@ -7,11 +7,11 @@ import * as Path from "node:path";
 import { ApiItemKind, ApiModel, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
-import { Suite } from "mocha";
+import { type Suite } from "mocha";
 
 import { renderApiModelAsHtml } from "../RenderHtml";
 import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
-import { DocumentNode } from "../documentation-domain";
+import { type DocumentNode } from "../documentation-domain";
 import { type HtmlRenderConfiguration } from "../renderers";
 import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities";
 

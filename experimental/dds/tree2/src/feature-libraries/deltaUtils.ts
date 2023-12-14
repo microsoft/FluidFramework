@@ -11,12 +11,16 @@ import {
 	DeltaMark,
 	DeltaRoot,
 	FieldKey,
+	RevisionTag,
 	makeDetachedNodeId,
 } from "../core";
 import { Mutable } from "../util";
 
-export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): DeltaDetachedNodeId {
-	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
+export function nodeIdFromChangeAtom(
+	changeAtom: ChangeAtomId,
+	fallbackRevision?: RevisionTag,
+): DeltaDetachedNodeId {
+	return makeDetachedNodeId(changeAtom.revision ?? fallbackRevision, changeAtom.localId);
 }
 
 /**

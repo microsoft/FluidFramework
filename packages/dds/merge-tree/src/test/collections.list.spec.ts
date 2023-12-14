@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { List, walkList } from "../collections";
+import { DoublyLinkedList, walkList } from "../collections";
 
-describe("Collections.List", () => {
+describe("Collections.DoublyLinkedList", () => {
 	const listCount = 5;
-	let list: List<number>;
+	let list: DoublyLinkedList<number>;
 
 	beforeEach(() => {
-		list = new List<number>();
+		list = new DoublyLinkedList<number>();
 		for (let i = 0; i < listCount; i++) {
 			list.unshift(i);
 		}
@@ -90,7 +90,8 @@ describe("Collections.List", () => {
 				const spliceNode = nodesArray[spliceIndex];
 				const arraySplice = nodesArray.splice(spliceIndex);
 
-				const listSplice = spliceNode === undefined ? new List() : list.splice(spliceNode);
+				const listSplice =
+					spliceNode === undefined ? new DoublyLinkedList() : list.splice(spliceNode);
 
 				assert.equal(list.length, nodesArray.length, "remaining lengths don't match");
 				assert.equal(listSplice.length, arraySplice.length, "spliced lengths don't match");

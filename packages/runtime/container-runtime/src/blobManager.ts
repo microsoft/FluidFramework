@@ -729,7 +729,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
 	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
 	 */
-	public updateUnusedRoutes(unusedRoutes: string[]): void {
+	public updateUnusedRoutes(unusedRoutes: readonly string[]): void {
 		this.deleteBlobsFromRedirectTable(unusedRoutes);
 	}
 
@@ -739,7 +739,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * be based off of local ids.
 	 * @returns The routes of blobs that were deleted.
 	 */
-	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
 		if (this.mc.config.getBoolean(disableAttachmentBlobSweepKey) === true) {
 			return [];
@@ -760,7 +760,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
 	 * will remove them the next summary. The service would them delete them some time in the future.
 	 */
-	private deleteBlobsFromRedirectTable(blobRoutes: string[]) {
+	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]) {
 		if (blobRoutes.length === 0) {
 			return;
 		}
@@ -805,7 +805,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * accessing deleted content without actually deleting content from summaries.
 	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
 		const tombstonedBlobsSet: Set<string> = new Set();
 		// The routes or blob node paths are in the same format as returned in getGCData -
 		// `/<BlobManager.basePath>/<blobId>`.

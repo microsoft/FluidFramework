@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-app-insights-logger",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Azure Application Insights logger for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {

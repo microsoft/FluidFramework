@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -377,7 +377,8 @@
 		},
 		"patchedDependencies": {
 			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
-			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch"
+			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch",
+			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}
 }

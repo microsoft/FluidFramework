@@ -18,7 +18,7 @@ import { IErrorEvent } from "@fluidframework/core-interfaces";
 /**
  * @internal
  */
-export type SignalListener = (clientId: string, local: boolean, payload: Jsonable) => void;
+export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;
 
 /**
  * ISignaler defines an interface for working with signals that is similar to the more common
@@ -34,7 +34,7 @@ export interface ISignaler {
 	 * @param listener - The callback signal handler to add
 	 * @returns This ISignaler
 	 */
-	onSignal(signalName: string, listener: SignalListener): ISignaler;
+	onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
 	/**
 	 * Remove a listener for the specified signal.  It behaves in the same way as EventEmitter's
 	 * `off` method regarding multiple registrations, removal order, etc.
@@ -42,13 +42,13 @@ export interface ISignaler {
 	 * @param listener - The callback signal handler to remove
 	 * @returns This ISignaler
 	 */
-	offSignal(signalName: string, listener: SignalListener): ISignaler;
+	offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
 	/**
 	 * Send a signal with payload to its connected listeners.
 	 * @param signalName - The name of the signal
 	 * @param payload - The data to send with the signal
 	 */
-	submitSignal(signalName: string, payload?: Jsonable);
+	submitSignal<T>(signalName: string, payload?: Jsonable<T>);
 }
 
 /**
@@ -59,7 +59,7 @@ export interface ISignaler {
 export interface IRuntimeSignaler {
 	connected: boolean;
 	on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: Jsonable<unknown>): void;
 }
 
 /**
@@ -110,19 +110,19 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 
 	// ISignaler methods
 
-	public onSignal(signalName: string, listener: SignalListener): ISignaler {
+	public onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		this.emitter.on(signalerSignalName, listener);
 		return this;
 	}
 
-	public offSignal(signalName: string, listener: SignalListener): ISignaler {
+	public offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		this.emitter.off(signalerSignalName, listener);
 		return this;
 	}
 
-	public submitSignal(signalName: string, payload?: Jsonable) {
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		if (this.signaler.connected) {
 			this.signaler.submitSignal(signalerSignalName, payload);
@@ -158,17 +158,17 @@ export class Signaler
 
 	// ISignaler methods  Note these are all passthroughs
 
-	public onSignal(signalName: string, listener: SignalListener): ISignaler {
+	public onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		this.signaler.onSignal(signalName, listener);
 		return this;
 	}
 
-	public offSignal(signalName: string, listener: SignalListener): ISignaler {
+	public offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		this.signaler.offSignal(signalName, listener);
 		return this;
 	}
 
-	public submitSignal(signalName: string, payload?: Jsonable) {
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
 		this.signaler.submitSignal(signalName, payload);
 	}
 }

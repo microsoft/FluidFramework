@@ -5,7 +5,7 @@
 
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
 import { FlexListToUnion, LazyItem } from "../feature-libraries";
-import { Unhydrated } from "../simple-tree";
+import { Unhydrated, TreeMapNodeBase } from "../simple-tree";
 
 /**
  * Base type which all nodes extend.
@@ -57,9 +57,10 @@ export type TreeNodeSchema<
 	Kind extends NodeKind = NodeKind,
 	TNode = unknown,
 	TBuild = never,
+	ImplicitlyConstructable extends boolean = boolean,
 > =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild>;
+	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>
+	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
 
 /**
  * Schema which is not a class.
@@ -74,7 +75,8 @@ export interface TreeNodeSchemaNonClass<
 	out Kind extends NodeKind = NodeKind,
 	out TNode = unknown,
 	in TInsertable = never,
-> extends TreeNodeSchemaCore<Name, Kind> {
+	out ImplicitlyConstructable extends boolean = boolean,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
 	create(data: TInsertable): TNode;
 }
 
@@ -93,7 +95,8 @@ export interface TreeNodeSchemaClass<
 	out Kind extends NodeKind = NodeKind,
 	out TNode = unknown,
 	in TInsertable = never,
-> extends TreeNodeSchemaCore<Name, Kind> {
+	out ImplicitlyConstructable extends boolean = boolean,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
@@ -109,13 +112,25 @@ export interface TreeNodeSchemaClass<
  * @beta
  */
 export interface TreeNodeSchemaCore<
-	out Name extends string = string,
-	out Kind extends NodeKind = NodeKind,
-	out Specification = unknown,
+	out Name extends string,
+	out Kind extends NodeKind,
+	out ImplicitlyConstructable extends boolean,
 > {
 	readonly identifier: Name;
 	readonly kind: Kind;
-	readonly info: Specification;
+	readonly info: unknown;
+
+	/**
+	 * When constructing insertable content,
+	 * data that could be passed to the node's constructor can be used instead of an {@link Unhydrated} node
+	 * iff implicitlyConstructable is true.
+	 * @privateRemarks
+	 * Currently the logic for traversing insertable content,
+	 * both to build trees and to hydrate them does not defer to the schema classes to handle the policy,
+	 * so if their constructors differ from what is supported, some cases will not work.
+	 * Setting this to false adjusts the insertable types to disallow cases which could be impacted by these inconsistencies.
+	 */
+	readonly implicitlyConstructable: ImplicitlyConstructable;
 }
 
 /**
@@ -153,9 +168,9 @@ export enum NodeKind {
 	 */
 	Map,
 	/**
-	 * A node which serves as a list, storing children in an ordered sequence.
+	 * A node which serves as an array, storing children in an ordered sequence.
 	 */
-	List,
+	Array,
 	/**
 	 * A node which stores a heterogenous collection of children in named fields.
 	 * @remarks
@@ -285,7 +300,7 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
  * @beta
  */
 export type InsertableTypedNode<T extends TreeNodeSchema> =
-	| NodeBuilderData<T>
+	| (T["implicitlyConstructable"] extends true ? NodeBuilderData<T> : never)
 	| Unhydrated<NodeFromSchema<T>>;
 
 /**
@@ -305,3 +320,14 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 >
 	? TBuild
 	: never;
+
+/**
+ * A map of string keys to tree objects.
+ *
+ * @beta
+ */
+export interface TreeMapNode<T extends ImplicitAllowedTypes>
+	extends TreeMapNodeBase<
+		TreeNodeFromImplicitAllowedTypes<T>,
+		InsertableTreeNodeFromImplicitAllowedTypes<T>
+	> {}

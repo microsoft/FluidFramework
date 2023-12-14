@@ -13,13 +13,9 @@ import {
 	UsageError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
-import { responseToException } from "@fluidframework/runtime-utils";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
-import { summarizerClientType } from "./summarizerClientElection";
 import { SummaryCollection } from "./summaryCollection";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
@@ -69,7 +65,7 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
  * Summarizer is responsible for coordinating when to generate and send summaries.
  * It is the main entry point for summary work.
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
- * @internal
+ * @alpha
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer() {
@@ -101,51 +97,6 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	) {
 		super();
 		this.logger = createChildLogger({ logger: this.runtime.logger, namespace: "Summarizer" });
-	}
-
-	/**
-	 * Creates a Summarizer and its underlying client.
-	 * Note that different implementations of ILoader will handle the URL differently.
-	 * ILoader provided by a ContainerRuntime is a RelativeLoader, which will treat URL's
-	 * starting with "/" as relative to the Container. The general ILoader
-	 * interface will expect an absolute URL and will not handle "/".
-	 * @param loader - the loader that resolves the request
-	 * @param url - the URL used to resolve the container
-	 * @deprecated Creating a summarizer is not a publicly supported API. Please remove all usage of this static method.
-	 */
-	public static async create(loader: ILoader, url: string): Promise<ISummarizer> {
-		const request: IRequest = {
-			headers: {
-				[LoaderHeader.cache]: false,
-				[LoaderHeader.clientDetails]: {
-					capabilities: { interactive: false },
-					type: summarizerClientType,
-				},
-				[DriverHeader.summarizingClient]: true,
-				[LoaderHeader.reconnect]: false,
-			},
-			url,
-		};
-
-		const resolvedContainer = await loader.resolve(request);
-		let fluidObject: FluidObject<ISummarizer> | undefined;
-
-		// Older containers may not have the "getEntryPoint" API
-		// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
-		if (resolvedContainer.getEntryPoint !== undefined) {
-			fluidObject = await resolvedContainer.getEntryPoint();
-		} else {
-			const response = await resolvedContainer.request({ url: "_summarizer" });
-			if (response.status !== 200 || response.mimeType !== "fluid/object") {
-				throw responseToException(response, request);
-			}
-			fluidObject = response.value;
-		}
-
-		if (fluidObject?.ISummarizer === undefined) {
-			throw new UsageError("Fluid object does not implement ISummarizer");
-		}
-		return fluidObject.ISummarizer;
 	}
 
 	public async run(onBehalfOf: string): Promise<SummarizerStopReason> {

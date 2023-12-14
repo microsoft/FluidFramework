@@ -48,11 +48,6 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
  * @alpha
- *
- * @privateRemarks
- * This is currently leaked into some persisted formats.
- * A full audit of persisted formats is needed,
- * and all types which are used in them should be moved to locations which indicated they are persisted, or duplicated into a persisted and non-persisted version with explicit encoding between them.
  */
 export enum ValueSchema {
 	Number,
@@ -203,7 +198,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
  *
  * @remarks
  * Note: the owner of this may modify it over time:
- * thus if needing to hand onto a specific version, make a copy.
+ * thus if needing to hang onto a specific version, make a copy.
  * @alpha
  */
 export interface StoredSchemaCollection {

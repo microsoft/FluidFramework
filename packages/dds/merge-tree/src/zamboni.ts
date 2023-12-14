@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { UnassignedSequenceNumber } from "./constants";
@@ -13,8 +12,10 @@ import {
 	IMergeBlock,
 	IMergeNode,
 	ISegment,
+	Marker,
 	MaxNodesInBlock,
 	seqLTE,
+	toMoveInfo,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
 import { matchProperties } from "./properties";
@@ -33,11 +34,11 @@ export function zamboniSegments(
 	}
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-		let segmentToScour = mergeTree.segmentsToScour.peek();
+		let segmentToScour = mergeTree.segmentsToScour.peek()?.value;
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
-		segmentToScour = mergeTree.segmentsToScour.get();
+		segmentToScour = mergeTree.segmentsToScour.get()!;
 		// Only skip scouring if needs scour is explicitly false, not true or undefined
 		if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
 			const block = segmentToScour.segment!.parent;
@@ -75,8 +76,7 @@ export function packParent(parent: IMergeBlock, mergeTree: MergeTree) {
 	const holdNodes: IMergeNode[] = [];
 	for (childIndex = 0; childIndex < parent.childCount; childIndex++) {
 		// Debug assert not isLeaf()
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		childBlock = <IMergeBlock>children[childIndex];
+		childBlock = children[childIndex] as IMergeBlock;
 		scourNode(childBlock, holdNodes, mergeTree);
 		// Will replace this block with a packed block
 		childBlock.parent = undefined;
@@ -141,11 +141,13 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 
 		const segment = childNode;
 		const removalInfo = toRemovalInfo(segment);
-		if (removalInfo !== undefined) {
+		const moveInfo = toMoveInfo(segment);
+		if (removalInfo !== undefined || moveInfo !== undefined) {
 			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
 			// it can be unlinked (i.e. removed from the merge-tree)
 			if (
-				seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq) &&
+				((!!removalInfo && seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq)) ||
+					(!!moveInfo && seqLTE(moveInfo.movedSeq, mergeTree.collabWindow.minSeq))) &&
 				segment.trackingCollection.empty
 			) {
 				mergeTree.mergeTreeMaintenanceCallback?.(
@@ -157,6 +159,10 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 				);
 
 				segment.parent = undefined;
+
+				if (Marker.is(segment)) {
+					mergeTree.unlinkMarker(segment);
+				}
 			} else {
 				holdNodes.push(segment);
 			}
