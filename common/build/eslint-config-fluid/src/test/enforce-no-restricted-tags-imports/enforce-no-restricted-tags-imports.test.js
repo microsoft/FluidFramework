@@ -11,7 +11,7 @@ describe("ESLint Rule Tests", function () {
 		return new ESLint({
 			useEslintrc: false,
 			overrideConfig: config,
-			rulePaths: [path.join(__dirname, "../custom-rules")],
+			rulePaths: [path.join(__dirname, "../../custom-rules")],
 		});
 	}
 
@@ -28,11 +28,11 @@ describe("ESLint Rule Tests", function () {
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "./tsconfig.json"),
+				project: path.join(__dirname, "../tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
-			path.join(__dirname, "mockFiles", file),
+			path.join(__dirname, ".././mockFiles", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -63,11 +63,11 @@ describe("ESLint Rule Tests", function () {
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "./tsconfig.json"),
+				project: path.join(__dirname, "../tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
-			path.join(__dirname, "mockFiles", file),
+			path.join(__dirname, ".././mockFiles", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -90,11 +90,11 @@ describe("ESLint Rule Tests", function () {
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "./tsconfig.json"),
+				project: path.join(__dirname, "../tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
-			path.join(__dirname, "mockFiles", file),
+			path.join(__dirname, ".././mockFiles", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];

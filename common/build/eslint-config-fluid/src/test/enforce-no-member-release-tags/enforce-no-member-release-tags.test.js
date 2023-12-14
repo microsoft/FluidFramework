@@ -11,22 +11,22 @@ describe("ESLint No Release Tag Rule Tests", function () {
 		return new ESLint({
 			useEslintrc: false,
 			overrideConfig: config,
-			rulePaths: [path.join(__dirname, "../custom-rules")],
+			rulePaths: [path.join(__dirname, "../../custom-rules")],
 		});
 	}
 
 	it("Should report an error for restricted tag imports", async function () {
 		const eslint = createESLintInstance({
 			rules: {
-				"no-release-tags": ["error"],
+				"no-member-release-tags": ["error"],
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "./tsconfig.json"),
+				project: path.join(__dirname, "../tsconfig.json"),
 			},
 		});
 		const filesToLint = ["noReleaseTagMockClass.ts"].map((file) =>
-			path.join(__dirname, "mockFiles", file),
+			path.join(__dirname, ".././mockFiles", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
