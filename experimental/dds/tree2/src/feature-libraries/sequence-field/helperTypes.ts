@@ -35,7 +35,7 @@ export type CellRename = AttachAndDetach | DetachOfRemovedNodes;
  * - Delete
  * - MoveOut
  *
- * Note that in the case of MoveOut, the makes the marks a potential receiver of effects from
+ * Note that in the case of MoveOut, this makes the mark a potential receiver of effects from
  * both the MoveIn that corresponds to the MoveOut, and from the MoveIn that corresponds to the cancelled out MoveOut.
  */
 export interface VestigialEndpoint {
