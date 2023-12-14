@@ -53,6 +53,9 @@ const emptySchema: TreeStoredSchema = {
 const stSchemaChange: SharedTreeChange = {
 	changes: [{ type: "schema", innerChange: { schema: { new: emptySchema, old: emptySchema } } }],
 };
+const stEmptyChange: SharedTreeChange = {
+	changes: [],
+};
 
 const sharedTreeFamily = new SharedTreeChangeFamily({ jsonValidator: typeboxValidator });
 
@@ -87,6 +90,26 @@ describe("SharedTreeChangeFamily", () => {
 					},
 				],
 			},
+		);
+	});
+
+	it("empty changes result in no-op rebases", () => {
+		assert.deepEqual(
+			sharedTreeFamily.rebase(
+				stSchemaChange,
+				makeAnonChange(stEmptyChange),
+				revisionMetadataSourceFromInfo([]),
+			),
+			stSchemaChange,
+		);
+
+		assert.deepEqual(
+			sharedTreeFamily.rebase(
+				stDataChange1,
+				makeAnonChange(stEmptyChange),
+				revisionMetadataSourceFromInfo([]),
+			),
+			stDataChange1,
 		);
 	});
 
