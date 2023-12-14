@@ -94,7 +94,7 @@ describe("Interval Stashed Ops on client ", () => {
 				start: 5,
 				end: 10,
 				sequenceNumber: sharedString.getCurrentSeq(),
-				intervalType: IntervalType.SlideOnRemove,
+				intervalType: 2,
 			};
 			const opArgs: IMapValueTypeOperation = {
 				key: label,
@@ -120,7 +120,7 @@ describe("Interval Stashed Ops on client ", () => {
 					value: {
 						properties: { intervalId },
 						sequenceNumber: sharedString.getCurrentSeq(),
-						intervalType: IntervalType.SlideOnRemove,
+						intervalType: 2,
 					},
 				},
 			};
@@ -139,7 +139,7 @@ describe("Interval Stashed Ops on client ", () => {
 						end: 10,
 						properties: { intervalId },
 						sequenceNumber: sharedString.getCurrentSeq(),
-						intervalType: IntervalType.SlideOnRemove,
+						intervalType: 2,
 					},
 				},
 			};
@@ -157,7 +157,7 @@ describe("Interval Stashed Ops on client ", () => {
 					value: {
 						properties: { intervalId, a: 2 },
 						sequenceNumber: sharedString.getCurrentSeq(),
-						intervalType: IntervalType.SlideOnRemove,
+						intervalType: 2,
 					},
 				},
 			};
