@@ -10,6 +10,8 @@ import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-servi
 import { ISummaryTestMode } from "./utils";
 import {
 	GitWholeSummaryManager,
+	IFileSystemManagerFactory,
+	IFileSystemPromises,
 	IRepositoryManager,
 	IsomorphicGitManagerFactory,
 	MemFsManagerFactory,
@@ -23,7 +25,6 @@ import {
 	sampleInitialSummaryUpload,
 	sampleChannelSummaryResult,
 } from "./examples";
-import { Volume } from "memfs/lib/volume";
 import {
 	StorageAccessCallCounts,
 	checkFullStorageAccessBaselinePerformance,
@@ -73,7 +74,6 @@ function assertEqualSummaries(
 		message,
 	);
 }
-
 const testModes = permuteFlags({
 	repoPerDocEnabled: false,
 	enableLowIoWrite: false,
@@ -81,160 +81,190 @@ const testModes = permuteFlags({
 	enableSlimGitInit: false,
 }) as unknown as ISummaryTestMode[];
 
-testModes.forEach((testMode) => {
-	describe(`Summaries (${JSON.stringify(testMode)})`, () => {
+const getFsManagerFactory = (
+	fileSystem: string,
+): {
+	fsManagerFactory: IFileSystemManagerFactory;
+	getFsSpy: () => SinonSpiedInstance<IFileSystemPromises>;
+	fsCleanup: () => void;
+	fsCheckSizeBytes: () => number;
+} => {
+	if (fileSystem === "memfs") {
 		const memfsManagerFactory = new MemFsManagerFactory();
-		const tenantId = "gitrest-summaries-test";
-		let documentId: string;
-		let repoManager: IRepositoryManager;
-		const getWholeSummaryManager = () => {
-			// Always create a new WholeSummaryManager to reset internal caches.
-			return new GitWholeSummaryManager(
-				documentId,
-				repoManager,
-				{ documentId, tenantId },
-				false /* externalStorageEnabled */,
-				{
-					enableLowIoWrite: testMode.enableLowIoWrite,
-					optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
-				},
-			);
+		return {
+			fsManagerFactory: memfsManagerFactory,
+			getFsSpy: () =>
+				spy(memfsManagerFactory.volume.promises as unknown as IFileSystemPromises),
+			fsCheckSizeBytes: () => JSON.stringify(memfsManagerFactory.volume.toJSON()).length,
+			fsCleanup: () => {
+				memfsManagerFactory.volume.reset();
+			},
 		};
-		let memfsVolumeSpy: SinonSpiedInstance<Volume>;
-		const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts => ({
-			readFile: memfsVolumeSpy.readFile.callCount,
-			writeFile: memfsVolumeSpy.writeFile.callCount,
-			mkdir: memfsVolumeSpy.mkdir.callCount,
-			stat: memfsVolumeSpy.stat.callCount,
-		});
-		beforeEach(async () => {
-			documentId = uuid();
-			// Spy on memfs volume to record number of calls to storage.
-			memfsVolumeSpy = spy(memfsManagerFactory.volume);
-			const repoManagerFactory = new IsomorphicGitManagerFactory(
-				{
-					useRepoOwner: true,
-					baseDir: `/${uuid()}/tmp`,
-				},
-				{
-					defaultFileSystemManagerFactory: memfsManagerFactory,
-				},
-				new NullExternalStorageManager(),
-				testMode.repoPerDocEnabled,
-				false /* enableRepositoryManagerMetrics */,
-				testMode.enableSlimGitInit,
-				undefined /* apiMetricsSamplingPeriod */,
-			);
-			repoManager = await repoManagerFactory.create({
-				repoOwner: tenantId,
-				repoName: documentId,
-				storageRoutingId: { tenantId, documentId },
+	}
+	throw new Error(`Unknown file system ${fileSystem}`);
+};
+
+const testFileSystems = ["memfs"];
+testFileSystems.forEach((fileSystem) => {
+	const { fsManagerFactory, fsCleanup, fsCheckSizeBytes, getFsSpy } =
+		getFsManagerFactory(fileSystem);
+	testModes.forEach((testMode) => {
+		describe(`Summaries (${JSON.stringify(testMode)})`, () => {
+			const tenantId = "gitrest-summaries-test";
+			let documentId: string;
+			let repoManager: IRepositoryManager;
+			const getWholeSummaryManager = () => {
+				// Always create a new WholeSummaryManager to reset internal caches.
+				return new GitWholeSummaryManager(
+					documentId,
+					repoManager,
+					{ documentId, tenantId },
+					false /* externalStorageEnabled */,
+					{
+						enableLowIoWrite: testMode.enableLowIoWrite,
+						optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
+					},
+				);
+			};
+			let fsSpy: SinonSpiedInstance<IFileSystemPromises>;
+			const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts => ({
+				readFile: fsSpy.readFile.callCount,
+				writeFile: fsSpy.writeFile.callCount,
+				mkdir: fsSpy.mkdir.callCount,
+				stat: fsSpy.stat.callCount,
 			});
-		});
+			beforeEach(async () => {
+				documentId = uuid();
+				// Spy on memfs volume to record number of calls to storage.
+				fsSpy = getFsSpy();
+				const repoManagerFactory = new IsomorphicGitManagerFactory(
+					{
+						useRepoOwner: true,
+						baseDir: `/${uuid()}/tmp`,
+					},
+					{
+						defaultFileSystemManagerFactory: fsManagerFactory,
+					},
+					new NullExternalStorageManager(),
+					testMode.repoPerDocEnabled,
+					false /* enableRepositoryManagerMetrics */,
+					testMode.enableSlimGitInit,
+					undefined /* apiMetricsSamplingPeriod */,
+				);
+				repoManager = await repoManagerFactory.create({
+					repoOwner: tenantId,
+					repoName: documentId,
+					storageRoutingId: { tenantId, documentId },
+				});
+			});
 
-		afterEach(() => {
-			process.stdout.write(
-				`\nFinal storage size: ${Math.ceil(
-					JSON.stringify(memfsManagerFactory.volume.toJSON()).length / 1_024,
-				)}kb\n`,
-			);
-			// Reset storage volume after each test.
-			memfsManagerFactory.volume.reset();
-			// Reset Sinon spies after each test.
-			restore();
-		});
+			afterEach(() => {
+				process.stdout.write(
+					`\nFinal storage size: ${Math.ceil(fsCheckSizeBytes() / 1_024)}kb\n`,
+				);
+				// Reset storage volume after each test.
+				fsCleanup();
+				// Reset Sinon spies after each test.
+				restore();
+			});
 
-		it("Can create and read an initial summary and a subsequent incremental summary", async () => {
-			const initialWriteResponse = await getWholeSummaryManager().writeSummary(
-				sampleInitialSummaryUpload,
-				true,
-			);
-			assert.strictEqual(
-				initialWriteResponse.isNew,
-				true,
-				"Initial summary write `isNew` should be `true`.",
-			);
-			assertEqualSummaries(
-				initialWriteResponse.writeSummaryResponse as IWholeFlatSummary,
-				sampleInitialSummaryResponse,
-				"Initial summary write response should match expected response.",
-			);
+			it("Can create and read an initial summary and a subsequent incremental summary", async () => {
+				const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+					sampleInitialSummaryUpload,
+					true,
+				);
+				assert.strictEqual(
+					initialWriteResponse.isNew,
+					true,
+					"Initial summary write `isNew` should be `true`.",
+				);
+				assertEqualSummaries(
+					initialWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+					sampleInitialSummaryResponse,
+					"Initial summary write response should match expected response.",
+				);
 
-			checkInitialWriteStorageAccessBaselinePerformance(
-				testMode,
-				getCurrentStorageAccessCallCounts(),
-			);
+				if (fileSystem === "memfs") {
+					checkInitialWriteStorageAccessBaselinePerformance(
+						testMode,
+						getCurrentStorageAccessCallCounts(),
+					);
+				}
 
-			const initialReadResponse = await getWholeSummaryManager().readSummary(LatestSummaryId);
-			assertEqualSummaries(
-				initialReadResponse,
-				sampleInitialSummaryResponse,
-				"Initial summary read response should match expected response.",
-			);
+				const initialReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					initialReadResponse,
+					sampleInitialSummaryResponse,
+					"Initial summary read response should match expected response.",
+				);
 
-			const channelWriteResponse = await getWholeSummaryManager().writeSummary(
-				sampleChannelSummaryUpload,
-				false,
-			);
-			assert.strictEqual(
-				channelWriteResponse.isNew,
-				false,
-				"Channel summary write `isNew` should be `false`.",
-			);
+				const channelWriteResponse = await getWholeSummaryManager().writeSummary(
+					sampleChannelSummaryUpload,
+					false,
+				);
+				assert.strictEqual(
+					channelWriteResponse.isNew,
+					false,
+					"Channel summary write `isNew` should be `false`.",
+				);
 
-			// Latest should still be the initial summary.
-			const postChannelReadResponse =
-				await getWholeSummaryManager().readSummary(LatestSummaryId);
-			assertEqualSummaries(
-				postChannelReadResponse,
-				sampleInitialSummaryResponse,
-				"Channel summary read response should match expected initial container summary response.",
-			);
+				// Latest should still be the initial summary.
+				const postChannelReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					postChannelReadResponse,
+					sampleInitialSummaryResponse,
+					"Channel summary read response should match expected initial container summary response.",
+				);
 
-			const containerWriteResponse = await getWholeSummaryManager().writeSummary(
-				// Replace the referenced channel summary with the one we just wrote.
-				// This matters when low-io write is enabled, because it alters how the tree is stored.
-				JSON.parse(
-					JSON.stringify(sampleContainerSummaryUpload).replace(
-						sampleChannelSummaryResult.id,
-						channelWriteResponse.writeSummaryResponse.id,
+				const containerWriteResponse = await getWholeSummaryManager().writeSummary(
+					// Replace the referenced channel summary with the one we just wrote.
+					// This matters when low-io write is enabled, because it alters how the tree is stored.
+					JSON.parse(
+						JSON.stringify(sampleContainerSummaryUpload).replace(
+							sampleChannelSummaryResult.id,
+							channelWriteResponse.writeSummaryResponse.id,
+						),
 					),
-				),
-				false,
-			);
-			assert.strictEqual(
-				containerWriteResponse.isNew,
-				false,
-				"Container summary write `isNew` should be `false`.",
-			);
-			assertEqualSummaries(
-				containerWriteResponse.writeSummaryResponse as IWholeFlatSummary,
-				sampleContainerSummaryResponse,
-				"Container summary write response should match expected response.",
-			);
+					false,
+				);
+				assert.strictEqual(
+					containerWriteResponse.isNew,
+					false,
+					"Container summary write `isNew` should be `false`.",
+				);
+				assertEqualSummaries(
+					containerWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+					sampleContainerSummaryResponse,
+					"Container summary write response should match expected response.",
+				);
 
-			const containerReadResponse =
-				await getWholeSummaryManager().readSummary(LatestSummaryId);
-			assertEqualSummaries(
-				containerReadResponse,
-				sampleContainerSummaryResponse,
-				"Container summary read response should match expected response.",
-			);
+				const containerReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					containerReadResponse,
+					sampleContainerSummaryResponse,
+					"Container summary read response should match expected response.",
+				);
 
-			// And we should still be able to read the initial summary when referenced by ID.
-			const initialLaterReadResponse = await getWholeSummaryManager().readSummary(
-				initialWriteResponse.writeSummaryResponse.id,
-			);
-			assertEqualSummaries(
-				initialLaterReadResponse,
-				sampleInitialSummaryResponse,
-				"Later initial summary read response should match expected initial summary response.",
-			);
+				// And we should still be able to read the initial summary when referenced by ID.
+				const initialLaterReadResponse = await getWholeSummaryManager().readSummary(
+					initialWriteResponse.writeSummaryResponse.id,
+				);
+				assertEqualSummaries(
+					initialLaterReadResponse,
+					sampleInitialSummaryResponse,
+					"Later initial summary read response should match expected initial summary response.",
+				);
 
-			checkFullStorageAccessBaselinePerformance(
-				testMode,
-				getCurrentStorageAccessCallCounts(),
-			);
+				if (fileSystem === "memfs") {
+					checkFullStorageAccessBaselinePerformance(
+						testMode,
+						getCurrentStorageAccessCallCounts(),
+					);
+				}
+			});
 		});
 	});
 });

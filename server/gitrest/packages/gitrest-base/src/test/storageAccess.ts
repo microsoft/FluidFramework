@@ -4,11 +4,10 @@
  */
 
 import assert from "assert";
-// eslint-disable-next-line import/no-internal-modules
-import type { Volume } from "memfs/lib/volume";
+import { IFileSystemPromises } from "../utils";
 import { ISummaryTestMode } from "./utils";
 
-export type StorageAccessCallCounts = { [K in keyof Volume]?: number };
+export type StorageAccessCallCounts = { [K in keyof IFileSystemPromises]?: number };
 
 /**
  * These baseline storage access counts are set based on
