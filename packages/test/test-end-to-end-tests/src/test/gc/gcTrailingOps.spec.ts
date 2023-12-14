@@ -23,12 +23,25 @@ import { delay } from "@fluidframework/core-utils";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
+/**
+ * These tests validate that trailing ops that alters the reference state of an object are successfully
+ * processed by GC and doesn't result in unexpected GC issues. The tests validate the following:
+ * - The reference state of objects are correctly updated in the GC run following trailing ops generation.
+ * - Objects that are referenced via trailing ops are not deleted if a container is opened after sweep timeout.
+ *
+ * Trailing ops are ops that are not part of the latest summary of a container, i.e., they were generated
+ * after the last summary was submitted. These should not be missed by GC before is runs the next time as they
+ * can result in incorrect GC state or worse - incorrect deletion of objects.
+ */
 describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 	/**
-	 * @param transitionToReference - Whether the trailing op should transition objects to referenced or unreferenced.
-	 * @param beforeSweepTimeout - Whether the trailing op should be sent before or after sweep timeout.
+	 * @param transition - The referenced state transition that the trailing op would do.
+	 * @param when - Whether the trailing op should be sent before or after sweep timeout.
 	 */
-	const tests = (transitionToReference: boolean, beforeSweepTimeout: boolean) => {
+	const tests = (
+		transition: "ref -> unref" | "unref -> ref",
+		when: "beforeSweepTimeout" | "afterSweepTimeout",
+	) => {
 		let provider: ITestObjectProvider;
 		let settings = {};
 		let testContainerConfig: ITestContainerConfig;
@@ -92,7 +105,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				`Data store ${dataStoreNodePath} should be present in GC state`,
 			);
 			assert.equal(
-				dataStoreGCData.unreferencedTimestampMs ? false : true,
+				dataStoreGCData.unreferencedTimestampMs === undefined,
 				referenced,
 				`Data store ${dataStoreNodePath}'s referenced state is incorrect`,
 			);
@@ -136,30 +149,26 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			settings = {};
 		});
 
-		it(`Trailing ops ${
-			beforeSweepTimeout ? "before sweep timeout" : "after sweep timeout"
-		} makes data store ${
-			transitionToReference ? "referenced" : "unreferenced"
-		} without deleting it`, async () => {
+		it(`Trailing op [${when}] transitions data store from [${transition}] without deleting it`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
-			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
+			const mainDataObject = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer);
 
 			const newDataStoreKey = "datastore";
 			// Create a data store and reference it.
 			const newDataStore =
-				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
-			assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
-			const newTestDataObject = (await newDataStore.entryPoint.get()) as ITestDataObject;
-			mainDataStore._root.set(newDataStoreKey, newDataStore.entryPoint);
+				await mainDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
+			assert(newDataStore.entryPoint !== undefined, "PRECONDITION: Should have a handle");
+			const newDataObject = (await newDataStore.entryPoint.get()) as ITestDataObject;
+			mainDataObject._root.set(newDataStoreKey, newDataStore.entryPoint);
 
-			// Update the reference state. The data store should start in the opposite state of "transitionToReference"
-			// and the trailing op will transition it to that state.
+			// Update the initial reference state of the data store.
+			let referenced = transition === "ref -> unref" ? true : false;
 			updateDataStoreReferenceState(
-				mainDataStore,
-				newTestDataObject,
+				mainDataObject,
+				newDataObject,
 				newDataStoreKey,
-				!transitionToReference,
+				referenced,
 			);
 
 			// Create a summarizer
@@ -176,29 +185,33 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				summary1.summaryTree,
 				newDataStore.entryPoint.absolutePath,
 				false /* expectGCStateHandle */,
-				!transitionToReference,
+				referenced,
 			);
 
-			// If beforeSweepTimeout is true, send the trailing op that transitions the data store to "transitionToReference"
-			// state first and then wait for sweep timeout.
-			// If beforeSweepTimeout is false, wait for sweep timeout and then send the trailing op.
-			// In both the cases, the data store should not be deleted from the summary / GC state because the wait
-			// for sweep timeout happens before GC has a chance to change the data store state.
-			if (beforeSweepTimeout) {
+			// The referenced state will not change.
+			referenced = !referenced;
+
+			// If beforeSweepTimeout, send the trailing op that transitions the data store's reference state first
+			// and then wait for sweep timeout.
+			// If afterSweepTimeout, wait for sweep timeout and then send the trailing op.
+			// In both the cases, the data store should not be deleted from the summary / GC state. GC processes all
+			// trailing ops and recomputes the reference state before it runs, so regardless of when this op was
+			// sent, GC will arrive at the right conclusion.
+			if (when === "beforeSweepTimeout") {
 				updateDataStoreReferenceState(
-					mainDataStore,
-					newTestDataObject,
+					mainDataObject,
+					newDataObject,
 					newDataStoreKey,
-					transitionToReference,
+					referenced,
 				);
 				await delay(sweepTimeoutMs);
-			} else {
+			} else if (when === "afterSweepTimeout") {
 				await delay(sweepTimeoutMs);
 				updateDataStoreReferenceState(
-					mainDataStore,
-					newTestDataObject,
+					mainDataObject,
+					newDataObject,
 					newDataStoreKey,
-					transitionToReference,
+					referenced,
 				);
 			}
 
@@ -217,12 +230,12 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			await provider.ensureSynchronized();
 			const summary2 = await summarizeNow(summarizer);
 
-			// Validate that the data store has transitioned to the correct state.
+			// Validate that the data store has transitioned correctly
 			validateDataStoreStateInSummary(
 				summary2.summaryTree,
 				newDataStore.entryPoint.absolutePath,
 				false /* expectGCStateHandle */,
-				transitionToReference,
+				referenced,
 			);
 
 			// Summarize again to ensure that GC sweep op (if any) is now processed.
@@ -234,13 +247,13 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				summary3.summaryTree,
 				newDataStore.entryPoint.absolutePath,
 				true /* expectGCStateHandle */,
-				transitionToReference,
+				referenced,
 			);
 		});
 	};
 
-	tests(true /* transitionToReference */, true /** beforeSweepTimeout */);
-	tests(true /* transitionToReference */, false /** beforeSweepTimeout */);
-	tests(false /** transitionToReference */, true /* beforeSweepTimeout */);
-	tests(false /** transitionToReference */, false /* beforeSweepTimeout */);
+	tests("unref -> ref", "beforeSweepTimeout");
+	tests("unref -> ref", "afterSweepTimeout");
+	tests("ref -> unref", "beforeSweepTimeout");
+	tests("ref -> unref", "afterSweepTimeout");
 });
