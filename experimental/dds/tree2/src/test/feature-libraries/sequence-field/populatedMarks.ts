@@ -4,7 +4,6 @@
  */
 
 import { SequenceField as SF } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
 import { brand, Populated } from "../../../util";
 import { ChangeAtomId, mintRevisionTag, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";

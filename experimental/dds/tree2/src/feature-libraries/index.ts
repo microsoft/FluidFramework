@@ -68,7 +68,7 @@ export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 
-export { ForestSummarizer } from "./forestSummarizer";
+export { ForestSummarizer } from "./forest-summary";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
@@ -188,10 +188,7 @@ export {
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
-	decode,
-	uncompressedEncode,
-	schemaCompressedEncode,
-	EncodedChunk,
+	makeFieldBatchCodec,
 } from "./chunked-forest";
 
 export {

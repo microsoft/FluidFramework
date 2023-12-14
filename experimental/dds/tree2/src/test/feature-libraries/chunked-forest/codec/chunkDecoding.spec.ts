@@ -77,8 +77,13 @@ describe("chunkDecoding", () => {
 		// Smoke test for top level decode function.
 		// All real functionality should be tested in more specific tests.
 		it("minimal", () => {
-			const result = decode({ version, identifiers: [], shapes: [{ a: 0 }], data: [0, []] });
-			assert.equal(result, emptyChunk);
+			const result = decode({
+				version,
+				identifiers: [],
+				shapes: [{ a: 0 }],
+				data: [[0, []]],
+			});
+			assert.deepEqual(result, [emptyChunk]);
 		});
 	});
 
