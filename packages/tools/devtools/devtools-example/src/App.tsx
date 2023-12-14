@@ -20,7 +20,7 @@ import {
 	type HasContainerKey,
 	type IFluidDevtools,
 	initializeDevtools,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { type SharedCounter } from "@fluidframework/counter";
 import { type SessionStorageModelLoader } from "@fluid-example/example-utils";

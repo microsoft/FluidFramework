@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ContainerDevtoolsFeatureFlags } from "@fluid-experimental/devtools-core";
+import { type ContainerDevtoolsFeatureFlags } from "@fluidframework/devtools-core";
 import React from "react";
 
 /**
@@ -10,7 +10,7 @@ import React from "react";
  */
 export interface ContainerFeatureFlagContextData {
 	/**
-	 * {@inheritDoc @fluid-experimental/devtools-core#ContainerDevtoolsFeatureFlags}
+	 * {@inheritDoc @fluidframework/devtools-core#ContainerDevtoolsFeatureFlags}
 	 */
 	containerFeatureFlags: ContainerDevtoolsFeatureFlags;
 }

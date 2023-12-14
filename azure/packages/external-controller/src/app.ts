@@ -4,7 +4,7 @@
  */
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
-import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
+import { DevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
 import {
 	AzureClient,
 	AzureContainerServices,

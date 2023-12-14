@@ -68,8 +68,8 @@
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",
-		"@fluid-experimental/devtools-core": "workspace:~",
-		"@fluid-experimental/devtools-view": "workspace:~",
+		"@fluidframework/devtools-core": "workspace:~",
+		"@fluidframework/devtools-view": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
