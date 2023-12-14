@@ -422,12 +422,15 @@ export function applyTypesFromContext(
 	const schema = possibleTypes[0];
 
 	if (schema instanceof LeafNodeSchema) {
-		assert(isTreeValue(data), "non tree value for leaf");
+		const value = isTreeValue(data)
+			? data
+			: (data as ContextuallyTypedNodeDataObject)[valueSymbol];
+
 		assert(
-			allowsValue(schema.leafValue, data),
+			allowsValue(schema.leafValue, value),
 			0x4d3 /* unsupported schema for provided primitive */,
 		);
-		return { value: data, type: schema.name, fields: new Map() };
+		return { value, type: schema.name, fields: new Map() };
 	}
 	assert(!isTreeValue(data), "leaf value for non leaf");
 	if (schema instanceof FieldNodeSchema) {

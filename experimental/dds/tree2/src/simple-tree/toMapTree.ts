@@ -28,6 +28,7 @@ import {
 	LeafNodeSchema,
 	MapNodeSchema,
 	getAllowedTypes,
+	typeNameSymbol,
 } from "../feature-libraries";
 import { brand, isReadonlyArray } from "../util";
 import { InsertableTreeField, InsertableTypedNode } from "./insertable";
@@ -386,6 +387,9 @@ function shallowCompatibilityTest(
 	if (schema instanceof LeafNodeSchema) {
 		return false;
 	}
+	if (typeNameSymbol in data) {
+		return data[typeNameSymbol] === schema.name;
+	}
 	if (isReadonlyArray(data)) {
 		if (schema instanceof FieldNodeSchema) {
 			const field = schema.getFieldSchema();
@@ -410,7 +414,6 @@ function shallowCompatibilityTest(
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @alpha
  */
 export type ContextuallyTypedNodeData =
 	| ContextuallyTypedNodeDataObject
@@ -427,15 +430,19 @@ export type ContextuallyTypedNodeData =
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @alpha
  */
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 /**
  * Object case of {@link ContextuallyTypedNodeData}.
- * @alpha
  */
 export interface ContextuallyTypedNodeDataObject {
+	/**
+	 * The type of the node.
+	 * If this node is well-formed, it must follow this schema.
+	 */
+	readonly [typeNameSymbol]?: string;
+
 	/**
 	 * Fields of this node, indexed by their field keys.
 	 *

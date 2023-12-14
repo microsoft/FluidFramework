@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { EmptyKey, MapTree } from "../../core";
+import { MapTree } from "../../core";
 
 import {
 	isTreeValue,
@@ -54,7 +54,7 @@ describe("ContextuallyTyped", () => {
 			libraries: [leaf.library],
 		});
 		const numberSequence = SchemaBuilder.sequence(leaf.number);
-		const primaryObject = builder.object("numbers", { [EmptyKey]: numberSequence });
+		const primaryObject = builder.fieldNode("numbers", numberSequence);
 		const schema = builder.intoSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject]), []);
 		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
