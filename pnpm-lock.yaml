@@ -117,6 +117,7 @@ importers:
       eslint-config-prettier: ~9.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tsc-multi: ^1.1.0
@@ -160,6 +161,7 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
@@ -213,6 +215,7 @@ importers:
       eslint-config-prettier: ~9.0.0
       jsrsasign: ^10.5.25
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -234,6 +237,7 @@ importers:
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
