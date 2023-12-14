@@ -26,15 +26,23 @@ docVersions.forEach((version) => {
 	apiDocRenders.push(
 		renderApiDocumentation(version).then(
 			() => {
-				console.log(chalk.green("API docs written!"));
-				process.exit(0);
+				console.log(chalk.green(`${version} API docs written!`));
 			},
 			(error) => {
-				console.error("API docs could not be written due to an error:", error);
-				process.exit(1);
+				throw new error(`${version} API docs could not be written due to an error:`, error);
 			},
 		),
 	);
 });
 
-Promise.all(apiDocRenders);
+Promise.all(apiDocRenders).then(
+	() => {
+		console.log(chalk.green("All API docs written!"));
+		process.exit(0);
+	},
+	(error) => {
+		console.error(error);
+		process.exit(1);
+	},
+);
+
