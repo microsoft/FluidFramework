@@ -166,6 +166,7 @@ stages:
       # Job - Build
       - job: build
         displayName: Build
+        timeoutInMinutes: 90
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
