@@ -52,7 +52,7 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-    # Relevant to the test-service-clientspipeline
+    # Relevant to the test-service-clients pipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
     - packages/framework/fluid-static
