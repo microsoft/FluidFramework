@@ -29,7 +29,12 @@ async function renderApiDocumentation(version) {
 		version,
 		"_build",
 	);
-	const apiDocsDirectoryPath = path.resolve(__dirname, "..", "content", "docs", "apis", version);
+
+	// TODO: remove check for 2.0 and just set apiDocsDirectoryPath to include version.
+	// currently publishing to base apis directory until 2.0 release
+	const apiDocsDirectoryPath = (version === '2.0') ? 
+		path.resolve(__dirname, "..", "content", "docs", "apis") :
+		path.resolve(__dirname, "..", "content", "docs", "apis", version);
 
 	// Delete existing documentation output
 	console.log("Removing existing generated API docs...");
