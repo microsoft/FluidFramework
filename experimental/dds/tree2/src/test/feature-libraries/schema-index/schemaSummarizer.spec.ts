@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import {
 	encodeTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/schemaSummarizer";
-import { storedEmptyFieldSchema } from "../../core";
-import { jsonSequenceRootSchema } from "../utils";
+} from "../../../feature-libraries/schema-index/schemaSummarizer";
+import { storedEmptyFieldSchema } from "../../../core";
+import { jsonSequenceRootSchema } from "../../utils";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
@@ -46,7 +46,6 @@ describe("schemaSummarizer", () => {
 				},
 				nodeSchema: [
 					{
-						leafValue: undefined,
 						mapFields: undefined,
 						name: "com.fluidframework.json.array",
 						objectNodeFields: [
@@ -65,7 +64,6 @@ describe("schemaSummarizer", () => {
 						],
 					},
 					{
-						leafValue: undefined,
 						mapFields: {
 							kind: "Optional",
 							types: [
