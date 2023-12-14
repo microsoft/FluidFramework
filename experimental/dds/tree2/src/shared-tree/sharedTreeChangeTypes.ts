@@ -15,7 +15,7 @@ export interface SharedTreeChange {
 	 * @remarks while not expressable in TypeScript, these changes should never have two `ModularChangeset`s adjacent in the list.
 	 */
 	readonly changes: readonly (
-		| { type: "data"; innerChange: ModularChangeset }
-		| { type: "schema"; innerChange: SchemaChange }
+		| { readonly type: "data"; readonly innerChange: ModularChangeset }
+		| { readonly type: "schema"; readonly innerChange: SchemaChange }
 	)[];
 }
