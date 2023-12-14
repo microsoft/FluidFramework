@@ -113,8 +113,4 @@ export {
 	 * @deprecated Import from `@fluidframework/id-compressor` instead.
 	 */
 	StableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	initialClusterCapacity,
 } from "@fluidframework/id-compressor";

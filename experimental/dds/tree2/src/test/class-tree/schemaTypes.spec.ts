@@ -82,5 +82,45 @@ describe("schemaTypes", () => {
 				type _check5 = requireTrue<areSafelyAssignable<N2, N3>>;
 			}
 		});
+
+		it("Objects", () => {
+			const A = schema.object("A", {});
+			const B = schema.object("B", { a: A });
+
+			const a = new A({});
+			const b = new B({ a });
+			const b2 = new B({ a: {} });
+		});
+
+		it("Customized Objects", () => {
+			class A extends schema.object("A", {}) {
+				public extra: number = 0;
+			}
+			class B extends schema.object("B", { a: A }) {
+				public extra: string = "";
+			}
+
+			const a = new A({});
+			const b = new B({ a });
+			const b2 = new B({ a: {} });
+		});
+
+		it("Mixed Regression test", () => {
+			class Note extends schema.object("Note", {}) {
+				public isSelected: boolean = false;
+			}
+
+			class NodeMap extends schema.map("NoteMap", Note) {}
+			class NodeList extends schema.list("NoteList", Note) {}
+
+			class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
+
+			const y = new NodeList([{}]);
+
+			// There was a bug where unions with maps lost implicit contractibility, causing this to not compile:
+			const x = new Canvas({
+				stuff: [{}],
+			});
+		});
 	});
 });

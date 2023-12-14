@@ -53,7 +53,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^1.0.0",
-		"@fluidframework/common-utils": "^3.0.0",
+		"@fluidframework/common-utils": "3.0.0-220318",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.1.0-220363",

@@ -29,8 +29,6 @@ export function generateStableId(): StableId;
 
 // @alpha @deprecated
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
-    get clusterCapacity(): number;
-    set clusterCapacity(value: number);
     // @deprecated (undocumented)
     static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
     // @deprecated (undocumented)
@@ -72,6 +70,7 @@ export interface IdCreationRange {
     readonly ids?: {
         readonly firstGenCount: number;
         readonly count: number;
+        readonly requestedClusterSize: number;
     };
     // (undocumented)
     readonly sessionId: SessionId;
@@ -96,9 +95,6 @@ export interface IIdCompressorCore {
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
     takeNextCreationRange(): IdCreationRange;
 }
-
-// @internal
-export const initialClusterCapacity = 512;
 
 // @internal
 export function isStableId(str: string): str is StableId;

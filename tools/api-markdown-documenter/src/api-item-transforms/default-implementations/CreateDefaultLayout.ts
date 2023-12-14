@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
+import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
+import { type SectionNode } from "../../documentation-domain";
 import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemTransformUtilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import {
 	alphaWarningSpan,
 	betaWarningSpan,

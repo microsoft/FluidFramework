@@ -380,18 +380,7 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 		entryPoint === undefined ||
 		(entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView === undefined
 	) {
-		const response = await container.request({
-			headers: {
-				mountableView: true,
-			},
-			url,
-		});
-
-		if (response.status !== 200 || response.mimeType !== "fluid/object") {
-			return false;
-		}
-
-		fluidObject = response.value;
+		throw new Error("entryPoint was not defined or is not properly formatted");
 	} else {
 		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView(
 			// Remove starting "//"

@@ -315,7 +315,7 @@ describe("Garbage Collection Stats", () => {
 		it("can generate stats with deleted nodes - sweep enabled", async () => {
 			// Create garbage collector with sweep enabled.
 			garbageCollector = createGarbageCollector({
-				gcOptions: { gcSweepGeneration: 1, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
 			});
 
 			let previousGCMessagesCount = gcMessagesCount;
@@ -370,7 +370,7 @@ describe("Garbage Collection Stats", () => {
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep enabled", async () => {
 			garbageCollector = createGarbageCollector({
-				gcOptions: { gcSweepGeneration: 1, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
 			});
 
 			const expectedStats = initialStats;

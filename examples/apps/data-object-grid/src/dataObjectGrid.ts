@@ -62,7 +62,7 @@ export interface IDataObjectGridItem {
 	/**
 	 * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
 	 */
-	readonly serializableData: Serializable;
+	readonly serializableData: Serializable<unknown>;
 	/**
 	 * The react grid layout of the item.
 	 */

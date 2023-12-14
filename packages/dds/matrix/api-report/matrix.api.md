@@ -22,25 +22,24 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { SummarySerializer } from '@fluidframework/shared-object-base';
 
 // @alpha (undocumented)
 export interface IRevertible {
     // (undocumented)
-    discard(): any;
+    discard(): void;
     // (undocumented)
-    revert(): any;
+    revert(): void;
 }
 
 // @alpha
 export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
-    (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): any;
+    (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): void;
 }
 
 // @alpha (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
-    pushToCurrentOperation(revertible: IRevertible): any;
+    pushToCurrentOperation(revertible: IRevertible): void;
 }
 
 // @alpha
@@ -84,7 +83,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected processGCDataCore(serializer: SummarySerializer): void;
+    protected processGCDataCore(serializer: IFluidSerializer): void;
     // (undocumented)
     removeCols(colStart: number, count: number): void;
     // (undocumented)

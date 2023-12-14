@@ -1,6 +1,12 @@
 {
 	"targets": [
-		{ "extname": ".mjs", "module": "ESNext", "moduleResolution": "node10", "outDir": "./lib" }
+		{
+			"extname": ".mjs",
+			"rewriteDtsImports": true,
+			"module": "ESNext",
+			"moduleResolution": "Node16",
+			"outDir": "./lib"
+		}
 	],
 	"projects": ["tsconfig.json"]
 }

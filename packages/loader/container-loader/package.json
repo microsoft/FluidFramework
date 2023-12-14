@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-loader",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid container loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -124,6 +124,17 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerExperimental": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Loader": {
+				"backCompat": false
+			}
+		}
 	}
 }

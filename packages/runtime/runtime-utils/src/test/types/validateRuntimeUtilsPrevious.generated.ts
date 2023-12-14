@@ -624,26 +624,14 @@ use_old_FunctionDeclaration_mergeStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_requestFluidObject": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_requestFluidObject": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_requestFluidObject():
-    TypeOnly<typeof old.requestFluidObject>;
-declare function use_current_FunctionDeclaration_requestFluidObject(
-    use: TypeOnly<typeof current.requestFluidObject>): void;
-use_current_FunctionDeclaration_requestFluidObject(
-    get_old_FunctionDeclaration_requestFluidObject());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_requestFluidObject": {"backCompat": false}
+* "RemovedFunctionDeclaration_requestFluidObject": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_requestFluidObject():
-    TypeOnly<typeof current.requestFluidObject>;
-declare function use_old_FunctionDeclaration_requestFluidObject(
-    use: TypeOnly<typeof old.requestFluidObject>): void;
-use_old_FunctionDeclaration_requestFluidObject(
-    get_current_FunctionDeclaration_requestFluidObject());
 
 /*
 * Validate forward compat by using old type in place of current type

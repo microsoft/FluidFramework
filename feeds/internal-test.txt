@@ -17,6 +17,7 @@
 @fluid-private/stochastic-test-utils
 @fluidframework/mocha-test-setup
 @fluid-experimental/odsp-client
+@fluid-experimental/odsp-end-to-end-tests
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
@@ -26,7 +27,6 @@
 @fluidframework/container-runtime-definitions
 @fluidframework/container-runtime
 @fluid-private/test-loader-utils
-@fluidframework/location-redirection-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/view-interfaces
