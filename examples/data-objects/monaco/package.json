@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/monaco",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"private": true,
 	"description": "Monaco code editor",
 	"homepage": "https://fluidframework.com",
@@ -42,7 +42,6 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"monaco-editor": "^0.30.0",

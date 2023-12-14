@@ -25,11 +25,16 @@ import {
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
-import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidCodeDetails,
+	IFluidHandle,
+	IRequestHeader,
+} from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { ConfigTypes, IConfigProviderBase, createChildLogger } from '@fluidframework/telemetry-utils';
-import { ITelemetryBaseLogger, IRequest } from '@fluidframework/core-interfaces';
+import { createChildLogger } from '@fluidframework/telemetry-utils';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
 	DetachedSequenceId,
@@ -324,28 +329,21 @@ export async function setUpLocalServerTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
 	const registry: ChannelFactoryRegistry = [[treeId, factory]];
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 
 	const runtimeFactory = () =>
-		new TestContainerRuntimeFactory(
-			TestDataStoreType,
-			new TestFluidObjectFactory(registry),
-			{
-				summaryOptions: {
-					summaryConfigOverrides: {
-						...DefaultSummaryConfiguration,
-						...{
-							minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
-							maxIdleTime: 1000,
-							maxTime: 1000 * 12,
-							initialSummarizerDelayMs: 0,
-						},
+		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
+						maxIdleTime: 1000,
+						maxTime: 1000 * 12,
+						initialSummarizerDelayMs: 0,
 					},
 				},
 			},
-			[innerRequestHandler]
-		);
+		});
 
 	const defaultCodeDetails: IFluidCodeDetails = {
 		package: 'defaultTestPackage',

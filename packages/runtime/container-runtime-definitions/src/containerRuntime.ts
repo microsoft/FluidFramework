@@ -8,8 +8,6 @@ import {
 	IEventProvider,
 	IRequest,
 	IResponse,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
@@ -73,15 +71,6 @@ export interface IContainerRuntime
 	readonly attachState: AttachState;
 
 	/**
-	 * Returns the runtime of the data store.
-	 * @param id - Id supplied during creating the data store.
-	 * @param wait - True if you want to wait for it.
-	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
-
-	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
 	 * @param alias - The alias for the data store.
 	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
@@ -112,11 +101,4 @@ export interface IContainerRuntime
 	 * @param relativeUrl - A relative request within the container
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-	/**
-	 * Resolves handle URI
-	 * @param request - request to resolve
-	 * @deprecated Will be removed in future major release. Migrate all usage of resolveHandle to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	resolveHandle(request: IRequest): Promise<IResponse>;
 }

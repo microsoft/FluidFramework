@@ -12,9 +12,11 @@ import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp, ReferenceType } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
+import { PropertySet } from "../properties";
+import { ISegment } from "../mergeTreeNodes";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestSerializer } from "./testSerializer";
-import { ISegment, PropertySet, TestClient } from ".";
+import { TestClient } from "./testClient";
 
 // Reconstitutes a MergeTree client from a summary
 export async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
@@ -58,7 +60,7 @@ export class TestString {
 	}
 
 	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
-		this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
+		this.queue(this.client.annotateRangeLocal(start, end, props)!, increaseMsn);
 	}
 
 	public append(text: string, increaseMsn: boolean) {
@@ -80,6 +82,10 @@ export class TestString {
 
 	public removeRange(start: number, end: number, increaseMsn: boolean) {
 		this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
+	}
+
+	public obliterateRange(start: number, end: number, increaseMsn: boolean) {
+		this.queue(this.client.obliterateRangeLocal(start, end)!, increaseMsn);
 	}
 
 	// Ensures the client's text matches the `expected` string and round-trips through a snapshot

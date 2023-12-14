@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 import {
-	ApiClass,
-	ApiEnum,
-	ApiFunction,
-	ApiInterface,
-	ApiItem,
+	type ApiClass,
+	type ApiEnum,
+	type ApiFunction,
+	type ApiInterface,
+	type ApiItem,
 	ApiItemKind,
-	ApiNamespace,
-	ApiTypeAlias,
-	ApiVariable,
+	type ApiNamespace,
+	type ApiTypeAlias,
+	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
-import { ApiModuleLike, filterByKind } from "../../utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type SectionNode } from "../../documentation-domain";
+import { type ApiModuleLike, filterByKind } from "../../utilities";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 import { filterItems } from "../ApiItemTransformUtilities";
 

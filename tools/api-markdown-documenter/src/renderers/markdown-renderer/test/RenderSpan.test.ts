@@ -8,7 +8,7 @@ import {
 	LineBreakNode,
 	PlainTextNode,
 	SpanNode,
-	TextFormatting,
+	type TextFormatting,
 } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 

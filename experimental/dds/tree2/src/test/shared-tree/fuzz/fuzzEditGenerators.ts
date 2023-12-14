@@ -15,10 +15,10 @@ import {
 import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	ISharedTree,
-	ITreeCheckout,
 	FlexTreeView,
 	SharedTreeFactory,
 	TreeContent,
+	ITreeViewFork,
 } from "../../../shared-tree";
 import { brand, fail, getOrCreate } from "../../../util";
 import { AllowedUpdateType, FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
@@ -40,11 +40,24 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes";
-import { FuzzNode, fuzzNode, fuzzSchema, fuzzViewFromTree } from "./fuzzUtils";
+import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils";
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
-	// Schematized view of clients. Created lazily by viewFromState.
+	/**
+	 * Schematized view of clients. Created lazily by viewFromState.
+	 *
+	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
+	 * which should be used in place of this view until the transaction is complete.
+	 */
 	view2?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
+	/**
+	 * Schematized view of clients undergoing transactions.
+	 * Edits to this view are not visible to other clients until the transaction is closed.
+	 *
+	 * Maintaining a separate view here is necessary since async transactions are not supported on the root checkout,
+	 * and the fuzz testing model only simulates async transactions.
+	 */
+	transactionViews?: Map<ISharedTree, ITreeViewFork<typeof fuzzSchema.rootFieldSchema>>;
 }
 
 export function viewFromState(
@@ -53,12 +66,15 @@ export function viewFromState(
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
 ): FlexTreeView<typeof fuzzSchema.rootFieldSchema> {
 	state.view2 ??= new Map();
-	return getOrCreate(state.view2, client.channel, (tree) =>
-		tree.schematizeInternal({
-			initialTree,
-			schema: fuzzSchema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}),
+	return (
+		state.transactionViews?.get(client.channel) ??
+		getOrCreate(state.view2, client.channel, (tree) =>
+			tree.schematizeInternal({
+				initialTree,
+				schema: fuzzSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			}),
+		)
 	);
 }
 
@@ -387,12 +403,12 @@ export const makeTransactionEditGenerator = (
 		[
 			commit,
 			passedOpWeights.commit,
-			({ client }) => transactionsInProgress(fuzzViewFromTree(client.channel)),
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
 		],
 		[
 			abort,
 			passedOpWeights.abort,
-			({ client }) => transactionsInProgress(fuzzViewFromTree(client.channel)),
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
 		],
 	]);
 
@@ -630,10 +646,6 @@ function selectTreeField(
 	const result = trySelectTreeField(tree, random, weights, filter);
 	assert(result !== "no-valid-fields", "No valid fields found");
 	return result;
-}
-
-function transactionsInProgress(tree: ITreeCheckout) {
-	return tree.transaction.inProgress();
 }
 
 /**

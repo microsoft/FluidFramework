@@ -5,7 +5,8 @@
 
 import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core";
 import { FluidSerializableReadOnly } from "../../valueUtilities";
-import { EncodedChunk, version, EncodedTreeShape, EncodedNestedArray } from "./format";
+import { FieldBatch } from "./fieldBatch";
+import { version, EncodedTreeShape, EncodedNestedArray, EncodedFieldBatch } from "./format";
 import { ShapeIndex } from "./formatGeneric";
 
 /**
@@ -16,13 +17,15 @@ import { ShapeIndex } from "./formatGeneric";
  *
  * This is intended as a simple reference implementation with minimal code and dependencies.
  */
-export function uncompressedEncode(cursor: ITreeCursorSynchronous): EncodedChunk {
-	const rootField = encodeSequence(cursor);
+export function uncompressedEncode(batch: FieldBatch): EncodedFieldBatch {
+	const rootFields = batch.map(encodeSequence);
 	return {
 		version,
 		identifiers: [],
+		// A single shape used to encode all fields.
 		shapes: [{ c: anyTreeShape }, { a: anyArray }],
-		data: [arrayIndex, rootField],
+		// Wrap up each field as an indicator to use the above shape, and its encoded data.
+		data: rootFields.map((data) => [arrayIndex, data]),
 	};
 }
 
@@ -36,6 +39,12 @@ const anyTreeShape: EncodedTreeShape = {
 
 const anyArray: EncodedNestedArray = treeIndex;
 
+/**
+ * Encode a field using the hard coded shape above.
+ * @remarks
+ * Since this shape contains no information about the actual schema, all schema/shape information is inline in the data:
+ * that is why this encoding is called "uncompressed".
+ */
 function encodeSequence(cursor: ITreeCursorSynchronous): FluidSerializableReadOnly[] {
 	const data: FluidSerializableReadOnly[] = [];
 	forEachNode(cursor, () => {

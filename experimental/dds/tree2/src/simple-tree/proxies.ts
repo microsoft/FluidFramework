@@ -216,7 +216,11 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 						| FlexTreeOptionalField<AllowedTypes>;
 
 					const { content, hydrateProxies } = extractFactoryContent(value);
-					const cursor = cursorFromNodeData(content, flexNode.context, fieldSchema.types);
+					const cursor = cursorFromNodeData(
+						content,
+						flexNode.context.schema,
+						fieldSchema.allowedTypeSet,
+					);
 					modifyChildren(
 						flexNode,
 						() => {
@@ -324,7 +328,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -345,7 +349,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -369,7 +373,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -716,7 +720,11 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getFlexNode(this);
 
 			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
-			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
+			const cursor = cursorFromNodeData(
+				content,
+				node.context.schema,
+				node.schema.mapFields.allowedTypeSet,
+			);
 			modifyChildren(
 				node,
 				(mapNode) => mapNode.set(key, cursor),
@@ -930,7 +938,7 @@ export function extractFactoryContent(
 	let type: NodeKind;
 	let extractedContent: ExtractedFactoryContent;
 	if (isReadonlyArray(content)) {
-		type = NodeKind.List;
+		type = NodeKind.Array;
 		extractedContent = extractContentArray(
 			content as readonly FactoryContent[],
 			insertedAtIndex,

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/pact-map",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Distributed data structure for key-value pairs using pact consensus",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,6 +11,18 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
@@ -24,7 +36,9 @@
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
+		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
 		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -72,6 +86,7 @@
 		"events": "^3.1.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
@@ -92,6 +107,8 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
+		"renamer": "^4.0.0",
+		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"

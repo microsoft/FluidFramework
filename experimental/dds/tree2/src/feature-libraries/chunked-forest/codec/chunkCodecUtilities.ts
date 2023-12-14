@@ -169,6 +169,9 @@ export function readStreamStream(stream: StreamCursor): StreamCursor {
 	return { data: content, offset: 0 };
 }
 
+/**
+ * Decodes a chunk within a FieldBatch.
+ */
 export interface ChunkDecoder {
 	/**
 	 * Read from stream, updating the offset.

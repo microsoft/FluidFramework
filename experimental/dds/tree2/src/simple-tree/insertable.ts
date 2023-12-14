@@ -17,7 +17,7 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
-	TreeSchema,
+	FlexTreeSchema,
 } from "../feature-libraries";
 
 /**
@@ -99,7 +99,7 @@ export type InsertableTypedNode<TSchema extends TreeNodeSchema> = TSchema extend
 /**
  * Data which can be built into an entire tree matching the provided schema.
  */
-export type InsertableTreeRoot<TSchema extends TreeSchema> = TSchema extends TreeSchema<
+export type InsertableTreeRoot<TSchema extends FlexTreeSchema> = TSchema extends FlexTreeSchema<
 	infer TRootFieldSchema
 >
 	? InsertableTreeField<TRootFieldSchema>

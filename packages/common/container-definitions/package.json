@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-definitions",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid container definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,6 +78,32 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IPendingLocalState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IRuntime": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISnapshotTreeWithBlobContents": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainer": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IHostLoader": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ILoader": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IProvideLoader": {
+				"backCompat": false
+			}
+		}
 	}
 }
