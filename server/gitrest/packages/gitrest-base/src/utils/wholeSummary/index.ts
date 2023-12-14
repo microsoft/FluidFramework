@@ -6,7 +6,7 @@
 export { Constants } from "./constants";
 export { readSummary } from "./readWholeSummary";
 export {
-	ISummaryWriteOptions,
+	ISummaryWriteFeatureFlags,
 	IWriteSummaryInfo,
 	isContainerSummary,
 	isChannelSummary,

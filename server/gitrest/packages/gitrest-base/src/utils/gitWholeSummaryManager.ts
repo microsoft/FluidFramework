@@ -13,7 +13,7 @@ import { IRepositoryManager } from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import {
 	Constants,
-	ISummaryWriteOptions,
+	ISummaryWriteFeatureFlags,
 	IWriteSummaryInfo,
 	isChannelSummary,
 	isContainerSummary,
@@ -22,7 +22,7 @@ import {
 	writeContainerSummary,
 } from "./wholeSummary";
 
-const DefaultSummaryWriteOptions: ISummaryWriteOptions = {
+const DefaultSummaryWriteFeatureFlags: ISummaryWriteFeatureFlags = {
 	enableLowIoWrite: false,
 	optimizeForInitialSummary: false,
 };
@@ -39,17 +39,17 @@ export const latestSummarySha = Constants.LatestSummarySha;
  * using "Shredded Summary" format would, unless the enableLowIoWrite option is/was used.
  */
 export class GitWholeSummaryManager {
-	private readonly writeOptions: ISummaryWriteOptions;
+	private readonly summaryWriteFeatureFlags: ISummaryWriteFeatureFlags;
 
 	constructor(
 		private readonly documentId: string,
 		private readonly repoManager: IRepositoryManager,
 		private readonly lumberjackProperties: Record<string, any>,
 		private readonly externalStorageEnabled = true,
-		writeOptions?: Partial<ISummaryWriteOptions>,
+		writeOptions?: Partial<ISummaryWriteFeatureFlags>,
 	) {
-		this.writeOptions = {
-			...DefaultSummaryWriteOptions,
+		this.summaryWriteFeatureFlags = {
+			...DefaultSummaryWriteFeatureFlags,
 			...writeOptions,
 		};
 	}
@@ -85,22 +85,28 @@ export class GitWholeSummaryManager {
 			GitRestLumberEventName.WholeSummaryManagerWriteSummary,
 			this.lumberjackProperties,
 		);
-		writeSummaryMetric.setProperty("enableLowIoWrite", this.writeOptions.enableLowIoWrite);
+		writeSummaryMetric.setProperty(
+			"enableLowIoWrite",
+			this.summaryWriteFeatureFlags.enableLowIoWrite,
+		);
 		writeSummaryMetric.setProperty(
 			"optimizeForInitialSummary",
-			this.writeOptions.optimizeForInitialSummary,
+			this.summaryWriteFeatureFlags.optimizeForInitialSummary,
 		);
 		writeSummaryMetric.setProperty("isInitial", isInitial);
 		try {
 			if (isChannelSummary(payload)) {
 				writeSummaryMetric.setProperty("summaryType", "channel");
-				const writeSummaryInfo = await writeChannelSummary(payload, {
-					documentId: this.documentId,
-					repoManager: this.repoManager,
-					externalStorageEnabled: this.externalStorageEnabled,
-					...this.writeOptions,
-					lumberjackProperties: this.lumberjackProperties,
-				});
+				const writeSummaryInfo = await writeChannelSummary(
+					payload,
+					{
+						documentId: this.documentId,
+						repoManager: this.repoManager,
+						externalStorageEnabled: this.externalStorageEnabled,
+						lumberjackProperties: this.lumberjackProperties,
+					},
+					this.summaryWriteFeatureFlags,
+				);
 				writeSummaryMetric.setProperty("treeSha", writeSummaryInfo.writeSummaryResponse.id);
 				writeSummaryMetric.success(
 					"GitWholeSummaryManager succeeded in writing channel summary",
@@ -109,13 +115,17 @@ export class GitWholeSummaryManager {
 			}
 			if (isContainerSummary(payload)) {
 				writeSummaryMetric.setProperty("summaryType", "container");
-				const writeSummaryInfo = await writeContainerSummary(payload, isInitial, {
-					documentId: this.documentId,
-					repoManager: this.repoManager,
-					externalStorageEnabled: this.externalStorageEnabled,
-					...this.writeOptions,
-					lumberjackProperties: this.lumberjackProperties,
-				});
+				const writeSummaryInfo = await writeContainerSummary(
+					payload,
+					isInitial,
+					{
+						documentId: this.documentId,
+						repoManager: this.repoManager,
+						externalStorageEnabled: this.externalStorageEnabled,
+						lumberjackProperties: this.lumberjackProperties,
+					},
+					this.summaryWriteFeatureFlags,
+				);
 				writeSummaryMetric.setProperty("newDocument", writeSummaryInfo.isNew);
 				writeSummaryMetric.setProperty(
 					"commitSha",
