@@ -15,6 +15,7 @@ import {
 import {
 	describeCompat,
 	ITestDataObject,
+	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -24,24 +25,35 @@ import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
-	const tests = (beforeSweepTimeout: boolean) => {
+	/**
+	 * @param transitionToReference - Whether the trailing op should transition objects to referenced or unreferenced.
+	 * @param beforeSweepTimeout - Whether the trailing op should be sent before or after sweep timeout.
+	 */
+	const tests = (transitionToReference: boolean, beforeSweepTimeout: boolean) => {
 		let provider: ITestObjectProvider;
 		let settings = {};
+		let testContainerConfig: ITestContainerConfig;
+		let summarizerContainerConfig: ITestContainerConfig;
 
 		const sweepTimeoutMs = 100;
-		const configProvider = mockConfigProvider(settings);
-		const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0, beforeSweepTimeout: true };
-		const testContainerConfig: ITestContainerConfig = {
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-				gcOptions,
-			},
-			loaderProps: { configProvider },
+		const gcOptions: IGCRuntimeOptions = {
+			inactiveTimeoutMs: 0,
+			enableGCSweep: true,
+			sweepGracePeriodMs: 0, // Skip Tombstone, these tests focus on Sweep
 		};
+
+		function updateDataStoreReferenceState(
+			fromDataStore: ITestDataObject,
+			dataStoreToUpdate: ITestDataObject,
+			key: string,
+			makeReferenced: boolean,
+		) {
+			if (makeReferenced) {
+				fromDataStore._root.set(key, dataStoreToUpdate.handle);
+			} else {
+				fromDataStore._root.delete(key);
+			}
+		}
 
 		/**
 		 * Validates that the data store is not deleted from the data store and GC trees in the summary.
@@ -100,178 +112,150 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
-			settings = {};
 			settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
-		});
 
-		it(`Trailing ops ${
-			beforeSweepTimeout ? "before sweep timeout" : "after sweep timeout"
-		} makes data store unreferenced without deleting it`, async () => {
-			const mainContainer = await provider.makeTestContainer(testContainerConfig);
-			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
-			await waitForContainerConnection(mainContainer);
+			const configProvider = mockConfigProvider(settings);
+			testContainerConfig = {
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: "disabled",
+						},
+					},
+					gcOptions,
+				},
+				loaderProps: { configProvider },
+			};
 
-			// Create a data store and reference it.
-			const newDataStore =
-				await mainDefaultDataStore._context.containerRuntime.createDataStore(
-					TestDataObjectType,
-				);
-			assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
-			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
-
-			// Create a summarizer
-			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
+			summarizerContainerConfig = {
 				runtimeOptions: { gcOptions },
 				loaderProps: { configProvider },
-			});
-
-			// Summarize and verify that the datastore is referenced.
-			await provider.ensureSynchronized();
-			const summary1 = await summarizeNow(mainSummarizer);
-			validateDataStoreStateInSummary(
-				summary1.summaryTree,
-				newDataStore.entryPoint.absolutePath,
-				false /* expectGCStateHandle */,
-				true /* referenced */,
-			);
-
-			// If sweep is enabled, send the trailing op that makes data store unreferenced after waiting
-			// for sweep timeout.
-			// If sweep is disabled, send the trailing op right away.
-			// In both the cases, the data store should be unreferenced but not deleted in the next summary.
-			if (beforeSweepTimeout) {
-				await delay(sweepTimeoutMs);
-			}
-			mainDefaultDataStore._root.delete("datastore");
-
-			// Close the summarizer so that it doesn't interfere with the new one.
-			mainSummarizer.close();
-
-			// Load a new summarizer from the summary. It should process the trailing op before running GC.
-			const { summarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
-				summary1.summaryVersion,
-			);
-
-			// If sweep is not enabled, wait for sweep timeout before running GC to ensure that the data store
-			// is not deleted in that run.
-			if (!beforeSweepTimeout) {
-				await delay(sweepTimeoutMs);
-			}
-
-			// Ensure trailing ops are processed and summarize.
-			await provider.ensureSynchronized();
-			const summary2 = await summarizeNow(summarizer);
-
-			// Validate that data store is unreferenced but not deleted.
-			validateDataStoreStateInSummary(
-				summary2.summaryTree,
-				newDataStore.entryPoint.absolutePath,
-				false /* expectGCStateHandle */,
-				false /* referenced */,
-			);
-
-			// Summarize again to ensure that GC sweep op (if any) is now processed.
-			await provider.ensureSynchronized();
-			const summary3 = await summarizeNow(summarizer);
-
-			// Validate that data store is still unreferenced but not deleted. The GC state should not be a handle
-			// since it should not have changed since last time.
-			validateDataStoreStateInSummary(
-				summary3.summaryTree,
-				newDataStore.entryPoint.absolutePath,
-				true /* expectGCStateHandle */,
-				false /* referenced */,
-			);
+			};
 		});
 
-		it(`Trailing ops ${
-			beforeSweepTimeout ? "before sweep timeout" : "after sweep timeout"
-		} makes data store referenced without deleting it`, async () => {
-			const mainContainer = await provider.makeTestContainer(testContainerConfig);
-			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
-			await waitForContainerConnection(mainContainer);
+		afterEach(() => {
+			settings = {};
+		});
 
-			// Create a data store and make it unreferenced.
-			const newDataStore =
-				await mainDefaultDataStore._context.containerRuntime.createDataStore(
-					TestDataObjectType,
+		itExpects(
+			`Trailing ops ${
+				beforeSweepTimeout ? "before sweep timeout" : "after sweep timeout"
+			} makes data store ${
+				transitionToReference ? "referenced" : "unreferenced"
+			} without deleting it`,
+			beforeSweepTimeout && transitionToReference
+				? [
+						{
+							eventName:
+								"fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+							clientType: "noninteractive/summarizer",
+						},
+				  ]
+				: [],
+			async () => {
+				const mainContainer = await provider.makeTestContainer(testContainerConfig);
+				const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
+				await waitForContainerConnection(mainContainer);
+
+				const newDataStoreKey = "datastore";
+				// Create a data store and reference it.
+				const newDataStore =
+					await mainDataStore._context.containerRuntime.createDataStore(
+						TestDataObjectType,
+					);
+				assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
+				const newTestDataObject = (await newDataStore.entryPoint.get()) as ITestDataObject;
+				mainDataStore._root.set(newDataStoreKey, newDataStore.entryPoint);
+
+				// Update the reference state. The data store should start in the opposite state of "transitionToReference"
+				// and the trailing op will transition it to that state.
+				updateDataStoreReferenceState(
+					mainDataStore,
+					newTestDataObject,
+					newDataStoreKey,
+					!transitionToReference,
 				);
-			assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
-			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
-			mainDefaultDataStore._root.delete("datastore");
 
-			// Create a summarizer
-			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
-				runtimeOptions: { gcOptions },
-				loaderProps: { configProvider },
-			});
+				// Create a summarizer
+				const { summarizer: mainSummarizer } = await createSummarizer(
+					provider,
+					mainContainer,
+					summarizerContainerConfig,
+				);
 
-			// Summarize and verify that the datastore is unreferenced.
-			await provider.ensureSynchronized();
-			const summary1 = await summarizeNow(mainSummarizer);
-			validateDataStoreStateInSummary(
-				summary1.summaryTree,
-				newDataStore.entryPoint.absolutePath,
-				false /* expectGCStateHandle */,
-				false /* referenced */,
-			);
+				// Summarize and verify that the datastore reference state is in the opposite state of "transitionToReference".
+				await provider.ensureSynchronized();
+				const summary1 = await summarizeNow(mainSummarizer);
+				validateDataStoreStateInSummary(
+					summary1.summaryTree,
+					newDataStore.entryPoint.absolutePath,
+					false /* expectGCStateHandle */,
+					!transitionToReference,
+				);
 
-			// If sweep is enabled, send the trailing op that makes data store referenced after waiting
-			// for sweep timeout.
-			// If sweep is disabled, send the trailing op right away.
-			// In both the cases, the data store should be referenced and not deleted in the next summary.
-			if (beforeSweepTimeout) {
-				await delay(sweepTimeoutMs);
-			}
-			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
+				// If beforeSweepTimeout is true, send the trailing op that transitions the data store to "transitionToReference"
+				// state first and then wait for sweep timeout.
+				// If beforeSweepTimeout is false, wait for sweep timeout and then send the trailing op.
+				// In both the cases, the data store should not be deleted from the summary / GC state because the wait
+				// for sweep timeout happens before GC has a chance to change the data store state.
+				if (beforeSweepTimeout) {
+					updateDataStoreReferenceState(
+						mainDataStore,
+						newTestDataObject,
+						newDataStoreKey,
+						transitionToReference,
+					);
+					await delay(sweepTimeoutMs);
+				} else {
+					await delay(sweepTimeoutMs);
+					updateDataStoreReferenceState(
+						mainDataStore,
+						newTestDataObject,
+						newDataStoreKey,
+						transitionToReference,
+					);
+				}
 
-			// Close the summarizer so that it doesn't interfere with the new one.
-			mainSummarizer.close();
+				// Close the summarizer so that it doesn't interfere with the new one.
+				mainSummarizer.close();
 
-			// Load a new summarizer from the summary.
-			const { summarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
-				summary1.summaryVersion,
-			);
+				// Load a new summarizer from the summary. It should process the trailing op before running GC.
+				const { summarizer } = await createSummarizer(
+					provider,
+					mainContainer,
+					summarizerContainerConfig,
+					summary1.summaryVersion,
+				);
 
-			// If sweep is not enabled, wait for sweep timeout before running GC to ensure that the data store
-			// is not deleted in that run.
-			if (!beforeSweepTimeout) {
-				await delay(sweepTimeoutMs);
-			}
+				// Ensure trailing ops are processed and summarize.
+				await provider.ensureSynchronized();
+				const summary2 = await summarizeNow(summarizer);
 
-			// Ensure trailing ops are processed and summarize.
-			await provider.ensureSynchronized();
-			const summary2 = await summarizeNow(summarizer);
+				// Validate that the data store has transitioned to the correct state.
+				validateDataStoreStateInSummary(
+					summary2.summaryTree,
+					newDataStore.entryPoint.absolutePath,
+					false /* expectGCStateHandle */,
+					transitionToReference,
+				);
 
-			// Validate that data store is referenced and not deleted.
-			validateDataStoreStateInSummary(
-				summary2.summaryTree,
-				newDataStore.entryPoint.absolutePath,
-				false /* expectGCStateHandle */,
-				true /* referenced */,
-			);
+				// Summarize again to ensure that GC sweep op (if any) is now processed.
+				await provider.ensureSynchronized();
+				const summary3 = await summarizeNow(summarizer);
 
-			// Summarize again to ensure that GC sweep op (if any) is now processed.
-			await provider.ensureSynchronized();
-			const summary3 = await summarizeNow(summarizer);
-
-			// Validate that data store is still referenced and not deleted. The GC state should not be a handle
-			// since it should not have changed since last time.
-			validateDataStoreStateInSummary(
-				summary3.summaryTree,
-				newDataStore.entryPoint.absolutePath,
-				true /* expectGCStateHandle */,
-				true /* referenced */,
-			);
-		});
+				// Validate that data store is still in the same state as before and is not deleted.
+				validateDataStoreStateInSummary(
+					summary3.summaryTree,
+					newDataStore.entryPoint.absolutePath,
+					true /* expectGCStateHandle */,
+					transitionToReference,
+				);
+			},
+		);
 	};
 
-	tests(true /** beforeSweepTimeout */);
-	tests(false /** beforeSweepTimeout */);
+	tests(true /* transitionToReference */, true /** beforeSweepTimeout */);
+	tests(true /* transitionToReference */, false /** beforeSweepTimeout */);
+	tests(false /** transitionToReference */, true /* beforeSweepTimeout */);
+	tests(false /** transitionToReference */, false /* beforeSweepTimeout */);
 });
