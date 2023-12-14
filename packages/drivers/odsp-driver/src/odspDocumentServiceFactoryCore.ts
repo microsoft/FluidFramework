@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
-	ensureFluidResolvedUrl,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
@@ -28,6 +27,8 @@ import {
 	SharingLinkRole,
 	ShareLinkTypes,
 	ISharingLinkKind,
+	ISocketStorageDiscovery,
+	IRelaySessionAwareDriverFactory,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
@@ -40,6 +41,7 @@ import {
 	toInstrumentedOdspTokenFetcher,
 	IExistingFileInfo,
 	isNewFileInfo,
+	getJoinSessionCacheKey,
 } from "./odspUtils";
 
 /**
@@ -48,13 +50,36 @@ import {
  *
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
+ * @alpha
  */
-export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryCore
+	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
+{
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
 	public get snapshotPrefetchResultCache() {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
+	}
+
+	public get IRelaySessionAwareDriverFactory() {
+		return this;
+	}
+
+	/**
+	 * This function would return info about relay service session only if this factory established (or attempted to
+	 * establish) connection very recently. Otherwise, it will return undefined.
+	 * @param resolvedUrl - resolved url for container
+	 * @returns The current join session response stored in cache. `undefined` if not present.
+	 */
+	public async getRelayServiceSessionInfo(
+		resolvedUrl: IResolvedUrl,
+	): Promise<ISocketStorageDiscovery | undefined> {
+		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+		const joinSessionResponse = await this.nonPersistentCache.sessionJoinCache.get(
+			getJoinSessionCacheKey(odspResolvedUrl),
+		);
+		return joinSessionResponse?.joinSessionResponse;
 	}
 
 	public async createContainer(
@@ -63,21 +88,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(createNewResolvedUrl);
-
 		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
-		const [, queryString] = odspResolvedUrl.url.split("?");
-
-		const searchParams = new URLSearchParams(queryString);
-		const filePath = searchParams.get("path");
-		if (filePath === undefined || filePath === null) {
-			throw new Error("File path should be provided!!");
-		}
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
 		let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
@@ -89,6 +105,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 				itemId: odspResolvedUrl.itemId,
 			};
 		} else if (odspResolvedUrl.fileName) {
+			const [, queryString] = odspResolvedUrl.url.split("?");
+			const searchParams = new URLSearchParams(queryString);
+			const filePath = searchParams.get("path");
+			if (filePath === undefined || filePath === null) {
+				throw new Error("File path should be provided!!");
+			}
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",
@@ -148,7 +170,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 				// while only happens once in lifetime of a document happens in the background after creation of
 				// detached container.
 				const module = await import(
-					/* webpackChunkName: "createNewModule" */ "./createNewModule"
+					/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
 				)
 					.then((m) => {
 						odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });
@@ -244,7 +266,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: TelemetryLogger,
+		odspLogger: ITelemetryLogger,
 		cacheAndTrackerArg?: ICacheAndTracker,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {

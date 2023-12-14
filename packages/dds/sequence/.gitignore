@@ -53,3 +53,7 @@ temp_modules/
 
 # Output folder for memory profiling tests
 .memoryTestsOutput
+
+# Output folder for fuzz tests
+src/test/results
+src/test/fuzz/results

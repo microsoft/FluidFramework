@@ -4,7 +4,12 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+	IDocumentManager,
+} from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
@@ -14,22 +19,26 @@ import { DriverVersionHeaderName } from "@fluidframework/server-services-client"
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, ITenantService } from "./services";
-import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
+import { ICache, IDenyList, ITenantService } from "./services";
+import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -47,12 +56,13 @@ export function create(
 	};
 	app.use(restLessMiddleware());
 
+	app.use(bindTelemetryContext());
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("historian", (tokens, req, res) => {
 				const tenantId = getTenantIdFromRequest(req.params);
-				return {
+				const additionalProperties: Record<string, any> = {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: tenantId,
 					[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
@@ -60,6 +70,12 @@ export function create(
 						req.get("Authorization"),
 					),
 				};
+				if (req.get(Constants.IsEphemeralContainer) !== undefined) {
+					additionalProperties.isEphemeralContainer = req.get(
+						Constants.IsEphemeralContainer,
+					);
+				}
+				return additionalProperties;
 			}),
 		);
 	} else {
@@ -76,11 +92,14 @@ export function create(
 	const apiRoutes = routes.create(
 		config,
 		tenantService,
+		storageNameRetriever,
 		restTenantThrottlers,
 		restClusterThrottlers,
+		documentManager,
 		cache,
 		asyncLocalStorage,
-		tokenRevocationManager,
+		revokedTokenChecker,
+		denyList,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);

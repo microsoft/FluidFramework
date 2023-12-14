@@ -4,11 +4,25 @@
  */
 
 import assert from "assert";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import Deque from "double-ended-queue";
+
+import {
+	ContainerErrorTypes,
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
-import { PendingStateManager } from "../pendingStateManager";
+import { isILoggingError } from "@fluidframework/telemetry-utils";
+
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
+import type {
+	RecentlyAddedContainerRuntimeMessageDetails,
+	UnknownContainerRuntimeMessage,
+} from "../messageTypes";
+
+type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
+	initialMessages: Deque<IPendingMessage>;
+};
 
 describe("Pending State Manager", () => {
 	describe("Rollback", () => {
@@ -46,7 +60,7 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should do nothing when rolling back nothing", () => {
-			batchManager.push(getMessage("1"));
+			batchManager.push(getMessage("1"), /* reentrant */ false);
 			const checkpoint = batchManager.checkpoint();
 			checkpoint.rollback(rollBackCallback);
 
@@ -56,9 +70,9 @@ describe("Pending State Manager", () => {
 
 		it("should succeed when rolling back entire pending stack", () => {
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("11"));
-			batchManager.push(getMessage("22"));
-			batchManager.push(getMessage("33"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
+			batchManager.push(getMessage("22"), /* reentrant */ false);
+			batchManager.push(getMessage("33"), /* reentrant */ false);
 			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
@@ -70,10 +84,10 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should succeed when rolling back part of pending stack", () => {
-			batchManager.push(getMessage("11"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("22"));
-			batchManager.push(getMessage("33"));
+			batchManager.push(getMessage("22"), /* reentrant */ false);
+			batchManager.push(getMessage("33"), /* reentrant */ false);
 			checkpoint.rollback(rollBackCallback);
 
 			assert.strictEqual(rollbackCalled, true);
@@ -86,7 +100,7 @@ describe("Pending State Manager", () => {
 		it("should throw and close when rollback fails", () => {
 			rollbackShouldThrow = true;
 			const checkpoint = batchManager.checkpoint();
-			batchManager.push(getMessage("11"));
+			batchManager.push(getMessage("11"), /* reentrant */ false);
 			assert.throws(() => {
 				checkpoint.rollback(rollBackCallback);
 			});
@@ -111,21 +125,19 @@ describe("Pending State Manager", () => {
 					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
 					reSubmit: () => {},
-					rollback: () => {},
-					orderSequentially: (callback: () => void) => {
-						callback();
-					},
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
 				},
-				undefined,
+				undefined /* initialLocalState */,
+				undefined /* logger */,
 			);
 		});
 
 		const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
 			messages.forEach((message) => {
 				pendingStateManager.onSubmitMessage(
-					message.type,
+					JSON.stringify({ type: message.type, contents: message.contents }),
 					message.referenceSequenceNumber,
-					message.contents,
 					undefined,
 					message.metadata,
 				);
@@ -185,7 +197,8 @@ describe("Pending State Manager", () => {
 
 			submitBatch(messages);
 			process(messages);
-			assert(closeError instanceof DataProcessingError);
+			assert(isILoggingError(closeError));
+			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
 		});
@@ -208,7 +221,8 @@ describe("Pending State Manager", () => {
 						type: "otherType",
 					})),
 				);
-				assert(closeError instanceof DataProcessingError);
+				assert(isILoggingError(closeError));
+				assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 				assert.strictEqual(
 					closeError.getTelemetryProperties().expectedMessageType,
 					MessageType.Operation,
@@ -233,7 +247,7 @@ describe("Pending State Manager", () => {
 						contents: undefined,
 					})),
 				);
-				assert(closeError instanceof DataProcessingError);
+				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
 
 			it("stringified message content does not match", () => {
@@ -254,7 +268,7 @@ describe("Pending State Manager", () => {
 						contents: { prop1: true },
 					})),
 				);
-				assert(closeError instanceof DataProcessingError);
+				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
 		});
 
@@ -281,7 +295,8 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Local state processing", () => {
-		function createPendingStateManager(pendingStates): any {
+		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -289,15 +304,15 @@ describe("Pending State Manager", () => {
 					close: () => {},
 					connected: () => true,
 					reSubmit: () => {},
-					rollback: () => {},
-					orderSequentially: () => {},
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
 				},
 				{ pendingStates },
-			);
+				undefined /* logger */,
+			) as any;
 		}
 
-		// TODO: Remove in 2.0.0-internal.5.0.0 once only new format is written in getLocalState() AB#2496
-		describe("Constructor conversion", () => {
+		describe("Constructor pendingStates", () => {
 			it("Empty local state", () => {
 				{
 					const pendingStateManager = createPendingStateManager(undefined);
@@ -309,131 +324,139 @@ describe("Pending State Manager", () => {
 				}
 			});
 
-			it("Only flush messages", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "flush" },
-					{ type: "flush" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-			});
-
 			it("New format", () => {
 				const messages = [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message" },
+					{ type: "message", content: '{"type":"component"}' },
+					{
+						type: "message",
+						content: '{"type": "component", "contents": {"prop1": "value"}}',
+					},
 				];
 				const pendingStateManager = createPendingStateManager(messages);
 				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
 			});
-
-			it("Ends with no flush", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-				]);
-			});
-
-			it("Ends with flush", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "flush" },
-					{ type: "message" },
-					{ type: "flush" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "flush" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message", opMetadata: { batch: false } },
-				]);
-			});
-
-			it("Mix of new and old", () => {
-				const pendingStateManager = createPendingStateManager([
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "flush" },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "flush" },
-				]);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message", opMetadata: { batch: false } },
-					{ type: "message" },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: true } },
-					{ type: "message" },
-					{ type: "message", opMetadata: { batch: false } },
-				]);
-			});
 		});
 
-		it("getLocalState writes new format", async () => {
-			const pendingStateManager = createPendingStateManager([
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: true } },
-				{ type: "message", referenceSequenceNumber: 0 },
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: false } },
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: true } },
-				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: false } },
-				{ type: "message", referenceSequenceNumber: 0 },
-			]);
+		describe("Future op compat behavior", () => {
+			it("pending op roundtrip", async () => {
+				const pendingStateManager = createPendingStateManager([]);
+				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
+					RecentlyAddedContainerRuntimeMessageDetails = {
+					type: "FROM_THE_FUTURE",
+					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
+				};
 
-			await pendingStateManager.applyStashedOpsAt(0);
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(futureRuntimeMessage),
+					0,
+					undefined,
+					undefined,
+				);
+				pendingStateManager.processPendingLocalMessage(
+					futureRuntimeMessage as ISequencedDocumentMessage &
+						UnknownContainerRuntimeMessage,
+				);
+			});
+		});
+	});
 
-			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
-				/* eslint-disable max-len */
+	describe("Pending messages state", () => {
+		const messages = [
+			{ type: "message", content: '{"type":"component"}' },
+			{
+				type: "message",
+				content: '{"type": "component", "contents": {"prop1": "value"}}',
+			},
+		];
+
+		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return new PendingStateManager(
 				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: true },
+					applyStashedOp: async () => undefined,
+					clientId: () => undefined,
+					close: () => {},
+					connected: () => true,
+					reSubmit: () => {},
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
 				},
-				{ type: "message", referenceSequenceNumber: 0, localOpMetadata: undefined },
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: false },
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: true },
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: false },
-				},
-				{ type: "message", referenceSequenceNumber: 0, localOpMetadata: undefined },
-				/* eslint-enable max-len */
-			]);
+				{ pendingStates },
+				undefined /* logger */,
+			) as any;
+		}
+
+		it("no pending or initial messages", () => {
+			const pendingStateManager = createPendingStateManager(undefined);
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				false,
+				"There shouldn't be pending messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				0,
+				"Pending messages count should be 0",
+			);
+		});
+
+		it("has pending messages but no initial messages", () => {
+			const pendingStateManager = createPendingStateManager(undefined);
+			for (const message of messages) {
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(message.content),
+					0,
+					undefined /* localOpMetadata */,
+					undefined /* opMetadata */,
+				);
+			}
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				true,
+				"There should be pending messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				messages.length,
+				"Pending messages count should be same as pending messages",
+			);
+		});
+
+		it("has initial messages but no pending messages", () => {
+			const pendingStateManager = createPendingStateManager(messages);
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				true,
+				"There should be initial messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				messages.length,
+				"Pending messages count should be same as initial messages",
+			);
+		});
+
+		it("has both pending messages and initial messages", () => {
+			const pendingStateManager = createPendingStateManager(messages);
+			for (const message of messages) {
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(message.content),
+					0,
+					undefined /* localOpMetadata */,
+					undefined /* opMetadata */,
+				);
+			}
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				true,
+				"There should be pending messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				messages.length * 2,
+				"Pending messages count should be same as pending + initial messages",
+			);
 		});
 	});
 });

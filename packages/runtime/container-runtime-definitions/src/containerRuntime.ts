@@ -3,62 +3,59 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IEventProvider,
+	IRequest,
+	IResponse,
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
-	IHelpMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
-	IDataStore,
 	IFluidDataStoreContextDetached,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
 /**
- * @deprecated Not necessary if consumers add a new dataStore to the container by storing its handle.
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @alpha
  */
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-	fluidDataStoreChannel?: { bindToContext?(): void };
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
+	readonly IFluidHandleContext: IFluidHandleContext;
+	resolveHandle(request: IRequest): Promise<IResponse>;
 }
 
 /**
- * @deprecated This will be removed in a later release.
+ * Events emitted by {@link IContainerRuntime}.
+ * @alpha
  */
-export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export interface IProvideContainerRuntime {
-	/**
-	 * @deprecated This will be removed in a later release.
-	 */
-	IContainerRuntime: IContainerRuntime;
-}
-
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
-	(event: "localHelp", listener: (message: IHelpMessage) => void);
 }
 
+/**
+ * @alpha
+ */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 	IEventProvider<IContainerRuntimeEvents>;
 
-/*
+/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
+ * @alpha
  */
 export interface IContainerRuntime
-	extends IProvideContainerRuntime,
-		IProvideFluidDataStoreRegistry,
+	extends IProvideFluidDataStoreRegistry,
 		IContainerRuntimeBaseWithCombinedEvents {
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;
@@ -74,11 +71,12 @@ export interface IContainerRuntime
 	readonly attachState: AttachState;
 
 	/**
-	 * Returns the runtime of the data store.
-	 * @param id - Id supplied during creating the data store.
-	 * @param wait - True if you want to wait for it.
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
 	 */
-	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Creates detached data store context. Data store initialization is considered complete
@@ -103,10 +101,4 @@ export interface IContainerRuntime
 	 * @param relativeUrl - A relative request within the container
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-	/**
-	 * Resolves handle URI
-	 * @param request - request to resolve
-	 */
-	resolveHandle(request: IRequest): Promise<IResponse>;
 }

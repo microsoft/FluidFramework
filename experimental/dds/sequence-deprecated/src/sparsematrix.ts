@@ -3,27 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	BaseSegment,
-	createGroupOp,
-	IJSONSegment,
-	IMergeTreeDeltaOp,
-	ISegment,
-	PropertySet,
-} from "@fluidframework/merge-tree";
+import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelFactory,
-	Serializable,
 	Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence, SubSequence } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedSegmentSequence } from "@fluidframework/sequence";
 import { pkgVersion } from "./packageVersion";
+import { SubSequence } from "./sharedSequence";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.
@@ -31,6 +24,7 @@ import { pkgVersion } from "./packageVersion";
  *
  * @deprecated `PaddingSegment` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export class PaddingSegment extends BaseSegment {
 	public static readonly typeString = "PaddingSegment";
@@ -73,7 +67,7 @@ export class PaddingSegment extends BaseSegment {
 	}
 
 	public append(segment: ISegment) {
-		assert(PaddingSegment.is(segment), "can only append padding segment");
+		assert(PaddingSegment.is(segment), 0x5f7 /* can only append padding segment */);
 		super.append(segment);
 	}
 
@@ -95,12 +89,14 @@ export class PaddingSegment extends BaseSegment {
 /**
  * @deprecated `SparseMatrixItem` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
-export type SparseMatrixItem = Serializable;
+export type SparseMatrixItem = any;
 
 /**
  * @deprecated `RunSegment` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export class RunSegment extends SubSequence<SparseMatrixItem> {
 	public static readonly typeString = "RunSegment";
@@ -182,48 +178,56 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 /**
  * @deprecated `MatrixSegment` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export type MatrixSegment = RunSegment | PaddingSegment;
 
 /**
  * @deprecated `maxCol` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export const maxCol = 0x200000; // X128 Excel maximum of 16,384 columns
 
 /**
  * @deprecated `maxCols` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export const maxCols = maxCol + 1;
 
 /**
  * @deprecated `maxRow` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export const maxRow = 0xffffffff; // X4096 Excel maximum of 1,048,576 rows
 
 /**
  * @deprecated `maxRows` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export const maxRows = maxRow + 1;
 
 /**
  * @deprecated `maxCellPosition` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export const maxCellPosition = maxCol * maxRow;
 
 /**
  * @deprecated `positionToRowCol` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export const rowColToPosition = (row: number, col: number) => row * maxCols + col;
 
 /**
  * @deprecated `positionToRowCol` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export function positionToRowCol(position: number) {
 	const row = Math.floor(position / maxCols);
@@ -234,6 +238,7 @@ export function positionToRowCol(position: number) {
 /**
  * @deprecated `SparseMatrix` is an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
  */
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 	/**
@@ -319,10 +324,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 		const size = maxCols * numRows;
 		const segment = new PaddingSegment(size);
 
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.client.insertSegmentLocal(pos, segment);
 	}
 
 	public removeRows(row: number, numRows: number) {
@@ -354,25 +356,13 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 	private moveAsPadding(srcCol: number, destCol: number, numCols: number) {
 		const removeColStart = srcCol;
 		const removeColEnd = srcCol + numCols;
-		const ops: IMergeTreeDeltaOp[] = [];
 
 		for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
-			const removeMsg = this.client.removeRangeLocal(
-				rowStart + removeColStart,
-				rowStart + removeColEnd,
-			);
-			if (removeMsg) {
-				ops.push(removeMsg);
-			}
+			this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd);
 			const insertPos = rowStart + destCol;
 			const segment = new PaddingSegment(numCols);
-			const insertMsg = this.client.insertSegmentLocal(insertPos, segment);
-			if (insertMsg) {
-				ops.push(insertMsg);
-			}
+			this.client.insertSegmentLocal(insertPos, segment);
 		}
-
-		this.submitSequenceMessage(createGroupOp(...ops));
 	}
 
 	private getSegment(row: number, col: number) {
@@ -384,6 +374,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 /**
  * @deprecated `SparseMatrixFactory` is an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrixFactory} instead.
+ * @internal
  */
 export class SparseMatrixFactory implements IChannelFactory {
 	public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";

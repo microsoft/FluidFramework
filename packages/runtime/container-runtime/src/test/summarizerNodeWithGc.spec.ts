@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
@@ -16,12 +16,13 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { IFetchSnapshotResult } from "../summary/summarizerNode";
+import { ValidateSummaryResult } from "../summary/summarizerNode";
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
+	SummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc";
 import { cloneGCData } from "../gc";
@@ -57,7 +58,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			undefined,
 			getRootBaseGCDetails,
 		);
-		rootSummarizerNode.startSummary(0, new TelemetryNullLogger());
+		rootSummarizerNode.startSummary(0, createChildLogger());
 
 		summarizerNode = rootSummarizerNode.createChild(
 			summarizeInternal,
@@ -237,13 +238,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 	});
 
-	describe("Complete Summary", () => {
+	describe("Validate Summary", () => {
 		const ids = ["rootId", "midId", "leafId"] as const;
 		let rootNode: IRootSummarizerNodeWithGC;
 		let midNode: ISummarizerNodeWithGC | undefined;
 		let leafNode: ISummarizerNodeWithGC | undefined;
 
-		const logger = new TelemetryNullLogger();
+		const logger = createChildLogger();
 		const getSummarizeInternalFn = (depth: 0 | 1 | 2) => async (fullTree: boolean) => {
 			return {
 				id: ids[depth],
@@ -280,12 +281,31 @@ describe("SummarizerNodeWithGC Tests", () => {
 			leafNode = midNode?.createChild(getSummarizeInternalFn(2), ids[2], createParam);
 		}
 
-		it("Should fail completeSummary if GC not run on root node", () => {
+		it("summary validation should fail if GC not run on root node", () => {
 			createRoot();
 			rootNode.startSummary(11, logger);
+
+			// Validate summary fails by calling validateSummary.
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "",
+				},
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the root node",
+			);
+
+			// Validate summary fails by calling completeSummary.
 			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
-				(error) => {
+				() => rootNode.completeSummary("test-handle", true /* validateSummary */),
+				(error: any) => {
 					const correctErrorMessage = error.message === "NodeDidNotRunGC";
 					const correctErrorId = error.id.value === "";
 					return correctErrorMessage && correctErrorId;
@@ -294,7 +314,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 		});
 
-		it("Should fail completeSummary if GC not run on child node", async () => {
+		it("summary validation should fail if GC not run on child node", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -308,9 +328,28 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await rootNode.summarize(false);
 			await leafNode?.summarize(false);
 			const midNodeId = `/${ids[1]}`;
+
+			// Validate summary fails by calling validateSummary.
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: midNodeId,
+				},
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the mid node",
+			);
+
+			// Validate summary fails by calling completeSummary.
 			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
-				(error) => {
+				() => rootNode.completeSummary("test-handle", true /* validateSummary */),
+				(error: any) => {
 					const correctErrorMessage = error.message === "NodeDidNotRunGC";
 					const correctErrorId = error.id.value === midNodeId;
 					return correctErrorMessage && correctErrorId;
@@ -319,7 +358,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 		});
 
-		it("Should fail completeSummary if GC not run on leaf node", async () => {
+		it("summary validation should fail if GC not run on leaf node", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
@@ -332,9 +371,28 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
 			const leafNodeId = `/${ids[1]}/${ids[2]}`;
+
+			// Validate summary fails by calling validateSummary.
+			const expectedResult: ValidateSummaryResult = {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: leafNodeId,
+				},
+				retryAfterSeconds: 1,
+			};
+			const result = rootNode.validateSummary();
+			assert.deepStrictEqual(
+				result,
+				expectedResult,
+				"validate summary should have failed at the leaf node",
+			);
+
+			// Validate summary fails by calling completeSummary.
 			assert.throws(
-				() => rootNode.completeSummary("test-handle"),
-				(error) => {
+				() => rootNode.completeSummary("test-handle", true /* validateSummary */),
+				(error: any) => {
 					const correctErrorMessage = error.message === "NodeDidNotRunGC";
 					const correctErrorId = error.id.value === leafNodeId;
 					return correctErrorMessage && correctErrorId;
@@ -344,40 +402,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 
 		let summaryRefSeq = 123;
-		const blobs = {
-			protocolAttributes: { sequenceNumber: summaryRefSeq },
-		} as const;
-		const readAndParseBlob = async <T>(id: string) => blobs[id] as T;
-
-		const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
-		const protocolTree: ISnapshotTree = {
-			blobs: { attributes: "protocolAttributes" },
-			trees: {},
-		};
-		const coreSnapshot: ISnapshotTree = {
-			blobs: {},
-			trees: {
-				[ids[1]]: {
-					blobs: {},
-					trees: {
-						[ids[2]]: emptySnapshot,
-					},
-				},
-			},
-		};
-		const simpleSnapshot: ISnapshotTree = {
-			blobs: {},
-			trees: {
-				...coreSnapshot.trees,
-				".protocol": protocolTree,
-			},
-		};
-		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			return {
-				snapshotTree: simpleSnapshot,
-				snapshotRefSeq: summaryRefSeq,
-			};
-		};
 
 		it("Should add GC pending summary node created after parent node was summarized with non-empty used routes", async () => {
 			createRoot();
@@ -388,17 +412,11 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle1");
+			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
-			let result = await rootNode.refreshLatestSummary(
-				"test-handle1",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
-			);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
 
 			rootNode.startSummary(summaryRefSeq++, logger);
 			rootNode.updateUsedRoutes([`/`, `/${ids[1]}`, `/${ids[1]}/${ids[2]}`]);
@@ -406,20 +424,21 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle2");
+			rootNode.completeSummary("test-handle2", true /* validateSummary */);
 
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary(
-				"test-handle2",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
+			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			assert.strictEqual(
+				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodePath,
+				"The child node's latest summary path is incorrect",
 			);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
 		});
 
 		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
@@ -431,17 +450,11 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle1");
+			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
-			let result = await rootNode.refreshLatestSummary(
-				"test-handle1",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
-			);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
 
 			rootNode.startSummary(summaryRefSeq++, logger);
 			rootNode.updateUsedRoutes([""]);
@@ -449,20 +462,21 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 			await rootNode.summarize(false);
 			await midNode?.summarize(false);
-			rootNode.completeSummary("test-handle2");
+			rootNode.completeSummary("test-handle2", true /* validateSummary */);
 
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary(
-				"test-handle2",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
+			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			assert.strictEqual(
+				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodePath,
+				"The child node's latest summary path is incorrect",
 			);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
 		});
 	});
 });

@@ -9,13 +9,14 @@
  * @packageDocumentation
  */
 
-export { FluidContainer, IFluidContainer, IFluidContainerEvents } from "./fluidContainer";
 export {
-	DOProviderContainerRuntimeFactory,
-	RootDataObject,
-	RootDataObjectProps,
-} from "./rootDataObject";
-export { ServiceAudience } from "./serviceAudience";
+	createFluidContainer,
+	IFluidContainer,
+	IFluidContainerEvents,
+	InitialObjects,
+} from "./fluidContainer";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
+export { createServiceAudience } from "./serviceAudience";
 export {
 	ContainerSchema,
 	DataObjectClass,
@@ -29,6 +30,7 @@ export {
 	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
-	SharedObjectClass,
 	Myself,
+	SharedObjectClass,
+	IProvideRootDataObject,
 } from "./types";

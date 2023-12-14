@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { assert, EventForwarder } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
+	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
-	IFluidRouter,
 	IProvideFluidHandle,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { defaultFluidObjectRequestHandler } from "../request-handlers";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
 /**
@@ -26,13 +25,12 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  * you are creating another base data store class
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @alpha
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
-	extends EventForwarder<I["Events"] & IEvent>
-	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
+	extends TypedEventEmitter<I["Events"] & IEvent>
+	implements IFluidLoadable, IProvideFluidHandle
 {
-	private _disposed = false;
-
 	/**
 	 * This is your FluidDataStoreRuntime object
 	 */
@@ -56,15 +54,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initializeP: Promise<void> | undefined;
 
-	public get disposed() {
-		return this._disposed;
-	}
-
 	public get id() {
 		return this.runtime.id;
-	}
-	public get IFluidRouter() {
-		return this;
 	}
 	public get IFluidLoadable() {
 		return this;
@@ -85,8 +76,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-		const obj = await runtime.entryPoint?.get();
-		assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
+		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
 
@@ -102,15 +92,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 			0x0bd /* "Object runtime already has DataObject!" */,
 		);
 		(this.runtime as any)._dataObject = this;
-
-		// Container event handlers
-		this.runtime.once("dispose", () => {
-			this._disposed = true;
-			this.dispose();
-		});
 	}
-
-	// #region IFluidRouter
 
 	/**
 	 * Return this object if someone requests it directly
@@ -121,10 +103,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * 2. the request url is empty
 	 */
 	public async request(req: IRequest): Promise<IResponse> {
-		return defaultFluidObjectRequestHandler(this, req);
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
 	}
-
-	// #endregion IFluidRouter
 
 	/**
 	 * Call this API to ensure PureDataObject is fully initialized.
@@ -165,29 +147,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	/**
-	 * Retrieve Fluid object using the handle get
-	 *
-	 * @param key - key that object (handle/id) is stored with in the directory
-	 * @param directory - directory containing the object
-	 * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
-	 * define custom types/getters for object retrieval
-	 */
-	public async getFluidObjectFromDirectory<T extends IFluidLoadable>(
-		key: string,
-		directory: IDirectory,
-		getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined,
-	): Promise<T | undefined> {
-		const handleMaybe = getObjectFromDirectory
-			? getObjectFromDirectory(key, directory)
-			: directory.get(key);
-		const handle = handleMaybe?.IFluidHandle;
-		if (handle) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return handle.get();
-		}
-	}
-
-	/**
 	 * Called every time the data store is initialized, before initializingFirstTime or
 	 * initializingFromExisting is called.
 	 */
@@ -211,11 +170,4 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * Called every time the data store is initialized after create or existing.
 	 */
 	protected async hasInitialized(): Promise<void> {}
-
-	/**
-	 * Called when the host container closes and disposes itself
-	 */
-	public dispose(): void {
-		super.dispose();
-	}
 }

@@ -26,6 +26,7 @@ export class PendingMessageReader implements IPendingMessageReader {
 			this.documentId,
 			from - 1,
 			to + 1,
+			"scribe",
 		);
 		return deltasP;
 	}

@@ -26,6 +26,7 @@ export {
 	HookArguments,
 	isInPerformanceTestingMode,
 	validateBenchmarkArguments,
+	qualifiedTitle,
 	Titled,
 	BenchmarkTimingOptions,
 	BenchmarkRunningOptions,
@@ -46,5 +47,6 @@ export {
 	BenchmarkResult,
 	isResultError,
 	Phase,
+	runBenchmark,
 } from "./runBenchmark";
 export { Timer } from "./timer";

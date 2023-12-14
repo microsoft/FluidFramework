@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
+ */
 export abstract class SortedSet<T, U extends string | number> {
 	protected abstract getKey(t: T): U;
 
@@ -19,9 +23,7 @@ export abstract class SortedSet<T, U extends string | number> {
 	public addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void) {
 		const position = this.findItemPosition(newItem);
 		if (position.exists) {
-			if (update) {
-				update(this.keySortedItems[position.index], newItem);
-			}
+			update?.(this.keySortedItems[position.index], newItem);
 		} else {
 			this.keySortedItems.splice(position.index, 0, newItem);
 		}

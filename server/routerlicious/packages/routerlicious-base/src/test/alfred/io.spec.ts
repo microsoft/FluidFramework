@@ -101,12 +101,14 @@ describe("Routerlicious", () => {
 						collectionNames,
 						collectionNames,
 						collectionNames,
+						collectionNames,
 					);
 					const testStorage = new services.DocumentStorage(
 						testDocumentRepository,
 						testTenantManager,
 						false,
 						await databaseManager.getDeltaCollection(undefined, undefined),
+						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -559,6 +561,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						collectionNames,
 						collectionNames,
 						collectionNames,
+						collectionNames,
 					);
 					const testDocumentRepository = new TestNotImplementedDocumentRepository();
 					const testStorage = new services.DocumentStorage(
@@ -566,6 +569,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						testTenantManager,
 						false,
 						await databaseManager.getDeltaCollection(undefined, undefined),
+						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -693,6 +697,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						);
 						Sinon.clock.tick(clientConnectionTime);
 						socket.send("disconnect");
+						// Wait for disconnect handler to complete
+						await Sinon.clock.nextAsync();
 
 						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
 							clientConnectivityStorageId,
@@ -712,6 +718,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						);
 						Sinon.clock.tick(clientConnectionTime);
 						socket.send("disconnect");
+						// Wait for disconnect handler to complete
+						await Sinon.clock.nextAsync();
 
 						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
 							clientConnectivityStorageId,
@@ -745,9 +753,10 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						// wait for throttler to be checked
 						await Sinon.clock.nextAsync();
 
-						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
-							signalUsageStorageId,
-						);
+						const usageData =
+							await testThrottleAndUsageStorageManager.getUsageData(
+								signalUsageStorageId,
+							);
 						assert.equal(usageData.value, signalCount + 1);
 						assert.equal(usageData.clientId, connectMessage.clientId);
 						assert.equal(usageData.tenantId, testTenantId);
@@ -787,12 +796,14 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				collectionNames,
 				collectionNames,
 				collectionNames,
+				collectionNames,
 			);
 			testStorage = new services.DocumentStorage(
 				testDocumentRepository,
 				testTenantManager,
 				false,
 				await databaseManager.getDeltaCollection(undefined, undefined),
+				undefined,
 			);
 		});
 
@@ -810,7 +821,6 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				testId,
 				summaryTree,
 				10,
-				1,
 				defaultHash,
 				url,
 				url,

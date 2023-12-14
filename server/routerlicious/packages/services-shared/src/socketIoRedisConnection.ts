@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -16,7 +16,7 @@ import {
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-	constructor(protected readonly client: Redis) {
+	constructor(protected readonly client: Redis.default) {
 		client.on("error", (err) => {
 			winston.error("Error with Redis:", err);
 			Lumberjack.error("Error with Redis:", undefined, err);
@@ -42,7 +42,7 @@ export class SocketIoRedisSubscriptionConnection
 	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> =
 		new Map();
 
-	constructor(client: Redis) {
+	constructor(client: Redis.default) {
 		super(client);
 
 		client.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
@@ -88,7 +88,7 @@ export class SocketIoRedisSubscriptionConnection
 			return;
 		}
 
-		await this.client.unsubscribe(channelsArray);
+		await this.client.unsubscribe(...channelsArray);
 
 		for (const channel of channelsArray) {
 			subscriptionsMap.delete(channel);

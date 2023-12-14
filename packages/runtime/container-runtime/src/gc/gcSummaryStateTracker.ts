@@ -12,12 +12,11 @@ import {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats, ReadAndParseBlob, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IContainerRuntimeMetadata, metadataBlobName, RefreshSummaryResult } from "../summary";
-import { GCVersion } from "./gcDefinitions";
-import { getGCDataFromSnapshot, generateSortedGCState, getGCVersion } from "./gcHelpers";
+import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IRefreshSummaryResult } from "../summary";
+import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions";
+import { generateSortedGCState } from "./gcHelpers";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
-import { IGarbageCollectorConfigs } from ".";
 
 export const gcStateBlobKey = `${gcBlobPrefix}_root`;
 
@@ -37,8 +36,6 @@ export interface IGCSummaryTrackingData {
  * On summarize, it decides whether to write new state or re-use previous summary's state.
  */
 export class GCSummaryStateTracker {
-	// The current version of GC running.
-	public readonly currentGCVersion: GCVersion = this.configs.gcVersionInEffect;
 	// This is the version of GC data in the latest summary being tracked.
 	private latestSummaryGCVersion: GCVersion;
 
@@ -49,6 +46,10 @@ export class GCSummaryStateTracker {
 
 	// Tracks whether there was GC was run in latest summary being tracked.
 	private wasGCRunInLatestSummary: boolean;
+
+	// Tracks the count of data stores whose state updated since the last summary, i.e., they went from referenced
+	// to unreferenced or vice-versa.
+	public updatedDSCountSinceLastSummary: number = 0;
 
 	constructor(
 		// Tells whether GC should run or not.
@@ -62,7 +63,8 @@ export class GCSummaryStateTracker {
 		this.wasGCRunInLatestSummary = wasGCRunInBaseSnapshot;
 		// For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
 		// latest tracked GC version. For new documents, we will be writing the first summary with the current version.
-		this.latestSummaryGCVersion = this.configs.gcVersionInBaseSnapshot ?? this.currentGCVersion;
+		this.latestSummaryGCVersion =
+			this.configs.gcVersionInBaseSnapshot ?? this.configs.gcVersionInEffect;
 	}
 
 	/**
@@ -101,7 +103,8 @@ export class GCSummaryStateTracker {
 	public get doesSummaryStateNeedReset(): boolean {
 		return (
 			this.doesGCStateNeedReset ||
-			(this.configs.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
+			(this.configs.shouldRunGC &&
+				this.latestSummaryGCVersion !== this.configs.gcVersionInEffect)
 		);
 	}
 
@@ -260,70 +263,33 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<IGarbageCollectionSnapshotData | undefined> {
-		// If the latest summary was updated and the summary was tracked, this client is the one that generated this
-		// summary. So, update wasGCRunInLatestSummary.
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		if (!result.isSummaryTracked) {
+			return;
+		}
+
+		// If the summary is tracked, this client is the one that generated it. So, update wasGCRunInLatestSummary.
 		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
-		// true in scenarios where GC is disabled but enabled in the snapshot we loaded from.
-		if (result.latestSummaryUpdated && result.wasSummaryTracked) {
-			this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
+		// true in scenarios where GC is currently disabled but enabled in the snapshot we loaded from.
+		this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
+
+		if (!this.configs.shouldRunGC) {
+			return;
 		}
 
-		if (!result.latestSummaryUpdated || !this.configs.shouldRunGC) {
-			return undefined;
-		}
+		this.latestSummaryGCVersion = this.configs.gcVersionInEffect;
+		this.latestSummaryData = this.pendingSummaryData;
+		this.pendingSummaryData = undefined;
+		this.updatedDSCountSinceLastSummary = 0;
+		return;
+	}
 
-		// If the summary was tracked by this client, it was the one that generated the summary in the first place.
-		// Update latest state from pending.
-		if (result.wasSummaryTracked) {
-			this.latestSummaryGCVersion = this.currentGCVersion;
-			this.latestSummaryData = this.pendingSummaryData;
-			this.pendingSummaryData = undefined;
-			return undefined;
-		}
-
-		// If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
-		const snapshotTree = result.snapshotTree;
-		const metadataBlobId = snapshotTree.blobs[metadataBlobName];
-		const metadata = metadataBlobId
-			? await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId)
-			: undefined;
-		this.latestSummaryGCVersion = getGCVersion(metadata);
-
-		const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
-		// If GC ran in the container that generated this snapshot, it will have a GC tree.
-		this.wasGCRunInLatestSummary = gcSnapshotTree !== undefined;
-
-		if (gcSnapshotTree === undefined) {
-			return undefined;
-		}
-
-		let snapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
-
-		// If the GC version in the snapshot does not match the GC version currently in effect, the GC data
-		// in the snapshot cannot be interpreted correctly. Set everything to undefined except for deletedNodes
-		// because irrespective of GC versions, these nodes have been deleted and cannot be brought back. The
-		// deletedNodes info is needed to identify when these nodes are used.
-		if (getGCVersion(metadata) !== this.currentGCVersion) {
-			snapshotData = {
-				gcState: undefined,
-				tombstones: undefined,
-				deletedNodes: snapshotData.deletedNodes,
-			};
-		}
-
-		this.latestSummaryData = {
-			serializedGCState: JSON.stringify(snapshotData.gcState),
-			serializedTombstones: JSON.stringify(snapshotData.tombstones),
-			serializedDeletedNodes: JSON.stringify(snapshotData.deletedNodes),
-		};
-		return snapshotData;
+	/**
+	 * Called to update the state from a GC run's stats. Used to update the count of data stores whose state updated.
+	 */
+	public updateStateFromGCRunStats(stats: IGCStats) {
+		this.updatedDSCountSinceLastSummary += stats.updatedDataStoreCount;
 	}
 }

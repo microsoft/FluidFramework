@@ -4,13 +4,7 @@
  */
 
 export { ConnectionState } from "./connectionState";
-export {
-	IContainerConfig,
-	IContainerLoadOptions,
-	IPendingContainerState,
-	waitContainerToCatchUp,
-} from "./container";
-export { ISerializableBlobContents } from "./containerStorageAdapter";
+export { IContainerExperimental, waitContainerToCatchUp } from "./container";
 export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
@@ -19,6 +13,10 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
-	requestResolvedObjectFromContainer,
 } from "./loader";
+export {
+	isLocationRedirectionError,
+	resolveWithLocationRedirectionHandling,
+} from "./location-redirection-utilities";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
+export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils";

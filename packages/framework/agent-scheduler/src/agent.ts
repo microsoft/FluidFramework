@@ -3,15 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 
+/**
+ * @internal
+ */
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
 
+/**
+ * @internal
+ */
 export interface IProvideAgentScheduler {
 	readonly IAgentScheduler: IAgentScheduler;
 }
 
+/**
+ * Events emitted by {@link (IAgentScheduler:interface)}.
+ * @internal
+ */
 export interface IAgentSchedulerEvents extends IEvent {
 	/**
 	 * Event when ownership of task changes
@@ -35,6 +44,7 @@ export interface IAgentSchedulerEvents extends IEvent {
 
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
+ * @internal
  */
 export interface IAgentScheduler
 	extends IProvideAgentScheduler,

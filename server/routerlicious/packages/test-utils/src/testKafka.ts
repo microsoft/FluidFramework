@@ -13,6 +13,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { TestContext } from "./testContext";
 
+/**
+ * @internal
+ */
 export class TestConsumer implements IConsumer {
 	private readonly emitter = new EventEmitter();
 	private pausedQueue: string[] = null;
@@ -21,7 +24,10 @@ export class TestConsumer implements IConsumer {
 	// Leverage the context code for storing and tracking an offset
 	private readonly context = new TestContext();
 
-	constructor(public groupId: string, public topic: string) {}
+	constructor(
+		public groupId: string,
+		public topic: string,
+	) {}
 
 	public setFailOnCommit(value: boolean) {
 		this.failOnCommit = value;
@@ -46,7 +52,7 @@ export class TestConsumer implements IConsumer {
 		assert(partitionId === 0);
 
 		if (this.failOnCommit) {
-			return Promise.reject(new Error("TestConsumer set to fail on commit"));
+			throw new Error("TestConsumer set to fail on commit");
 		} else {
 			this.context.checkpoint(queuedMessage);
 			return;
@@ -113,6 +119,9 @@ export class TestConsumer implements IConsumer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class TestProducer implements IProducer {
 	constructor(private readonly kafka: TestKafka) {}
 
@@ -139,6 +148,7 @@ export class TestProducer implements IProducer {
 
 /**
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
+ * @internal
  */
 export class TestKafka {
 	public static createdQueuedMessage(offset: number, metadata?: any): IQueuedMessage {

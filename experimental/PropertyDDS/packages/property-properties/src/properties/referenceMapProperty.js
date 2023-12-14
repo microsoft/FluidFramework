@@ -15,6 +15,7 @@ const { StringMapProperty } = require("./valueMapProperty");
 
 /**
  * A StringMapProperty which stores reference values
+ * @internal
  */
 export class ReferenceMapProperty extends StringMapProperty {
 	/**
@@ -45,7 +46,7 @@ export class ReferenceMapProperty extends StringMapProperty {
 	/**
 	 * Resolves the referenced property for the given key
 	 *
-	 * @param {string|array<string|number>} in_ids - The ID of the property or an array of IDs
+	 * @param {string | Array<string | number>} in_ids - The ID of the property or an array of IDs
 	 * if an array is passed, the .get function will be performed on each id in sequence
 	 * for example .get(['position','x']) is equivalent to .get('position').get('x').
 	 * If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
@@ -54,7 +55,7 @@ export class ReferenceMapProperty extends StringMapProperty {
 	 * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
 	 * should this function behave during reference resolution?
 	 *
-	 * @returns {property-properties.BaseProperty|undefined} The property object the reference points to or undefined
+	 * @returns {BaseProperty | undefined} The property object the reference points to or undefined
 	 * if it could not be resolved
 	 */
 	get(in_ids, in_options) {
@@ -93,6 +94,7 @@ export class ReferenceMapProperty extends StringMapProperty {
 	 * Returns an object with all the nested path values.
 	 *
 	 * @example
+	 *
 	 * ```javascript
 	 * {
 	 *   'firstPath': '/path',

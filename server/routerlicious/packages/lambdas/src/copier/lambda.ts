@@ -13,13 +13,19 @@ import {
 	IRawOperationMessageBatch,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class CopierLambda implements IPartitionLambda {
 	// Below, one job corresponds to the task of sending one batch to Mongo:
 	private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
 	private pendingOffset: IQueuedMessage | undefined;
 	private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
-	constructor(private readonly rawOpCollection: ICollection<any>, protected context: IContext) {}
+	constructor(
+		private readonly rawOpCollection: ICollection<any>,
+		protected context: IContext,
+	) {}
 
 	public handler(message: IQueuedMessage) {
 		// Extract batch of raw ops from Kafka message:
@@ -77,16 +83,15 @@ export class CopierLambda implements IPartitionLambda {
 			allProcessed.push(processP);
 		}
 
-		Promise.all(allProcessed).then(
-			() => {
+		Promise.all(allProcessed)
+			.then(() => {
 				this.currentJobs.clear();
 				this.context.checkpoint(batchOffset as IQueuedMessage);
 				this.sendPending();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				this.context.error(error, { restart: true });
-			},
-		);
+			});
 	}
 
 	private async processMongoCore(kafkaBatches: IRawOperationMessageBatch[]): Promise<void> {
@@ -95,7 +100,7 @@ export class CopierLambda implements IPartitionLambda {
 			// All other errors result in a rejected promise.
 			if (error.code !== 11000) {
 				// Needs to be a full rejection here
-				return Promise.reject(error);
+				throw error;
 			}
 		});
 	}

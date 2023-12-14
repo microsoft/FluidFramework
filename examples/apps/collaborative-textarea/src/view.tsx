@@ -11,6 +11,9 @@ interface CollaborativeTextProps {
 	text: SharedString;
 }
 
+/**
+ * @internal
+ */
 export const CollaborativeTextView = (props: CollaborativeTextProps) => {
 	return (
 		<div className="text-area">

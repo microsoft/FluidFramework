@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
@@ -24,22 +24,26 @@ describe("Hardware Stats", () => {
 		taggedLogger: mockLogger,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
 	};
 
 	const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
 		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
 
 	const loadContainer = async () =>
-		ContainerRuntime.load(
-			mockContext as IContainerContext,
-			[],
-			undefined, // requestHandler
-			{
+		ContainerRuntime.loadRuntime({
+			context: mockContext as IContainerContext,
+			registryEntries: [],
+			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: { state: "disabled" },
 				},
 			},
-		);
+			provideEntryPoint: async () => ({
+				myProp: "myValue",
+			}),
+			existing: false,
+		});
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();
@@ -49,6 +53,7 @@ describe("Hardware Stats", () => {
 			taggedLogger: mockLogger,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (dirty: boolean) => {},
+			getLoadedFromVersion: () => undefined,
 		};
 	});
 

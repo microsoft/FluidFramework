@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/common-utils";
+import cluster from "cluster";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
@@ -20,18 +21,29 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IWebSocketTracker,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
+import {
+	configureWebSocketServices,
+	ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
+import { IDocumentDeleteService } from "./services";
 
+/**
+ * @internal
+ */
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
+	private stopped: boolean = false;
+	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.AlfredRunner);
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
@@ -53,107 +65,143 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
 		private readonly socketTracker?: IWebSocketTracker,
-		private readonly tokenManager?: ITokenRevocationManager,
+		private readonly tokenRevocationManager?: ITokenRevocationManager,
+		private readonly revokedTokenChecker?: IRevokedTokenChecker,
+		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create the HTTP server and attach alfred to it
-		const alfred = app.create(
-			this.config,
-			this.tenantManager,
-			this.restTenantThrottlers,
-			this.restClusterThrottlers,
-			this.singleUseTokenCache,
-			this.storage,
-			this.appTenants,
-			this.deltaService,
-			this.producer,
-			this.documentRepository,
-			this.tokenManager,
-		);
-		alfred.set("port", this.port);
+		const usingClusterModule: boolean | undefined = this.config.get("alfred:useNodeCluster");
+		// Don't include application logic in primary thread when Node.js cluster module is enabled.
+		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
-		this.server = this.serverFactory.create(alfred);
+		if (includeAppLogic) {
+			// Create the HTTP server and attach alfred to it
+			const alfred = app.create(
+				this.config,
+				this.tenantManager,
+				this.restTenantThrottlers,
+				this.restClusterThrottlers,
+				this.singleUseTokenCache,
+				this.storage,
+				this.appTenants,
+				this.deltaService,
+				this.producer,
+				this.documentRepository,
+				this.documentDeleteService,
+				this.tokenRevocationManager,
+				this.revokedTokenChecker,
+				this.collaborationSessionEventEmitter,
+			);
+			alfred.set("port", this.port);
+			this.server = this.serverFactory.create(alfred);
+
+			const maxNumberOfClientsPerDocument = this.config.get(
+				"alfred:maxNumberOfClientsPerDocument",
+			);
+			const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
+			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
+			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
+			const isClientConnectivityCountingEnabled = this.config.get(
+				"usage:clientConnectivityCountingEnabled",
+			);
+			const isSignalUsageCountingEnabled = this.config.get(
+				"usage:signalUsageCountingEnabled",
+			);
+
+			// Register all the socket.io stuff
+			configureWebSocketServices(
+				this.server.webSocketServer,
+				this.orderManager,
+				this.tenantManager,
+				this.storage,
+				this.clientManager,
+				createMetricClient(this.metricClientConfig),
+				winston,
+				maxNumberOfClientsPerDocument,
+				numberOfMessagesPerTrace,
+				maxTokenLifetimeSec,
+				isTokenExpiryEnabled,
+				isClientConnectivityCountingEnabled,
+				isSignalUsageCountingEnabled,
+				this.redisCache,
+				this.socketConnectTenantThrottler,
+				this.socketConnectClusterThrottler,
+				this.socketSubmitOpThrottler,
+				this.socketSubmitSignalThrottler,
+				this.throttleAndUsageStorageManager,
+				this.verifyMaxMessageSize,
+				this.socketTracker,
+				this.revokedTokenChecker,
+				this.collaborationSessionEventEmitter,
+			);
+
+			if (this.tokenRevocationManager) {
+				this.tokenRevocationManager.start().catch((error) => {
+					// Prevent service crash if token revocation manager fails to start
+					Lumberjack.error("Failed to start token revocation manager.", undefined, error);
+				});
+			}
+		} else {
+			// Create an HTTP server with a blank request listener
+			this.server = this.serverFactory.create(null);
+		}
 
 		const httpServer = this.server.httpServer;
-
-		const maxNumberOfClientsPerDocument = this.config.get(
-			"alfred:maxNumberOfClientsPerDocument",
-		);
-		const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
-		const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
-		const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
-		const isClientConnectivityCountingEnabled = this.config.get(
-			"usage:clientConnectivityCountingEnabled",
-		);
-		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
-
-		// Register all the socket.io stuff
-		configureWebSocketServices(
-			this.server.webSocketServer,
-			this.orderManager,
-			this.tenantManager,
-			this.storage,
-			this.clientManager,
-			createMetricClient(this.metricClientConfig),
-			winston,
-			maxNumberOfClientsPerDocument,
-			numberOfMessagesPerTrace,
-			maxTokenLifetimeSec,
-			isTokenExpiryEnabled,
-			isClientConnectivityCountingEnabled,
-			isSignalUsageCountingEnabled,
-			this.redisCache,
-			this.socketConnectTenantThrottler,
-			this.socketConnectClusterThrottler,
-			this.socketSubmitOpThrottler,
-			this.socketSubmitSignalThrottler,
-			this.throttleAndUsageStorageManager,
-			this.verifyMaxMessageSize,
-			this.socketTracker,
-		);
-
-		// Listen on provided port, on all network interfaces.
-		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
+		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
+			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
+		);
+		// Listen on primary thread port, on all network interfaces,
+		// or allow cluster module to assign random port for worker thread.
+		httpServer.listen(cluster.isPrimary ? this.port : 0);
 
-		// Start token manager
-		if (this.tokenManager) {
-			this.tokenManager.start().catch((error) => {
-				this.runningDeferred.reject(error);
-			});
-		}
+		this.stopped = false;
 
 		return this.runningDeferred.promise;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public stop(): Promise<void> {
-		// Close the underlying server and then resolve the runner once closed
-		this.server.close().then(
-			() => {
-				this.runningDeferred.resolve();
-			},
-			(error) => {
-				this.runningDeferred.reject(error);
-			},
-		);
+	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
+		if (this.stopped) {
+			Lumberjack.info("AlfredRunner.stop already called, returning early.", { caller });
+			return;
+		}
 
-		return this.runningDeferred.promise;
+		this.stopped = true;
+		Lumberjack.info("AlfredRunner.stop starting.", { caller });
+
+		const runnerServerCloseTimeoutMs =
+			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
+
+		await runnerHttpServerStop(
+			this.server,
+			this.runningDeferred,
+			runnerServerCloseTimeoutMs,
+			this.runnerMetric,
+			caller,
+			uncaughtException,
+		);
 	}
 
 	/**
 	 * Event listener for HTTP server "error" event.
 	 */
 	private onError(error) {
+		if (!this.runnerMetric.isCompleted()) {
+			this.runnerMetric.error(
+				`${this.runnerMetric.eventName} encountered an error in http server`,
+				error,
+			);
+		}
 		if (error.syscall !== "listen") {
 			throw error;
 		}
@@ -163,14 +211,51 @@ export class AlfredRunner implements IRunner {
 		// Handle specific listen errors with friendly messages
 		switch (error.code) {
 			case "EACCES":
-				this.runningDeferred.reject(`${bind} requires elevated privileges`);
+				this.runningDeferred?.reject(`${bind} requires elevated privileges`);
+				this.runningDeferred = undefined;
 				break;
 			case "EADDRINUSE":
-				this.runningDeferred.reject(`${bind} is already in use`);
+				this.runningDeferred?.reject(`${bind} is already in use`);
+				this.runningDeferred = undefined;
 				break;
 			default:
 				throw error;
 		}
+	}
+
+	/**
+	 * Handles the on "upgrade" event to setup connection count telemetry. This telemetry is updated
+	 * on all socket events: "upgrade", "close", "error".
+	 */
+	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
+		const metric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
+			origin: "upgrade",
+			metricValue: socket.server._connections,
+		});
+		metric.success("WebSockets: connection upgraded");
+		socket.on("close", (hadError: boolean) => {
+			const closeMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
+				origin: "close",
+				metricValue: socket.server._connections,
+				hadError: hadError.toString(),
+			});
+			closeMetric.success(
+				"WebSockets: connection closed",
+				hadError ? LogLevel.Error : LogLevel.Info,
+			);
+		});
+		socket.on("error", (error) => {
+			const errorMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
+				origin: "error",
+				metricValue: socket.server._connections,
+				bytesRead: socket.bytesRead,
+				bytesWritten: socket.bytesWritten,
+				error: error.toString(),
+			});
+			// We only care about the connections parameter which is already calculated.
+			// Leaving as success to avoid confusion if someone see the metric decreasing.
+			errorMetric.success("WebSockets: connection error", LogLevel.Error);
+		});
 	}
 
 	/**

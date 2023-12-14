@@ -4,9 +4,9 @@
  */
 
 import {
+	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IProvideFluidHandle,
@@ -15,22 +15,21 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { EventForwarder } from "@fluidframework/common-utils";
-import { IEvent } from "@fluidframework/common-definitions";
+import { EventForwarder } from "@fluid-internal/client-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
 
+/**
+ * @internal
+ */
 export abstract class LazyLoadedDataObject<
 		TRoot extends ISharedObject = ISharedObject,
 		TEvents extends IEvent = IEvent,
 	>
 	extends EventForwarder<TEvents>
-	implements IFluidLoadable, IProvideFluidHandle, IFluidRouter
+	implements IFluidLoadable, IProvideFluidHandle
 {
 	private _handle?: IFluidHandle<this>;
 
-	public get IFluidRouter() {
-		return this;
-	}
 	public get IFluidLoadable() {
 		return this;
 	}
@@ -52,15 +51,11 @@ export abstract class LazyLoadedDataObject<
 		this.root = root as TRoot;
 	}
 
-	// #region IFluidRouter
-
 	public async request(r: IRequest): Promise<IResponse> {
 		return r.url === "" || r.url === "/"
 			? { status: 200, mimeType: "fluid/object", value: this }
 			: create404Response(r);
 	}
-
-	// #endregion IFluidRouter
 
 	// #region IFluidLoadable
 

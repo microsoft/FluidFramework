@@ -2,22 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops";
 import { PropertySet } from "./properties";
 import { ISegment } from "./mergeTreeNodes";
 
+/**
+ * @alpha
+ */
 export type MergeTreeDeltaOperationType =
 	| typeof MergeTreeDeltaType.ANNOTATE
 	| typeof MergeTreeDeltaType.INSERT
-	| typeof MergeTreeDeltaType.REMOVE;
+	| typeof MergeTreeDeltaType.REMOVE
+	| typeof MergeTreeDeltaType.OBLITERATE;
 
 /**
  * Enum-like constant defining the types of "maintenance" events on a merge tree.
  * Maintenance events correspond to structural segment changes or acks of pending segments.
  *
  * Note: these values are assigned negative integers to avoid clashing with `MergeTreeDeltaType`.
+ * @alpha
  */
 export const MergeTreeMaintenanceType = {
 	/**
@@ -46,11 +51,20 @@ export const MergeTreeMaintenanceType = {
 	 */
 	ACKNOWLEDGED: -4,
 } as const;
+/**
+ * @alpha
+ */
 export type MergeTreeMaintenanceType =
-	typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+	(typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
+/**
+ * @alpha
+ */
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
+/**
+ * @alpha
+ */
 export interface IMergeTreeDeltaCallbackArgs<
 	TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
 > {
@@ -58,16 +72,23 @@ export interface IMergeTreeDeltaCallbackArgs<
 	readonly deltaSegments: IMergeTreeSegmentDelta[];
 }
 
+/**
+ * @alpha
+ */
 export interface IMergeTreeSegmentDelta {
 	segment: ISegment;
 	propertyDeltas?: PropertySet;
 }
 
+/**
+ * @alpha
+ */
 export interface IMergeTreeDeltaOpArgs {
 	/**
 	 * The group op which contains the operation
 	 * if there operation is part of a group op.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly groupOp?: IMergeTreeGroupMsg;
 	/**
 	 * The merge tree operation
@@ -78,23 +99,40 @@ export interface IMergeTreeDeltaOpArgs {
 	 * Delta op args are for an unacked local change
 	 */
 	readonly sequencedMessage?: ISequencedDocumentMessage;
+
+	/**
+	 * If the operation is being applied as a stashed op, which means it may have been previously submitted, and therefore should not be resubmitted
+	 */
+	readonly stashed?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeClientSequenceArgs {
 	readonly clientId: number;
 	readonly referenceSequenceNumber: number;
 	readonly sequenceNumber: number;
 }
 
+/**
+ * @internal
+ */
 export type MergeTreeDeltaCallback = (
 	opArgs: IMergeTreeDeltaOpArgs,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 ) => void;
 
+/**
+ * @alpha
+ */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 
+/**
+ * @internal
+ */
 export type MergeTreeMaintenanceCallback = (
 	MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs,
 	opArgs: IMergeTreeDeltaOpArgs | undefined,

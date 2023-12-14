@@ -5,42 +5,39 @@
 
 import { strict as assert } from "assert";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
 	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
+	class TestDataObject extends apis.dataRuntime.DataObject {
+		public get _root() {
+			return this.root;
+		}
 	}
-}
 
-describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		// Disable summaries so the summarizer client doesn't interfere with the audience
+	const dataObjectFactory = new apis.dataRuntime.DataObjectFactory(
+		"TestDataObject",
+		TestDataObject,
+		[],
+		[],
+	);
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 		{
-			summaryOptions: {
-				summaryConfigOverrides: { state: "disabled" },
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			// Disable summaries so the summarizer client doesn't interfere with the audience
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: { state: "disabled" },
+				},
 			},
 		},
 	);
@@ -146,17 +143,13 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	it("should add clients in audience as expected in write mode", async () => {
 		// Create a client - client1.
 		const client1Container = await createContainer();
-		const client1DataStore = await requestFluidObject<TestDataObject>(
-			client1Container,
-			"default",
-		);
+		const client1DataStore =
+			await getContainerEntryPointBackCompat<TestDataObject>(client1Container);
 
 		// Load a second client - client2.
 		const client2Container = await loadContainer();
-		const client2DataStore = await requestFluidObject<TestDataObject>(
-			client2Container,
-			"default",
-		);
+		const client2DataStore =
+			await getContainerEntryPointBackCompat<TestDataObject>(client2Container);
 
 		// Perform operations to move the clients to "write" mode (if not already in write mode).
 		client1DataStore._root.set("testKey1", "testValue1");

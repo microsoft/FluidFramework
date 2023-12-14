@@ -13,11 +13,30 @@ import { IGitCache, ISession } from "@fluidframework/server-services-client";
 import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
+/**
+ * @internal
+ */
 export interface IDocumentDetails {
 	existing: boolean;
 	value: IDocument;
 }
 
+/**
+ * @internal
+ */
+export interface IDocumentStaticProperties {
+	// Schema version
+	version: string;
+	createTime: number;
+	documentId: string;
+	tenantId: string;
+	storageName?: string;
+	isEphemeralContainer?: boolean;
+}
+
+/**
+ * @internal
+ */
 export interface IDocumentStorage {
 	getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
@@ -36,16 +55,20 @@ export interface IDocumentStorage {
 		documentId: string,
 		summary: ISummaryTree,
 		sequenceNumber: number,
-		term: number,
 		initialHash: string,
 		ordererUrl: string,
 		historianUrl: string,
 		deltaStreamUrl: string,
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean,
+		isEphemeralContainer: boolean,
+		messageBrokerId?: string,
 	): Promise<IDocumentDetails>;
 }
 
+/**
+ * @internal
+ */
 export interface IClientSequenceNumber {
 	// Whether or not the client can expire
 	canEvict: boolean;
@@ -58,6 +81,9 @@ export interface IClientSequenceNumber {
 	serverMetadata?: any;
 }
 
+/**
+ * @internal
+ */
 export interface IDeliState {
 	// List of connected clients
 	clients: IClientSequenceNumber[] | undefined;
@@ -77,12 +103,6 @@ export interface IDeliState {
 	// Rolling hash at sequenceNumber
 	expHash1: string;
 
-	// Epoch of stream provider
-	epoch: number;
-
-	// Term at logOffset
-	term: number;
-
 	// Last sent minimum sequence number
 	lastSentMSN: number | undefined;
 
@@ -100,6 +120,9 @@ export interface IDeliState {
 }
 
 // TODO: We should probably rename this to IScribeState
+/**
+ * @internal
+ */
 export interface IScribe {
 	// Kafka checkpoint that maps to the below stored data
 	logOffset: number;
@@ -122,8 +145,14 @@ export interface IScribe {
 
 	// Refs of the service summaries generated since the last client generated summary.
 	validParentSummaries: string[] | undefined;
+
+	// Is document corrupted?
+	isCorrupt: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface IDocument {
 	// Schema version
 	version: string;
@@ -148,4 +177,24 @@ export interface IDocument {
 	// Timestamp of when this document and related data will be hard deleted.
 	// The document is soft deleted if a scheduled deletion timestamp is present.
 	scheduledDeletionTime?: string;
+
+	// name of the storage to save the document durable artifacts
+	storageName?: string;
+
+	isEphemeralContainer?: boolean;
+}
+
+/**
+ * @alpha
+ */
+export interface ICheckpoint {
+	_id: string;
+
+	documentId: string;
+
+	tenantId: string;
+
+	scribe: string;
+
+	deli: string;
 }

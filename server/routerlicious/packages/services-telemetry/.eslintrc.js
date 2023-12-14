@@ -10,5 +10,6 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"promise/catch-or-return": ["error", { allowFinally: true }],
 	},
 };

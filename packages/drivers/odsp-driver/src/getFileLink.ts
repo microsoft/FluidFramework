@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
-import { canRetryOnError, NonRetryableError } from "@fluidframework/driver-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	IOdspUrlParts,
@@ -20,7 +19,7 @@ import {
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { runWithRetry } from "./retryUtils";
+import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();
@@ -39,7 +38,7 @@ const fileLinkCache = new Map<string, Promise<string>>();
 export async function getFileLink(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): Promise<string> {
 	const cacheKey = `${odspUrlParts.siteUrl}_${odspUrlParts.driveId}_${odspUrlParts.itemId}`;
 	const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
@@ -50,18 +49,32 @@ export async function getFileLink(
 	const fileLinkGenerator = async function () {
 		let fileLinkCore: string;
 		try {
+			let retryCount = 0;
 			fileLinkCore = await runWithRetry(
-				async () => getFileLinkCore(getToken, odspUrlParts, logger),
-				"getFileLinkCore",
+				async () =>
+					runWithRetryForCoherencyAndServiceReadOnlyErrors(
+						async () => getFileLinkCore(getToken, odspUrlParts, logger),
+						"getFileLinkCore",
+						logger,
+					),
+				"getShareLink",
 				logger,
+				{
+					onRetry(delayInMs: number, error: any) {
+						retryCount++;
+						if (retryCount === 5) {
+							if (error !== undefined && typeof error === "object") {
+								error.canRetry = false;
+								throw error;
+							}
+							throw error;
+						}
+					},
+				},
 			);
 		} catch (err) {
-			// runWithRetry throws a non retriable error after it hits the max # of attempts
-			// or encounters an unexpected error type
-			if (!canRetryOnError(err)) {
-				// Delete from the cache to permit retrying later.
-				fileLinkCache.delete(cacheKey);
-			}
+			// Delete from the cache to permit retrying later.
+			fileLinkCache.delete(cacheKey);
 			throw err;
 		}
 
@@ -80,7 +93,7 @@ export async function getFileLink(
 async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): Promise<string> {
 	const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, true);
 
@@ -178,7 +191,7 @@ const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLi
 async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(

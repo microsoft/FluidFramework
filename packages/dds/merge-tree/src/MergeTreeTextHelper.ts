@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IIntegerRange } from "./base";
+import { IIntegerRange } from "./client";
 import { ISegment } from "./mergeTreeNodes";
 import { MergeTree } from "./mergeTree";
+// eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment";
 
 interface ITextAccumulator {
@@ -14,6 +15,7 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
+// eslint-disable-next-line import/no-deprecated
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 
@@ -73,6 +75,7 @@ function gatherText(
 		}
 	} else if (placeholder && placeholder.length > 0) {
 		const placeholderText =
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
 		textSegment.text += placeholderText;
 	}

@@ -47,14 +47,13 @@ describe("kafka-service", () => {
 			});
 
 			async function verifyRejection(promise: Promise<any>): Promise<any> {
-				await promise.then(
-					() => {
+				await promise
+					.then(() => {
 						assert(false, "promise should have been rejected");
-					},
-					(error) => {
+					})
+					.catch((error) => {
 						return;
-					},
-				);
+					});
 			}
 
 			it("Should resolve start promise on kafka error ", async () => {

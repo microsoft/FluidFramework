@@ -2,21 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Lazy } from "@fluidframework/common-utils";
-import { TelemetryDataTag } from "./logger";
-
-export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
-
-/**
- * Base interface for providing configurations to enable/disable/control features
- */
-export interface IConfigProviderBase {
-	getRawConfig(name: string): ConfigTypes;
-}
+import {
+	ITelemetryBaseLogger,
+	IConfigProviderBase,
+	ConfigTypes,
+} from "@fluidframework/core-interfaces";
+import { Lazy } from "@fluidframework/core-utils";
+import { createChildLogger, tagCodeArtifacts } from "./logger";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
- * Explicitly typed interface for reading configurations
+ * Explicitly typed interface for reading configurations.
+ *
+ * @internal
  */
 export interface IConfigProvider extends IConfigProviderBase {
 	getBoolean(name: string): boolean | undefined;
@@ -30,6 +28,8 @@ export interface IConfigProvider extends IConfigProviderBase {
  * Creates a base configuration provider based on `sessionStorage`
  *
  * @returns A lazy initialized base configuration provider with `sessionStorage` as the underlying config store
+ *
+ * @internal
  */
 export const sessionStorageConfigProvider = new Lazy<IConfigProviderBase>(() =>
 	inMemoryConfigProvider(safeSessionStorage()),
@@ -49,11 +49,12 @@ const NullConfigProvider: IConfigProviderBase = {
 export const inMemoryConfigProvider = (storage: Storage | undefined): IConfigProviderBase => {
 	if (storage !== undefined && storage !== null) {
 		return new CachedConfigProvider(undefined, {
-			getRawConfig: (name: string) => {
+			getRawConfig: (name: string): ConfigTypes | undefined => {
 				try {
 					return stronglyTypedParse(storage.getItem(name) ?? undefined)?.raw;
-				} catch {}
-				return undefined;
+				} catch {
+					return undefined;
+				}
 			},
 		});
 	}
@@ -75,10 +76,12 @@ function isPrimitiveType(type: string): type is PrimitiveTypeStrings {
 	switch (type) {
 		case "boolean":
 		case "number":
-		case "string":
+		case "string": {
 			return true;
-		default:
+		}
+		default: {
 			return false;
+		}
 	}
 }
 
@@ -103,7 +106,7 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 	// holds strings
 	if (typeof input === "string") {
 		try {
-			output = JSON.parse(input);
+			output = JSON.parse(input) as ConfigTypes;
 			// we succeeded in parsing, but we don't support parsing
 			// for any object as we can't do it type safely
 			// so in this case, the default return will be string
@@ -112,7 +115,9 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 			// a false sense of security by just
 			// casting.
 			defaultReturn = { raw: input, string: input };
-		} catch {}
+		} catch {
+			// No-op
+		}
 	}
 
 	if (output === undefined) {
@@ -143,7 +148,9 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 	return defaultReturn;
 }
 
-/** `sessionStorage` is undefined in some environments such as Node and web pages with session storage disabled */
+/**
+ * `sessionStorage` is undefined in some environments such as Node and web pages with session storage disabled.
+ */
 const safeSessionStorage = (): Storage | undefined => {
 	// For some configurations accessing "globalThis.sessionStorage" throws
 	// "'sessionStorage' property from 'Window': Access is denied for this document" rather than returning undefined.
@@ -221,11 +228,10 @@ export class CachedConfigProvider implements IConfigProvider {
 					this.logger?.send({
 						category: "generic",
 						eventName: "ConfigRead",
-						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
-						configValue: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: JSON.stringify(parsed),
-						},
+						...tagCodeArtifacts({
+							configName: name,
+							configValue: JSON.stringify(parsed),
+						}),
 					});
 					return parsed;
 				}
@@ -238,21 +244,34 @@ export class CachedConfigProvider implements IConfigProvider {
 }
 
 /**
- * A type containing both a telemetry logger and a configuration provider
+ * A type containing both a telemetry logger and a configuration provider.
+ *
+ * @internal
  */
-export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger> {
+export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
 	config: IConfigProvider;
 	logger: L;
 }
 
-export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+/**
+ * Determines whether or not the provided object is a {@link MonitoringContext}.
+ * @remarks Can be used for type-narrowing.
+ *
+ * @internal
+ */
+export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	obj: L,
 ): obj is L & MonitoringContext<L> {
 	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
-export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+/**
+ * Creates a {@link MonitoringContext} from the provided logger, if it isn't already one.
+ *
+ * @internal
+ */
+export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 ): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
@@ -261,10 +280,21 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 	return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);
 }
 
-export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+/**
+ * Creates a {@link MonitoringContext} from the provided logger.
+ *
+ * @remarks
+ * Assumes that the provided logger is not itself already a {@link MonitoringContext}, and will throw an error if it is.
+ * If you are unsure, use {@link loggerToMonitoringContext} instead.
+ *
+ * @throws If the provided logger is already a {@link MonitoringContext}.
+ *
+ * @internal
+ */
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
-) {
+): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
 		throw new Error("Logger is already a monitoring context");
 	}
@@ -285,4 +315,16 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
 	const maybeConfig = obj as Partial<IConfigProviderBase> | undefined;
 	return typeof maybeConfig?.getRawConfig === "function";
+}
+
+/**
+ * Creates a child logger with a {@link MonitoringContext}.
+ *
+ * @see {@link loggerToMonitoringContext}
+ * @internal
+ */
+export function createChildMonitoringContext(
+	props: Parameters<typeof createChildLogger>[0],
+): MonitoringContext {
+	return loggerToMonitoringContext(createChildLogger(props));
 }

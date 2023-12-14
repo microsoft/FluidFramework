@@ -6,14 +6,14 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import assert from "assert";
 import { EventEmitter } from "events";
+import { MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import {
+	SequenceEvent,
 	ISegment,
 	ReferencePosition,
-	MergeTreeMaintenanceType,
 	LocalReferencePosition,
-} from "@fluidframework/merge-tree";
-import { SequenceEvent } from "@fluidframework/sequence";
-import { FlowDocument } from "../document";
+} from "@fluidframework/sequence";
+import { FlowDocument } from "../document/index.js";
 import {
 	clamp,
 	Dom,
@@ -23,10 +23,10 @@ import {
 	hasTagName,
 	isTextNode,
 	TagName,
-} from "../util";
-import { extractRef, updateRef } from "../util/localref";
-import { debug } from "./debug";
-import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
+} from "../util/index.js";
+import { extractRef, updateRef } from "../util/localref.js";
+import { debug } from "./debug.js";
+import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter.js";
 
 interface ILayoutCursor {
 	parent: Node;
@@ -298,6 +298,7 @@ export class Layout extends EventEmitter {
 			"  pushFormat(%o,pos=%d,%s,start=%d,end=%d,depth=%d)",
 			formatter,
 			this.position,
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			segment.toString(),
 			this.startOffset,
 			this.endOffset,

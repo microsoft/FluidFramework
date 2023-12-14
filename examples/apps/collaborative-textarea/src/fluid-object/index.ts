@@ -9,6 +9,7 @@ import { SharedString } from "@fluidframework/sequence";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
+ * @internal
  */
 export class CollaborativeText extends DataObject {
 	private readonly textKey = "textKey";
@@ -21,9 +22,7 @@ export class CollaborativeText extends DataObject {
 		return this._text;
 	}
 
-	public static get Name() {
-		return "@fluid-example/collaborative-textarea";
-	}
+	public static readonly Name = "@fluid-example/collaborative-textarea";
 
 	private static readonly factory = new DataObjectFactory(
 		CollaborativeText.Name,

@@ -9,11 +9,23 @@ export {
 	AlfredRunner,
 	AlfredRunnerFactory,
 	DeltaService,
+	DocumentDeleteService,
+	IAlfredResourcesCustomizations,
+	IDocumentDeleteService,
 	OrdererManager,
 } from "./alfred";
+export {
+	NexusResources,
+	NexusResourcesFactory,
+	NexusRunnerFactory,
+	INexusResourcesCustomizations,
+} from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
+	MongoTenantRepository,
+	IRiddlerResourcesCustomizations,
 	ITenantDocument,
+	ITenantRepository,
 	RiddlerResources,
 	RiddlerResourcesFactory,
 	RiddlerRunner,

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import {
-	DocumentationNode,
+	type DocumentationNode,
 	DocumentationParentNodeBase,
-	SingleLineDocumentationNode,
+	type SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";
-import { TextFormatting } from "./TextFormatting";
+import { type TextFormatting } from "./TextFormatting";
 import { createNodesFromPlainText } from "./Utilities";
 
 /**
@@ -36,6 +36,8 @@ import { createNodesFromPlainText } from "./Utilities";
  * 	</i>
  * </span>
  * ```
+ *
+ * @public
  */
 export class SpanNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -73,6 +75,8 @@ export class SpanNode<
 
 /**
  * A {@link SpanNode} that contractually fits on a single line.
+ *
+ * @public
  */
 export class SingleLineSpanNode
 	extends SpanNode<SingleLineDocumentationNode>

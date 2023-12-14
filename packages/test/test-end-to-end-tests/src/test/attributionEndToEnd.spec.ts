@@ -10,7 +10,6 @@ import {
 	enableOnNewFileKey,
 	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
@@ -18,11 +17,12 @@ import {
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	ITestFluidObject,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -90,7 +90,7 @@ function assertAttributionMatches(
 
 // TODO: Expand the e2e tests in this suite to cover interesting combinations of configuration and versioning that aren't covered by mixinAttributor
 // unit tests.
-describeNoCompat("Attributor", (getTestObjectProvider) => {
+describeCompat("Attributor", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -101,7 +101,7 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 	});
 
 	const sharedStringFromContainer = async (container: IContainer) => {
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
 
@@ -122,32 +122,40 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		},
 	});
 
-	it("Can attribute content from multiple collaborators", async () => {
-		const attributor = createRuntimeAttributor();
-		const container1 = await provider.makeTestContainer(getTestConfig(attributor));
-		const sharedString1 = await sharedStringFromContainer(container1);
-		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const sharedString2 = await sharedStringFromContainer(container2);
+	/**
+	 * Tracked by AB#4997, if no error event is detected within one sprint, we will remove
+	 * the skipping or take actions accordingly if it is.
+	 */
+	itSkipsFailureOnSpecificDrivers(
+		"Can attribute content from multiple collaborators",
+		["tinylicious", "t9s"],
+		async () => {
+			const attributor = createRuntimeAttributor();
+			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
+			const sharedString1 = await sharedStringFromContainer(container1);
+			const container2 = await provider.loadTestContainer(testContainerConfig);
+			const sharedString2 = await sharedStringFromContainer(container2);
 
-		const text = "client 1";
-		sharedString1.insertText(0, text);
-		assertAttributionMatches(sharedString1, 3, attributor, "local");
-		await provider.ensureSynchronized();
-		sharedString2.insertText(0, "client 2, ");
-		await provider.ensureSynchronized();
-		assert.equal(sharedString1.getText(), "client 2, client 1");
+			const text = "client 1";
+			sharedString1.insertText(0, text);
+			assertAttributionMatches(sharedString1, 3, attributor, "local");
+			await provider.ensureSynchronized();
+			sharedString2.insertText(0, "client 2, ");
+			await provider.ensureSynchronized();
+			assert.equal(sharedString1.getText(), "client 2, client 1");
 
-		assert(
-			container1.clientId !== undefined && container2.clientId !== undefined,
-			"Both containers should have client ids.",
-		);
-		assertAttributionMatches(sharedString1, 3, attributor, {
-			user: container1.audience.getMember(container2.clientId)?.user,
-		});
-		assertAttributionMatches(sharedString1, 13, attributor, {
-			user: container1.audience.getMember(container1.clientId)?.user,
-		});
-	});
+			assert(
+				container1.clientId !== undefined && container2.clientId !== undefined,
+				"Both containers should have client ids.",
+			);
+			assertAttributionMatches(sharedString1, 3, attributor, {
+				user: container1.audience.getMember(container2.clientId)?.user,
+			});
+			assertAttributionMatches(sharedString1, 13, attributor, {
+				user: container1.audience.getMember(container1.clientId)?.user,
+			});
+		},
+	);
 
 	it("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();

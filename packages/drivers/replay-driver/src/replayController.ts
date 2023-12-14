@@ -12,6 +12,7 @@ import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Partial implementation of IDocumentStorageService
+ * @internal
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
 	public abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
@@ -22,15 +23,15 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 		summary: api.ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public get repositoryUrl(): string {
@@ -42,13 +43,14 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
  * Replay controller object
  * It controls where we start (snapshot, local file, no snapshots)
  * As well as dispatch of ops
+ * @internal
  */
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 	/**
 	 * Initialize reply controller
 	 * @param documentService - the real document service
-	 * @returns - Boolean, indicating if controller should be used.
-	 * If false is returned, caller should fallback to original storage.
+	 * @returns Whether or not the controller should be used.
+	 * If `false` is returned, caller should fallback to original storage.
 	 */
 	public abstract initStorage(documentService: IDocumentService): Promise<boolean>;
 

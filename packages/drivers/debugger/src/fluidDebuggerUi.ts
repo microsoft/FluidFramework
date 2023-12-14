@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, IVersion } from "@fluidframework/protocol-definitions";
 
+/**
+ * @internal
+ */
 export interface IDebuggerUI {
 	/**
 	 * Version information is provided.
@@ -56,6 +59,9 @@ export interface IDebuggerUI {
 	updateLastOpText(lastKnownOp: number, stillLoading: boolean): void;
 }
 
+/**
+ * @internal
+ */
 export interface IDebuggerController {
 	/**
 	 * Initialization. UI layers calls into controller to connect the two.
@@ -132,6 +138,9 @@ Step to move: <input type='number' id='steps' value='1' min='1' style='width:50p
 <button type='button' id='downloadOps'>Download ops</button>
 </body>`;
 
+/**
+ * @internal
+ */
 export class DebuggerUI {
 	public static create(controller: IDebuggerController): DebuggerUI | null {
 		if (

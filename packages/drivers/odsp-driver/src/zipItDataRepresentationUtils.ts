@@ -8,8 +8,9 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
  */
 
-import { assert, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
@@ -205,7 +206,11 @@ export class BlobShallowCopy extends BlobCore {
 	 * @param start - Start point of the blob in the buffer.
 	 * @param end - End point of the blob in the buffer.
 	 */
-	constructor(protected data: Uint8Array, protected start: number, protected end: number) {
+	constructor(
+		protected data: Uint8Array,
+		protected start: number,
+		protected end: number,
+	) {
 		super();
 	}
 
@@ -391,7 +396,7 @@ export class NodeCore {
 	 * Load and parse the buffer into a tree.
 	 * @param buffer - buffer to read from.
 	 */
-	protected load(buffer: ReadBuffer, logger: ITelemetryLogger) {
+	protected load(buffer: ReadBuffer, logger: ITelemetryLoggerExt) {
 		const [stringsToResolve, durationStructure] = measure(() =>
 			this.loadStructure(buffer, logger),
 		);
@@ -405,7 +410,7 @@ export class NodeCore {
 	 * Load and parse the buffer into a tree.
 	 * @param buffer - buffer to read from.
 	 */
-	protected loadStructure(buffer: ReadBuffer, logger: ITelemetryLogger) {
+	protected loadStructure(buffer: ReadBuffer, logger: ITelemetryLoggerExt) {
 		const stack: NodeTypes[][] = [];
 		const stringsToResolve: IStringElementInternal[] = [];
 		const dictionary: IStringElement[] = [];
@@ -506,7 +511,7 @@ export class NodeCore {
 	private loadStrings(
 		buffer: ReadBuffer,
 		stringsToResolve: IStringElementInternal[],
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	) {
 		/**
 		 * Process all the strings at once!
@@ -557,7 +562,7 @@ export class NodeCore {
  * Provides loading and serialization capabilities.
  */
 export class TreeBuilder extends NodeCore {
-	static load(buffer: ReadBuffer, logger: ITelemetryLogger) {
+	static load(buffer: ReadBuffer, logger: ITelemetryLoggerExt) {
 		const builder = new TreeBuilder();
 		const telemetryProps = builder.load(buffer, logger);
 		assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);

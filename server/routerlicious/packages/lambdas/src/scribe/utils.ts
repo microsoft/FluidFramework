@@ -15,14 +15,10 @@ import {
 	RawOperationType,
 } from "@fluidframework/server-services-core";
 
-export const initializeProtocol = (
-	protocolState: IProtocolState,
-	term: number,
-): ProtocolOpHandler =>
+export const initializeProtocol = (protocolState: IProtocolState): ProtocolOpHandler =>
 	new ProtocolOpHandler(
 		protocolState.minimumSequenceNumber,
 		protocolState.sequenceNumber,
-		term,
 		protocolState.members,
 		protocolState.proposals,
 		protocolState.values,
@@ -50,4 +46,8 @@ export const sendToDeli = (
 	};
 
 	return producer.send([message], tenantId, documentId);
+};
+
+export const getClientIds = (protocolState: IProtocolState, clientCount: number) => {
+	return protocolState.members.slice(0, clientCount).map((member) => member[0]);
 };

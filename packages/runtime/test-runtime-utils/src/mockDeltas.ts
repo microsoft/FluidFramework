@@ -18,10 +18,12 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
+ * @internal
  */
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 	protected readonly queue: T[] = [];
@@ -96,6 +98,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
+ * @internal
  */
 export class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -141,17 +144,13 @@ export class MockDeltaManager
 		return undefined as any as string;
 	}
 
-	public get maxMessageSize(): number {
-		return 0;
-	}
+	public readonly maxMessageSize: number = 0;
 
 	public get serviceConfiguration(): IClientConfiguration {
 		return undefined as any as IClientConfiguration;
 	}
 
-	public get active(): boolean {
-		return true;
-	}
+	public readonly active: boolean = true;
 
 	public close(): void {}
 

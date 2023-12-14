@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert, expect } from 'chai';
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { strict as assert } from 'assert';
+import { expect } from 'chai';
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
+	validateAssertionError,
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
 import { EditId, NodeId, TraitLabel } from '../../Identifiers';
@@ -402,7 +404,7 @@ export function runSharedTreeOperationsTests(
 					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
 					containerRuntimeFactory.pushMessage = (msg) => {
 						// Drop the version property to replicate ops created before the version property existed
-						msg.contents.version = undefined;
+						(msg.contents as { version?: unknown }).version = undefined;
 						originalPushMessage(msg);
 					};
 
@@ -921,10 +923,10 @@ export function runSharedTreeOperationsTests(
 					...summary,
 					sequencedEdits,
 				};
-				expect(() => sharedTree2.loadSummary(corruptedSummary))
-					.to.throw(Error)
-					.that.has.property('message')
-					.which.matches(/Duplicate/);
+				assert.throws(
+					() => sharedTree2.loadSummary(corruptedSummary),
+					(e: Error) => validateAssertionError(e, /Duplicate/)
+				);
 			});
 
 			it('can be used without history preservation', async () => {

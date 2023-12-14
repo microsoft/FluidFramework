@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue } from "./interfaces";
 import { ILocalValue } from "./localValues";
 
@@ -23,6 +24,7 @@ export interface IMapSetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	value: ISerializableValue;
 }
 

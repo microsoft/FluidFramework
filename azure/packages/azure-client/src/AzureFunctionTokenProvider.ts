@@ -4,9 +4,9 @@
  */
 import axios from "axios";
 
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import { type ITokenProvider, type ITokenResponse } from "@fluidframework/routerlicious-driver";
 
-import { AzureMember } from "./interfaces";
+import { type AzureMember } from "./interfaces";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
@@ -15,6 +15,7 @@ import { AzureMember } from "./interfaces";
  * @deprecated 1.2.0, This API will be removed in 2.0.0
  * No replacement since it is not expected anyone will use this token provider as is
  * See https://github.com/microsoft/FluidFramework/issues/13693 for context
+ * @internal
  */
 export class AzureFunctionTokenProvider implements ITokenProvider {
 	/**

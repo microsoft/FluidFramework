@@ -6,15 +6,36 @@
 		"level": "info",
 		"timestamp": true
 	},
+	"config": {
+		"configDumpEnabled": false,
+		"secretNamesToRedactInConfigDump": [
+			"mongo.globalDbEndpoint",
+			"mongo.operationsDbEndpoint",
+			"redis.pass",
+			"redisForTenantCache.pass",
+			"redis2.pass",
+			"redisForThrottling.pass"
+		]
+	},
 	"riddler": "http://riddler:5000",
+	"alfred": "http://alfred:3000",
 	"requestSizeLimit": "1gb",
+	"ignoreEphemeralFlag": true,
 	"redis": {
 		"host": "redis",
-		"port": 6379
+		"port": 6379,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForThrottling": {
 		"host": "redis",
-		"port": 6379
+		"port": 6379,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"error": {
 		"track": false,
@@ -72,10 +93,16 @@
 		}
 	},
 	"restGitService": {
-		"disableGitCache": false
+		"disableGitCache": false,
+		"maxCacheableSummarySize": 100000000
 	},
 	"storageUrl": "",
 	"tokenRevocation": {
 		"enable": false
+	},
+	"system": {
+		"httpServer": {
+			"connectionTimeoutMs": 0
+		}
 	}
 }

@@ -53,6 +53,7 @@ const LoadingButton: React.FunctionComponent<ILoadingButtonProps> = ({
 
 	const handleClick = () => {
 		setState({ progress: true });
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		onClick().finally(() => isMounted && setState({ progress: false }));
 	};
 

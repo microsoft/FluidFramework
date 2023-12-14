@@ -1,10 +1,8 @@
-
 ## Note:
 
 The instructions below are out of date. They might work partially but are not fully supported.
 
 ---
-
 
 ## Minikube
 

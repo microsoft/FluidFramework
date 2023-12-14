@@ -12,6 +12,7 @@ import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
 
 /**
  * JSON serialized form of an IFluidHandle
+ * @internal
  */
 export interface ISerializedHandle {
 	// Marker to indicate to JSON.parse that the object is a Fluid handle
@@ -21,9 +22,15 @@ export interface ISerializedHandle {
 	url: string;
 }
 
+/**
+ * @internal
+ */
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 	value?.type === "__fluid_handle__";
 
+/**
+ * @alpha
+ */
 export interface IFluidSerializer {
 	/**
 	 * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
@@ -59,6 +66,7 @@ export interface IFluidSerializer {
 
 /**
  * Data Store serializer implementation
+ * @internal
  */
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;

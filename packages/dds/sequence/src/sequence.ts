@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+
+import { assert, Deferred } from "@fluidframework/core-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -11,12 +13,13 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createRemoveRangeOp,
-	ICombiningOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -30,11 +33,13 @@ import {
 	matchProperties,
 	MergeTreeDeltaType,
 	PropertySet,
-	RangeStackMap,
 	ReferencePosition,
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	IMergeTreeObliterateMsg,
+	createObliterateRangeOp,
+	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -43,16 +48,15 @@ import {
 	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
-	SummarySerializer,
 } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-
-import { DefaultMap } from "./defaultMap";
+import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
+import { SequenceInterval } from "./intervals";
 import {
+	IIntervalCollection,
 	IntervalCollection,
-	SequenceInterval,
 	SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
@@ -93,22 +97,26 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @alpha
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
 		event: "createIntervalCollection",
 		listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "sequenceDelta",
 		listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "maintenance",
 		listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 }
 
+/**
+ * @alpha
+ */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
@@ -117,13 +125,27 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.loadedDeferred.promise;
 	}
 
+	/**
+	 * This is a safeguard to avoid problematic reentrancy of local ops. This type of scenario occurs if the user of SharedString subscribes
+	 * to the `sequenceDelta` event and uses the callback for a local op to submit further local ops.
+	 * Historically (before 2.0.0-internal.6.1.0), doing so would result in eventual consistency issues or a corrupted document.
+	 * These issues were fixed in #16815 which makes such reentrancy no different from applying the ops in order but not from within the change events,
+	 * but there is still little test coverage for reentrant scenarios.
+	 * Additionally, applications submitting ops from inside change events need to take extreme care that their data models also support reentrancy.
+	 * Since this is likely not the case, by default SharedString throws when encountering reentrant ops.
+	 *
+	 * An application using SharedString which explicitly wants to opt in to allowing reentrancy anyway can set `sharedStringPreventReentrancy`
+	 * on the data store options to `false`.
+	 */
+	protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
+
 	private static createOpsFromDelta(event: SequenceDeltaEvent): IMergeTreeDeltaOp[] {
 		const ops: IMergeTreeDeltaOp[] = [];
 		for (const r of event.ranges) {
 			switch (event.deltaOperation) {
 				case MergeTreeDeltaType.ANNOTATE: {
 					const lastAnnotate = ops[ops.length - 1] as IMergeTreeAnnotateMsg;
-					const props = {};
+					const props: PropertySet = {};
 					for (const key of Object.keys(r.propertyDeltas)) {
 						props[key] = r.segment.properties?.[key] ?? null;
 					}
@@ -139,7 +161,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								r.position,
 								r.position + r.segment.cachedLength,
 								props,
-								undefined,
 							),
 						);
 					}
@@ -166,12 +187,32 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					break;
 				}
 
+				case MergeTreeDeltaType.OBLITERATE: {
+					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
+					if (lastRem?.pos1 === r.position) {
+						assert(
+							lastRem.pos2 !== undefined,
+							0x874 /* pos2 should not be undefined here */,
+						);
+						lastRem.pos2 += r.segment.cachedLength;
+					} else {
+						ops.push(
+							createObliterateRangeOp(
+								r.position,
+								r.position + r.segment.cachedLength,
+							),
+						);
+					}
+					break;
+				}
+
 				default:
 			}
 		}
 		return ops;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
@@ -192,22 +233,39 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
+		this.guardReentrancy =
+			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
+				? ensureNoReentrancy
+				: createReentrancyDetector((depth) => {
+						if (totalReentrancyLogs > 0) {
+							totalReentrancyLogs--;
+							this.logger.sendTelemetryEvent(
+								{ eventName: "LocalOpReentry", depth },
+								new LoggingError(reentrancyErrorMessage),
+							);
+						}
+				  });
+
 		this.loadedDeferred.promise.catch((error) => {
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
+		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
 			segmentFromSpec,
-			ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
+			createChildLogger({
+				logger: this.logger,
+				namespace: "SharedSegmentSequence.MergeTreeClient",
+			}),
 			dataStoreRuntime.options,
 		);
 
-		this.client.on("delta", (opArgs, deltaArgs) => {
-			this.emit(
-				"sequenceDelta",
-				new SequenceDeltaEvent(opArgs, deltaArgs, this.client),
-				this,
-			);
+		this.client.prependListener("delta", (opArgs, deltaArgs) => {
+			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
+			if (opArgs.stashed !== true && event.isLocal) {
+				this.submitSequenceMessage(opArgs.op);
+			}
+			this.emit("sequenceDelta", event, this);
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {
@@ -219,6 +277,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
+			dataStoreRuntime.options,
 		);
 	}
 
@@ -226,15 +285,28 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */
-	public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
-		const removeOp = this.client.removeRangeLocal(start, end);
-		this.submitSequenceMessage(removeOp);
-		return removeOp;
+	public removeRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
+	/**
+	 * Obliterate is similar to remove, but differs in that segments concurrently
+	 * inserted into an obliterated range will also be removed
+	 *
+	 * @param start - The inclusive start of the range to obliterate
+	 * @param end - The exclusive end of the range to obliterate
+	 */
+	public obliterateRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
+	}
+
+	/**
+	 * @deprecated The ability to create group ops will be removed in an upcoming
+	 * release, as group ops are redundant with the native batching capabilities
+	 * of the runtime
+	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
-		this.client.localTransaction(groupOp);
-		this.submitSequenceMessage(groupOp);
+		this.guardReentrancy(() => this.client.localTransaction(groupOp));
 	}
 
 	/**
@@ -271,19 +343,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 *
 	 */
-	public annotateRange(
-		start: number,
-		end: number,
-		props: PropertySet,
-		combiningOp?: ICombiningOp,
-	) {
-		const annotateOp = this.client.annotateRangeLocal(start, end, props, combiningOp);
-		if (annotateOp) {
-			this.submitSequenceMessage(annotateOp);
-		}
+	public annotateRange(start: number, end: number, props: PropertySet): void {
+		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
 	public getPropertiesAtPosition(pos: number) {
@@ -307,8 +370,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
-		return this.client.createLocalReferencePosition(segment, offset, refType, properties);
+		return this.client.createLocalReferencePosition(
+			segment,
+			offset,
+			refType,
+			properties,
+			slidingPreference,
+			canSlideToEndpoint,
+		);
 	}
 
 	/**
@@ -351,7 +423,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	public submitSequenceMessage(message: IMergeTreeOp) {
+	private submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
 			return;
 		}
@@ -362,7 +434,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		// if loading isn't complete, we need to cache
 		// local ops until loading is complete, and then
-		// they will be resent
+		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
 			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {
@@ -381,12 +453,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Walk the underlying segments of the sequence.
-	 * The walked segments may extend beyond the range
-	 * if the segments cross the ranges start or end boundaries.
-	 * Set split range to true to ensure only segments within the
-	 * range are walked.
+	 * The walked segments may extend beyond the range if the segments cross the
+	 * ranges start or end boundaries.
 	 *
-	 * @param handler - The function to handle each segment
+	 * Set split range to true to ensure only segments within the range are walked.
+	 *
+	 * @param handler - The function to handle each segment. Traversal ends if
+	 * this function returns true.
 	 * @param start - Optional. The start of range walk.
 	 * @param end - Optional. The end of range walk
 	 * @param accum - Optional. An object that will be passed to the handler for accumulation
@@ -402,12 +475,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.client.walkSegments(handler, start, end, accum as TClientData, splitRange);
 	}
 
-	public getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
-		return this.client.getStackContext(startPos, rangeLabels);
-	}
-
 	/**
-	 * @returns - The most recent sequence number which has been acked by the server and processed by this
+	 * @returns The most recent sequence number which has been acked by the server and processed by this
 	 * SharedSegmentSequence.
 	 */
 	public getCurrentSeq() {
@@ -419,30 +488,24 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param refPos - The reference position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
-	public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
-		const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
+		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
 	/**
 	 * Inserts a segment
 	 * @param start - The position to insert the segment at
 	 * @param spec - The segment to inserts spec
 	 */
-	public insertFromSpec(pos: number, spec: IJSONSegment) {
+	public insertFromSpec(pos: number, spec: IJSONSegment): void {
 		const segment = this.segmentFromSpec(spec);
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
 	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
 	 * creates one.
 	 */
-	public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
+	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
 	}
 
@@ -450,6 +513,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @returns An iterable object that enumerates the IntervalCollection labels.
 	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * const iter = this.getIntervalCollectionKeys();
 	 * for (key of iter)
@@ -485,7 +549,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * Runs serializer over the GC data for this SharedMatrix.
 	 * All the IFluidHandle's represent routes to other objects.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		if (this.intervalCollections.size > 0) {
 			this.intervalCollections.serialize(serializer);
 		}
@@ -502,7 +566,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param end - The end of the range to replace
 	 * @param segment - The segment that will replace the range
 	 */
-	protected replaceRange(start: number, end: number, segment: ISegment) {
+	protected replaceRange(start: number, end: number, segment: ISegment): void {
 		// Insert at the max end of the range when start > end, but still remove the range later
 		const insertIndex: number = Math.max(start, end);
 
@@ -510,11 +574,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		const insert = this.client.insertSegmentLocal(insertIndex, segment);
 		if (insert) {
 			if (start < end) {
-				const remove = this.client.removeRangeLocal(start, end);
-				const op = remove ? createGroupOp(insert, remove) : insert;
-				this.submitSequenceMessage(op);
-			} else {
-				this.submitSequenceMessage(insert);
+				this.client.removeRangeLocal(start, end);
 			}
 		}
 	}
@@ -581,7 +641,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 							m.minimumSequenceNumber < collabWindow.minSeq ||
 							m.referenceSequenceNumber < collabWindow.minSeq ||
 							m.sequenceNumber <= collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.currentSeq
+							// sequenceNumber could be the same if messages are part of a grouped batch
+							m.sequenceNumber < collabWindow.currentSeq
 						) {
 							throw new Error(
 								`Invalid catchup operations in snapshot: ${JSON.stringify({
@@ -634,7 +695,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			);
 
 			const handled = this.intervalCollections.tryProcessMessage(
-				message.contents,
+				message.contents as IMapOperation,
 				local,
 				message,
 				localOpMetadata,
@@ -669,7 +730,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(content);
+		return this.client.applyStashedOp(parseHandles(content, this.serializer));
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -719,6 +780,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
+					// eslint-disable-next-line import/no-deprecated
 					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
 				};
 			}
@@ -800,3 +862,41 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 }
+
+function createReentrancyDetector(
+	onReentrancy: (depth: number) => void,
+): <T>(callback: () => T) => T {
+	let depth = 0;
+	function detectReentrancy<T>(callback: () => T): T {
+		if (depth > 0) {
+			onReentrancy(depth);
+		}
+		depth++;
+		try {
+			return callback();
+		} finally {
+			depth--;
+		}
+	}
+
+	return detectReentrancy;
+}
+
+/**
+ * Apps which generate reentrant behavior may do so at a high frequency.
+ * Logging even per-SharedSegmentSequence instance might be too noisy, and having a few logs from a session
+ * is likely enough.
+ */
+let totalReentrancyLogs = 3;
+
+/**
+ * Resets the reentrancy log counter. Test-only API.
+ */
+export function resetReentrancyLogCounter() {
+	totalReentrancyLogs = 3;
+}
+
+const reentrancyErrorMessage = "Reentrancy detected in sequence local ops";
+const ensureNoReentrancy = createReentrancyDetector(() => {
+	throw new LoggingError(reentrancyErrorMessage);
+});

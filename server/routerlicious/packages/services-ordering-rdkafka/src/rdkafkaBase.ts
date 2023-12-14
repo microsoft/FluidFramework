@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IContextErrorData } from "@fluidframework/server-services-core";
 import type * as kafkaTypes from "node-rdkafka";
 import { tryImportNodeRdkafka } from "./tryImport";
@@ -14,6 +15,7 @@ export interface IKafkaBaseOptions {
 	disableTopicCreation?: boolean;
 	sslCACertFilePath?: string;
 	restartOnKafkaErrorCodes?: number[];
+	eventHubConnString?: string;
 }
 
 export interface IKafkaEndpoints {
@@ -70,6 +72,20 @@ export abstract class RdkafkaBase extends EventEmitter {
 				"security.protocol": "ssl",
 				"ssl.ca.location": options?.sslCACertFilePath,
 			};
+		} else if (options?.eventHubConnString) {
+			if (!kafka.features.filter((feature) => feature.toLowerCase().includes("sasl_ssl"))) {
+				throw new Error(
+					"Attempted to configure SASL_SSL for Event Hubs, but rdkafka has not been built to support it. " +
+						"Please make sure OpenSSL is available and build rdkafka again.",
+				);
+			}
+
+			this.sslOptions = {
+				"security.protocol": "sasl_ssl",
+				"sasl.mechanisms": "PLAIN",
+				"sasl.username": "$ConnectionString",
+				"sasl.password": options?.eventHubConnString,
+			};
 		}
 
 		setTimeout(() => void this.initialize(), 1);
@@ -87,8 +103,9 @@ export abstract class RdkafkaBase extends EventEmitter {
 		} catch (ex) {
 			this.error(ex);
 
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.initialize();
+			this.initialize().catch((error) => {
+				Lumberjack.error("Error initializing rdkafka", undefined, error);
+			});
 
 			return;
 		}

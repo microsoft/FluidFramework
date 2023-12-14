@@ -4,7 +4,6 @@
  */
 import { strict as assert } from "assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -275,7 +274,6 @@ describe("Odsp Driver Resolver", () => {
 
 		// Act
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		// Assert
 		assert.strictEqual(resolvedUrl.fileName, fileName, "FileName should be equal");
@@ -305,7 +303,6 @@ describe("Odsp Driver Resolver", () => {
 
 		// Act
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		// Assert
 		assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
@@ -339,7 +336,6 @@ describe("Odsp Driver Resolver", () => {
 
 		// Act
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		// Assert
 		assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
@@ -373,7 +369,6 @@ describe("Odsp Driver Resolver", () => {
 
 		// Act
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		// Assert
 		assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
@@ -418,7 +413,6 @@ describe("Odsp Driver Resolver", () => {
 
 		// Act
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		// Assert
 		assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");

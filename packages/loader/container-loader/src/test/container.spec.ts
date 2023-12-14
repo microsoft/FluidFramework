@@ -13,8 +13,7 @@ import {
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { waitContainerToCatchUp } from "../container";
@@ -47,7 +46,6 @@ class MockContainer
 	audience?: IAudience | undefined;
 	clientId?: string | undefined;
 	readOnlyInfo?: ReadOnlyInfo | undefined;
-	IFluidRouter?: IFluidRouter | undefined;
 
 	get mockDeltaManager() {
 		return this.deltaManager as any as MockDeltaManager;

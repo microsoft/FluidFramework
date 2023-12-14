@@ -5,4 +5,4 @@
 # Because we have the client release group at the root of the repo, there's a pnpm-workspace.yaml file in the hierarchy
 # for our independent packages as well. This file makes pnpm treat the project as a one-package workspace.
 packages:
-    - "."
+  - "."

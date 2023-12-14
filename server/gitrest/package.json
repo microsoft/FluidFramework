@@ -1,6 +1,6 @@
 {
-	"name": "gitrest-release-group",
-	"version": "0.1.0",
+	"name": "gitrest-release-group-root",
+	"version": "1.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -12,25 +12,26 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "npm run build:genver && npm run build:compile && npm run lint",
-		"build:compile": "lerna run build:compile --stream",
-		"build:genver": "lerna run build:genver --stream --parallel",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
-		"format": "lerna run format --no-sort --stream -- -- -- --color",
+		"build:compile": "pnpm run -r --stream build:compile",
+		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
+		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
+		"clean": "rimraf --glob \"dist\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
-		"lint": "lerna run lint --no-sort --stream",
-		"lint:fix": "lerna run lint:fix --no-sort --stream",
-		"policy-check": "fluid-repo-policy-check",
-		"policy-check:fix": "fluid-repo-policy-check -r",
-		"prettier": "npm run prettier:root && lerna run prettier --no-sort --stream",
-		"prettier:fix": "npm run prettier:root:fix && lerna run prettier:fix --no-sort --stream",
-		"prettier:root": "prettier --check ./*.* --ignore-path ./.prettierignore",
-		"prettier:root:fix": "prettier --write ./*.* --ignore-path ./.prettierignore",
+		"lint": "npm run prettier && npm run ci:eslint",
+		"lint:fix": "npm run prettier:fix && pnpm run -r --stream --no-sort lint:fix",
+		"policy-check": "cd ../.. && npm run policy-check",
+		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
+		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
+		"prettier": "prettier --check . --cache --ignore-path ./.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
 		"start": "node packages/gitrest/dist/www.js",
 		"start:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
-		"test": "lerna run test --stream --no-bail --no-sort",
-		"tsc": "tsc"
+		"test": "pnpm run -r --stream --no-bail --no-sort test",
+		"test:coverage": "c8 npm test",
+		"tsc": "pnpm run -r --stream tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],
@@ -44,39 +45,42 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-135362",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@rushstack/eslint-config": "^2.6.1",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",
 		"@types/lorem-ipsum": "^1.0.2",
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^16.18.16",
-		"@types/nodegit": "^0.27.3",
+		"@types/node": "^18.17.1",
 		"@types/rimraf": "^3.0.2",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
 		"async": "^3.2.2",
-		"concurrently": "^7.5.0",
+		"c8": "^7.7.1",
 		"eslint": "~8.27.0",
-		"lerna": "^5.1.8",
+		"lerna": "5.6.2",
 		"lorem-ipsum": "^1.0.6",
 		"mocha": "^10.1.0",
-		"nyc": "^15.1.0",
+		"prettier": "~3.0.3",
 		"rimraf": "^3.0.2",
 		"run-script-os": "^1.1.5",
 		"sillyname": "^0.1.0",
 		"supertest": "^3.4.2",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
+	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"pnpm": {
+		"commentsOverrides": [
+			"@yarnpkg/parsers is a transitive dependency of lerna via nx, but versions >3.0.0-rc.48.1 require node 18, while we use 16."
+		],
 		"overrides": {
+			"@types/node": "^18.17.1",
+			"nx>@yarnpkg/parsers": "3.0.0-rc.48.1",
 			"qs": "^6.11.0"
 		}
 	}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError, IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
@@ -24,8 +24,9 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 		io: typeof SocketIOClientStatic,
 		client: IClient,
 		url: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		timeoutMs = 20000,
+		enableLongPollingDowngrade = true,
 	): Promise<IDocumentDeltaConnection> {
 		const socket = io(url, {
 			query: {
@@ -50,13 +51,11 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			),
 		};
 
-		// TODO: expose to host at factory level
-		const enableLongPollingDowngrades = true;
 		const deltaConnection = new R11sDocumentDeltaConnection(
 			socket,
 			id,
 			logger,
-			enableLongPollingDowngrades,
+			enableLongPollingDowngrade,
 		);
 
 		await deltaConnection.initialize(connectMessage, timeoutMs);

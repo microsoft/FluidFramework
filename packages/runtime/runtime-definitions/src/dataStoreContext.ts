@@ -4,13 +4,10 @@
  */
 
 import {
-	ITelemetryBaseLogger,
-	IDisposable,
 	IEvent,
 	IEventProvider,
-} from "@fluidframework/common-definitions";
-import {
-	IFluidRouter,
+	ITelemetryBaseLogger,
+	IDisposable,
 	IProvideFluidHandleContext,
 	IFluidHandle,
 	IRequest,
@@ -31,6 +28,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
@@ -45,6 +43,7 @@ import {
 
 /**
  * Runtime flush mode handling
+ * @alpha
  */
 export enum FlushMode {
 	/**
@@ -59,6 +58,9 @@ export enum FlushMode {
 	TurnBased,
 }
 
+/**
+ * @internal
+ */
 export enum FlushModeExperimental {
 	/**
 	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
@@ -75,6 +77,7 @@ export enum FlushModeExperimental {
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
+ * @alpha
  */
 export const VisibilityState = {
 	/**
@@ -100,8 +103,14 @@ export const VisibilityState = {
 	 */
 	GloballyVisible: "GloballyVisible",
 };
-export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
+/**
+ * @alpha
+ */
+export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
+/**
+ * @alpha
+ */
 export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
 	/**
@@ -117,10 +126,11 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
- * 'Conflict' - there is already a datastore bound to the provided alias. To acquire a handle to it,
- * use the `IContainerRuntime.getRootDataStore` function. The current datastore should be discarded
+ * 'Conflict' - there is already a datastore bound to the provided alias. To acquire it's entry point, use
+ * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
+ * @alpha
  */
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
@@ -129,36 +139,32 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Handle to the data store's entryPoint
  * - Fluid router for the data store
  * - Can be assigned an alias
+ * @alpha
  */
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
 	/**
 	 * Attempt to assign an alias to the datastore.
 	 * If the operation succeeds, the datastore can be referenced
 	 * by the supplied alias and will not be garbage collected.
 	 *
 	 * @param alias - Given alias for this datastore.
+	 * @returns A promise with the {@link AliasResult}
 	 */
 	trySetAlias(alias: string): Promise<AliasResult>;
 
 	/**
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
-	 * with it. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a
-	 * particular scenario) fall back to the current approach of requesting the root object through the request pattern.
-	 *
-	 * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality, this property
-	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
-	 * the data store's entryPoint.
+	 * with it.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 }
 
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
+ * @alpha
  */
-export interface IContainerRuntimeBase
-	extends IEventProvider<IContainerRuntimeBaseEvents>,
-		IProvideFluidHandleContext {
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 
@@ -169,11 +175,6 @@ export interface IContainerRuntimeBase
 	orderSequentially(callback: () => void): void;
 
 	/**
-	 * Executes a request against the container runtime
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
@@ -182,7 +183,6 @@ export interface IContainerRuntimeBase
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
-	 * @internal
 	 */
 	_createDataStoreWithProps(
 		pkg: string | string[],
@@ -213,7 +213,7 @@ export interface IContainerRuntimeBase
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Returns the current quorum.
@@ -231,8 +231,9 @@ export interface IContainerRuntimeBase
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
+ * @alpha
  */
-export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
 	readonly id: string;
 
 	/**
@@ -323,26 +324,28 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 
 	/**
 	 * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
-	 * with the component. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented
-	 * in a particular scenario) fall back to the current approach of requesting the root object through the request
-	 * pattern.
-	 *
-	 * @remarks The plan is that eventually the component will stop providing IFluidRouter functionality, this property
-	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
-	 * the component's entryPoint.
+	 * with the component.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
+
+	request(request: IRequest): Promise<IResponse>;
 }
 
+/**
+ * @alpha
+ */
 export type CreateChildSummarizerNodeFn = (
 	summarizeInternal: SummarizeInternalFn,
 	getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
+/**
+ * @alpha
+ */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
@@ -350,6 +353,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 /**
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
+ * @alpha
  */
 export interface IFluidDataStoreContext
 	extends IEventProvider<IFluidDataStoreContextEvents>,
@@ -377,6 +381,7 @@ export interface IFluidDataStoreContext
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
+	readonly idCompressor?: IIdCompressor;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
@@ -428,14 +433,9 @@ export interface IFluidDataStoreContext
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
-
-	/**
-	 * @deprecated To be removed in favor of makeVisible.
-	 * Register the runtime to the container
-	 */
-	bindToContext(): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
@@ -470,10 +470,10 @@ export interface IFluidDataStoreContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
-	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 *
 	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
 	 * and its children with the GC details from the previous summary.
@@ -489,6 +489,9 @@ export interface IFluidDataStoreContext
 	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
+/**
+ * @alpha
+ */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**
 	 * Binds a runtime to the context.

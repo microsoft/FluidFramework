@@ -25,6 +25,9 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import hash = require("string-hash");
 
+/**
+ * @internal
+ */
 export class KafkaMessageFactory {
 	private readonly offsets: number[] = [];
 
@@ -70,6 +73,9 @@ export class KafkaMessageFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class MessageFactory {
 	private clientSequenceNumber = 0;
 	private sequenceNumber = 0;
@@ -171,7 +177,6 @@ export class MessageFactory {
 			origin: undefined,
 			referenceSequenceNumber: operation.referenceSequenceNumber,
 			sequenceNumber: this.sequenceNumber++,
-			term: 1,
 			timestamp: Date.now(),
 			traces: [],
 			type: operation.type,
@@ -204,7 +209,6 @@ export class MessageFactory {
 			origin: undefined,
 			referenceSequenceNumber: operation.referenceSequenceNumber,
 			sequenceNumber: this.sequenceNumber++,
-			term: 1,
 			timestamp: Date.now(),
 			traces: [],
 			type: operation.type,
@@ -232,7 +236,6 @@ export class MessageFactory {
 			origin: undefined,
 			referenceSequenceNumber: this.sequenceNumber,
 			sequenceNumber: this.sequenceNumber++,
-			term: 1,
 			timestamp: Date.now(),
 			traces: [],
 			type: operation.type,
@@ -260,7 +263,6 @@ export class MessageFactory {
 			origin: undefined,
 			referenceSequenceNumber: -1,
 			sequenceNumber: this.sequenceNumber++,
-			term: 1,
 			timestamp: Date.now(),
 			traces: [],
 			type: operation.type,

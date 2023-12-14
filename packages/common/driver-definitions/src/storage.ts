@@ -8,7 +8,7 @@ import {
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,
@@ -28,6 +28,9 @@ import {
 import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
+/**
+ * @internal
+ */
 export interface IDeltasFetchResult {
 	/**
 	 * Sequential set of messages starting from 'from' sequence number.
@@ -45,6 +48,7 @@ export interface IDeltasFetchResult {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @internal
  */
 export interface IDeltaStorageService {
 	/**
@@ -53,9 +57,9 @@ export interface IDeltaStorageService {
 	 * @param id - document id.
 	 * @param from - first op to retrieve (inclusive)
 	 * @param to - first op not to retrieve (exclusive end)
-	 * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-	 * of Op on wire and known seq number. It should not contain any PII. It can be logged by
-	 * spo which could help in debugging sessions if any issue occurs.
+	 * @param fetchReason - Reason for fetching the messages, for logging.
+	 * Example, gap between seq number of Op on wire and known seq number.
+	 * It can be logged by spo which could help in debugging sessions if any issue occurs.
 	 */
 	get(
 		tenantId: string,
@@ -66,10 +70,14 @@ export interface IDeltaStorageService {
 	): Promise<IDeltasFetchResult>;
 }
 
+/**
+ * @alpha
+ */
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
+ * @alpha
  */
 export interface IStream<T> {
 	read(): Promise<IStreamResult<T>>;
@@ -77,6 +85,7 @@ export interface IStream<T> {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @alpha
  */
 export interface IDocumentDeltaStorageService {
 	/**
@@ -85,9 +94,9 @@ export interface IDocumentDeltaStorageService {
 	 * @param to - first op not to retrieve (exclusive end)
 	 * @param abortSignal - signal that aborts operation
 	 * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
-	 * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-	 * of Op on wire and known seq number. It should not contain any PII. It can be logged by
-	 * spo which could help in debugging sessions if any issue occurs.
+	 * @param fetchReason - Reason for fetching the messages, for logging.
+	 * Example, gap between seq number of Op on wire and known seq number.
+	 * It can be logged by spo which could help in debugging sessions if any issue occurs.
 	 */
 	fetchMessages(
 		from: number,
@@ -102,23 +111,21 @@ export interface IDocumentDeltaStorageService {
 // If a driver started using a larger value,
 // internal assumptions of the Runtime's GC feature will be violated
 // DO NOT INCREASE THIS TYPE'S VALUE
+/**
+ * @alpha
+ */
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
 /**
  * Policies describing attributes or characteristics of the driver's storage service,
  * to direct how other components interact with the driver
+ * @alpha
  */
 export interface IDocumentStorageServicePolicies {
 	/**
 	 * Should the Loader implement any sort of pre-fetching or caching mechanism?
 	 */
 	readonly caching?: LoaderCachingPolicy;
-
-	/**
-	 * If this policy is provided, it tells runtime on ideal size for blobs.
-	 * Blobs that are smaller than that size should be aggregated into bigger blobs.
-	 */
-	readonly minBlobSize?: number;
 
 	/**
 	 * IMPORTANT: This policy MUST be set to 5 days and PROPERLY ENFORCED for drivers that are used
@@ -133,6 +140,7 @@ export interface IDocumentStorageServicePolicies {
 
 /**
  * Interface to provide access to snapshots saved for a shared object
+ * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	repositoryUrl: string;
@@ -197,17 +205,23 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
 	(event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
-	(event: "signal", listener: (message: ISignalMessage) => void);
+	(event: "signal", listener: (message: ISignalMessage | ISignalMessage[]) => void);
 	(event: "pong", listener: (latency: number) => void);
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(event: "error", listener: (error: any) => void);
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentDeltaConnection
 	extends IDisposable,
 		IEventProvider<IDocumentDeltaConnectionEvents> {
@@ -279,13 +293,16 @@ export interface IDocumentDeltaConnection
 	submit(messages: IDocumentMessage[]): void;
 
 	/**
-	 * Submit a new signal to the server
+	 * Submits a new signal to the server
 	 */
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(message: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 }
 
+/**
+ * @alpha
+ */
 export enum LoaderCachingPolicy {
 	/**
 	 * The loader should not implement any prefetching or caching policy.
@@ -298,6 +315,9 @@ export enum LoaderCachingPolicy {
 	Prefetch,
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentServicePolicies {
 	/**
 	 * Do not connect to delta stream
@@ -310,6 +330,9 @@ export interface IDocumentServicePolicies {
 	readonly summarizeProtocolTree?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentService {
 	resolvedUrl: IResolvedUrl;
 
@@ -348,6 +371,9 @@ export interface IDocumentService {
 	dispose(error?: any): void;
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentServiceFactory {
 	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
@@ -388,6 +414,7 @@ export interface IDocumentServiceFactory {
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
+ * @alpha
  */
 export interface ISummaryContext {
 	/**
@@ -403,6 +430,9 @@ export interface ISummaryContext {
 	readonly referenceSequenceNumber: number;
 }
 
+/**
+ * @alpha
+ */
 export enum FetchSource {
 	default = "default",
 	noCache = "noCache",

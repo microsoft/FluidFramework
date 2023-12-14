@@ -1,3 +1,4 @@
+// DEPRECATED. USE `api-extractor-base.json` INSTEAD.
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "./api-extractor-common-report.json",
@@ -33,7 +34,7 @@
 			// A type signature should not reference another types whose release tag is less visible.
 			"ae-incompatible-release-tags": {
 				"logLevel": "error",
-				"addToApiReportFile": true
+				"addToApiReportFile": false
 			},
 			// Disabled. We don't require that internal members be prefixed with an underscore.
 			"ae-internal-missing-underscore": {

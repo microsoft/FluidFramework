@@ -5,17 +5,19 @@
 import { EventEmitter } from "events";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { assert, performance } from "@fluidframework/common-utils";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
+	createChildLogger,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
+import { IBatchMetadata } from "./metadata";
 
 type IRuntimeMessageMetadata =
 	| undefined
@@ -41,11 +43,11 @@ export class ScheduleManager {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly emitter: EventEmitter,
 		readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.deltaScheduler = new DeltaScheduler(
 			this.deltaManager,
-			ChildLogger.create(this.logger, "DeltaScheduler"),
+			createChildLogger({ logger: this.logger, namespace: "DeltaScheduler" }),
 		);
 		void new ScheduleManagerCore(deltaManager, getClientId, logger);
 	}
@@ -62,7 +64,9 @@ export class ScheduleManager {
 			this.deltaScheduler.batchBegin(message);
 
 			const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-			this.batchClientId = batch ? message.clientId : undefined;
+			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+			this.batchClientId = batch ? (message.clientId as string) : undefined;
 		}
 	}
 
@@ -106,7 +110,7 @@ class ScheduleManagerCore {
 	constructor(
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		// Listen for delta manager sends and add batch metadata to messages
 		this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -128,7 +132,9 @@ class ScheduleManagerCore {
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
 			const lastMessage = messages[messages.length - 1];
-			lastMessage.metadata = { ...lastMessage.metadata, batch: false };
+			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };
 		});
 
 		// Listen for updates and peek at the inbound
@@ -147,14 +153,14 @@ class ScheduleManagerCore {
 		// We are intentionally directly listening to the "op" to inspect system ops as well.
 		// If we do not observe system ops, we are likely to hit 0x296 assert when system ops
 		// precedes start of incomplete batch.
-		this.deltaManager.on("op", (message) => this.afterOpProcessing(message.sequenceNumber));
+		this.deltaManager.on("op", (message) => this.afterOpProcessing(message));
 	}
 
 	/**
 	 * The only public function in this class - called when we processed an op,
 	 * to make decision if op processing should be paused or not after that.
 	 */
-	public afterOpProcessing(sequenceNumber: number) {
+	public afterOpProcessing(message: ISequencedDocumentMessage) {
 		assert(
 			!this.localPaused,
 			0x294 /* "can't have op processing paused if we are processing an op" */,
@@ -177,12 +183,24 @@ class ScheduleManagerCore {
 
 		// do we have incomplete batch to worry about?
 		if (this.pauseSequenceNumber !== undefined) {
-			assert(
-				sequenceNumber < this.pauseSequenceNumber,
-				0x296 /* "we should never start processing incomplete batch!" */,
-			);
+			if (message.sequenceNumber >= this.pauseSequenceNumber) {
+				throw DataProcessingError.create(
+					// Former assert 0x296
+					"Incomplete batch",
+					"ScheduleManager",
+					message,
+					{
+						type: message.type,
+						contentType: typeof message.contents,
+						batch: (message.metadata as IBatchMetadata | undefined)?.batch,
+						compression: message.compression,
+						pauseSeqNum: this.pauseSequenceNumber,
+					},
+				);
+			}
+
 			// If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
-			if (sequenceNumber + 1 === this.pauseSequenceNumber) {
+			if (message.sequenceNumber + 1 === this.pauseSequenceNumber) {
 				this.pauseQueue();
 			}
 		}
@@ -252,7 +270,9 @@ class ScheduleManagerCore {
 					message,
 					{
 						runtimeVersion: pkgVersion,
-						batchClientId: this.currentBatchClientId,
+						batchClientId:
+							// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+							this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
 						localBatch: this.currentBatchClientId === this.getClientId(),
 						messageType: message.type,
@@ -286,7 +306,9 @@ class ScheduleManagerCore {
 		) {
 			throw new DataCorruptionError("OpBatchIncomplete", {
 				runtimeVersion: pkgVersion,
-				batchClientId: this.currentBatchClientId,
+				batchClientId:
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+					this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
 				localBatch: this.currentBatchClientId === this.getClientId(),
 				localMessage: message.clientId === this.getClientId(),
@@ -310,7 +332,9 @@ class ScheduleManagerCore {
 				0x29f /* "we should be processing ops when there is no active batch" */,
 			);
 			this.pauseSequenceNumber = message.sequenceNumber;
-			this.currentBatchClientId = message.clientId;
+			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+			this.currentBatchClientId = message.clientId as string;
 			// Start of the batch
 			// Only pause processing if queue has no other ops!
 			// If there are any other ops in the queue, processing will be stopped when they are processed!

@@ -6,11 +6,6 @@
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "@fluidframework/protocol-base";
-import {
 	ISequencedDocumentMessage,
 	ISummaryContent,
 	ITreeEntry,
@@ -26,6 +21,9 @@ import {
 	ISummaryTree,
 	NetworkError,
 	WholeSummaryUploadManager,
+	getQuorumTreeEntries,
+	generateServiceProtocolEntries,
+	mergeAppAndProtocolTree,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -47,6 +45,7 @@ import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**
  * Git specific implementation of ISummaryWriter
+ * @internal
  */
 export class SummaryWriter implements ISummaryWriter {
 	private readonly lumberProperties: Record<string, any>;
@@ -60,6 +59,7 @@ export class SummaryWriter implements ISummaryWriter {
 		private readonly lastSummaryMessages: ISequencedDocumentMessage[],
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly maxRetriesOnError: number = 6,
+		private readonly maxLogtailLength: number = 2000,
 	) {
 		this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 	}
@@ -90,10 +90,11 @@ export class SummaryWriter implements ISummaryWriter {
 		lastSummaryHead: string | undefined,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
-		this.setSummaryProperties(clientSummaryMetric, op);
-		const content = JSON.parse(op.contents) as ISummaryContent;
+		this.setSummaryProperties(clientSummaryMetric, op, isEphemeralContainer);
+		const content = JSON.parse(op.contents as string) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
 			// two summaries at the same time. In this case the first one wins.
@@ -132,7 +133,7 @@ export class SummaryWriter implements ISummaryWriter {
 									existingRef ? existingRef.object.sha : "n/a"
 								}" nor other valid parent summaries "[${
 									checkpoint.validParentSummaries?.join(",") ?? ""
-								}]".`,
+								}] nor the last known client summary "${lastSummaryHead}".`,
 								summaryProposal: {
 									summarySequenceNumber: op.sequenceNumber,
 								},
@@ -203,10 +204,8 @@ export class SummaryWriter implements ISummaryWriter {
 
 			// At this point the summary op and its data are all valid and we can perform the write to history
 			const protocolEntries: ITreeEntry[] = getQuorumTreeEntries(
-				this.documentId,
 				checkpoint.protocolState.minimumSequenceNumber,
 				checkpoint.protocolState.sequenceNumber,
-				op.term ?? 1,
 				checkpoint.protocolState,
 			);
 
@@ -398,9 +397,10 @@ export class SummaryWriter implements ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<string | false> {
 		const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
-		this.setSummaryProperties(serviceSummaryMetric, op);
+		this.setSummaryProperties(serviceSummaryMetric, op, isEphemeralContainer);
 		try {
 			const existingRef = await requestWithRetry(
 				async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
@@ -574,21 +574,31 @@ export class SummaryWriter implements ISummaryWriter {
 	private setSummaryProperties(
 		summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>,
 		op: ISequencedDocumentAugmentedMessage,
+		isEphemeralContainer?: boolean,
 	) {
 		summaryMetric.setProperties(getLumberBaseProperties(this.documentId, this.tenantId));
 		summaryMetric.setProperties({
 			[CommonProperties.clientId]: op.clientId,
 			[CommonProperties.sequenceNumber]: op.sequenceNumber,
 			[CommonProperties.minSequenceNumber]: op.minimumSequenceNumber,
+			[CommonProperties.isEphemeralContainer]: isEphemeralContainer ?? false,
 		});
 	}
 
 	private async generateLogtailEntries(
-		from: number,
-		to: number,
+		gt: number,
+		lt: number,
 		pending: ISequencedOperationMessage[],
 		lastSummaryMessages: ISequencedDocumentMessage[] | undefined,
 	): Promise<ITreeEntry[]> {
+		let to = lt;
+		const from = gt;
+		const LogtailRequestedLength = to - from - 1;
+
+		if (LogtailRequestedLength > this.maxLogtailLength) {
+			Lumberjack.warning(`Limiting logtail length`, this.lumberProperties);
+			to = from + this.maxLogtailLength + 1;
+		}
 		const logTail = await this.getLogTail(from, to, pending);
 
 		// Some ops would be missing if we switch cluster during routing.
@@ -717,7 +727,14 @@ export class SummaryWriter implements ISummaryWriter {
 		let logTail: ISequencedDocumentMessage[] = [];
 
 		if (this.getDeltasViaAlfred) {
-			logTail = await this.deltaService.getDeltas("", this.tenantId, this.documentId, gt, lt);
+			logTail = await this.deltaService.getDeltas(
+				"",
+				this.tenantId,
+				this.documentId,
+				gt,
+				lt,
+				"scribe",
+			);
 		} else {
 			const query = {
 				"documentId": this.documentId,

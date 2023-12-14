@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
@@ -15,6 +16,7 @@ import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
+ * @internal
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	private readonly providers = new Map<keyof TMap, FluidObjectProvider<any>>();
@@ -164,6 +166,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		// The double nested gets are required for lazy loading the provider resolution
 		if (typeof provider === "function") {
 			return {
+				// eslint-disable-next-line @typescript-eslint/promise-function-async
 				get() {
 					if (provider && typeof provider === "function") {
 						return Promise.resolve(this[IFluidDependencySynthesizer])
@@ -176,10 +179,12 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		return {
 			get() {
 				if (provider) {
-					return Promise.resolve(provider).then((p) => {
-						if (p) {
-							return p[t];
-						}
+					return new LazyPromise(async () => {
+						return Promise.resolve(provider).then((p) => {
+							if (p) {
+								return p[t];
+							}
+						});
 					});
 				}
 			},

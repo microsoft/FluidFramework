@@ -8,6 +8,7 @@ interface CommonOptions {
 	root?: string;
 	timer: boolean;
 	logtime: boolean;
+	quiet: boolean;
 	verbose: boolean;
 }
 
@@ -16,6 +17,7 @@ export const commonOptions: CommonOptions = {
 	root: process.env["_FLUID_ROOT_"],
 	timer: false,
 	logtime: false,
+	quiet: false,
 	verbose: false,
 };
 
@@ -60,6 +62,11 @@ export function parseOption(argv: string[], i: number) {
 
 	if (arg === "--logtime") {
 		commonOptions.logtime = true;
+		return 1;
+	}
+
+	if (arg === "-q" || arg === "--quiet") {
+		commonOptions.quiet = true;
 		return 1;
 	}
 

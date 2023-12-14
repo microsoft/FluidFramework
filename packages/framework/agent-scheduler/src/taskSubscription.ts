@@ -3,16 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IAgentScheduler } from "./agent";
 
+/**
+ * Events emitted by {@link TaskSubscription}.
+ * @internal
+ */
 export interface ITaskSubscriptionEvents extends IEvent {
 	(event: "gotTask" | "lostTask", listener: () => void);
 }
 
 /**
  * TaskSubscription works with an AgentScheduler to make it easier to monitor a specific task ownership.
+ * @internal
  */
 export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {
 	private subscribed: boolean = false;
@@ -21,7 +26,10 @@ export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents>
 	 * @param agentScheduler - The AgentScheduler that will be subscribed against
 	 * @param taskId - The string ID of the task to subscribe against
 	 */
-	constructor(private readonly agentScheduler: IAgentScheduler, public readonly taskId: string) {
+	constructor(
+		private readonly agentScheduler: IAgentScheduler,
+		public readonly taskId: string,
+	) {
 		super();
 		agentScheduler.on("picked", (_taskId: string) => {
 			if (_taskId === this.taskId) {

@@ -11,8 +11,7 @@ const oAuthBearerScheme = "Bearer";
  * Tenant id is represented by "realm" property. More details can be found here:
  * {@link https://tools.ietf.org/html/rfc2617#page-8}
  *
- * @example
- * Header sample:
+ * @example Header sample
  *
  * ```
  * www-authenticate=Bearer realm="03d0c210-38e8-47d7-9bc9-9ff2cd5ea7bc",

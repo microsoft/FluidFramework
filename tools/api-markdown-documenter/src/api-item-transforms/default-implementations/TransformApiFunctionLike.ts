@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SectionNode } from "../../documentation-domain";
-import { ApiFunctionLike } from "../ApiItemUtilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type SectionNode } from "../../documentation-domain";
+import { type ApiFunctionLike } from "../../utilities";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSection, createReturnsSection } from "../helpers";
 
 /**
@@ -28,5 +28,5 @@ export function transformApiFunctionLike(
 		childSections.push(renderedReturnsSection);
 	}
 
-	return config.createChildContentSections(apiFunctionLike, childSections, config);
+	return config.createDefaultLayout(apiFunctionLike, childSections, config);
 }

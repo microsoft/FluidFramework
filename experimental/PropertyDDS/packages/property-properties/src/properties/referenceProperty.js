@@ -19,6 +19,7 @@ const { ValueProperty } = require("./valueProperty");
  * object's value field. To do this we simply keep a pointer to the object and
  * it's associated data field that we are interested in. If no data field is
  * present this property will have an undefined value.
+ * @internal
  */
 export class ReferenceProperty extends ValueProperty {
 	/**
@@ -59,14 +60,14 @@ export class ReferenceProperty extends ValueProperty {
 	/**
 	 * Resolves the referenced property
 	 *
-	 * @param {string|number|array<string|number>} in_ids - The ID of the property or an array of IDs if an array is
+	 * @param {string | number | Array<string | number>} in_ids - The ID of the property or an array of IDs if an array is
 	 * passed, the .get function will be performed on each id in sequence for example .get(['position','x']) is
 	 * equivalent to .get('position').get('x'). If .get resolves to a ReferenceProperty, it will return the property
 	 * that the ReferenceProperty refers to.
 	 * @param {Object} in_options - parameter object
 	 * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
 	 * should this function behave during reference resolution?
-	 * @returns {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if
+	 * @returns {BaseProperty | undefined} The property object the reference points to or undefined if
 	 * it could not be resolved
 	 */
 	get(in_ids, in_options) {
@@ -109,7 +110,7 @@ export class ReferenceProperty extends ValueProperty {
 	 * @param {Object} in_options - Parameter object
 	 * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
 	 * should this function behave during reference resolution?
-	 * @returns {property-properties.BaseProperty|undefined} resolved path
+	 * @returns {BaseProperty | undefined} resolved path
 	 * @throws if the path resolves to a primitive value
 	 * @throws if in_path is not a valid path
 	 */

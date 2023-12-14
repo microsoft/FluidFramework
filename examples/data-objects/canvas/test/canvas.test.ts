@@ -14,7 +14,7 @@ describe("canvas", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	it("can be drawn upon with a computer mouse input peripheral", async () => {
@@ -37,7 +37,7 @@ describe("canvas", () => {
 		await page.mouse.down();
 		await page.mouse.move(126, 19);
 		await page.mouse.up();
-		await page.waitFor(() => window["FluidLoader"].isSynchronized());
+		await page.waitForFunction(() => window["FluidLoader"].isSynchronized());
 
 		// compare canvases
 		const result = await page.evaluate(() => {

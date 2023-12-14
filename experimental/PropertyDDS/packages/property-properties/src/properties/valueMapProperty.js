@@ -17,6 +17,7 @@ const { MapProperty } = require("./mapProperty");
 
 /**
  * A ValueMapProperty is a collection class that can contain an dictionary that maps from strings to primitive types.
+ * @internal
  */
 export class ValueMapProperty extends MapProperty {
 	/**
@@ -48,6 +49,7 @@ export class ValueMapProperty extends MapProperty {
 	 * Returns an object with all the nested values contained in this property.
 	 *
 	 * @example
+	 *
 	 * ```javascript
 	 * {
 	 *   'firstString': 'test1',
@@ -67,7 +69,7 @@ export class ValueMapProperty extends MapProperty {
 	/**
 	 * Return a JSON representation of the map and its items.
 	 * @return {object} A JSON representation of the map and its items.
-	 * @private
+	 * @protected
 	 */
 	_toJson() {
 		return {

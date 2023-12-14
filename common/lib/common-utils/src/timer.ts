@@ -6,6 +6,10 @@
 import { assert } from "./assert";
 import { Deferred } from "./promises";
 
+/**
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
+ */
 export interface ITimer {
 	/**
 	 * True if timer is currently running
@@ -23,6 +27,9 @@ export interface ITimer {
 	clear(): void;
 }
 
+/**
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ */
 interface ITimeout {
 	/**
 	 * Tick that timeout was started.
@@ -40,6 +47,9 @@ interface ITimeout {
 	handler: () => void;
 }
 
+/**
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ */
 interface IRunningTimerState extends ITimeout {
 	/**
 	 * JavaScript Timeout object.
@@ -68,6 +78,9 @@ const maxSetTimeoutMs = 0x7fffffff; // setTimeout limit is MAX_INT32=(2^31-1).
  * @param setTimeoutIdFn - Executed to update the timeout if multiple timeouts are required when
  * timeoutMs greater than maxTimeout
  * @returns The initial timeout
+ *
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 export function setLongTimeout(
 	timeoutFn: () => void,
@@ -95,6 +108,9 @@ export function setLongTimeout(
  * makes it simpler to keep track of recurring timeouts with the same
  * or similar handlers and timeouts. This class supports long timeouts
  * or timeouts exceeding (2^31)-1 ms or approximately 24.8 days.
+ *
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 export class Timer implements ITimer {
 	/**
@@ -215,6 +231,10 @@ export class Timer implements ITimer {
 	}
 }
 
+/**
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
+ */
 export interface IPromiseTimerResult {
 	timerResult: "timeout" | "cancel";
 }
@@ -222,6 +242,9 @@ export interface IPromiseTimerResult {
 /**
  * Timer which offers a promise that fulfills when the timer
  * completes.
+ *
+ * @deprecated Moved to the `@fluid-private/client-utils` package.
+ * @internal
  */
 export interface IPromiseTimer extends ITimer {
 	/**
@@ -236,6 +259,9 @@ export interface IPromiseTimer extends ITimer {
  * makes it simpler to keep track of recurring timeouts with the
  * same handlers and timeouts, while also providing a promise that
  * resolves when it times out.
+ *
+ * @deprecated Moved to the `@fluid-private/client-utils` package.
+ * @internal
  */
 export class PromiseTimer implements IPromiseTimer {
 	private deferred?: Deferred<IPromiseTimerResult>;

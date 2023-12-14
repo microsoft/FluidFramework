@@ -15,7 +15,8 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  * Consensus Register Collection channel factory interface
  *
  * Extends the base IChannelFactory to return a more definite type of IConsensusRegisterCollection
- * Use for the runtime to create and load distributed data structure by type name of each channel
+ * Use for the runtime to create and load distributed data structure by type name of each channel.
+ * @internal
  */
 export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
 	/**
@@ -31,6 +32,10 @@ export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
 	create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
 }
 
+/**
+ * Events emitted by {@link IConsensusRegisterCollection}.
+ * @internal
+ */
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
 	(
 		event: "atomicChanged" | "versionChanged",
@@ -39,9 +44,7 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
 }
 
 /**
- * Consensus Register Collection.
- *
- * A consensus register collection is a distributed data structure, which holds a set of registers with update
+ * A distributed data structure that holds a set of registers with update
  * versions. On concurrent updates, a register internally stores all possible versions of a value by using reference
  * sequence number of the incoming update.
  *
@@ -56,7 +59,7 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
  * the value. So we can safely return the first value.
  *
  * LWW: The last write to a key always wins.
- *
+ * @internal
  */
 export interface IConsensusRegisterCollection<T = any>
 	extends ISharedObject<IConsensusRegisterCollectionEvents> {
@@ -86,6 +89,7 @@ export interface IConsensusRegisterCollection<T = any>
 
 /**
  * Read policies used when reading the map value.
+ * @internal
  */
 export enum ReadPolicy {
 	// On a concurrent update, returns the first agreed upon value amongst all clients.

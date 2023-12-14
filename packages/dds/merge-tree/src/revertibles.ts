@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
-import { List } from "./collections";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
+import { DoublyLinkedList } from "./collections";
 import { EndOfTreeSegment } from "./endOfTreeSegment";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
-import { ISegment, toRemovalInfo } from "./mergeTreeNodes";
+import { IMergeLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
@@ -18,11 +18,7 @@ import { DetachedReferencePosition } from "./referencePositions";
 import { MergeTree, findRootMergeBlock } from "./mergeTree";
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- *
- * @alpha
+ * @internal
  */
 export type MergeTreeDeltaRevertible =
 	| {
@@ -38,6 +34,14 @@ export type MergeTreeDeltaRevertible =
 			trackingGroup: ITrackingGroup;
 			propertyDeltas: PropertySet;
 	  };
+
+/**
+ * Tests whether x is a MergeTreeDeltaRevertible
+ * @internal
+ */
+export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible {
+	return !!x && typeof x === "object" && "operation" in x && "trackingGroup" in x;
+}
 
 type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> = MergeTreeDeltaRevertible & {
 	operation: T;
@@ -55,40 +59,12 @@ interface RemoveSegmentRefProperties {
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- *
  * @alpha
  */
 export interface MergeTreeRevertibleDriver {
-	insertFromSpec(pos: number, spec: IJSONSegment);
-	removeRange(start: number, end: number);
-	annotateRange(start: number, end: number, props: PropertySet);
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	createLocalReferencePosition(
-		segment: ISegment,
-		offset: number,
-		refType: ReferenceType,
-		properties: PropertySet | undefined,
-	): LocalReferencePosition;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	localReferencePositionToPosition(lref: LocalReferencePosition): number;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	getPosition(segment: ISegment): number;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	getContainingSegment(pos: number): {
-		segment: ISegment | undefined;
-		offset: number | undefined;
-	};
+	insertFromSpec(pos: number, spec: IJSONSegment): void;
+	removeRange(start: number, end: number): void;
+	annotateRange(start: number, end: number, props: PropertySet): void;
 }
 
 /**
@@ -108,7 +84,7 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 	const maybeRoot = findRootMergeBlock(segmentOrNode);
 	assert(
 		maybeRoot?.mergeTree !== undefined,
-		"trackable is invalid as it is not in a rooted merge tree.",
+		0x5c2 /* trackable is invalid as it is not in a rooted merge tree. */,
 	);
 	const mergeTree: PickPartial<MergeTreeWithRevert, "__mergeTreeRevertible"> =
 		maybeRoot.mergeTree;
@@ -213,13 +189,9 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- * @alpha
+ * @internal
  */
 export function appendToMergeTreeDeltaRevertibles(
-	driver: MergeTreeRevertibleDriver,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {
@@ -240,15 +212,14 @@ export function appendToMergeTreeDeltaRevertibles(
 			break;
 
 		default:
-			throw new UsageError(`Unsupported event delta type: ${deltaArgs.operation}`);
+			throw new UsageError("Unsupported event delta type", {
+				operation: deltaArgs.operation,
+			});
 	}
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- * @alpha
+ * @internal
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
 	revertibles.forEach((r) => {
@@ -313,7 +284,7 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment = mergeTreeWithRevert.getContainingSegment(
+		const insertSegment: IMergeLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
 			realPos,
 			mergeTreeWithRevert.collabWindow.currentSeq,
 			mergeTreeWithRevert.collabWindow.clientId,
@@ -324,7 +295,9 @@ function revertLocalRemove(
 			(lref.properties as Partial<RemoveSegmentRefProperties>)?.referenceSpace ===
 			"mergeTreeDeltaRevertible";
 
-		const insertRef: Partial<Record<"before" | "after", List<LocalReferencePosition>>> = {};
+		const insertRef: Partial<
+			Record<"before" | "after", DoublyLinkedList<LocalReferencePosition>>
+		> = {};
 		const forward = insertSegment.ordinal < refSeg.ordinal;
 		const refHandler = (lref: LocalReferencePosition) => {
 			// once we reach it keep the original reference where it is
@@ -334,10 +307,10 @@ function revertLocalRemove(
 			}
 			if (localSlideFilter(lref)) {
 				if (forward) {
-					const before = (insertRef.before ??= new List());
+					const before = (insertRef.before ??= new DoublyLinkedList());
 					before.push(lref);
 				} else {
-					const after = (insertRef.after ??= new List());
+					const after = (insertRef.after ??= new DoublyLinkedList());
 					after.unshift(lref);
 				}
 			}
@@ -410,10 +383,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- * @alpha
+ * @internal
  */
 export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,

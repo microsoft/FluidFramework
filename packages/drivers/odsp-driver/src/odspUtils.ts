@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryProperties,
-	ITelemetryBaseLogger,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
@@ -16,11 +12,13 @@ import {
 	NonRetryableError,
 	NetworkErrorBasic,
 } from "@fluidframework/driver-utils";
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
-	ChildLogger,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
+	createChildLogger,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -43,7 +41,6 @@ import {
 	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
@@ -53,6 +50,9 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
+/**
+ * @alpha
+ */
 export interface IOdspResponse<T> {
 	content: T;
 	headers: Map<string, string>;
@@ -142,9 +142,16 @@ export async function fetchHelper(
 		},
 		(error) => {
 			const online = isOnline();
-			const errorText = `${error}`;
+
+			// The error message may not be suitable to log for privacy reasons, so tag it as such
+			const taggedErrorMessage = {
+				value: `${error}`, // This uses toString for objects, which often results in `${error.name}: ${error.message}`
+				tag: TelemetryDataTag.UserData,
+			};
+			// After redacting URLs we believe the error message is safe to log
 			const urlRegex = /((http|https):\/\/(\S*))/i;
-			const redactedErrorText = errorText.replace(urlRegex, "REDACTED_URL");
+			const redactedErrorText = taggedErrorMessage.value.replace(urlRegex, "REDACTED_URL");
+
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			if (error.name === "AbortError") {
 				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, {
@@ -152,15 +159,12 @@ export async function fetchHelper(
 				});
 			}
 			// TCP/IP timeout
-			if (errorText.includes("ETIMEDOUT")) {
+			if (redactedErrorText.includes("ETIMEDOUT")) {
 				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, {
 					driverVersion,
 				});
 			}
 
-			// WARNING: Do not log error object itself or any of its properties!
-			// It could contain PII, like URI in message itself, or token in properties.
-			// It is also non-serializable object due to circular references.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (online === OnlineStatus.Offline) {
 				throw new RetryableError(
@@ -169,7 +173,7 @@ export async function fetchHelper(
 					DriverErrorType.offlineError,
 					{
 						driverVersion,
-						rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
+						rawErrorMessage: taggedErrorMessage,
 					},
 				);
 			} else {
@@ -181,7 +185,7 @@ export async function fetchHelper(
 					DriverErrorType.fetchFailure,
 					{
 						driverVersion,
-						rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
+						rawErrorMessage: taggedErrorMessage,
 					},
 				);
 			}
@@ -199,8 +203,21 @@ export async function fetchArray(
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
 	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	let arrayBuffer: ArrayBuffer;
+	try {
+		arrayBuffer = await content.arrayBuffer();
+	} catch (e) {
+		// Parsing can fail and message could contain full request URI, including
+		// tokens, etc. So do not log error object itself.
+		throwOdspNetworkError(
+			"Error while parsing fetch response",
+			fetchIncorrectResponse,
+			content, // response
+			undefined, // response text
+			propsToLog,
+		);
+	}
 
-	const arrayBuffer = await content.arrayBuffer();
 	propsToLog.bodySize = arrayBuffer.byteLength;
 	return {
 		headers,
@@ -235,6 +252,7 @@ export async function fetchAndParseAsJSONHelper<T>(
 			fetchIncorrectResponse,
 			content, // response
 			text,
+			propsToLog,
 		);
 	}
 
@@ -287,10 +305,21 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 	return resolvedUrl as IOdspResolvedUrl;
 }
 
+/**
+ * @internal
+ */
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
+	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
+}
+
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
-	ChildLogger.create(logger, "OdspDriver", {
-		all: {
-			driverVersion,
+	createChildLogger({
+		logger,
+		namespace: "OdspDriver",
+		properties: {
+			all: {
+				driverVersion,
+			},
 		},
 	});
 
@@ -318,7 +347,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
 }
 
 export function toInstrumentedOdspTokenFetcher(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
@@ -422,6 +451,7 @@ export function buildOdspShareLinkReqParams(
 	}
 	const scope = (shareLinkType as ISharingLinkKind).scope;
 	if (!scope) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		return `createLinkType=${shareLinkType}`;
 	}
 	let shareLinkRequestParams = `createLinkScope=${scope}`;
@@ -446,38 +476,6 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
 	return [result, time];
 }
 
-export function validateMessages(
-	reason: string,
-	messages: ISequencedDocumentMessage[],
-	from: number,
-	logger: ITelemetryLogger,
-) {
-	if (messages.length !== 0) {
-		const start = messages[0].sequenceNumber;
-		const length = messages.length;
-		const last = messages[length - 1].sequenceNumber;
-		if (start !== from) {
-			logger.sendErrorEvent({
-				eventName: "OpsFetchViolation",
-				reason,
-				from,
-				start,
-				last,
-				length,
-			});
-			messages.length = 0;
-		}
-		if (last + 1 !== from + length) {
-			logger.sendErrorEvent({
-				eventName: "OpsFetchViolation",
-				reason,
-				from,
-				start,
-				last,
-				length,
-			});
-			// we can do better here by finding consecutive sub-block and return it
-			messages.length = 0;
-		}
-	}
+export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
+	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
 }

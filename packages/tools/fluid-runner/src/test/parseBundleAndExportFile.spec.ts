@@ -20,6 +20,9 @@ describe("parseBundleAndExportFile", () => {
 
 	beforeEach(() => {
 		fs.mkdirSync(outputFolder);
+		global.fetch = (async () => {
+			return undefined;
+		}) as any;
 	});
 
 	afterEach(() => {
@@ -66,6 +69,40 @@ describe("parseBundleAndExportFile", () => {
 			result.error?.message.toLowerCase().includes("timed out"),
 			`error message does not contain "timed out" [${result.error?.message}]`,
 		);
+	});
+
+	it("fails on disallowed network fetch", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "networkFetchCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			undefined,
+			true,
+		);
+
+		assert(!result.success, "result should not be successful");
+		assert(
+			result.error?.message.toLowerCase().includes("network fetch"),
+			`error message does not contain "network fetch" [${result.error?.message}]`,
+		);
+	});
+
+	it("succeeds when allowed network fetch occurs", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "networkFetchCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			undefined,
+			false,
+		);
+
+		assert(result.success, "result should be successful");
 	});
 
 	describe("Validate arguments", () => {

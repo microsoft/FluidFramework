@@ -4,26 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { v4 as uuid } from "uuid";
+import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
+import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	IPendingLocalState,
 	ContainerErrorType,
 	IFluidCodeDetails,
 	IContainer,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
 	ConnectionState,
 	Loader,
 	ILoaderProps,
 	waitContainerToCatchUp,
+	IContainerExperimental,
 } from "@fluidframework/container-loader";
 import {
 	DriverErrorType,
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
-	IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	LocalCodeLoader,
@@ -36,18 +37,25 @@ import {
 	ITestContainerConfig,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
 	ITestDataObject,
 	TestDataObjectType,
-	describeNoCompat,
+	describeCompat,
 	itExpects,
-} from "@fluid-internal/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+} from "@fluid-private/test-version-utils";
+import {
+	ConfigTypes,
+	DataCorruptionError,
+	IConfigProviderBase,
+} from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IClient } from "@fluidframework/protocol-definitions";
+import {
+	DeltaStreamConnectionForbiddenError,
+	NonRetryableError,
+} from "@fluidframework/driver-utils";
+import { Deferred } from "@fluidframework/core-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -55,7 +63,7 @@ const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 // REVIEW: enable compat testing?
-describeNoCompat("Container", (getTestObjectProvider) => {
+describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
@@ -81,7 +89,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	afterEach(() => {
 		loaderContainerTracker.reset();
 	});
-	async function loadContainer(props?: Partial<ILoaderProps>) {
+	async function loadContainer(props?: Partial<ILoaderProps>, headers?: IRequestHeader) {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -94,23 +102,14 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		});
 		loaderContainerTracker.add(loader);
 
-		return loader.resolve(testRequest);
+		return loader.resolve({
+			url: testRequest.url,
+			headers: { ...testRequest.headers, ...headers },
+		});
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
-		const localTestObjectProvider = new TestObjectProvider(
-			Loader,
-			provider.driver,
-			runtimeFactory,
-		);
-
-		const container = await localTestObjectProvider.makeTestContainer();
+		const container = await provider.makeTestContainer();
 		await waitForContainerConnection(container, true, {
 			durationMs: timeoutMs,
 			errorMsg: "Container initial connection timeout",
@@ -145,7 +144,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			mockFactory.createDocumentService = async (resolvedUrl) => {
 				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
 				// Issue typescript-eslint/typescript-eslint #1256
-				service.connectToStorage = async () => Promise.reject(new Error("expectedFailure"));
+				service.connectToStorage = () => {
+					throw new Error("expectedFailure");
+				};
 				return service;
 			};
 
@@ -161,7 +162,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 				error: "expectedFailure",
 			},
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -220,7 +220,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert(disconnectEventRaised, "Disconnected event should be raised");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -259,7 +259,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert.strictEqual(container.closed, false, "Container should not be closed");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -292,12 +292,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -306,7 +302,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 
 		const container = await localTestObjectProvider.makeTestContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 		let runCount = 0;
 
@@ -342,13 +338,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = await localTestObjectProvider.makeTestContainer(testContainerConfig);
-
-		const pendingLocalState: IPendingLocalState = JSON.parse(
-			container.closeAndGetPendingLocalState(),
-		);
+		const container: IContainerExperimental =
+			await localTestObjectProvider.makeTestContainer(testContainerConfig);
+		const pendingString = await container.closeAndGetPendingLocalState?.();
+		assert.ok(pendingString);
+		const pendingLocalState: { url?: string } = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
-		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
+		assert.strictEqual(pendingLocalState.url, container.resolvedUrl?.url);
 	});
 
 	it("can call connect() and disconnect() on Container", async () => {
@@ -382,12 +378,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("can control op processing with connect() and disconnect()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -406,7 +398,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			"container is not connected after connected event fires",
 		);
 
-		const dataObject = await requestFluidObject<ITestDataObject>(container1, "default");
+		const dataObject = (await container1.getEntryPoint()) as ITestDataObject;
 		const directory1 = dataObject._root;
 		directory1.set("key", "value");
 		let value1 = await directory1.get("key");
@@ -417,7 +409,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			durationMs: timeoutMs,
 			errorMsg: "container2 initial connect timeout",
 		});
-		const dataObjectTest = await requestFluidObject<ITestDataObject>(container2, "default");
+		const dataObjectTest = (await container2.getEntryPoint()) as ITestDataObject;
 		const directory2 = dataObjectTest._root;
 		await localTestObjectProvider.ensureSynchronized();
 		let value2 = await directory2.get("key");
@@ -576,7 +568,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		let run = 0;
 		container.deltaManager.on("readonly", () => run++);
 
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(
 			run,
 			0,
@@ -594,87 +586,277 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
 	});
 
-	it("Disposing container should send dispose events", async () => {
-		const container = await createConnectedContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+	it("DeltaStreamConnectionForbidden error on connectToDeltaStream sends deltamanager readonly event", async () => {
+		const documentServiceFactory = provider.documentServiceFactory;
 
-		let containerDisposed = 0;
-		let containerClosed = 0;
-		let deltaManagerDisposed = 0;
-		let deltaManagerClosed = 0;
-		let runtimeDispose = 0;
-		container.on("disposed", () => containerDisposed++);
-		container.on("closed", () => containerClosed++);
-		(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
-		(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-		(dataObject._context.containerRuntime as ContainerRuntime).on(
-			"dispose",
-			() => runtimeDispose++,
+		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+		mockFactory.createDocumentService = async (resolvedUrl) => {
+			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+			const realDeltaStream = service.connectToDeltaStream;
+			service.connectToDeltaStream = async (client) => {
+				throw new DeltaStreamConnectionForbiddenError(
+					"deltaStreamConnectionForbidden",
+					{ driverVersion: "1" },
+					"deltaStreamConnectionForbidden",
+				);
+			};
+			return service;
+		};
+		const container = await loadContainer(
+			{ documentServiceFactory: mockFactory },
+			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
 		);
 
-		container.dispose?.();
-		assert.strictEqual(
-			containerDisposed,
-			1,
-			"Container should send disposed event on container dispose",
-		);
-		assert.strictEqual(
-			containerClosed,
-			0,
-			"Container should not send closed event on container dispose",
-		);
-		assert.strictEqual(
-			deltaManagerDisposed,
-			1,
-			"DeltaManager should send disposed event on container dispose",
-		);
-		assert.strictEqual(
-			deltaManagerClosed,
-			0,
-			"DeltaManager should not send closed event on container dispose",
-		);
-		assert.strictEqual(
-			runtimeDispose,
-			1,
-			"ContainerRuntime should send dispose event on container dispose",
+		const readOnlyPromise = new Deferred<boolean>();
+		container.deltaManager.on("readonly", (readonly?: boolean) => {
+			assert(readonly, "Readonly should be true");
+			readOnlyPromise.resolve(true);
+		});
+
+		container.connect();
+		assert(
+			await readOnlyPromise.promise,
+			"DeltaManager should send readonly event on DeltaStreamConnectionForbidden error",
 		);
 	});
 
-	it("Closing then disposing container should send close and dispose events", async () => {
-		const container = await createConnectedContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+	it("OutOfStorageError sends deltamanager readonly event", async () => {
+		const documentServiceFactory = provider.documentServiceFactory;
 
-		let containerDisposed = 0;
-		let containerClosed = 0;
-		let deltaManagerDisposed = 0;
-		let deltaManagerClosed = 0;
-		let runtimeDispose = 0;
-		container.on("disposed", () => containerDisposed++);
-		container.on("closed", () => containerClosed++);
-		(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
-		(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-		(dataObject._context.containerRuntime as ContainerRuntime).on(
-			"dispose",
-			() => runtimeDispose++,
+		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+		mockFactory.createDocumentService = async (resolvedUrl) => {
+			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+			const realDeltaStream = service.connectToDeltaStream;
+			service.connectToDeltaStream = async (client) => {
+				throw new NonRetryableError(
+					"outOfStorageError",
+					DriverErrorType.outOfStorageError,
+					{ driverVersion: "1" },
+				);
+			};
+			return service;
+		};
+		const container = await loadContainer(
+			{ documentServiceFactory: mockFactory },
+			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
 		);
 
-		container.close();
-		container.dispose?.();
-		assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
-		assert.strictEqual(containerClosed, 1, "Container should send closed event");
-		assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
-		assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
-		assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
+		const readOnlyPromise = new Deferred<boolean>();
+		container.deltaManager.on(
+			"readonly",
+			(
+				readonly?: boolean,
+				readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+			) => {
+				assert(readonly, "Readonly should be true");
+				assert.strictEqual(
+					readonlyConnectionReason?.error?.errorType,
+					DriverErrorType.outOfStorageError,
+					"Error should be outOfStorageError",
+				);
+				readOnlyPromise.resolve(true);
+			},
+		);
+
+		container.connect();
+		assert(
+			await readOnlyPromise.promise,
+			"DeltaManager should send readonly event on Out of storage error",
+		);
+	});
+
+	itExpects(
+		"Disposing container should send dispose events",
+		[{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" }],
+		async () => {
+			const container = await createConnectedContainer();
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
+
+			let containerDisposed = 0;
+			let containerClosed = 0;
+			let deltaManagerDisposed = 0;
+			let deltaManagerClosed = 0;
+			let runtimeDispose = 0;
+			container.on("disposed", () => containerDisposed++);
+			container.on("closed", () => containerClosed++);
+			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+			(dataObject._context.containerRuntime as ContainerRuntime).on(
+				"dispose",
+				() => runtimeDispose++,
+			);
+
+			container.dispose(new DataCorruptionError("expected", {}));
+			assert.strictEqual(
+				containerDisposed,
+				1,
+				"Container should send disposed event on container dispose",
+			);
+			assert.strictEqual(
+				containerClosed,
+				0,
+				"Container should not send closed event on container dispose",
+			);
+			assert.strictEqual(
+				deltaManagerDisposed,
+				1,
+				"DeltaManager should send disposed event on container dispose",
+			);
+			assert.strictEqual(
+				deltaManagerClosed,
+				0,
+				"DeltaManager should not send closed event on container dispose",
+			);
+			assert.strictEqual(
+				runtimeDispose,
+				1,
+				"ContainerRuntime should send dispose event on container dispose",
+			);
+		},
+	);
+
+	itExpects(
+		"Closing then disposing container should send close and dispose events",
+		[
+			{ eventName: "fluid:telemetry:Container:ContainerClose", category: "error" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "generic" },
+		],
+		async () => {
+			const container = await createConnectedContainer();
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
+
+			let containerDisposed = 0;
+			let containerClosed = 0;
+			let deltaManagerDisposed = 0;
+			let deltaManagerClosed = 0;
+			let runtimeDispose = 0;
+			container.on("disposed", () => containerDisposed++);
+			container.on("closed", () => containerClosed++);
+			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+			(dataObject._context.containerRuntime as ContainerRuntime).on(
+				"dispose",
+				() => runtimeDispose++,
+			);
+
+			container.close(new DataCorruptionError("expected", {}));
+			container.dispose(new DataCorruptionError("expected", {}));
+			assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
+			assert.strictEqual(containerClosed, 1, "Container should send closed event");
+			assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
+			assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
+			assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
+		},
+	);
+
+	// Temporary disable since we reverted the fix that caused an increase in loader bundle size.
+	// Tracking alternative fix in AB#4129.
+	it.skip("clientDetailsOverride does not cause client details of other containers with the same loader to change", async function () {
+		const documentId = uuid();
+		const client: IClient = {
+			details: {
+				capabilities: { interactive: true },
+			},
+			permission: [],
+			scopes: [],
+			user: { id: "" },
+			mode: "write",
+		};
+		const loaderProps: Partial<ILoaderProps> = {
+			options: {
+				client,
+			},
+		};
+		const loader = provider.makeTestLoader({ loaderProps });
+		const container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		const createNewRequest = provider.driver.createCreateNewRequest(documentId);
+		await container1.attach(createNewRequest);
+
+		// Check that client details are the expected ones before resolving a second container with different client details
+		assert.equal(
+			(container1 as any).clientDetails?.capabilities?.interactive,
+			true,
+			"First container's client capabilities should say 'interactive: true' before resolving second container",
+		);
+		assert.equal(
+			(container1 as any).clientDetails?.type,
+			undefined,
+			"First container's clientDetails should have undefined 'type' before resolving second container",
+		);
+
+		// Check that the IClient object passed in loader props hasn't been mutated
+		assert.equal(
+			client.details.capabilities.interactive,
+			true,
+			"IClient.details.capabilities.interactive should be 'true' before resolving second container",
+		);
+		assert.equal(
+			client.details.type,
+			undefined,
+			"IClient.details.type should be undefined before resolving second container",
+		);
+
+		// Resolve the container a second time with different client details.
+		// The contents of the [LoaderHeader.clientDetails] header end up in IContainerLoadOptions.clientDetailsOverride
+		// when loading the container during the loader.resolve() call.
+		const request: IRequest = {
+			headers: {
+				[LoaderHeader.cache]: false,
+				[LoaderHeader.clientDetails]: {
+					capabilities: { interactive: false },
+					type: "myContainerType",
+				},
+				[LoaderHeader.reconnect]: false,
+			},
+			url: await provider.driver.createContainerUrl(documentId, container1.resolvedUrl),
+		};
+		const container2 = await loader.resolve(request);
+
+		// Check that the second container's client details are the expected ones
+		assert.equal(
+			(container2 as any).clientDetails?.capabilities?.interactive,
+			false,
+			"Second container's capabilities should say 'interactive: false'",
+		);
+		assert.equal(
+			(container2 as any).clientDetails?.type,
+			"myContainerType",
+			"Second container's clientDetails say 'type: myContainerType'",
+		);
+
+		// Check that the first container's client details are still the expected ones after resolving the second container
+		assert.equal(
+			(container1 as any).clientDetails?.capabilities?.interactive,
+			true,
+			"First container's capabilities should say 'interactive: true' after resolving second container",
+		);
+		assert.equal(
+			(container1 as any).clientDetails?.type,
+			undefined,
+			"First container's clientDetails should have undefined 'type' after resolving second container",
+		);
+
+		// Check that the IClient object passed in loader props hasn't been mutated
+		assert.equal(
+			client.details.capabilities.interactive,
+			true,
+			"IClient.details.capabilities.interactive should be 'true' after resolving second container",
+		);
+		assert.equal(
+			client.details.type,
+			undefined,
+			"IClient.details.type should be undefined after resolving second container",
+		);
 	});
 });
 
-describeNoCompat("Driver", (getTestObjectProvider) => {
+describeCompat("Driver", "NoCompat", (getTestObjectProvider) => {
 	it("Driver Storage Policy Values", async () => {
 		const provider = getTestObjectProvider();
 		const fiveDaysMs: FiveDaysMs = 432_000_000;
 
 		const { resolvedUrl } = await provider.makeTestContainer();
-		ensureFluidResolvedUrl(resolvedUrl);
+		assert(resolvedUrl !== undefined, "Missing resolved url");
 		const ds = await provider.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await ds.connectToStorage();
 		assert.equal(storage.policies?.maximumCacheDurationMs, fiveDaysMs);

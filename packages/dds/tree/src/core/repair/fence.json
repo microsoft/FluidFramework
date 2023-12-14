@@ -1,5 +1,0 @@
-{
-	"tags": ["repair"],
-	"exports": ["index"],
-	"imports": ["tree", "util"]
-}

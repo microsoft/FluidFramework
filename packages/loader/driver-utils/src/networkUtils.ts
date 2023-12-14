@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 
+/**
+ * @internal
+ */
 export function logNetworkFailure(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	event: ITelemetryErrorEvent,
 	error?: any,
 ) {
 	const newEvent = { ...event };
 
-	const errorOnlineProp = error.online;
+	const errorOnlineProp = error?.online;
 	newEvent.online =
 		typeof errorOnlineProp === "string" ? errorOnlineProp : OnlineStatus[isOnline()];
 

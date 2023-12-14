@@ -4,10 +4,11 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 /**
  * Type of "valueChanged" event parameter.
+ * @internal
  */
 export interface IValueChanged {
 	/**
@@ -25,6 +26,7 @@ export interface IValueChanged {
 
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
+ * @internal
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -63,6 +65,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
+ * @internal
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,6 +110,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * channel ID.
  *
  * @deprecated This type is legacy and deprecated.
+ * @internal
  */
 export interface ISerializableValue {
 	/**
@@ -128,6 +132,7 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
+ * @internal
  */
 export interface ISerializedValue {
 	/**
@@ -146,25 +151,4 @@ export interface ISerializedValue {
 	 * The attribution key or seq number attached with the entry
 	 */
 	attribution?: string;
-}
-
-/**
- * Options related to attribution
- *
- * @public
- */
-export interface IMapOptions {
-	attribution?: IMapAttributionOptions;
-}
-
-/**
- * This enables the map to store the attribution information which can be accessed with the runtime
- * (i.e. who creeated the content and when it was created)
- *
- * default: false
- *
- * @public
- */
-export interface IMapAttributionOptions {
-	track?: boolean;
 }

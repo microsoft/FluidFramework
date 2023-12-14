@@ -4,16 +4,23 @@
  */
 
 import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
-import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
+/**
+ * @internal
+ */
 export type ExpectedEvents =
 	| ITelemetryGenericEvent[]
 	| Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
 
-function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
+/**
+ * @internal
+ */
+export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
 	return async function (this: Context) {
 		const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
 		if (provider === undefined) {
@@ -30,7 +37,10 @@ function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.As
 			// only use TestException if the event is provided.
 			// it must be last, as the events are ordered, so all other events must come first
 			if (orderedEvents[orderedEvents.length - 1]?.eventName === "TestException") {
-				provider.logger.sendErrorEvent({ eventName: "TestException" }, error);
+				createChildLogger({ logger: provider.logger }).sendErrorEvent(
+					{ eventName: "TestException" },
+					error,
+				);
 			} else {
 				throw error;
 			}
@@ -42,6 +52,9 @@ function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.As
 	};
 }
 
+/**
+ * @internal
+ */
 export type ExpectsTest = (
 	name: string,
 	orderedExpectedEvents: ExpectedEvents,
@@ -51,6 +64,8 @@ export type ExpectsTest = (
 /**
  * Similar to mocha's it function, but allow specifying expected events.
  * That must occur during the execution of the test.
+ *
+ * @internal
  */
 export const itExpects: ExpectsTest & Record<"only" | "skip", ExpectsTest> = (
 	name: string,

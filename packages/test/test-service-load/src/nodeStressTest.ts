@@ -12,7 +12,7 @@ import {
 	DriverEndpoint,
 	ITestDriver,
 } from "@fluidframework/test-driver-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
@@ -248,7 +248,7 @@ async function orchestratorProcess(
  */
 function setupTelemetry(
 	process: child_process.ChildProcess,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	runId: number,
 	username?: string,
 ) {

@@ -16,7 +16,7 @@ export type CompressedPlaceholderTree<TId extends OpSpaceNodeId, TPlaceholder ex
 	| [InternedStringId | Definition, TId]
 	| [
 			InternedStringId | Definition,
-			[Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>
+			[Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>,
 	  ]
 	| [InternedStringId, TId, [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>];
 ```

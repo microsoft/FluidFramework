@@ -5,17 +5,19 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { exec, execSync } from "child_process";
-import * as path from "path";
 import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
+import { ExecOptions, exec, execSync } from "child_process";
+import * as path from "path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
-import { pkgVersion } from "./packageVersion";
-import { InstalledPackage } from "./testApi";
+import { pkgVersion } from "./packageVersion.js";
+import { InstalledPackage } from "./testApi.js";
 
 // Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
-const baseModulePath = path.join(__dirname, "..", "node_modules", ".legacy");
+const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
 const getModulePath = (version: string) => path.join(baseModulePath, version);
 
@@ -33,7 +35,7 @@ async function ensureInstalledJson() {
 	if (existsSync(installedJsonPath)) {
 		return;
 	}
-	const release = await lock(__dirname, { retries: { forever: true } });
+	const release = await lock(fileURLToPath(import.meta.url), { retries: { forever: true } });
 	try {
 		// Check it again under the lock
 		if (existsSync(installedJsonPath)) {
@@ -101,6 +103,9 @@ async function removeInstalled(version: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export function resolveVersion(requested: string, installed: boolean) {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
@@ -168,6 +173,9 @@ async function ensureModulePath(version: string, modulePath: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export async function ensureInstalled(
 	requested: string,
 	packageList: string[],
@@ -190,7 +198,7 @@ export async function ensureInstalled(
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}
 
-	// Release the __dirname but lock the modulePath so we can do parallel installs
+	// Release the base path but lock the modulePath so we can do parallel installs
 	const release = await lock(modulePath, { retries: { forever: true } });
 	try {
 		if (force) {
@@ -200,21 +208,38 @@ export async function ensureInstalled(
 
 		// Check installed status again under lock the modulePath lock
 		if (force || !(await isInstalled(version))) {
+			const options: ExecOptions = {
+				cwd: modulePath,
+				env: {
+					...process.env,
+					// Reset any parent process node options: path-specific options (ex: --require, --experimental-loader)
+					// will otherwise propagate to these commands but fail to resolve.
+					NODE_OPTIONS: "",
+				},
+			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
-				exec(`npm init --yes`, { cwd: modulePath }, (error, stdout, stderr) => {
+				// Added --verbose to try to troubleshoot AB#6195.
+				// We should probably remove it if when find the root cause and fix for that.
+				exec(`npm init --yes --verbose`, options, (error, stdout, stderr) => {
 					if (error) {
-						reject(new Error(`Failed to initialize install directory ${modulePath}`));
+						reject(
+							new Error(
+								`Failed to initialize install directory ${modulePath}\n${stderr}`,
+							),
+						);
 					}
 					resolve();
 				}),
 			);
 			await new Promise<void>((resolve, reject) =>
+				// Added --verbose to try to troubleshoot AB#6195.
+				// We should probably remove it when we find the root cause and fix for that.
 				exec(
-					`npm i --no-package-lock ${adjustedPackageList
+					`npm i --no-package-lock --verbose ${adjustedPackageList
 						.map((pkg) => `${pkg}@${version}`)
 						.join(" ")}`,
-					{ cwd: modulePath },
+					options,
 					(error, stdout, stderr) => {
 						if (error) {
 							reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));
@@ -240,6 +265,9 @@ export async function ensureInstalled(
 	}
 }
 
+/**
+ * @internal
+ */
 export function checkInstalled(requested: string) {
 	const version = resolveVersion(requested, true);
 	const modulePath = getModulePath(version);
@@ -252,41 +280,111 @@ export function checkInstalled(requested: string) {
 	);
 }
 
-export const loadPackage = (modulePath: string, pkg: string) =>
-	// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return
-	require(path.join(modulePath, "node_modules", pkg));
+/**
+ * @internal
+ */
+export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+	const pkgPath = path.join(modulePath, "node_modules", pkg);
+	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
+	// some of Node's module loading logic here.
+	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
+	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
+		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
+	);
+	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
+	let primaryExport: string;
+	if (pkgJson.exports !== undefined) {
+		// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
+		// if this assert fails.
+		// The v18 doc doesn't mention that export paths must start with ".", but the modern docs do:
+		// https://nodejs.org/api/packages.html#exports
+		for (const key of Object.keys(pkgJson.exports)) {
+			if (!key.startsWith(".")) {
+				throw new Error(
+					"Conditional exports not supported by test-version-utils. Legacy module loading logic needs to be updated.",
+				);
+			}
+		}
+		if (typeof pkgJson.exports === "string") {
+			primaryExport = pkgJson.exports;
+		} else {
+			const exp = pkgJson.exports["."];
+			primaryExport = typeof exp === "string" ? exp : exp.require.default;
+			if (primaryExport === undefined) {
+				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			}
+		}
+	} else {
+		if (pkgJson.main === undefined) {
+			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		primaryExport = pkgJson.main;
+	}
+	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
+};
 
 /**
- * Used to get the major version number above or below the baseVersion.
+ *
+ * Given a version, returns the most recently released version. The version provided can be adjusted to
+ * the next or previous major versions by providing positive/negative integers in the `requested` parameter.
+ *
  * @param baseVersion - The base version to move from (eg. "0.60.0")
- * @param requested - Number representing the major version to move from. These are
- * generally negative to move back versions (eg. -1).
- * Note: If the requested number is a string then that will be the returned value
+ * @param requested - If the value is a negative number, the baseVersion will be adjusted down.
+ * If the value is a string then it will be returned as-is. Throws on positive number.
+ * @param adjustPublicMajor - If `baseVersion` is a Fluid internal version, then this boolean controls whether the
+ * public or internal version is adjusted by the `requested` value. This parameter has no effect if `requested` is a
+ * string value or if `baseVersion` is not a Fluid internal version.
+ *
+ * @remarks
+ *
+ * In typical use, the `requested` values are negative values to return ranges for previous versions (e.g. "-1").
+ *
+ * @example
+ * ```typescript
+ * const newVersion = getRequestedVersion("2.3.5", -1); // "^1.0.0"
+ * ```
+ *
+ * @example
+ * ```typescript
+ * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
+ * ```
+ *
+ * @internal
  */
-export function getRequestedRange(baseVersion: string, requested?: number | string): string {
+export function getRequestedVersion(
+	baseVersion: string,
+	requested?: number | string,
+	adjustPublicMajor: boolean = false,
+): string {
 	if (requested === undefined || requested === 0) {
 		return baseVersion;
 	}
 	if (typeof requested === "string") {
 		return requested;
 	}
+	if (requested > 0) {
+		throw new Error("Only negative values are supported for `requested` param.");
+	}
 
-	const isInternal = baseVersion.includes("internal");
-	const isDev = baseVersion.includes("dev");
+	const scheme = detectVersionScheme(baseVersion);
 
 	// if the baseVersion passed is an internal version
-	if (isInternal) {
-		const internalVersions = baseVersion.split("-internal.");
-		return internalSchema(internalVersions[0], internalVersions[1], requested);
+	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
+		const [publicVersion, internalVersion /* prereleaseIdentifier */] = fromInternalScheme(
+			baseVersion,
+			/** allowPrereleases */ true,
+			/** allowAnyPrereleaseId */ true,
+		);
+
+		const internalSchemeRange = internalSchema(
+			publicVersion.version,
+			internalVersion.version,
+			requested,
+		);
+		return resolveVersion(internalSchemeRange, false);
 	}
 
-	// if the baseVersion passed is a pre-released version
-	if (isDev) {
-		const devVersions = baseVersion.split("-dev.");
-		return internalSchema(devVersions[0], devVersions[1].split(".", 3).join("."), requested);
-	}
-
-	let version;
+	let version: semver.SemVer;
 	try {
 		version = new semver.SemVer(baseVersion);
 	} catch (err: unknown) {
@@ -294,51 +392,53 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 	}
 
 	// calculate requested major version number
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	const requestedMajorVersion = version.major + requested;
 	// if the major version number is bigger than 0 then return it as normal
 	if (requestedMajorVersion > 0) {
-		return `^${requestedMajorVersion}.0.0-0`;
+		return resolveVersion(`^${requestedMajorVersion}.0.0-0`, false);
 	}
 	// if the major version number is <= 0 then we return the equivalent pre-releases
 	const lastPrereleaseVersion = new semver.SemVer("0.59.0");
 
 	// Minor number in 0.xx release represent a major change hence different rules
 	// are applied for computing the requested version.
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
 	// too old a version / non existing version requested
 	if (requestedMinorVersion <= 0) {
 		// cap at min version
 		return "^0.0.1-0";
 	}
-	return `^0.${requestedMinorVersion}.0-0`;
+	return resolveVersion(`^0.${requestedMinorVersion}.0-0`, false);
 }
 
-export function internalSchema(
-	publicVersion: string,
-	internalVersion: string,
-	requested: number | string,
-): string {
-	if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -1) {
-		return `^1.0.0-0`;
+function internalSchema(publicVersion: string, internalVersion: string, requested: number): string {
+	if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+		if (requested === -1) {
+			return `^1.0.0-0`;
+		}
+
+		if (requested === -2) {
+			return `^0.59.0-0`;
+		}
 	}
-	if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -2) {
-		return `^0.59.0-0`;
-	}
+
 	if (
-		publicVersion === "2.0.0" &&
-		internalVersion >= "2.0.0" &&
-		internalVersion < "3.0.0" &&
+		semver.eq(publicVersion, "2.0.0") &&
+		semver.gte(internalVersion, "2.0.0") &&
+		semver.lt(internalVersion, "3.0.0") &&
 		requested === -2
 	) {
 		return `^1.0.0-0`;
 	}
 
 	// if the version number is for the older version scheme before 1.0.0
-	if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
+	if (
+		semver.eq(publicVersion, "2.0.0") &&
+		semver.lte(internalVersion, "2.0.0") &&
+		requested < -2
+	) {
 		const lastPrereleaseVersion = new semver.SemVer("0.59.0");
-		const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
+		const requestedMinorVersion = lastPrereleaseVersion.minor + requested + 2;
 		return `^0.${requestedMinorVersion}.0-0`;
 	}
 
@@ -346,11 +446,9 @@ export function internalSchema(
 	let semverInternal: string = internalVersion;
 
 	// applied for all the baseVersion passed as 2.0.0-internal-3.0.0 or greater in 2.0.0 internal series
-	if (internalVersion > publicVersion && requested <= -2) {
-		const version = internalVersion.split(".");
-		semverInternal = (parseInt(version[0], 10) + ((requested as number) + 1))
-			.toString()
-			.concat(".0.0");
+	if (semver.gt(internalVersion, publicVersion) && requested <= -2) {
+		const parsed = new semver.SemVer(internalVersion);
+		semverInternal = (parsed.major + requested + 1).toString().concat(".0.0");
 	}
 
 	try {
@@ -364,6 +462,9 @@ export function internalSchema(
 	}.0.0`;
 }
 
+/**
+ * @internal
+ */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
 	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
 	return (

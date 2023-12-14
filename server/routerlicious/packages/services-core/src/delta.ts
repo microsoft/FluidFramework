@@ -5,6 +5,9 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+/**
+ * @internal
+ */
 export interface IDeltaService {
 	getDeltas(
 		collectionName: string,
@@ -12,6 +15,7 @@ export interface IDeltaService {
 		documentId: string,
 		from?: number,
 		to?: number,
+		caller?: string,
 	): Promise<ISequencedDocumentMessage[]>;
 
 	getDeltasFromStorage(

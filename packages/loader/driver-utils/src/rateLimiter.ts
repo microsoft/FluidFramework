@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 
+/**
+ * @alpha
+ */
 export class RateLimiter {
 	private readonly tasks: (() => void)[] = [];
 	constructor(private maxRequests: number) {

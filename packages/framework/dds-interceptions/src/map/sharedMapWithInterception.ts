@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
@@ -20,6 +20,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
  * @param setInterceptionCallback - The interception callback to be called
  *
  * @returns A new SharedMap that intercepts the set method and calls the setInterceptionCallback.
+ * @internal
  */
 export function createSharedMapWithInterception(
 	sharedMap: SharedMap,

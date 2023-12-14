@@ -3,26 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator";
+import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
 function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
-	return new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
+	return new SharedMatrix<SharedString["handle"]>(
+		dataStoreRuntime,
+		"matrix1",
+		SharedMatrixFactory.Attributes,
+	);
 }
 
 function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
 	return new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
 }
 
-describeNoCompat("PAS Test", () => {
-	let matrix: SharedMatrix;
-	let containerRuntimeFactory: MockContainerRuntimeFactory;
+describeCompat("PAS Test", "NoCompat", () => {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const rowSize = 6;
 	const columnSize = 5;
@@ -47,16 +49,16 @@ describeNoCompat("PAS Test", () => {
 				this.matrix.insertCols(0, columnSize);
 				for (let i = 0; i < rowSize; i++) {
 					for (let j = 0; j < columnSize; j++) {
-						const id = j.toString() + i.toString();
+						const id = `${j},${i}`;
 						const sharedString: SharedString = createString(id, dataStoreRuntime);
 						sharedString.insertText(0, "testValue");
-						this.matrix.setCell(i, j, sharedString);
+						this.matrix.setCell(i, j, sharedString.handle);
 					}
 				}
 			}
-			before(): void {}
+			async before(): Promise<void> {}
 			beforeIteration(): void {}
-			after(): void {}
+			async after(): Promise<void> {}
 		})(),
 	);
 });

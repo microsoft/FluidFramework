@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-
 /**
  * Object returned from calling IModelLoader.createDetached().
+ * @internal
  */
 export interface IDetachedModel<ModelType> {
 	/**
@@ -22,6 +20,9 @@ export interface IDetachedModel<ModelType> {
 	attach: () => Promise<string>;
 }
 
+/**
+ * @internal
+ */
 export interface IModelLoader<ModelType> {
 	/**
 	 * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
@@ -44,12 +45,11 @@ export interface IModelLoader<ModelType> {
 	 * @param id - the id of the container to load
 	 */
 	loadExisting(id: string): Promise<ModelType>;
-}
 
-/**
- * The callback signature that the container author will provide.  It must return a promise for the container's model.
- */
-export type ModelMakerCallback<ModelType> = (
-	runtime: IContainerRuntime,
-	container: IContainer,
-) => Promise<ModelType>;
+	/**
+	 * Load a model for the container with the given id.
+	 * @param id - the id of the container to load
+	 * @param sequenceNumber - the sequence number we want to load to and pause at
+	 */
+	loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType>;
+}

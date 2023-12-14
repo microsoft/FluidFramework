@@ -8,13 +8,15 @@ import {
 	IContext,
 	IPublisher,
 	IPartitionLambda,
-	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
 	IServiceConfiguration,
 	IClientManager,
 } from "@fluidframework/server-services-core";
 import { BroadcasterLambda } from "./lambda";
 
+/**
+ * @internal
+ */
 export class BroadcasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly publisher: IPublisher,
@@ -29,10 +31,7 @@ export class BroadcasterLambdaFactory extends EventEmitter implements IPartition
 		});
 	}
 
-	public async create(
-		config: IPartitionLambdaConfig,
-		context: IContext,
-	): Promise<IPartitionLambda> {
+	public async create(config: undefined, context: IContext): Promise<IPartitionLambda> {
 		return new BroadcasterLambda(
 			this.publisher,
 			context,

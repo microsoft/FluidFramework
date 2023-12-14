@@ -9,13 +9,20 @@ import { safelyParseJSON } from "@fluidframework/common-utils";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
+/**
+ * @internal
+ */
 export interface IPartitionLambdaPlugin {
-	create(config: Provider, customizations?: Record<string, any>): Promise<IPartitionLambdaFactory>;
+	create(
+		config: Provider,
+		customizations?: Record<string, any>,
+	): Promise<IPartitionLambdaFactory>;
 	customize?(config: Provider): Promise<Record<string, any>>;
 }
 
 /**
  * Reasons why a lambda is closing
+ * @internal
  */
 export enum LambdaCloseType {
 	Stop = "Stop",
@@ -24,16 +31,25 @@ export enum LambdaCloseType {
 	Error = "Error",
 }
 
+/**
+ * @internal
+ */
 export enum LambdaName {
 	Scribe = "Scribe",
 }
 
+/**
+ * @internal
+ */
 export interface ILogger {
 	info(message: string, metaData?: any): void;
 	warn(message: string, metaData?: any): void;
 	error(message: string, metaData?: any): void;
 }
 
+/**
+ * @internal
+ */
 export interface IContextErrorData {
 	/**
 	 * Indicates whether the error is recoverable and the lambda should be restarted.
@@ -49,13 +65,23 @@ export interface IContextErrorData {
 
 	tenantId?: string;
 	documentId?: string;
+
+	/**
+	 * For KafkaRunner logging purposes.
+	 * Since KafkaRunner metric logs all the errors, this will indicate how the error was handled
+	 * eg: doc corruption error / rdkafkaConsumer error, so that we can filter accordingly
+	 */
+	errorLabel?: string;
 }
 
+/**
+ * @internal
+ */
 export interface IContext {
 	/**
 	 * Updates the checkpoint
 	 */
-	checkpoint(queuedMessage: IQueuedMessage): void;
+	checkpoint(queuedMessage: IQueuedMessage, restartFlag?: boolean): void;
 
 	/**
 	 * Closes the context with an error.
@@ -70,7 +96,16 @@ export interface IContext {
 	readonly log: ILogger | undefined;
 }
 
+/**
+ * @internal
+ */
 export interface IPartitionLambda {
+	/**
+	 * Expire document partition after this long of no activity.
+	 * When undefined, the default global IDocumentLambdaServerConfiguration.partitionActivityTimeout is used.
+	 */
+	readonly activityTimeout?: number;
+
 	/**
 	 * Processes an incoming message
 	 */
@@ -85,14 +120,14 @@ export interface IPartitionLambda {
 
 /**
  * Factory for creating lambda related objects
+ * @internal
  */
-export interface IPartitionLambdaFactory<T extends IPartitionConfig = IPartitionLambdaConfig>
-	extends EventEmitter {
+export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitter {
 	/**
 	 * Constructs a new lambda
 	 */
 	create(
-		config: T,
+		config: TConfig,
 		context: IContext,
 		updateActivityTime?: () => void,
 	): Promise<IPartitionLambda>;
@@ -104,20 +139,17 @@ export interface IPartitionLambdaFactory<T extends IPartitionConfig = IPartition
 }
 
 /**
- * Partition config
- */
-export interface IPartitionConfig {
-	leaderEpoch: number;
-}
-
-/**
  * Lambda config
+ * @internal
  */
-export interface IPartitionLambdaConfig extends IPartitionConfig {
+export interface IPartitionLambdaConfig {
 	tenantId: string;
 	documentId: string;
 }
 
+/**
+ * @internal
+ */
 export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 	if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return

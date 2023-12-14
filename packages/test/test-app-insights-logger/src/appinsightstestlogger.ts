@@ -5,9 +5,12 @@
 
 import * as appinsights from "applicationinsights";
 
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
+/**
+ * @internal
+ */
 export class AppInsightsTestLogger implements ITelemetryBufferedLogger {
 	protected readonly telemetryClient: appinsights.TelemetryClient;
 

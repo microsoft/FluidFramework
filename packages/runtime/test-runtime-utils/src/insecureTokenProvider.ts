@@ -14,6 +14,7 @@ import { IInsecureUser } from "./insecureUsers";
  *
  * As the name implies, this is not secure and should not be used in production.
  * It simply makes examples where authentication is not relevant easier to bootstrap.
+ * @internal
  */
 export class InsecureTokenProvider implements ITokenProvider {
 	constructor(
@@ -33,7 +34,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 		 *
 		 * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
 		 *
-		 * @defaultValue - [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
+		 * @defaultValue [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
 		 */
 		private readonly scopes?: ScopeType[],
 	) {}

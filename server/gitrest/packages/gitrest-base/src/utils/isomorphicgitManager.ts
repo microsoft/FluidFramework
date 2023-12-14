@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as isomorphicGit from "isomorphic-git";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as isomorphicGit from "isomorphic-git";
 import { IExternalStorageManager } from "../externalStorageManager";
-import * as helpers from "./helpers";
-import * as conversions from "./isomorphicgitConversions";
 import {
 	IExternalWriterConfig,
-	IRepositoryManager,
 	IFileSystemManager,
-	IFileSystemManagerFactory,
+	IFileSystemManagerFactories,
+	IRepositoryManager,
 	IStorageDirectoryConfig,
 } from "./definitions";
 import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
+import * as helpers from "./helpers";
+import * as conversions from "./isomorphicgitConversions";
 import { RepositoryManagerBase } from "./repositoryManagerBase";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
@@ -29,9 +29,15 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		directory: string,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean = false,
-        apiMetricsSamplingPeriod?: number,
+		apiMetricsSamplingPeriod?: number,
+		private readonly isEphemeralContainer?: boolean,
 	) {
-		super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics, apiMetricsSamplingPeriod);
+		super(
+			directory,
+			lumberjackBaseProperties,
+			enableRepositoryManagerMetrics,
+			apiMetricsSamplingPeriod,
+		);
 	}
 
 	protected async getCommitCore(sha: string): Promise<resources.ICommit> {
@@ -72,16 +78,20 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 				};
 				return result;
 			});
-		} catch (err) {
+		} catch (err: any) {
 			Lumberjack.error(
 				"getCommits error",
 				{
 					...this.lumberjackBaseProperties,
 					[BaseGitRestTelemetryProperties.sha]: sha,
+					[BaseGitRestTelemetryProperties.directoryPath]: this.directory,
 					count,
 				},
 				err,
 			);
+			if (this.isEphemeralContainer && err?.code === "NotFoundError") {
+				throw new NetworkError(404, "Unable to get commits for ephemeral container.");
+			}
 			throw new NetworkError(500, "Unable to get commits.");
 		}
 	}
@@ -374,21 +384,21 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<void> {
 	constructor(
 		storageDirectoryConfig: IStorageDirectoryConfig,
-		fileSystemManagerFactory: IFileSystemManagerFactory,
+		fileSystemManagerFactories: IFileSystemManagerFactories,
 		externalStorageManager: IExternalStorageManager,
 		repoPerDocEnabled: boolean,
 		enableRepositoryManagerMetrics: boolean = false,
 		private readonly enableSlimGitInit: boolean = false,
-        apiMetricsSamplingPeriod?: number,
+		apiMetricsSamplingPeriod?: number,
 	) {
 		super(
 			storageDirectoryConfig,
-			fileSystemManagerFactory,
+			fileSystemManagerFactories,
 			externalStorageManager,
 			repoPerDocEnabled,
 			enableRepositoryManagerMetrics,
 			false /* enforceSynchronous */,
-            apiMetricsSamplingPeriod,
+			apiMetricsSamplingPeriod,
 		);
 	}
 
@@ -415,7 +425,8 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 		externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
-        apiMetricsSamplingPeriod?: number,
+		apiMetricsSamplingPeriod?: number,
+		isEphemeralContainer?: boolean,
 	): IRepositoryManager {
 		return new IsomorphicGitRepositoryManager(
 			fileSystemManager,
@@ -424,7 +435,8 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 			gitdir,
 			lumberjackBaseProperties,
 			enableRepositoryManagerMetrics,
-            apiMetricsSamplingPeriod,
+			apiMetricsSamplingPeriod,
+			isEphemeralContainer,
 		);
 	}
 

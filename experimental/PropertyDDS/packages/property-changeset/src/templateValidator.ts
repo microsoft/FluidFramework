@@ -9,6 +9,10 @@
  * versioning (semver) errors and warn about incorrect versioning practices.
  */
 
+// There are lots of violations in this file.
+/* eslint-disable @typescript-eslint/no-base-to-string */
+/* eslint-disable jsdoc/check-line-alignment */
+
 import Ajv from "ajv";
 import ajvKeywords from "ajv-keywords";
 
@@ -98,7 +102,7 @@ const _extractTypeid = function (typeidOrReference: string) {
 	}
 	const reference = "Reference<";
 	let result = typeidOrReference || "";
-	const isReference = result.indexOf(reference) === 0;
+	const isReference = result.startsWith(reference);
 	if (isReference) {
 		result = typeidOrReference.substring(reference.length, typeidOrReference.length - 1);
 	}
@@ -710,10 +714,10 @@ const _validateContextAsync = async function (in_template) {
 
 	const error = getInvalidContextError(context);
 	if (error) {
-		return Promise.reject(error);
+		throw error;
 	}
 	if (context === "map" && in_template.contextKeyType === "typeid") {
-		return Promise.reject(new Error(MSG.INVALID_OPTION_NONE_CONSTANTS));
+		throw new Error(MSG.INVALID_OPTION_NONE_CONSTANTS);
 	}
 	// If context is not 'set' validation doesn't apply
 	if (context !== "set") {
@@ -728,7 +732,7 @@ const _validateContextAsync = async function (in_template) {
 	} else {
 		// Since context is 'set' the template must eventually inherit from NamedProperty
 		if (in_template.inherits === undefined) {
-			return Promise.reject(new Error(MSG.SET_ONLY_NAMED_PROPS));
+			throw new Error(MSG.SET_ONLY_NAMED_PROPS);
 		}
 
 		// Since context is 'set' the template must eventually inherit from NamedProperty (same as above)
@@ -757,14 +761,14 @@ const _validateContextAsync = async function (in_template) {
 		.then(function (results) {
 			const foundNamedPropertyDescendant = find(results, (res) => res);
 			if (!foundNamedPropertyDescendant) {
-				return Promise.reject(Error(MSG.SET_ONLY_NAMED_PROPS));
+				throw Error(MSG.SET_ONLY_NAMED_PROPS);
 			}
 
 			return that._hasSchemaAsync(in_template.typeid);
 		})
 		.then(function (hasIt) {
 			if (!hasIt) {
-				return Promise.reject(new Error(MSG.SET_ONLY_NAMED_PROPS));
+				throw new Error(MSG.SET_ONLY_NAMED_PROPS);
 			}
 
 			return that._inheritsFromAsync(in_template.typeid, "NamedProperty");
@@ -774,7 +778,7 @@ const _validateContextAsync = async function (in_template) {
 				return undefined;
 			}
 
-			return Promise.reject(new Error(MSG.SET_ONLY_NAMED_PROPS));
+			throw new Error(MSG.SET_ONLY_NAMED_PROPS);
 		});
 };
 
@@ -825,13 +829,13 @@ const _processValidationResults = function (in_template: PropertySchema) {
 			const regexTypeId = /typeid/;
 			switch (error.keyword) {
 				case "pattern":
-					if (error.dataPath === ".typeid") {
+					if (error.instancePath === ".typeid") {
 						error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data} does not match that pattern`;
-					} else if ("pattern" && regexTypeId.test(error.dataPath)) {
+					} else if ("pattern" && regexTypeId.test(error.instancePath)) {
 						error.message =
 							error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
 								? ""
-								: `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
+								: `${error.instancePath} should follow this pattern: <namespace>:<typeid>-<version> ` +
 								  `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
 								  `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
 								  `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
@@ -840,27 +844,27 @@ const _processValidationResults = function (in_template: PropertySchema) {
 					break;
 
 				case "enum":
-					error.message = regexTypeId.test(error.dataPath)
+					error.message = regexTypeId.test(error.instancePath)
 						? ""
-						: `${error.dataPath} should match one of the following: ${error.schema}`;
+						: `${error.instancePath} should match one of the following: ${error.schema}`;
 					break;
 
 				case "type":
-					error.message = `${error.dataPath} should be a ${error.schema}`;
+					error.message = `${error.instancePath} should be a ${error.schema}`;
 					break;
 
 				case "not":
 					if (error.schemaPath === "#/switch/1/then/anyOf/0/properties/typeid/not") {
-						// remove .typeid at the end of the dataPath
-						error.message = `For ${error.dataPath.slice(
+						// remove .typeid at the end of the instancePath
+						error.message = `For ${error.instancePath.slice(
 							0,
 							-7,
 						)}: Properties should have either a typeid or an array of child properties, but not both.`;
 					} else if (
 						error.schemaPath === "#/switch/1/then/anyOf/1/properties/properties/not"
 					) {
-						// remove .properties at the end of the dataPath
-						error.message = `For ${error.dataPath.slice(
+						// remove .properties at the end of the instancePath
+						error.message = `For ${error.instancePath.slice(
 							0,
 							-11,
 						)}: Properties should have either a typeid or an array of child properties, but not both.`;
@@ -874,10 +878,10 @@ const _processValidationResults = function (in_template: PropertySchema) {
 					error.message = "";
 					break;
 
-				// for minItems, required and any other error - add dataPath to indicate which part of the
+				// for minItems, required and any other error - add instancePath to indicate which part of the
 				// template the error refers to.
 				default:
-					error.message = `${error.dataPath} ${error.message}`;
+					error.message = `${error.instancePath} ${error.message}`;
 					break;
 			}
 			// Deep-copy for thread-safety.
@@ -1021,6 +1025,7 @@ const Utils = {
 /**
  * Instantiates a new TemplateValidator. Must be provided with a set of inheritsFrom and hasSchema
  * function or inheritsFromAsync and hasSchemaAsync, but not both.
+ * @internal
  */
 export class TemplateValidator {
 	static Utils = Utils;

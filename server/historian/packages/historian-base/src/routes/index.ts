@@ -4,10 +4,15 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+	IDocumentManager,
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ICache, ITenantService } from "../services";
+import { ICache, IDenyList, ITenantService } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -39,89 +44,119 @@ export interface IRoutes {
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): IRoutes {
 	return {
 		git: {
 			blobs: blobs.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			commits: commits.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			refs: refs.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			tags: tags.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			trees: trees.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 		},
 		repository: {
 			commits: repositoryCommits.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			contents: contents.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			headers: headers.create(
 				config,
 				tenantService,
+				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 		},
 		summaries: summaries.create(
 			config,
 			tenantService,
+			storageNameRetriever,
 			restTenantThrottlers,
 			restClusterThrottlers,
+			documentManager,
 			cache,
 			asyncLocalStorage,
-			tokenRevocationManager,
+			revokedTokenChecker,
+			denyList,
 		),
 	};
 }

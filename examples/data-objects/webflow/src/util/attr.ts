@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/merge-tree";
-import { areStringsEquivalent } from "./string";
-import { emptyObject } from "./";
+import { ISegment } from "@fluidframework/sequence";
+import { areStringsEquivalent } from "./string.js";
+import { emptyObject } from "./index.js";
 
 export interface IHTMLAttributes {
 	src?: string;

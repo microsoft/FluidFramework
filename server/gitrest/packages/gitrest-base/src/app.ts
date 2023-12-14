@@ -4,10 +4,6 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { json, urlencoded } from "body-parser";
-import cors from "cors";
-import express, { Express } from "express";
-import nconf from "nconf";
 import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import {
@@ -18,12 +14,18 @@ import {
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
+import { json, urlencoded } from "body-parser";
+import cors from "cors";
+import express, { Express } from "express";
+import nconf from "nconf";
 import * as routes from "./routes";
 import {
+	Constants,
 	getRepoManagerParamsFromRequest,
-	IFileSystemManagerFactory,
+	IFileSystemManagerFactories,
 	IRepoManagerParams,
 	IRepositoryManagerFactory,
 } from "./utils";
@@ -34,23 +36,30 @@ function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: expre
 
 export function create(
 	store: nconf.Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
+	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repositoryManagerFactory: IRepositoryManagerFactory,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ) {
 	// Express app configuration
 	const app: Express = express();
 
+	app.use(bindTelemetryContext());
 	const loggerFormat = store.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("gitrest", (tokens, req, res) => {
 				const params = getRepoManagerParamsFromRequest(req);
-				return {
+				const additionalProperties: Record<string, any> = {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(params, req),
 					[BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
 				};
+				if (req.get(Constants.IsEphemeralContainer) !== undefined) {
+					additionalProperties.isEphemeralContainer = req.get(
+						Constants.IsEphemeralContainer,
+					);
+				}
+				return additionalProperties;
 			}),
 		);
 	} else {
@@ -65,7 +74,7 @@ export function create(
 
 	app.use(cors());
 
-	const apiRoutes = routes.create(store, fileSystemManagerFactory, repositoryManagerFactory);
+	const apiRoutes = routes.create(store, fileSystemManagerFactories, repositoryManagerFactory);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
 	app.use(apiRoutes.git.repos);

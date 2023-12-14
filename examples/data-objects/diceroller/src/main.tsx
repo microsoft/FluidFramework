@@ -60,11 +60,10 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRolle
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
+ * @internal
  */
 export class DiceRoller extends DataObject implements IDiceRoller {
-	public static get Name() {
-		return "@fluid-example/dice-roller";
-	}
+	public static readonly Name = "@fluid-example/dice-roller";
 
 	public static readonly factory = new DataObjectFactory(DiceRoller.Name, DiceRoller, [], {});
 
@@ -100,5 +99,6 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const DiceRollerInstantiationFactory = DiceRoller.factory;

@@ -4,11 +4,16 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IntervalType, SequenceDeltaEvent } from "@fluidframework/sequence";
+import {
+	IntervalType,
+	SequenceDeltaEvent,
+	ReferencePosition,
+	PropertySet,
+	SharedString,
+	createEndpointIndex,
+} from "@fluidframework/sequence";
 import {
 	positionToRowCol,
 	rowColToPosition,
@@ -40,6 +45,7 @@ export interface ITableDocumentEvents extends IEvent {
 /**
  * @deprecated `TableDocument` is an abandoned prototype.
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @internal
  */
 export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
 	public static getFactory() {
@@ -78,9 +84,12 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		this.matrix.setItems(row, col, [value], properties);
 	}
 
-	public async getRange(label: string) {
+	public async getRange(label: string): Promise<CellRange> {
+		const endpointIndex = createEndpointIndex(this.matrix as unknown as SharedString);
 		const intervals = this.matrix.getIntervalCollection(label);
-		const interval = intervals.nextInterval(0);
+		intervals.attachIndex(endpointIndex);
+		const interval = endpointIndex.nextInterval(0);
+		intervals.detachIndex(endpointIndex);
 		return new CellRange(interval, this.localRefToRowCol);
 	}
 
@@ -104,26 +113,16 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		return component;
 	}
 
-	public annotateRows(
-		startRow: number,
-		endRow: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.rows.annotateRange(startRow, endRow, properties, op);
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
+		this.rows.annotateRange(startRow, endRow, properties);
 	}
 
 	public getRowProperties(row: number): PropertySet {
 		return this.rows.getPropertiesAtPosition(row);
 	}
 
-	public annotateCols(
-		startCol: number,
-		endCol: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.cols.annotateRange(startCol, endCol, properties, op);
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
+		this.cols.annotateRange(startCol, endCol, properties);
 	}
 
 	public getColProperties(col: number): PropertySet {
@@ -191,9 +190,12 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		this.rows = await this.root.get<IFluidHandle<SharedNumberSequence>>("rows").get();
 		this.cols = await this.root.get<IFluidHandle<SharedNumberSequence>>("cols").get();
 
-		this.forwardEvent(this.cols, "op", "sequenceDelta");
-		this.forwardEvent(this.rows, "op", "sequenceDelta");
-		this.forwardEvent(this.matrix, "op", "sequenceDelta");
+		this.cols.on("op", (...args: any[]) => this.emit("op", ...args));
+		this.cols.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+		this.rows.on("op", (...args: any[]) => this.emit("op", ...args));
+		this.rows.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+		this.matrix.on("op", (...args: any[]) => this.emit("op", ...args));
+		this.matrix.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
 	}
 
 	private readonly localRefToRowCol = (localRef: ReferencePosition) => {

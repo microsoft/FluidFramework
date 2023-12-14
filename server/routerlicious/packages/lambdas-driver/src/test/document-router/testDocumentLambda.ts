@@ -21,7 +21,10 @@ export class TestLambda implements IPartitionLambda {
 	private failHandler = false;
 	private throwHandler = false;
 
-	constructor(config: IPartitionLambdaConfig, private readonly context: IContext) {
+	constructor(
+		config: IPartitionLambdaConfig,
+		private readonly context: IContext,
+	) {
 		this.documentId = config.documentId;
 		assert(this.documentId);
 	}
@@ -69,7 +72,7 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		context: IContext,
 	): Promise<IPartitionLambda> {
 		if (this.failCreatelambda) {
-			return Promise.reject(new Error("Test failure"));
+			throw new Error("Test failure");
 		} else {
 			const lambda = new TestLambda(config, context);
 			this.lambdas.push(lambda);

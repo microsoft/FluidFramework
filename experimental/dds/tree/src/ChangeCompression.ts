@@ -145,7 +145,7 @@ export function compressEdit<TId extends OpSpaceNodeId, TEdit extends { changes:
  */
 export function decompressEdit<
 	TId extends OpSpaceNodeId,
-	TEdit extends { changes: readonly CompressedChangeInternal<TId>[] }
+	TEdit extends { changes: readonly CompressedChangeInternal<TId>[] },
 >(
 	compressor: ChangeCompressor,
 	interner: StringInterner,

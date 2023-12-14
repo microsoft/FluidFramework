@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import * as fs from "fs";
 import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
@@ -16,25 +16,25 @@ import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest"
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
+import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
-	copyFileAsync,
 	execWithErrorAsync,
 	existsSync,
 	isSameFileOrDir,
 	lookUpDirSync,
 	rimrafWithErrorAsync,
-	unlinkAsync,
 } from "./utils";
 
-const { info, verbose, errorLog: error } = defaultLogger;
-export type ScriptDependencies = { [key: string]: string[] };
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
+
+const { log, errorLog: error } = defaultLogger;
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
  */
-type FluidPackageJson = {
+export type FluidPackageJson = {
 	/**
 	 * nyc config
 	 */
@@ -55,12 +55,11 @@ type FluidPackageJson = {
 /**
  * A type representing all known fields in package.json, including fluid-build-specific config.
  *
- * By default all fields are optional, but we require that the name, dependencies, devDependencies, scripts, and version
- * all be defined.
+ * By default all fields are optional, but we require that the name, scripts, and version all be defined.
  */
 export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJson,
-	"name" | "dependencies" | "devDependencies" | "scripts" | "version"
+	"name" | "scripts" | "version"
 >;
 
 export class Package {
@@ -86,7 +85,6 @@ export class Package {
 	private _packageJson: PackageJson;
 	private readonly packageId = Package.packageCount++;
 	private _matched: boolean = false;
-	private _markForBuild: boolean = false;
 
 	private _indent: string;
 	public readonly packageManager: PackageManager;
@@ -94,10 +92,20 @@ export class Package {
 		return this._packageJson;
 	}
 
+	/**
+	 * Create a new package from a package.json file. Prefer the .load method to calling the contructor directly.
+	 *
+	 * @param packageJsonFileName - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 */
 	constructor(
-		private readonly packageJsonFileName: string,
+		public readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
+		additionalProperties: any = {},
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
@@ -107,47 +115,67 @@ export class Package {
 			: existsSync(yarnLockPath)
 			? "yarn"
 			: "npm";
-		verbose(`Package loaded: ${this.nameColored}`);
+		traceInit(`${this.nameColored}: Package loaded`);
+		Object.assign(this, additionalProperties);
 	}
 
+	/**
+	 * The name of the package including the scope.
+	 */
 	public get name(): string {
 		return this.packageJson.name;
 	}
 
+	/**
+	 * The name of the package with a color for terminal output.
+	 */
 	public get nameColored(): string {
 		return this.color(this.name);
+	}
+
+	/**
+	 * The name of the package excluding the scope.
+	 */
+	public get nameUnscoped(): string {
+		return PackageName.getUnscopedName(this.name);
+	}
+
+	/**
+	 * The parsed package scope, including the \@-sign, or an empty string if there is no scope.
+	 */
+	public get scope(): string {
+		return PackageName.getScope(this.name);
+	}
+
+	public get private(): boolean {
+		return this.packageJson.private ?? false;
 	}
 
 	public get version(): string {
 		return this.packageJson.version;
 	}
 
-	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
-		return this.packageJson.fluidBuild;
-	}
-
 	public get isPublished(): boolean {
-		return !this.packageJson.private;
+		return !this.private;
 	}
 
 	public get isTestPackage(): boolean {
 		return this.name.split("/")[1]?.startsWith("test-") === true;
 	}
+
+	/**
+	 * Returns true if the package is a release group root package based on its directory path.
+	 */
+	public get isReleaseGroupRoot(): boolean {
+		return this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath;
+	}
+
 	public get matched() {
 		return this._matched;
 	}
 
 	public setMatched() {
 		this._matched = true;
-		this._markForBuild = true;
-	}
-
-	public get markForBuild() {
-		return this._markForBuild;
-	}
-
-	public setMarkForBuild() {
-		this._markForBuild = true;
 	}
 
 	public get dependencies() {
@@ -179,6 +207,22 @@ export class Package {
 		return path.dirname(this.packageJsonFileName);
 	}
 
+	/**
+	 * Get the full path for the lock file.
+	 * @returns full path for the lock file, or undefined if one doesn't exist
+	 */
+	public getLockFilePath() {
+		const directory = this.monoRepo ? this.monoRepo.repoPath : this.directory;
+		const lockFileNames = ["pnpm-lock.yaml", "yarn.lock", "package-lock.json"];
+		for (const lockFileName of lockFileNames) {
+			const full = path.join(directory, lockFileName);
+			if (fs.existsSync(full)) {
+				return full;
+			}
+		}
+		return undefined;
+	}
+
 	public get installCommand(): string {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
@@ -205,22 +249,6 @@ export class Package {
 
 	public reload() {
 		this._packageJson = readJsonSync(this.packageJsonFileName);
-	}
-
-	public async noHoistInstall(repoRoot: string) {
-		// Fluid specific
-		const rootNpmRC = path.join(repoRoot, ".npmrc");
-		const npmRC = path.join(this.directory, ".npmrc");
-
-		await copyFileAsync(rootNpmRC, npmRC);
-		const result = await execWithErrorAsync(
-			`${this.installCommand} --no-package-lock --no-shrinkwrap`,
-			{ cwd: this.directory },
-			this.nameColored,
-		);
-		await unlinkAsync(npmRC);
-
-		return result;
 	}
 
 	public async checkInstall(print: boolean = true) {
@@ -257,8 +285,58 @@ export class Package {
 			throw new Error("Package in a monorepo shouldn't be installed");
 		}
 
-		info(`${this.nameColored}: Installing - ${this.installCommand}`);
+		log(`${this.nameColored}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
+	}
+
+	/**
+	 * Load a package from a package.json file. Prefer this to calling the contructor directly.
+	 *
+	 * @param packageJsonFileName - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 */
+	public static load<T extends typeof Package, TAddProps>(
+		this: T,
+		packageJsonFileName: string,
+		group: string,
+		monoRepo?: MonoRepo,
+		additionalProperties?: TAddProps,
+	) {
+		return new this(
+			packageJsonFileName,
+			group,
+			monoRepo,
+			additionalProperties,
+		) as InstanceType<T> & TAddProps;
+	}
+
+	/**
+	 * Load a package from directory containing a package.json.
+	 *
+	 * @param packageDir - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 * @typeParam TAddProps - The type of the additional properties object.
+	 * @returns a loaded Package. If additional properties are specifed, the returned type will be Package & TAddProps.
+	 */
+	public static loadDir<T extends typeof Package, TAddProps>(
+		this: T,
+		packageDir: string,
+		group: string,
+		monoRepo?: MonoRepo,
+		additionalProperties?: TAddProps,
+	) {
+		return Package.load(
+			path.join(packageDir, "package.json"),
+			group,
+			monoRepo,
+			additionalProperties,
+		) as InstanceType<T> & TAddProps;
 	}
 }
 
@@ -279,7 +357,7 @@ async function queueExec<TItem, TResult>(
 				const startTime = Date.now();
 				const result = await exec(item);
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
 						3,
 					)}s`,
@@ -312,7 +390,7 @@ export class Packages {
 	) {
 		const packageJsonFileName = path.join(dirFullPath, "package.json");
 		if (existsSync(packageJsonFileName)) {
-			return [new Package(packageJsonFileName, group, monoRepo)];
+			return [Package.load(packageJsonFileName, group, monoRepo)];
 		}
 
 		const packages: Package[] = [];
@@ -333,60 +411,8 @@ export class Packages {
 		return packages;
 	}
 
-	/**
-	 * Loads all packages found under the specified glob path. Ignores files in node_modules.
-	 *
-	 * @param globPath The glob path to search for package.json files.
-	 * @param group The release group (monorepo) the packages are associated with.
-	 * @param ignoredGlobs Glob paths that should be ignored. Note: `**\/node_modules/**` is always ignored.
-	 * @param monoRepo A {@link MonoRepo} instance that will be associated with the packages.
-	 * @returns An array containing all the packages that were found under the globPath.
-	 */
-	public static loadGlob(
-		globPath: string,
-		group: MonoRepoKind,
-		ignoredGlobs: string[] | undefined,
-		monoRepo?: MonoRepo,
-	): Package[] {
-		const packages: Package[] = [];
-
-		if (hasMagic(globPath)) {
-			if (ignoredGlobs === undefined) {
-				ignoredGlobs = [];
-			}
-			ignoredGlobs.push("**/node_modules/**");
-
-			const globPkg = globPath + "/package.json";
-			for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
-				info(`Loading from glob: ${pkg}`);
-				packages.push(new Package(pkg, group, monoRepo));
-			}
-		} else {
-			// Assume a path to a single package
-			const packageJsonFileName = path.join(globPath, "package.json");
-			if (existsSync(packageJsonFileName)) {
-				return [new Package(packageJsonFileName, group, monoRepo)];
-			}
-		}
-		return packages;
-	}
-
 	public async cleanNodeModules() {
 		return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
-	}
-
-	public async noHoistInstall(repoRoot: string) {
-		return this.queueExecOnAllPackage(
-			(pkg) => pkg.noHoistInstall(repoRoot),
-			"install dependencies",
-		);
-	}
-
-	public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
-		if (releaseGroup === undefined) {
-			return this.packages;
-		}
-		return this.packages.filter((p) => p.monoRepo?.kind === releaseGroup);
 	}
 
 	public async forEachAsync<TResult>(
@@ -427,7 +453,7 @@ export class Packages {
 
 			if (status) {
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${cleanP.length}] ${
 						pkg.nameColored
 					}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`,

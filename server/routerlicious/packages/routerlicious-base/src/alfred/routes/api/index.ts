@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IDeltaService,
 	IDocumentRepository,
 	IDocumentStorage,
 	IProducer,
+	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
 	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
@@ -32,7 +36,10 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
-	tokenManager?: ITokenRevocationManager,
+	documentDeleteService: IDocumentDeleteService,
+	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -42,7 +49,8 @@ export function create(
 		appTenants,
 		tenantThrottlers,
 		clusterThrottlers,
-		tokenManager,
+		singleUseTokenCache,
+		revokedTokenChecker,
 	);
 	const documentsRoute = documents.create(
 		storage,
@@ -53,7 +61,9 @@ export function create(
 		config,
 		tenantManager,
 		documentRepository,
-		tokenManager,
+		documentDeleteService,
+		tokenRevocationManager,
+		revokedTokenChecker,
 	);
 	const apiRoute = api.create(
 		config,
@@ -61,7 +71,9 @@ export function create(
 		tenantManager,
 		storage,
 		tenantThrottlers,
-		tokenManager,
+		singleUseTokenCache,
+		revokedTokenChecker,
+		collaborationSessionEventEmitter,
 	);
 
 	router.use(cors());

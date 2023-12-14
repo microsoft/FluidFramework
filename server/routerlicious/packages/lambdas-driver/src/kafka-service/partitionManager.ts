@@ -8,19 +8,19 @@ import {
 	IConsumer,
 	IQueuedMessage,
 	IPartition,
-	IPartitionConfig,
-	IPartitionWithEpoch,
 	IPartitionLambdaFactory,
 	ILogger,
 	LambdaCloseType,
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { Partition } from "./partition";
 
 /**
  * The PartitionManager is responsible for maintaining a list of partitions for the given Kafka topic.
  * It will route incoming messages to the appropriate partition for the messages.
+ * @internal
  */
 export class PartitionManager extends EventEmitter {
 	private readonly partitions = new Map<number, Partition>();
@@ -30,9 +30,10 @@ export class PartitionManager extends EventEmitter {
 	private stopped = false;
 
 	constructor(
-		private readonly factory: IPartitionLambdaFactory<IPartitionConfig>,
+		private readonly factory: IPartitionLambdaFactory,
 		private readonly consumer: IConsumer,
 		private readonly logger?: ILogger,
+		private readonly config?: Provider,
 		listenForConsumerErrors = true,
 	) {
 		super();
@@ -46,18 +47,54 @@ export class PartitionManager extends EventEmitter {
 			this.rebalancing(partitions);
 		});
 
-		this.consumer.on("rebalanced", (partitions: IPartitionWithEpoch[]) => {
+		this.consumer.on("rebalanced", (partitions: IPartition[]) => {
 			this.rebalanced(partitions);
 		});
 
 		if (listenForConsumerErrors) {
 			this.consumer.on("error", (error, errorData: IContextErrorData) => {
 				if (this.stopped) {
+					Lumberjack.info(
+						"Consumer.onError: PartitionManager already stopped, not emitting error again",
+						{ error, ...errorData },
+					);
 					return;
 				}
 
 				this.emit("error", error, errorData);
 			});
+
+			this.consumer.on(
+				"checkpoint_success",
+				(partitionId, queuedMessage, retries, latency) => {
+					if (this.sampleMessages(100)) {
+						Lumberjack.info(`Kafka checkpoint successful`, {
+							msgOffset: queuedMessage.offset,
+							topic: queuedMessage.topic,
+							msgPartition: queuedMessage.partition,
+							retries,
+							latency,
+						});
+					}
+				},
+			);
+
+			this.consumer.on(
+				"checkpoint_error",
+				(partitionId, queuedMessage, retries, latency, ex) => {
+					Lumberjack.error(
+						`Kafka checkpoint failed`,
+						{
+							msgOffset: queuedMessage.offset,
+							topic: queuedMessage.topic,
+							msgPartition: queuedMessage.partition,
+							retries,
+							latency,
+						},
+						ex,
+					);
+				},
+			);
 		}
 	}
 
@@ -137,7 +174,7 @@ export class PartitionManager extends EventEmitter {
 	 * @param partitions - Assigned partitions after the rebalance.
 	 * May contain partitions that have been previously assigned to this consumer
 	 */
-	private rebalanced(partitions: IPartitionWithEpoch[]) {
+	private rebalanced(partitions: IPartition[]) {
 		if (this.stopped) {
 			return;
 		}
@@ -168,23 +205,27 @@ export class PartitionManager extends EventEmitter {
 			}
 
 			this.logger?.info(
-				`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`,
+				`Creating ${partition.topic}: Partition ${partition.partition}, Offset ${partition.offset} due to rebalance`,
 			);
 			Lumberjack.info(
-				`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`,
+				`Creating ${partition.topic}: Partition ${partition.partition}, Offset ${partition.offset} due to rebalance`,
 			);
 
 			const newPartition = new Partition(
 				partition.partition,
-				partition.leaderEpoch,
 				this.factory,
 				this.consumer,
 				this.logger,
+				this.config,
 			);
 
 			// Listen for error events to know when the partition has stopped processing due to an error
 			newPartition.on("error", (error, errorData: IContextErrorData) => {
 				if (this.stopped) {
+					Lumberjack.info(
+						"Partition.onError: PartitionManager already stopped, not emitting error again",
+						{ error, ...errorData },
+					);
 					return;
 				}
 
@@ -193,5 +234,13 @@ export class PartitionManager extends EventEmitter {
 
 			this.partitions.set(partition.partition, newPartition);
 		}
+	}
+
+	private sampleMessages(numberOfMessagesPerTrace: number): boolean {
+		return this.getRandomInt(numberOfMessagesPerTrace) === 0;
+	}
+
+	private getRandomInt(range: number) {
+		return Math.floor(Math.random() * range);
 	}
 }

@@ -5,10 +5,10 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
-describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
+describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	before(async () => {
@@ -34,13 +34,13 @@ describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
 				assert(this.iteration > 0, "testTitle needs to be defined");
 				console.log(`this will run for each iteration ${this.iteration}`);
 			}
-			before(): void {
+			async before(): Promise<void> {
 				console.log(`this will run before the measurements`);
 			}
 			beforeIteration(): void {
 				console.log(`this will run before each iteration ${this.iteration}`);
 			}
-			after(): void {
+			async after(): Promise<void> {
 				this.iteration = 0;
 			}
 		})(),
@@ -58,13 +58,13 @@ describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
 				assert(this.iteration > 0, "testTitle needs to be defined");
 				console.log(`this will run for each iteration ${this.iteration}`);
 			}
-			before(): void {
+			async before(): Promise<void> {
 				console.log(`this will run before the measurements`);
 			}
 			beforeIteration(): void {
 				console.log(`this will run before each iteration ${this.iteration}`);
 			}
-			after(): void {
+			async after(): Promise<void> {
 				this.iteration = 0;
 			}
 		})(),

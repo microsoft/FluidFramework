@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
@@ -13,17 +12,7 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
-import {
-	disableTombstoneKey,
-	GCFeatureMatrix,
-	GCVersion,
-	IGCMetadata,
-	runSweepKey,
-	throwOnTombstoneLoadKey,
-	throwOnTombstoneUsageKey,
-} from "./gcDefinitions";
+import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
 import {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
@@ -39,90 +28,34 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 }
 
 /**
- * Consolidates info / logic for logging when we encounter unexpected usage of GC'd objects. For example, when a
- * tombstoned or deleted object is loaded.
- */
-export function sendGCUnexpectedUsageEvent(
-	mc: MonitoringContext,
-	event: ITelemetryGenericEvent & {
-		category: "error" | "generic";
-		gcTombstoneEnforcementAllowed: boolean | undefined;
-	},
-	packagePath: readonly string[] | undefined,
-	error?: unknown,
-) {
-	event.pkg = packagePathToTelemetryProperty(packagePath);
-	event.tombstoneFlags = JSON.stringify({
-		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
-		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
-		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadKey),
-	});
-	event.sweepFlags = JSON.stringify({
-		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
-	});
-
-	mc.logger.sendTelemetryEvent(event, error);
-}
-
-/**
- * Indicates whether Tombstone Enforcement is allowed for this document based on the current/persisted
- * TombstoneGeneration values
- *
- * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
- * such that enforcing GC Tombstone (Failing on Tombstone load/usage) would cause legitimate data loss,
- * the container author may increment the generation value for Tombstone such that containers created
- * with a different value will not be subjected to GC enforcement.
- *
- * If no generation is provided at runtime, this defaults to return true to maintain expected default behavior
- *
- * @param persistedGeneration - The persisted tombstoneGeneration value
- * @param currentGeneration - The current app-provided tombstoneGeneration value
- * @returns true if GC Tombstone enforcement (Fail on Tombstone load/usage) should be allowed for this document
- */
-export function shouldAllowGcTombstoneEnforcement(
-	persistedGeneration: number | undefined,
-	currentGeneration: number | undefined,
-): boolean {
-	// If no Generation value is provided for this session, then we should default to letting Tombstone feature behave as intended.
-	if (currentGeneration === undefined) {
-		return true;
-	}
-	return persistedGeneration === currentGeneration;
-}
-
-/**
- * Indicates whether Sweep is allowed for this document based on the GC Feature Matrix and current SweepGeneration
+ * Indicates whether Sweep is allowed for this document based on the persisted GC Feature Matrix and current gcGeneration.
+ * This applies to the entire Sweep Phase the same - both Tombstone Enforcement (i.e. should loading a Tombstone fail?) and Deletion.
  *
  * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
  * such that enforcing GC Sweep would cause legitimate data loss, the container author may increment the generation value for Sweep
  * such that containers created with a different value will not be subjected to GC Sweep.
  *
- * If no generation is provided, Sweep will be disabled.
- * Passing 0 is a special case: Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
+ * If no generation is provided, Sweep will be enabled for all documents.
  *
- * @param persistedGenerations - The persisted sweep/tombstone generations from the GC Feature Matrix
- * @param currentGeneration - The current app-provided sweepGeneration value
+ * For backwards compatibility, the current generation value is also compared against the persisted gcTombstoneGeneration if present.
+ *
+ * @param featureMatrix - The GC Feature Matrix, containing the persisted generation value
+ * @param currentGeneration - The current app-provided gcGeneration value
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
-	persistedGenerations: Pick<GCFeatureMatrix, "sweepGeneration" | "tombstoneGeneration">,
+	featureMatrix: GCFeatureMatrix,
 	currentGeneration: number | undefined,
 ): boolean {
-	// If no Generation value is provided for this session, default to false
+	// If no Generation value is provided for this session, default to true
 	if (currentGeneration === undefined) {
-		return false;
+		return true;
 	}
 
-	// 0 is a special case: It matches both SweepGeneration and TombstoneGeneration
-	// This is an optimistic measure to maximize coverage of GC Sweep if no bumps to TombstoneGeneration are needed before enabling Sweep.
-	if (currentGeneration === 0) {
-		return (
-			persistedGenerations.sweepGeneration === 0 ||
-			persistedGenerations.tombstoneGeneration === 0
-		);
-	}
+	// tombstoneGeneration is the predecessor and needs to be supported for back-compat reasons
+	const targetGeneration = featureMatrix.tombstoneGeneration ?? featureMatrix.gcGeneration;
 
-	return persistedGenerations.sweepGeneration === currentGeneration;
+	return currentGeneration === targetGeneration;
 }
 
 /**
@@ -169,7 +102,7 @@ export function concatGarbageCollectionStates(
 			) {
 				assert(
 					nodeData.unreferencedTimestampMs === combineNodeData.unreferencedTimestampMs,
-					"Two entries for the same GC node with different unreferenced timestamp",
+					0x5d7 /* Two entries for the same GC node with different unreferenced timestamp */,
 				);
 			}
 			combineNodeData = {
@@ -253,7 +186,7 @@ export async function getGCDataFromSnapshot(
 			continue;
 		}
 		const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
-		assert(gcState !== undefined, "GC blob missing from snapshot");
+		assert(gcState !== undefined, 0x5d8 /* GC blob missing from snapshot */);
 		// Merge the GC state of this blob into the root GC state.
 		rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
 	}
@@ -280,7 +213,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			continue;
 		}
 
-		assert(id.startsWith("/"), "node id should always be an absolute route");
+		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
 		const childId = id.split("/")[1];
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
@@ -294,7 +227,10 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			childGCDetails = { gcData: { gcNodes: {} }, usedRoutes: [] };
 		}
 		// gcData should not undefined as its always at least initialized as  empty above.
-		assert(childGCDetails.gcData !== undefined, "Child GC data should have been initialized");
+		assert(
+			childGCDetails.gcData !== undefined,
+			0x5da /* Child GC data should have been initialized */,
+		);
 		childGCDetails.gcData.gcNodes[childGCNodeId] = [...new Set(outboundRoutes)];
 		childGCDetailsMap.set(childId, childGCDetails);
 	}
@@ -306,14 +242,14 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	// Remove the node's self used route, if any, and generate the children used routes.
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
-		assert(route.startsWith("/"), "Used route should always be an absolute route");
+		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
 		const childId = route.split("/")[1];
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
 		assert(
 			childGCDetails?.usedRoutes !== undefined,
-			"This should have be initialized when generate GC nodes above",
+			0x5dc /* This should have be initialized when generate GC nodes above */,
 		);
 
 		childGCDetails.usedRoutes.push(childUsedRoute);
@@ -329,4 +265,20 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  */
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * Utility to implement compat behaviors given an unknown message type
+ * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
+ *
+ * @param _unknownGCMessageType - Typed as never to ensure all known types have been
+ * handled before calling this function (e.g. in a switch statement).
+ * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
+ */
+export function compatBehaviorAllowsGCMessageType(
+	_unknownGCMessageType: never,
+	compatBehavior: "Ignore" | "FailToProcess" | undefined,
+): boolean {
+	// undefined defaults to same behavior as "FailToProcess"
+	return compatBehavior === "Ignore";
 }

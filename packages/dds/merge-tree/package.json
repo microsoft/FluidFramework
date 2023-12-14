@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.0.0-internal.4.1.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,39 +15,41 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
-		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"check:are-the-types-wrong": "attw --pack",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"postpack": "tar -cvf ./merge-tree.test-files.tar ./src/test ./dist/test",
 		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.spec.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
 		"perf:measure": "npm run perf -- --fgrep @Measurement",
 		"perf:profile": "node --inspect-brk ./node_modules/mocha/bin/mocha.js \"dist/**/*.spec.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha \"dist/test/*.perf.spec.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r @fluidframework/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -68,103 +70,195 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0"
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-internal/test-pairwise-generator": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-tools/benchmark": "0.47.0-140906",
-		"@fluid-tools/build-cli": "^0.13.1",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.1",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.4.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
+		"@fluid-private/test-pairwise-generator": "workspace:~",
+		"@fluid-tools/benchmark": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.28.0",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.28.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.7.2.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
-		"concurrently": "^7.6.0",
+		"@types/node": "^18.19.0",
+		"c8": "^7.7.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
-		"eslint": "~8.6.0",
+		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"nyc": "^15.1.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"source-map-support": "^0.5.16",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_BaseSegment": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IAttributionCollection": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IHierBlock": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_SerializedAttributionCollection": {
+			"RemovedInterfaceDeclaration_IIntegerRange": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IMergeBlock": {
+			"RemovedFunctionDeclaration_internedSpaces": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_refGetRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabel": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_Client": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_RangeStackMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_Stack": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"FunctionDeclaration_extendIfUndefined": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_clone": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_combine": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_extend": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_extendIfUndefined": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_SegmentGroup": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_Dictionary": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IConsensusInfo": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IConsensusValue": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IMarkerModifiedAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_LocalClientId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_MergeTreeDeltaCallback": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_MergeTreeMaintenanceCallback": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_NonCollabClient": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SegmentAccumulator": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SortedDictionary": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_TreeMaintenanceSequenceNumber": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_compareNumbers": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_compareStrings": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_PropertiesRollback": {
 				"forwardCompat": false
 			},
-			"TypeAliasDeclaration_IMergeNode": {
-				"forwardCompat": false
+			"ClassDeclaration_LocalReferenceCollection": {
+				"backCompat": false
 			},
-			"InterfaceDeclaration_IMergeNodeCommon": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_IncrementalMapState": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_InsertContext": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISegmentChanges": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_Marker": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_MergeBlock": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_MergeNode": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_PropertiesManager": {
-				"forwardCompat": false
+			"ClassDeclaration_BaseSegment": {
+				"backCompat": false
 			},
 			"InterfaceDeclaration_IConsensusInfo": {
-				"forwardCompat": false
+				"backCompat": false
 			},
-			"TypeAliasDeclaration_SortedSegmentSetItem": {
-				"forwardCompat": false
+			"ClassDeclaration_Marker": {
+				"backCompat": false
 			},
 			"ClassDeclaration_TextSegment": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ICombiningOp": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_createAnnotateMarkerOp": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"VariableDeclaration_MergeTreeDeltaType": {
+				"forwardCompat": false
 			}
 		}
 	}

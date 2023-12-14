@@ -4,11 +4,10 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import { getSnapshotFileContent, timeoutPromise, getArgsValidationError } from "./utils";
@@ -17,6 +16,9 @@ import { ITelemetryOptions } from "./logger/fileLogger";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
 /* eslint-enable import/no-internal-modules */
 
+/**
+ * @internal
+ */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
 interface IExportFileResponseSuccess {
@@ -34,6 +36,7 @@ const clientArgsValidationError = "Client_ArgsValidationError";
 
 /**
  * Execute code on Container based on ODSP snapshot and write result to file
+ * @internal
  */
 export async function exportFile(
 	fluidFileConverter: IFluidFileConverter,
@@ -43,6 +46,7 @@ export async function exportFile(
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
 	timeout?: number,
+	disableNetworkFetch?: boolean,
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -71,6 +75,7 @@ export async function exportFile(
 						logger,
 						options,
 						timeout,
+						disableNetworkFetch,
 					),
 				);
 
@@ -89,15 +94,23 @@ export async function exportFile(
 /**
  * Create the container based on an ODSP snapshot and execute code on it
  * @returns result of execution
+ * @internal
  */
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverter,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
+	disableNetworkFetch: boolean = false,
 ): Promise<string> {
 	const fn = async () => {
+		if (disableNetworkFetch) {
+			global.fetch = async () => {
+				throw new Error("Network fetch is not allowed");
+			};
+		}
+
 		const loader = new Loader({
 			urlResolver: new FakeUrlResolver(),
 			documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
@@ -114,9 +127,11 @@ export async function createContainerAndExecute(
 		});
 
 		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-			const result = await fluidFileConverter.execute(container, options);
-			container.close();
-			return result;
+			try {
+				return await fluidFileConverter.execute(container, options);
+			} finally {
+				container.dispose();
+			}
 		});
 	};
 

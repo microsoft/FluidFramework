@@ -4,13 +4,14 @@
  */
 
 import { ICollection, IDatabaseManager } from "./database";
-import { IDocument } from "./document";
+import { ICheckpoint, IDocument } from "./document";
 import { ISequencedOperationMessage } from "./messages";
 import { MongoManager } from "./mongo";
 import { INode } from "./orderer";
 
 /**
  * MongoDB implementation of IDatabaseManager
+ * @internal
  */
 export class MongoDatabaseManager implements IDatabaseManager {
 	constructor(
@@ -19,6 +20,7 @@ export class MongoDatabaseManager implements IDatabaseManager {
 		private readonly globalDbMongoManager: MongoManager,
 		private readonly nodeCollectionName: string,
 		private readonly documentsCollectionName: string,
+		private readonly checkpointsCollectionName: string,
 		private readonly deltasCollectionName: string,
 		private readonly scribeDeltasCollectionName: string,
 	) {}
@@ -29,6 +31,10 @@ export class MongoDatabaseManager implements IDatabaseManager {
 
 	public async getDocumentCollection(): Promise<ICollection<IDocument>> {
 		return this.getCollection<IDocument>(this.documentsCollectionName);
+	}
+
+	public async getCheckpointCollection(): Promise<ICollection<ICheckpoint>> {
+		return this.getCollection<ICheckpoint>(this.checkpointsCollectionName);
 	}
 
 	public async getDeltaCollection(

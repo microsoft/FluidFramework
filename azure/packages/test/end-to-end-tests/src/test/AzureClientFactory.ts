@@ -8,10 +8,15 @@ import {
 	AzureClient,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
+	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
-import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
-import { IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	IConfigProviderBase,
+	MockLogger,
+	createMultiSinkLogger,
+} from "@fluidframework/telemetry-utils";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 /**
@@ -33,6 +38,9 @@ export function createAzureClient(
 		name: userName ?? uuid(),
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
+	if (useAzure && endPoint === undefined) {
+		throw new Error("Azure FRS endpoint is missing");
+	}
 
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
 	// Default to running Tinylicious for PR validation
@@ -41,7 +49,7 @@ export function createAzureClient(
 		? {
 				tenantId,
 				tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
-				endpoint: endPoint ?? "https://us.fluidrelay.azure.com",
+				endpoint: endPoint,
 				type: "remote",
 		  }
 		: {
@@ -49,5 +57,19 @@ export function createAzureClient(
 				endpoint: "http://localhost:7071",
 				type: "local",
 		  };
-	return new AzureClient({ connection: connectionProps, logger, configProvider });
+	const getLogger = (): ITelemetryBaseLogger | undefined => {
+		const testLogger = getTestLogger?.();
+		if (!logger && !testLogger) {
+			return undefined;
+		}
+		if (logger && testLogger) {
+			return createMultiSinkLogger({ loggers: [logger, testLogger] });
+		}
+		return logger ?? testLogger;
+	};
+	return new AzureClient({
+		connection: connectionProps,
+		logger: getLogger(),
+		configProvider,
+	});
 }

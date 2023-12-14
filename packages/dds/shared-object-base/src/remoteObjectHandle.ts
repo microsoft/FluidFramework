@@ -3,21 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
-	IResponse,
 	FluidObject,
-	IFluidRouter,
 } from "@fluidframework/core-interfaces";
-import {
-	create404Response,
-	exceptionToResponse,
-	responseToException,
-} from "@fluidframework/runtime-utils";
+import { responseToException } from "@fluidframework/runtime-utils";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
@@ -27,9 +21,6 @@ import {
  * IFluidHandle can be retrieved by calling `get` on it.
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
-	public get IFluidRouter() {
-		return this;
-	}
 	public get IFluidHandleContext() {
 		return this;
 	}
@@ -81,16 +72,5 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 
 	public bind(handle: IFluidHandle): void {
 		handle.attachGraph();
-	}
-
-	public async request(request: IRequest): Promise<IResponse> {
-		try {
-			const object: FluidObject<IFluidRouter> = await this.get();
-			const router = object.IFluidRouter;
-
-			return router !== undefined ? router.request(request) : create404Response(request);
-		} catch (error) {
-			return exceptionToResponse(error);
-		}
 	}
 }

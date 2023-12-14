@@ -8,17 +8,17 @@ import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IDocumentServiceFactory,
-	IFluidResolvedUrl,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	ITelemetryLogger,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
@@ -38,6 +38,7 @@ const normalizeOpts: ISnapshotNormalizerConfig = {
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
+ * @internal
  */
 export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
 	const normalizedSnapshot: IFileSnapshot = {
@@ -53,6 +54,9 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 	return normalizedSnapshot;
 }
 
+/**
+ * @internal
+ */
 export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
@@ -67,6 +71,7 @@ export function compareWithReferenceSnapshot(
 	 * package versions with X before we compare them.
 	 *
 	 * @example
+	 *
 	 * This is how it will look:
 	 * Before replace:
 	 *
@@ -104,14 +109,17 @@ export function compareWithReferenceSnapshot(
 	}
 }
 
+/**
+ * @internal
+ */
 export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: TelemetryLogger,
+	logger?: ITelemetryLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
-	const resolved: IFluidResolvedUrl = {
+	const resolved: IResolvedUrl = {
 		endpoints: {
 			deltaStorageUrl: "example.com",
 			ordererUrl: "example.com",
@@ -166,6 +174,14 @@ export async function loadContainer(
 		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
 	);
 
+	// Add a config provider to the Loader to enable / disable features.
+	const settings: Record<string, ConfigTypes> = {};
+	const configProvider: IConfigProviderBase = {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	};
+	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
+	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
+
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,
@@ -175,11 +191,15 @@ export async function loadContainer(
 			? { ...loaderOptions, summarizeProtocolTree: true }
 			: { summarizeProtocolTree: true },
 		logger,
+		configProvider,
 	});
 
 	return loader.resolve({ url: resolved.url });
 }
 
+/**
+ * @internal
+ */
 export async function uploadSummary(container: IContainer) {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;

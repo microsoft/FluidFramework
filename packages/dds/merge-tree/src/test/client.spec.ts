@@ -142,7 +142,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 1, "length not expected");
 
-			const tile = client.findTile(0, tileLabel);
+			const tile = client.findTile(client.getLength(), tileLabel);
 
 			assert(tile, "Returned tile undefined.");
 
@@ -215,7 +215,7 @@ describe("TestClient", () => {
 			assert(insertOp);
 			const markerInfo = client.getContainingSegment(0);
 			const marker = markerInfo.segment as Marker;
-			const annotateOp = client.annotateMarker(marker, { foo: "bar" }, undefined);
+			const annotateOp = client.annotateMarker(marker, { foo: "bar" });
 			assert(annotateOp);
 			assert(marker.properties);
 			assert(marker.properties.foo, "bar");

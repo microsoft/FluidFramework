@@ -6,6 +6,9 @@
 import { Deferred } from "@fluidframework/common-utils";
 import { ITicketedMessage } from "./messages";
 
+/**
+ * @internal
+ */
 export interface IQueuedMessage {
 	topic: string;
 	partition: number;
@@ -14,16 +17,18 @@ export interface IQueuedMessage {
 	timestamp?: number | undefined;
 }
 
+/**
+ * @internal
+ */
 export interface IPartition {
 	topic: string;
 	partition: number;
 	offset: number;
 }
 
-export interface IPartitionWithEpoch extends IPartition {
-	leaderEpoch: number;
-}
-
+/**
+ * @internal
+ */
 export interface IConsumer {
 	readonly groupId: string;
 
@@ -69,7 +74,7 @@ export interface IConsumer {
 	): this;
 	on(event: "data", listener: (message: IQueuedMessage) => void): this;
 	on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
-	on(event: "rebalanced", listener: (partitions: IPartitionWithEpoch[]) => void): this;
+	on(event: "rebalanced", listener: (partitions: IPartition[]) => void): this;
 	on(event: string, listener: (...args: any[]) => void): this;
 	once(
 		event: "connected" | "disconnected" | "closed" | "paused" | "resumed",
@@ -79,6 +84,7 @@ export interface IConsumer {
 
 /**
  * A pending message the producer is holding on to
+ * @internal
  */
 export interface IPendingMessage {
 	// The deferred is used to resolve a promise once the message is sent
@@ -88,6 +94,9 @@ export interface IPendingMessage {
 	message: string;
 }
 
+/**
+ * @internal
+ */
 export interface IProducer<T = ITicketedMessage> {
 	/**
 	 * Returns true if the producer is connected
@@ -119,6 +128,9 @@ export interface IProducer<T = ITicketedMessage> {
 	): this;
 }
 
+/**
+ * @internal
+ */
 export interface IPendingBoxcar {
 	documentId: string;
 	tenantId: string;

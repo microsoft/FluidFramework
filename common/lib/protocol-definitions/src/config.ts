@@ -4,13 +4,18 @@
  */
 
 /**
- * Key value store of service configuration properties provided to the client as part of connection
+ * Key value store of service configuration properties provided to the client as part of connection.
+ * @alpha
  */
 export interface IClientConfiguration {
-	// Max message size the server will accept before requiring chunking
+	/**
+	 * Max message size the server will accept before requiring chunking.
+	 */
 	maxMessageSize: number;
 
-	// Server defined ideal block size for storing snapshots
+	/**
+	 * Server-defined ideal block size for storing snapshots.
+	 */
 	blockSize: number;
 
 	/**

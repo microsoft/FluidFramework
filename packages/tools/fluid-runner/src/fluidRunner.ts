@@ -13,6 +13,7 @@ import { validateCommandLineArgs } from "./utils";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
+ * @internal
  */
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -76,6 +77,12 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 						describe: "Allowed timeout in ms before process is automatically cancelled",
 						type: "number",
 						demandOption: false,
+					})
+					.option("disableNetworkFetch", {
+						describe: "Should network fetch calls be explicitly disabled?",
+						type: "boolean",
+						demandOption: false,
+						default: false,
 					}),
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (argv) => {
@@ -103,6 +110,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							argv.options,
 							telemetryOptionsResult.telemetryOptions,
 							argv.timeout,
+							argv.disableNetworkFetch,
 					  )
 					: exportFile(
 							fluidFileConverter!,
@@ -112,6 +120,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							argv.options,
 							telemetryOptionsResult.telemetryOptions,
 							argv.timeout,
+							argv.disableNetworkFetch,
 					  ));
 
 				if (!result.success) {

@@ -5,6 +5,7 @@
 
 /**
  * Normalize a port into a number, string, or false.
+ * @internal
  */
 export function normalizePort(val) {
 	const normalizedPort = parseInt(val, 10);

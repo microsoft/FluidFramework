@@ -9,7 +9,8 @@ import { ISequencedDocumentMessage, ISignalMessage } from "./protocol";
 import { ITokenClaims } from "./tokens";
 
 /**
- * Message sent to connect to the given document
+ * Message sent to connect to the given document.
+ * @internal
  */
 export interface IConnect {
 	/**
@@ -66,9 +67,7 @@ export interface IConnect {
 	 * Features supported might be service specific.
 	 * If we have standardized features across all services, they need to be exposed in more structured way.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	supportedFeatures?: Record<string, any>;
+	supportedFeatures?: Record<string, unknown>;
 
 	/**
 	 * Properties that client can send to server to tell info about client environment. These are a bunch of properties
@@ -79,7 +78,8 @@ export interface IConnect {
 }
 
 /**
- * Message sent to indicate a client has connected to the server
+ * Message sent to indicate a client has connected to the server.
+ * @alpha
  */
 export interface IConnected {
 	/**
@@ -161,9 +161,7 @@ export interface IConnected {
 	 * Features supported might be service specific.
 	 * If we have standardized features across all services, they need to be exposed in more structured way.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	supportedFeatures?: Record<string, any>;
+	supportedFeatures?: Record<string, unknown>;
 
 	/**
 	 * The time the client connected

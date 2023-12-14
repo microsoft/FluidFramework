@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import * as semver from "semver";
 
 import { VersionBumpTypeExtended } from "./bumpTypes";
+import { detectVersionScheme } from "./schemes";
 
 /**
  * The lowest/default public version of valid Fluid internal versions. The public version of Fluid internal versions
@@ -20,10 +21,16 @@ const MINIMUM_PUBLIC_MAJOR = semver.major(MINIMUM_PUBLIC_VERSION);
 const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
 
 /**
- * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
- * value must always match this constant.
+ * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions,
+ * this is the default prerelease indentifier.
  */
-export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
+export const DEFAULT_PRERELEASE_IDENTIFIER = "internal";
+
+/**
+ * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
+ * value must always match one of these values.
+ */
+export const ALLOWED_PRERELEASE_IDENTIFIERS = [DEFAULT_PRERELEASE_IDENTIFIER, "rc"] as const;
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
@@ -40,16 +47,15 @@ export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
  * Fluid internal version strings *always* include the string "internal" in the first position of the pre-release
  * section.
  *
- * In the following example, the public version is `a.b.c`, while the internal version is `x.y.z`.
- *
  * @example
  *
- * a.b.c-internal.x.y.z
+ * Public version `a.b.c` and internal version `x.y.z` yields `a.b.c-internal.x.y.z`.
  *
  * @param internalVersion - A version in the Fluid internal version scheme.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
+ *
  * @returns A tuple of [publicVersion, internalVersion, prereleaseIdentifier]
  */
 export function fromInternalScheme(
@@ -61,7 +67,7 @@ export function fromInternalScheme(
 	validateVersionScheme(
 		parsedVersion,
 		allowPrereleases,
-		allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER,
+		allowAnyPrereleaseId ? undefined : ALLOWED_PRERELEASE_IDENTIFIERS,
 	);
 
 	assert(parsedVersion !== null);
@@ -106,20 +112,21 @@ export function fromInternalScheme(
  *
  * @example
  *
- * a.b.c-internal.x.y.z
+ * Public version `a.b.c` and internal version `x.y.z` yields `a.b.c-internal.x.y.z`.
  *
  * @param publicVersion - The public version.
  * @param version - The internal version.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param prereleaseIdentifier - The prerelease indentifier to use in the Fluid internal version. Defaults to
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
+ *
  * @returns A version in the Fluid internal version scheme.
  */
 export function toInternalScheme(
 	publicVersion: semver.SemVer | string,
 	version: semver.SemVer | string,
 	allowPrereleases = false,
-	prereleaseIdentifier = REQUIRED_PRERELEASE_IDENTIFIER,
+	prereleaseIdentifier = DEFAULT_PRERELEASE_IDENTIFIER,
 ): semver.SemVer {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
@@ -154,8 +161,8 @@ export function toInternalScheme(
  *
  * @param version - The version to check.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
- * @param prereleaseIdentifier - If provided, the version must use this prereleaseIdentifier to be considered a valid
- * internal version. When set to undefined any prerelease identifier will be considered valid.
+ * @param prereleaseIdentifiers - If provided, the version must use one of these prereleaseIdentifier to be considered a
+ * valid internal version. When set to undefined any prerelease identifier will be considered valid.
  * @returns True if the version matches the Fluid internal version scheme. Throws if not.
  *
  * @remarks
@@ -166,7 +173,7 @@ export function validateVersionScheme(
 	// eslint-disable-next-line @rushstack/no-new-null
 	version: semver.SemVer | string | null,
 	allowPrereleases = false,
-	prereleaseIdentifier?: string,
+	prereleaseIdentifiers?: readonly string[],
 ) {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
@@ -185,12 +192,14 @@ export function validateVersionScheme(
 		);
 	}
 
-	if (prereleaseIdentifier !== undefined) {
+	if (prereleaseIdentifiers !== undefined) {
 		// the "prerelease identifier" is the first section of the prerelease field
 		const prereleaseId = parsedVersion.prerelease[0];
-		if (prereleaseId !== prereleaseIdentifier) {
+		if (!prereleaseIdentifiers.includes(prereleaseId)) {
 			throw new Error(
-				`First prerelease component should be '${prereleaseIdentifier}'; found ${prereleaseId}`,
+				`First prerelease component should be one of '${prereleaseIdentifiers.join(
+					", ",
+				)}'; found ${prereleaseId}`,
 			);
 		}
 	}
@@ -220,7 +229,7 @@ export function validateVersionScheme(
  * @param version - The version to check. If it is `undefined`, returns false.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
  * @returns True if the version matches the Fluid internal version scheme.
  */
 export function isInternalVersionScheme(
@@ -229,10 +238,10 @@ export function isInternalVersionScheme(
 	allowAnyPrereleaseId = false,
 ): boolean {
 	const parsedVersion = semver.parse(version);
-	const prereleaseId = allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER;
+	const prereleaseIds = allowAnyPrereleaseId ? undefined : ALLOWED_PRERELEASE_IDENTIFIERS;
 
 	try {
-		validateVersionScheme(parsedVersion, allowPrereleases, prereleaseId);
+		validateVersionScheme(parsedVersion, allowPrereleases, prereleaseIds);
 	} catch (error) {
 		return false;
 	}
@@ -245,7 +254,7 @@ export function isInternalVersionScheme(
  *
  * @param range - The range string to check.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
  * @returns True if the range string matches the Fluid internal version scheme.
  */
 export function isInternalVersionRange(range: string, allowAnyPrereleaseId = false): boolean {
@@ -382,4 +391,49 @@ export function changePreReleaseIdentifier(
 	}
 
 	return newVer;
+}
+
+/**
+ * Detects the type of upgrade constraint that a version range represents. Only works for Fluid internal version scheme
+ * versions.
+ *
+ * @param range - The range to check.
+ * @returns The constraint type.
+ *
+ * @throws an Error if `range` is not a parseable semver.Range or if it's not a Fluid internal version scheme.
+ *
+ * @remarks
+ *
+ * This function is only needed for the \>= \< version ranges that Fluid internal versions require. It supports ranges
+ * that start with ~ and ^ for convenience, but standard Fluid internal version ranges always use the \>= \< version
+ * ranges.
+ *
+ * @internal
+ */
+export function detectInternalVersionConstraintType(range: string): "minor" | "patch" {
+	if (semver.validRange(range) === null) {
+		throw new Error(`Invalid range: ${range}`);
+	}
+
+	const minVer = semver.minVersion(range);
+	if (minVer === null) {
+		throw new Error(`Couldn't determine minVersion from ${range}.`);
+	}
+
+	const scheme = detectVersionScheme(minVer);
+	if (scheme !== "internal" && scheme !== "internalPrerelease") {
+		throw new Error(`Range ${range} is not a Fluid internal version range.`);
+	}
+
+	if (range.startsWith("~")) {
+		return "patch";
+	} else if (range.startsWith("^")) {
+		return "minor";
+	}
+
+	const patch = bumpInternalVersion(minVer, "patch");
+	const minor = bumpInternalVersion(minVer, "minor");
+
+	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
+	return maxSatisfying === patch ? "patch" : "minor";
 }

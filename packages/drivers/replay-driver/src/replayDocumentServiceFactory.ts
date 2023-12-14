@@ -9,12 +9,15 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
 
+/**
+ * @internal
+ */
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 	public static create(
 		from: number,
@@ -45,11 +48,10 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 	): Promise<IDocumentService> {
 		// Always include isReplay: true on events for the Replay Driver.
 		// It's used in testing/debugging scenarios, so we want to be able to filter these events out sometimes.
-		const replayLogger = ChildLogger.create(
+		const replayLogger = createChildLogger({
 			logger,
-			undefined /* namespace */,
-			{ all: { isReplay: true } } /* properties */,
-		);
+			properties: { all: { isReplay: true } },
+		});
 
 		return ReplayDocumentService.create(
 			await this.documentServiceFactory.createDocumentService(

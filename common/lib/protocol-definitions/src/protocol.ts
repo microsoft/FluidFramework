@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @alpha
+ */
 export enum MessageType {
 	/**
 	 * Empty operation message. Used to send an updated reference sequence number.
 	 * Relay service is free to coalesce these messages or fully drop them, if
-	 * another op was used to update MSN to a number equal or higher than referenced
+	 * another message was used to update MSN to a number equal or higher than referenced
 	 * sequence number in Noop.
 	 */
 	NoOp = "noop",
@@ -38,30 +41,24 @@ export enum MessageType {
 	Accept = "accept",
 
 	/**
-	 * Summary operation (op).
+	 * Summary operation (message).
 	 */
 	Summarize = "summarize",
 
 	/**
-	 * Summary operation (op) written.
+	 * Summary operation (message) written.
 	 */
 	SummaryAck = "summaryAck",
 
 	/**
-	 * Summary operation (op) write failure.
+	 * Summary operation (message) write failure.
 	 */
 	SummaryNack = "summaryNack",
 
 	/**
-	 * Operation (op) produced by container runtime.
+	 * Operation (message) produced by container runtime.
 	 */
 	Operation = "op",
-
-	/**
-	 * Message to indicate the need of a remote agent for a document.
-	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
-	 */
-	RemoteHelp = "remoteHelp",
 
 	/**
 	 * Message to indicate that no active clients are present.
@@ -79,6 +76,9 @@ export enum MessageType {
 	Control = "control",
 }
 
+/**
+ * @internal
+ */
 export enum SignalType {
 	/**
 	 * System signal sent to indicate a new client has joined the collaboration.
@@ -92,7 +92,8 @@ export enum SignalType {
 }
 
 /**
- * Messages to track latency trace
+ * Messages to track latency trace.
+ * @alpha
  */
 export interface ITrace {
 	/**
@@ -111,6 +112,9 @@ export interface ITrace {
 	timestamp: number;
 }
 
+/**
+ * @alpha
+ */
 export interface INack {
 	/**
 	 * The operation that was just nacked.
@@ -129,7 +133,8 @@ export interface INack {
 }
 
 /**
- * Document specific message
+ * Document-specific message.
+ * @alpha
  */
 export interface IDocumentMessage {
 	/**
@@ -150,23 +155,17 @@ export interface IDocumentMessage {
 	/**
 	 * The contents of the message.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	contents: any;
+	contents: unknown;
 
 	/**
 	 * App provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	metadata?: any;
+	metadata?: unknown;
 
 	/**
 	 * Server provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	serverMetadata?: any;
+	serverMetadata?: unknown;
 
 	/**
 	 * Traces related to the packet.
@@ -174,7 +173,7 @@ export interface IDocumentMessage {
 	traces?: ITrace[];
 
 	/**
-	 * The compression algorithm that was used to compress contents of this op.
+	 * The compression algorithm that was used to compress contents of this message.
 	 * @experimental Not ready for use
 	 */
 	compression?: string;
@@ -182,13 +181,15 @@ export interface IDocumentMessage {
 
 /**
  * Document Message with optional system level data field.
+ * @internal
  */
 export interface IDocumentSystemMessage extends IDocumentMessage {
 	data: string;
 }
 
 /**
- * Branch origin information
+ * Branch origin information.
+ * @alpha
  */
 export interface IBranchOrigin {
 	/**
@@ -208,24 +209,21 @@ export interface IBranchOrigin {
 }
 
 /**
- * Sequenced message for a distributed document
+ * Sequenced message for a distributed document.
+ * @alpha
  */
 export interface ISequencedDocumentMessage {
 	/**
-	 * The client ID that submitted the delta.
+	 * The client ID that submitted the message.
+	 * For server generated messages the clientId will be null;
 	 */
-	clientId: string;
+	// eslint-disable-next-line @rushstack/no-new-null
+	clientId: string | null;
 
 	/**
 	 * The sequenced identifier.
 	 */
 	sequenceNumber: number;
-
-	/**
-	 * The term identifier.
-	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
-	 */
-	term: number | undefined;
 
 	/**
 	 * The minimum sequence number for all connected clients.
@@ -250,23 +248,17 @@ export interface ISequencedDocumentMessage {
 	/**
 	 * The contents of the message.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	contents: any;
+	contents: unknown;
 
 	/**
 	 * App provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	metadata?: any;
+	metadata?: unknown;
 
 	/**
 	 * Server provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	serverMetadata?: any;
+	serverMetadata?: unknown;
 
 	/**
 	 * Origin branch information for the message.
@@ -285,38 +277,73 @@ export interface ISequencedDocumentMessage {
 	 */
 	timestamp: number;
 
-	// Data provided by service. Only present in service generated messages.
+	/**
+	 * Data provided by service. Only present in service generated messages.
+	 */
 	data?: string;
 
 	/**
 	 * Experimental field for storing the rolling hash at sequence number.
-	 * @alpha
+	 *
+	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
 	 */
 	expHash1?: string;
 
 	/**
-	 * The compression algorithm that was used to compress contents of this op.
-	 * @experimental Not ready for use.
+	 * The compression algorithm that was used to compress contents of this message.
+	 *
+	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
 	 */
 	compression?: string;
 }
 
+/**
+ * {@link ISequencedDocumentAugmentedMessage} with experimental properties.
+ * @internal
+ */
+export type ISequencedDocumentMessageExperimental = Omit<
+	ISequencedDocumentMessage,
+	"expHash1" | "compression"
+> & {
+	/**
+	 * Stores the rolling hash at sequence number.
+	 */
+	expHash1?: string;
+
+	/**
+	 * The compression algorithm that was used to compress contents of this message.
+	 */
+	compression?: string;
+};
+
+/**
+ * @internal
+ */
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
 }
 
+/**
+ * @internal
+ */
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
 }
 
-export interface ISignalMessage {
-	// TODO: Update this to use undefined instead of null.
-	// eslint-disable-next-line @rushstack/no-new-null
-	clientId: string | null;
+/**
+ * Common interface between incoming and outgoing signals.
+ * @alpha
+ */
+export interface ISignalMessageBase {
+	/**
+	 * Signal content
+	 */
+	content: unknown;
 
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	content: any;
+	/**
+	 * Signal type
+	 */
+	type?: string;
 
 	/**
 	 * Counts the number of signals sent by the client
@@ -329,25 +356,67 @@ export interface ISignalMessage {
 	referenceSequenceNumber?: number;
 }
 
+/**
+ * Interface for signals sent by the server to clients.
+ * @alpha
+ */
+export interface ISignalMessage extends ISignalMessageBase {
+	/**
+	 * The client ID that submitted the message.
+	 * For server generated messages the clientId will be null.
+	 */
+	// eslint-disable-next-line @rushstack/no-new-null
+	clientId: string | null;
+}
+
+/**
+ * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
+ * @internal
+ */
+export interface ISentSignalMessage extends ISignalMessageBase {
+	/**
+	 * When specified, the signal is only sent to the provided client id
+	 */
+	targetClientId?: string;
+}
+
+/**
+ * @alpha
+ */
 export interface IUploadedSummaryDetails {
-	// Indicates whether the uploaded summary contains ".protocol" tree
+	/**
+	 * Indicates whether the uploaded summary contains ".protocol" tree.
+	 */
 	includesProtocolTree?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface ISummaryContent {
-	// Handle reference to the summary data
+	/**
+	 * Handle reference to the summary data.
+	 */
 	handle: string;
 
-	// Message included as part of the summary
+	/**
+	 * Message included as part of the summary.
+	 */
 	message: string;
 
-	// Handles to parent summaries of the proposed new summary
+	/**
+	 * Handles to parent summaries of the proposed new summary.
+	 */
 	parents: string[];
 
-	// Handle to the current latest summary stored by the service
+	/**
+	 * Handle to the current latest summary stored by the service
+	 */
 	head: string;
 
-	// Details of the uploaded summary
+	/**
+	 * Details of the uploaded summary.
+	 */
 	details?: IUploadedSummaryDetails;
 
 	// TODO - need an epoch/reload bit to indicate to clients that the summary has changed and requires a reload
@@ -357,6 +426,7 @@ export interface ISummaryContent {
 /**
  * General errors returned from the server.
  * May want to add error code or something similar in the future.
+ * @internal
  */
 export interface IServerError {
 	/**
@@ -366,17 +436,19 @@ export interface IServerError {
 }
 
 /**
- * Data about the original proposed summary op.
+ * Data about the original proposed summary message.
+ * @alpha
  */
 export interface ISummaryProposal {
 	/**
-	 * Actual sequence number of the summary op proposal.
+	 * Actual sequence number of the summary message proposal.
 	 */
 	summarySequenceNumber: number;
 }
 
 /**
  * Contents of summary ack expected from the server.
+ * @alpha
  */
 export interface ISummaryAck {
 	/**
@@ -385,23 +457,24 @@ export interface ISummaryAck {
 	handle: string;
 
 	/**
-	 * Information about the proposed summary op.
+	 * Information about the proposed summary message.
 	 */
 	summaryProposal: ISummaryProposal;
 }
 
 /**
  * Contents of summary nack expected from the server.
+ * @alpha
  */
 export interface ISummaryNack {
 	/**
-	 * Information about the proposed summary op.
+	 * Information about the proposed summary message.
 	 */
 	summaryProposal: ISummaryProposal;
 
 	/**
 	 * An error code number that represents the error. It will be a valid HTTP error code.
-	 * 403 errors are non retryable.
+	 * 403 errors are non retriable.
 	 * 400 errors are always immediately retriable.
 	 * 429 errors are retriable or non retriable (depends on type field).
 	 */
@@ -420,35 +493,13 @@ export interface ISummaryNack {
 }
 
 /**
- * Represents a message containing tasks.
- */
-export interface IHelpMessage {
-	tasks: string[];
-
-	// Temporary version field for back-compat.
-	version?: string;
-}
-
-/**
- * Represents a message in task queue to be processed.
- */
-export interface IQueueMessage {
-	message: IHelpMessage;
-
-	tenantId: string;
-
-	documentId: string;
-
-	token: string;
-}
-
-/**
  * Interface for nack content.
+ * @alpha
  */
 export interface INackContent {
 	/**
 	 * An error code number that represents the error. It will be a valid HTTP error code.
-	 * 403 errors are non retryable and client should acquire a new identity before reconnection.
+	 * 403 errors are non retriable and client should acquire a new identity before reconnection.
 	 * 400 errors are always immediately retriable
 	 * 429 errors are retriable or non retriable (depends on type field).
 	 */
@@ -472,15 +523,27 @@ export interface INackContent {
 }
 
 /**
- * Type of the Nack.
- * InvalidScopeError: Client's token is not valid for the intended op.
- * ThrottlingError: Retryable after retryAfter number.
- * BadRequestError: Clients op is invalid and should retry immediately with a valid op.
- * LimitExceededError: Service is having issues. Client should not retry.
+ * Type of the nack.
+ * @alpha
  */
 export enum NackErrorType {
+	/**
+	 * Retriable after {@link ISummaryNack.retryAfter} seconds.
+	 */
 	ThrottlingError = "ThrottlingError",
+
+	/**
+	 * Client's token is not valid for the intended message.
+	 */
 	InvalidScopeError = "InvalidScopeError",
+
+	/**
+	 * Clients message is invalid and should retry immediately with a valid message.
+	 */
 	BadRequestError = "BadRequestError",
+
+	/**
+	 * Service is having issues. Client should not retry.
+	 */
 	LimitExceededError = "LimitExceededError",
 }

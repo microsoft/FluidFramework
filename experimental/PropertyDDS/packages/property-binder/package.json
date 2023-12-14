@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-binder",
-	"version": "2.0.0-internal.4.1.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Data Binder for Fluid PropertyDDS",
 	"keywords": [],
 	"homepage": "https://fluidframework.com",
@@ -20,15 +20,13 @@
 		"dist/index.d.ts"
 	],
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
+		"build": "fluid-build . --task build",
 		"postbuild": "npm run gen:tscdef",
-		"build:commonjs": "npm run tsc && npm run build:test",
-		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"doc": "cross-var appfw-typedoc $npm_package_name",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -38,15 +36,15 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"precit": "bash -c \"npm run test -- --reporters dots; echo '----------Linting----------'; npm run lint; echo '----------Docs----------'; npm run doc\"",
 		"prepublishOnly": "npm run test:dist",
-		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:jest",
-		"pretest:coverage": "rimraf coverage/",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"pretest:coverage": "rimraf --glob coverage/",
+		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"tsc": "tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -68,26 +66,28 @@
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.13.7",
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-dds": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-properties": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/property-changeset": "workspace:~",
+		"@fluid-experimental/property-dds": "workspace:~",
+		"@fluid-experimental/property-properties": "workspace:~",
 		"lodash": "^4.17.21",
 		"underscore": "^1.13.6"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.13.0",
-		"@babel/eslint-parser": "^7.16.5",
+		"@babel/eslint-parser": "^7.22.15",
+		"@babel/plugin-proposal-decorators": "^7.20.4",
 		"@babel/plugin-transform-runtime": "^7.2.0",
 		"@babel/preset-env": "^7.2.0",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@types/jest": "22.2.3",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.28.0",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
+		"@types/jest": "29.5.3",
 		"@types/lodash": "^4.14.118",
-		"@types/node": "^14.18.38",
+		"@types/node": "^18.19.0",
 		"@types/underscore": "^1.11.4",
 		"async": "^3.2.2",
-		"babel-eslint": "^10.0.1",
+		"babel-eslint": "^10.1.0",
 		"babel-loader": "^8.0.5",
 		"babel-plugin-istanbul": "^5.1.0",
 		"babel-plugin-module-resolver": "^3.1.1",
@@ -96,25 +96,26 @@
 		"babel-plugin-polyfill-regenerator": "^0.1.6",
 		"babel-plugin-transform-jsx": "^2.0.0",
 		"body-parser": "^1.18.3",
+		"c8": "^7.7.1",
 		"chai": "^4.2.0",
-		"concurrently": "^7.6.0",
-		"eslint": "~8.6.0",
-		"jest": "^26.6.3",
+		"eslint": "~8.50.0",
+		"jest": "^29.6.2",
 		"jest-junit": "^10.0.0",
 		"jsdoc": "3.6.7",
 		"lighthouse": "^5.2.0",
-		"nyc": "^15.1.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
-		"source-map-support": "^0.5.16",
 		"typedoc": "^0.12.0",
-		"typescript": "~4.5.5",
-		"webpack": "^5.76.2"
+		"typescript": "~5.1.6",
+		"webpack": "^5.82.0"
 	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
+	"fluidBuild": {
+		"tasks": {
+			"gen:tscdef": [
+				"^tsc"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

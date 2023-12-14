@@ -12,10 +12,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
-import { generateToken } from "@fluidframework/server-services-client";
 import {
 	DefaultMetricClient,
-	EmptyTaskMessageSender,
 	IDatabaseManager,
 	IDocumentRepository,
 	IDocumentStorage,
@@ -41,6 +39,7 @@ import { LocalWebSocketServer } from "./localWebSocketServer";
 
 /**
  * Items needed for handling deltas.
+ * @alpha
  */
 export interface ILocalDeltaConnectionServer {
 	webSocketServer: IWebSocketServer;
@@ -59,6 +58,7 @@ export interface ILocalDeltaConnectionServer {
 
 /**
  * Implementation of local delta connection server.
+ * @internal
  */
 export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 	/**
@@ -75,6 +75,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
 		const nodesCollectionName = "nodes";
 		const documentsCollectionName = "documents";
+		const checkpointsCollectionName = "checkpoints";
 		const deltasCollectionName = "deltas";
 		const scribeDeltasCollectionName = "scribeDeltas";
 
@@ -93,6 +94,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			mongoManager,
 			nodesCollectionName,
 			documentsCollectionName,
+			checkpointsCollectionName,
 			deltasCollectionName,
 			scribeDeltasCollectionName,
 		);
@@ -104,10 +106,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 		const ordererManager = new LocalOrdererManager(
 			testStorage,
 			databaseManager,
-			testTenantManager,
-			new EmptyTaskMessageSender(),
-			{},
-			generateToken,
 			async () => new TestHistorian(testDbFactory.testDatabase),
 			logger,
 			serviceConfiguration,
@@ -186,10 +184,14 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			};
 			socket.on("op", earlyOpHandler);
 
-			const earlySignalHandler = (msg: ISignalMessage) => {
+			const earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
 				this.logger.info("Queued early signals");
 				Lumberjack.info("Queued early signals");
-				queuedSignals.push(msg);
+				if (Array.isArray(msg)) {
+					queuedSignals.push(...msg);
+				} else {
+					queuedSignals.push(msg);
+				}
 			};
 			socket.on("signal", earlySignalHandler);
 

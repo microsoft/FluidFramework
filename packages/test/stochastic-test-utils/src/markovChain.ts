@@ -7,6 +7,9 @@ import { createWeightedGenerator } from "./generators";
 import { makeRandom } from "./random";
 import { IRandom } from "./types";
 
+/**
+ * @internal
+ */
 export abstract class MarkovChain<PredictionPointType, OutputType> {
 	public static readonly MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
 	public static readonly MARKOV_SENTENCE_END_KEY = "MARKOV_SENTENCE_END_KEY_01$#@%^#";
@@ -61,12 +64,18 @@ export abstract class MarkovChain<PredictionPointType, OutputType> {
 	}
 }
 
+/**
+ * @internal
+ */
 export enum WordSpacing {
 	Spaced,
 	Unspaced,
 	Unknown,
 }
 
+/**
+ * @internal
+ */
 export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	chain: Record<string, [string, number][]>;
 	readonly random: IRandom;
@@ -99,11 +108,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 					const markovChainRoot = initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
 					if (markovChainRoot !== undefined) {
 						const currentCount = markovChainRoot[word];
-						if (currentCount !== undefined) {
-							markovChainRoot[word] = currentCount + 1;
-						} else {
-							markovChainRoot[word] = 1;
-						}
+						markovChainRoot[word] = currentCount === undefined ? 1 : currentCount + 1;
 					} else {
 						initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = { [word]: 1 };
 					}
@@ -117,11 +122,8 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 					}
 
 					const currentWordCount = initialChain[prevWord][word];
-					if (currentWordCount !== undefined) {
-						initialChain[prevWord][word] = currentWordCount + 1;
-					} else {
-						initialChain[prevWord][word] = 1;
-					}
+					initialChain[prevWord][word] =
+						currentWordCount === undefined ? 1 : currentWordCount + 1;
 					prevWord = word;
 				}
 			}
@@ -209,6 +211,9 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	}
 }
 
+/**
+ * @internal
+ */
 export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 	readonly chain: Record<string, string[]>;
 	readonly random: IRandom;

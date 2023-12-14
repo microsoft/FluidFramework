@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
+	createChildLogger,
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes";
 import { estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
 
@@ -31,10 +31,10 @@ export class OpSplitter {
 			| undefined,
 		public readonly chunkSizeInBytes: number,
 		private readonly maxBatchSizeInBytes: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryBaseLogger,
 	) {
 		this.chunkMap = new Map<string, string[]>(chunks);
-		this.logger = ChildLogger.create(logger, "OpSplitter");
+		this.logger = createChildLogger({ logger, namespace: "OpSplitter" });
 	}
 
 	public get isBatchChunkingEnabled(): boolean {
@@ -53,7 +53,9 @@ export class OpSplitter {
 			};
 		}
 
-		const clientId = message.clientId;
+		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		const clientId = message.clientId as string;
 		const chunkedContent = message.contents as IChunkedOp;
 		this.addChunk(clientId, chunkedContent, message);
 
@@ -135,7 +137,7 @@ export class OpSplitter {
 	 * @param batch - the compressed batch which needs to be processed
 	 * @returns A new adjusted batch which can be sent over the wire
 	 */
-	public splitCompressedBatch(batch: IBatch): IBatch {
+	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
@@ -208,13 +210,13 @@ const chunkToBatchMessage = (
 	referenceSequenceNumber: number,
 	metadata: Record<string, unknown> | undefined = undefined,
 ): BatchMessage => {
-	const payload: ContainerRuntimeMessage = {
+	const payload: ContainerRuntimeChunkedOpMessage = {
 		type: ContainerMessageType.ChunkedOp,
 		contents: chunk,
 	};
 	return {
 		contents: JSON.stringify(payload),
-		deserializedContent: payload,
+		type: payload.type,
 		metadata,
 		localOpMetadata: undefined,
 		referenceSequenceNumber,
@@ -251,7 +253,7 @@ export const splitOp = (
 		const chunk: IChunkedOp = {
 			chunkId,
 			contents: op.contents.substr(offset, chunkSizeInBytes),
-			originalType: op.deserializedContent.type,
+			originalType: op.type,
 			totalChunks: chunkCount,
 		};
 

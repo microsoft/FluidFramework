@@ -4,10 +4,20 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
+import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	DataProcessingError,
+	EventEmitterWithErrorHandling,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	SampledTelemetryHelper,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -23,15 +33,6 @@ import {
 	totalBlobSizePropertyName,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	ChildLogger,
-	EventEmitterWithErrorHandling,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	SampledTelemetryHelper,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
@@ -39,6 +40,7 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
  * Base class from which all shared objects derive.
+ * @alpha
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends EventEmitterWithErrorHandling<TEvent>
@@ -59,7 +61,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	/**
 	 * Telemetry logger for the shared object
 	 */
-	protected readonly logger: ITelemetryLogger;
+	protected readonly logger: ITelemetryLoggerExt;
 	private readonly mc: MonitoringContext;
 
 	/**
@@ -106,12 +108,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
 
-		this.logger = ChildLogger.create(runtime.logger, undefined, {
-			all: {
-				sharedObjectId: uuid(),
-				ddsType: {
-					value: this.attributes.type,
-					tag: TelemetryDataTag.CodeArtifact,
+		this.logger = createChildLogger({
+			logger: runtime.logger,
+			properties: {
+				all: {
+					sharedObjectId: uuid(),
+					...tagCodeArtifacts({
+						ddsType: this.attributes.type,
+					}),
 				},
 			},
 		});
@@ -540,9 +544,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * attached to them by the consumers of the DDS). It should not be called from outside the class or to emit events
 	 * which are only internal to the DDS. Support for calling it from outside the DDS instance might be removed in the
 	 * future.
-	 *
-	 * @internal
-	 *
 	 * @param event - The event to emit.
 	 * @param args - Arguments to pass to the event listeners.
 	 * @returns `true` if the event had listeners, `false` otherwise.
@@ -580,6 +581,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * @alpha
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -714,7 +716,7 @@ export abstract class SharedObject<
 	 * Calls the serializer over all data in this object that reference other GC nodes.
 	 * Derived classes must override this to provide custom list of references to other GC nodes.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		// We run the full summarize logic to get the list of outbound routes from this object. This is a little
 		// expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
 		// See: https://github.com/microsoft/FluidFramework/issues/4547

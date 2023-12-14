@@ -10,8 +10,6 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	Factory,
-	packagePathToTelemetryProperty,
-	requestFluidObject,
 	responseToException,
 } from "./dataStoreHelpers";
 export { ObjectStoragePartition } from "./objectstoragepartition";

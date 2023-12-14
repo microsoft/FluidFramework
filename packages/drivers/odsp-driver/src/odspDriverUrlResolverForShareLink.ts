@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PromiseCache } from "@fluidframework/common-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { PromiseCache } from "@fluidframework/core-utils";
+import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IOdspResolvedUrl,
 	IdentityType,
@@ -30,6 +30,7 @@ import { getFileLink } from "./getFileLink";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
+ * @internal
  */
 export interface ShareLinkFetcherProps {
 	/**
@@ -46,9 +47,10 @@ export interface ShareLinkFetcherProps {
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
  * This resolver also handles share links and try to generate one for the use by the app.
+ * @internal
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly sharingLinkCache = new PromiseCache<string, string>();
 	private readonly shareLinkFetcherProps: ShareLinkFetcherProps | undefined;
 

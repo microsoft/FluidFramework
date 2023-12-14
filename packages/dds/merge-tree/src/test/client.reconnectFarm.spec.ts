@@ -4,7 +4,8 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IRandom, makeRandom, describeFuzz } from "@fluid-internal/stochastic-test-utils";
+import { strict as assert } from "assert";
+import { IRandom, makeRandom, describeFuzz } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";
@@ -40,6 +41,7 @@ function applyMessagesWithReconnect(
 	// log and apply all the ops created in the round
 	while (messageDatas.length > 0) {
 		const [message, sg] = messageDatas.shift()!;
+		assert(message.clientId, "expected clientId to be defined");
 		if (reconnectingClientIds.includes(message.clientId)) {
 			reconnectClientMsgs.get(message.clientId)!.push([message.contents as IMergeTreeOp, sg]);
 		} else {
@@ -90,9 +92,7 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [
-				new TestClient({ mergeTreeUseNewLengthCalculations: true }),
-			];
+			const clients: TestClient[] = [new TestClient()];
 			clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 
 			let seq = 0;

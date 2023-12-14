@@ -35,4 +35,7 @@ const names = [
 	"Celeste Burton",
 ];
 
+/**
+ * @internal
+ */
 export const chooseCelaName = (): string => names[Math.floor(Math.random() * names.length)];

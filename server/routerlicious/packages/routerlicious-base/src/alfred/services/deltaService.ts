@@ -6,15 +6,18 @@
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	ICollection,
 	IDeltaService,
 	ISequencedOperationMessage,
 	ITenantManager,
-	MongoManager,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class DeltaService implements IDeltaService {
 	constructor(
-		protected readonly mongoManager: MongoManager,
+		protected readonly deltasCollection: ICollection<ISequencedOperationMessage>,
 		protected readonly tenantManager: ITenantManager,
 	) {}
 
@@ -47,16 +50,11 @@ export class DeltaService implements IDeltaService {
 		collectionName: string,
 		tenantId: string,
 		documentId: string,
-		fromTerm: number,
-		toTerm: number,
 		fromSeq?: number,
 		toSeq?: number,
 	): Promise<ISequencedDocumentMessage[]> {
 		const query: any = { documentId, tenantId, scheduledDeletionTime: { $exists: false } };
-		query["operation.term"] = {};
 		query["operation.sequenceNumber"] = {};
-		query["operation.term"].$gte = fromTerm;
-		query["operation.term"].$lte = toTerm;
 		if (fromSeq !== undefined) {
 			query["operation.sequenceNumber"].$gt = fromSeq;
 		}
@@ -64,7 +62,7 @@ export class DeltaService implements IDeltaService {
 			query["operation.sequenceNumber"].$lt = toSeq;
 		}
 
-		const sort = { "operation.term": 1, "operation.sequenceNumber": 1 };
+		const sort = { "operation.sequenceNumber": 1 };
 		return this.queryDeltas(collectionName, query, sort);
 	}
 
@@ -73,9 +71,7 @@ export class DeltaService implements IDeltaService {
 		query: any,
 		sort: any,
 	): Promise<ISequencedDocumentMessage[]> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ISequencedOperationMessage>(collectionName);
-		const dbDeltas = await collection.find(query, sort);
+		const dbDeltas = await this.deltasCollection.find(query, sort);
 		return dbDeltas.map((delta) => delta.operation);
 	}
 
@@ -90,18 +86,15 @@ export class DeltaService implements IDeltaService {
 
 		const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
 		if (!existingRef) {
-			return this.getDeltasFromStorage(collectionName, tenantId, documentId, 1, 1, from, to);
+			return this.getDeltasFromStorage(collectionName, tenantId, documentId, from, to);
 		} else {
-			const [deliContent, opsContent] = await Promise.all([
-				gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
-				gitManager.getContent(existingRef.object.sha, ".logTail/logTail"),
-			]);
+			const opsContent = await gitManager.getContent(
+				existingRef.object.sha,
+				".logTail/logTail",
+			);
 			const opsFromSummary = JSON.parse(
 				toUtf8(opsContent.content, opsContent.encoding),
 			) as ISequencedDocumentMessage[];
-
-			const deli = JSON.parse(toUtf8(deliContent.content, deliContent.encoding));
-			const term = deli.term;
 
 			const fromSeq =
 				opsFromSummary.length > 0
@@ -111,8 +104,6 @@ export class DeltaService implements IDeltaService {
 				collectionName,
 				tenantId,
 				documentId,
-				term,
-				term,
 				fromSeq,
 				to,
 			);

@@ -16,6 +16,9 @@ const asyncExec = promisify(exec);
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
+/**
+ * @internal
+ */
 export class NodeAllowList {
 	constructor() {}
 
@@ -24,6 +27,9 @@ export class NodeAllowList {
 	}
 }
 
+/**
+ * @internal
+ */
 export class NodeCodeLoader {
 	constructor(
 		private readonly packageDirectory: string,
@@ -43,15 +49,14 @@ export class NodeCodeLoader {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return entry;
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			Promise.reject(new Error("Invalid Package"));
+			throw new Error("Invalid Package");
 		}
 	}
 
 	private async installOrWaitForPackages(pkg: string): Promise<string> {
 		const dataStores = pkg.match(/(.*)\/(.*)@(.*)/);
 		if (!dataStores) {
-			return Promise.reject(new Error("Invalid package"));
+			throw new Error("Invalid package");
 		}
 		const [, scope, name] = dataStores;
 

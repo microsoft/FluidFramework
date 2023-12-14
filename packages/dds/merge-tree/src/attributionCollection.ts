@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AttributionKey,
 	OpAttributionKey,
@@ -12,24 +12,28 @@ import {
 import { ISegment } from "./mergeTreeNodes";
 
 /**
- * @internal
+ * @alpha
  */
 export interface SequenceOffsets {
 	/**
 	 * Parallel array with posBreakpoints which tracks the seq of insertion.
-	 * Ex: if seqs is [45, 46] and posBreakpoints is [0, 3], the section of the string
+	 *
+	 * @example
+	 *
+	 * If seqs is [45, 46] and posBreakpoints is [0, 3], the section of the string
 	 * between offsets 0 and 3 was inserted at seq 45 and the section of the string between
 	 * 3 and the length of the string was inserted at seq 46.
 	 *
-	 * @remarks - We use null here rather than undefined as round-tripping through JSON converts
+	 * @remarks We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
+	// eslint-disable-next-line @rushstack/no-new-null
 	seqs: (number | AttributionKey | null)[];
 	posBreakpoints: number[];
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface SerializedAttributionCollection extends SequenceOffsets {
 	channels?: { [name: string]: SequenceOffsets };
@@ -38,22 +42,22 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttributionCollectionSpec<T> {
+	// eslint-disable-next-line @rushstack/no-new-null
 	root: Iterable<{ offset: number; key: T | null }>;
+	// eslint-disable-next-line @rushstack/no-new-null
 	channels?: { [name: string]: Iterable<{ offset: number; key: T | null }> };
 	length: number;
 }
 
 /**
- * @internal
+ * @alpha
  * @sealed
  */
 export interface IAttributionCollectionSerializer {
-	/**
-	 * @internal
-	 */
+	/***/
 	serializeAttributionCollections(
 		segments: Iterable<{
 			attribution?: IAttributionCollection<AttributionKey>;
@@ -63,7 +67,6 @@ export interface IAttributionCollectionSerializer {
 
 	/**
 	 * Populates attribution information on segments using the provided summary.
-	 * @internal
 	 */
 	populateAttributionCollections(
 		segments: Iterable<ISegment>,
@@ -93,17 +96,16 @@ export interface IAttributionCollection<T> {
 	 * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
 	 * `i+1`th offset.
 	 * The last entry's key applies to the open interval from the last entry's offset to this collection's length.
-	 * @internal
 	 */
 	getAll(): IAttributionCollectionSpec<T>;
 
-	/** @internal */
+	/***/
 	splitAt(pos: number): IAttributionCollection<T>;
 
-	/** @internal */
+	/***/
 	append(other: IAttributionCollection<T>): void;
 
-	/** @internal */
+	/***/
 	clone(): IAttributionCollection<T>;
 
 	/**
@@ -112,14 +114,15 @@ export interface IAttributionCollection<T> {
 	 * Updates apply only to the individual channel (i.e. if an attribution policy needs to update the root
 	 * channel and 4 other channels, it should call `.update` 5 times).
 	 * @param channel - Updated collection for that channel.
-	 * @internal
 	 */
-	update(name: string | undefined, channel: IAttributionCollection<T>);
+	update(name: string | undefined, channel: IAttributionCollection<T>): void;
 }
 
 // note: treats null and undefined as equivalent
 export function areEqualAttributionKeys(
+	// eslint-disable-next-line @rushstack/no-new-null
 	a: AttributionKey | null | undefined,
+	// eslint-disable-next-line @rushstack/no-new-null
 	b: AttributionKey | null | undefined,
 ): boolean {
 	if (!a && !b) {
@@ -157,7 +160,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.entries(this.channels ?? {});
 	}
 
-	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
+	public constructor(
+		private _length: number,
+		// eslint-disable-next-line @rushstack/no-new-null
+		baseEntry?: AttributionKey | null,
+	) {
 		if (baseEntry !== undefined) {
 			this.offsets.push(0);
 			this.keys.push(baseEntry);
@@ -192,7 +199,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	private get(index: number): AttributionKey | undefined {
 		const key = this.keys[index];
-		return key !== null ? key : undefined;
+		return key ?? undefined;
 	}
 
 	public get length(): number {
@@ -252,9 +259,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	}
 
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
-		const root: IAttributionCollectionSpec<AttributionKey>["root"] = new Array(
-			this.keys.length,
-		);
+		type ExtractGeneric<T> = T extends Iterable<infer Q> ? Q : unknown;
+		const root: ExtractGeneric<IAttributionCollectionSpec<AttributionKey>["root"]>[] =
+			new Array(this.keys.length);
 		for (let i = 0; i < this.keys.length; i++) {
 			root[i] = { offset: this.offsets[i], key: this.keys[i] };
 		}
@@ -276,7 +283,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		copy.keys = this.keys.slice();
 		copy.offsets = this.offsets.slice();
 		if (this.channels !== undefined) {
-			const channelsCopy = {};
+			const channelsCopy: Record<string, AttributionCollection> = {};
 			for (const [key, collection] of this.channelEntries) {
 				channelsCopy[key] = collection.clone();
 			}
@@ -288,7 +295,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	public update(name: string | undefined, channel: AttributionCollection) {
 		assert(
 			channel.length === this.length,
-			"AttributionCollection channel update should have consistent segment length",
+			0x5c0 /* AttributionCollection channel update should have consistent segment length */,
 		);
 		if (name === undefined) {
 			this.offsets = [...channel.offsets];
@@ -405,7 +412,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				for (const { offset, key } of getSpecEntries(spec)) {
 					assert(
 						key?.type !== "local",
-						"local attribution keys should never be put in summaries",
+						0x5c1 /* local attribution keys should never be put in summaries */,
 					);
 					if (
 						mostRecentAttributionKey === undefined ||

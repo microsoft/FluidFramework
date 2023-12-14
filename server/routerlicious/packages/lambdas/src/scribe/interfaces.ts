@@ -11,13 +11,18 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export interface ISummaryWriteResponse {
 	message: ISummaryAck | ISummaryNack;
 	status: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface ILatestSummaryState {
-	term: number;
 	protocolHead: number;
 	scribe: string;
 	messages: ISequencedDocumentMessage[];
@@ -26,6 +31,7 @@ export interface ILatestSummaryState {
 
 /**
  * Interface to abstract out the storage specific details of summary retrieval
+ * @internal
  */
 export interface ISummaryReader {
 	readLastSummary(): Promise<ILatestSummaryState>;
@@ -33,6 +39,7 @@ export interface ISummaryReader {
 
 /**
  * Interface to abstract out the storage specific details of summary creation
+ * @internal
  */
 export interface ISummaryWriter {
 	writeClientSummary(
@@ -40,6 +47,7 @@ export interface ISummaryWriter {
 		lastSummaryHead: string | undefined,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<ISummaryWriteResponse>;
 
 	writeServiceSummary(
@@ -47,6 +55,7 @@ export interface ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<string | false>;
 
 	isExternal: boolean;
@@ -54,6 +63,7 @@ export interface ISummaryWriter {
 
 /**
  * Interface to abstract out the storage specific details of pending message retrieval
+ * @internal
  */
 export interface IPendingMessageReader {
 	/**
@@ -66,12 +76,16 @@ export interface IPendingMessageReader {
 
 /**
  * Interface to abstract out the storage specific details of scribe checkpointing
+ * @internal
  */
 export interface ICheckpointManager {
 	write(
 		checkpoint: IScribe,
 		protocolHead: number,
 		pendingCheckpointMessages: ISequencedOperationMessage[],
+		noActiveClients: boolean,
+		globalCheckpointOnly: boolean,
+		markAsCorrupt: boolean,
 	): Promise<void>;
 
 	delete(sequenceNumber: number, lte: boolean): Promise<void>;

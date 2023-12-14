@@ -5,11 +5,10 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/dist/test";
-import Random from "random-js";
+import { MersenneTwister19937, Random } from "random-js";
 import * as mocks from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalType } from "../intervalCollection";
 import {
 	SharedStringWithV1IntervalCollection,
 	V1IntervalCollectionSharedStringFactory,
@@ -29,13 +28,13 @@ export const supportedVersions = new Map<string, any>([
 ]);
 
 function createIntervals(sharedString) {
-	const rand = new Random(Random.engines.mt19937().seed(0));
+	const rand = new Random(MersenneTwister19937.seed(0));
 	const collection1 = sharedString.getIntervalCollection("collection1");
-	collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+	collection1.add({ start: 1, end: 5, props: { intervalId: rand.uuid4() } });
 
 	const collection2 = sharedString.getIntervalCollection("collection2");
 	for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-		collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+		collection2.add({ start: i, end: i + 5, props: { intervalId: rand.uuid4() } });
 	}
 }
 

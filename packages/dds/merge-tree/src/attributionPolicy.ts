@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionPolicy } from "./mergeTree";
+// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client";
 import {
 	IMergeTreeDeltaCallbackArgs,
@@ -25,11 +26,13 @@ interface AttributionCallbacks {
 	delta: (
 		opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 	) => void;
 	maintenance: (
 		maintenanceArgs: IMergeTreeMaintenanceCallbackArgs,
 		opArgs: IMergeTreeDeltaOpArgs | undefined,
+		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 	) => void;
 }
@@ -40,14 +43,17 @@ function createAttributionPolicyFromCallbacks({
 }: AttributionCallbacks): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
 	return {
+		// eslint-disable-next-line import/no-deprecated
 		attach: (client: Client) => {
 			assert(
 				unsubscribe === undefined,
 				0x557 /* cannot attach to multiple clients at once */,
 			);
 
-			const deltaSubscribed = (opArgs, deltaArgs) => delta(opArgs, deltaArgs, client);
-			const maintenanceSubscribed = (args, opArgs) => maintenance(args, opArgs, client);
+			const deltaSubscribed: AttributionCallbacks["delta"] = (opArgs, deltaArgs) =>
+				delta(opArgs, deltaArgs, client);
+			const maintenanceSubscribed: AttributionCallbacks["maintenance"] = (args, opArgs) =>
+				maintenance(args, opArgs, client);
 
 			client.on("delta", deltaSubscribed);
 			client.on("maintenance", maintenanceSubscribed);
@@ -80,6 +86,7 @@ const ensureAttributionCollectionCallbacks: AttributionCallbacks = {
 };
 
 const getAttributionKey = (
+	// eslint-disable-next-line import/no-deprecated
 	client: Client,
 	msg: ISequencedDocumentMessage | undefined,
 ): AttributionKey => {
@@ -189,8 +196,8 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
 }
 
 /**
- * @alpha
- * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ * @returns An {@link AttributionPolicy} which tracks only insertion of content.
+ * @internal
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	return createAttributionPolicyFromCallbacks(
@@ -203,7 +210,7 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 
 /**
  * @param propNames - List of property names for which attribution should be tracked.
- * @returns - A policy which only attributes annotation of the properties specified.
+ * @returns A policy which only attributes annotation of the properties specified.
  * Keys for each property are stored under attribution channels of the same name--see example below.
  *
  * @example

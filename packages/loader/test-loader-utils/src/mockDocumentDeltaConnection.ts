@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	IAnyDriverError,
 	IDocumentDeltaConnection,
@@ -19,7 +19,7 @@ import {
 	ISignalMessage,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {
@@ -28,7 +28,9 @@ const DefaultServiceConfiguration: IClientConfiguration = {
 };
 
 /**
- * Mock Document Delta Connection for testing
+ * Mock Document Delta Connection for testing.
+ *
+ * @internal
  */
 export class MockDocumentDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>

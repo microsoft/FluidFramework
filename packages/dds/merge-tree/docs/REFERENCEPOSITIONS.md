@@ -76,9 +76,9 @@ To implement an operation which creates LocalReferences which will have an event
 2. Send the reference numerical position in an op
 3. On acknowledgement of the local create:
     1. set the `refType` of the reference to include `SlideOnRemove`
-    2. call `Client.getSlideToSegment` with the references current segment and offset to get the proper new location
+    2. call `getSlideToSegoff` with the reference's current segment and offset to get the proper new location
     3. Delete the old reference and create a new one with the returned values
-4. Remote clients, on receiving the op, call `Client.getContainingSegment` followed by `Client.getSlideToSegment`
+4. Remote clients, on receiving the op, call `Client.getContainingSegment` followed by `getSlideToSegoff`
    on the result. Call `Client.createLocalReferencePosition` with the result to create a `SlideOnRemove` reference.
 5. If there is a dependency on the comparison of reference positions (such as the index in IntervalCollections)
    must listen to the `beforeSlide` and `afterSlide` events on `IReferencePositionEvents`. When slide occurs the

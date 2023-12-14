@@ -64,7 +64,7 @@ export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefine
 	],
 	[
 		"@fluid-tools/benchmark",
-		"https://dev.azure.com/fluidframework/internal/_build?definitionId=96",
+		"https://dev.azure.com/fluidframework/internal/_build?definitionId=62",
 	],
 	[
 		"@fluidframework/test-tools",
@@ -136,7 +136,7 @@ export abstract class InstructionalPromptWriter {
 	/**
 	 * Writes the prompt to the terminal.
 	 */
-	public async writePrompt(data: InstructionalPrompt) {
+	public async writePrompt(data: InstructionalPrompt): Promise<void> {
 		const prompt = await this.formatPrompt(data);
 
 		this.log.logHr();

@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import {
-	ChildLogger,
-	loggerToMonitoringContext,
+	ITelemetryLoggerExt,
+	createChildMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -69,7 +68,7 @@ export class OdspDocumentService implements IDocumentService {
 		getStorageToken: InstrumentedStorageTokenFetcher,
 		// eslint-disable-next-line @rushstack/no-new-null
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		epochTracker: EpochTracker,
@@ -117,7 +116,7 @@ export class OdspDocumentService implements IDocumentService {
 		private readonly getWebsocketToken:
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
@@ -130,15 +129,16 @@ export class OdspDocumentService implements IDocumentService {
 			summarizeProtocolTree: true,
 		};
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(logger, undefined, {
+		this.mc = createChildMonitoringContext({
+			logger,
+			properties: {
 				all: {
 					odc: isOdcOrigin(
 						new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin,
 					),
 				},
-			}),
-		);
+			},
+		});
 
 		this.hostPolicy = hostPolicy;
 		if (this.clientIsSummarizer) {
@@ -227,6 +227,7 @@ export class OdspDocumentService implements IDocumentService {
 				}
 			},
 			(ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
+			() => this.storageManager,
 		);
 	}
 
@@ -256,12 +257,12 @@ export class OdspDocumentService implements IDocumentService {
 	 * This dynamically imports the module for loading the delta connection. In many cases the delta stream, is not
 	 * required during the critical load flow. So this way we don't have to bundle this in the initial bundle and can
 	 * import this later on when required.
-	 * @returns - delta stream object.
+	 * @returns The delta stream object.
 	 */
 	private async getDelayLoadedDeltaStream() {
 		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);
 		const module = await import(
-			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream"
+			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
 		)
 			.then((m) => {
 				this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });

@@ -3,14 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import { ITree, TreeEntry, ITreeEntry } from "@fluidframework/protocol-definitions";
 
 /** The name of the metadata blob added to the root of the container runtime. */
 const metadataBlobName = ".metadata";
-/** The prefix that all GC blob names start with. */
+/**
+ * The prefix that all GC blob names start with.
+ *
+ * @internal
+ */
 export const gcBlobPrefix = "__gc";
 
+/**
+ * @internal
+ */
 export interface ISnapshotNormalizerConfig {
 	// The paths of blobs whose contents should be normalized.
 	blobsToNormalize?: string[];
@@ -132,6 +139,7 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
  * @param config - Configs to use when normalizing snapshot. For example, it can contain paths of blobs whose contents
  * should be normalized as well.
  * @returns a copy of the normalized snapshot tree.
+ * @internal
  */
 export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
 	// Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
@@ -202,6 +210,7 @@ function normalizeEntry(
 			let contents = entry.value.contents;
 			// If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
 			if (
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .includes returns false.
 				config?.blobsToNormalize?.includes(entry.path) ||
 				entry.path.startsWith(gcBlobPrefix)
 			) {

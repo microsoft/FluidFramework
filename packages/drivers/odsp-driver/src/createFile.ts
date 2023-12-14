@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
@@ -53,7 +52,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 export async function createNewFluidFile(
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,
@@ -188,7 +187,7 @@ function extractShareLinkData(
 export async function createNewEmptyFluidFile(
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<string> {
@@ -229,7 +228,7 @@ export async function createNewEmptyFluidFile(
 				);
 
 				const content = fetchResponse.content;
-				if (!content || !content.id) {
+				if (!content?.id) {
 					throw new NonRetryableError(
 						// pre-0.58 error message: ODSP CreateFile call returned no item ID
 						"ODSP CreateFile call returned no item ID (for empty file)",
@@ -251,7 +250,7 @@ export async function createNewEmptyFluidFile(
 export async function createNewFluidFileFromSummary(
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree,
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
@@ -281,7 +280,7 @@ export async function createNewFluidFileFromSummary(
 		telemetryName: "CreateNewFile",
 		fetchType: "createFile",
 		validateResponseCallback: (content) => {
-			if (!content || !content.itemId) {
+			if (!content?.itemId) {
 				throw new NonRetryableError(
 					"ODSP CreateFile call returned no item ID",
 					DriverErrorType.incorrectServerResponse,

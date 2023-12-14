@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import nconf from "nconf";
-import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "../utils";
+import { IFileSystemManagerFactories, IRepositoryManagerFactory } from "../utils";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -36,22 +36,26 @@ export interface IRoutes {
 
 export function create(
 	store: nconf.Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
+	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repoManagerFactory: IRepositoryManagerFactory,
 ): IRoutes {
 	return {
 		git: {
-			blobs: blobs.create(store, fileSystemManagerFactory, repoManagerFactory),
-			commits: commits.create(store, fileSystemManagerFactory, repoManagerFactory),
-			refs: refs.create(store, fileSystemManagerFactory, repoManagerFactory),
+			blobs: blobs.create(store, fileSystemManagerFactories, repoManagerFactory),
+			commits: commits.create(store, fileSystemManagerFactories, repoManagerFactory),
+			refs: refs.create(store, fileSystemManagerFactories, repoManagerFactory),
 			repos: repos.create(store, repoManagerFactory),
-			tags: tags.create(store, fileSystemManagerFactory, repoManagerFactory),
-			trees: trees.create(store, fileSystemManagerFactory, repoManagerFactory),
+			tags: tags.create(store, fileSystemManagerFactories, repoManagerFactory),
+			trees: trees.create(store, fileSystemManagerFactories, repoManagerFactory),
 		},
 		repository: {
-			commits: repositoryCommits.create(store, fileSystemManagerFactory, repoManagerFactory),
-			contents: contents.create(store, fileSystemManagerFactory, repoManagerFactory),
+			commits: repositoryCommits.create(
+				store,
+				fileSystemManagerFactories,
+				repoManagerFactory,
+			),
+			contents: contents.create(store, fileSystemManagerFactories, repoManagerFactory),
 		},
-		summaries: summaries.create(store, fileSystemManagerFactory, repoManagerFactory),
+		summaries: summaries.create(store, fileSystemManagerFactories, repoManagerFactory),
 	};
 }

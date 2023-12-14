@@ -5,26 +5,35 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+	IDocumentManager,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -41,14 +50,17 @@ export function create(
 		authorization: string,
 		params: git.ICreateTreeParams,
 	): Promise<git.ITree> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
-		);
+			denyList,
+		});
 		return service.createTree(params);
 	}
 
@@ -59,22 +71,25 @@ export function create(
 		recursive: boolean,
 		useCache: boolean,
 	): Promise<git.ITree> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
-		);
+			denyList,
+		});
 		return service.getTree(sha, recursive, useCache);
 	}
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/trees",
-		utils.validateRequestParams("tenantId"),
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const treeP = createTree(
 				request.params.tenantId,
@@ -87,9 +102,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/trees/:sha",
-		utils.validateRequestParams("tenantId", "sha"),
+		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const treeP = getTree(

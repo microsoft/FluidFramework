@@ -5,7 +5,11 @@
 
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
-/** Reads a blob from storage and parses it from JSON. */
+/**
+ * Reads a blob from storage and parses it from JSON.
+ *
+ * @internal
+ */
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
 /**
@@ -13,6 +17,7 @@ export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
  * @param tree - snapshot tree to examine
  * @param readAndParseBlob - function to read blob contents from storage
  * and parse the result from JSON.
+ * @internal
  */
 export async function seqFromTree(
 	tree: ISnapshotTree,

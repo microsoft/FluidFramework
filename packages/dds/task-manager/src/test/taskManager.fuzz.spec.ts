@@ -6,14 +6,15 @@
 import * as path from "path";
 import { strict as assert } from "assert";
 import {
-	combineReducers,
-	createWeightedGenerator,
-	Generator,
+	combineReducersAsync as combineReducers,
+	createWeightedAsyncGenerator as createWeightedGenerator,
+	AsyncGenerator as Generator,
 	makeRandom,
-	Reducer,
-	take,
-} from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+	AsyncReducer as Reducer,
+	takeAsync as take,
+} from "@fluid-private/stochastic-test-utils";
+import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";
 
@@ -89,37 +90,39 @@ function makeOperationGenerator(
 		),
 	);
 
-	function volunteer(state: OpSelectionState): Volunteer {
+	async function volunteer(state: OpSelectionState): Promise<Volunteer> {
 		return {
 			type: "volunteer",
 			taskId: state.taskId,
 		};
 	}
 
-	function abandon(state: OpSelectionState): Abandon {
+	async function abandon(state: OpSelectionState): Promise<Abandon> {
 		return {
 			type: "abandon",
 			taskId: state.taskId,
 		};
 	}
 
-	function subscribe(state: OpSelectionState): Subscribe {
+	async function subscribe(state: OpSelectionState): Promise<Subscribe> {
 		return {
 			type: "subscribe",
 			taskId: state.taskId,
 		};
 	}
 
-	function complete(state: OpSelectionState): Complete {
+	async function complete(state: OpSelectionState): Promise<Complete> {
 		return {
 			type: "complete",
 			taskId: state.taskId,
 		};
 	}
 
-	const canVolunteer = ({ channel }: OpSelectionState): boolean => channel.canVolunteer();
-	const isQueued = ({ channel, taskId }: OpSelectionState): boolean => channel.queued(taskId);
-	const isAssigned = ({ channel, taskId }: OpSelectionState): boolean => channel.assigned(taskId);
+	const canVolunteer = ({ client }: OpSelectionState): boolean => client.channel.canVolunteer();
+	const isQueued = ({ client, taskId }: OpSelectionState): boolean =>
+		client.channel.queued(taskId);
+	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>
+		client.channel.assigned(taskId);
 
 	const clientBaseOperationGenerator = createWeightedGenerator<Operation, OpSelectionState>([
 		[volunteer, 1, canVolunteer],
@@ -128,7 +131,7 @@ function makeOperationGenerator(
 		[complete, 1, isAssigned],
 	]);
 
-	return (state: FuzzTestState) =>
+	return async (state: FuzzTestState) =>
 		clientBaseOperationGenerator({
 			...state,
 			taskId: state.random.pick(taskIdPool),
@@ -146,7 +149,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const client of state.clients) {
 		const taskManager = client.channel;
 		assert(taskManager);
-		if (loggingInfo.taskManagerNames.includes(taskManager.id)) {
+		if (loggingInfo.taskManagerNames.includes(client.containerRuntime.clientId)) {
 			console.log(
 				`TaskManager ${taskManager.id} (CanVolunteer: ${taskManager.canVolunteer()}):`,
 			);
@@ -158,22 +161,22 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestState> {
 	const withLogging =
-		<T>(baseReducer: (state: FuzzTestState, operation: T) => void): Reducer<T, FuzzTestState> =>
-		(state, operation) => {
+		<T>(baseReducer: Reducer<T, FuzzTestState>): Reducer<T, FuzzTestState> =>
+		async (state, operation) => {
 			if (loggingInfo !== undefined && (operation as any).taskId === loggingInfo.taskId) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
-			baseReducer(state, operation);
+			await baseReducer(state, operation);
 		};
 
 	const reducer = combineReducers<Operation, FuzzTestState>({
-		volunteer: ({ channel }, { taskId }) => {
+		volunteer: async ({ client }, { taskId }) => {
 			// Note: this is fire-and-forget as `volunteerForTask` resolves/rejects its returned
 			// promise based on server responses, which will occur on later operations (and
 			// processing those operations will raise the error directly)
-			channel.volunteerForTask(taskId).catch((e: Error) => {
+			client.channel.volunteerForTask(taskId).catch((e: Error) => {
 				// We expect an error to be thrown if we are disconnected while volunteering
 				const expectedErrors = [
 					"Disconnected before acquiring task assignment",
@@ -184,14 +187,14 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 				}
 			});
 		},
-		abandon: ({ channel }, { taskId }) => {
-			channel.abandon(taskId);
+		abandon: async ({ client }, { taskId }) => {
+			client.channel.abandon(taskId);
 		},
-		subscribe: ({ channel }, { taskId }) => {
-			channel.subscribeToTask(taskId);
+		subscribe: async ({ client }, { taskId }) => {
+			client.channel.subscribeToTask(taskId);
 		},
-		complete: ({ channel }, { taskId }) => {
-			channel.complete(taskId);
+		complete: async ({ client }, { taskId }) => {
+			client.channel.complete(taskId);
 		},
 	});
 
@@ -237,8 +240,44 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
+		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		// Uncomment this line to replay a specific seed:
+		// replay: 0,
+		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
+	});
+});
+
+describe("TaskManager fuzz testing with rebasing", () => {
+	const model: DDSFuzzModel<TaskManagerFactory, Operation, FuzzTestState> = {
+		workloadName: "default configuration and rebasing",
+		generatorFactory: () => take(100, makeOperationGenerator()),
+		reducer:
+			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
+			makeReducer(),
+		validateConsistency: assertEqualTaskManagers,
+		factory: new TaskManagerFactory(),
+	};
+
+	createDDSFuzzSuite(model, {
+		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
+		// AB#5185: enabling rebasing indicates some unknown eventual consistency issue
+		skip: [0, 2, 6],
+		rebaseProbability: 0.15,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
+		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
+		defaultTestCount: defaultOptions.testCount,
+		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.

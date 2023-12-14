@@ -5,13 +5,10 @@
 
 import assert from "assert";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/test-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
@@ -20,16 +17,20 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+		public get _context() {
+			return this.context;
+		}
 	}
-	public get _context() {
-		return this.context;
-	}
-}
 
-describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 
@@ -51,12 +52,13 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 			gcAllowed: true,
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		undefined,
-		runtimeOptions,
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			runtimeOptions,
+		},
 	);
 
 	let mockLogger: MockLogger;
@@ -88,7 +90,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 		);
 
 		// getting default data store and create a new data store
-		const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		const dataStore2 = await dataObjectFactory.createInstance(
 			mainDataStore._context.containerRuntime,
 		);
@@ -96,7 +98,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 
 		// second client loads the container
 		const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
-		const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
+		const defaultDataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		await provider.ensureSynchronized();
 
@@ -136,7 +138,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 		);
 
 		// getting default data store and create a new data store
-		const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		const dataStore2 = await dataObjectFactory.createInstance(
 			mainDataStore._context.containerRuntime,
 		);
@@ -151,7 +153,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 		provider.documentServiceFactory = mockDocumentServiceFactory;
 
 		const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
-		const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
+		const defaultDataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		await provider.ensureSynchronized();
 

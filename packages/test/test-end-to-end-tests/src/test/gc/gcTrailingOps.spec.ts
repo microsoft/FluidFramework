@@ -13,19 +13,18 @@ import {
 	mockConfigProvider,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { stringToBuffer } from "@fluidframework/common-utils";
+} from "@fluid-private/test-version-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
-describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
+describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 	const tests = (tombstoneEnabled: boolean = false) => {
 		let provider: ITestObjectProvider;
 
@@ -77,10 +76,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
 		}`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
-			const mainDefaultDataStore = await requestFluidObject<ITestDataObject>(
-				mainContainer,
-				"default",
-			);
+			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer);
 
 			// Create a data store and blob.
@@ -95,13 +91,10 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			);
 
 			// Create a summarizer
-			const { summarizer: mainSummarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				undefined,
-				gcOptions,
-				configProvider,
-			);
+			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider },
+			});
 
 			// Reference datastore and blob
 			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
@@ -130,9 +123,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
+				{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 				summary1.summaryVersion,
-				gcOptions,
-				configProvider,
 			);
 
 			// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are unreferenced
@@ -147,7 +139,6 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			assert(blobTimestamp2 !== undefined, `Should have unreferenced blob`);
 		});
 
-		// Note: we should not need an itExpects here as this error should not have fired.
 		itExpects(
 			`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
 				tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
@@ -156,20 +147,18 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				? [
 						{
 							eventName:
-								"fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+								"fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 						},
 						{
 							eventName:
-								"fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+								"fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 						},
 				  ]
 				: [],
 			async () => {
 				const mainContainer = await provider.makeTestContainer(testContainerConfig);
-				const mainDefaultDataStore = await requestFluidObject<ITestDataObject>(
-					mainContainer,
-					"default",
-				);
+				const mainDefaultDataStore =
+					(await mainContainer.getEntryPoint()) as ITestDataObject;
 				await waitForContainerConnection(mainContainer);
 
 				// Create a data store and blob.
@@ -187,9 +176,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				const { summarizer: mainSummarizer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined,
-					gcOptions,
-					configProvider,
+					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 				);
 
 				// Make the datastore and blob live and unreferenced
@@ -226,9 +213,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
+					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 					summary1.summaryVersion,
-					gcOptions,
-					configProvider,
 				);
 
 				// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are referenced

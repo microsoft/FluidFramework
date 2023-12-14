@@ -3,42 +3,37 @@
  * Licensed under the MIT License.
  */
 import * as path from "path";
-
+import chalk from "chalk";
 import { FluidRepo } from "../common/fluidRepo";
+import { getFluidBuildConfig } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
-import { MonoRepoKind } from "../common/monoRepo";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
-import { existsSync, globFn, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import {
+	existsSync,
+	globFn,
+	isSameFileOrDir,
+	lookUpDirSync,
+	ExecAsyncResult,
+} from "../common/utils";
 import { BuildGraph } from "./buildGraph";
-import { FluidPackageCheck } from "./fluidPackageCheck";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
 
-const { info, verbose } = defaultLogger;
+const { log } = defaultLogger;
 
 export interface IPackageMatchedOptions {
 	match: string[];
 	all: boolean;
-	server: boolean;
-	azure: boolean;
-	buildTools: boolean;
 	dirs: string[];
+	releaseGroups: string[];
 }
 
-/** Packages in this list will not have their scripts checked for conformance with repo standards. */
-const uncheckedPackages = [
-	"@fluid-internal/build-cli",
-	"@fluid-internal/version-tools",
-	"@fluid-tools/build-cli",
-	"@fluid-tools/version-tools",
-	"@fluidframework/build-tools",
-	"@fluidframework/eslint-config-fluid",
-];
-
 export class FluidRepoBuild extends FluidRepo {
-	constructor(resolvedRoot: string, services: boolean) {
-		super(resolvedRoot, services);
+	constructor(resolvedRoot: string) {
+		super(resolvedRoot);
 	}
 
 	public async clean() {
@@ -47,17 +42,18 @@ export class FluidRepoBuild extends FluidRepo {
 
 	public async uninstall() {
 		const cleanPackageNodeModules = this.packages.cleanNodeModules();
-		const removePromise = Promise.all([
-			this.clientMonoRepo.uninstall(),
-			this.serverMonoRepo?.uninstall(),
-		]);
+		const removePromise: Promise<ExecAsyncResult>[] = [];
+		for (const g of this.releaseGroups.values()) {
+			removePromise.push(g.uninstall());
+		}
 
-		const r = await Promise.all([cleanPackageNodeModules, removePromise]);
+		const r = await Promise.all([cleanPackageNodeModules, Promise.all(removePromise)]);
 		return r[0] && !r[1].some((ret) => ret?.error);
 	}
 
 	public setMatched(options: IPackageMatchedOptions) {
-		const hasMatchArgs = options.match.length || options.dirs.length;
+		const hasMatchArgs =
+			options.match.length || options.dirs.length || options.releaseGroups.length;
 
 		if (hasMatchArgs) {
 			let matched = false;
@@ -69,44 +65,18 @@ export class FluidRepoBuild extends FluidRepo {
 			});
 
 			options.dirs.forEach((arg) => {
-				const pkgDir = lookUpDirSync(arg, (currentDir) => {
-					return existsSync(path.join(currentDir, "package.json"));
-				});
-				if (!pkgDir) {
+				this.setMatchedDir(arg, false);
+				matched = true;
+			});
+
+			options.releaseGroups.forEach((releaseGroupName) => {
+				const releaseGroup = this.releaseGroups.get(releaseGroupName);
+				if (releaseGroup === undefined) {
 					throw new Error(
-						`Path specified '${arg}' is not a package. package.json not found.`,
+						`Release group '${releaseGroupName}' specified is not defined in the repo.`,
 					);
 				}
-
-				let matchedMonoRepo = false;
-				for (const monoRepo of this.releaseGroups.values()) {
-					if (isSameFileOrDir(monoRepo.repoPath, pkgDir)) {
-						info(`Release group matched: ${arg} => ${monoRepo.kind}`);
-						if (
-							!this.matchWithFilter((pkg) => MonoRepo.isSame(pkg.monoRepo, monoRepo))
-						) {
-							throw new Error(
-								`Release group path specified '${arg}' does not have any packages`,
-							);
-						}
-						matched = true;
-						matchedMonoRepo = true;
-						break;
-					}
-				}
-
-				if (matchedMonoRepo) {
-					return;
-				}
-
-				if (!this.matchWithFilter((pkg) => isSameFileOrDir(pkg.directory, pkgDir))) {
-					throw new Error(
-						`Path specified '${arg}' is not a package in a Fluid repo. ${arg} -> ${path.join(
-							pkgDir,
-							"package.json",
-						)}`,
-					);
-				}
+				this.setMatchedReleaseGroup(releaseGroup);
 				matched = true;
 			});
 			return matched;
@@ -116,56 +86,21 @@ export class FluidRepoBuild extends FluidRepo {
 			return this.matchWithFilter(() => true);
 		}
 
-		const monoReposToConsider: MonoRepoKind[] = [];
-
-		if (options.azure) {
-			monoReposToConsider.push(MonoRepoKind.Azure);
-		}
-		if (options.server) {
-			monoReposToConsider.push(MonoRepoKind.Server);
-		}
-		if (options.buildTools) {
-			monoReposToConsider.push(MonoRepoKind.BuildTools);
-		}
-		if (!options.azure && !options.server && !options.buildTools) {
-			monoReposToConsider.push(MonoRepoKind.Client);
-		}
-
-		return this.matchWithFilter((pkg) =>
-			pkg.monoRepo ? monoReposToConsider.includes(pkg.monoRepo.kind) : false,
-		);
+		// Match based on CWD
+		this.setMatchedDir(process.cwd(), true);
+		return true;
 	}
 
-	public async checkPackages(fix: boolean) {
-		for (const pkg of this.packages.packages) {
-			if (!pkg.matched) {
-				// Only check package that matched to build
-				continue;
-			}
-			// TODO: Make this configurable and/or teach fluid-build about new scripts
-
-			if (uncheckedPackages.includes(pkg.name)) {
-				verbose(`Skipping ${pkg.nameColored} because it's ignored.`);
-				continue;
-			}
-			if (FluidPackageCheck.checkScripts(pkg, fix)) {
-				await pkg.savePackageJson();
-			}
-			await FluidPackageCheck.checkNpmIgnore(pkg, fix);
-			await FluidPackageCheck.checkTsConfig(pkg, fix);
-			await FluidPackageCheck.checkTestDir(pkg, fix);
-		}
-	}
-	public async depcheck() {
+	public async depcheck(fix: boolean) {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific
 			let checkFiles: string[];
 			if (pkg.packageJson.dependencies) {
 				const tsFiles = await globFn(`${pkg.directory}/**/*.ts`, {
-					ignore: `${pkg.directory}/node_modules`,
+					ignore: `${pkg.directory}/node_modules/**`,
 				});
 				const tsxFiles = await globFn(`${pkg.directory}/**/*.tsx`, {
-					ignore: `${pkg.directory}/node_modules`,
+					ignore: `${pkg.directory}/node_modules/**`,
 				});
 				checkFiles = tsFiles.concat(tsxFiles);
 			} else {
@@ -173,7 +108,7 @@ export class FluidRepoBuild extends FluidRepo {
 			}
 
 			const npmDepChecker = new NpmDepChecker(pkg, checkFiles);
-			if (await npmDepChecker.run()) {
+			if (await npmDepChecker.run(fix)) {
 				await pkg.savePackageJson();
 			}
 		}
@@ -191,23 +126,87 @@ export class FluidRepoBuild extends FluidRepo {
 		);
 	}
 
-	public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
-		return new BuildGraph(this.packages.packages, buildScriptNames, (pkg: Package) => {
-			return (dep: Package) => {
-				return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
-			};
-		});
+	public createBuildGraph(options: ISymlinkOptions, buildTargetNames: string[]) {
+		return new BuildGraph(
+			this.createPackageMap(),
+			this.getReleaseGroupPackages(),
+			buildTargetNames,
+			getFluidBuildConfig(this.resolvedRoot)?.tasks,
+			(pkg: Package) => {
+				return (dep: Package) => {
+					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
+				};
+			},
+		);
+	}
+
+	private getReleaseGroupPackages() {
+		const releaseGroupPackages: Package[] = [];
+		for (const releaseGroup of this.releaseGroups.values()) {
+			releaseGroupPackages.push(releaseGroup.pkg);
+		}
+		return releaseGroupPackages;
 	}
 
 	private matchWithFilter(callback: (pkg: Package) => boolean) {
 		let matched = false;
 		this.packages.packages.forEach((pkg) => {
 			if (!pkg.matched && callback(pkg)) {
-				verbose(`${pkg.nameColored}: matched`);
-				pkg.setMatched();
+				this.setMatchedPackage(pkg);
 				matched = true;
 			}
 		});
 		return matched;
+	}
+
+	private setMatchedDir(dir: string, matchReleaseGroup: boolean) {
+		const pkgDir = lookUpDirSync(dir, (currentDir) => {
+			return existsSync(path.join(currentDir, "package.json"));
+		});
+		if (!pkgDir) {
+			throw new Error(`Unable to look up package in directory '${dir}'.`);
+		}
+
+		for (const releaseGroup of this.releaseGroups.values()) {
+			if (isSameFileOrDir(releaseGroup.repoPath, pkgDir)) {
+				log(
+					`Release group ${chalk.cyanBright(
+						releaseGroup.kind,
+					)} matched (directory: ${dir})`,
+				);
+				this.setMatchedReleaseGroup(releaseGroup);
+				return;
+			}
+		}
+
+		const foundPackage = this.packages.packages.find((pkg) =>
+			isSameFileOrDir(pkg.directory, pkgDir),
+		);
+		if (foundPackage === undefined) {
+			throw new Error(
+				`Package in '${pkgDir}' not part of the Fluid repo '${this.resolvedRoot}'.`,
+			);
+		}
+
+		if (matchReleaseGroup && foundPackage.monoRepo !== undefined) {
+			log(
+				`\tRelease group ${chalk.cyanBright(
+					foundPackage.monoRepo.kind,
+				)} matched (directory: ${dir})`,
+			);
+			this.setMatchedReleaseGroup(foundPackage.monoRepo);
+		} else {
+			log(`\t${foundPackage.nameColored} matched (${dir})`);
+			this.setMatchedPackage(foundPackage);
+		}
+	}
+
+	private setMatchedReleaseGroup(monoRepo: MonoRepo) {
+		this.setMatchedPackage(monoRepo.pkg);
+	}
+
+	private setMatchedPackage(pkg: Package) {
+		traceInit(`${pkg.nameColored}: matched`);
+		pkg.setMatched();
 	}
 }

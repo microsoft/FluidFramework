@@ -4,9 +4,9 @@
  */
 
 export {
-	IFetchSnapshotResult,
+	IRefreshSummaryResult,
 	ISummarizerNodeRootContract,
-	RefreshSummaryResult,
+	ValidateSummaryResult,
 } from "./summarizerNodeUtils";
 export { IRootSummarizerNode, createRootSummarizerNode } from "./summarizerNode";
 export { IRootSummarizerNodeWithGC, createRootSummarizerNodeWithGC } from "./summarizerNodeWithGc";

@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { strict as assert } from "node:assert";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { DriverHeader } from "@fluidframework/driver-definitions";
 import { InsecureTinyliciousUrlResolver } from "../insecureTinyliciousUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
 	const documentId = "fileName";
 	const hostUrl = "fluid://localhost:7070";
+	const tinyliciousEndpoint = "http://localhost:7070";
 	let resolver: InsecureTinyliciousUrlResolver;
 
 	beforeEach(() => {
@@ -24,7 +25,6 @@ describe("Insecure Url Resolver Test", () => {
 		};
 
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
@@ -41,7 +41,6 @@ describe("Insecure Url Resolver Test", () => {
 		};
 
 		const resolvedUrl = await customResolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `${customFluidEndpoint}:${customPort}/tinylicious/${documentId}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
@@ -54,7 +53,6 @@ describe("Insecure Url Resolver Test", () => {
 		};
 
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}/${path}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
@@ -66,7 +64,6 @@ describe("Insecure Url Resolver Test", () => {
 		};
 
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}/`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
@@ -78,7 +75,6 @@ describe("Insecure Url Resolver Test", () => {
 		};
 
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}//`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
@@ -92,11 +88,59 @@ describe("Insecure Url Resolver Test", () => {
 		};
 
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${encodeURIComponent(
 			testDocumentId,
 		)}/${path}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+	});
+
+	it("Should correctly resolve url for a create-new request with a non-empty URL", async () => {
+		const testDocumentId = "fileName!@$";
+		const testRequest: IRequest = {
+			url: `${testDocumentId}`,
+			headers: {
+				[DriverHeader.createNew]: true,
+			},
+		};
+
+		const resolvedUrl = await resolver.resolve(testRequest);
+
+		const expectedResolvedUrl = {
+			endpoints: {
+				deltaStorageUrl: `${tinyliciousEndpoint}/deltas/tinylicious/${testDocumentId}`,
+				ordererUrl: tinyliciousEndpoint,
+				storageUrl: `${tinyliciousEndpoint}/repos/tinylicious`,
+			},
+			id: testDocumentId,
+			tokens: {},
+			type: "fluid",
+			url: `${hostUrl}/tinylicious/${testDocumentId}`,
+		};
+		assert.deepStrictEqual(resolvedUrl, expectedResolvedUrl);
+	});
+
+	it("Should correctly resolve url for a create-new request with an empty URL", async () => {
+		const testRequest: IRequest = {
+			url: "",
+			headers: {
+				[DriverHeader.createNew]: true,
+			},
+		};
+
+		const resolvedUrl = await resolver.resolve(testRequest);
+
+		const expectedResolvedUrl = {
+			endpoints: {
+				deltaStorageUrl: `${tinyliciousEndpoint}/deltas/tinylicious/new`,
+				ordererUrl: tinyliciousEndpoint,
+				storageUrl: `${tinyliciousEndpoint}/repos/tinylicious`,
+			},
+			id: "new",
+			tokens: {},
+			type: "fluid",
+			url: `${hostUrl}/tinylicious/new`,
+		};
+		assert.deepStrictEqual(resolvedUrl, expectedResolvedUrl);
 	});
 });

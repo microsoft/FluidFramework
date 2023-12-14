@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { newEditId } from './EditUtilities';
 import { TreeView } from './TreeView';
@@ -16,7 +16,7 @@ import { RestOrArray, unwrapRestOrArray } from './Common';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
- * @public
+ * @internal
  */
 export enum TransactionEvent {
 	/**
@@ -27,7 +27,7 @@ export enum TransactionEvent {
 
 /**
  * Events which may be emitted by `Transaction`
- * @public
+ * @internal
  */
 export interface TransactionEvents extends IErrorEvent {
 	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
@@ -36,6 +36,7 @@ export interface TransactionEvents extends IErrorEvent {
 /**
  * Buffers changes to be applied to an isolated view of a `SharedTree` over time before applying them directly to the tree itself as a
  * single edit
+ * @internal
  */
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	/** The view of the tree when this transaction was created */

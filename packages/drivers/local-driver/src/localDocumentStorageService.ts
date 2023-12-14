@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -17,25 +17,26 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	GitManager,
 	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createDocument } from "./localCreateDocument";
 
+const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
+/**
+ * @internal
+ */
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
 	// empty strings as values.
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
 
-	public get repositoryUrl(): string {
-		return "";
-	}
+	public readonly repositoryUrl: string = "";
 
 	constructor(
 		private readonly id: string,
@@ -73,7 +74,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		}
 
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
-		const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
+		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		return tree;
 	}
 
@@ -94,7 +95,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 					"Insufficient constructor parameters. An ILocalDeltaConnectionServer and IResolvedUrl required",
 				);
 			}
-			ensureFluidResolvedUrl(this.resolvedUrl);
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 			const version = await this.getVersions(this.id, 1);
 			return version[0].id;
@@ -110,7 +110,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const uint8ArrayFile = new Uint8Array(file);
 		return this.manager
 			.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
-			.then((r) => ({ id: r.sha, url: r.url }));
+			.then((r) => ({ id: r.sha, url: r.url, minTTLInSeconds }));
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {

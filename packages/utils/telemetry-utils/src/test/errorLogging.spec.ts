@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable unicorn/consistent-function-scoping */
+/* eslint-disable unicorn/no-null */
+
+import { strict as assert } from "node:assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
 import {
 	LoggingError,
@@ -31,8 +39,10 @@ describe("Error Logging", () => {
 		function freshEvent(): ITelemetryBaseEvent {
 			return { category: "cat1", eventName: "event1" };
 		}
-		function createILoggingError(props: ITelemetryProperties) {
-			return { ...props, getTelemetryProperties: () => props };
+		function createILoggingError(props: ITelemetryProperties): {
+			getTelemetryProperties: () => ITelemetryProperties;
+		} {
+			return { ...props, getTelemetryProperties: (): ITelemetryProperties => props };
 		}
 
 		it("non-object error added to event", () => {
@@ -348,12 +358,12 @@ describe("Error Logging", () => {
 			errorAsAny.p1 = "one";
 			errorAsAny.p4 = 4;
 			errorAsAny.p5 = { value: 5, tag: "CodeArtifact" };
-			errorAsAny.pii6 = { value: 5, tag: "UserData" };
+			errorAsAny.userData6 = { value: 5, tag: "UserData" };
 			const props = loggingError.getTelemetryProperties();
 			assert.strictEqual(props.p1, "one");
 			assert.strictEqual(props.p4, 4);
 			assert.deepStrictEqual(props.p5, { value: 5, tag: "CodeArtifact" });
-			assert.deepStrictEqual(props.pii6, { value: 5, tag: "UserData" });
+			assert.deepStrictEqual(props.userData6, { value: 5, tag: "UserData" });
 		});
 		it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
 			const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
@@ -435,8 +445,8 @@ describe("Error Logging", () => {
 				const error = new Error("asdf");
 				error.name = "FooError";
 				throw error;
-			} catch (e) {
-				return e as Error;
+			} catch (error) {
+				return error as Error;
 			}
 		}
 
@@ -563,6 +573,41 @@ describe("Error Logging", () => {
 			);
 		});
 	});
+	describe("normalizeError", () => {
+		describe("preserves properties", () => {
+			it("missing properties are not set", () => {
+				// eslint-disable-next-line unicorn/error-message
+				const unknownError = new Error();
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, undefined, "canRetry not undefined");
+				assert.strictEqual(
+					newError.retryAfterSeconds,
+					undefined,
+					"retryAfterSeconds not undefined",
+				);
+			});
+			it("existing retry properties are present in normalized error", () => {
+				const unknownError: { canRetry?: boolean; retryAfterSeconds?: number } & Error =
+					// eslint-disable-next-line unicorn/error-message
+					new Error();
+				unknownError.canRetry = true;
+				unknownError.retryAfterSeconds = 100;
+
+				const newError: IFluidErrorBase & {
+					canRetry?: boolean;
+					retryAfterSeconds?: number;
+				} = normalizeError(unknownError);
+
+				assert.strictEqual(newError.canRetry, true, "canRetry not true");
+				assert.strictEqual(newError.retryAfterSeconds, 100, "retryAfterSeconds not 100");
+			});
+		});
+	});
 });
 
 class TestFluidError implements IFluidErrorBase {
@@ -597,18 +642,18 @@ class TestFluidError implements IFluidErrorBase {
 		return {};
 	}
 
-	addTelemetryProperties(props: ITelemetryProperties) {
+	addTelemetryProperties(props: ITelemetryProperties): void {
 		throw new Error("Not Implemented - Expected to be Stubbed via Sinon");
 	}
 
-	withoutProperty(propName: keyof IFluidErrorBase) {
+	withoutProperty(propName: keyof IFluidErrorBase): this {
 		const objectWithoutProp = {};
 		objectWithoutProp[propName] = undefined;
 		Object.assign(this, objectWithoutProp);
 		return this;
 	}
 
-	withExpectedTelemetryProps(props: ITelemetryProperties) {
+	withExpectedTelemetryProps(props: ITelemetryProperties): this {
 		Object.assign(this.expectedTelemetryProps, props);
 		return this;
 	}
@@ -701,7 +746,7 @@ describe("normalizeError", () => {
 		class NamedError extends Error {
 			name = "CoolErrorName";
 		}
-		const sampleFluidError = () =>
+		const sampleFluidError = (): TestFluidError =>
 			new TestFluidError({
 				errorType: "someType",
 				message: "Hello",
@@ -710,7 +755,7 @@ describe("normalizeError", () => {
 		const typicalOutput = (
 			message: string,
 			stackHint: "<<natural stack>>" | "<<stack from input>>",
-		) =>
+		): TestFluidError =>
 			new TestFluidError({
 				errorType: "genericError",
 				message,
@@ -817,7 +862,7 @@ describe("normalizeError", () => {
 					).withExpectedTelemetryProps({ typeofError: "symbol", untrustedOrigin: 1 }),
 				}),
 				"function": () => ({
-					input: () => {},
+					input: (): void => {},
 					expectedOutput: typicalOutput(
 						"() => { }",
 						"<<natural stack>>",
@@ -843,7 +888,7 @@ describe("normalizeError", () => {
 			expected: TestFluidError,
 			annotations: IFluidErrorAnnotations = {},
 			inputStack: string | undefined,
-		) {
+		): void {
 			expected.withExpectedTelemetryProps({
 				...annotations.props,
 				errorInstanceId: actual.errorInstanceId,
@@ -865,7 +910,7 @@ describe("normalizeError", () => {
 			actual: IFluidErrorBase,
 			expected: TestFluidError,
 			inputStack: string | undefined,
-		) {
+		): void {
 			assert.equal(actual.message, expected.message, "message should match");
 			const actualStack = actual.stack;
 			assert(actualStack !== undefined, "stack should be present as a string");
@@ -952,11 +997,19 @@ describe("normalizeError", () => {
 	});
 });
 
-/** Create an error missing errorType that will not be recognized as a valid Fluid error */
-const createExternalError = (m) => new Error(m);
+/**
+ * Create an error missing errorType that will not be recognized as a valid Fluid error
+ */
+const createExternalError = (m: string): Error => new Error(m);
 
-/** Create a simple valid Fluid error */
-const createTestError = (m) =>
+/**
+ * Create a simple valid Fluid error
+ */
+const createTestError = (
+	m: string,
+): LoggingError & {
+	errorType: string;
+} =>
 	Object.assign(new LoggingError(m), {
 		errorType: "someErrorType",
 	});
@@ -1011,7 +1064,7 @@ describe("wrapError", () => {
 describe("wrapErrorAndLog", () => {
 	const mockLogger = new MockLogger();
 	const innerError = new LoggingError("hello");
-	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger);
+	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger.toTelemetryLogger());
 	assert(
 		mockLogger.matchEvents([
 			{
@@ -1047,8 +1100,8 @@ describe("Error Discovery", () => {
 		const validLegacyError = {
 			message: "testMessage",
 			errorType: "someErrorType",
-			getTelemetryProperties: () => {},
-			addTelemetryProperties: () => {},
+			getTelemetryProperties: (): void => {},
+			addTelemetryProperties: (): void => {},
 		};
 		assert.strictEqual(isValidLegacyError(validLegacyError), true);
 		assert.strictEqual(isValidLegacyError({ ...validLegacyError, message: undefined }), false);
@@ -1082,7 +1135,7 @@ describe("Error Discovery", () => {
 		);
 	}
 
-	function testFluidError(isFluidErrorImpl: (e: any) => boolean, isOld: boolean) {
+	function testFluidError(isFluidErrorImpl: (e: any) => boolean, isOld: boolean): void {
 		it(`isFluidError${isOld ? "_old" : ""}`, () => {
 			assert(
 				!isFluidErrorImpl(new Error("hello")),

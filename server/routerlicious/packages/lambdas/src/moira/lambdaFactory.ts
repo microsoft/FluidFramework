@@ -14,7 +14,13 @@ import {
 } from "@fluidframework/server-services-core";
 import { MoiraLambda } from "./lambda";
 
-export class MoiraLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+/**
+ * @internal
+ */
+export class MoiraLambdaFactory
+	extends EventEmitter
+	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
+{
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly serviceConfiguration: IServiceConfiguration,

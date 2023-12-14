@@ -12,7 +12,7 @@ import fs from "fs";
 export interface Handler {
 	name: string;
 	match: RegExp;
-	handler: (file: string, root: string) => string | undefined;
+	handler: (file: string, root: string) => Promise<string | undefined>;
 	resolver?: (file: string, root: string) => { resolved: boolean; message?: string };
 	final?: (root: string, resolve: boolean) => { error?: string } | undefined;
 }

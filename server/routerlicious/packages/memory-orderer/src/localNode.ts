@@ -6,20 +6,19 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import {
 	IDatabaseManager,
 	IDocumentStorage,
 	INode,
 	IOrderer,
 	IOrdererConnection,
-	ITaskMessageSender,
-	ITenantManager,
 	IWebSocketServer,
 	ILogger,
-	TokenGenerator,
 	DefaultServiceConfiguration,
 	IDocumentRepository,
+	ICheckpointRepository,
+	CheckpointService,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import sillyname from "sillyname";
@@ -70,13 +69,13 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		storage: IDocumentStorage,
 		databaseManager: IDatabaseManager,
 		documentRepository: IDocumentRepository,
+		deliCheckpointRepository: ICheckpointRepository,
+		scribeCheckpointRepository: ICheckpointRepository,
+		deliCheckpointService: CheckpointService,
+		scribeCheckpointService: CheckpointService,
 		timeoutLength: number,
 		webSocketServerFactory: () => IWebSocketServer,
-		taskMessageSender: ITaskMessageSender,
-		tenantManager: ITenantManager,
-		permission: any,
 		maxMessageSize: number,
-		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 	) {
 		// Look up any existing information for the node or create a new one
@@ -88,12 +87,12 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			storage,
 			databaseManager,
 			documentRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			timeoutLength,
-			taskMessageSender,
-			tenantManager,
-			permission,
 			maxMessageSize,
-			tokenGenerator,
 			logger,
 		);
 	}
@@ -161,12 +160,12 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly deliCheckpointRepository: ICheckpointRepository,
+		private readonly scribeCheckpointRepository: ICheckpointRepository,
+		private readonly deliCheckpointService: CheckpointService,
+		private readonly scribeCheckpointService: CheckpointService,
 		private readonly timeoutLength: number,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly tenantManager: ITenantManager,
-		private readonly permission: any,
 		private readonly maxMessageSize: number,
-		private readonly tokenGenerator: TokenGenerator,
 		private readonly logger: ILogger,
 	) {
 		super();
@@ -200,8 +199,18 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 							connectMessage.client,
 						);
 
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						connection.connect();
+						connection.connect().catch((err) => {
+							Lumberjack.error(
+								"Error handling connect message",
+								{
+									...getLumberBaseProperties(
+										connectMessage.documentId,
+										connectMessage.tenantId,
+									),
+								},
+								err,
+							);
+						});
 
 						// Need to subscribe to both channels. Then broadcast subscription across pipe
 						// on receiving a message
@@ -222,8 +231,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 					case "disconnect": {
 						const connection = this.connectionMap.get(message.cid);
 						assert(connection);
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						connection.disconnect();
+						connection.disconnect().catch((err) => {
+							Lumberjack.error("Error handling disconnect message", undefined, err);
+						});
 						this.connectionMap.delete(message.cid);
 
 						break;
@@ -233,8 +243,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 						const orderMessage = message.payload as IDocumentMessage;
 						const connection = this.connectionMap.get(message.cid);
 						assert(connection);
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						connection.order([orderMessage]);
+						connection.order([orderMessage]).catch((err) => {
+							Lumberjack.error("Error handling order message", undefined, err);
+						});
 						break;
 					}
 
@@ -260,12 +271,12 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			this.databaseManager,
 			tenantId,
 			documentId,
-			this.taskMessageSender,
-			this.tenantManager,
-			this.permission,
-			this.tokenGenerator,
 			this.logger,
 			this.documentRepository,
+			this.deliCheckpointRepository,
+			this.scribeCheckpointRepository,
+			this.deliCheckpointService,
+			this.scribeCheckpointService,
 		);
 		assert(!this.orderMap.has(fullId));
 		this.orderMap.set(fullId, orderer);
@@ -295,13 +306,13 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 					this.databaseManager,
 					this.timeoutLength,
 				);
-				updateP.then(
-					(newNode) => {
+				updateP
+					.then((newNode) => {
 						// Debug(`Successfully renewed expiration for ${this.node._id}`);
 						this.node = newNode;
 						this.scheduleHeartbeat();
-					},
-					(error) => {
+					})
+					.catch((error) => {
 						// Try again immediately.
 						debug(`Failed to renew expiration for ${this.node._id}`, error);
 						Lumberjack.error(
@@ -310,8 +321,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 							error,
 						);
 						this.scheduleHeartbeat();
-					},
-				);
+					});
 			}, delta);
 		}
 	}

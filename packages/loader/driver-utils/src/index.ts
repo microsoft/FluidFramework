@@ -4,9 +4,9 @@
  */
 
 export { buildSnapshotTree } from "./buildSnapshotTree";
+export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export { UsageError } from "./error";
-export { ensureFluidResolvedUrl, isFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
 export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition";
 export {
@@ -40,12 +40,17 @@ export {
 export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 export { RateLimiter } from "./rateLimiter";
 export { readAndParse } from "./readAndParse";
-export { IProgress, runWithRetry } from "./runWithRetry";
+export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry";
 export {
-	combineAppAndProtocolSummary,
 	CombinedAppAndProtocolSummary,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
+export {
+	applyStorageCompression,
+	ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
+	blobHeadersBlobName,
+} from "./adapters";

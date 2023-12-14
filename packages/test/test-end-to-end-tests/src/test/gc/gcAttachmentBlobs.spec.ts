@@ -4,44 +4,33 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager";
+import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "../mockDetachedBlobStorage";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
-
-const waitForContainerConnectionWriteMode = async (container: IContainer) => {
-	const resolveIfActive = (res: () => void) => {
-		if (container.deltaManager.active) {
-			res();
-		}
-	};
-	if (!container.deltaManager.active) {
-		await new Promise<void>((resolve) =>
-			container.on("connected", () => resolveIfActive(resolve)),
-		);
-	}
-};
+} from "../mockDetachedBlobStorage.js";
+import {
+	getGCStateFromSummary,
+	waitForContainerWriteModeConnectionWrite,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that unreferenced blobs are marked as unreferenced and deleted correctly.
  */
-describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
+describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider) => {
 	// If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteUnreferencedContent: boolean = false) => {
@@ -127,10 +116,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 		async function createSummarizerRuntime() {
 			const summarizerContainer = await loadContainer();
-			const summarizerDefaultDataStore = await requestFluidObject<ITestDataObject>(
-				summarizerContainer,
-				"/",
-			);
+			const summarizerDefaultDataStore =
+				(await summarizerContainer.getEntryPoint()) as ITestDataObject;
 			return summarizerDefaultDataStore._context.containerRuntime as ContainerRuntime;
 		}
 
@@ -145,7 +132,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 				loaderProps: { detachedBlobStorage },
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-			defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		});
 
 		it("collects blobs uploaded in attached container", async () => {
@@ -208,7 +195,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 			// Load a second container.
 			const container2 = await loadContainer();
-			const defaultDataStore2 = await requestFluidObject<ITestDataObject>(container2, "/");
+			const defaultDataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 
 			// Validate the blob handle's path is the same as the one in the first container.
 			const blobHandle2 = defaultDataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
@@ -264,7 +251,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 			// uses the timestamp of the op.
 			defaultDataStore._root.set("make container connect in", "write mode");
 			// Make sure we are connected or we may get a local ID handle
-			await waitForContainerConnectionWriteMode(container);
+			await waitForContainerWriteModeConnectionWrite(container);
 
 			// Upload the same blob. This will get de-duped and we will get back a handle with another localId. Both of
 			// these blobs should be mapped to the same storageId.
@@ -343,7 +330,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 			// uses the timestamp of the op.
 			defaultDataStore._root.set("make container connect in", "write mode");
 			// Make sure we are connected or we may get a local ID handle
-			await waitForContainerConnectionWriteMode(container);
+			await waitForContainerWriteModeConnectionWrite(container);
 
 			// Upload the same blob. This will get de-duped and we will get back a handle with another localId. This and
 			// the blobs uploaded in detached mode should map to the same storageId.
@@ -427,7 +414,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 			// GC requires at least one op to have been processed. It needs a server timestamp and
 			// uses the timestamp of the op.
 			defaultDataStore._root.set("make container connect in", "write mode");
-			await waitForContainerConnectionWriteMode(container);
+			await waitForContainerWriteModeConnectionWrite(container);
 
 			// Summarize once before uploading the blob in disconnected container. This will make sure that when GC
 			// runs next, it has GC data from previous run to do reference validation.
@@ -436,21 +423,21 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 			// Load a new container and disconnect it.
 			const container2 = await loadContainer();
-			const container2DataStore = await requestFluidObject<ITestDataObject>(container2, "/");
+			const container2DataStore = (await container2.getEntryPoint()) as ITestDataObject;
 			container2.disconnect();
 
 			// Upload an attachment blob when disconnected. We should get a handle with a localId for the blob. Mark it
 			// referenced by storing its handle in a DDS.
 			const blobContents = "Blob contents";
-			const localHandle1 = await container2DataStore._context.uploadBlob(
+			const localHandle1P = container2DataStore._context.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
 			);
-			container2DataStore._root.set("local1", localHandle1);
 
 			// Connect the container and wait for it to be connected.
 			container2.connect();
 			await waitForContainerConnection(container2);
-
+			const localHandle1 = await localHandle1P;
+			container2DataStore._root.set("local1", localHandle1);
 			// Validate that the localId node is referenced.
 			const s1 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
 			assert.strictEqual(s1.size, 1, "There should be 1 blob entries in GC data");

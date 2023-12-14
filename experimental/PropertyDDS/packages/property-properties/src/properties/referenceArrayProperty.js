@@ -16,6 +16,7 @@ const { ValueArrayProperty } = require("./valueArrayProperty");
 
 /**
  * An ArrayProperty which stores reference values
+ * @internal
  */
 export class ReferenceArrayProperty extends ValueArrayProperty {
 	/**
@@ -46,7 +47,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 	/**
 	 * Resolves the referenced property for the given key
 	 *
-	 * @param {number|array<string|number>} in_ids - the ID of the property or an array of IDs if an array is passed,
+	 * @param {number | Array<string | number>} in_ids - the ID of the property or an array of IDs if an array is passed,
 	 * the .get function will be performed on each id in sequence for example .get([0, 'position','x']) is equivalent to
 	 * .get(0).get('position').get('x'). If `.get` resolves to a ReferenceProperty, it will, by default, return the
 	 * property that the ReferenceProperty refers to.
@@ -134,7 +135,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
 	/**
 	 * Returns an object with all the nested values contained in this property
-	 * @returns {array<String>} an array of strings representing the paths listed in this array
+	 * @returns {Array<String>} an array of strings representing the paths listed in this array
 	 * for example: ['/path1', '/path2']
 	 */
 	getValues() {

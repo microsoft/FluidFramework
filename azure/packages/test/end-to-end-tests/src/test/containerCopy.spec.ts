@@ -10,11 +10,12 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
+import { ConnectionState } from "@fluidframework/container-loader";
 import { createAzureClient } from "./AzureClientFactory";
 import { mapWait } from "./utils";
 
 describe("Container copy scenarios", () => {
-	const connectTimeoutMs = 1000;
+	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
@@ -43,10 +44,12 @@ describe("Container copy scenarios", () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 		const resources = client.getContainerVersions(containerId);
 		await assert.doesNotReject(
 			resources,
@@ -91,20 +94,24 @@ describe("Container copy scenarios", () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 		const resources = client.copyContainer(containerId, schema);
 		await assert.doesNotReject(resources, () => true, "container could not be copied");
 
 		const { container: containerCopy } = await resources;
 
 		const newContainerId = await containerCopy.attach();
-		await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (containerCopy.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		assert.strictEqual(typeof newContainerId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
@@ -115,19 +122,21 @@ describe("Container copy scenarios", () => {
 	});
 
 	/**
-	 * Scenario: test if Azure Client can copy existing container at specific version.
+	 * Scenario: test if Azure Client can copy existing container at a specific version.
 	 *
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it.skip("TEST FAILING SO SKIPPED - can sucesfully copy document from a specific version", async () => {
+	it("can successfully copy an existing container at a specific version", async () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const versions = await client.getContainerVersions(containerId);
 		assert.strictEqual(versions.length, 1, "Container should have exactly one version.");
@@ -138,10 +147,12 @@ describe("Container copy scenarios", () => {
 		const { container: containerCopy } = await resources;
 
 		const newContainerId = await containerCopy.attach();
-		await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (containerCopy.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		assert.strictEqual(typeof newContainerId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
@@ -168,11 +179,12 @@ describe("Container copy scenarios", () => {
 
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
-
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 		const resources = client.copyContainer(containerId, schema);
 		await assert.doesNotReject(resources, () => true, "container could not be copied");
 

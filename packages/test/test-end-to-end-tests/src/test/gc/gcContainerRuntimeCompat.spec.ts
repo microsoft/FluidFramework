@@ -7,10 +7,7 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -20,9 +17,9 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
-import { pkgVersion } from "../../packageVersion";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import { pkgVersion } from "../../packageVersion.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate the compatibility of the GC data in the summary tree across the past 2 container runtime
@@ -30,7 +27,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils";
  * read and process it successfully.
  */
 // Issue #10053
-describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider) => {
+describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObjectProvider) => {
 	const currentVersionNumber = 0;
 	const oldVersionNumbers = [-1, -2];
 	const dataObjectFactory = new TestFluidObjectFactory([]);
@@ -48,22 +45,18 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 			},
 			gcOptions: { gcAllowed: true },
 		};
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			dataObjectFactory,
-			[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			undefined,
-			[innerRequestHandler],
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
-		);
+		});
 		return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });
 	}
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await createContainer();
-		dataStoreA = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
+		dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 		await waitForContainerConnection(mainContainer);
 	});
 
@@ -109,17 +102,17 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 			const summarizer1 = await createSummarizer(version1);
 
 			// Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
-			const dataStoreB = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type),
-				"",
+			const dataStoreB = await dataStoreA.context.containerRuntime.createDataStore(
+				dataObjectFactory.type,
 			);
-			dataStoreA.root.set("dataStoreB", dataStoreB.handle);
+			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+			dataStoreA.root.set("dataStoreB", dataObjectB.handle);
 
 			// Validate that the new data store does not have unreferenced timestamp.
 			await provider.ensureSynchronized();
 			const summaryResult1 = await summarizeNow(summarizer1);
 			const timestamps1 = await getUnreferencedTimestamps(summaryResult1.summaryTree);
-			const dsBTimestamp1 = timestamps1.get(dataStoreB.context.id);
+			const dsBTimestamp1 = timestamps1.get(dataObjectB.context.id);
 			assert(
 				dsBTimestamp1 === undefined,
 				`new data store should not have unreferenced timestamp`,
@@ -131,7 +124,7 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 			await provider.ensureSynchronized();
 			const summaryResult2 = await summarizeNow(summarizer1);
 			const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
-			const dsBTimestamp2 = timestamps2.get(dataStoreB.context.id);
+			const dsBTimestamp2 = timestamps2.get(dataObjectB.context.id);
 			assert(
 				dsBTimestamp2 !== undefined,
 				`new data store should have unreferenced timestamp`,
@@ -144,7 +137,7 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 			await provider.ensureSynchronized();
 			const summaryResult3 = await summarizeNow(summarizer2);
 			const timestamps3 = await getUnreferencedTimestamps(summaryResult3.summaryTree);
-			const dsBTimestamp3 = timestamps3.get(dataStoreB.context.id);
+			const dsBTimestamp3 = timestamps3.get(dataObjectB.context.id);
 			assert(
 				dsBTimestamp3 !== undefined,
 				`new data store should still have unreferenced timestamp`,

@@ -4,27 +4,29 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import {
-	IGCRuntimeOptions,
+	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	FluidObject,
+	IRequest,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
-	IContainerRuntimeBase,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
 import { timeoutAwait } from "./timeoutUtils";
+import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
 
 const summarizerClientType = "summarizer";
 
@@ -53,11 +55,8 @@ async function createSummarizerCore(
 	const summarizerContainer = await loader.resolve(request);
 	await waitForContainerConnection(summarizerContainer);
 
-	const fluidObject: FluidObject<ISummarizer> | undefined = summarizerContainer.getEntryPoint
-		? await summarizerContainer.getEntryPoint?.()
-		: await requestFluidObject<FluidObject<ISummarizer>>(summarizerContainer, {
-				url: "_summarizer",
-		  });
+	const fluidObject: FluidObject<ISummarizer> | undefined =
+		await summarizerContainer.getEntryPoint();
 	if (fluidObject?.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
@@ -71,7 +70,7 @@ async function createSummarizerCore(
 const defaultSummaryOptions: ISummaryRuntimeOptions = {
 	summaryConfigOverrides: {
 		state: "disableHeuristics",
-		maxAckWaitTime: 10000,
+		maxAckWaitTime: 20000, // Some of the AFR tests take a long time to ack.
 		maxOpsSinceLastSummary: 7000,
 		initialSummarizerDelayMs: 0,
 	},
@@ -81,6 +80,7 @@ const defaultSummaryOptions: ISummaryRuntimeOptions = {
  * Creates a summarizer client from the given container and data store factory, and returns the summarizer client's
  * IContainer and ISummarizer.
  * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ * @internal
  */
 export async function createSummarizerFromFactory(
 	provider: ITestObjectProvider,
@@ -90,19 +90,21 @@ export async function createSummarizerFromFactory(
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
+	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new containerRuntimeFactoryType(
-		dataStoreFactory,
-		registryEntries ?? [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
-		undefined,
-		[innerRequestHandler],
-		{ summaryOptions: defaultSummaryOptions },
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		containerRuntimeFactoryType,
+		{
+			defaultFactory: dataStoreFactory,
+			registryEntries: registryEntries ?? [
+				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+			],
+			runtimeOptions: { summaryOptions: defaultSummaryOptions },
+		},
 	);
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
-		configProvider: mockConfigProvider(),
+		configProvider,
 		logger,
 	});
 	return createSummarizerCore(container, loader, summaryVersion);
@@ -111,21 +113,28 @@ export async function createSummarizerFromFactory(
 /**
  * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
  * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ *
+ * Can pass in a test config provider to enable/disable features.
+ * @internal
  */
 export async function createSummarizer(
 	provider: ITestObjectProvider,
 	container: IContainer,
+	config?: ITestContainerConfig,
 	summaryVersion?: string,
-	gcOptions?: IGCRuntimeOptions,
-	configProvider: IConfigProviderBase = mockConfigProvider(),
 	logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const testContainerConfig: ITestContainerConfig = {
+		...config,
 		runtimeOptions: {
-			summaryOptions: defaultSummaryOptions,
-			gcOptions,
+			...config?.runtimeOptions,
+			summaryOptions: config?.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
 		},
-		loaderProps: { configProvider, logger },
+		loaderProps: {
+			...config?.loaderProps,
+			configProvider: config?.loaderProps?.configProvider ?? mockConfigProvider(),
+			logger,
+		},
 	};
 	const loader = provider.makeTestLoader(testContainerConfig);
 	return createSummarizerCore(container, loader, summaryVersion);
@@ -134,12 +143,27 @@ export async function createSummarizer(
 /**
  * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
  * submitted summary.
+ *
+ * @param summarizer - The ISummarizer to use to summarize on demand
+ * @param inputs - Either the reason string or the full IOnDemandSummarizeOptions.
+ * Defaults to the reason "end-to-end test".
+ * @internal
  */
-export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
-	const result = summarizer.summarizeOnDemand({ reason });
+export async function summarizeNow(
+	summarizer: ISummarizer,
+	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",
+) {
+	const options: IOnDemandSummarizeOptions =
+		typeof inputs === "string" ? { reason: inputs } : inputs;
+	const result = summarizer.summarizeOnDemand(options);
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
-	assert(submitResult.success, "on-demand summary should submit");
+	if (!submitResult.success) {
+		if (typeof submitResult.error !== "string") {
+			submitResult.error.data = submitResult.data;
+		}
+		throw submitResult.error;
+	}
 	assert(
 		submitResult.data.stage === "submit",
 		"on-demand summary submitted data stage should be submit",
@@ -147,10 +171,14 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 	assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
-	assert(broadcastResult.success, "summary op should be broadcast");
+	if (!broadcastResult.success) {
+		throw broadcastResult.error;
+	}
 
 	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
-	assert(ackNackResult.success, "summary op should be acked");
+	if (!ackNackResult.success) {
+		throw ackNackResult.error;
+	}
 
 	await new Promise((resolve) => process.nextTick(resolve));
 

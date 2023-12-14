@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -12,7 +12,6 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -28,15 +27,19 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
+/**
+ * @internal
+ */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
 	public options: ILoaderOptions = undefined as any;
 	public clientId: string | undefined = uuid();
-	public clientDetails: IClientDetails = undefined as any;
+	public clientDetails: IClientDetails = { capabilities: { interactive: this.interactive } };
 	public connected: boolean = true;
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
@@ -45,6 +48,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public storage: IDocumentStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
+	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.
@@ -60,9 +64,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLogger = DebugLogger.create(
-			"fluid:MockFluidDataStoreContext",
-		),
+		public readonly logger: ITelemetryLoggerExt = createChildLogger({
+			namespace: "fluid:MockFluidDataStoreContext",
+		}),
+		private readonly interactive: boolean = true,
 	) {}
 
 	on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -104,10 +109,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public makeLocallyVisible(): void {
-		throw new Error("Method not implemented.");
-	}
-
-	public bindToContext(): void {
 		throw new Error("Method not implemented.");
 	}
 

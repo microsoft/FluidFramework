@@ -4,15 +4,15 @@
  */
 
 import { Serializable, IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { BlobTreeEntry } from "@fluidframework/driver-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 
-export const serializeBlob = (
+export const serializeBlob = <T>(
 	handle: IFluidHandle,
 	path: string,
-	snapshot: Serializable,
+	snapshot: Serializable<T>,
 	serializer: IFluidSerializer,
 ) => new BlobTreeEntry(path, serializer.stringify(snapshot, handle));
 

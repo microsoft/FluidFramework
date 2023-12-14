@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "@fluidframework/merge-tree";
-import { debug } from "../document/debug";
-import { FlowDocument } from "../document/index";
+import { LocalReferencePosition } from "@fluidframework/sequence";
+import { debug } from "../document/debug.js";
+import { FlowDocument } from "../document/index.js";
 
 export function updateRef(doc: FlowDocument, ref: LocalReferencePosition, position: number) {
 	if (isNaN(position)) {

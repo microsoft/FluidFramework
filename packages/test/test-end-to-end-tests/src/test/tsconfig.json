@@ -1,12 +1,13 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": ["../../../../../common/build/build-common/tsconfig.test.json"],
+	"include": ["./**/*"],
 	"compilerOptions": {
-		"declaration": false,
-		"declarationMap": false,
 		"rootDir": "../",
 		"outDir": "../../dist",
 		"types": ["mocha", "@fluidframework/test-driver-definitions"],
-		"noUnusedLocals": false, // Needed for memory tests to be able to declare local variables just for the purpose of keeping stuff in memory
+		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"resolvePackageJsonExports": false,
 	},
-	"include": ["./**/*"],
 }

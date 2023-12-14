@@ -11,18 +11,13 @@
  * @packageDocumentation
  */
 
-export {
-	AttachState,
-	ContainerErrorType,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+export type { ICriticalContainerError } from "@fluidframework/container-definitions";
+export { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 export { DriverErrorType } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
-export {
+export type {
 	ContainerSchema,
 	DataObjectClass,
-	DOProviderContainerRuntimeFactory,
-	FluidContainer,
 	IConnection,
 	IFluidContainer,
 	IFluidContainerEvents,
@@ -35,13 +30,9 @@ export {
 	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
-	RootDataObject,
-	RootDataObjectProps,
-	ServiceAudience,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
-export {
-	DirectoryFactory,
+export type {
 	IDirectory,
 	IDirectoryClearOperation,
 	IDirectoryCreateSubDirectoryOperation,
@@ -64,46 +55,47 @@ export {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
+} from "@fluidframework/map";
+export {
+	DirectoryFactory,
 	LocalValueMaker,
 	MapFactory,
 	SharedDirectory,
 	SharedMap,
 } from "@fluidframework/map";
-export {
-	CompressedSerializedInterval,
+export type {
 	DeserializeCallback,
-	getTextAndMarkers,
 	IInterval,
 	IIntervalCollectionEvent,
 	IIntervalHelpers,
 	IJSONRunSegment,
 	IMapMessageLocalMetadata,
-	Interval,
-	IntervalCollection,
-	IntervalCollectionIterator,
-	IntervalConflictResolver,
+	IIntervalCollection,
 	IntervalLocator,
-	intervalLocatorFromEndpoint,
-	IntervalType,
 	ISequenceDeltaRange,
 	ISerializableInterval,
 	ISerializedInterval,
-	ISerializedIntervalCollectionV2,
 	ISharedIntervalCollection,
 	ISharedSegmentSequenceEvents,
 	ISharedString,
 	IValueOpEmitter,
+	SerializedIntervalDelta,
+	SharedStringSegment,
+} from "@fluidframework/sequence";
+export {
+	getTextAndMarkers,
+	Interval,
+	intervalLocatorFromEndpoint,
+	IntervalType,
 	SequenceDeltaEvent,
 	SequenceEvent,
 	SequenceInterval,
 	SequenceMaintenanceEvent,
-	SerializedIntervalDelta,
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
 	SharedSegmentSequence,
 	SharedSequence,
 	SharedString,
 	SharedStringFactory,
-	SharedStringSegment,
 	SubSequence,
 } from "@fluidframework/sequence";

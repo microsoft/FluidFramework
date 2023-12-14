@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
 	appendToMergeTreeDeltaRevertibles,
@@ -49,7 +49,7 @@ describe("MergeTree.Client", () => {
 				const clients = createClientsAtInitialState(
 					{
 						initialState: "",
-						options: { mergeTreeUseNewLengthCalculations: true },
+						options: {},
 					},
 					"A",
 					"B",
@@ -85,11 +85,7 @@ describe("MergeTree.Client", () => {
 					const clientBDriver = createRevertDriver(clients.B);
 					const deltaCallback = (op, delta) => {
 						if (op.sequencedMessage === undefined) {
-							appendToMergeTreeDeltaRevertibles(
-								clientBDriver,
-								delta,
-								clientB_Revertibles,
-							);
+							appendToMergeTreeDeltaRevertibles(delta, clientB_Revertibles);
 						}
 					};
 
@@ -205,6 +201,7 @@ describe("MergeTree.Client", () => {
 						errorPrefix: "After Re-Revert (redo)",
 						baseText: redoBaseText,
 					});
+					logger.dispose();
 				}
 			});
 		}

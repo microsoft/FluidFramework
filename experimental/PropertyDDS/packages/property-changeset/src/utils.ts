@@ -30,10 +30,17 @@ type NextFn = (err?: Error | null | undefined | string, result?: unknown) => voi
  * Utils
  * @alias property-changeset.Utils
  * @class
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Utils {
+	/**
+	 * @internal
+	 */
 	export type OperationType = "modify" | "insert" | "remove";
+	/**
+	 * @internal
+	 */
 	export type PropertyContainerType =
 		| "array"
 		| "map"
@@ -70,7 +77,7 @@ export namespace Utils {
 	 *
 	 * @param in_preCallback - The (pre-order) callback function that is invoked for each property
 	 * @param in_postCallback - The (post-order) callback function that is invoked for each property
-	 * @param in_context -  The traversal context for the currently processed property
+	 * @param in_context - The traversal context for the currently processed property
 	 * @param in_levelCallback - A callback for when a node is reached
 	 */
 	function _traverseChangeSetRecursivelyAsync(
@@ -726,7 +733,7 @@ export namespace Utils {
 	 *
 	 * @param in_preCallback - The (pre-order) callback function that is invoked for each property
 	 * @param in_postCallback - The (post-order) callback function that is invoked for each property
-	 * @param in_context -  The traversal context for the currently processed property
+	 * @param in_context - The traversal context for the currently processed property
 	 */
 	const _traverseChangeSetRecursively = function (
 		in_preCallback: (context: TraversalContext) => any | undefined,
@@ -890,7 +897,9 @@ export namespace Utils {
 						break;
 					case ArrayIteratorOperationTypes.REMOVE:
 						in_context._operationType = "remove";
-						for (i = 0; i < arrayIterator.opDescription.operation[1]; ++i) {
+						// WARNING: 'operation[1]' is 'string | number | genericArray'.  The cast to 'number'
+						//          preserves the JavaScript coercion behavior, which was permitted prior to TS5.
+						for (i = 0; i < (arrayIterator.opDescription.operation[1] as number); ++i) {
 							// For removals, we don't have a typeid and we use the ChangeSet of the removal operation as nested
 							// ChangeSet -- TODO: doing this is maybe not really nice here
 							processChange(
@@ -1047,6 +1056,7 @@ export namespace Utils {
 
 	/**
 	 * Provides traversal information when parsing ChangeSets via the traverseChangeSetRecursively function.
+	 * @internal
 	 */
 	export class TraversalContext {
 		public _fullPath: string;
@@ -1445,6 +1455,7 @@ export namespace Utils {
 	 * At least one of the pre- or post-order callbacks must be specified. Both may be specified as well.
 	 *
 	 * @param in_changeSet - The ChangeSet to process
+	 * @internal
 	 */
 	export function traverseChangeSetRecursively(
 		in_changeSet: SerializedChangeSet,
@@ -1482,7 +1493,7 @@ export namespace Utils {
 	 *
 	 * @param in_changeSet - The ChangeSet to process
 	 * @param in_finalizer - A callback when traversal is completed
-	 *
+	 * @internal
 	 */
 	export function traverseChangeSetRecursivelyAsync(
 		in_changeSet: SerializedChangeSet,
@@ -1525,6 +1536,7 @@ export namespace Utils {
 	 * @param in_changeSet - The ChangeSet to process
 	 *
 	 * @returns All typeids that appear in the ChangeSet
+	 * @internal
 	 */
 	export function extractTypeids(in_changeSet: SerializedChangeSet): string[] {
 		const result = {};
@@ -1551,6 +1563,7 @@ export namespace Utils {
 	 *
 	 * @returns All templates that appear in the ChangeSet.
 	 * The returned object has members key (string), corresponding to the type and value with the definition (object)
+	 * @internal
 	 */
 	export function enumerateSchemas(
 		in_changeSet: SerializedChangeSet,
@@ -1586,6 +1599,7 @@ export namespace Utils {
 	 * This is a private functions, it is only exported for the tests.
 	 *
 	 * @param io_changeSet - The ChangeSet to process
+	 * @internal
 	 */
 	export function _stripTypeids(io_changeSet: SerializedChangeSet) {
 		const result = {};
@@ -1656,6 +1670,7 @@ export namespace Utils {
 	 * @param in_changeSet - The ChangeSet to process
 	 * @param in_excludeTypeids - Exclude all typeids from the returned ChangeSet
 	 * @returns Returns the applied operations to entries of the given typeid. The returned maps for insert and modify map paths to ChangeSets
+	 * @internal
 	 */
 	export function getChangesByType(
 		in_typeid: string,
@@ -1713,6 +1728,7 @@ export namespace Utils {
 	 * {insert: Object|undefined, modify: Object|undefined, remove: boolean|undefined}
 	 * </pre>
 	 * ```
+	 * @internal
 	 */
 	export function getChangesByPath(
 		in_path: string,
@@ -1871,6 +1887,7 @@ export namespace Utils {
 	 * @param in_options.escapeLeadingDoubleUnderscore - If this is set to true, keys which start with '__' will be
 	 * escaped (by adding an additional '_') before the lookup into the paths map. This frees the keyspace with
 	 * duplicated underscores for the use by the calling application.
+	 * @internal
 	 */
 	export function getChangesToTokenizedPaths(
 		in_paths: Map<string, Map<string, any>> | { [key: string]: any },
@@ -1932,11 +1949,7 @@ export namespace Utils {
 				if (_isUserData(k)) {
 					thisLevel[k] = v;
 				} else {
-					if (v instanceof Map) {
-						thisLevel[k] = _convertMapToLevel(v);
-					} else {
-						thisLevel[k] = v;
-					}
+					thisLevel[k] = v instanceof Map ? _convertMapToLevel(v) : v;
 				}
 			}
 			return thisLevel;
@@ -1980,7 +1993,7 @@ export namespace Utils {
 				let nestedSubPath;
 				if (
 					changesetSegment.indexOf(".") !== -1 ||
-					(changesetSegment.length > 0 && changesetSegment[0] === '"')
+					(changesetSegment.length > 0 && changesetSegment.startsWith('"'))
 				) {
 					nestedSubPath = currentSubPaths;
 					const tokenized = PathHelper.tokenizePathString(changesetSegment);
@@ -1990,7 +2003,7 @@ export namespace Utils {
 						currentTokenizedPath.push(segment);
 						if (
 							in_options.escapeLeadingDoubleUnderscore &&
-							segment[0] === "_" &&
+							segment.startsWith("_") &&
 							segment[1] === "_"
 						) {
 							segment = `_${segment}`;
@@ -2014,7 +2027,7 @@ export namespace Utils {
 					currentTokenizedPath.push(changesetSegment);
 					if (
 						in_options.escapeLeadingDoubleUnderscore &&
-						changesetSegment[0] === "_" &&
+						changesetSegment.startsWith("_") &&
 						changesetSegment[1] === "_"
 					) {
 						changesetSegment = `_${changesetSegment}`;
@@ -2074,7 +2087,9 @@ export namespace Utils {
 	 * The final ChangeSet will only include the paths in question starting from the root of
 	 * the ChangeSet.
 	 *
-	 * @example Given the following change set:
+	 * @example
+	 *
+	 * Given the following change set:
 	 *
 	 * ```json
 	 * 'insert': {
@@ -2104,7 +2119,8 @@ export namespace Utils {
 	 * Note: duplicate paths will be ignored including ones that encompasse other paths.
 	 *
 	 * @throws If a path given resolves into an array or set.
-	 * @returns - Filtered ChangeSet
+	 * @returns The filtered ChangeSet
+	 * @internal
 	 */
 	export function getFilteredChangeSetByPaths(
 		in_changeSet: SerializedChangeSet,
@@ -2271,7 +2287,7 @@ export namespace Utils {
 				if (
 					contractedPathSegment &&
 					(lastSegment.indexOf(".") !== -1 ||
-						(lastSegment.length > 0 && lastSegment[0] === '"')) &&
+						(lastSegment.length > 0 && lastSegment.startsWith('"'))) &&
 					PathHelper.tokenizePathString(lastSegment).length > 1
 				) {
 					toPurge[context.getFullPath()] = {
@@ -2333,6 +2349,7 @@ export namespace Utils {
 	 * @param in_paths - An array with paths
 	 * @returns {Map} A tree structured representation of the tokenized paths that can be
 	 * passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
+	 * @internal
 	 */
 	export function convertPathArrayToTree(in_paths: string[]): PathTree {
 		in_paths = Array.isArray(in_paths) ? in_paths : [in_paths];
@@ -2381,7 +2398,9 @@ export namespace Utils {
 	 * The final ChangeSet will exclude the paths in question starting from the root of
 	 * the ChangeSet.
 	 *
-	 * @example Given the following change set:
+	 * @example
+	 *
+	 * Given the following change set:
 	 *
 	 * ```json
 	 * 'insert': {
@@ -2408,7 +2427,8 @@ export namespace Utils {
 	 * @param in_paths - List of paths to exclude. Note: duplicate paths will be ignored
 	 * including ones that encompasse other paths
 	 * @throws if a path given resolves into an array or set
-	 * @returns - Filtered ChangeSet
+	 * @returns Filtered ChangeSet
+	 * @internal
 	 */
 	export function excludePathsFromChangeSet(
 		in_changeSet: SerializedChangeSet,
@@ -2464,7 +2484,8 @@ export namespace Utils {
 	 * @param in_options - Set of options
 	 * @param in_options.includeOperation - Flag to include the operation
 	 * @param in_options.includeTypeidInfo - Flag to include the typeid info
-	 * @returns - Flat list of paths
+	 * @returns Flat list of paths
+	 * @internal
 	 */
 	export function extractPathsFromChangeSet(
 		in_changeSet: SerializedChangeSet,

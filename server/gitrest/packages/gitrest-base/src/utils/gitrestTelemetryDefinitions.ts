@@ -15,16 +15,18 @@ export enum GitRestLumberEventName {
 	// Misc
 	CheckSoftDeleted = "CheckSoftDeleted",
 
-    // Repository APIs
-    RepositoryManager = "RepositoryManager",
-    RepositoryManagerFactory = "RepositoryManagerFactory",
+	// Repository APIs
+	RepositoryManager = "RepositoryManager",
+	RepositoryManagerFactory = "RepositoryManagerFactory",
 }
 
 // List of properties used in telemetry throughout GitRest
 export enum BaseGitRestTelemetryProperties {
 	directoryPath = "directoryPath",
 	emptyFullSummary = "emptyFullSummary",
-	fullSummaryirectoryExists = "fullSummaryirectoryExists",
+	fullSummaryDirectoryExists = "fullSummaryDirectoryExists",
+	isEphemeralContainer = "isEphemeralContainer",
+	isInitial = "isInitial",
 	ref = "ref",
 	repoName = "repoName",
 	repoOwner = "repoOwner",
@@ -37,7 +39,7 @@ export enum BaseGitRestTelemetryProperties {
 }
 
 export enum GitRestRepositoryApiCategory {
-    // RepoManager
+	// RepoManager
 	CreateBlob = "CreateBlob",
 	CreateCommit = "CreateCommit",
 	CreateRef = "CreateRef",

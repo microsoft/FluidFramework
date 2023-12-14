@@ -6,29 +6,14 @@
 import { assert } from "chai";
 import { Test } from "mocha";
 import {
-	BenchmarkType,
 	BenchmarkArguments,
 	isParentProcess,
 	isInPerformanceTestingMode,
-	performanceTestSuiteTag,
-	userCategoriesSplitter,
-	TestType,
 	Titled,
 	MochaExclusiveOptions,
-	BenchmarkDescription,
+	qualifiedTitle,
 } from "../Configuration";
 import { BenchmarkResult, Phase, runBenchmark } from "../runBenchmark";
-
-export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
-	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
-	const testTypeTag = TestType[TestType.ExecutionTime];
-	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
-
-	if (args.category !== "") {
-		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
-	}
-	return qualifiedTitle;
-}
 
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
