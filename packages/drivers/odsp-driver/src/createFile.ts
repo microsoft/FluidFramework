@@ -12,7 +12,6 @@ import {
 	IOdspResolvedUrl,
 	OdspErrorType,
 	ShareLinkInfoType,
-	ISharingLinkKind,
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
@@ -93,11 +92,7 @@ export async function createNewFluidFile(
 		itemId = content.itemId;
 		summaryHandle = content.id;
 
-		shareLinkInfo = extractShareLinkData(
-			newFileInfo.createLinkType,
-			content,
-			enableSingleRequestForShareLinkWithCreate,
-		);
+		shareLinkInfo = extractShareLinkData(content, enableSingleRequestForShareLinkWithCreate);
 	}
 
 	const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
@@ -135,13 +130,9 @@ export async function createNewFluidFile(
  * @returns Sharing link information received in the response from a successful creation of a file.
  */
 function extractShareLinkData(
-	requestedSharingLinkKind: ISharingLinkKind | undefined,
 	response: ICreateFileResponse,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
 ): ShareLinkInfoType | undefined {
-	if (!requestedSharingLinkKind) {
-		return;
-	}
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (enableSingleRequestForShareLinkWithCreate) {
 		const { sharing } = response;
