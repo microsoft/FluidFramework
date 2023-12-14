@@ -4,13 +4,13 @@
 
 ```ts
 
-// @alpha
+// @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// @internal
+// @alpha
 export const FluidErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
@@ -19,7 +19,7 @@ export const FluidErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 // @public
@@ -33,7 +33,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha
+// @public
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
@@ -230,7 +230,7 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: string, listener: (...args: any[]) => void): any;
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;
     readonly package: string | Readonly<IFluidPackage>;
@@ -245,7 +245,7 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
     satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface IFluidCodeDetailsConfig {
     // (undocumented)
     readonly [key: string]: string;
@@ -288,7 +288,7 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     handle: IFluidHandle;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface IFluidPackage {
     [key: string]: unknown;
     fluid: {
@@ -297,7 +297,7 @@ export interface IFluidPackage {
     name: string;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface IFluidPackageEnvironment {
     [target: string]: undefined | {
         files: string[];
@@ -455,7 +455,7 @@ export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
 }
 
-// @internal
+// @alpha
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
@@ -490,7 +490,7 @@ export interface Tagged<V, T extends string = string> {
     value: V;
 }
 
-// @internal
+// @alpha
 export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 
 // @public @deprecated

@@ -18,7 +18,7 @@ import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
-// @alpha
+// @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
     copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
@@ -36,7 +36,7 @@ export class AzureClient {
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
 }
 
-// @alpha
+// @public
 export interface AzureClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
@@ -45,22 +45,22 @@ export interface AzureClientProps {
     readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
-// @alpha
+// @public
 export interface AzureConnectionConfig {
     endpoint: string;
     tokenProvider: ITokenProvider;
     type: AzureConnectionConfigType;
 }
 
-// @alpha
+// @public
 export type AzureConnectionConfigType = "local" | "remote";
 
-// @alpha
+// @public
 export interface AzureContainerServices {
     audience: IAzureAudience;
 }
 
-// @alpha
+// @public
 export interface AzureContainerVersion {
     date?: string;
     id: string;
@@ -75,23 +75,23 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @alpha
+// @public
 export interface AzureGetVersionsOptions {
     maxCount: number;
 }
 
-// @alpha
+// @public
 export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
     type: "local";
 }
 
-// @alpha
+// @public
 export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
     userName: string;
 }
 
-// @alpha
+// @public
 export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     tenantId: string;
     type: "remote";
@@ -103,7 +103,7 @@ export interface AzureUser<T = any> extends IUser {
     name: string;
 }
 
-// @alpha
+// @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
 export { ITelemetryBaseEvent }
