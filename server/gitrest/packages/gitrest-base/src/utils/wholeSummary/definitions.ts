@@ -4,10 +4,6 @@
  */
 
 import { IBlob, ITree } from "@fluidframework/gitresources";
-import {
-	IWholeFlatSummaryBlob,
-	IWholeFlatSummaryTreeEntry,
-} from "@fluidframework/server-services-client";
 import { IRepositoryManager } from "../definitions";
 
 export interface IWholeSummaryOptions {
@@ -50,13 +46,4 @@ export interface IFullGitTree {
 	 * Inform consumer that this tree contained "FullGitTree" blobs.
 	 */
 	parsedFullTreeBlobs: boolean;
-}
-
-/**
- * A representation of an IFullGitTree in summary format that
- * can be understood by Fluid.
- */
-export interface IFullSummaryTree {
-	treeEntries: IWholeFlatSummaryTreeEntry[];
-	blobs: IWholeFlatSummaryBlob[];
 }

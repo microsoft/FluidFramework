@@ -63,9 +63,19 @@ export interface IWriteSummaryInfo {
 	writeSummaryResponse: IWriteSummaryResponse | IWholeFlatSummary;
 }
 
+/**
+ * Check if the given payload is a container summary.
+ */
 export const isContainerSummary = (payload: IWholeSummaryPayload) => payload.type === "container";
+/**
+ * Check if the given payload is a channel summary.
+ */
 export const isChannelSummary = (payload: IWholeSummaryPayload) => payload.type === "channel";
 
+/**
+ * Retrieve the Git ref for the given documentId from storage.
+ * Logically, this is a reference to the most recent commit (version) for the document.
+ */
 async function getDocRef(options: IWholeSummaryOptions): Promise<IRef | undefined> {
 	const ref: IRef | undefined = await options.repoManager
 		.getRef(`refs/heads/${options.documentId}`, { enabled: options.externalStorageEnabled })
@@ -73,6 +83,10 @@ async function getDocRef(options: IWholeSummaryOptions): Promise<IRef | undefine
 	return ref;
 }
 
+/**
+ * Write a summary tree as a Git tree in storage.
+ * @returns the written git tree as an {@link IFullGitTree}, which contains all the tree entries, blob entries and their shas.
+ */
 async function writeSummaryTree(
 	payload: IWholeSummaryPayload,
 	documentRef: IRef | undefined,
@@ -126,8 +140,8 @@ export async function writeChannelSummary(
 }
 
 /**
- * Persist the given summary payload as a new git tree. The payload will be referenced by a new
- * commit which will be referenced by the document's ref.
+ * Create a new commit referencing the given tree.
+ * Logically, this creates a new version ID for the document.
  */
 async function createNewSummaryVersion(
 	treeSha: string,
@@ -158,6 +172,10 @@ async function createNewSummaryVersion(
 	};
 }
 
+/**
+ * Persist the given summary payload as a new git tree. The payload will be referenced by a new
+ * commit which will be referenced by the document's ref.
+ */
 export async function writeContainerSummary(
 	payload: IWholeSummaryPayload,
 	isInitial: boolean,

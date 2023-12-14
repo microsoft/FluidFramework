@@ -33,6 +33,13 @@ export interface IWriteSummaryTreeOptions {
 	entryHandleToObjectShaCache: Map<string, string>;
 }
 
+/**
+ * Converts an {@link IFullGitTree} into a {@link IFullSummaryTree},
+ * then to an array of {@link WholeSummaryTreeEntry}, and finally, writes it into Git storage using {@link writeSummaryTree}.
+ *
+ * This appears to be an unnecessary amount of conversions, but the internal logic for parsing {@link IFullGitTree}s stored as blobs
+ * makes a more straightforward approach difficult. It should be possible to simplify this in the future with care and appropriate testing.
+ */
 export async function writeFullGitTreeAsSummaryTree(
 	fullGitTree: IFullGitTree,
 	options: IWriteSummaryTreeOptions,
@@ -43,6 +50,9 @@ export async function writeFullGitTreeAsSummaryTree(
 	return tree.tree.sha;
 }
 
+/**
+ * Write a single summary tree blob into Git storage.
+ */
 async function writeSummaryTreeBlob(
 	blob: IWholeSummaryBlob,
 	options: IWriteSummaryTreeOptions,
@@ -62,6 +72,10 @@ async function writeSummaryTreeBlob(
 	};
 	return sha;
 }
+
+/**
+ * Recursively write a summary tree into Git storage.
+ */
 async function writeSummaryTreeTree(
 	tree: IWholeSummaryTree,
 	options: IWriteSummaryTreeOptions,
@@ -76,6 +90,11 @@ async function writeSummaryTreeTree(
 	return sha;
 }
 
+/**
+ * Resolve a tree handle entry to a sha based on its path.
+ * The path is expected to be in the form: `<parent commit sha>/<tree path>`,
+ * where the parent commit references the tree that the path traverses.
+ */
 async function getShaFromTreeHandleEntry(
 	entry: IWholeSummaryTreeHandleEntry,
 	options: IWriteSummaryTreeOptions,
@@ -129,6 +148,12 @@ async function getShaFromTreeHandleEntry(
 	return sha;
 }
 
+/**
+ * Write a single summary tree object into Git storage.
+ * - A blob is written as a Git blob.
+ * - A tree is recursively written as a Git tree, possibly writing additional trees and blobs.
+ * - A handle is resolved to a sha based on its path.
+ */
 async function writeSummaryTreeObject(
 	wholeSummaryTreeEntry: WholeSummaryTreeEntry,
 	options: IWriteSummaryTreeOptions,
@@ -170,6 +195,9 @@ async function writeSummaryTreeObject(
 	return createEntry;
 }
 
+/**
+ * Use tree and blob caches to precompute the {@link IFullGitTree} for the newly written Git tree.
+ */
 async function precomputeFullGitTree(
 	newlyCreatedTree: ITree,
 	options: IWriteSummaryTreeOptions,
@@ -219,6 +247,13 @@ async function precomputeFullGitTree(
 	);
 }
 
+/**
+ * Write a summary tree as a Git tree in the provided filesystem.
+ *
+ * Optionally, while writing the tree, it will also precompute the full git tree for the written tree by combining
+ * the shas returned for each entry on write with the data that was just written. This prevents unnecessary
+ * reading of data that is already known just for the sake of retrieving it with a sha attached.
+ */
 export async function writeSummaryTree(
 	wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
 	options: IWriteSummaryTreeOptions,

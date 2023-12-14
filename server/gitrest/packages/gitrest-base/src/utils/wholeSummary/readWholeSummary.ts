@@ -8,7 +8,11 @@ import { ISummaryVersion, IWholeSummaryOptions } from "./definitions";
 import { Constants } from "./constants";
 import { buildFullGitTreeFromGitTree, convertFullGitTreeToFullSummaryTree } from "./conversions";
 
-async function getLatestSummaryVersion(
+/**
+ * Retrieve the summary version (commit) for a given sha.
+ * If the sha is "latest", retrieves the latest version for the given documentId.
+ */
+async function getSummaryVersion(
 	summarySha: string,
 	options: IWholeSummaryOptions,
 ): Promise<ISummaryVersion> {
@@ -26,11 +30,14 @@ async function getLatestSummaryVersion(
 	return { id: commit.sha, treeId: commit.tree.sha };
 }
 
+/**
+ * Read the summary with the given ID (sha) from Git storage as a flat summary that is readable by the Routerlicious Driver.
+ */
 export async function readSummary(
 	summarySha: string,
 	options: IWholeSummaryOptions,
 ): Promise<IWholeFlatSummary> {
-	const { id: versionId, treeId } = await getLatestSummaryVersion(summarySha, options);
+	const { id: versionId, treeId } = await getSummaryVersion(summarySha, options);
 	const gitTree = await options.repoManager.getTree(treeId, true);
 	const fullGitTree = await buildFullGitTreeFromGitTree(
 		gitTree,

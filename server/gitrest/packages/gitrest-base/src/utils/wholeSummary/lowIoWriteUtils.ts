@@ -27,6 +27,10 @@ import {
 	writeSummaryTree,
 } from "./coreWriteUtils";
 
+/**
+ * Retrieve a git tree from storage, then write it into the in-memory filesystem.
+ * This is used when attempting to write a summary tree to memory that references a git tree that is not currently in memory.
+ */
 async function retrieveMissingGitTreeIntoMemory(
 	missingTreeSha: string,
 	options: IWholeSummaryOptions,
@@ -61,6 +65,9 @@ async function retrieveMissingGitTreeIntoMemory(
 	}
 }
 
+/**
+ * Write a summary tree (channel or container) into an in-memory filesystem, then read it out as an {@link IFullGitTree}.
+ */
 async function computeInMemoryFullGitTree(
 	wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
 	documentRef: IRef | undefined,
@@ -125,6 +132,10 @@ async function computeInMemoryFullGitTree(
 	return inMemorySummaryFullGitTree;
 }
 
+/**
+ * Reduce a whole summary payload into a single tree entry containing the full tree as 1 blob containing an {@link IFullGitTree}.
+ * This blob contains all the data needed to reconstruct the full tree (all tree entries and blob entries, including blob data) in a different storage system as needed.
+ */
 export async function computeLowIoSummaryTreeEntries(
 	payload: IWholeSummaryPayload,
 	documentRef: IRef | undefined,

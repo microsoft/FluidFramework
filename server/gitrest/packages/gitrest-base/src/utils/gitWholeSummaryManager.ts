@@ -54,6 +54,10 @@ export class GitWholeSummaryManager {
 		};
 	}
 
+	/**
+	 * Read a summary from Git storage.
+	 * @param sha - The commit sha of the summary to read. If the sha is the special value "latest", the most recent commit sha will be used.
+	 */
 	public async readSummary(sha: string): Promise<IWholeFlatSummary> {
 		const readSummaryMetric = Lumberjack.newLumberMetric(
 			GitRestLumberEventName.WholeSummaryManagerReadSummary,
@@ -77,6 +81,14 @@ export class GitWholeSummaryManager {
 		}
 	}
 
+	/**
+	 * Write a summary to Git storage.
+	 * @param payload - Payload containing summary tree entries and summary type (container or channel). Sequence number is not stored.
+	 * @param isInitial - Whether this is the first summary written for the document.
+	 * @returns Information about the written summary.
+	 * If the summary is a "container" summary, the full summary tree will be returned so that it can be cached by Historian and/or optionally stored as 1 file in storage.
+	 * If the summary is a "channel" summary, the tree sha will be returned so that it can be referenced by a future "container" summary.
+	 */
 	public async writeSummary(
 		payload: IWholeSummaryPayload,
 		isInitial?: boolean,

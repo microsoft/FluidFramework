@@ -16,8 +16,18 @@ import {
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { IRepositoryManager } from "../definitions";
-import { IFullGitTree, IFullSummaryTree } from "./definitions";
+import { IFullGitTree } from "./definitions";
 import { Constants } from "./constants";
+
+/**
+ * A representation of an IFullGitTree in summary format that
+ * can be understood by Fluid. This heirarchical format is
+ * useful for converting to/from client summary format and Git summary format.
+ */
+export interface IFullSummaryTree {
+	treeEntries: IWholeFlatSummaryTreeEntry[];
+	blobs: IWholeFlatSummaryBlob[];
+}
 
 /**
  * Package a Git tree into a Full Git Tree object by (optionally) parsing and unpacking
