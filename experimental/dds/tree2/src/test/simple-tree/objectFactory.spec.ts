@@ -28,7 +28,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	const childD = sb.object("childD", {
-		list: sb.list([childA, childB]),
+		list: sb.array([childA, childB]),
 		map: sb.map([childA, childB]),
 	});
 
@@ -39,7 +39,7 @@ describe("SharedTreeObject factories", () => {
 	const schema = sb.object("parent", {
 		child: childA,
 		poly: [childA, childB],
-		list: sb.list(sb.number),
+		list: sb.array(sb.number),
 		map: sb.map(sb.number),
 		optional: sb.optional(childOptional),
 		grand: childC,

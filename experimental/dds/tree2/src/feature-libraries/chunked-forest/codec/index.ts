@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { decode } from "./chunkDecoding";
-export { uncompressedEncode } from "./uncompressedEncode";
-export { schemaCompressedEncode } from "./schemaBasedEncoding";
-export { EncodedChunk } from "./format";
+export { EncodedFieldBatch } from "./format";
+export { FieldBatch } from "./fieldBatch";
+export { FieldBatchCodec, makeFieldBatchCodec, FieldBatchEncoder } from "./codecs";

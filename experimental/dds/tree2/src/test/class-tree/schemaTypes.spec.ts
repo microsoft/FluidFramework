@@ -24,8 +24,8 @@ const factory = new TreeFactory({});
 describe("schemaTypes", () => {
 	describe("insertable", () => {
 		it("Lists", () => {
-			const List = schema.list(schema.number);
-			const NestedList = schema.list(List);
+			const List = schema.array(schema.number);
+			const NestedList = schema.array(List);
 
 			const list: number[] = [5];
 			const nestedList: number[][] = [[5]];
@@ -111,7 +111,7 @@ describe("schemaTypes", () => {
 			}
 
 			class NodeMap extends schema.map("NoteMap", Note) {}
-			class NodeList extends schema.list("NoteList", Note) {}
+			class NodeList extends schema.array("NoteList", Note) {}
 
 			class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 

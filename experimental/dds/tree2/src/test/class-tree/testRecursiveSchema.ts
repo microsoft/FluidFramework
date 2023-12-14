@@ -20,12 +20,12 @@ export class ObjectRecursive extends sf.object("Object", { x: [ObjectRef] }) {}
 	const ListRef = () => NodeList;
 	sf.fixRecursiveReference(ListRef);
 	// @ts-expect-error Lists fail to recurse and need listRecursive
-	class NodeList extends sf.list("NodeList", [ListRef]) {}
+	class NodeList extends sf.array("NodeList", [ListRef]) {}
 }
 
 const ListRefWrapped = () => ListRecursive;
 sf.fixRecursiveReference(ListRefWrapped);
-export class ListRecursive extends sf.listRecursive("List", [ListRefWrapped]) {}
+export class ListRecursive extends sf.arrayRecursive("List", [ListRefWrapped]) {}
 
 // #endregion
 
