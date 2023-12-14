@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { fail, Mutable } from "../../util";
+import { Mutable } from "../../util";
 import {
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
@@ -167,8 +167,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						local.push(deltaMark);
 					}
 					break;
-				case "Placeholder":
-					fail("Should not have placeholders in a changeset being converted to delta");
 				default:
 					unreachableCase(type);
 			}
