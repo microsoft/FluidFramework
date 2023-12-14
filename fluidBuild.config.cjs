@@ -28,7 +28,6 @@ module.exports = {
 				"build:esnext",
 				"build:test",
 				"build:copy",
-				// "^build:rename-types",
 				"build:rename-types",
 			],
 			script: false,

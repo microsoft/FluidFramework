@@ -5,8 +5,8 @@
 import {
 	TableBodyCellNode,
 	TableBodyRowNode,
-	TableCellNode,
-	TableNode,
+	type TableCellNode,
+	type TableNode,
 } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";

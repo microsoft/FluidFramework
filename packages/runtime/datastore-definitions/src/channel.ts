@@ -15,7 +15,7 @@ import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
 /**
- * @alpha
+ * @public
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -118,7 +118,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @alpha
+ * @public
  */
 export interface IDeltaHandler {
 	/**
@@ -166,7 +166,7 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @alpha
+ * @public
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -202,7 +202,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
- * @alpha
+ * @public
  */
 export interface IChannelStorageService {
 	/**
@@ -223,7 +223,7 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @alpha
+ * @public
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -250,7 +250,7 @@ export interface IChannelServices {
  *
  * If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
  * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
- * @alpha
+ * @public
  */
 export interface IChannelFactory {
 	/**

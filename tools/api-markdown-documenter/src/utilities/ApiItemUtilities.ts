@@ -5,29 +5,29 @@
 
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
-	ApiCallSignature,
-	ApiConstructSignature,
-	ApiConstructor,
+	type ApiCallSignature,
+	type ApiConstructSignature,
+	type ApiConstructor,
 	ApiDocumentedItem,
-	ApiEntryPoint,
-	ApiFunction,
-	ApiIndexSignature,
-	ApiItem,
-	ApiItemKind,
-	ApiMethod,
-	ApiMethodSignature,
-	ApiNamespace,
+	type ApiEntryPoint,
+	type ApiFunction,
+	type ApiIndexSignature,
+	type ApiItem,
+	type ApiItemKind,
+	type ApiMethod,
+	type ApiMethodSignature,
+	type ApiNamespace,
 	ApiOptionalMixin,
-	ApiPackage,
+	type ApiPackage,
 	ApiParameterListMixin,
 	ApiReadonlyMixin,
 	ApiReleaseTagMixin,
 	ApiStaticMixin,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { DocSection, StandardTags } from "@microsoft/tsdoc";
+import { type DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
-import { Logger } from "../Logging";
+import { type Logger } from "../Logging";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.
@@ -178,16 +178,21 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
 export function releaseTagToString(releaseTag: ReleaseTag): string {
 	// eslint-disable-next-line default-case
 	switch (releaseTag) {
-		case ReleaseTag.Alpha:
+		case ReleaseTag.Alpha: {
 			return "Alpha";
-		case ReleaseTag.Beta:
+		}
+		case ReleaseTag.Beta: {
 			return "Beta";
-		case ReleaseTag.Internal:
+		}
+		case ReleaseTag.Internal: {
 			return "Internal";
-		case ReleaseTag.Public:
+		}
+		case ReleaseTag.Public: {
 			return "Public";
-		case ReleaseTag.None:
+		}
+		case ReleaseTag.None: {
 			return "";
+		}
 	}
 }
 

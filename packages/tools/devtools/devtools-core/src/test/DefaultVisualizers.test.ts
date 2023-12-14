@@ -409,7 +409,7 @@ describe("DefaultVisualizers unit tests", () => {
 		}) {}
 
 		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.list(ChildSchema),
+			childrenOne: builder.array(ChildSchema),
 			childrenTwo: builder.number,
 		}) {}
 

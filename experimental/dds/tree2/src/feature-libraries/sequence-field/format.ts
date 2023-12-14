@@ -64,8 +64,6 @@ const Delete = Type.Composite(
 
 const MoveOut = Type.Composite([HasMoveFields, RedetachFields], noAdditionalProps);
 
-const MovePlaceholder = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
-
 const Attach = Type.Object(
 	{
 		insert: Type.Optional(Insert),
@@ -94,7 +92,6 @@ const MarkEffect = Type.Object(
 		moveIn: Type.Optional(MoveIn),
 		delete: Type.Optional(Delete),
 		moveOut: Type.Optional(MoveOut),
-		placeholder: Type.Optional(MovePlaceholder),
 		attachAndDetach: Type.Optional(AttachAndDetach),
 	},
 	unionOptions,
@@ -136,7 +133,6 @@ export namespace Encoded {
 	export type MoveIn = Static<typeof MoveIn>;
 	export type Delete = Static<typeof Delete>;
 	export type MoveOut = Static<typeof MoveOut>;
-	export type MovePlaceholder = Static<typeof MovePlaceholder>;
 	export type Attach = Static<typeof Attach>;
 	export type Detach = Static<typeof Detach>;
 	export type AttachAndDetach = Static<typeof AttachAndDetach>;

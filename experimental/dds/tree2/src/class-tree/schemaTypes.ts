@@ -168,9 +168,9 @@ export enum NodeKind {
 	 */
 	Map,
 	/**
-	 * A node which serves as a list, storing children in an ordered sequence.
+	 * A node which serves as an array, storing children in an ordered sequence.
 	 */
-	List,
+	Array,
 	/**
 	 * A node which stores a heterogenous collection of children in named fields.
 	 * @remarks
