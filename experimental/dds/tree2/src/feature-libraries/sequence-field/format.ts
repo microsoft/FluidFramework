@@ -47,8 +47,8 @@ const HasMoveFields = Type.Composite([
 
 const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
 
-const InverseAttachFields = Type.Object({
-	detachIdOverride: Type.Optional(EncodedChangeAtomId),
+const RedetachFields = Type.Object({
+	redetachId: Type.Optional(CellId),
 });
 
 const Delete = Type.Composite(
@@ -57,12 +57,12 @@ const Delete = Type.Composite(
 			id: ChangesetLocalIdSchema,
 		}),
 		HasRevisionTag,
-		InverseAttachFields,
+		RedetachFields,
 	],
 	noAdditionalProps,
 );
 
-const MoveOut = Type.Composite([HasMoveFields, InverseAttachFields], noAdditionalProps);
+const MoveOut = Type.Composite([HasMoveFields, RedetachFields], noAdditionalProps);
 
 const MovePlaceholder = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
 

@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiEntryPoint, ApiItem } from "@microsoft/api-extractor-model";
+import { type ApiEntryPoint, type ApiItem } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type SectionNode } from "../../documentation-domain";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { transformApiModuleLike } from "./TransformApiModuleLike";
 
 /**

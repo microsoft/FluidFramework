@@ -45,7 +45,7 @@
 			// This is the primary error we are looking for with the linter pass.
 			// Ensure that release tags of API members are compatible **across package boundaries**.
 			"ae-incompatible-release-tags": {
-				"logLevel": "none", // TODO: change to "error" once we are ready to start enforcing repo-wide
+				"logLevel": "error",
 				"addToApiReportFile": false
 			}
 		}

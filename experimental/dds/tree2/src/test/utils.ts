@@ -49,7 +49,6 @@ import {
 	createMockNodeKeyManager,
 	TreeFieldSchema,
 	jsonableTreeFromCursor,
-	makeSchemaCodec,
 	mapFieldChanges,
 	mapFieldsChanges,
 	mapMarkList,
@@ -112,6 +111,8 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+// eslint-disable-next-line import/no-internal-modules
+import { makeSchemaCodec } from "../feature-libraries/schema-index/codec";
 
 // Testing utilities
 

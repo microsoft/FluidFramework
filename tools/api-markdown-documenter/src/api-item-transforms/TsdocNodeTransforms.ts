@@ -2,38 +2,38 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem } from "@microsoft/api-extractor-model";
+import { type ApiItem } from "@microsoft/api-extractor-model";
 import {
-	DocCodeSpan,
-	DocDeclarationReference,
-	DocEscapedText,
-	DocFencedCode,
-	DocHtmlEndTag,
-	DocHtmlStartTag,
-	DocLinkTag,
-	DocNode,
+	type DocCodeSpan,
+	type DocDeclarationReference,
+	type DocEscapedText,
+	type DocFencedCode,
+	type DocHtmlEndTag,
+	type DocHtmlStartTag,
+	type DocLinkTag,
+	type DocNode,
 	DocNodeKind,
-	DocParagraph,
-	DocPlainText,
-	DocSection,
+	type DocParagraph,
+	type DocPlainText,
+	type DocSection,
 } from "@microsoft/tsdoc";
 
-import { Link } from "../Link";
+import { type Link } from "../Link";
 import {
 	CodeSpanNode,
-	DocumentationNode,
+	type DocumentationNode,
 	DocumentationNodeType,
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
-	SingleLineDocumentationNode,
+	type SingleLineDocumentationNode,
 	SingleLineSpanNode,
 } from "../documentation-domain";
-import { ConfigurationBase } from "../ConfigurationBase";
+import { type ConfigurationBase } from "../ConfigurationBase";
 import { getTsdocNodeTransformationOptions } from "./Utilities";
-import { ApiItemTransformationConfiguration } from "./configuration";
+import { type ApiItemTransformationConfiguration } from "./configuration";
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
@@ -99,29 +99,40 @@ export function _transformTsdocNode(
 	options: TsdocNodeTransformOptions,
 ): DocumentationNode | undefined {
 	switch (node.kind) {
-		case DocNodeKind.CodeSpan:
+		case DocNodeKind.CodeSpan: {
 			return transformTsdocCodeSpan(node as DocCodeSpan, options);
-		case DocNodeKind.EscapedText:
+		}
+		case DocNodeKind.EscapedText: {
 			return transformTsdocEscapedText(node as DocEscapedText, options);
-		case DocNodeKind.FencedCode:
+		}
+		case DocNodeKind.FencedCode: {
 			return transformTsdocFencedCode(node as DocFencedCode, options);
-		case DocNodeKind.HtmlStartTag:
+		}
+		case DocNodeKind.HtmlStartTag: {
 			return transformTsdocHtmlTag(node as DocHtmlStartTag, options);
-		case DocNodeKind.HtmlEndTag:
+		}
+		case DocNodeKind.HtmlEndTag: {
 			return transformTsdocHtmlTag(node as DocHtmlEndTag, options);
-		case DocNodeKind.LinkTag:
+		}
+		case DocNodeKind.LinkTag: {
 			return transformTsdocLinkTag(node as DocLinkTag, options);
-		case DocNodeKind.Paragraph:
+		}
+		case DocNodeKind.Paragraph: {
 			return transformTsdocParagraph(node as DocParagraph, options);
-		case DocNodeKind.PlainText:
+		}
+		case DocNodeKind.PlainText: {
 			return transformTsdocPlainText(node as DocPlainText, options);
-		case DocNodeKind.Section:
+		}
+		case DocNodeKind.Section: {
 			return transformTsdocSection(node as DocSection, options);
-		case DocNodeKind.SoftBreak:
+		}
+		case DocNodeKind.SoftBreak: {
 			return LineBreakNode.Singleton;
-		default:
+		}
+		default: {
 			options.logger?.error(`Unsupported DocNode kind: "${node.kind}".`, node);
 			return undefined;
+		}
 	}
 }
 
