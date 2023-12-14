@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
+import { FieldKey, ValueSchema } from "../../core";
 import {
 	FlexTreeObjectNode,
 	FlexTreeContext,
@@ -12,7 +12,7 @@ import {
 	FlexTreeNode,
 	boxedIterator,
 } from "../flex-tree";
-import { schemaIsObjectNode } from "../typed-schema";
+import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
 /**
@@ -32,10 +32,10 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	/**
 	 * Returns true if the given schema contains the node key type, otherwise false
 	 */
-	public static hasNodeKeyTreeSchema(schema: TreeStoredSchema): boolean {
+	public static hasNodeKeyTreeSchema(schema: FlexTreeSchema): boolean {
 		// TODO: make TreeStoredSchema contain ViewSchema and compare by reference to nodeKeyTreeSchema.
 		const treeSchema = schema.nodeSchema.get(nodeKeyTreeIdentifier);
-		if (treeSchema === undefined) {
+		if (!(treeSchema instanceof LeafNodeSchema)) {
 			return false;
 		}
 		return treeSchema.leafValue === ValueSchema.String;

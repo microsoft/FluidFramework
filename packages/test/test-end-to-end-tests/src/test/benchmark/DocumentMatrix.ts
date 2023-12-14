@@ -15,15 +15,16 @@ import {
 } from "@fluidframework/aqueduct";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-private/test-version-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-private/test-version-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

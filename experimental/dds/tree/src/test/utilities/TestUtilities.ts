@@ -25,9 +25,15 @@ import {
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
-import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidCodeDetails,
+	IFluidHandle,
+	IRequestHeader,
+} from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ConfigTypes, IConfigProviderBase, createChildLogger } from '@fluidframework/telemetry-utils';
+import { createChildLogger } from '@fluidframework/telemetry-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
