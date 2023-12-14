@@ -687,6 +687,22 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
 		assert.deepEqual(insertB2.change, expected);
 	});
+
+	it("[revive, insert] ↷ no change", () => {
+		const reviveA = tagChange([Mark.revive(2, { revision: tag1, localId: brand(0) })], tag2);
+		const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+		const inverseA = tagRollbackInverse(invert(reviveA), tag4, tag2);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, reviveA]);
+		const expected = [
+			Mark.skip(1),
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 2, offset: 1 }],
+			}),
+		];
+
+		assert.deepEqual(insertB2.change, expected);
+	});
 });
 
 describe("SequenceField - Sandwich composing", () => {
