@@ -41,7 +41,7 @@ describe("ContextuallyTyped", () => {
 		const numberSequence = SchemaBuilder.sequence(leaf.number);
 		const numbersObject = builder.object("numbers", { numbers: numberSequence });
 		const schema = builder.intoSchema(numberSequence);
-		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject.name]), {
+		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject]), {
 			numbers: [],
 		});
 		const expected: MapTree = { fields: new Map(), type: numbersObject.name, value: undefined };
@@ -56,7 +56,7 @@ describe("ContextuallyTyped", () => {
 		const numberSequence = SchemaBuilder.sequence(leaf.number);
 		const primaryObject = builder.object("numbers", { [EmptyKey]: numberSequence });
 		const schema = builder.intoSchema(numberSequence);
-		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject.name]), []);
+		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject]), []);
 		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
 		assert.deepEqual(mapTree, expected);
 	});
@@ -87,7 +87,7 @@ describe("ContextuallyTyped", () => {
 						schema: nodeSchemaData,
 						fieldSource: () => (): MapTree[] => generatedField,
 					},
-					new Set([nodeSchema.name]),
+					new Set([nodeSchema]),
 					contextualData,
 				),
 			);
@@ -125,7 +125,7 @@ describe("ContextuallyTyped", () => {
 						schema: nodeSchemaData,
 						fieldSource: () => (): MapTree[] => generatedField,
 					},
-					new Set([nodeSchema.name]),
+					new Set([nodeSchema]),
 					contextualData,
 				),
 			);

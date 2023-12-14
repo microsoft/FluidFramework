@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import {
 	DefaultEditBuilder,
-	TreeSchema,
+	FlexTreeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 	AllowedTypes,
@@ -25,7 +25,7 @@ import { TreeContent } from "../../../shared-tree";
 import { forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 
-export function getReadonlyContext(forest: IEditableForest, schema: TreeSchema): Context {
+export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
 	return getTreeContext(

@@ -44,7 +44,7 @@ import {
 	nodeKeyFieldKey as defailtNodeKeyFieldKey,
 	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
-	TreeSchema,
+	FlexTreeSchema,
 	ViewSchema,
 	NodeKeyManager,
 	FieldKinds,
@@ -135,7 +135,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * instead of a separate callback.
 	 */
 	requireSchema<TRoot extends TreeFieldSchema>(
-		schema: TreeSchema<TRoot>,
+		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 	): FlexTreeView<TRoot> | undefined;
 }
@@ -236,7 +236,7 @@ export class SharedTree
 	}
 
 	public requireSchema<TRoot extends TreeFieldSchema>(
-		schema: TreeSchema<TRoot>,
+		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
@@ -314,8 +314,8 @@ export class SharedTree
 			initializeContent(this.storedSchema, config.schema, () => {
 				const field = { field: rootFieldKey, parent: undefined };
 				const content = normalizeNewFieldContent(
-					{ schema: this.storedSchema },
-					this.storedSchema.rootFieldSchema,
+					{ schema: config.schema },
+					config.schema.rootFieldSchema,
 					config.initialTree,
 				);
 				switch (this.storedSchema.rootFieldSchema.kind.identifier) {

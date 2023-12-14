@@ -7,33 +7,29 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
-import {
-	type FieldKey,
-	type MapTree,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-	type TreeTypeSet,
-} from "../core";
+import { EmptyKey, type FieldKey, type MapTree } from "../core";
 // Drilling into `domains` to reduce the magnitude of cycles introduced here
 // eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../domains/leafDomain";
 import {
 	allowsValue,
-	type ContextuallyTypedNodeData,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	type CursorWithNode,
-	getFieldKind,
-	getFieldSchema,
-	getPossibleTypes,
-	getPrimaryField,
 	isFluidHandle,
 	Multiplicity,
-	type TreeDataContext,
 	type TreeNodeSchema,
+	FlexTreeSchema,
+	type AllowedTypeSet,
+	TreeFieldSchema,
+	Any,
+	FieldNodeSchema,
+	isTreeValue,
+	LeafNodeSchema,
+	MapNodeSchema,
+	getAllowedTypes,
 } from "../feature-libraries";
-import { brand, fail } from "../util";
+import { brand, isReadonlyArray } from "../util";
 import { InsertableTreeField, InsertableTypedNode } from "./insertable";
 
 /**
@@ -57,8 +53,8 @@ import { InsertableTreeField, InsertableTypedNode } from "./insertable";
  */
 export function cursorFromNodeData(
 	data: InsertableTypedNode<TreeNodeSchema>,
-	context: TreeDataContext,
-	typeSet: TreeTypeSet,
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
 ): CursorWithNode<MapTree> | undefined {
 	if (data === undefined) {
 		return undefined;
@@ -74,8 +70,8 @@ export function cursorFromNodeData(
  */
 export function cursorFromFieldData(
 	data: InsertableTreeField,
-	context: TreeDataContext,
-	fieldSchema: TreeFieldStoredSchema,
+	context: FlexTreeSchema,
+	fieldSchema: TreeFieldSchema,
 ): CursorWithNode<MapTree> {
 	const mappedContent = fieldDataToMapTrees(data, context, fieldSchema);
 	return cursorForMapTreeField(mappedContent);
@@ -100,8 +96,8 @@ export function cursorFromFieldData(
  */
 export function nodeDataToMapTree(
 	data: InsertableTypedNode<TreeNodeSchema>,
-	context: TreeDataContext,
-	typeSet: TreeTypeSet,
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
 ): MapTree {
 	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
@@ -137,14 +133,14 @@ export function nodeDataToMapTree(
  * @param data - The input tree to be converted.
  * If the input is a sequence containing 1 or more `undefined` values, those values will be mapped as `null` if supported.
  * Othewise, an error will be thrown.
- * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
+ * @param context - Schema for the whole tree. Used to select the valid types when encountering `any`.
  */
 export function fieldDataToMapTrees(
 	data: InsertableTreeField,
-	context: TreeDataContext,
-	fieldSchema: TreeFieldStoredSchema,
+	context: FlexTreeSchema,
+	fieldSchema: TreeFieldSchema,
 ): MapTree[] {
-	const multiplicity = getFieldKind(fieldSchema).multiplicity;
+	const multiplicity = fieldSchema.kind.multiplicity;
 	if (data === undefined) {
 		assert(
 			multiplicity === Multiplicity.Forbidden || multiplicity === Multiplicity.Optional,
@@ -153,7 +149,7 @@ export function fieldDataToMapTrees(
 		return [];
 	}
 
-	const typeSet = fieldSchema.types;
+	const typeSet = fieldSchema.allowedTypeSet;
 
 	if (multiplicity === Multiplicity.Sequence) {
 		assert(Array.isArray(data), 0x848 /* Expected an array as sequence input. */);
@@ -162,7 +158,7 @@ export function fieldDataToMapTrees(
 			// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
 			let childWithFallback = child;
 			if (child === undefined) {
-				if (typeSet?.has(leaf.null.name) ?? false) {
+				if (typeSet === Any || typeSet.has(leaf.null)) {
 					childWithFallback = null;
 				} else {
 					throw new TypeError(`Received unsupported list entry value: ${child}.`);
@@ -182,21 +178,20 @@ export function fieldDataToMapTrees(
 function valueToMapTree(
 	// eslint-disable-next-line @rushstack/no-new-null
 	value: boolean | number | string | IFluidHandle | null,
-	context: TreeDataContext,
-	typeSet: TreeTypeSet,
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
 ): MapTree {
 	const mappedValue = mapValueWithFallbacks(value, typeSet);
 
-	const type = getType(mappedValue, context, typeSet);
-	const schema = getSchema(context, type);
+	const schema = getType(mappedValue, context, typeSet);
 	assert(
-		allowsValue(schema.leafValue, mappedValue),
+		schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, mappedValue),
 		0x84a /* Unsupported schema for provided primitive. */,
 	);
 
 	return {
 		value: mappedValue,
-		type,
+		type: schema.name,
 		fields: new Map(),
 	};
 }
@@ -210,7 +205,7 @@ function valueToMapTree(
 function mapValueWithFallbacks(
 	// eslint-disable-next-line @rushstack/no-new-null
 	value: boolean | number | string | IFluidHandle | null,
-	typeSet: TreeTypeSet,
+	typeSet: AllowedTypeSet,
 	// eslint-disable-next-line @rushstack/no-new-null
 ): boolean | number | string | IFluidHandle | null {
 	switch (typeof value) {
@@ -223,7 +218,7 @@ function mapValueWithFallbacks(
 				// Our serialized data format does not support NaN nor +/-∞.
 				// If the schema supports `null`, fall back to that. Otherwise, throw.
 				// This is intended to match JSON's behavior for such values.
-				if (typeSet?.has(leaf.null.name) ?? false) {
+				if (typeSet === Any || typeSet.has(leaf.null)) {
 					return null;
 				} else {
 					throw new TypeError(`Received unsupported numeric value: ${value}.`);
@@ -239,37 +234,34 @@ function mapValueWithFallbacks(
 
 function arrayToMapTree(
 	data: InsertableTypedNode<TreeNodeSchema>[],
-	context: TreeDataContext,
-	typeSet: TreeTypeSet,
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
 ): MapTree {
-	const type = getType(data, context, typeSet);
-	const schema = getSchema(context, type);
-	const primaryField = getPrimaryField(schema);
+	const schema = getType(data, context, typeSet);
 	assert(
-		primaryField !== undefined,
+		schema instanceof FieldNodeSchema,
 		0x84b /* Array data reported comparable with the schema without a primary field. */,
 	);
 
-	const mappedChildren = fieldDataToMapTrees(data, context, primaryField.schema);
+	const mappedChildren = fieldDataToMapTrees(data, context, schema.info);
 	const fieldsEntries: [FieldKey, MapTree[]][] =
-		mappedChildren.length === 0 ? [] : [[primaryField.key, mappedChildren]];
+		mappedChildren.length === 0 ? [] : [[EmptyKey, mappedChildren]];
 
 	// List children are represented as a single field entry denoted with `EmptyKey`
 	const fields = new Map<FieldKey, MapTree[]>(fieldsEntries);
 
 	return {
-		type,
+		type: schema.name,
 		fields,
 	};
 }
 
 function mapToMapTree(
 	data: Map<string, InsertableTypedNode<TreeNodeSchema>>,
-	context: TreeDataContext,
-	typeSet: TreeTypeSet,
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
 ): MapTree {
-	const type = getType(data, context, typeSet);
-	const schema = getSchema(context, type);
+	const schema = getType(data, context, typeSet);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of data) {
@@ -277,24 +269,23 @@ function mapToMapTree(
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (value !== undefined) {
-			const childSchema = getFieldSchema(brand(key), schema);
+			const childSchema = schema.getFieldSchema(brand(key));
 			const mappedField = fieldDataToMapTrees(value, context, childSchema);
 			fields.set(brand(key), mappedField);
 		}
 	}
 	return {
-		type,
+		type: schema.name,
 		fields,
 	};
 }
 
 function recordToMapTree(
 	data: Record<string | number | symbol, InsertableTypedNode<TreeNodeSchema>>,
-	context: TreeDataContext,
-	typeSet: TreeTypeSet,
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
 ): MapTree {
-	const type = getType(data, context, typeSet);
-	const schema = getSchema(context, type);
+	const schema = getType(data, context, typeSet);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 
@@ -307,23 +298,23 @@ function recordToMapTree(
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (value !== undefined) {
-			const childSchema = getFieldSchema(brand(key), schema);
+			const childSchema = schema.getFieldSchema(key);
 			const mappedChildTree = fieldDataToMapTrees(value, context, childSchema);
 			fields.set(brand(key), mappedChildTree);
 		}
 	}
 
 	return {
-		type,
+		type: schema.name,
 		fields,
 	};
 }
 
 function getType(
 	data: InsertableTypedNode<TreeNodeSchema>,
-	context: TreeDataContext,
-	typeSet: TreeTypeSet,
-): TreeNodeSchemaIdentifier {
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
+): TreeNodeSchema {
 	const possibleTypes = getPossibleTypes(context, typeSet, data as ContextuallyTypedNodeData);
 	assert(
 		possibleTypes.length !== 0,
@@ -333,15 +324,11 @@ function getType(
 		possibleTypes.length === 1,
 		() =>
 			`The provided data is compatible with more than one type allowed by the schema.
-The set of possible types is ${JSON.stringify([...possibleTypes], undefined)}.
+The set of possible types is ${JSON.stringify([...possibleTypes.map((n) => n.name)], undefined)}.
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
 	return possibleTypes[0];
-}
-
-function getSchema(context: TreeDataContext, type: TreeNodeSchemaIdentifier): TreeNodeStoredSchema {
-	return context.schema.nodeSchema.get(type) ?? fail("Requested type does not exist in schema.");
 }
 
 /**
@@ -356,4 +343,111 @@ function checkInput(condition: boolean, message: string | (() => string)): asser
 	if (!condition) {
 		invalidInput(typeof message === "string" ? message : message());
 	}
+}
+
+/**
+ * @returns all types, for which the data is schema-compatible.
+ */
+export function getPossibleTypes(
+	context: FlexTreeSchema,
+	typeSet: AllowedTypeSet,
+	data: ContextuallyTypedNodeData,
+) {
+	// All types allowed by schema
+	const allowedTypes = getAllowedTypes(context, typeSet);
+
+	const possibleTypes: TreeNodeSchema[] = [];
+	for (const allowed of allowedTypes) {
+		if (shallowCompatibilityTest(allowed, data)) {
+			possibleTypes.push(allowed);
+		}
+	}
+	return possibleTypes;
+}
+
+/**
+ * Checks if data might be schema-compatible.
+ *
+ * @returns false if `data` is incompatible with `type` based on a cheap/shallow check.
+ *
+ * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
+ */
+function shallowCompatibilityTest(
+	schema: TreeNodeSchema,
+	data: ContextuallyTypedNodeData,
+): boolean {
+	assert(
+		data !== undefined,
+		0x6b2 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
+	);
+	if (isTreeValue(data)) {
+		return schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, data);
+	}
+	if (schema instanceof LeafNodeSchema) {
+		return false;
+	}
+	if (isReadonlyArray(data)) {
+		if (schema instanceof FieldNodeSchema) {
+			const field = schema.getFieldSchema();
+			return field.kind.multiplicity === Multiplicity.Sequence;
+		} else {
+			return false;
+		}
+	}
+	if (data instanceof Map) {
+		return schema instanceof MapNodeSchema;
+	}
+
+	// For now, consider all not explicitly typed objects shallow compatible.
+	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
+
+	return true;
+}
+
+/**
+ * Content of a tree which needs external schema information to interpret.
+ *
+ * This format is intended for concise authoring of tree literals when the schema is statically known.
+ *
+ * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
+ * @alpha
+ */
+export type ContextuallyTypedNodeData =
+	| ContextuallyTypedNodeDataObject
+	| number
+	| string
+	| boolean
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
+	| readonly ContextuallyTypedNodeData[];
+
+/**
+ * Content of a field which needs external schema information to interpret.
+ *
+ * This format is intended for concise authoring of tree literals when the schema is statically known.
+ *
+ * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
+ * @alpha
+ */
+export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
+
+/**
+ * Object case of {@link ContextuallyTypedNodeData}.
+ * @alpha
+ */
+export interface ContextuallyTypedNodeDataObject {
+	/**
+	 * Fields of this node, indexed by their field keys.
+	 *
+	 * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+	 */
+	// TODO: make sure explicit undefined is actually handled correctly.
+	[key: FieldKey]: ContextuallyTypedFieldData;
+
+	/**
+	 * Fields of this node, indexed by their field keys as strings.
+	 *
+	 * Allow unbranded field keys as a convenience for literals.
+	 */
+	[key: string]: ContextuallyTypedFieldData;
 }

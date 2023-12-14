@@ -31,6 +31,7 @@ import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	intoDelta,
+	intoStoredSchema,
 	jsonableTreeFromCursor,
 	schemaCompressedEncode,
 } from "../../../feature-libraries";
@@ -376,7 +377,7 @@ describe("DefaultEditBuilder", () => {
 						.sequenceField(
 							{ parent: undefined, field: rootKey },
 							{
-								schema: schemaData,
+								schema: intoStoredSchema(schemaData),
 								policy: defaultSchemaPolicy,
 							},
 						)
@@ -388,7 +389,7 @@ describe("DefaultEditBuilder", () => {
 					for (let index = 0; index < tree.length; index++) {
 						const treeField = tree.length === 1 ? tree : [tree[index]];
 						const expectedOp = schemaCompressedEncode(
-							schemaData,
+							intoStoredSchema(schemaData),
 							defaultSchemaPolicy,
 							cursorForJsonableTreeField(treeField),
 						);

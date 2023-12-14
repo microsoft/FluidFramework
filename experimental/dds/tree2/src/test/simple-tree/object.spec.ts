@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { LeafNodeSchema, NewFieldContent, TreeSchema } from "../../feature-libraries";
+import { LeafNodeSchema, NewFieldContent, FlexTreeSchema } from "../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../domains";
 import { TreeValue } from "../../core";
 import { getOldRoot, makeOldSchema, pretty } from "./utils";
 
 interface TestCase {
 	initialTree: object;
-	schema: TreeSchema;
+	schema: FlexTreeSchema;
 }
 
 export function testObjectPrototype(proxy: object, prototype: object) {

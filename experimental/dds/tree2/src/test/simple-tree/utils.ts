@@ -7,7 +7,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	TreeFieldSchema,
 	ImplicitFieldSchema as OldImplicitFieldSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	InsertableFlexField,
 } from "../../feature-libraries";
 import { InsertableTreeRoot, TreeFieldInner, getProxyForField } from "../../simple-tree";
@@ -45,8 +45,8 @@ export function makeOldSchema<const TSchema extends OldImplicitFieldSchema>(
  * @deprecated - use getRoot instead.
  */
 export function getOldRoot<TRoot extends TreeFieldSchema>(
-	schema: TreeSchema<TRoot>,
-	initialTree: InsertableTreeRoot<TreeSchema<TRoot>>,
+	schema: FlexTreeSchema<TRoot>,
+	initialTree: InsertableTreeRoot<FlexTreeSchema<TRoot>>,
 ): TreeFieldInner<TRoot["kind"], TRoot["allowedTypes"], "maybeEmpty"> {
 	const tree = flexTreeWithContent({
 		schema,

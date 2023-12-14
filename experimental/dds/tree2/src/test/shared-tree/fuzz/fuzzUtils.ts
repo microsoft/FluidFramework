@@ -14,7 +14,12 @@ import {
 	Revertible,
 	TreeNavigationResult,
 } from "../../../core";
-import { FieldKinds, TreeFieldSchema, FlexTreeObjectNodeTyped } from "../../../feature-libraries";
+import {
+	FieldKinds,
+	TreeFieldSchema,
+	FlexTreeObjectNodeTyped,
+	intoStoredSchema,
+} from "../../../feature-libraries";
 import { SharedTree, ITreeCheckout, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
@@ -47,7 +52,7 @@ export function fuzzViewFromTree(tree: ISharedTree): ITreeCheckout {
 }
 
 export const onCreate = (tree: SharedTree) => {
-	tree.storedSchema.update(fuzzSchema);
+	tree.storedSchema.update(intoStoredSchema(fuzzSchema));
 };
 
 /**

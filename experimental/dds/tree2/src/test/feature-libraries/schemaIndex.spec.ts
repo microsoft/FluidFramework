@@ -12,7 +12,7 @@ import { Format, makeSchemaCodec } from "../../feature-libraries/schemaIndexForm
 import { FieldKindIdentifier, TreeStoredSchema } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { jsonSchema, jsonRoot, SchemaBuilder, leaf } from "../../domains";
-import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
+import { defaultSchemaPolicy, allowsRepoSuperset, intoStoredSchema } from "../../feature-libraries";
 import { makeCodecFamily } from "../../codec";
 import { EncodingTestData, makeEncodingTestSuite } from "../utils";
 import { library } from "../testTrees";
@@ -32,8 +32,8 @@ const schema2 = new SchemaBuilder({
 
 const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 	successes: [
-		["json", schema1],
-		["testSchemas", schema2],
+		["json", intoStoredSchema(schema1)],
+		["testSchemas", intoStoredSchema(schema2)],
 	],
 };
 

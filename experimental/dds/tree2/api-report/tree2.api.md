@@ -284,7 +284,7 @@ export interface CursorAdapter<TNode> {
 export function cursorForTypedTreeData<T extends FlexTreeNodeSchema>(context: TreeDataContext, schema: T, data: InsertableFlexNode<T>): ITreeCursorSynchronous;
 
 // @alpha
-export function cursorFromContextualData(context: TreeDataContext, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
+export function cursorFromContextualData(context: TreeDataContext, typeSet: AllowedTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
 
 // @alpha (undocumented)
 export const enum CursorLocationType {
@@ -520,13 +520,7 @@ export class FieldNodeSchema<Name extends string = string, Specification extends
     // (undocumented)
     static create<const Name extends string, const Specification extends TreeFieldSchema>(builder: Named<string>, name: TreeNodeSchemaIdentifier<Name>, specification: Specification): FieldNodeSchema<Name, Specification>;
     // (undocumented)
-    getFieldSchema(field: FieldKey): TreeFieldSchema;
-    // (undocumented)
-    readonly leafValue: undefined;
-    // (undocumented)
-    readonly mapFields: undefined;
-    // (undocumented)
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
+    getFieldSchema(field?: FieldKey): TreeFieldSchema;
     // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
@@ -822,12 +816,6 @@ export interface GenericFieldsNode<TChild> {
 // @alpha
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
-
-// @alpha (undocumented)
-export function getPrimaryField(schema: TreeNodeStoredSchema): {
-    key: FieldKey;
-    schema: TreeFieldStoredSchema;
-} | undefined;
 
 // @alpha (undocumented)
 export interface HasListeners<E extends Events<E>> {
@@ -1151,10 +1139,6 @@ export class LeafNodeSchema<const out Name extends string = string, const out Sp
     // (undocumented)
     get leafValue(): ValueSchema;
     // (undocumented)
-    readonly mapFields: undefined;
-    // (undocumented)
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
-    // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
 
@@ -1176,11 +1160,7 @@ export class MapNodeSchema<const out Name extends string = string, const out Spe
     // (undocumented)
     getFieldSchema(field: FieldKey): MapFieldSchema;
     // (undocumented)
-    readonly leafValue: undefined;
-    // (undocumented)
     get mapFields(): MapFieldSchema;
-    // (undocumented)
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
     // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
@@ -1301,10 +1281,6 @@ export class ObjectNodeSchema<const out Name extends string = string, const out 
     static create<const Name extends string, const Specification extends Fields>(builder: Named<string>, name: TreeNodeSchemaIdentifier<Name>, specification: Specification): ObjectNodeSchema<Name, Specification>;
     // (undocumented)
     getFieldSchema(field: FieldKey): TreeFieldSchema;
-    // (undocumented)
-    readonly leafValue: undefined;
-    // (undocumented)
-    readonly mapFields: undefined;
     // (undocumented)
     readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
     // (undocumented)
@@ -1484,7 +1460,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 }
 
 // @alpha
-export interface SchemaCollection extends StoredSchemaCollection {
+export interface SchemaCollection {
     readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>;
 }
 
@@ -1731,7 +1707,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 // @alpha
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
-    readonly schema: TreeStoredSchema;
+    readonly schema: TreeSchema;
 }
 
 // @alpha
@@ -1846,8 +1822,8 @@ type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = T
 export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
 
 // @alpha
-export abstract class TreeNodeSchemaBase<const out Name extends string = string, const out Specification = unknown> implements TreeNodeStoredSchema {
-    protected constructor(builder: Named<string>, name: TreeNodeSchemaIdentifier<Name>, info: Specification);
+export abstract class TreeNodeSchemaBase<const out Name extends string = string, const out Specification = unknown> {
+    protected constructor(builder: Named<string>, name: TreeNodeSchemaIdentifier<Name>, info: Specification, stored: TreeNodeStoredSchema);
     // (undocumented)
     readonly builder: Named<string>;
     // (undocumented)
@@ -1855,13 +1831,9 @@ export abstract class TreeNodeSchemaBase<const out Name extends string = string,
     // (undocumented)
     readonly info: Specification;
     // (undocumented)
-    abstract readonly leafValue?: ValueSchema | undefined;
-    // (undocumented)
-    abstract readonly mapFields?: TreeFieldStoredSchema | undefined;
-    // (undocumented)
     readonly name: TreeNodeSchemaIdentifier<Name>;
     // (undocumented)
-    abstract readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
+    readonly stored: TreeNodeStoredSchema;
     // (undocumented)
     protected _typeCheck?: MakeNominal;
 }
