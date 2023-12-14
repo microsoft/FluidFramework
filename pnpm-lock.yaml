@@ -7304,6 +7304,7 @@ importers:
       eslint: ~8.50.0
       jsonschema: ^1.2.6
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7326,6 +7327,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7358,6 +7360,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       tsc-multi: ^1.1.0
@@ -7390,6 +7393,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
@@ -7416,6 +7420,7 @@ importers:
       idb: ^6.1.2
       jest: ^29.6.2
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7440,6 +7445,7 @@ importers:
       fake-indexeddb: 3.1.4
       jest: 29.7.0_@types+node@18.19.1
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7515,6 +7521,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7544,6 +7551,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7587,6 +7595,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       tsc-multi: ^1.1.0
@@ -7634,6 +7643,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
@@ -7674,6 +7684,7 @@ importers:
       moment: ^2.21.0
       node-fetch: ^2.6.9
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -7717,6 +7728,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
@@ -7737,6 +7749,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7755,6 +7768,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7783,6 +7797,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7810,6 +7825,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7836,6 +7852,7 @@ importers:
       eslint: ~8.50.0
       nock: ^13.3.3
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7861,6 +7878,7 @@ importers:
       eslint: 8.50.0
       nock: 13.4.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7905,6 +7923,7 @@ importers:
       moment: ^2.21.0
       nock: ^13.3.3
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -7955,6 +7974,7 @@ importers:
       moment: 2.29.4
       nock: 13.4.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
@@ -7987,6 +8007,7 @@ importers:
       moment: ^2.21.0
       nconf: ^0.12.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8019,6 +8040,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8049,6 +8071,7 @@ importers:
       jsrsasign: ^10.5.25
       mocha: ^10.2.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8080,6 +8103,7 @@ importers:
       eslint: 8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8108,6 +8132,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8137,6 +8162,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8177,6 +8203,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8218,12 +8245,14 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/attributor:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -8258,6 +8287,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8275,6 +8305,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       lz4js: 0.2.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -8297,12 +8328,14 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/client-logger/app-insights-logger:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/core-interfaces': workspace:~
@@ -8322,8 +8355,10 @@ importers:
       eslint-plugin-react-hooks: ~4.6.0
       mocha: ^10.2.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      tsc-multi: ^1.1.0
       tslib: ^1.10.0
       typescript: ~5.1.6
     dependencies:
@@ -8331,6 +8366,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
@@ -8347,8 +8383,10 @@ importers:
       eslint-plugin-react-hooks: 4.6.0_eslint@8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       tslib: 1.14.1
       typescript: 5.1.6
 
@@ -8377,6 +8415,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8405,6 +8444,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8438,6 +8478,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8470,6 +8511,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8492,6 +8534,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8513,6 +8556,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8552,6 +8596,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8590,12 +8635,14 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/oldest-client-observer:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -8613,6 +8660,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8623,6 +8671,7 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/protocol-definitions': 3.0.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../../dds/test-dds-utils
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -8635,6 +8684,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8668,6 +8718,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8700,6 +8751,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8728,6 +8780,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8755,6 +8808,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8790,6 +8844,7 @@ importers:
       eslint: ~8.50.0
       mocha: ^10.2.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^2.0.2
@@ -8828,6 +8883,7 @@ importers:
       eslint: 8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.2
@@ -8864,6 +8920,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8897,6 +8954,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8919,6 +8977,7 @@ importers:
       prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8940,6 +8999,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -8959,6 +9019,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8977,6 +9038,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
