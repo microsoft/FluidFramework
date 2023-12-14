@@ -1,0 +1,21 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "../../../common/build/build-common/api-extractor-base.json",
+	"messages": {
+		"extractorMessageReporting": {
+			// TODO: fix violations and remove overrides
+			"ae-forgotten-export": {
+				"logLevel": "warning",
+				"addToApiReportFile": true
+			},
+			"ae-undocumented": {
+				"logLevel": "warning",
+				"addToApiReportFile": true
+			},
+			"ae-unresolved-link": {
+				"logLevel": "warning",
+				"addToApiReportFile": true
+			}
+		}
+	}
+}

@@ -5,7 +5,7 @@
 import { expect } from "chai";
 
 import { PlainTextNode } from "../../../documentation-domain";
-import { RenderContext } from "../RenderContext";
+import { type RenderContext } from "../RenderContext";
 import { testRender } from "./Utilities";
 
 describe("PlainText Markdown rendering tests", () => {

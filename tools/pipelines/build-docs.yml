@@ -2,7 +2,14 @@
 # Licensed under the MIT License.
 
 # build-docs pipeline
-# This pipeline builds the main branch docs each time the client packages are built
+# This pipeline builds the main branch docs as well as previous major release branch docs each time the client packages are built.
+# Note that the method for getting the api json for main differs from previous versions. For main, the pipeline bundles
+# the published artifacts from other pipeline resources and publishes an artifact to the pipeline which can be later downloaded.
+# However, for previous version branches (in this case: 1.0) cannot run on the pipeline to generate resources. Thus, api-extractor
+# was run on 1.0 locally and manually published to the azure storage as "lts-1.0.tar.gz" which is later downloaded using 
+# the AzureCLI@2 task. 
+# For now, the only previous version which is manually uploaded is lts. However, for any previous versions which cannot run on the
+# pipeline, we assume that the api json content would be uploaded to the azure storage in the format: latest-${{version}}.tar.gz
 
 name: $(Build.BuildId)
 
@@ -200,12 +207,41 @@ stages:
             script: |
               pnpm i --frozen-lockfile
 
+        - task: Bash@3
+          displayName: Download and extract previous version API
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              # Run helper script to read versions.json
+              output=$(node docs/readVersionData.js)
+              
+              # Pipe script output and loop through each value in the array
+              echo "$output" | while IFS= read -r version; do
+                version=$(echo "$version" | sed 's/"//g')
+                echo "Version: $version"
+
+                echo "creating api-extractor-temp-$version folder"
+                mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-$version/doc-models
+
+                az storage blob download -f latest-$version.tar.gz -c 'api-extractor-json' -n latest-$version.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
+                
+                tar -xzf latest-$version.tar.gz -C _api-extractor-temp-$version/doc-models
+
+              done
+
         - task: Npm@1
           displayName: npm run build
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
+          # # disable running multi-version until 2.0 release
+          # displayName: npm run build:multi-version
+          # inputs:
+          #   command: 'custom'
+          #   workingDir: $(Build.SourcesDirectory)/docs
+          #   customCommand: 'run build:multi-version'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'

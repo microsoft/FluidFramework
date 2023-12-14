@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiModel } from "@microsoft/api-extractor-model";
+import { type ApiModel } from "@microsoft/api-extractor-model";
 
-import { ConfigurationBase } from "../../ConfigurationBase";
+import { type ConfigurationBase } from "../../ConfigurationBase";
 import { defaultConsoleLogger } from "../../Logging";
 import {
-	DocumentationSuiteOptions,
+	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
 } from "./DocumentationSuiteOptions";
 import {
-	ApiItemTransformationOptions,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationOptionsWithDefaults,
 } from "./TransformationOptions";
 

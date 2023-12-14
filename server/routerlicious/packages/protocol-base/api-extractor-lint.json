@@ -1,13 +1,4 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../api-extractor-lint-base.json",
-	"messages": {
-		"extractorMessageReporting": {
-			// TODO: remove once base config has this enabled as an error
-			"ae-incompatible-release-tags": {
-				"logLevel": "error",
-				"addToApiReportFile": false
-			}
-		}
-	}
+	"extends": "../../api-extractor-lint-base.json"
 }
