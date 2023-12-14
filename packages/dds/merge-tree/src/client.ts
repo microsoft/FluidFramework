@@ -439,7 +439,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
 			opArgs.op.type === MergeTreeDeltaType.OBLITERATE,
-			"Unexpected op type on range obliterate!",
+			0x866 /* Unexpected op type on range obliterate! */,
 		);
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
@@ -753,7 +753,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			assert(
 				segmentGroup.localSeq !== undefined,
-				"expected segment group localSeq to be defined",
+				0x867 /* expected segment group localSeq to be defined */,
 			);
 			const segmentPosition = this.findReconnectionPosition(segment, segmentGroup.localSeq);
 			let newOp: IMergeTreeDeltaOp | undefined;
