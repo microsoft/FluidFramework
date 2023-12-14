@@ -100,6 +100,6 @@
 	"typeValidation": {
 		"disabled": false,
 		"broken": {},
-		"typeRollupFile": "packageName.alpha.d.ts"
+		"typeRollupFile": "dist/build-tools.alpha.d.ts"
 	}
 }
