@@ -156,6 +156,7 @@ export {
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
+	mapTaggedChange,
 	noFailure,
 	OutputType,
 	verifyChangeRebaser,

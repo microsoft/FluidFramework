@@ -8,9 +8,10 @@ import { ICodecFamily, ICodecOptions } from "../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
+	RevisionMetadataSource,
 	TaggedChange,
+	mapTaggedChange,
 	rebaseChangeOverChanges,
-	tagChange,
 } from "../core";
 import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
 import { Mutable, fail } from "../util";
@@ -72,7 +73,7 @@ export class SharedTreeChangeFamily
 					flushDataChangeRun();
 					newChanges.push(change);
 				} else {
-					dataChangeRun.push(tagChange(change.innerChange, topChange.revision));
+					dataChangeRun.push(mapTaggedChange(topChange, change.innerChange));
 				}
 			}
 		}
@@ -90,7 +91,7 @@ export class SharedTreeChangeFamily
 					return {
 						type: "data",
 						innerChange: this.modularChangeFamily.invert(
-							tagChange(innerChange.innerChange, change.revision),
+							mapTaggedChange(change, innerChange.innerChange),
 							isRollback,
 						),
 						isConflicted: innerChange.isConflicted,
@@ -126,6 +127,7 @@ export class SharedTreeChangeFamily
 	public rebase(
 		change: SharedTreeChange,
 		over: TaggedChange<SharedTreeChange>,
+		revisionMetadata: RevisionMetadataSource,
 	): SharedTreeChange {
 		/**
 		 * Any SharedTreeChange (a list of sub-changes) that contains a schema change will cause ANY change that rebases over it to conflict.
@@ -164,10 +166,10 @@ export class SharedTreeChangeFamily
 			changes: [
 				{
 					type: "data",
-					innerChange: rebaseChangeOverChanges(
-						this.modularChangeFamily,
+					innerChange: this.modularChangeFamily.rebase(
 						dataChangeIntention.innerChange,
-						[tagChange(dataChangeOver.innerChange, over.revision)],
+						mapTaggedChange(over, dataChangeOver.innerChange),
+						revisionMetadata,
 					),
 					isConflicted: false,
 				},

@@ -26,6 +26,7 @@ export {
 	FinalChangeStatus,
 	makeAnonChange,
 	tagChange,
+	mapTaggedChange,
 	tagRollbackInverse,
 	TaggedChange,
 	RevisionMetadataSource,
