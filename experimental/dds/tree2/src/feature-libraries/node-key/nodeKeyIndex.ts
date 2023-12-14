@@ -35,7 +35,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	public static hasNodeKeyTreeSchema(schema: FlexTreeSchema): boolean {
 		// TODO: make TreeStoredSchema contain ViewSchema and compare by reference to nodeKeyTreeSchema.
 		const treeSchema = schema.nodeSchema.get(nodeKeyTreeIdentifier);
-		if (treeSchema === undefined || !(treeSchema instanceof LeafNodeSchema)) {
+		if (!(treeSchema instanceof LeafNodeSchema)) {
 			return false;
 		}
 		return treeSchema.leafValue === ValueSchema.String;

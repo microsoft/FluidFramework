@@ -712,6 +712,13 @@ export interface FlexTreeRequiredField<in out TTypes extends AllowedTypes> exten
 }
 
 // @alpha
+export interface FlexTreeSchema<out T extends TreeFieldSchema = TreeFieldSchema> extends SchemaCollection {
+    readonly adapters: Adapters;
+    readonly policy: FullSchemaPolicy;
+    readonly rootFieldSchema: T;
+}
+
+// @alpha
 export interface FlexTreeSequenceField<in out TTypes extends AllowedTypes> extends FlexTreeField {
     // (undocumented)
     [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
@@ -979,7 +986,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @alpha
 export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
-    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): FlexTreeView<TRoot> | undefined;
+    requireSchema<TRoot extends TreeFieldSchema>(schema: FlexTreeSchema<TRoot>, onSchemaIncompatible: () => void): FlexTreeView<TRoot> | undefined;
     schematizeInternal<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): FlexTreeView<TRoot>;
 }
 
@@ -1437,7 +1444,7 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     fieldNodeRecursive<Name extends TName, const T extends Unenforced<FlexImplicitFieldSchema>>(name: Name, t: T): FieldNodeSchema<`${TScope}.${Name}`, T>;
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<Unenforced<FlexTreeNodeSchema>>>(kind: Kind, ...allowedTypes: T): TreeFieldSchema<Kind, T>;
     intoLibrary(): SchemaLibrary;
-    intoSchema<const TSchema extends FlexImplicitFieldSchema>(root: TSchema): TreeSchema<NormalizeField<TSchema, TDefaultKind>>;
+    intoSchema<const TSchema extends FlexImplicitFieldSchema>(root: TSchema): FlexTreeSchema<NormalizeField<TSchema, TDefaultKind>>;
     map<Name extends TName, const T extends MapFieldSchema>(name: Name, fieldSchema: T): MapNodeSchema<`${TScope}.${Name}`, T>;
     mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(name: Name, t: T): MapNodeSchema<`${TScope}.${Name}`, T>;
     readonly name: string;
@@ -1466,7 +1473,7 @@ export interface SchemaCollection {
 
 // @alpha
 export interface SchemaConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema> {
-    readonly schema: TreeSchema<TRoot>;
+    readonly schema: FlexTreeSchema<TRoot>;
 }
 
 // @alpha
@@ -1701,13 +1708,13 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
     // (undocumented)
     readonly nodeKeys: NodeKeys;
     get root(): FlexTreeField;
-    readonly schema: TreeSchema;
+    readonly schema: FlexTreeSchema;
 }
 
 // @alpha
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
-    readonly schema: TreeSchema;
+    readonly schema: FlexTreeSchema;
 }
 
 // @alpha
@@ -1877,14 +1884,7 @@ export interface TreeOptions extends SharedTreeOptions {
 }
 
 // @alpha
-export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema> extends SchemaCollection {
-    readonly adapters: Adapters;
-    readonly policy: FullSchemaPolicy;
-    readonly rootFieldSchema: T;
-}
-
-// @alpha
-export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema;
+export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema;
 
 // @beta
 export enum TreeStatus {

@@ -516,6 +516,9 @@ export interface FlexTreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
 	readonly adapters: Adapters;
 }
 
+/**
+ * Converts a {@link FlexTreeSchema} into a {@link TreeStoredSchema}.
+ */
 export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 	return {
 		rootFieldSchema: treeSchema.rootFieldSchema,
@@ -523,6 +526,9 @@ export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 	};
 }
 
+/**
+ * Converts a {@link SchemaCollection} into a {@link StoredSchemaCollection}.
+ */
 export function intoStoredSchemaCollection(treeSchema: SchemaCollection): StoredSchemaCollection {
 	return {
 		nodeSchema: new Map(

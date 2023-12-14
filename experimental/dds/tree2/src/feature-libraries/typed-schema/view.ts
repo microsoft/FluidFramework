@@ -21,6 +21,9 @@ import { FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema";
  * A collection of View information for schema, including policy.
  */
 export class ViewSchema {
+	/**
+	 * Cached conversion of `schema` into a stored schema.
+	 */
 	public readonly storedSchema: TreeStoredSchema;
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
