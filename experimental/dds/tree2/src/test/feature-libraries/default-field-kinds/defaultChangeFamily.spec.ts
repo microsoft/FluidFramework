@@ -27,7 +27,6 @@ import {
 	buildForest,
 	cursorForJsonableTreeNode,
 	intoDelta,
-	intoStoredSchema,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
