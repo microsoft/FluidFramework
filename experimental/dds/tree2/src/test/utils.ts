@@ -49,7 +49,6 @@ import {
 	createMockNodeKeyManager,
 	TreeFieldSchema,
 	jsonableTreeFromCursor,
-	makeSchemaCodec,
 	mapFieldChanges,
 	mapFieldsChanges,
 	mapMarkList,
@@ -63,6 +62,7 @@ import {
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
 	mapRootChanges,
+	intoStoredSchema,
 } from "../feature-libraries";
 import {
 	moveToDetachedField,
@@ -112,6 +112,8 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+// eslint-disable-next-line import/no-internal-modules
+import { makeSchemaCodec } from "../feature-libraries/schema-index/codec";
 
 // Testing utilities
 
@@ -556,7 +558,7 @@ function contentToJsonableTree(content: TreeContent): JsonableTree[] {
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
 	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, content.schema);
+	expectSchemaEqual(tree.storedSchema, intoStoredSchema(content.schema));
 }
 
 export function expectSchemaEqual(
@@ -621,7 +623,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	const view = createTreeCheckout({
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(content.schema),
+		schema: new InMemoryStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	return new CheckoutFlexTreeView(
 		view,
@@ -658,7 +660,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	const branch = createTreeCheckout({
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(content.schema),
+		schema: new InMemoryStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(
@@ -770,7 +772,7 @@ export function expectJsonTree(
 export function initializeTestTree(
 	tree: ITreeCheckout,
 	state: JsonableTree | JsonableTree[] | undefined,
-	schema: TreeStoredSchema = wrongSchema,
+	schema: TreeStoredSchema = intoStoredSchema(wrongSchema),
 ): void {
 	if (state === undefined) {
 		tree.storedSchema.update(schema);

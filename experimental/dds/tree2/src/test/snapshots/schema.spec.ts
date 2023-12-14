@@ -4,7 +4,7 @@
  */
 
 import path from "path";
-import { encodeTreeSchema } from "../../feature-libraries";
+import { encodeTreeSchema, intoStoredSchema } from "../../feature-libraries";
 import { testTrees as schemaTestTrees } from "../testTrees";
 import {
 	createSchemaSnapshot,
@@ -27,7 +27,7 @@ describe("schema snapshots", () => {
 
 	for (const { name, schemaData } of schemaTestTrees) {
 		it(`${regenerateSnapshots ? "regenerate " : ""}for ${name}`, async () => {
-			const encoded = encodeTreeSchema(schemaData);
+			const encoded = encodeTreeSchema(intoStoredSchema(schemaData));
 
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (regenerateSnapshots) {

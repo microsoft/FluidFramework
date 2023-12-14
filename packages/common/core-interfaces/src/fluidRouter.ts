@@ -4,7 +4,7 @@
  */
 
 /**
- * @alpha
+ * @public
  */
 export interface IRequestHeader {
 	// TODO: Use `unknown` instead (API-Breaking)
@@ -13,7 +13,7 @@ export interface IRequestHeader {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface IRequest {
 	url: string;
@@ -21,7 +21,7 @@ export interface IRequest {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface IResponse {
 	mimeType: string;
@@ -33,27 +33,4 @@ export interface IResponse {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	headers?: { [key: string]: any };
 	stack?: string;
-}
-
-/**
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @alpha
- */
-export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
-
-/**
- * Request routing
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @alpha
- */
-export interface IProvideFluidRouter {
-	readonly IFluidRouter: IFluidRouter;
-}
-
-/**
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @alpha
- */
-export interface IFluidRouter extends IProvideFluidRouter {
-	request(request: IRequest): Promise<IResponse>;
 }

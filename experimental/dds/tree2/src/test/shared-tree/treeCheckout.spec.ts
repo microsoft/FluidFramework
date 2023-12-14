@@ -363,7 +363,7 @@ describe("sharedTreeView", () => {
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: TreeStoredSchema = {
-				nodeSchema: new Map([[leaf.number.name, leaf.number]]),
+				nodeSchema: new Map([[leaf.number.name, leaf.number.stored]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {

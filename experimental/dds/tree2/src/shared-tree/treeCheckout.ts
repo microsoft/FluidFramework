@@ -204,11 +204,23 @@ export interface ITransaction {
 	 * Start a new transaction.
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
+	 *
+	 * @remarks - Asynchronous transactions are not supported on the root checkout,
+	 * since it is always kept up-to-date with the latest remote edits and the results of this rebasing (which might invalidate
+	 * the transaction) is not visible to the application author.
+	 * Instead,
+	 *
+	 * 1. fork the root checkout
+	 * 2. run the transaction on the fork
+	 * 3. merge the fork back into the root checkout
+	 *
+	 * @privateRemarks - There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
+	 * AB#6488 tracks adding some enforcement to make it more clear to application authors that this is not supported.
 	 */
 	start(): void;
 	/**
 	 * Close this transaction by squashing its edits and committing them as a single edit.
-	 * If this is the root view and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+	 * If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
 	 */
 	commit(): TransactionResult.Commit;
 	/**

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,6 +40,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0"
 	},
 	"devDependencies": {
@@ -77,6 +78,32 @@
 			},
 			"RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {
 				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false
+			},
+			"VariableDeclaration_initialClusterCapacity": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_initialClusterCapacity": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeBase": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDataStore": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
 				"backCompat": false
 			}
 		}

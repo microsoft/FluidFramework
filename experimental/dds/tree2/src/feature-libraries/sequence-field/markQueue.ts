@@ -8,7 +8,7 @@ import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../../util";
 import { Mark } from "./types";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
-import { areOverlappingIdRanges, getInputCellId, splitMark } from "./utils";
+import { splitMark } from "./utils";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isVestigialEndpoint } from "./helperTypes";
 import { Mark, MarkList } from "./types";
 import { isNoopMark, tryMergeMarks as tryMergeMarks } from "./utils";
 
@@ -30,7 +31,12 @@ export class MarkListFactory<TNodeChange> {
 	}
 
 	public pushContent(mark: Mark<TNodeChange>): void {
-		if (isNoopMark(mark) && mark.changes === undefined && mark.cellId === undefined) {
+		if (
+			isNoopMark(mark) &&
+			mark.changes === undefined &&
+			mark.cellId === undefined &&
+			!isVestigialEndpoint(mark)
+		) {
 			this.pushOffset(mark.count);
 		} else {
 			if (this.offset > 0) {

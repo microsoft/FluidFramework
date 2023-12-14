@@ -38,7 +38,7 @@ import { createOdspAudienceMember } from "./odspAudience";
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
  * @sealed
- * @alpha
+ * @beta
  */
 export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -193,13 +193,11 @@ export class OdspClient {
 	}
 
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> | undefined =
-			await container.getEntryPoint();
-		assert(rootDataObject !== undefined, "entryPoint must exist");
-		// ! This "if" is needed for back-compat (older instances of IRootDataObject may not have the IRootDataObject property)
-		if (rootDataObject.IRootDataObject === undefined) {
-			return rootDataObject as IRootDataObject;
-		}
+		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		assert(
+			rootDataObject.IRootDataObject !== undefined,
+			0x878 /* entryPoint must be of type IRootDataObject */,
+		);
 		return rootDataObject.IRootDataObject;
 	}
 }

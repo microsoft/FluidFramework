@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NewlineKind } from "@rushstack/node-core-library";
+import { type NewlineKind } from "@rushstack/node-core-library";
 
 /**
  * Configuration for interacting with the file-system.

@@ -7,7 +7,7 @@
  * Base interface for event emitters.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IEvent} instead.
- * @internal
+ * @alpha
  */
 export interface IEvent {
 	/**
@@ -28,7 +28,7 @@ export interface IEvent {
  * Base interface for error event emitters.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IErrorEvent} instead.
- * @internal
+ * @alpha
  */
 export interface IErrorEvent extends IEvent {
 	/**
@@ -44,7 +44,7 @@ export interface IErrorEvent extends IEvent {
  * Base interface for event providers.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IEventProvider} instead.
- * @internal
+ * @alpha
  */
 export interface IEventProvider<TEvent extends IEvent> {
 	/**
@@ -85,7 +85,7 @@ export interface IEventProvider<TEvent extends IEvent> {
  * interface B will now extend interface A and its events
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#ExtendEventProvider} instead.
- * @internal
+ * @alpha
  */
 export type ExtendEventProvider<
 	TBaseEvent extends IEvent,
@@ -109,7 +109,7 @@ export type ExtendEventProvider<
  * The placeholder type that should be used instead of `this` in events.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IEventThisPlaceholder} instead.
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };
@@ -118,7 +118,7 @@ export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };
  * Does the type replacement by changing types of {@link IEventThisPlaceHolder} to `TThis`
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#ReplaceIEventThisPlaceHolder} instead.
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[]
@@ -130,7 +130,7 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
  * arguments and having the overload return `TTHis` as well
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#TransformedEvent} instead.
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TransformedEvent<TThis, E, A extends any[]> = (
@@ -148,7 +148,7 @@ export type TransformedEvent<TThis, E, A extends any[]> = (
  * If we need to move beyond 15 we should evaluate using a mapped type pattern like `{"event":(listenerArgs)=>void}`
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IEventTransformer} instead.
- * @internal
+ * @alpha
  */
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 	(event: infer E0, listener: (...args: infer A0) => void);

@@ -14,7 +14,7 @@ export {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	FieldNodeSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	Unenforced,
 	AllowedTypeSet,
 	MapFieldSchema,
@@ -27,6 +27,9 @@ export {
 	schemaIsObjectNode,
 	NormalizeObjectNodeFields,
 	NormalizeField,
+	intoStoredSchema,
+	allowedTypesSchemaSet,
+	intoStoredSchemaCollection,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
