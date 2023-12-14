@@ -213,7 +213,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor();
     // (undocumented)
-    get active(): boolean;
+    readonly active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -243,7 +243,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     lastSequenceNumber: number;
     // (undocumented)
-    get maxMessageSize(): number;
+    readonly maxMessageSize: number;
     // (undocumented)
     minimumSequenceNumber: number;
     // (undocumented)
@@ -453,8 +453,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     idCompressor?: IIdCompressor_2 & IIdCompressorCore_2;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
@@ -478,7 +476,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     processSignal(message: any, local: boolean): void;
     // (undocumented)
     quorum: MockQuorumClients;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;

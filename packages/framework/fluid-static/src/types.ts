@@ -5,7 +5,6 @@
 
 import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -38,7 +37,7 @@ export type LoadableObjectClass<T extends IFluidLoadable> =
  * @alpha
  */
 export type DataObjectClass<T extends IFluidLoadable> = {
-	readonly factory: IFluidDataStoreFactory;
+	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
 } & LoadableObjectCtor<T>;
 
 /**
@@ -107,7 +106,7 @@ export interface ContainerSchema {
  * @internal
  */
 export interface IProvideRootDataObject {
-	readonly IRootDataObject?: IRootDataObject;
+	readonly IRootDataObject: IRootDataObject;
 }
 
 /**
