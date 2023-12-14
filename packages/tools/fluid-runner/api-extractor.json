@@ -6,11 +6,11 @@
 			// TODO: fix violations and remove overrides
 			"ae-forgotten-export": {
 				"logLevel": "warning",
-				"addToApiReportFile": false
+				"addToApiReportFile": true
 			},
 			"ae-undocumented": {
 				"logLevel": "warning",
-				"addToApiReportFile": false
+				"addToApiReportFile": true
 			},
 			"ae-unresolved-link": {
 				"logLevel": "warning",

@@ -40,6 +40,9 @@ export interface ICodeLoaderBundle {
     fluidExport: Promise<IFluidFileConverter>;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IExportFileResponseSuccess" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "IExportFileResponseFailure" needs to be exported by the entry point index.d.ts
+//
 // @internal (undocumented)
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
@@ -76,6 +79,14 @@ export function validateAndParseTelemetryOptions(format?: string, props?: (strin
     success: true;
     telemetryOptions: ITelemetryOptions;
 };
+
+// Warnings were encountered during analysis:
+//
+// src/exportFile.ts:22:1 - (ae-undocumented) Missing documentation for "IExportFileResponse".
+// src/fluidRunner.ts:18:1 - (ae-undocumented) Missing documentation for "fluidRunner".
+// src/logger/fileLogger.ts:24:2 - (ae-undocumented) Missing documentation for "JSON".
+// src/logger/fileLogger.ts:25:2 - (ae-undocumented) Missing documentation for "CSV".
+// src/logger/loggerUtils.ts:29:35 - (ae-forgotten-export) The symbol "IFileLogger" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
