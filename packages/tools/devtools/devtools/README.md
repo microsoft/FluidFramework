@@ -6,15 +6,6 @@ It is used to power our associated [browser extension][browser-extension].
 -   Chrome: <https://aka.ms/fluid/devtool/chrome>
 -   Edge: <https://aka.ms/fluid/devtool/edge>
 
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
-
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
