@@ -854,10 +854,7 @@ export interface IDefaultEditBuilder {
     // (undocumented)
     optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
     // (undocumented)
-    sequenceField(field: FieldUpPath, shapeInfo?: {
-        schema: StoredSchemaCollection;
-        policy: FullSchemaPolicy;
-    }): SequenceFieldEditBuilder;
+    sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
     // (undocumented)
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
 }
