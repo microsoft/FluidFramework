@@ -77,7 +77,7 @@ async function computeInMemoryFullGitTree(
 ): Promise<IFullGitTree> {
 	const inMemoryWriteSummaryTreeOptions: IWriteSummaryTreeOptions = {
 		repoManager: inMemoryRepoManager,
-		enableLowIoWrite: true,
+		enableLowIoWrite: false,
 		precomputeFullTree: true,
 		currentPath: "",
 		// Use blank caches caches for in-memory repo manager. Otherwise, we will be referencing

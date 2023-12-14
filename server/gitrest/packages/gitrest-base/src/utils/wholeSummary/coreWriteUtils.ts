@@ -23,13 +23,43 @@ import {
 	convertWholeSummaryTreeEntryToSummaryObject,
 } from "./conversions";
 
+/**
+ * Options and flags for writing a summary tree.
+ */
 export interface IWriteSummaryTreeOptions {
+	/**
+	 * The Git repository manager to use for writing the summary tree.
+	 * This will be treated as the "final destination" for Git objects.
+	 */
 	repoManager: IRepositoryManager;
+	/**
+	 * Whether or not to precompute the full git tree for the written summary tree.
+	 * This will cause the returned {@link IFullGitTree} to contain the entire newly written Git tree.
+	 * When false, the returned {@link IFullGitTree} will only contain the shas of the newly written Git tree and whatever ended up in the blob cache.
+	 */
 	precomputeFullTree: boolean;
+	/**
+	 * The current path of the summary tree being written.
+	 * When writing the summary tree recursively, this will be updated for each level of the tree.
+	 * When writing from the root of the tree, this should be an empty string.
+	 */
 	currentPath: string;
+	/**
+	 * Whether or not to enable low-io write.
+	 * When true, the resulting tree written to the Git repo referenced by `repoManager` will contain a single blob.
+	 */
 	enableLowIoWrite: boolean;
+	/**
+	 * Tree cache used to store references to git trees. Utilized when precomputing full tree.
+	 */
 	treeCache: Record<string, ITree>;
+	/**
+	 * Blob cache used to store references to git blobs. Utilized when precomputing full tree.
+	 */
 	blobCache: Record<string, IBlob>;
+	/**
+	 * Cache used to store key/value pairs, where the key is a summary object handle (commitSha/treepath) and the value is the sha of the object at that path.
+	 */
 	entryHandleToObjectShaCache: Map<string, string>;
 }
 
