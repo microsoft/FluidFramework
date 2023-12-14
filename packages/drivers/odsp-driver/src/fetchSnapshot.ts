@@ -56,7 +56,7 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * Enum to support different types of snapshot formats.
- * @internal
+ * @alpha
  */
 export enum SnapshotFormatSupportType {
 	Json = 0,

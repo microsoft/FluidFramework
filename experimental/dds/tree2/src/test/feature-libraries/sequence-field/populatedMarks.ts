@@ -49,7 +49,6 @@ const detach: Populated<Detach> = {
 
 export const populatedMarks: PopulatedMark[] = [
 	{ count: 1, cellId, changes },
-	{ type: "Placeholder", count: 1, cellId, changes, id: brand(0), revision: tag },
 	{ type: "Insert", count: 1, cellId, changes, id: brand(0), revision: tag },
 	{
 		type: "MoveIn",

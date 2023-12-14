@@ -85,7 +85,7 @@ export {
  * Types supported by {@link IConfigProviderBase}.
  * @deprecated Use ConfigTypes from fluidFramework/core-interfaces
  *
- * @internal
+ * @alpha
  */
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -94,7 +94,7 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
  *
  * @deprecated Use IConfigProviderBase from fluidFramework/core-interfaces
  *
- * @internal
+ * @alpha
  */
 export interface IConfigProviderBase {
 	getRawConfig(name: string): ConfigTypes;
