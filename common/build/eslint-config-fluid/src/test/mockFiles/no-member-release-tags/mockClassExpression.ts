@@ -4,36 +4,39 @@
  */
 
 /**
- * @public
+ * @alpha
  */
-class MockClass {
+const mockClassExpression = class {
 	/**
 	 * @internal
 	 */
-	foo(): void {}
+	invalidInternal(): void {}
 
 	/**
 	 * @alpha
 	 */
-	bar(): void {}
+	invalidAlpha(): void {}
 
 	/**
 	 * @beta
 	 */
-	baz(): void {}
+	inValidBeta(): void {}
 
 	/**
 	 * @public
 	 */
-	bazz(): void {}
+	inValidPublic(): void {}
+
+	//@public
+	invalidLineComment(): void {}
 
 	/**
 	 * Correctly implemented method with valid comment.
 	 */
-	correctValidComment(): void {}
+	validBlockComment(): void {}
 
 	// Correctly implemented method with a slash comment.
-	correctSlashComment(): void {}
+	validLineComment(): void {}
 
-	correctNoComment(): void {}
+	validNoComment(): void {}
 }
