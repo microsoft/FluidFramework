@@ -57,24 +57,29 @@
                             }
                           }
                         ],
-                        "builds": [
-                          [
-                            1,
-                            {
-                              "version": 1,
-                              "identifiers": [],
-                              "shapes": [
-                                {
-                                  "c": {
-                                    "extraFields": 1,
-                                    "fields": []
-                                  }
-                                },
-                                {
-                                  "a": 0
+                        "builds": {
+                          "builds": [
+                            [
+                              1,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
                                 }
-                              ],
-                              "data": [
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
                                 1,
                                 [
                                   "com.fluidframework.leaf.handle",
@@ -86,9 +91,9 @@
                                   []
                                 ]
                               ]
-                            }
-                          ]
-                        ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",
                       "sequenceNumber": -9007199254740989,
@@ -160,39 +165,39 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.handle",
-                            true,
-                            {
-                              "type": "__fluid_handle__",
-                              "url": "/test/test"
-                            },
-                            []
-                          ]
-                        ]
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
                       }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.handle",
+                          true,
+                          {
+                            "type": "__fluid_handle__",
+                            "url": "/test/test"
+                          },
+                          []
+                        ]
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.0.0-internal.8.0.0",
+	"version": "2.0.0-internal.9.0.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -68,11 +68,11 @@
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",
-		"@fluidframework/devtools-core": "workspace:~",
-		"@fluidframework/devtools-view": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/devtools-core": "workspace:~",
+		"@fluidframework/devtools-view": "workspace:~",
 		"@microsoft/1ds-core-js": "^3.2.13",
 		"@microsoft/1ds-post-js": "^3.2.13",
 		"react": "^17.0.1",

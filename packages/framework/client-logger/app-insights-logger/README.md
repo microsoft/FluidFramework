@@ -50,7 +50,7 @@ const appInsightsClient = new ApplicationInsights({
 // Initializes the App Insights client. Without this, logs will not be sent to Azure.
 appInsightsClient.loadAppInsights();
 
-const logger = new FluidAppInsightsLogger(appInsightsClient);
+const logger = new createLogger(appInsightsClient);
 
 // Example of sending an event to app insights using the FluidAppInsightsLogger directly
 logger.send({ category: "mockEvent", eventName: "mockEventName" });

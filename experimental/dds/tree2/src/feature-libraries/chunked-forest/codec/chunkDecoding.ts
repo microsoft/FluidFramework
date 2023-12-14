@@ -13,8 +13,8 @@ import { SequenceChunk } from "../sequenceChunk";
 import { emptyChunk } from "../emptyChunk";
 import {
 	EncodedAnyShape,
-	EncodedChunk,
 	EncodedChunkShape,
+	EncodedFieldBatch,
 	EncodedInlineArray,
 	EncodedNestedArray,
 	EncodedTreeShape,
@@ -39,7 +39,7 @@ import {
 /**
  * Decode `chunk` into a TreeChunk.
  */
-export function decode(chunk: EncodedChunk): TreeChunk {
+export function decode(chunk: EncodedFieldBatch): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
 		new DecoderContext(chunk.identifiers, chunk.shapes),

@@ -4,7 +4,7 @@
  */
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
-import { DevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
 import {
 	AzureClient,
 	AzureContainerServices,
@@ -116,7 +116,7 @@ async function start(): Promise<void> {
 	const baseLogger = createChildLogger();
 
 	// Wrap telemetry logger for use with Devtools
-	const devtoolsLogger = new DevtoolsLogger(baseLogger);
+	const devtoolsLogger = createDevtoolsLogger(baseLogger);
 
 	const clientProps = {
 		connection: connectionConfig,

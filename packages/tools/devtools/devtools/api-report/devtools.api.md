@@ -5,8 +5,9 @@
 ```ts
 
 import { ContainerKey } from '@fluidframework/devtools-core';
-import { DevtoolsLogger } from '@fluidframework/devtools-core';
+import { createDevtoolsLogger } from '@fluidframework/devtools-core';
 import { HasContainerKey } from '@fluidframework/devtools-core';
+import { IDevtoolsLogger } from '@fluidframework/devtools-core';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 
@@ -17,12 +18,12 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 
 export { ContainerKey }
 
-export { DevtoolsLogger }
+export { createDevtoolsLogger }
 
 // @internal
 export interface DevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
-    logger?: DevtoolsLogger;
+    logger?: IDevtoolsLogger;
 }
 
 export { HasContainerKey }
@@ -32,6 +33,8 @@ export interface IDevtools extends IDisposable {
     closeContainerDevtools(id: string): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
+
+export { IDevtoolsLogger }
 
 // @internal
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
