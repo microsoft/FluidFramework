@@ -75,6 +75,7 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  * @returns The blob in string format
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
 	IsoBuffer.from(blob).toString(encoding);
