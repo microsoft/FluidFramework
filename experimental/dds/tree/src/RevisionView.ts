@@ -13,7 +13,7 @@ import { HasVariadicTraits } from './ChangeTypes';
 
 /**
  * An immutable view of a distributed tree.
- * @internal
+ * @alpha
  */
 export class RevisionView extends TreeView {
 	/**
@@ -86,7 +86,7 @@ export class RevisionView extends TreeView {
 
 /**
  * An view of a distributed tree that is part of an ongoing transaction between `RevisionView`s.
- * @internal
+ * @alpha
  */
 export class TransactionView extends TreeView {
 	/** Conclude a transaction by generating an immutable `RevisionView` from this view */

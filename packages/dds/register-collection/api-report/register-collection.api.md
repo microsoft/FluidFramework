@@ -16,7 +16,7 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @internal
+// @alpha
 export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
@@ -39,7 +39,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegis
     write(key: string, value: T): Promise<boolean>;
 }
 
-// @internal
+// @alpha
 export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCollectionFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -55,7 +55,7 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
     get type(): string;
 }
 
-// @internal
+// @alpha
 export interface IConsensusRegisterCollection<T = any> extends ISharedObject<IConsensusRegisterCollectionEvents> {
     keys(): string[];
     read(key: string, policy?: ReadPolicy): T | undefined;
@@ -63,13 +63,13 @@ export interface IConsensusRegisterCollection<T = any> extends ISharedObject<ICo
     write(key: string, value: T): Promise<boolean>;
 }
 
-// @internal
+// @alpha
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
@@ -77,7 +77,7 @@ export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
     load(document: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
 }
 
-// @internal
+// @alpha
 export enum ReadPolicy {
     // (undocumented)
     Atomic = 0,

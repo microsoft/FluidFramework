@@ -26,7 +26,7 @@ export interface IClientConfig {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOdspAuthRequestInfo {
 	accessToken: string;
@@ -59,12 +59,12 @@ type TokenRequestBody = TokenRequestCredentials & {
 };
 
 /**
- * @internal
+ * @alpha
  */
 export const getOdspScope = (server: string) =>
 	`offline_access ${getSiteUrl(server)}/AllSites.Write`;
 /**
- * @internal
+ * @alpha
  */
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
