@@ -33,6 +33,7 @@ export type {
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
 export type {
+	ICreateInfo,
 	IDirectory,
 	IDirectoryClearOperation,
 	IDirectoryCreateSubDirectoryOperation,
