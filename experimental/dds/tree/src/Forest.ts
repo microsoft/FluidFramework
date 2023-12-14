@@ -66,9 +66,6 @@ export interface Delta<NodeId> {
 	readonly removed: readonly NodeId[];
 }
 
-/**
- * @alpha
- */
 interface ForestState {
 	nodes: BTree<NodeId, ForestNode>;
 	expensiveValidation: boolean;
