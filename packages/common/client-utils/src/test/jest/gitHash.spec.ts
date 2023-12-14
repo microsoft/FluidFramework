@@ -13,9 +13,10 @@ import path from "node:path";
 import rewire from "rewire";
 
 import * as HashNode from "../../hashFileNode";
+// import * as HashBrowser from "../../hashFileBrowser";
 
 // Use rewire to access private functions
-const HashBrowser = rewire("../../hashFileBrowser");
+const HashBrowser = rewire("../../hashFileBrowser.cjs");
 
 async function getFileContents(p: string): Promise<Buffer> {
 	return new Promise<Buffer>((resolve, reject) => {
