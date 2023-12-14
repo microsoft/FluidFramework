@@ -28,7 +28,7 @@ export class SharedTreeChangeFamily
 		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		ChangeRebaser<SharedTreeChange>
 {
-	public static emptyChange: SharedTreeChange = {
+	public static readonly emptyChange: SharedTreeChange = {
 		changes: [],
 	};
 
