@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { ICodecOptions, noopValidator } from "../codec";
 import {
 	Compatibility,
@@ -38,12 +39,13 @@ import {
 	nodeKeyFieldKey as defailtNodeKeyFieldKey,
 	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
-	TreeSchema,
+	FlexTreeSchema,
 	ViewSchema,
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
+	makeFieldBatchCodec,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, disposeSymbol, fail } from "../util";
@@ -132,7 +134,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * instead of a separate callback.
 	 */
 	requireSchema<TRoot extends TreeFieldSchema>(
-		schema: TreeSchema<TRoot>,
+		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 	): FlexTreeView<TRoot> | undefined;
 }
@@ -179,11 +181,13 @@ export class SharedTree
 				: buildForest();
 		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
+		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			schema,
 			defaultSchemaPolicy,
 			options.summaryEncodeType,
+			fieldBatchCodec,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
@@ -232,7 +236,7 @@ export class SharedTree
 	}
 
 	public requireSchema<TRoot extends TreeFieldSchema>(
-		schema: TreeSchema<TRoot>,
+		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
@@ -295,7 +299,11 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): CheckoutFlexTreeView<TRoot> {
-		assert(this.hasView2 === false, 0x7f3 /* Cannot create second view from tree. */);
+		if (this.hasView2 === true) {
+			throw new UsageError(
+				"Only one view can be constructed from a given tree at a time. Dispose of the first before creating a second.",
+			);
+		}
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
 		// This will improve support for readonly documents, cross version collaboration and attribution.
@@ -306,8 +314,8 @@ export class SharedTree
 			initializeContent(this.view, config.schema, () => {
 				const field = { field: rootFieldKey, parent: undefined };
 				const content = normalizeNewFieldContent(
-					{ schema: this.storedSchema },
-					this.storedSchema.rootFieldSchema,
+					{ schema: config.schema },
+					config.schema.rootFieldSchema,
 					config.initialTree,
 				);
 				switch (this.storedSchema.rootFieldSchema.kind.identifier) {

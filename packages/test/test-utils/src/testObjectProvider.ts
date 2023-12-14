@@ -40,7 +40,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOpProcessingController {
 	processIncoming(...containers: IContainer[]): Promise<void>;

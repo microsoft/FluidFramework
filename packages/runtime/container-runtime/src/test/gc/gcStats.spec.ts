@@ -9,11 +9,11 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -120,7 +120,6 @@ describe("Garbage Collection Stats", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
-			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {
 				gcMessagesCount++;
 				lastGCMessage = message;
@@ -316,7 +315,7 @@ describe("Garbage Collection Stats", () => {
 		it("can generate stats with deleted nodes - sweep enabled", async () => {
 			// Create garbage collector with sweep enabled.
 			garbageCollector = createGarbageCollector({
-				gcOptions: { gcSweepGeneration: 1, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
 			});
 
 			let previousGCMessagesCount = gcMessagesCount;
@@ -371,7 +370,7 @@ describe("Garbage Collection Stats", () => {
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep enabled", async () => {
 			garbageCollector = createGarbageCollector({
-				gcOptions: { gcSweepGeneration: 1, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
 			});
 
 			const expectedStats = initialStats;

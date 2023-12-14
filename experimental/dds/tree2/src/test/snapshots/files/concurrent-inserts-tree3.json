@@ -166,9 +166,43 @@
                                   ]
                                 }
                               }
-                            }
+                            ]
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              0,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "y",
+                                  []
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000003",
                       "sequenceNumber": -9007199254740990,
@@ -178,28 +212,47 @@
                       "change": {
                         "changes": [
                           {
-                            "data": {
-                              "maxId": 0,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
-                                    {
-                                      "count": 1,
-                                      "effect": {
-                                        "insert": {
-                                          "id": 0
-                                        }
-                                      },
-                                      "cellId": {
-                                        "localId": 0
-                                      }
-                                    }
-                                  ]
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 1
+                                  }
+                                },
+                                "cellId": {
+                                  "localId": 1
                                 }
-                              ],
-                              "builds": [
+                              }
+                            ]
+                          }
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              1,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
                                 [
                                   0,
                                   {
@@ -228,9 +281,9 @@
                                   }
                                 ]
                               ]
-                            }
+                            ]
                           }
-                        ]
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",
                       "sequenceNumber": -9007199254740989,
@@ -292,7 +345,54 @@
                               ]
                             }
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              0,
+                              0
+                            ],
+                            [
+                              1,
+                              1
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "a",
+                                  []
+                                ]
+                              ],
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "c",
+                                  []
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000005",
                       "sequenceNumber": -9007199254740988,
@@ -302,31 +402,50 @@
                       "change": {
                         "changes": [
                           {
-                            "data": {
-                              "maxId": 1,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
-                                    {
-                                      "count": 2
-                                    },
-                                    {
-                                      "count": 2,
-                                      "effect": {
-                                        "insert": {
-                                          "id": 0
-                                        }
-                                      },
-                                      "cellId": {
-                                        "localId": 0
-                                      }
-                                    }
-                                  ]
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "count": 3
+                              },
+                              {
+                                "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 2
+                                  }
+                                },
+                                "cellId": {
+                                  "localId": 2
                                 }
-                              ],
-                              "builds": [
+                              }
+                            ]
+                          }
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              2,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
                                 [
                                   0,
                                   {
@@ -382,9 +501,9 @@
                                   }
                                 ]
                               ]
-                            }
+                            ]
                           }
-                        ]
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000006",
                       "sequenceNumber": -9007199254740987,
@@ -394,31 +513,47 @@
                       "change": {
                         "changes": [
                           {
-                            "data": {
-                              "maxId": 2,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
-                                    {
-                                      "count": 3
-                                    },
-                                    {
-                                      "count": 1,
-                                      "effect": {
-                                        "insert": {
-                                          "id": 2
-                                        }
-                                      },
-                                      "cellId": {
-                                        "localId": 2
-                                      }
-                                    }
-                                  ]
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 2
+                                  }
+                                },
+                                "cellId": {
+                                  "localId": 2
                                 }
-                              ],
-                              "builds": [
+                              }
+                            ]
+                          }
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              2,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
                                 [
                                   2,
                                   {
@@ -447,9 +582,9 @@
                                   }
                                 ]
                               ]
-                            }
+                            ]
                           }
-                        ]
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000007",
                       "sequenceNumber": -9007199254740986,
@@ -511,7 +646,54 @@
                               ]
                             }
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              0,
+                              0
+                            ],
+                            [
+                              1,
+                              1
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "d",
+                                  []
+                                ]
+                              ],
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "e",
+                                  []
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-00000000000a",
                       "sequenceNumber": -9007199254740985,
@@ -521,31 +703,50 @@
                       "change": {
                         "changes": [
                           {
-                            "data": {
-                              "maxId": 2,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
-                                    {
-                                      "count": 2
-                                    },
-                                    {
-                                      "count": 2,
-                                      "effect": {
-                                        "insert": {
-                                          "id": 0
-                                        }
-                                      },
-                                      "cellId": {
-                                        "localId": 0
-                                      }
-                                    }
-                                  ]
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "count": 3
+                              },
+                              {
+                                "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 2
+                                  }
+                                },
+                                "cellId": {
+                                  "localId": 2
                                 }
-                              ],
-                              "builds": [
+                              }
+                            ]
+                          }
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              2,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
                                 [
                                   0,
                                   {
@@ -601,9 +802,9 @@
                                   }
                                 ]
                               ]
-                            }
+                            ]
                           }
-                        ]
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-00000000000b",
                       "sequenceNumber": -9007199254740984,
@@ -777,68 +978,68 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "z",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "x",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "d",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "f",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "e",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "y",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "a",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "b",
-                            [],
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "c",
-                            []
-                          ]
-                        ]
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
                       }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "z",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "x",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "d",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "f",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "e",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "y",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "a",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "b",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "c",
+                          []
+                        ]
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }

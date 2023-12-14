@@ -150,6 +150,8 @@ export class Chunker implements IChunker {
 /**
  * Get a TreeChunk for the current node (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
+ *
+ * @param cursor - cursor in nodes mode
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
 	return chunkRange(cursor, policy, 1, true)[0];
@@ -164,6 +166,18 @@ export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
 	const started = cursor.firstNode();
 	assert(started, 0x57c /* field to chunk should have at least one node */);
 	return chunkRange(cursor, policy, length, false);
+}
+
+/**
+ * Get a TreeChunk for the current field (and its children) of cursor.
+ * Like {@link chunkField}, but forces the results into a single TreeChunk.
+ */
+export function chunkFieldSingle(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
+	const chunks = chunkField(cursor, policy);
+	if (chunks.length === 1) {
+		return chunks[0];
+	}
+	return new SequenceChunk(chunks);
 }
 
 /**
@@ -323,6 +337,12 @@ function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
 	);
 }
 
+/**
+ * @param cursor - cursor in nodes mode
+ * @param policy - heuristics to impact chunking
+ * @param length - how many nodes to process (at the top level)
+ * @param skipLastNavigation - if true, leaves the cursor at the last node instead of moving off of it.
+ */
 export function chunkRange(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkPolicy,

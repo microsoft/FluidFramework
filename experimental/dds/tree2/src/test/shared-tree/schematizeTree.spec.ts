@@ -5,12 +5,13 @@
 import { strict as assert, fail } from "assert";
 import {
 	Any,
-	TreeSchema,
+	FlexTreeSchema,
 	TreeFieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	NewFieldContent,
+	intoStoredSchema,
 } from "../../feature-libraries";
 import { CheckoutEvents, ITreeCheckout } from "../../shared-tree";
 import { AllowedUpdateType, TreeStoredSchema, TreeStoredSchemaRepository } from "../../core";
@@ -55,7 +56,7 @@ function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
 } {
 	return {
 		storedSchema: repository,
-		updateSchema: (newSchema: TreeSchema) => {
+		updateSchema: (newSchema: TreeStoredSchema) => {
 			// This test repository applies the schema immediately.
 			repository.apply(newSchema);
 		},
@@ -76,7 +77,7 @@ describe("schematizeTree", () => {
 						count++;
 					});
 					assert.equal(count, 1);
-					expectSchema(storedSchema, content.schema);
+					expectSchema(storedSchema, intoStoredSchema(content.schema));
 				});
 
 				it("is compatible", () => {
@@ -136,7 +137,7 @@ describe("schematizeTree", () => {
 
 	describe("schematize", () => {
 		describe("noop upgrade", () => {
-			const testCases: [string, TreeSchema][] = [
+			const testCases: [string, FlexTreeSchema][] = [
 				["empty", emptySchema],
 				["basic-optional", schema],
 				["basic-value", schemaValueRoot],
@@ -145,7 +146,7 @@ describe("schematizeTree", () => {
 			for (const [name, data] of testCases) {
 				it(name, () => {
 					const events = createEmitter<CheckoutEvents>();
-					const storedSchema = new TreeStoredSchemaRepository(data);
+					const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(data));
 
 					// Error if modified
 					storedSchema.on("afterSchemaChange", () => {
@@ -163,18 +164,18 @@ describe("schematizeTree", () => {
 
 		it("upgrade works", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(schema);
+			const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
 
 			schematize(events, makeSchemaRepository(storedSchema), {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				schema: schemaGeneralized,
 			});
-			expectSchema(storedSchema, schemaGeneralized);
+			expectSchema(storedSchema, intoStoredSchema(schemaGeneralized));
 		});
 
 		it("upgrade schema errors when in AllowedUpdateType.None", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(schema);
+			const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
 			assert.throws(() => {
 				schematize(events, makeSchemaRepository(storedSchema), {
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -185,7 +186,9 @@ describe("schematizeTree", () => {
 
 		it("incompatible upgrade errors and does not modify schema", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(schemaGeneralized);
+			const storedSchema = new TreeStoredSchemaRepository(
+				intoStoredSchema(schemaGeneralized),
+			);
 
 			let modified = false;
 			storedSchema.on("afterSchemaChange", () => {
@@ -201,12 +204,12 @@ describe("schematizeTree", () => {
 
 			// Schema should be unchanged
 			assert(!modified);
-			expectSchema(storedSchema, schemaGeneralized);
+			expectSchema(storedSchema, intoStoredSchema(schemaGeneralized));
 		});
 
 		it("errors at correct time when schema changes to not be compatible with view schema", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(schema);
+			const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
 
 			schematize(events, makeSchemaRepository(storedSchema), {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
@@ -214,11 +217,11 @@ describe("schematizeTree", () => {
 			});
 
 			// transient should be ignored.
-			storedSchema.apply(schema);
-			storedSchema.apply(schemaGeneralized);
+			storedSchema.apply(intoStoredSchema(schema));
+			storedSchema.apply(intoStoredSchema(schemaGeneralized));
 			events.emit("afterBatch");
 
-			storedSchema.apply(schema);
+			storedSchema.apply(intoStoredSchema(schema));
 			assert.throws(() => events.emit("afterBatch"));
 		});
 	});

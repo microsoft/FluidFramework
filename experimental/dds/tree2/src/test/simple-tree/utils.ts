@@ -7,7 +7,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	TreeFieldSchema,
 	ImplicitFieldSchema as OldImplicitFieldSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	InsertableFlexField,
 } from "../../feature-libraries";
 import { InsertableTreeRoot, TreeFieldInner, getProxyForField } from "../../simple-tree";
@@ -45,8 +45,8 @@ export function makeOldSchema<const TSchema extends OldImplicitFieldSchema>(
  * @deprecated - use getRoot instead.
  */
 export function getOldRoot<TRoot extends TreeFieldSchema>(
-	schema: TreeSchema<TRoot>,
-	initialTree: InsertableTreeRoot<TreeSchema<TRoot>>,
+	schema: FlexTreeSchema<TRoot>,
+	initialTree: InsertableTreeRoot<FlexTreeSchema<TRoot>>,
 ): TreeFieldInner<TRoot["kind"], TRoot["allowedTypes"], "maybeEmpty"> {
 	const tree = flexTreeWithContent({
 		schema,
@@ -59,23 +59,30 @@ export function getOldRoot<TRoot extends TreeFieldSchema>(
  * Helper for making small test schemas.
  */
 export function makeSchema<TSchema extends ImplicitFieldSchema>(
-	fn: (factory: SchemaFactory<string>) => TSchema,
+	fn: (factory: SchemaFactory) => TSchema,
 ) {
 	return fn(new SchemaFactory(`test.schema.${Math.random().toString(36).slice(2)}`));
+}
+
+// Returns true if the given function is a class constructor (i.e., should be invoked with 'new')
+// eslint-disable-next-line @typescript-eslint/ban-types
+function isCtor(candidate: Function) {
+	return candidate.prototype?.constructor.name !== undefined;
 }
 
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
  */
 export function getRoot<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema | ((factory: SchemaFactory<string>) => TSchema),
-	data: InsertableTreeFieldFromImplicitField<TSchema>,
+	schema: TSchema | ((factory: SchemaFactory) => TSchema),
+	initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	if (typeof schema === "function") {
+	// Schema objects may also be class constructors.
+	if (typeof schema === "function" && !isCtor(schema)) {
 		// eslint-disable-next-line no-param-reassign
-		schema = makeSchema(schema as (builder: SchemaFactory<string>) => TSchema);
+		schema = makeSchema(schema as (builder: SchemaFactory) => TSchema);
 	}
-	const config = new TreeConfiguration(schema, () => data);
+	const config = new TreeConfiguration(schema as TSchema, initialTree);
 	const factory = new TreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,

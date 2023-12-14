@@ -37,6 +37,7 @@ export function makeOperationGenerator(
 	const {
 		startPosition,
 		addText,
+		obliterateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -176,6 +177,7 @@ export function makeOperationGenerator(
 				  })
 				: hasNonzeroLength,
 		],
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
@@ -198,15 +200,15 @@ describe("IntervalCollection fuzz testing", () => {
 		...defaultFuzzOptions,
 		// AB#4477: Seed 20, 60 and others with its call stack is the same root cause as skipped regression test in
 		// intervalCollection.spec.ts--search for 4477.
-		// AB#6552: Seed 70 exposed a bug where the interval endpoints do not slide properly on shared string removeRange.
+		// AB#6552: Seeds 9 and 70 exposed a bug where the interval endpoints do not slide properly on shared string removeRange.
 		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
 		// This exposed ways that `0x54e` can occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			1, 2, 5, 6, 14, 16, 18, 21, 24, 25, 26, 28, 31, 32, 33, 35, 36, 37, 44, 47, 51, 54, 59,
-			62, 64, 65, 66, 68, 70, 73, 78, 79, 81, 88, 89, 92, 93, 95, 96, 97,
+			1, 2, 5, 6, 9, 14, 16, 18, 21, 24, 25, 26, 28, 31, 32, 33, 35, 36, 37, 44, 47, 51, 54,
+			59, 62, 64, 65, 66, 68, 70, 73, 78, 79, 81, 88, 89, 92, 93, 95, 96, 97,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,

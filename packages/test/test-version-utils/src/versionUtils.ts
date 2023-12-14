@@ -288,7 +288,7 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
 	// some of Node's module loading logic here.
 	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
-	const pkgJson: { main?: string; exports?: string | Record<string, string> } = JSON.parse(
+	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
 		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
 	);
 	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
@@ -308,7 +308,8 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 		if (typeof pkgJson.exports === "string") {
 			primaryExport = pkgJson.exports;
 		} else {
-			primaryExport = pkgJson.exports["."];
+			const exp = pkgJson.exports["."];
+			primaryExport = typeof exp === "string" ? exp : exp.require.default;
 			if (primaryExport === undefined) {
 				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
 			}

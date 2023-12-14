@@ -114,7 +114,52 @@
                               }
                             }
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              0,
+                              0
+                            ],
+                            [
+                              1,
+                              1
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "has-sequence-map.SeqMap",
+                                  false,
+                                  []
+                                ]
+                              ],
+                              [
+                                1,
+                                [
+                                  "has-sequence-map.SeqMap",
+                                  false,
+                                  []
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000003",
                       "sequenceNumber": -9007199254740990,
@@ -304,42 +349,42 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "has-sequence-map.SeqMap",
+                          false,
                           [
-                            "has-sequence-map.SeqMap",
-                            false,
+                            "foo",
                             [
-                              "foo",
-                              [
-                                "has-sequence-map.SeqMap",
-                                false,
-                                []
-                              ]
+                              "has-sequence-map.SeqMap",
+                              false,
+                              []
                             ]
                           ]
                         ]
-                      }
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }

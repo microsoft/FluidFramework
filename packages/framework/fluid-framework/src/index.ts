@@ -32,12 +32,8 @@ export type {
 	MemberChangedListener,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
-export {
-	DOProviderContainerRuntimeFactory,
-	FluidContainer,
-	ServiceAudience,
-} from "@fluidframework/fluid-static";
 export type {
+	ICreateInfo,
 	IDirectory,
 	IDirectoryClearOperation,
 	IDirectoryCreateSubDirectoryOperation,

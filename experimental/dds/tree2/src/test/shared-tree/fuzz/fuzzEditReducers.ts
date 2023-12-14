@@ -15,7 +15,7 @@ import {
 } from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
-import { ISharedTree, ITreeCheckout, FlexTreeView, SharedTreeFactory } from "../../../shared-tree";
+import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { Revertible } from "../../../core";
 import {
 	FieldEdit,
@@ -26,8 +26,8 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
-import { fuzzNode, fuzzSchema, fuzzViewFromTree, isRevertibleSharedTreeView } from "./fuzzUtils";
-import { viewFromState } from "./fuzzEditGenerators";
+import { fuzzNode, fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
+import { FuzzTestState, viewFromState } from "./fuzzEditGenerators";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
@@ -42,10 +42,10 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		}
 	},
 	transaction: (state, operation) => {
-		applyTransactionEdit(fuzzViewFromTree(state.client.channel), operation.contents);
+		applyTransactionEdit(state, operation.contents);
 	},
 	undoRedo: (state, operation) => {
-		const view = fuzzViewFromTree(state.client.channel);
+		const view = viewFromState(state).checkout;
 		assert(isRevertibleSharedTreeView(view));
 		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
 	},
@@ -222,22 +222,41 @@ function applyOptionalFieldEdit(
 	}
 }
 
-export function applyTransactionEdit(tree: ITreeCheckout, contents: FuzzTransactionType): void {
+export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransactionType): void {
+	state.transactionViews ??= new Map();
+	let view = state.transactionViews.get(state.client.channel);
+	if (view === undefined) {
+		assert(
+			contents.fuzzType === "transactionStart",
+			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
+		);
+		view = viewFromState(state).fork();
+		state.transactionViews.set(state.client.channel, view);
+	}
+
+	const { checkout } = view;
 	switch (contents.fuzzType) {
 		case "transactionStart": {
-			tree.transaction.start();
+			checkout.transaction.start();
 			break;
 		}
 		case "transactionCommit": {
-			tree.transaction.commit();
+			checkout.transaction.commit();
 			break;
 		}
 		case "transactionAbort": {
-			tree.transaction.abort();
+			checkout.transaction.abort();
 			break;
 		}
 		default:
 			fail("Invalid edit.");
+	}
+
+	if (!checkout.transaction.inProgress()) {
+		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
+		state.transactionViews.delete(state.client.channel);
+		const rootView = viewFromState(state);
+		rootView.checkout.merge(checkout);
 	}
 }
 

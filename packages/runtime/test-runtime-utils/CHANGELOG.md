@@ -1,5 +1,37 @@
 # @fluidframework/test-runtime-utils
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   datastore-definitions: Jsonable and Serializable now require a generic parameter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `Jsonable` and `Serializable` types from @fluidframework/datastore-definitions now require a generic parameter and
+    if that type is `any` or `unknown`will return a new result `JsonableTypeWith<>` that more accurately represents the
+    limitation of serialization.
+
+    Additional modifications:
+
+    -   `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
+        `void`.
+    -   Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
+    -   Recursive types with arrays (`[]`) are now supported.
+
+    `Serializable` is commonly used for DDS values and now requires more precision when using them. For example SharedMatrix
+    (unqualified) has an `any` default that meant values were `Serializable<any>` (i.e. `any`), but now `Serializable<any>`
+    is `JsonableTypeWith<IFluidHandle>` which may be problematic for reading or writing. Preferred correction is to specify
+    the value type but casting through `any` may provide a quick fix.
+
+-   test-runtime-utils: MockDeltaManager class property type changes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `active` and `maxMessageSize` properties on the `MockDeltaManager` class have changed from property getters to
+    `readonly` fields. While this is an API change, there should be no changes required on the consumer side since calling
+    code should remain the same.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

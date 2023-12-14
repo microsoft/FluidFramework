@@ -15,10 +15,11 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	allowsRepoSuperset,
-	TreeSchema,
+	FlexTreeSchema,
 	TreeFieldSchema,
 	ViewSchema,
 	InsertableFlexField,
+	intoStoredSchema,
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISubscribable } from "../events";
@@ -41,7 +42,7 @@ export function initializeContent(
 		storedSchema: ITreeCheckout["storedSchema"];
 		updateSchema: ITreeCheckout["updateSchema"];
 	},
-	schema: TreeSchema,
+	newSchema: FlexTreeSchema,
 	setInitialTree: () => void,
 ): void {
 	assert(
@@ -49,6 +50,7 @@ export function initializeContent(
 		0x743 /* cannot initialize after a schema is set */,
 	);
 
+	const schema = intoStoredSchema(newSchema);
 	const rootSchema = schema.rootFieldSchema;
 	const rootKind = rootSchema.kind.identifier;
 
@@ -136,7 +138,7 @@ export function schematize(
 					);
 				}
 				if (compatibility.write !== Compatibility.Compatible) {
-					schemaRepository.updateSchema(config.schema);
+					schemaRepository.updateSchema(intoStoredSchema(config.schema));
 				}
 
 				break;
@@ -214,7 +216,7 @@ export interface SchemaConfiguration<TRoot extends TreeFieldSchema = TreeFieldSc
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TreeSchema<TRoot>;
+	readonly schema: FlexTreeSchema<TRoot>;
 }
 
 /**

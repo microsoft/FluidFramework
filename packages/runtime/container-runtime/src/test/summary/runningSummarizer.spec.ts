@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryBaseEvent,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -17,12 +21,7 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	MockLogger,
-	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";

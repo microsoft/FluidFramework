@@ -265,9 +265,13 @@ describe("SharedString interval collections", () => {
 
 		// Regression test for bug described in <https://dev.azure.com/fluidframework/internal/_workitems/edit/4477>
 		//
-		// this test involves a crash inside RBTree when multiple intervals slide
+		// This test involves a crash inside RBTree when multiple intervals slide
 		// off the string
-		it.skip("passes regression test for #4477", () => {
+		//
+		// More specifically, previously we didn't properly clear the segment
+		// on local references which became detached, which caused crashes on
+		// some IntervalCollection workflows
+		it("passes regression test for #4477", () => {
 			sharedString.insertText(0, "ABC");
 			sharedString.insertText(0, "D");
 			// DABC

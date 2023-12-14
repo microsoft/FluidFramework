@@ -51,6 +51,10 @@ export interface RemoveRange extends RangeSpec {
 	type: "removeRange";
 }
 
+export interface ObliterateRange extends RangeSpec {
+	type: "obliterateRange";
+}
+
 // For non-interval collection fuzzing, annotating text would also be useful.
 export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	type: "addInterval";
@@ -86,6 +90,7 @@ export interface RevertibleWeights {
 	revertWeight: number;
 	addText: number;
 	removeRange: number;
+	obliterateRange: number;
 	addInterval: number;
 	deleteInterval: number;
 	changeInterval: number;
@@ -93,7 +98,7 @@ export interface RevertibleWeights {
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
-export type TextOperation = AddText | RemoveRange;
+export type TextOperation = AddText | RemoveRange | ObliterateRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
@@ -112,6 +117,7 @@ export interface SharedStringOperationGenerationConfig {
 	weights?: {
 		addText: number;
 		removeRange: number;
+		obliterateRange: number;
 	};
 }
 
@@ -134,6 +140,7 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 		weights: {
 			addText: 2,
 			removeRange: 1,
+			obliterateRange: 1,
 		},
 	};
 export const defaultIntervalOperationGenerationConfig: Required<IntervalOperationGenerationConfig> =
@@ -149,6 +156,7 @@ export const defaultIntervalOperationGenerationConfig: Required<IntervalOperatio
 			addInterval: 2,
 			deleteInterval: 2,
 			changeInterval: 2,
+			obliterateRange: 0,
 		},
 	};
 
@@ -207,6 +215,9 @@ export function makeReducer(
 		},
 		removeRange: async ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
+		},
+		obliterateRange: async ({ client }, { start, end }) => {
+			client.channel.obliterateRange(start, end);
 		},
 		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
@@ -278,6 +289,13 @@ export function createSharedStringGeneratorOperations(
 		};
 	}
 
+	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+		return {
+			type: "obliterateRange",
+			...exclusiveRange(state),
+		};
+	}
+
 	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
 	}
@@ -298,6 +316,7 @@ export function createSharedStringGeneratorOperations(
 		exclusiveRange,
 		exclusiveRangeLeaveChar,
 		addText,
+		obliterateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -314,11 +333,13 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
 		runtime.options.intervalStickinessEnabled = true;
+		runtime.options.mergeTreeEnableObliterate = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
 		document.options.intervalStickinessEnabled = true;
+		document.options.mergeTreeEnableObliterate = true;
 		return super.create(document, id);
 	}
 }

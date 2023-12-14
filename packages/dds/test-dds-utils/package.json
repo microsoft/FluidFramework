@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-dds-utils",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,10 +17,10 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
+		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
@@ -68,6 +68,7 @@
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.28.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
@@ -95,8 +96,7 @@
 			"build:docs": {
 				"dependsOn": [
 					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
+					"api-extractor:commonjs"
 				],
 				"script": false
 			},

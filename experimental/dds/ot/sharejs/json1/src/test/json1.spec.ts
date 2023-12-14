@@ -31,6 +31,11 @@ function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFacto
 	return ot;
 }
 
+interface ITestObject {
+	x: number;
+	y: number;
+}
+
 describe("SharedJson1", () => {
 	describe("Local state", () => {
 		let ot: SharedJson1;
@@ -40,7 +45,7 @@ describe("SharedJson1", () => {
 			ot.replace([], null, {});
 		});
 
-		const expect = (expected: Jsonable) => {
+		const expect = <T>(expected: Jsonable<T>) => {
 			assert.deepEqual(ot.get(), expected);
 		};
 
@@ -66,6 +71,12 @@ describe("SharedJson1", () => {
 
 					ot.insert(["x", 0], 1);
 					expect({ x: [1] });
+				});
+
+				it("object", () => {
+					const obj: ITestObject = { x: 1, y: 2 };
+					ot.insert(["o"], obj);
+					expect({ o: { x: 1, y: 2 } });
 				});
 			});
 
@@ -109,7 +120,7 @@ describe("SharedJson1", () => {
 				expect([]);
 			});
 
-			const expect = (expected?: Jsonable) => {
+			const expect = <T>(expected?: Jsonable<T>) => {
 				containerRuntimeFactory.processAllMessages();
 
 				const actual1 = doc1.get();

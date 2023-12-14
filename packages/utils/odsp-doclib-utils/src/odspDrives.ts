@@ -202,7 +202,7 @@ async function getDriveItem(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export async function getDriveId(
 	server: string,

@@ -365,7 +365,7 @@ describe("sharedTreeView", () => {
 			(parent) => {
 				const schemaB: TreeStoredSchema = {
 					nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-						[leaf.number.name, leaf.number],
+						[leaf.number.name, leaf.number.stored],
 					]),
 					rootFieldSchema: storedEmptyFieldSchema,
 				};

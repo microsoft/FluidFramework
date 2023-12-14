@@ -21,6 +21,15 @@ import {
 	SchemaValidationFunction,
 } from "../../codec";
 import {
+	FieldBatchCodec,
+	FieldBatchEncoder,
+	TreeChunk,
+	chunkFieldSingle,
+	defaultChunkPolicy,
+	makeFieldBatchCodec,
+} from "../chunked-forest";
+import { TreeCompressionStrategy } from "../treeCompressionUtils";
+import {
 	FieldChangeMap,
 	FieldChangeset,
 	ModularChangeset,
@@ -30,6 +39,7 @@ import { FieldKindWithEditor } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 import {
 	EncodedBuilds,
+	EncodedBuildsArray,
 	EncodedFieldChange,
 	EncodedFieldChangeMap,
 	EncodedModularChangeset,
@@ -40,6 +50,7 @@ import {
 export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	fieldsCodecWithoutContext: FieldBatchCodec,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<ModularChangeset, EncodedModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
@@ -155,27 +166,48 @@ export function makeV0Codec(
 		return decodedChange;
 	}
 
-	function encodeBuilds(builds: ModularChangeset["builds"]): EncodedBuilds | undefined {
+	function encodeBuilds(
+		builds: ModularChangeset["builds"],
+		fieldsCodec: ReturnType<FieldBatchCodec>,
+	): EncodedBuilds | undefined {
 		if (builds === undefined) {
 			return undefined;
 		}
-		const encoded: EncodedBuilds = nestedMapToFlatList(builds).map(([r, i, t]) =>
+
+		const treeBatcher = new FieldBatchEncoder();
+
+		const buildsArray: EncodedBuildsArray = nestedMapToFlatList(builds).map(([r, i, t]) =>
 			// `undefined` does not round-trip through JSON strings, so it needs special handling.
 			// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 			// We therefore optimize for the common case by omitting the revision when it is undefined.
-			r !== undefined ? [revisionTagCodec.encode(r), i, t] : [i, t],
+			r !== undefined
+				? [revisionTagCodec.encode(r), i, treeBatcher.add(t.cursor())]
+				: [i, treeBatcher.add(t.cursor())],
 		);
-		return encoded.length === 0 ? undefined : encoded;
+		return buildsArray.length === 0
+			? undefined
+			: { builds: buildsArray, trees: treeBatcher.encode(fieldsCodec) };
 	}
 
-	function decodeBuilds(encoded: EncodedBuilds | undefined): ModularChangeset["builds"] {
-		if (encoded === undefined || encoded.length === 0) {
+	function decodeBuilds(
+		encoded: EncodedBuilds | undefined,
+		fieldsCodec: ReturnType<FieldBatchCodec>,
+	): ModularChangeset["builds"] {
+		if (encoded === undefined || encoded.builds.length === 0) {
 			return undefined;
 		}
-		const list: [RevisionTag | undefined, ChangesetLocalId, any][] = encoded.map((tuple) =>
-			tuple.length === 3
-				? [revisionTagCodec.decode(tuple[0]), tuple[1], tuple[2]]
-				: [undefined, ...tuple],
+
+		const chunks = fieldsCodec.decode(encoded.trees);
+		const getChunk = (index: number): TreeChunk => {
+			assert(index < chunks.length, "out of bounds index for build chunk");
+			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
+		};
+
+		const list: [RevisionTag | undefined, ChangesetLocalId, TreeChunk][] = encoded.builds.map(
+			(tuple) =>
+				tuple.length === 3
+					? [revisionTagCodec.decode(tuple[0]), tuple[1], getChunk(tuple[2])]
+					: [undefined, tuple[0], getChunk(tuple[1])],
 		);
 		return nestedMapFromFlatList(list);
 	}
@@ -214,6 +246,12 @@ export function makeV0Codec(
 		return decodedRevisions;
 	}
 
+	// TODO: provide schema here to enable schema based compression.
+	const fieldsCodecSchemaless = fieldsCodecWithoutContext({
+		encodeType: TreeCompressionStrategy.Compressed,
+	});
+
+	// TODO: use withSchemaValidation here to validate data against format.
 	return {
 		encode: (change) => {
 			return {
@@ -223,7 +261,7 @@ export function makeV0Codec(
 						? change.revisions
 						: encodeRevisionInfos(change.revisions),
 				changes: encodeFieldChangesForJson(change.fieldChanges),
-				builds: encodeBuilds(change.builds),
+				builds: encodeBuilds(change.builds, fieldsCodecSchemaless),
 			};
 		},
 		decode: (change) => {
@@ -232,7 +270,7 @@ export function makeV0Codec(
 				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes),
 			};
 			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeBuilds(encodedChange.builds);
+				decoded.builds = decodeBuilds(encodedChange.builds, fieldsCodecSchemaless);
 			}
 			if (encodedChange.revisions !== undefined) {
 				decoded.revisions = decodeRevisionInfos(encodedChange.revisions);

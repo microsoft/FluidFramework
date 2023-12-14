@@ -72,30 +72,6 @@ use_old_TypeAliasDeclaration_ContainerKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DevtoolsLogger": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_DevtoolsLogger():
-    TypeOnly<old.DevtoolsLogger>;
-declare function use_current_ClassDeclaration_DevtoolsLogger(
-    use: TypeOnly<current.DevtoolsLogger>): void;
-use_current_ClassDeclaration_DevtoolsLogger(
-    get_old_ClassDeclaration_DevtoolsLogger());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DevtoolsLogger": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_DevtoolsLogger():
-    TypeOnly<current.DevtoolsLogger>;
-declare function use_old_ClassDeclaration_DevtoolsLogger(
-    use: TypeOnly<old.DevtoolsLogger>): void;
-use_old_ClassDeclaration_DevtoolsLogger(
-    get_current_ClassDeclaration_DevtoolsLogger());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_DevtoolsProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_DevtoolsProps():
