@@ -353,7 +353,7 @@ jobs:
           displayName: Publish Artifact - Tinylicious Log
           inputs:
             targetPath: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
-            artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
+            artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)_${{ variant.name }}'
             publishLocation: 'pipeline'
           condition: succeededOrFailed()
           continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
