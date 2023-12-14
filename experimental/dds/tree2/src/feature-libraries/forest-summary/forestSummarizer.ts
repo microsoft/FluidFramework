@@ -22,7 +22,7 @@ import {
 	ITreeSubscriptionCursor,
 	makeDetachedFieldIndex,
 	mapCursorField,
-	StoredSchemaCollection,
+	StoredSchemaRepository,
 	TreeNavigationResult,
 } from "../../core";
 import {
@@ -50,22 +50,28 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private readonly codec: ReturnType<ForestCodec>;
-
-	public constructor(
-		private readonly forest: IEditableForest,
-		private readonly schema: StoredSchemaCollection,
-		private readonly policy: FullSchemaPolicy,
-		private readonly encodeType: TreeCompressionStrategy,
-		fieldBatchCodec: FieldBatchCodec,
-		private readonly options: ICodecOptions = { jsonValidator: noopValidator },
-	) {
-		this.codec = makeForestSummarizerCodec(
+	private lazyCodec?: ReturnType<ForestCodec>;
+	private get codec(): ReturnType<ForestCodec> {
+		this.lazyCodec ??= makeForestSummarizerCodec(
 			this.options,
-			fieldBatchCodec,
+			this.fieldBatchCodec,
 		)({
 			schema: { schema: this.schema, policy: this.policy },
 			encodeType: this.encodeType,
+		});
+		return this.lazyCodec;
+	}
+
+	public constructor(
+		private readonly forest: IEditableForest,
+		private readonly schema: StoredSchemaRepository,
+		private readonly policy: FullSchemaPolicy,
+		private readonly encodeType: TreeCompressionStrategy,
+		private readonly fieldBatchCodec: FieldBatchCodec,
+		private readonly options: ICodecOptions = { jsonValidator: noopValidator },
+	) {
+		this.schema.on("beforeSchemaChange", () => {
+			this.lazyCodec = undefined;
 		});
 	}
 
