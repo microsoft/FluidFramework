@@ -214,7 +214,7 @@ export interface ITransaction {
 	 * 2. run the transaction on the fork
 	 * 3. merge the fork back into the root checkout
 	 *
-	 * @privateRemarks - There is currently no enforcement that transactions don't happen on the root checkout.
+	 * @privateRemarks - There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
 	 * AB#6488 tracks adding some enforcement to make it more clear to application authors that this is not supported.
 	 */
 	start(): void;
