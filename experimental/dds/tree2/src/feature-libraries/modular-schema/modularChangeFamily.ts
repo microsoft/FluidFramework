@@ -23,7 +23,6 @@ import {
 	RevisionMetadataSource,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
-	ChangeAtomIdMap,
 	makeDetachedNodeId,
 	ITreeCursor,
 	emptyDelta,
@@ -35,19 +34,22 @@ import {
 	mapCursorField,
 	StoredSchemaCollection,
 	DeltaDetachedNodeId,
+	ChangeAtomIdRangeMap,
 } from "../../core";
 import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	forEachInNestedMap,
+	getFromRangeMap,
 	getOrAddEmptyToMap,
-	getOrAddInMap,
 	IdAllocationState,
 	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	isReadonlyArray,
 	Mutable,
+	RangeMap,
+	setInRangeMap,
 } from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
@@ -213,15 +215,15 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdMap<EncodedChunk> = new Map();
+		const allBuilds: ChangeAtomIdRangeMap<readonly EncodedChunk[]> = new Map();
 		for (const taggedChange of changes) {
 			const revision = revisionFromTaggedChange(taggedChange);
 			const change = taggedChange.change;
 			if (change.builds) {
-				for (const [revisionKey, innerMap] of change.builds) {
+				for (const [revisionKey, rangeMapData] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
-					const innerDstMap = getOrAddInMap(allBuilds, setRevisionKey, new Map());
-					for (const [id, tree] of innerMap) {
+					const rangeMap: RangeMap<readonly EncodedChunk[]> = [];
+					for (const { start, length, value } of rangeMapData) {
 						// Check for duplicate builds and prefer earlier ones.
 						// There are two scenarios where we might get duplicate builds:
 						// - In compositions of rebase sandwiches:
@@ -236,10 +238,11 @@ export class ModularChangeFamily
 						// Note that it would in principle be possible to adopt the later build and exclude from the
 						// composition all the changes already reflected on the tree, but that is not something we
 						// care to support at this time.
-						if (!innerDstMap.has(id)) {
-							innerDstMap.set(id, tree);
+						if (getFromRangeMap(rangeMap, start, length) === undefined) {
+							setInRangeMap(rangeMap, start, length, value);
 						}
 					}
+					allBuilds.set(setRevisionKey, rangeMap);
 				}
 			}
 		}
@@ -1121,7 +1124,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
-	builds?: ChangeAtomIdMap<EncodedChunk>,
+	builds?: ChangeAtomIdRangeMap<readonly EncodedChunk[]>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1180,10 +1183,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (length === 0) {
 			return { type: "global" };
 		}
-		const builds: ChangeAtomIdMap<EncodedChunk> = new Map();
-		const innerMap = new Map();
-		builds.set(undefined, innerMap);
-		let id = firstId;
+		const builds: ChangeAtomIdRangeMap<readonly EncodedChunk[]> = new Map();
+		const rangeMap: RangeMap<readonly EncodedChunk[]> = [];
+		builds.set(undefined, rangeMap);
 
 		const fieldCursors = content.map((cursor) =>
 			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
@@ -1198,12 +1200,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				  )
 				: nodeCursors.map(uncompressedEncode);
 
-		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const tree of encodedTrees) {
-			assert(!innerMap.has(id), 0x854 /* Unexpected duplicate build ID */);
-			innerMap.set(id, tree);
-			id = brand((id as number) + 1);
-		}
+		assert(
+			getFromRangeMap(rangeMap, firstId, length) === undefined,
+			"Unexpected duplicate build ID",
+		);
+		setInRangeMap(rangeMap, firstId, length, encodedTrees);
+
 		return {
 			type: "global",
 			builds,
@@ -1311,7 +1313,7 @@ export interface FieldEditDescription {
  */
 export interface GlobalEditDescription {
 	type: "global";
-	builds?: ChangeAtomIdMap<EncodedChunk>;
+	builds?: ChangeAtomIdRangeMap<readonly EncodedChunk[]>;
 }
 
 /**

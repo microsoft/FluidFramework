@@ -17,6 +17,7 @@ export {
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,
+	ChangeAtomIdRangeMap,
 	SessionId,
 	SessionIdSchema,
 } from "./types";

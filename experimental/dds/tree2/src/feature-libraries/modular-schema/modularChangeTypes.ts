@@ -4,7 +4,7 @@
  */
 
 import {
-	ChangeAtomIdMap,
+	ChangeAtomIdRangeMap,
 	ChangesetLocalId,
 	FieldKey,
 	FieldKindIdentifier,
@@ -32,7 +32,7 @@ export interface ModularChangeset extends HasFieldChanges {
 	fieldChanges: FieldChangeMap;
 	constraintViolationCount?: number;
 	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-	readonly builds?: ChangeAtomIdMap<EncodedChunk>;
+	readonly builds?: ChangeAtomIdRangeMap<readonly EncodedChunk[]>;
 }
 
 /**

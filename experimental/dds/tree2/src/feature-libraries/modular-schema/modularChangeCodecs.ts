@@ -13,14 +13,7 @@ import {
 	RevisionInfo,
 	RevisionTag,
 } from "../../core";
-import {
-	brand,
-	fail,
-	JsonCompatibleReadOnly,
-	Mutable,
-	nestedMapFromFlatList,
-	nestedMapToFlatList,
-} from "../../util";
+import { brand, fail, JsonCompatibleReadOnly, Mutable, nestedMapFromFlatList } from "../../util";
 import {
 	ICodecFamily,
 	ICodecOptions,
@@ -168,12 +161,13 @@ function makeV0Codec(
 		if (builds === undefined) {
 			return undefined;
 		}
-		const encoded: EncodedBuilds = nestedMapToFlatList(builds).map(([r, i, t]) =>
+		const encoded: EncodedBuilds = Array.from(builds.entries()).map(([revision, rangeMap]) => {
+			const entries = rangeMap.map(({ start, length, value }) => [start, length, value]);
 			// `undefined` does not round-trip through JSON strings, so it needs special handling.
 			// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 			// We therefore optimize for the common case by omitting the revision when it is undefined.
-			r !== undefined ? [revisionTagCodec.encode(r), i, t] : [i, t],
-		);
+			return revision !== undefined ? [revisionTagCodec.encode(revision), entries] : [entries];
+		});
 		return encoded.length === 0 ? undefined : encoded;
 	}
 

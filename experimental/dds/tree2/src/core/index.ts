@@ -152,6 +152,7 @@ export {
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,
+	ChangeAtomIdRangeMap,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
