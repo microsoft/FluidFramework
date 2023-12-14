@@ -71,8 +71,8 @@ class SocketIoServer implements core.IWebSocketServer {
 
 	constructor(
 		private readonly io: Server,
-		private readonly pub: Redis.Redis,
-		private readonly sub: Redis.Redis,
+		private readonly pub: Redis.Redis | Redis.Cluster,
+		private readonly sub: Redis.Redis | Redis.Cluster,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
