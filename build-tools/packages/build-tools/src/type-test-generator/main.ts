@@ -17,7 +17,33 @@ import { typeOnly } from "./compatibility";
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 // Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
 const packageObject: PackageJson = readJsonSync("package.json");
+const previousPackageName = `${packageObject.name}-previous`;
 
+const previousBasePath = `./node_modules/${previousPackageName}`;
+
+const previousPackageJsonPath = `${previousBasePath}/package.json`;
+
+if (!existsSync(previousPackageJsonPath)) {
+	throw new Error(
+		`${previousPackageJsonPath} not found. You may need to install the package via pnpm install.`,
+	);
+}
+const previousPackageJson = readJsonSync(previousPackageJsonPath);
+
+const typeValidationConfig = previousPackageJson.typeValidation || {};
+const typeRollupFilePath = typeValidationConfig.typeRollupFile;
+let typeDefinitionFilePath;
+
+if(typeRollupFilePath){
+	// Check if a specified typeRollupFile exists
+	if (!existsSync(typeRollupFilePath)) {
+        throw new Error(`Type rollup file '${typeRollupFilePath}' not found.`);
+    }
+    typeDefinitionFilePath = typeRollupFilePath;
+} else {
+    // Default to using index.d.ts and other .d.ts files under dist
+    typeDefinitionFilePath = "dist/index.d.ts";
+}
 const testPath = `./src/test/types`;
 // remove scope if it exists
 const unscopedName = path.basename(packageObject.name);
@@ -35,7 +61,6 @@ if (packageObject.typeValidation?.disabled) {
 	process.exit(0);
 }
 
-const previousPackageName = `${packageObject.name}-previous`;
 
 {
 	// Information about the previous package from the package.json is not needed,
@@ -48,13 +73,11 @@ const previousPackageName = `${packageObject.name}-previous`;
 
 const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
 
-const previousBasePath = `./node_modules/${previousPackageName}`;
 if (!existsSync(`${previousBasePath}/package.json`)) {
 	throw new Error(
 		`${previousBasePath} not found. You may need to install the package via pnpm install.`,
 	);
 }
-const alphaFilePath = `${previousBasePath}/dist/${previousPackageName}-alpha.d.ts`;
 
 const currentFile = new Project({
 	skipFileDependencyResolution: true,
@@ -68,8 +91,8 @@ const project = new Project({
 	tsConfigFilePath: existsSync(previousTsConfigPath) ? previousTsConfigPath : undefined,
 });
 // Check for existence of alpha and add appropriate file
-if (existsSync(alphaFilePath)) {
-	project.addSourceFilesAtPaths(alphaFilePath);
+if (existsSync(typeDefinitionFilePath)) {
+	project.addSourceFilesAtPaths(typeDefinitionFilePath);
 	previousFile = project.getSourceFileOrThrow("<package-name>-alpha.d.ts");
 	// Fall back to using .d.ts
 } else {
