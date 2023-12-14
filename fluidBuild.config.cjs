@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "^api", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "^build:rename-types", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -28,6 +28,7 @@ module.exports = {
 				"build:esnext",
 				"build:test",
 				"build:copy",
+				// "^build:rename-types",
 				"build:rename-types",
 			],
 			script: false,
@@ -166,9 +167,17 @@ module.exports = {
 				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
+				"^experimental/dds/tree2/package.json",
+        "^experimental/dds/sequence-deprecated/package.json",
+				"^experimental/framework/tree-react-api/package.json",
+				"^packages/common/.*/package.json",
 				"^packages/dds/.*/package.json",
 				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
+				"^packages/loader/.*/package.json",
+				"^packages/runtime/.*/package.json",
+				"^packages/service-clients/.*/package.json",
+				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
 			"html-copyright-file-header": [
@@ -224,9 +233,10 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
-				// This is an ESM-only package, and uses tsc to build the ESM output. The policy handler doesn't understand this
+				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",
+				"packages/test/functional-tests/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -323,6 +333,8 @@ module.exports = {
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
 				["renamer", "renamer"],
+				["tsc-multi", "tsc-multi"],
+				["attw", "@arethetypeswrong/cli"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
