@@ -34,7 +34,7 @@ import { IUsageError } from '@fluidframework/core-interfaces';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
-// @alpha
+// @public
 export enum AttachState {
     Attached = "Attached",
     Attaching = "Attaching",
@@ -80,7 +80,7 @@ export interface ContainerWarning extends IErrorBase {
     logged?: boolean;
 }
 
-// @alpha
+// @public
 export interface IAudience extends EventEmitter {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
@@ -110,7 +110,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @alpha
+// @public
 export interface IConnectionDetails {
     checkpointSequenceNumber: number | undefined;
     // (undocumented)
@@ -231,7 +231,7 @@ export interface IContainerLoadMode {
 // @alpha
 export type ICriticalContainerError = IErrorBase;
 
-// @alpha
+// @public @sealed
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
@@ -252,7 +252,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly version: string;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
@@ -268,7 +268,7 @@ export interface IDeltaManagerEvents extends IEvent {
     }) => void): any;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
     idle: boolean;
     length: number;
@@ -283,14 +283,14 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     }>;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push", listener: (task: T) => void): any;
     (event: "op", listener: (task: T) => void): any;
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaSender {
     flush(): void;
 }
@@ -409,7 +409,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type ILoaderOptions = {
     [key in string | number]: any;
 } & {
@@ -500,7 +500,7 @@ export enum LoaderHeader {
     version = "version"
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type ReadOnlyInfo = {
     readonly readonly: false | undefined;
 } | {

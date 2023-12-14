@@ -73,7 +73,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 // @internal (undocumented)
 export const disconnectedEventName = "disconnected";
 
-// @alpha
+// @public
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
@@ -208,7 +208,7 @@ export interface ITaggedTelemetryPropertyTypeExt {
     value: TelemetryEventPropertyTypeExt;
 }
 
-// @alpha
+// @public
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
     eventName: string;
@@ -222,7 +222,7 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @alpha
+// @public
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
     category?: TelemetryEventCategory;
@@ -230,7 +230,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @alpha
+// @public
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
@@ -251,13 +251,13 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
-// @alpha
+// @public
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
     // (undocumented)
     duration?: number;
 }
 
-// @alpha
+// @public
 export interface ITelemetryPropertiesExt {
     // (undocumented)
     [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
@@ -401,10 +401,10 @@ export enum TelemetryDataTag {
     UserData = "UserData"
 }
 
-// @alpha
+// @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @alpha
+// @public
 export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
     [key: string]: // Flat objects can have the same properties as the event itself
     string | number | boolean | undefined | (string | number | boolean)[];

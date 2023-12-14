@@ -15,7 +15,7 @@ describe("node API", () => {
 	const object = sb.object("child", {
 		content: sb.number,
 	});
-	const list = sb.list(object);
+	const list = sb.array(object);
 	const treeSchema = sb.object("parent", { object, list });
 
 	const never = makeSchema((_) => _.object("never", {}));

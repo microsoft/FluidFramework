@@ -13,7 +13,7 @@ const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTy
 
 /**
  * Different error types the Driver may report out to the Host.
- * @alpha
+ * @public
  */
 export const DriverErrorTypes = {
 	// Inherit base error types
@@ -106,7 +106,7 @@ export const DriverErrorTypes = {
 	outOfStorageError: "outOfStorageError",
 } as const;
 /**
- * @alpha
+ * @public
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
@@ -115,7 +115,7 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  * Lists types that are likely to be used by all drivers
  *
  * @deprecated Use {@link (DriverErrorTypes:type)} instead.
- * @alpha
+ * @public
  */
 export enum DriverErrorType {
 	/**
@@ -229,7 +229,7 @@ export enum DriverErrorType {
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
- * @alpha
+ * @public
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
@@ -237,7 +237,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 
 /**
  * Base interface for all errors and warnings
- * @alpha
+ * @public
  */
 export interface IDriverErrorBase {
 	/**

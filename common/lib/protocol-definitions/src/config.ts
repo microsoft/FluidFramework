@@ -5,7 +5,7 @@
 
 /**
  * Key value store of service configuration properties provided to the client as part of connection.
- * @alpha
+ * @public
  */
 export interface IClientConfiguration {
 	/**
