@@ -1,5 +1,173 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   sequence: Some function return types are now void instead of any [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The return types of some functions have changed from `any` to `void` because the projects are now being compiled with
+    the `noImplicitAny` TypeScript compilation option. This does not represent a logic change and only serves to make the
+    typing of these functions more accurate.
+
+-   sequence: Add experimental support for the obliterate operation [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    This change adds experimental support for _obliterate_, a form of _remove_ that deletes concurrently inserted segments.
+    To use, enable the `mergeTreeEnableObliterate` feature flag and call the new `obliterateRange` functions.
+
+    Note: this change may cause compilation errors for those attaching event listeners. As long as obliterate isn't used in
+    current handlers, their current implementation is sound.
+
+-   datastore-definitions: Jsonable and Serializable now require a generic parameter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `Jsonable` and `Serializable` types from @fluidframework/datastore-definitions now require a generic parameter and
+    if that type is `any` or `unknown`will return a new result `JsonableTypeWith<>` that more accurately represents the
+    limitation of serialization.
+
+    Additional modifications:
+
+    -   `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
+        `void`.
+    -   Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
+    -   Recursive types with arrays (`[]`) are now supported.
+
+    `Serializable` is commonly used for DDS values and now requires more precision when using them. For example SharedMatrix
+    (unqualified) has an `any` default that meant values were `Serializable<any>` (i.e. `any`), but now `Serializable<any>`
+    is `JsonableTypeWith<IFluidHandle>` which may be problematic for reading or writing. Preferred correction is to specify
+    the value type but casting through `any` may provide a quick fix.
+
+-   sequence: Removed Marker.hasSimpleType and made sequence operations return void [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    `Marker.hasSimpleType` was unused. Sequence operations now no longer return IMergeTree\*Msg types.
+    These types are redundant with the input.
+
+-   sequence: Removed several public exports from merge-tree and sequence [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The following APIs have been removed or marked internal in merge-tree and sequence. This functionality was never
+    intended for public export.
+
+    -   `BaseSegment.ack`
+    -   `Client`
+    -   `CollaborationWindow`
+    -   `compareNumbers`
+    -   `compareStrings`
+    -   `createAnnotateMarkerOp`
+    -   `createAnnotateRangeOp`
+    -   `createGroupOp`
+    -   `createInsertOp`
+    -   `createInsertSegmentOp`
+    -   `createRemoveRangeOp`
+    -   `IConsensusInfo`
+    -   `IConsensusValue`
+    -   `IMarkerModifiedAction`
+    -   `IMergeTreeTextHelper`
+    -   `LocalClientId`
+    -   `MergeTreeDeltaCallback`
+    -   `MergeTreeMaintenanceCallback`
+    -   `NonCollabClient`
+    -   `SegmentAccumulator`
+    -   `SegmentGroup`
+    -   `SegmentGroupCollection.enqueue`
+    -   `SegmentGroupCollection.dequeue`
+    -   `SegmentGroupCollection.pop`
+    -   `SortedSegmentSet`
+    -   `SortedSegmentSetItem`
+    -   `SortedSet`
+    -   `toRemovalInfo`
+    -   `TreeMaintenanceSequenceNumber`
+    -   `UniversalSequenceNumber`
+    -   `SharedSegmentSequence.submitSequenceMessage`
+
+-   sequence: Remove support for combining ops [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    In sequence, removed the following APIs:
+
+    -   the `combiningOp` argument from `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`
+    -   the function `SharedString.annotateMarkerNotifyConsensus`
+
+    In merge-tree, removed the following APIs:
+
+    -   `ICombiningOp`
+    -   the `combiningOp` field from `IMergeTreeAnnotateMsg`
+    -   the `op` argument from `BaseSegment.addProperties`, `PropertiesManager.addProperties`, and `ReferencePosition.addProperties`
+    -   the enum variant `PropertiesRollback.Rewrite`.
+
+    This functionality was largely unused and had no test coverage.
+
+-   sequence: Removed several APIs [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The following APIs have been removed:
+
+    -   `Client.getStackContext`
+    -   `SharedSegmentSequence.getStackContext`
+    -   `IntervalType.Nest`
+    -   `ReferenceType.NestBegin`
+    -   `ReferenceType.NestEnd`
+    -   `internedSpaces`
+    -   `RangeStackMap`
+    -   `refGetRangeLabels`
+    -   `refHasRangeLabel`
+    -   `refHasRangeLabels`
+
+    This functionality is deprecated, has low test coverage, and is largely unused.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   sequence: `change` and `changeProperties` are now a single method ([#18676](https://github.com/microsoft/FluidFramework/issues/18676)) [12c83d2696](https://github.com/microsoft/FluidFramework/commits/12c83d26962a1d76db6eb0ccad31fd6a7976a1af)
+
+    Instead of having two separate methods to change the endpoints of an interval and the properties, they have been combined into a
+    single method that will change the endpoints, properties, or both, depending on the arguments passed in. The signature
+    of this combined method is now updated as well.
+
+    The new way to use the change method is to call it with an interval id as the first parameter and an object containing
+    the desired portions of the interval to update as the second parameter. For the object parameter, the `endpoints` field
+    should be an object containing the new `start` and `end` values for the interval, and the `properties` field should be
+    an object containing the new properties for the interval. Either the `endpoints` field or the `properties` field can be
+    omitted, and if neither are present, `change` will return `undefined`.
+
+    The new usage of the change method is as follows:
+
+    Change interval endpoints: `change(id, { endpoints: { start: 1, end: 4 } });`
+
+    Change interval properties: `change(id { props: { a: 1 } });`
+
+    Change interval endpoints and properties: `change(id, { endpoints: { start: 1, end: 4 }, props: { a: 1 } });`
+
+-   sequence: Deprecated findOverlappingIntervals API ([#18036](https://github.com/microsoft/FluidFramework/issues/18036)) [52b864ea42](https://github.com/microsoft/FluidFramework/commits/52b864ea42759403771f2cbcb282b0ba19ce42f6)
+
+    The `findOverlappingIntervals` API from `IntervalCollection` has been deprecated. This functionality is moved to the
+    `OverlappingIntervalsIndex`. Users should independently attach the index to the collection and utilize the API
+    accordingly, for instance:
+
+    ```typescript
+    const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+    collection.attachIndex(overlappingIntervalsIndex);
+    const result = overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+    ```
+
+-   sequence: Deprecated previousInterval and nextInterval APIs ([#18060](https://github.com/microsoft/FluidFramework/issues/18060)) [05fb45d26f](https://github.com/microsoft/FluidFramework/commits/05fb45d26f3065297e219a4bce5763e25bdcffc9)
+
+    The `previousInterval` and `nextInterval` APIs from `IntervalCollection` have been deprecated. These functions are moved
+    to the `EndpointIndex`. Users should independently attach the index to the collection and utilize the API accordingly,
+    for instance:
+
+    ```typescript
+    const endpointIndex = createEndpointIndex(sharedString);
+    collection.attachIndex(endpointIndex);
+
+    const result1 = endpointIndex.previousInterval(pos);
+    const result2 = endpointIndex.nextInterval(pos);
+    ```
+
+-   sequence: Deprecated ICombiningOp, PropertiesRollback.Rewrite, and SharedString.annotateMarkerNotifyConsensus ([#18318](https://github.com/microsoft/FluidFramework/issues/18318)) [e67c2cac5f](https://github.com/microsoft/FluidFramework/commits/e67c2cac5f275fc5c875c0bc044bbb72aaf76648)
+
+    The `ICombiningOp` and its usage in various APIs has been deprecated. APIs affected include
+    `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`. `SharedString.annotateMarkerNotifyConsensus`
+    has also been deprecated, because it is related to combining ops. This functionality had no test coverage and was
+    largely unused.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

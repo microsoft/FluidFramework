@@ -22,7 +22,7 @@ import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId }, undefined);
+	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });
 
 const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
 	{

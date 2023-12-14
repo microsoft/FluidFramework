@@ -77,6 +77,7 @@ export {
 	useDeterministicStableId,
 	useAsyncDeterministicStableId,
 	objectToMap,
+	invertMap,
 	oneFromSet,
 	Named,
 	disposeSymbol,
@@ -84,6 +85,7 @@ export {
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
+	compareStrings,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

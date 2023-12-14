@@ -67,6 +67,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
 	sessionExpiryTimeoutMs: [undefined], // Don't want sessions to expire at a fixed time
+	enableGCSweep: [undefined], // Don't need coverage here, GC sweep is tested separately
 	sweepGracePeriodMs: [undefined], // Don't need coverage here, GC sweep is tested separately
 };
 

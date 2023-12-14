@@ -54,6 +54,8 @@ import {
  *
  * @public
  */
+// Prefer index signature for documentation.
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface Renderers {
 	/**
 	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a renderer implementation for that kind of node.

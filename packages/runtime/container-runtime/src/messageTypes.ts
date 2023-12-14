@@ -8,14 +8,14 @@ import {
 	IEnvelope,
 	InboundAttachMessage,
 	IAttachMessage,
-	IdCreationRange,
 } from "@fluidframework/runtime-definitions";
+import type { IdCreationRange } from "@fluidframework/id-compressor";
 import { IDataStoreAliasMessage } from "./dataStore";
 import { GarbageCollectionMessage } from "./gc";
 import { IChunkedOp } from "./opLifecycle";
 
 /**
- * @internal
+ * @alpha
  */
 export enum ContainerMessageType {
 	// An op to be delivered to store

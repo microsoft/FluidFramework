@@ -26,7 +26,6 @@ export {
 	TinyliciousMember,
 	TinyliciousUser,
 } from "./interfaces";
-export { TinyliciousAudience } from "./TinyliciousAudience";
 export { TinyliciousClient } from "./TinyliciousClient";
 // eslint-disable-next-line import/no-default-export
 export default TinyliciousClient;

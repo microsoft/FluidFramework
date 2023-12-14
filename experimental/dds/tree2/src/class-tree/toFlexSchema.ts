@@ -5,7 +5,7 @@
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
-	TreeSchema,
+	FlexTreeSchema,
 	TreeFieldSchema as FlexTreeFieldSchema,
 	FieldKind as FlexFieldKind,
 	FieldKinds,
@@ -49,12 +49,12 @@ import { TreeConfiguration } from "./tree";
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
 export function cursorFromUnhydratedRoot(
-	schema: TreeSchema,
+	schema: FlexTreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
 	return (
-		cursorFromNodeData(data.content, { schema }, schema.rootFieldSchema.types) ??
+		cursorFromNodeData(data.content, schema, schema.rootFieldSchema.allowedTypeSet) ??
 		fail("failed to decode tree")
 	);
 }
@@ -79,11 +79,11 @@ interface SchemaInfo {
 type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
 
 /**
- * Generate a {@link TreeSchema} with `root` as the root field.
+ * Generate a {@link FlexTreeSchema} with `root` as the root field.
  *
  * This also has the side effect of populating the cached view schema on the class based schema.
  */
-export function toFlexSchema(root: ImplicitFieldSchema): TreeSchema {
+export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const schemaMap: SchemaMap = new Map();
 	const field = convertField(schemaMap, root);
 	const nodeSchema = new Map(
@@ -91,18 +91,18 @@ export function toFlexSchema(root: ImplicitFieldSchema): TreeSchema {
 			const schema = value.toFlex();
 			const classSchema = getClassSchema(schema);
 			if (classSchema === undefined) {
-				assert(schemaIsLeaf(schema), "invalid leaf");
+				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
 			} else {
 				assert(
 					cachedFlexSchemaFromClassSchema(classSchema) === schema,
-					"mismatched schema",
+					0x83f /* mismatched schema */,
 				);
 			}
 			return [key, schema];
 		}),
 	);
 
-	const typed: TreeSchema = {
+	const typed: FlexTreeSchema = {
 		nodeSchema,
 		adapters: {},
 		rootFieldSchema: field,
@@ -194,7 +194,7 @@ export function convertNodeSchema(
 				const cached =
 					cachedFlexSchemaFromClassSchema(schema) ??
 					fail("leaf schema should be pre-cached");
-				assert(schemaIsLeaf(cached), "expected leaf");
+				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
 			case NodeKind.Map: {
@@ -208,7 +208,7 @@ export function convertNodeSchema(
 				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
 				break;
 			}
-			case NodeKind.List: {
+			case NodeKind.Array: {
 				const fieldInfo = schema.info as ImplicitAllowedTypes;
 				const field = FlexTreeFieldSchema.create(
 					FieldKinds.sequence,
@@ -240,13 +240,13 @@ export function convertNodeSchema(
 			default:
 				unreachableCase(kind);
 		}
-		assert(out instanceof FlexTreeNodeSchemaBase, "invalid schema produced");
+		assert(out instanceof FlexTreeNodeSchemaBase, 0x841 /* invalid schema produced */);
 		{
 			const cached = cachedFlexSchemaFromClassSchema(schema);
 			if (cached !== undefined) {
 				assert(
 					cachedFlexSchemaFromClassSchema(schema) === out,
-					"incorrect flexSchemaSymbol",
+					0x842 /* incorrect flexSchemaSymbol */,
 				);
 			} else {
 				setFlexSchemaFromClassSchema(schema, out);

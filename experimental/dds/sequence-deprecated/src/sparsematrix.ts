@@ -11,7 +11,6 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelFactory,
-	Serializable,
 	Jsonable,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
@@ -92,7 +91,7 @@ export class PaddingSegment extends BaseSegment {
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
  * @internal
  */
-export type SparseMatrixItem = Serializable;
+export type SparseMatrixItem = any;
 
 /**
  * @deprecated `RunSegment` is part of an abandoned prototype.

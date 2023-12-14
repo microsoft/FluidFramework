@@ -17,8 +17,7 @@ import {
 	RelevantRemovedRootsFromChild,
 	chunkTree,
 	defaultChunkPolicy,
-	uncompressedEncode,
-	EncodedChunk,
+	TreeChunk,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -315,7 +314,7 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
 };
 
 const node1 = singleJsonCursor(1);
-const encodedNode1 = encodedChunkFromCursor(node1);
+const node1Chunk = treeChunkFromCursor(node1);
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -343,12 +342,12 @@ describe("ModularChangeFamily", () => {
 		it("prioritizes earlier build entries when faced with duplicates", () => {
 			const change1: ModularChangeset = {
 				fieldChanges: new Map(),
-				builds: new Map([[undefined, new Map([[brand(0), encodedNode1]])]]),
+				builds: new Map([[undefined, new Map([[brand(0), node1Chunk]])]]),
 			};
 			const change2: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(2))]])],
+					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(2))]])],
 				]),
 			};
 			assert.deepEqual(
@@ -547,8 +546,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), encodedNode1]])],
-						[tag2, new Map([[brand(0), encodedNode1]])],
+						[undefined, new Map([[brand(0), node1Chunk]])],
+						[tag2, new Map([[brand(0), node1Chunk]])],
 					]),
 				},
 				tag1,
@@ -593,8 +592,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), encodedNode1]])],
-						[tag2, new Map([[brand(0), encodedNode1]])],
+						[undefined, new Map([[brand(0), node1Chunk]])],
+						[tag2, new Map([[brand(0), node1Chunk]])],
 					]),
 				},
 				tag1,
@@ -617,8 +616,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 					]),
 					destroys: new Map([
 						[undefined, new Map([[brand(1), undefined]])],
@@ -632,8 +631,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
+						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 					]),
 					destroys: new Map([
 						[undefined, new Map([[brand(3), undefined]])],
@@ -651,13 +650,13 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[tag1, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
-					[tag2, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
+					[tag1, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					[tag2, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 					[
 						tag3,
 						new Map([
-							[brand(0), encodedChunkFromCursor(node1)],
-							[brand(2), encodedChunkFromCursor(node1)],
+							[brand(0), treeChunkFromCursor(node1)],
+							[brand(2), treeChunkFromCursor(node1)],
 						]),
 					],
 				]),
@@ -732,8 +731,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), encodedNode1]])],
-						[tag2, new Map([[brand(1), encodedNode1]])],
+						[undefined, new Map([[brand(0), node1Chunk]])],
+						[tag2, new Map([[brand(1), node1Chunk]])],
 					]),
 				},
 				tag1,
@@ -823,8 +822,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(1), encodedNode1]])],
-						[tag2, new Map([[brand(2), encodedNode1]])],
+						[undefined, new Map([[brand(1), node1Chunk]])],
+						[tag2, new Map([[brand(2), node1Chunk]])],
 					]),
 				},
 				tag1,
@@ -1053,6 +1052,6 @@ describe("ModularChangeFamily", () => {
 	});
 });
 
-function encodedChunkFromCursor(cursor: ITreeCursorSynchronous): EncodedChunk {
-	return uncompressedEncode(chunkTree(cursor, defaultChunkPolicy).cursor());
+function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
+	return chunkTree(cursor, defaultChunkPolicy);
 }

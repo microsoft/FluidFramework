@@ -11,14 +11,30 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
 		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
+		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json && npm run build:rename-types",
+		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
@@ -28,48 +44,38 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint && npm run check:are-the-types-wrong",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
-		"tsc:watch": "tsc --watch",
+		"tsc": "tsc-multi --config ../../build/build-common/tsc-multi.cjs.json",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@2.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.6.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
+		"renamer": "^4.0.0",
 		"rimraf": "^2.6.2",
-		"typescript": "~4.5.5",
-		"typescript-formatter": "7.1.0"
+		"tsc-multi": "^1.1.0",
+		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
-	"fluidBuild": {
-		"branchReleaseTypes": {
-			"main": "minor",
-			"release/**": "patch"
-		},
-		"tasks": {
-			"tsc": [
-				"...",
-				"typetests:gen"
-			]
-		}
-	},
 	"pnpm": {
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch"
+			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch",
+			"tsc-multi@1.1.0": "../../../patches/tsc-multi@1.1.0.patch"
 		},
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."

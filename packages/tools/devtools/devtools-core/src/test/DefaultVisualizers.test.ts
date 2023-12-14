@@ -409,7 +409,7 @@ describe("DefaultVisualizers unit tests", () => {
 		}) {}
 
 		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.list(ChildSchema),
+			childrenOne: builder.array(ChildSchema),
 			childrenTwo: builder.number,
 		}) {}
 
@@ -810,11 +810,6 @@ describe("DefaultVisualizers unit tests", () => {
 											typeMetadata: "undefined",
 											nodeKind: VisualNodeKind.ValueNode,
 										},
-										leafValue: {
-											value: undefined,
-											typeMetadata: "undefined",
-											nodeKind: VisualNodeKind.ValueNode,
-										},
 										objectNodeFields: {
 											children: {
 												"0": {
@@ -861,11 +856,6 @@ describe("DefaultVisualizers unit tests", () => {
 											nodeKind: VisualNodeKind.ValueNode,
 										},
 										mapFields: {
-											value: undefined,
-											typeMetadata: "undefined",
-											nodeKind: VisualNodeKind.ValueNode,
-										},
-										leafValue: {
 											value: undefined,
 											typeMetadata: "undefined",
 											nodeKind: VisualNodeKind.ValueNode,
@@ -954,11 +944,6 @@ describe("DefaultVisualizers unit tests", () => {
 											typeMetadata: "undefined",
 											nodeKind: VisualNodeKind.ValueNode,
 										},
-										leafValue: {
-											value: undefined,
-											typeMetadata: "undefined",
-											nodeKind: VisualNodeKind.ValueNode,
-										},
 										objectNodeFields: {
 											children: {
 												"0": {
@@ -1017,11 +1002,6 @@ describe("DefaultVisualizers unit tests", () => {
 											nodeKind: VisualNodeKind.ValueNode,
 										},
 										mapFields: {
-											value: undefined,
-											typeMetadata: "undefined",
-											nodeKind: VisualNodeKind.ValueNode,
-										},
-										leafValue: {
 											value: undefined,
 											typeMetadata: "undefined",
 											nodeKind: VisualNodeKind.ValueNode,

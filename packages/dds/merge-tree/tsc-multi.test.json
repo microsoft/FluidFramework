@@ -1,0 +1,10 @@
+{
+	"targets": [
+		{
+			"extname": ".cjs",
+			"module": "Node16",
+			"moduleResolution": "Node16"
+		}
+	],
+	"projects": ["./tsconfig.json", "./src/test/tsconfig.json"]
+}

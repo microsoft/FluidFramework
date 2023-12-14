@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseLogger,
-	IDisposable,
-	FluidObject,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -26,13 +20,13 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
  * service.  The transition from detached to attached state is a one-way transition.
- * @alpha
+ * @public
  */
 export enum AttachState {
 	/**
@@ -59,12 +53,6 @@ export enum AttachState {
  * @alpha
  */
 export interface IRuntime extends IDisposable {
-	/**
-	 * Executes a request against the runtime
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
 	/**
 	 * Notifies the runtime of a change in the connection state
 	 */
@@ -103,13 +91,6 @@ export interface IRuntime extends IDisposable {
 	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
 
 	/**
-	 * Notify runtime that container is moving to "Attaching" state
-	 * @param snapshot - snapshot created at attach time
-	 * @deprecated not necessary after op replay moved to Container
-	 */
-	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
-
-	/**
 	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
 	 * stashed ops) after having processed it.
 	 */
@@ -121,7 +102,7 @@ export interface IRuntime extends IDisposable {
 	 *
 	 * @see {@link IContainer.getEntryPoint}
 	 */
-	getEntryPoint(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject>;
 }
 
 /**

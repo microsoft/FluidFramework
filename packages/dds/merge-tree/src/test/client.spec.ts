@@ -215,7 +215,7 @@ describe("TestClient", () => {
 			assert(insertOp);
 			const markerInfo = client.getContainingSegment(0);
 			const marker = markerInfo.segment as Marker;
-			const annotateOp = client.annotateMarker(marker, { foo: "bar" }, undefined);
+			const annotateOp = client.annotateMarker(marker, { foo: "bar" });
 			assert(annotateOp);
 			assert(marker.properties);
 			assert(marker.properties.foo, "bar");

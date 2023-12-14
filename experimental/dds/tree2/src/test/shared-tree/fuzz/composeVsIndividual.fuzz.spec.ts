@@ -23,12 +23,7 @@ import {
 	FuzzTestState,
 	viewFromState,
 } from "./fuzzEditGenerators";
-import {
-	applyFieldEdit,
-	applySynchronizationOp,
-	applyTransactionEdit,
-	applyUndoRedoEdit,
-} from "./fuzzEditReducers";
+import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers";
 import { fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
@@ -56,10 +51,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		return state;
 	},
 	transaction: async (state, operation) => {
-		const { contents } = operation;
-		const tree = state.main ?? assert.fail();
-		applyTransactionEdit(tree.checkout, contents);
-		return state;
+		assert.fail(
+			"Transactions are simulated manually in these tests and should not be generated.",
+		);
 	},
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
