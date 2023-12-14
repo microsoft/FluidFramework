@@ -284,11 +284,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
+				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
-					if (change.isConflicted) {
-						// Conflicts are not applied.
-						continue;
-					}
 					if (change.type === "data") {
 						const delta = intoDelta(
 							tagChange(change.innerChange, event.change.revision),

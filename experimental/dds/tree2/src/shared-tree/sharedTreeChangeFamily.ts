@@ -56,7 +56,6 @@ export class SharedTreeChangeFamily
 				newChanges.push({
 					type: "data",
 					innerChange: this.modularChangeFamily.compose(dataChangeRun),
-					isConflicted: false,
 				});
 				dataChangeRun.length = 0;
 			}
@@ -64,10 +63,6 @@ export class SharedTreeChangeFamily
 
 		for (const topChange of changes) {
 			for (const change of topChange.change.changes) {
-				if (change.isConflicted) {
-					// Conflicts are dropped.
-					continue;
-				}
 				if (change.type === "schema") {
 					flushDataChangeRun();
 					newChanges.push(change);
@@ -93,14 +88,12 @@ export class SharedTreeChangeFamily
 							mapTaggedChange(change, innerChange.innerChange),
 							isRollback,
 						),
-						isConflicted: innerChange.isConflicted,
 					};
 				case "schema": {
 					if (innerChange.innerChange.schema === undefined) {
 						return {
 							type: "schema",
 							innerChange: {},
-							isConflicted: innerChange.isConflicted,
 						};
 					}
 					return {
@@ -111,7 +104,6 @@ export class SharedTreeChangeFamily
 								old: innerChange.innerChange.schema.new,
 							},
 						},
-						isConflicted: innerChange.isConflicted,
 					};
 				}
 				default:
@@ -142,12 +134,7 @@ export class SharedTreeChangeFamily
 			c.changes.some((innerChange) => innerChange.type === "schema");
 		if (hasSchemaChange(change) || hasSchemaChange(over.change)) {
 			// Conflict all inner changes
-			return {
-				changes: change.changes.map((innerChange) => ({
-					...innerChange,
-					isConflicted: true,
-				})),
-			};
+			return SharedTreeChangeFamily.emptyChange;
 		}
 		assert(
 			change.changes.length === 1 && over.change.changes.length === 1,
@@ -170,7 +157,6 @@ export class SharedTreeChangeFamily
 						mapTaggedChange(over, dataChangeOver.innerChange),
 						revisionMetadata,
 					),
-					isConflicted: false,
 				},
 			],
 		};

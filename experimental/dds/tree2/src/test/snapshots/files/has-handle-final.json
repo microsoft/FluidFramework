@@ -93,8 +93,7 @@
                                   ]
                                 }
                               }
-                            },
-                            "isConflicted": false
+                            }
                           },
                           {
                             "type": "data",
@@ -111,8 +110,7 @@
                                   }
                                 }
                               ]
-                            },
-                            "isConflicted": false
+                            }
                           }
                         ]
                       },
@@ -179,8 +177,7 @@
                                   }
                                 ]
                               ]
-                            },
-                            "isConflicted": false
+                            }
                           }
                         ]
                       },

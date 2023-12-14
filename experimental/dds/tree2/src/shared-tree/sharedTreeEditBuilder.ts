@@ -35,7 +35,7 @@ export class SharedTreeEditBuilder
 	) {
 		super(modularChangeFamily, (change) =>
 			changeReceiver({
-				changes: [{ type: "data", innerChange: change, isConflicted: false }],
+				changes: [{ type: "data", innerChange: change }],
 			}),
 		);
 	}
@@ -46,7 +46,6 @@ export class SharedTreeEditBuilder
 				{
 					type: "schema",
 					innerChange: { schema: { new: newSchema, old: oldSchema } },
-					isConflicted: false,
 				},
 			],
 		});
