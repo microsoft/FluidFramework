@@ -6,7 +6,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DevtoolsPanel } from "@fluidframework/devtools-view";
+import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";

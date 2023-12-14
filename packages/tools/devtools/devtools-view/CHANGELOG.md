@@ -1,4 +1,4 @@
-# @fluidframework/devtools-view
+# @fluid-internal/devtools-view
 
 ## 2.0.0-internal.8.0.0
 
