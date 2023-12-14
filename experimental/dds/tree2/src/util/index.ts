@@ -77,6 +77,7 @@ export {
 	useDeterministicStableId,
 	useAsyncDeterministicStableId,
 	objectToMap,
+	invertMap,
 	oneFromSet,
 	Named,
 	disposeSymbol,
