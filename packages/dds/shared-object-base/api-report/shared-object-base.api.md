@@ -26,7 +26,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 // @internal
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
 
-// @alpha
+// @internal
 export class FluidSerializer implements IFluidSerializer {
     constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
     decode(input: any): any;
@@ -92,7 +92,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     // (undocumented)
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected processGCDataCore(serializer: SummarySerializer): void;
+    protected processGCDataCore(serializer: IFluidSerializer): void;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     // (undocumented)
@@ -142,7 +142,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
 
-// @alpha
+// @internal
 export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     getSerializedRoutes(): string[];
