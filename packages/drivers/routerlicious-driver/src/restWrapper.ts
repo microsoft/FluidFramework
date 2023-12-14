@@ -228,7 +228,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	): Promise<RawAxiosRequestHeaders> {
 		const token = await this.getToken();
 		assert(token !== undefined, 0x679 /* token should be present */);
-		const headers: RawAxiosRequestHeaders  = {
+		const headers: RawAxiosRequestHeaders = {
 			...requestHeaders,
 			[DriverVersionHeaderName]: driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
