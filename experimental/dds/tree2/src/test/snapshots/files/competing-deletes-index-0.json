@@ -17,7 +17,7 @@
                   "trunk": [
                     {
                       "change": {
-                        "encodedChanges": [
+                        "changes": [
                           {
                             "type": "data",
                             "change": {
@@ -47,7 +47,7 @@
                     },
                     {
                       "change": {
-                        "encodedChanges": [
+                        "changes": [
                           {
                             "type": "data",
                             "change": {
@@ -87,7 +87,7 @@
                     },
                     {
                       "change": {
-                        "encodedChanges": [
+                        "changes": [
                           {
                             "type": "data",
                             "change": {
@@ -134,7 +134,7 @@
                         "commits": [
                           {
                             "change": {
-                              "encodedChanges": [
+                              "changes": [
                                 {
                                   "type": "data",
                                   "change": {
@@ -171,7 +171,7 @@
                         "commits": [
                           {
                             "change": {
-                              "encodedChanges": [
+                              "changes": [
                                 {
                                   "type": "data",
                                   "change": {
