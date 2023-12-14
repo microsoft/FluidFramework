@@ -100,10 +100,13 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
-			
+
 			let redisClient: Redis.default | Redis.Cluster;
 			if (redisConfig.enableClustering) {
-				redisClient = new Redis.Cluster([{port: redisConfig.port, host: redisConfig.host}], redisOptions);
+				redisClient = new Redis.Cluster(
+					[{ port: redisConfig.port, host: redisConfig.host }],
+					redisOptions,
+				);
 			} else {
 				redisClient = new Redis.default(redisOptions);
 			}

@@ -30,7 +30,10 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 
 	constructor(options: Redis.RedisOptions, enableClustering: boolean = false) {
 		if (enableClustering) {
-			this.redisClient = new Redis.Cluster([{port: options.port, host: options.host}], options);
+			this.redisClient = new Redis.Cluster(
+				[{ port: options.port, host: options.host }],
+				options,
+			);
 		} else {
 			this.redisClient = new Redis.default(options);
 		}

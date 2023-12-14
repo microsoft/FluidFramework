@@ -17,7 +17,7 @@ export class RedisCache implements ICache {
 	private readonly prefix: string = "git";
 
 	constructor(
-		private readonly client: Redis.default,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {

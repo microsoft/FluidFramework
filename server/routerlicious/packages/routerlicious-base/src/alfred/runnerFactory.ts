@@ -237,7 +237,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		let redisClient: Redis.default | Redis.Cluster;
 		if (redisConfig2.enableClustering) {
-			redisClient = new Redis.Cluster([{port: redisConfig2.port, host: redisConfig2.host}], redisOptions2);
+			redisClient = new Redis.Cluster(
+				[{ port: redisConfig2.port, host: redisConfig2.host }],
+				redisOptions2,
+			);
 		} else {
 			redisClient = new Redis.default(redisOptions2);
 		}
@@ -245,7 +248,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		let redisClientForJwtCache: Redis.default | Redis.Cluster;
 		if (redisConfig2.enableClustering) {
-			redisClientForJwtCache = new Redis.Cluster([{port: redisConfig2.port, host: redisConfig2.host}], redisOptions2);
+			redisClientForJwtCache = new Redis.Cluster(
+				[{ port: redisConfig2.port, host: redisConfig2.host }],
+				redisOptions2,
+			);
 		} else {
 			redisClientForJwtCache = new Redis.default(redisOptions2);
 		}
@@ -346,7 +352,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		let redisClientForThrottling: Redis.default | Redis.Cluster;
 		if (redisConfigForThrottling.enableClustering) {
-			redisClientForThrottling = new Redis.Cluster([{port: redisConfigForThrottling.port, host: redisConfigForThrottling.host}], redisOptionsForThrottling);
+			redisClientForThrottling = new Redis.Cluster(
+				[{ port: redisConfigForThrottling.port, host: redisConfigForThrottling.host }],
+				redisOptionsForThrottling,
+			);
 		} else {
 			redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
 		}
@@ -541,7 +550,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 			let redisClientForLogging: Redis.default | Redis.Cluster;
 			if (redisConfig.enableClustering) {
-				redisClientForLogging = new Redis.Cluster([{port: redisConfig.port, host: redisConfig.host}], redisOptions);
+				redisClientForLogging = new Redis.Cluster(
+					[{ port: redisConfig.port, host: redisConfig.host }],
+					redisOptions,
+				);
 			} else {
 				redisClientForLogging = new Redis.default(redisOptions);
 			}
