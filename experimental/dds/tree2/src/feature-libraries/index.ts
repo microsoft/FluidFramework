@@ -71,7 +71,7 @@ export { ForestSummarizer } from "./forest-summary";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
-export { SchemaSummarizer, SchemaEditor, encodeTreeSchema, makeSchemaCodec } from "./schema-index/";
+export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/";
 export {
 	stackTreeNodeCursor,
 	CursorAdapter,

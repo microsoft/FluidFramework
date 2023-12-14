@@ -20,9 +20,12 @@ import { leaf } from "../../domains";
 import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes";
 // eslint-disable-next-line import/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds";
+import { RevisionTagCodec } from "../../shared-tree-core";
 
 const dataChanges: ModularChangeset[] = [];
-const modularFamily = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
+const modularFamily = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
+	jsonValidator: typeboxValidator,
+});
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
 
 const nodeX = { type: leaf.string.name, value: "X" };

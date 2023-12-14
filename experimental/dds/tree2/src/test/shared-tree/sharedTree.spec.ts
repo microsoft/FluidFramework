@@ -1247,7 +1247,6 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
 			const value1 = "42";
 			const value2 = "42";
-			const expectedSchema = schemaCodec.encode(stringSequenceRootSchema);
 
 			const view1 = provider.trees[0].schematizeInternal({
 				schema: stringSequenceRootSchema,
@@ -1263,7 +1262,10 @@ describe("SharedTree", () => {
 
 			await provider.ensureSynchronized();
 			assert.deepEqual(view1.editableTree.asArray, [value1]);
-			assert.deepEqual(schemaCodec.encode(provider.trees[1].storedSchema), expectedSchema);
+			expectSchemaEqual(
+				provider.trees[1].storedSchema,
+				intoStoredSchema(stringSequenceRootSchema),
+			);
 			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
 	});

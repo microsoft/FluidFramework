@@ -35,7 +35,6 @@ import {
 	DeltaDetachedNodeId,
 	EncodedRevisionTag,
 } from "../../core";
-import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	forEachInNestedMap,

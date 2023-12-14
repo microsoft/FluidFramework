@@ -38,6 +38,7 @@ import {
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
+import { RevisionTagCodec } from "../../shared-tree-core";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
 
@@ -45,7 +46,9 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
+const family = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
+	jsonValidator: typeboxValidator,
+});
 
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");

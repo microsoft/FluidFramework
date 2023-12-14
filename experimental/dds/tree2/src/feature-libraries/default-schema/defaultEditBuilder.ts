@@ -31,6 +31,7 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 	EditDescription,
 } from "../modular-schema";
+import { RevisionTagCodec } from "../../shared-tree-core";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
 export type DefaultChangeset = ModularChangeset;
@@ -44,7 +45,11 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(codecOptions: ICodecOptions) {
-		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
+		this.modularFamily = new ModularChangeFamily(
+			fieldKinds,
+			new RevisionTagCodec(),
+			codecOptions,
+		);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {

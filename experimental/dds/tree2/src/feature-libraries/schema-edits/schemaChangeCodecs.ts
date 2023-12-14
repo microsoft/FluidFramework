@@ -4,7 +4,7 @@
  */
 
 import { ICodecOptions, IJsonCodec } from "../../codec";
-import { makeSchemaCodec } from "../schemaIndexFormat";
+import { makeSchemaCodec } from "../schema-index";
 import { EncodedSchemaChange } from "./schemaChangeFormat";
 import { SchemaChange } from "./schemaChangeTypes";
 
