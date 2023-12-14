@@ -5,7 +5,11 @@
 
 import { strict as assert, fail } from "assert";
 import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
-import { defaultSchemaPolicy, cursorForJsonableTreeField } from "../../../../feature-libraries";
+import {
+	defaultSchemaPolicy,
+	cursorForJsonableTreeField,
+	TreeCompressionStrategy,
+} from "../../../../feature-libraries";
 
 import {
 	buildCache,
@@ -15,9 +19,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
 import {
-	makeSchemaCompressedCodec,
+	Context,
+	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
+} from "../../../../feature-libraries/chunked-forest/codec/codecs";
 import {
 	AnyShape,
 	EncoderCache,
@@ -236,6 +241,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
+		// TODO: test non size 1 batches
 		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
 				const tree = treeFactory();
@@ -243,17 +249,16 @@ describe("schemaBasedEncoding", () => {
 				const cache = buildCache(schemaData, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
-				const codec = makeSchemaCompressedCodec(
-					{ jsonValidator: typeboxValidator },
-					schemaData,
-					defaultSchemaPolicy,
-				);
+				const context: Context = {
+					encodeType: TreeCompressionStrategy.Compressed,
+					schema: { schema: schemaData, policy: defaultSchemaPolicy },
+				};
+				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator })(context);
 				// End to end test
-				const encoded = codec.encode(cursorForJsonableTreeField(tree));
+				const encoded = codec.encode([cursorForJsonableTreeField(tree)]);
 				const result = codec.decode(encoded);
-				const resultTree = jsonableTreesFromFieldCursor(result);
-				assert.deepEqual(resultTree, tree);
-				assert.equal(resultTree.length, tree.length);
+				const resultTree = result.map(jsonableTreesFromFieldCursor);
+				assert.deepEqual(resultTree, [tree]);
 			});
 		}
 	});

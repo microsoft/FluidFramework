@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/id-compressor",
-	"version": "2.0.0-internal.8.0.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "ID compressor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -73,6 +73,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluid-tools/build-cli": "^0.28.0",

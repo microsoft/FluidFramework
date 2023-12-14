@@ -15,6 +15,7 @@ export function makeMessageCodec<TChangeset>(
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
 ): IJsonCodec<DecodedMessage<TChangeset>> {
+	// TODO: consider adding version and using makeVersionedValidatedCodec
 	return withSchemaValidation<DecodedMessage<TChangeset>, TAnySchema>(
 		Message(changesetCodec.encodedSchema ?? Type.Any()),
 		{

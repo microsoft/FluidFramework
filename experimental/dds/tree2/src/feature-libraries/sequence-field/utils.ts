@@ -40,9 +40,8 @@ import {
 	CellMark,
 	AttachAndDetach,
 	MarkEffect,
-	InverseAttachFields,
+	RedetachFields,
 	IdRange,
-	MovePlaceholder,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -52,6 +51,8 @@ import {
 	MoveMarkEffect,
 	DetachOfRemovedNodes,
 	CellRename,
+	VestigialEndpoint,
+	isVestigialEndpoint,
 } from "./helperTypes";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
@@ -153,7 +154,7 @@ export function getDetachOutputId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		mark.detachIdOverride ?? {
+		mark.redetachId ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -332,7 +333,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
-		case "Placeholder":
 			return mark.cellId !== undefined;
 		case "Delete":
 		case "MoveOut":
@@ -379,7 +379,6 @@ export function isImpactful(
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
-		case "Placeholder":
 			return false;
 		case "Delete": {
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
@@ -513,11 +512,11 @@ function areAdjacentIdRanges(
 }
 
 function haveMergeableIdOverrides(
-	lhs: InverseAttachFields,
+	lhs: RedetachFields,
 	lhsCount: number,
-	rhs: InverseAttachFields,
+	rhs: RedetachFields,
 ): boolean {
-	return areMergeableChangeAtoms(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride);
+	return areMergeableChangeAtoms(lhs.redetachId, lhsCount, rhs.redetachId);
 }
 
 function areMergeableCellIds(
@@ -537,7 +536,10 @@ function areMergeableCellIds(
  * @returns `lhs` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `undefined` is returned, `lhs` is left untouched.
  */
-export function tryMergeMarks<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): Mark<T> | undefined {
+export function tryMergeMarks<T>(
+	lhs: Mark<T> & Partial<VestigialEndpoint>,
+	rhs: Readonly<Mark<T> & Partial<VestigialEndpoint>>,
+): (Mark<T> & Partial<VestigialEndpoint>) | undefined {
 	if (rhs.type !== lhs.type) {
 		return undefined;
 	}
@@ -547,6 +549,18 @@ export function tryMergeMarks<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): Mark<T> 
 	}
 
 	if (rhs.changes !== undefined || lhs.changes !== undefined) {
+		return undefined;
+	}
+
+	if (isVestigialEndpoint(lhs)) {
+		if (isVestigialEndpoint(rhs)) {
+			if (!areMergeableChangeAtoms(lhs.vestigialEndpoint, lhs.count, rhs.vestigialEndpoint)) {
+				return undefined;
+			}
+		} else {
+			return undefined;
+		}
+	} else if (isVestigialEndpoint(rhs)) {
 		return undefined;
 	}
 
@@ -593,7 +607,7 @@ function tryMergeEffects(
 	if (
 		isDetach(lhs) &&
 		isDetach(rhs) &&
-		!areMergeableCellIds(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride)
+		!areMergeableCellIds(lhs.redetachId, lhsCount, rhs.redetachId)
 	) {
 		return undefined;
 	}
@@ -635,13 +649,6 @@ function tryMergeEffects(
 			const lhsInsert = lhs as Insert;
 			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
 				return lhsInsert;
-			}
-			break;
-		}
-		case "Placeholder": {
-			const lhsPlaceholder = lhs as MovePlaceholder;
-			if ((lhsPlaceholder.id as number) + lhsCount === rhs.id) {
-				return lhsPlaceholder;
 			}
 			break;
 		}
@@ -1006,7 +1013,10 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number): [TMark, TMark] {
+export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>(
+	mark: TMark,
+	length: number,
+): [TMark, TMark] {
 	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
@@ -1018,6 +1028,9 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 	const mark2 = { ...mark, ...effect2, count: remainder };
 	if (mark2.cellId !== undefined) {
 		mark2.cellId = splitDetachEvent(mark2.cellId, length);
+	}
+	if (isVestigialEndpoint(mark2)) {
+		mark2.vestigialEndpoint = splitDetachEvent(mark2.vestigialEndpoint, length);
 	}
 
 	return [mark1, mark2];
@@ -1054,11 +1067,8 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			const id2: ChangesetLocalId = brand((effect.id as number) + length);
 			const effect2 = { ...effect, id: id2 };
 			const effect2Delete = effect2 as Delete;
-			if (effect2Delete.detachIdOverride !== undefined) {
-				effect2Delete.detachIdOverride = splitDetachEvent(
-					effect2Delete.detachIdOverride,
-					length,
-				);
+			if (effect2Delete.redetachId !== undefined) {
+				effect2Delete.redetachId = splitDetachEvent(effect2Delete.redetachId, length);
 			}
 			return [effect1, effect2];
 		}
@@ -1070,8 +1080,8 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 
 			const return2 = effect2 as MoveOut;
 
-			if (return2.detachIdOverride !== undefined) {
-				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);
+			if (return2.redetachId !== undefined) {
+				return2.redetachId = splitDetachEvent(return2.redetachId, length);
 			}
 
 			if (return2.finalEndpoint !== undefined) {
@@ -1095,13 +1105,6 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			};
 
 			return [effect1, effect2];
-		}
-		case "Placeholder": {
-			const effect2: MovePlaceholder = {
-				...effect,
-				id: brand((effect.id as number) + length),
-			};
-			return [effect, effect2 as TEffect];
 		}
 		default:
 			unreachableCase(type);
