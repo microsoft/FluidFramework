@@ -128,6 +128,10 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_DevtoolsLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_ContainerDevtoolsProps": {
 				"backCompat": false
 			},
@@ -168,6 +172,10 @@
 				"forwardCompat": false
 			},
 			"TypeAliasDeclaration_VisualNode": {
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_DevtoolsLogger": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}
