@@ -38,18 +38,18 @@ export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
  * @internal
  */
 interface IResponseLatency {
-    /**
-     * Emitted when the response has been sent.
-     * More specifically, this event is emitted when the last segment of the response headers and body have been handed off to the operating system for transmission over the network.
-     * It does not imply that the client has received anything yet.
-     * Docs: https://nodejs.org/docs/latest-v16.x/api/http.html#event-finish_1
-     */
-    finishTime: number | undefined;
-    /**
-     * Indicates that the response is completed, or its underlying connection was terminated prematurely (before the response completion).
-     * Docs: https://nodejs.org/docs/latest-v16.x/api/http.html#event-close_2
-     */
-    closeTime: number;
+	/**
+	 * Emitted when the response has been sent.
+	 * More specifically, this event is emitted when the last segment of the response headers and body have been handed off to the operating system for transmission over the network.
+	 * It does not imply that the client has received anything yet.
+	 * Docs: https://nodejs.org/docs/latest-v16.x/api/http.html#event-finish_1
+	 */
+	finishTime: number | undefined;
+	/**
+	 * Indicates that the response is completed, or its underlying connection was terminated prematurely (before the response completion).
+	 * Docs: https://nodejs.org/docs/latest-v16.x/api/http.html#event-close_2
+	 */
+	closeTime: number;
 }
 
 /**
@@ -62,22 +62,25 @@ export function jsonMorganLoggerMiddleware(
 		req: express.Request,
 		res: express.Response,
 	) => Record<string, any>,
-    enableLatencyMetric: boolean = false,
+	enableLatencyMetric: boolean = false,
 ): express.RequestHandler {
 	return (request, response, next): void => {
-        const responseLatencyP = new Promise<IResponseLatency>((resolve) => {
-            let finishTime: number | undefined;
-            const finishListener = () => {
-                finishTime = performance.now();
-            };
-            response.once("finish", finishListener);
-            response.once("close", () => {
-                response.removeListener("finish", finishListener);
-                const closeTime = performance.now();
-                resolve({ finishTime, closeTime });
-            });
-        });
-        const startTime = performance.now();
+		const responseLatencyP = new Promise<IResponseLatency>((resolve, reject) => {
+			let finishTime: number | undefined;
+			const finishListener = () => {
+				finishTime = performance.now();
+			};
+			response.once("finish", finishListener);
+			response.once("close", () => {
+				response.removeListener("finish", finishListener);
+				const closeTime = performance.now();
+				resolve({ finishTime, closeTime });
+			});
+			response.once("error", (error) => {
+				reject(error);
+			});
+		});
+		const startTime = performance.now();
 		const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
 		morgan<express.Request, express.Response>((tokens, req, res) => {
 			let additionalProperties = {};
@@ -101,34 +104,45 @@ export function jsonMorganLoggerMiddleware(
 				...getTelemetryContextPropertiesWithHttpInfo(req, res),
 			};
 			httpMetric.setProperties(properties);
-            const resolveMetric = () => {
-                if (properties.status?.startsWith("2")) {
-                    httpMetric.success("Request successful");
-                } else {
-                    httpMetric.error("Request failed");
-                }
-            }
-            if (enableLatencyMetric) {
-                // Morgan middleware logs using the [on-finished](https://www.npmjs.com/package/on-finished) package, meaning that it will log
-                // request duration immediately on response 'finish' event. However, the gap between 'finish' and 'close' can be helpful for
-                // understanding response latency.
-                const endTime = performance.now();
-                // HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
-                httpMetric.setProperty("durationInMs", endTime - startTime);
-                // Wait for response 'close' event to signal that the response is completed.
-                responseLatencyP.then((responseLatency) => {
-                    const finishToCloseDurationMs: number = responseLatency.finishTime === undefined
-                        ? -1 // Underlying connection was terminated prematurely (before the response completion)
-                        : responseLatency.closeTime - responseLatency.finishTime;
-                    httpMetric.setProperty(HttpProperties.responseLatencyMs, finishToCloseDurationMs);
-                }).catch((error) => {
-                    Lumberjack.error("Failed to track 'close' event for HTTP Request", properties, error);
-                }).finally(() => {
-                    resolveMetric();
-                });
-            } else {
-                resolveMetric();
-            }
+			const resolveMetric = () => {
+				if (properties.status?.startsWith("2")) {
+					httpMetric.success("Request successful");
+				} else {
+					httpMetric.error("Request failed");
+				}
+			};
+			if (enableLatencyMetric) {
+				// Morgan middleware logs using the [on-finished](https://www.npmjs.com/package/on-finished) package, meaning that it will log
+				// request duration immediately on response 'finish' event. However, the gap between 'finish' and 'close' can be helpful for
+				// understanding response latency.
+				const endTime = performance.now();
+				// HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
+				httpMetric.setProperty("durationInMs", endTime - startTime);
+				// Wait for response 'close' event to signal that the response is completed.
+				responseLatencyP
+					.then((responseLatency) => {
+						const finishToCloseDurationMs: number =
+							responseLatency.finishTime === undefined
+								? -1 // Underlying connection was terminated prematurely (before the response completion)
+								: responseLatency.closeTime - responseLatency.finishTime;
+						httpMetric.setProperty(
+							HttpProperties.responseLatencyMs,
+							finishToCloseDurationMs,
+						);
+					})
+					.catch((error) => {
+						Lumberjack.error(
+							"Failed to track 'close' event for HTTP Request",
+							properties,
+							error,
+						);
+					})
+					.finally(() => {
+						resolveMetric();
+					});
+			} else {
+				resolveMetric();
+			}
 			return undefined;
 		})(request, response, next);
 	};
