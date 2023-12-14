@@ -65,7 +65,7 @@ export interface IClient {
     user: IUser;
 }
 
-// @alpha
+// @public
 export interface IClientConfiguration {
     blockSize: number;
     maxMessageSize: number;
@@ -454,7 +454,7 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @alpha
+// @public
 export interface ITokenClaims {
     documentId: string;
     exp: number;
