@@ -6,10 +6,8 @@ This library also powers our [Chrome Extension](https://developer.chrome.com/doc
 
 <!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
 
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
+**IMPORTANT: This package is intended strictly as an implementation detail of the Fluid Framework and is not intended for public consumption.**
+**We make no stability guarantees regarding its APIs.**
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
