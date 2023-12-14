@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidDependencySynthesizer } from ".";
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
 
 /**
  * This is a condensed version of Record that requires the object has all
