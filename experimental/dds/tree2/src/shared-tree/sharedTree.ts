@@ -153,7 +153,16 @@ export class SharedTree
 		HasListeners<CheckoutEvents>;
 	public readonly view: TreeCheckout;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private schemaIndexLastChangedSeq: number | undefined;
+	/**
+	 * The most recent sequenceNumber on a message processed by this `SharedTree`.
+	 * Updated before processing an op, such that reading `currentSeq` while processing an op
+	 * gives the sequenceNumber of the op currently being processed.
+	 * `undefined` if no message has been processed, e.g. for a detached document or document loaded
+	 * from summary without any subsequent ops.
+	 * @remarks - Most rebasing is built atop a revision system decoupled from message sequence number.
+	 * However, this is sometimes necessary to interop with Fluid runtime APIs, e.g. for incremental summarization.
+	 */
+	private currentSeq: number | undefined;
 
 	/**
 	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
@@ -180,7 +189,7 @@ export class SharedTree
 				: buildForest();
 		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.schemaIndexLastChangedSeq,
+			getCurrentSeq: () => this.currentSeq,
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -374,9 +383,7 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		if ((message.contents as any).type === "SchemaOp") {
-			this.schemaIndexLastChangedSeq = message.sequenceNumber;
-		}
+		this.currentSeq = message.sequenceNumber;
 		// TODO: Get rid of this `as any`. There should be a better way to narrow the type of message.contents.
 		if (!this.storedSchema.tryHandleOp(message.contents as any)) {
 			super.processCore(message, local, localOpMetadata);

@@ -245,11 +245,8 @@ export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDeman
 
 // @internal
 export interface SummaryInfo {
-    // (undocumented)
     summaryRefSeq: number;
-    // (undocumented)
     summaryTree: ISummaryTree;
-    // (undocumented)
     summaryVersion: string;
 }
 

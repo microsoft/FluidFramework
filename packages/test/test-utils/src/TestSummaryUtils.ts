@@ -199,7 +199,16 @@ export async function summarizeNow(
  * @internal
  */
 export interface SummaryInfo {
+	/**
+	 * The summary tree generated
+	 */
 	summaryTree: ISummaryTree;
+	/**
+	 * Handle of the completed summary
+	 */
 	summaryVersion: string;
+	/**
+	 * Reference sequence number of the current summary generation
+	 */
 	summaryRefSeq: number;
 }

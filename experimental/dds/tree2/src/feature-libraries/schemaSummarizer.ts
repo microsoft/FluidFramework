@@ -33,7 +33,16 @@ import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
 
 const schemaStringKey = "SchemaString";
 
-interface CollabWindow {
+/**
+ * Manages the collaboration window for incremental summarization.
+ */
+export interface CollabWindow {
+	/**
+	 * Gets the sequence number of the latest processed message in `SharedTree`.
+	 * This number is used to check if incremental summarization is up-to-date.
+	 *
+	 * @returns The latest sequence number, or undefined if not available.
+	 */
 	getCurrentSeq: () => number | undefined;
 }
 /**
@@ -55,6 +64,7 @@ export class SchemaSummarizer implements Summarizable {
 		this.codec = makeSchemaCodec(options);
 		this.schema.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
+			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.
 			this.schemaIndexLastChangedSeq = collabWindow.getCurrentSeq();
 		});
 	}
@@ -75,7 +85,7 @@ export class SchemaSummarizer implements Summarizable {
 			builder.addHandle(
 				schemaStringKey,
 				SummaryType.Blob,
-				`${incrementalSummaryContext.summaryPath}/indexes/Schema/${schemaStringKey}`,
+				`${incrementalSummaryContext.summaryPath}/indexes/${this.key}/${schemaStringKey}`,
 			);
 		} else {
 			const dataString = JSON.stringify(this.codec.encode(this.schema));
@@ -91,11 +101,7 @@ export class SchemaSummarizer implements Summarizable {
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {
-		// Currently no Fluid handles are used, so just use JSON.stringify.
-		const dataString = JSON.stringify(this.codec.encode(this.schema));
-		const builder = new SummaryTreeBuilder();
-		builder.addBlob(schemaStringKey, dataString);
-		return builder.getSummaryTree();
+		throw new Error("Method not implemented.");
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -113,7 +119,6 @@ export class SchemaSummarizer implements Summarizable {
 		parse: SummaryElementParser,
 	): Promise<void> {
 		const schemaBuffer: ArrayBufferLike = await services.readBlob(schemaStringKey);
-		this.schemaIndexLastChangedSeq = 0;
 		// After the awaits, validate that the schema is in a clean state.
 		// This detects any schema that could have been accidentally added through
 		// invalid means and are about to be overwritten.
@@ -126,6 +131,7 @@ export class SchemaSummarizer implements Summarizable {
 		// Currently no Fluid handles are used, so just use JSON.parse.
 		const decoded = this.codec.decode(JSON.parse(schemaString));
 		this.schema.update(decoded);
+		this.schemaIndexLastChangedSeq = 0;
 	}
 }
 
