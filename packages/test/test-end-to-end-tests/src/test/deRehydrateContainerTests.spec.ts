@@ -198,7 +198,7 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			// Check blobs contents for protocolAttributes
 			// const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
 			// assert(
-			// 	snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !==
+			// 	snapshotTree.trees[".protocol"].blobsContents?[protocolAttributesBlobId] !==
 			// 		undefined,
 			// 	"Blobs should contain attributes blob",
 			// );
