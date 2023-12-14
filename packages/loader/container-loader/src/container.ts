@@ -234,7 +234,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
- * @internal
+ * @alpha
  */
 export async function waitContainerToCatchUp(container: IContainer) {
 	// Make sure we stop waiting if container is closed.

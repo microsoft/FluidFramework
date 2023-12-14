@@ -27,6 +27,11 @@ import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
 
+/**
+ * @deprecated `TableDocument` is an abandoned prototype.
+ * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @alpha
+ */
 export interface ITableDocumentEvents extends IEvent {
 	(
 		event: "op",
@@ -45,7 +50,7 @@ export interface ITableDocumentEvents extends IEvent {
 /**
  * @deprecated `TableDocument` is an abandoned prototype.
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
- * @internal
+ * @alpha
  */
 export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
 	public static getFactory() {

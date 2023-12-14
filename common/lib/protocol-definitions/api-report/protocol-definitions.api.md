@@ -549,7 +549,7 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @internal
+// @alpha
 export enum ScopeType {
     DocRead = "doc:read",
     DocWrite = "doc:write",
