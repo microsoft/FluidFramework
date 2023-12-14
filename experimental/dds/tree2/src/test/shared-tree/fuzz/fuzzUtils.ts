@@ -20,7 +20,7 @@ import {
 	FlexTreeObjectNodeTyped,
 	intoStoredSchema,
 } from "../../../feature-libraries";
-import { SharedTree, ITreeCheckout, ISharedTree } from "../../../shared-tree";
+import { SharedTree, ITreeCheckout } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
 
@@ -45,11 +45,6 @@ export type FuzzNodeSchema = typeof fuzzNode;
 export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
 
 export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
-
-export function fuzzViewFromTree(tree: ISharedTree): ITreeCheckout {
-	assert(tree instanceof SharedTree);
-	return tree.view;
-}
 
 export const onCreate = (tree: SharedTree) => {
 	tree.storedSchema.update(intoStoredSchema(fuzzSchema));
