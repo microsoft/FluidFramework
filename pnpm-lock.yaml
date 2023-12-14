@@ -240,12 +240,12 @@ importers:
 
   azure/packages/external-controller:
     specifiers:
-      '@fluid-experimental/devtools': workspace:~
       '@fluidframework/azure-client': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
+      '@fluidframework/devtools': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/local-driver': workspace:~
@@ -297,11 +297,11 @@ importers:
       fluid-framework: link:../../../packages/framework/fluid-framework
       uuid: 9.0.1
     devDependencies:
-      '@fluid-experimental/devtools': link:../../../packages/tools/devtools/devtools
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
+      '@fluidframework/devtools': link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
@@ -10800,13 +10800,13 @@ importers:
 
   packages/tools/devtools/devtools:
     specifiers:
-      '@fluid-experimental/devtools-core': workspace:~
-      '@fluid-experimental/devtools-previous': npm:@fluid-experimental/devtools@2.0.0-internal.7.2.0
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/devtools-core': workspace:~
+      '@fluidframework/devtools-previous': npm:@fluid-experimental/devtools@2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -10829,15 +10829,15 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
-      '@fluid-experimental/devtools-core': link:../devtools-core
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/devtools-core': link:../devtools-core
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
     devDependencies:
-      '@fluid-experimental/devtools-previous': /@fluid-experimental/devtools/2.0.0-internal.7.2.0
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
+      '@fluidframework/devtools-previous': /@fluid-experimental/devtools/2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
@@ -10863,8 +10863,6 @@ importers:
     specifiers:
       '@fluentui/react': ^8.109.4
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/devtools-core': workspace:~
-      '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -10875,6 +10873,8 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
+      '@fluidframework/devtools-core': workspace:~
+      '@fluidframework/devtools-view': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -10934,11 +10934,11 @@ importers:
       webpack-cli: ^4.9.2
     dependencies:
       '@fluentui/react': 8.112.9_z2l4bd7d7kzuhnbxbmhiesmtme
-      '@fluid-experimental/devtools-core': link:../devtools-core
-      '@fluid-experimental/devtools-view': link:../devtools-view
       '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/core-utils': link:../../../common/core-utils
+      '@fluidframework/devtools-core': link:../devtools-core
+      '@fluidframework/devtools-view': link:../devtools-view
       '@microsoft/1ds-core-js': 3.2.15_tslib@1.14.1
       '@microsoft/1ds-post-js': 3.2.15_tslib@1.14.1
       react: 17.0.2
@@ -11008,7 +11008,6 @@ importers:
 
   packages/tools/devtools/devtools-core:
     specifiers:
-      '@fluid-experimental/devtools-core-previous': npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0
       '@fluid-experimental/tree2': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -11020,6 +11019,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/devtools-core-previous': npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
@@ -11065,10 +11065,10 @@ importers:
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
     devDependencies:
-      '@fluid-experimental/devtools-core-previous': /@fluid-experimental/devtools-core/2.0.0-internal.7.2.0
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
+      '@fluidframework/devtools-core-previous': /@fluid-experimental/devtools-core/2.0.0-internal.7.2.0
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
@@ -11098,9 +11098,6 @@ importers:
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-icons': ^2.0.201
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/devtools': workspace:~
-      '@fluid-experimental/devtools-core': workspace:~
-      '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-experimental/tree2': workspace:~
       '@fluid-internal/client-utils': workspace:~
@@ -11114,6 +11111,9 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/devtools': workspace:~
+      '@fluidframework/devtools-core': workspace:~
+      '@fluidframework/devtools-view': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
@@ -11165,9 +11165,6 @@ importers:
       '@fluentui/react-components': 9.19.1_3eymgwxym437wpq7il2js5u6au
       '@fluentui/react-icons': 2.0.223_react@17.0.2
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
-      '@fluid-experimental/devtools': link:../devtools
-      '@fluid-experimental/devtools-core': link:../devtools-core
-      '@fluid-experimental/devtools-view': link:../devtools-view
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-experimental/tree2': link:../../../../experimental/dds/tree2
       '@fluid-internal/client-utils': link:../../../common/client-utils
@@ -11179,6 +11176,9 @@ importers:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
+      '@fluidframework/devtools': link:../devtools
+      '@fluidframework/devtools-core': link:../devtools-core
+      '@fluidframework/devtools-view': link:../devtools-view
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/map': link:../../../dds/map
@@ -11236,7 +11236,6 @@ importers:
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-hooks': ^8.6.24
       '@fluentui/react-icons': ^2.0.201
-      '@fluid-experimental/devtools-core': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -11244,6 +11243,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/devtools-core': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -11303,12 +11303,12 @@ importers:
       '@fluentui/react-components': 9.19.1_3eymgwxym437wpq7il2js5u6au
       '@fluentui/react-hooks': 8.6.33_5n3si3aeogjujeu5eks6mxpsfi
       '@fluentui/react-icons': 2.0.223_react@17.0.2
-      '@fluid-experimental/devtools-core': link:../devtools-core
       '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
+      '@fluidframework/devtools-core': link:../devtools-core
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
