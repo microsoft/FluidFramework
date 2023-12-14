@@ -132,7 +132,12 @@ export class SharedTreeChangeFamily
 		 */
 		const hasSchemaChange = (c: SharedTreeChange) =>
 			c.changes.some((innerChange) => innerChange.type === "schema");
-		if (hasSchemaChange(change) || hasSchemaChange(over.change)) {
+		if (
+			change.changes.length === 0 ||
+			over.change.changes.length === 0 ||
+			hasSchemaChange(change) ||
+			hasSchemaChange(over.change)
+		) {
 			// Conflict all inner changes
 			return SharedTreeChangeFamily.emptyChange;
 		}
