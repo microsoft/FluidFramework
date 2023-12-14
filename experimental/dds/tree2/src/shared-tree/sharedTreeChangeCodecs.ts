@@ -5,29 +5,9 @@
 
 import { IJsonCodec, ICodecOptions, ICodecFamily, makeCodecFamily } from "../codec";
 import { Mutable } from "../util";
-import {
-	ModularChangeset,
-	makeModularChangeCodec,
-	makeSchemaChangeCodec,
-} from "../feature-libraries";
+import { ModularChangeset, makeSchemaChangeCodec } from "../feature-libraries";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
-
-// These can't be an interfaces or they don't get the special string indexer bonus property.
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type EncodedModularChange = {
-	type: "data";
-	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
-};
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type EncodedSchemaChange = {
-	type: "schema";
-	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
-};
-
-export interface EncodedSharedTreeChange {
-	readonly encodedChanges: readonly (EncodedModularChange | EncodedSchemaChange)[];
-}
+import { EncodedSharedTreeChange } from "./sharedTreeChangeFormat";
 
 export function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<ModularChangeset>,
@@ -36,7 +16,7 @@ export function makeSharedTreeChangeCodec(
 	const schemaChangeCodec = makeSchemaChangeCodec({ jsonValidator: validator });
 	return {
 		encode: (change) => {
-			const changes: Mutable<EncodedSharedTreeChange["encodedChanges"]> = [];
+			const changes: Mutable<EncodedSharedTreeChange["changes"]> = [];
 			for (const decodedChange of change.changes) {
 				if (decodedChange.type === "data") {
 					changes.push({
@@ -50,12 +30,12 @@ export function makeSharedTreeChangeCodec(
 					});
 				}
 			}
-			return { encodedChanges: changes };
+			return { changes };
 		},
 		decode: (json) => {
 			const encodedChange = json as unknown as EncodedSharedTreeChange;
 			const changes: Mutable<SharedTreeChange["changes"]> = [];
-			for (const subChange of encodedChange.encodedChanges) {
+			for (const subChange of encodedChange.changes) {
 				if (subChange.type === "data") {
 					changes.push({
 						type: "data",

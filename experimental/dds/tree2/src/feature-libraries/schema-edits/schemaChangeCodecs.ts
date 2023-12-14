@@ -3,21 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Type } from "@sinclair/typebox";
 import { ICodecOptions, IJsonCodec } from "../../codec";
-import { Format, makeSchemaCodec } from "../schemaIndexFormat";
+import { makeSchemaCodec } from "../schemaIndexFormat";
+import { EncodedSchemaChange } from "./schemaChangeFormat";
 import { SchemaChange } from "./schemaChangeTypes";
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type EncodedSchemaChange = {
-	readonly new: Format;
-	readonly old: Format;
-};
-
-export const EncodedSchemaChange = Type.Object({
-	new: Type.Optional(Format),
-	old: Type.Optional(Format),
-});
 
 export function makeSchemaChangeCodec({
 	jsonValidator: validator,
