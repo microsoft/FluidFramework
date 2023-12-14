@@ -31,6 +31,8 @@ export type InitialObjects<T extends ContainerSchema> = {
 
 /**
  * Events emitted from {@link IFluidContainer}.
+ *
+ * @remarks Note: external implementations of this interface are not supported.
  * @sealed
  * @public
  */
