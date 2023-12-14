@@ -27,7 +27,7 @@ import { IVersion } from '@fluidframework/protocol-definitions';
 // @internal (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
-// @alpha @deprecated
+// @public @deprecated
 export enum DriverErrorType {
     authorizationError = "authorizationError",
     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
@@ -50,7 +50,7 @@ export enum DriverErrorType {
     writeError = "writeError"
 }
 
-// @internal
+// @public
 export const DriverErrorTypes: {
     readonly genericNetworkError: "genericNetworkError";
     readonly authorizationError: "authorizationError";
@@ -72,7 +72,7 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @public (undocumented)
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @internal
@@ -100,7 +100,7 @@ export enum FetchSource {
 // @alpha (undocumented)
 export type FiveDaysMs = 432000000;
 
-// @alpha
+// @public
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
@@ -222,7 +222,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
-// @alpha
+// @public
 export interface IDriverErrorBase {
     canRetry: boolean;
     endpointReached?: boolean;
