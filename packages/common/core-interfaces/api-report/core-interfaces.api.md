@@ -305,15 +305,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @alpha @deprecated (undocumented)
-export const IFluidRouter: keyof IProvideFluidRouter;
-
-// @alpha @deprecated (undocumented)
-export interface IFluidRouter extends IProvideFluidRouter {
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
-}
-
 // @internal (undocumented)
 export const IFluidRunnable: keyof IProvideFluidRunnable;
 
@@ -359,12 +350,6 @@ export interface IProvideFluidHandleContext {
 export interface IProvideFluidLoadable {
     // (undocumented)
     readonly IFluidLoadable: IFluidLoadable;
-}
-
-// @alpha @deprecated
-export interface IProvideFluidRouter {
-    // (undocumented)
-    readonly IFluidRouter: IFluidRouter;
 }
 
 // @internal (undocumented)

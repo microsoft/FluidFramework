@@ -143,8 +143,16 @@ export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
 
-export interface InverseAttachFields {
-	detachIdOverride?: ChangeAtomId;
+export interface RedetachFields {
+	/**
+	 * When set, the detach effect is reapplying a prior detach.
+	 * The cell ID specified is used in two ways:
+	 * - It indicates the location of the cell (including adjacent cell information) so that rebasing over this detach
+	 * can contribute the correct lineage information to the rebased mark.
+	 * - It specifies the revision and local ID that should be used to characterize the cell in the output context of
+	 * detach.
+	 */
+	redetachId?: CellId;
 }
 
 /**
@@ -155,7 +163,7 @@ export interface InverseAttachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Delete extends HasRevisionTag, InverseAttachFields {
+export interface Delete extends HasRevisionTag, RedetachFields {
 	type: "Delete";
 	id: ChangesetLocalId;
 }
@@ -168,7 +176,7 @@ export interface Delete extends HasRevisionTag, InverseAttachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface MoveOut extends HasMoveFields, InverseAttachFields {
+export interface MoveOut extends HasMoveFields, RedetachFields {
 	type: "MoveOut";
 }
 

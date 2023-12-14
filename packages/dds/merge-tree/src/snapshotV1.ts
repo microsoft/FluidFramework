@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
@@ -218,8 +216,13 @@ export class SnapshotV1 {
 			//      there is a pending insert op that will deliver the segment on reconnection.
 			//   b) The segment was removed at or below the MSN.  Pending ops can no longer reference this
 			//      segment, and therefore we can discard it.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (segment.seq === UnassignedSequenceNumber || segment.removedSeq! <= minSeq) {
+			if (
+				segment.seq === UnassignedSequenceNumber ||
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segment.removedSeq! <= minSeq ||
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segment.movedSeq! <= minSeq
+			) {
 				return true;
 			}
 
@@ -230,7 +233,8 @@ export class SnapshotV1 {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				segment.seq! <= minSeq && // Segment is below the MSN, and...
 				(segment.removedSeq === undefined || // .. Segment has not been removed, or...
-					segment.removedSeq === UnassignedSequenceNumber) // .. Removal op to be delivered on reconnect
+					segment.removedSeq === UnassignedSequenceNumber) && // .. Removal op to be delivered on reconnect
+				(segment.movedSeq === undefined || segment.movedSeq === UnassignedSequenceNumber)
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
 				// coalesce the new segment with the previous (if any).
@@ -294,10 +298,27 @@ export class SnapshotV1 {
 					);
 				}
 
-				// Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
+				if (segment.movedSeq !== undefined) {
+					assert(
+						segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq > minSeq,
+						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
+					);
+					raw.movedSeq = segment.movedSeq;
+					raw.movedSeqs = segment.movedSeqs;
+					raw.movedClientIds = segment.movedClientIds?.map((id) =>
+						this.getLongClientId(id),
+					);
+				}
+
+				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.
 				assert(
 					(raw.seq !== undefined && raw.client !== undefined) ||
-						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined),
+						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined) ||
+						(raw.movedSeq !== undefined &&
+							raw.movedClientIds !== undefined &&
+							raw.movedClientIds.length > 0 &&
+							raw.movedSeqs !== undefined &&
+							raw.movedSeqs.length > 0),
 					0x066 /* "Corrupted preservation of segment metadata!" */,
 				);
 

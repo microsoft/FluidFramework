@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/last-edited",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Tracks the last edited information in the Container.",
 	"homepage": "https://fluidframework.com",
 	"repository": {

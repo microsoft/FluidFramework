@@ -13,7 +13,10 @@ export const enum NodeKind {
 }
 
 // Helper for creating Scalar nodes in SharedTree
-export const makeScalar = <T>(idContext: NodeIdContext, value: Serializable<T>): ChangeNode => ({
+export const makeScalar = (
+	idContext: NodeIdContext,
+	value: Exclude<Serializable<unknown>, object>,
+): ChangeNode => ({
 	identifier: idContext.generateNodeId(),
 	definition: NodeKind.scalar as Definition,
 	traits: {},
@@ -27,9 +30,7 @@ export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): C
 				identifier: idContext.generateNodeId(),
 				definition: NodeKind.array as Definition,
 				traits: {
-					items: value.map(
-						(property: Serializable<T>): ChangeNode => fromJson(idContext, property),
-					),
+					items: value.map((property): ChangeNode => fromJson(idContext, property)),
 				},
 			};
 		} else if (value === null) {

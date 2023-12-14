@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ConfigurationBase } from "../../../ConfigurationBase";
+import { type ConfigurationBase } from "../../../ConfigurationBase";
 import { defaultConsoleLogger } from "../../../Logging";
-import { Renderers } from "./RenderOptions";
+import { type Renderers } from "./RenderOptions";
 
 /**
  * Configuration for HTML rendering of generated documentation contents.
