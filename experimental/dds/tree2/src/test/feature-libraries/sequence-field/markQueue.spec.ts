@@ -23,19 +23,31 @@ const tag2 = mintRevisionTag();
 describe("SequenceField - MarkQueue", () => {
 	it("applies effects to VestigialEndpoint marks", () => {
 		const idAllocator = idAllocatorFromMaxId();
-		const changes = TestChange.mint([], 1);
+		const change1 = TestChange.mint([], 1);
+		const change2 = TestChange.mint([], 2);
+		const change3 = TestChange.mint([], 3);
 		const moveEffects = SF.newCrossFieldTable() as MoveEffectTable<TestChange>;
-		const effect: MoveEffect<TestChange> & { basis: MoveId } = {
-			modifyAfter: tagChange(changes, tag2),
+		const effect1: MoveEffect<TestChange> & { basis: MoveId } = {
+			modifyAfter: tagChange(change1, tag2),
 			basis: brand(0),
 		};
-		moveEffects.set(CrossFieldTarget.Source, tag1, brand(1), 1, effect, false);
+		const effect2: MoveEffect<TestChange> & { basis: MoveId } = {
+			modifyAfter: tagChange(change2, tag2),
+			basis: brand(0),
+		};
+		const effect3: MoveEffect<TestChange> & { basis: MoveId } = {
+			modifyAfter: tagChange(change3, tag2),
+			basis: brand(0),
+		};
+		moveEffects.set(CrossFieldTarget.Source, tag1, brand(1), 1, effect1, false);
+		moveEffects.set(CrossFieldTarget.Source, tag1, brand(2), 1, effect2, false);
+		moveEffects.set(CrossFieldTarget.Source, tag1, brand(3), 1, effect3, false);
 		const vestige: VestigialEndpointMark<TestChange> = {
 			vestigialEndpoint: {
 				revision: tag1,
 				localId: brand(0),
 			},
-			count: 2,
+			count: 4,
 		};
 		const queue = new MarkQueue<TestChange>(
 			[vestige],
@@ -46,8 +58,7 @@ describe("SequenceField - MarkQueue", () => {
 			(a: TestChange | undefined, b: TaggedChange<TestChange>) => {
 				assert.equal(a, undefined);
 				assert.equal(b.revision, tag2);
-				assert.equal(b.change, changes);
-				return changes;
+				return b.change;
 			},
 		);
 		const actual = [];
@@ -69,7 +80,23 @@ describe("SequenceField - MarkQueue", () => {
 					localId: brand(1),
 				},
 				count: 1,
-				changes,
+				changes: change1,
+			},
+			{
+				vestigialEndpoint: {
+					revision: tag1,
+					localId: brand(2),
+				},
+				count: 1,
+				changes: change2,
+			},
+			{
+				vestigialEndpoint: {
+					revision: tag1,
+					localId: brand(3),
+				},
+				count: 1,
+				changes: change3,
 			},
 		];
 		assert.deepEqual(actual, expected);

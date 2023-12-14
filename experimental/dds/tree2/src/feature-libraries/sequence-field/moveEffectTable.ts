@@ -269,7 +269,7 @@ function applyMoveEffectsToVestigialMarks<T>(
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
 				mark = firstMark;
-				inputQueue.push(secondMark);
+				inputQueue.unshift(secondMark);
 			}
 
 			outputQueue.push(
@@ -321,7 +321,7 @@ function applyMoveEffectsToActiveMarks<T>(
 						const [firstMark, secondMark] = splitMark(mark, effect.length);
 						mark = firstMark;
 						updatedAttach = firstMark.attach as MoveIn;
-						inputQueue.push(secondMark);
+						inputQueue.unshift(secondMark);
 					} else {
 						updatedAttach = { ...mark.attach };
 					}
@@ -350,7 +350,7 @@ function applyMoveEffectsToActiveMarks<T>(
 				if (effect.length < mark.count) {
 					const [firstMark, secondMark] = splitMark(mark, effect.length);
 					mark = firstMark;
-					inputQueue.push(secondMark);
+					inputQueue.unshift(secondMark);
 				}
 
 				const newMark = cloneMark(mark);
@@ -397,7 +397,7 @@ function applyMoveEffectsToActiveMarks<T>(
 					if (effect.length < mark.count) {
 						const [firstMark, secondMark] = splitMark(mark, effect.length);
 						mark = firstMark;
-						inputQueue.push(secondMark);
+						inputQueue.unshift(secondMark);
 					}
 
 					outputQueue.push(
@@ -425,7 +425,7 @@ function applyMoveEffectsToActiveMarks<T>(
 					if (effect.length < mark.count) {
 						const [firstMark, secondMark] = splitMark(mark, effect.length);
 						mark = firstMark;
-						inputQueue.push(secondMark);
+						inputQueue.unshift(secondMark);
 					}
 
 					const newMark = cloneMark(mark);
