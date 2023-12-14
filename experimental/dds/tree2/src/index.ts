@@ -224,7 +224,7 @@ export {
 	MapFieldSchema,
 } from "./feature-libraries";
 
-export { TreeListNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
+export { TreeArrayNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
 
 export {
 	ISharedTree,

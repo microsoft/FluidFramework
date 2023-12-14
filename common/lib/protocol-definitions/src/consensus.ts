@@ -86,7 +86,7 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 /**
  * Interface for tracking clients in the Quorum.
- * @alpha
+ * @public
  */
 export interface IQuorumClients {
 	getMembers(): Map<string, ISequencedClient>;

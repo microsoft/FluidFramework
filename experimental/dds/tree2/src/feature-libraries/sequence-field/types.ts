@@ -143,8 +143,16 @@ export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
 
-export interface InverseAttachFields {
-	detachIdOverride?: ChangeAtomId;
+export interface RedetachFields {
+	/**
+	 * When set, the detach effect is reapplying a prior detach.
+	 * The cell ID specified is used in two ways:
+	 * - It indicates the location of the cell (including adjacent cell information) so that rebasing over this detach
+	 * can contribute the correct lineage information to the rebased mark.
+	 * - It specifies the revision and local ID that should be used to characterize the cell in the output context of
+	 * detach.
+	 */
+	redetachId?: CellId;
 }
 
 /**
@@ -155,7 +163,7 @@ export interface InverseAttachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Delete extends HasRevisionTag, InverseAttachFields {
+export interface Delete extends HasRevisionTag, RedetachFields {
 	type: "Delete";
 	id: ChangesetLocalId;
 }
@@ -168,22 +176,13 @@ export interface Delete extends HasRevisionTag, InverseAttachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface MoveOut extends HasMoveFields, InverseAttachFields {
+export interface MoveOut extends HasMoveFields, RedetachFields {
 	type: "MoveOut";
 }
 
 export type Attach = Insert | MoveIn;
 
 export type Detach = Delete | MoveOut;
-
-/**
- * Mark used during compose to temporarily remember the position of nodes which were being moved
- * but had their move cancelled with an inverse.
- * This mark should only exist as part of intermediate output of compose and should be removed during the amendCompose pass.
- */
-export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
-	type: "Placeholder";
-}
 
 /**
  * Fills then empties cells.
@@ -200,7 +199,7 @@ export interface AttachAndDetach {
 	detach: Detach;
 }
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | AttachAndDetach;
+export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach;
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 

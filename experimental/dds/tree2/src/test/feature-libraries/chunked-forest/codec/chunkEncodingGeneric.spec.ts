@@ -88,7 +88,7 @@ describe("chunkEncodingGeneric", () => {
 			});
 		});
 		it("data", () => {
-			const input = ["x", 1, [1, 2], { a: 1, b: 2 }];
+			const input = [["x", 1, [1, 2], { a: 1, b: 2 }]];
 			assert.deepEqual(handleShapesAndIdentifiers(version, input), {
 				version,
 				identifiers: [],
@@ -97,45 +97,46 @@ describe("chunkEncodingGeneric", () => {
 			});
 		});
 		it("identifier: inline", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, [new IdentifierToken("x")]), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, [[new IdentifierToken("x")]]), {
 				version,
 				identifiers: [],
 				shapes: [],
-				data: ["x"],
+				data: [["x"]],
 			});
 		});
 		it("identifier: deduplicated", () => {
 			assert.deepEqual(
 				handleShapesAndIdentifiers(version, [
-					new IdentifierToken("long string"),
-					new IdentifierToken("long string"),
+					[new IdentifierToken("long string"), new IdentifierToken("long string")],
 				]),
-				{ version, identifiers: ["long string"], shapes: [], data: [0, 0] },
+				{ version, identifiers: ["long string"], shapes: [], data: [[0, 0]] },
 			);
 		});
 		it("identifier: mixed", () => {
 			assert.deepEqual(
 				handleShapesAndIdentifiers(version, [
-					new IdentifierToken("long string"),
-					5,
-					"test string",
-					new IdentifierToken("long string"),
-					new IdentifierToken("used once"),
+					[
+						new IdentifierToken("long string"),
+						5,
+						"test string",
+						new IdentifierToken("long string"),
+						new IdentifierToken("used once"),
+					],
 				]),
 				{
 					version,
 					identifiers: ["long string"],
 					shapes: [],
-					data: [0, 5, "test string", 0, "used once"],
+					data: [[0, 5, "test string", 0, "used once"]],
 				},
 			);
 		});
 		it("shape: minimal", () => {
-			assert.deepEqual(handleShapesAndIdentifiers(version, [new TestShape("shape data")]), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, [[new TestShape("shape data")]]), {
 				version,
 				identifiers: [],
 				shapes: [{ b: "shape data" }],
-				data: [0],
+				data: [[0]],
 			});
 		});
 		it("shape: counted", () => {
@@ -144,19 +145,14 @@ describe("chunkEncodingGeneric", () => {
 			const shape3 = new TestShape("3");
 			assert.deepEqual(
 				handleShapesAndIdentifiers(version, [
-					shape1,
-					shape3,
-					shape3,
-					shape2,
-					shape3,
-					shape2,
+					[shape1, shape3, shape3, shape2, shape3, shape2],
 				]),
 				{
 					version,
 					identifiers: [],
 					// Ensure shapes are sorted by most frequent first
 					shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
-					data: [2, 0, 0, 1, 0, 1],
+					data: [[2, 0, 0, 1, 0, 1]],
 				},
 			);
 		});
@@ -172,21 +168,21 @@ describe("chunkEncodingGeneric", () => {
 				countShape(shape2);
 				countShape(shape3); // cycle
 			});
-			assert.deepEqual(handleShapesAndIdentifiers(version, [shape3, shape3]), {
+			assert.deepEqual(handleShapesAndIdentifiers(version, [[shape3, shape3]]), {
 				version,
 				identifiers: ["deduplicated-id"],
 				// Ensure shapes are sorted by most frequent first
 				shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
-				data: [0, 0],
+				data: [[0, 0]],
 			});
 		});
 
 		it("nested arrays", () => {
 			assert.deepEqual(
 				handleShapesAndIdentifiers(version, [
-					[[new IdentifierToken("long string"), new IdentifierToken("long string")]],
+					[[[new IdentifierToken("long string"), new IdentifierToken("long string")]]],
 				]),
-				{ version, identifiers: ["long string"], shapes: [], data: [[[0, 0]]] },
+				{ version, identifiers: ["long string"], shapes: [], data: [[[[0, 0]]]] },
 			);
 		});
 	});

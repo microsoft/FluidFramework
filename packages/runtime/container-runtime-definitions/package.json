@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime-definitions",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,6 +70,16 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerRuntime": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {
+				"backCompat": false
+			}
+		}
 	}
 }

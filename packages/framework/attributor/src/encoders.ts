@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import { IAttributor } from "./attributor";
@@ -29,10 +28,10 @@ export const deltaEncoder: TimestampEncoder = {
 		}
 		return deltaTimestamps;
 	},
-	decode: (encoded: Jsonable) => {
+	decode: (encoded: unknown) => {
 		assert(
 			Array.isArray(encoded),
-			0x4b0 /* Encoded timestamps should be an array of nummbers */,
+			0x4b0 /* Encoded timestamps should be an array of numbers */,
 		);
 		const timestamps: number[] = new Array(encoded.length);
 		let cumulativeSum = 0;

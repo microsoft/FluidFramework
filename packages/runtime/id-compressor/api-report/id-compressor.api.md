@@ -29,8 +29,6 @@ export function generateStableId(): StableId;
 
 // @alpha @deprecated
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
-    get clusterCapacity(): number;
-    set clusterCapacity(value: number);
     // @deprecated (undocumented)
     static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
     // @deprecated (undocumented)
@@ -72,12 +70,13 @@ export interface IdCreationRange {
     readonly ids?: {
         readonly firstGenCount: number;
         readonly count: number;
+        readonly requestedClusterSize: number;
     };
     // (undocumented)
     readonly sessionId: SessionId;
 }
 
-// @alpha
+// @public
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
     generateCompressedId(): SessionSpaceCompressedId;
@@ -98,12 +97,9 @@ export interface IIdCompressorCore {
 }
 
 // @internal
-export const initialClusterCapacity = 512;
-
-// @internal
 export function isStableId(str: string): str is StableId;
 
-// @alpha
+// @public
 export type OpSpaceCompressedId = number & {
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
 };
@@ -123,17 +119,17 @@ export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & 
     readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
 };
 
-// @alpha
+// @public
 export type SessionId = StableId & {
     readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
 };
 
-// @alpha
+// @public
 export type SessionSpaceCompressedId = number & {
     readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
 };
 
-// @alpha
+// @public
 export type StableId = string & {
     readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
 };

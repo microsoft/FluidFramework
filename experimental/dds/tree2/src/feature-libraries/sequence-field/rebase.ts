@@ -157,7 +157,7 @@ function rebaseMarkList<TNodeChange>(
 		if (
 			(markEmptiesCells(baseMark) ||
 				isImpactfulCellRename(baseMark, baseRevision, metadata)) &&
-			!isInverseAttach(baseMark)
+			!isRedetach(baseMark)
 		) {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
@@ -215,13 +215,13 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 	return factory.list;
 }
 
-function isInverseAttach(effect: MarkEffect): boolean {
+function isRedetach(effect: MarkEffect): boolean {
 	switch (effect.type) {
 		case "Delete":
 		case "MoveOut":
-			return effect.detachIdOverride !== undefined;
+			return effect.redetachId !== undefined;
 		case "AttachAndDetach":
-			return isInverseAttach(effect.detach);
+			return isRedetach(effect.detach);
 		default:
 			return false;
 	}
@@ -510,8 +510,6 @@ function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follo
 			}
 			return { remains, follows };
 		}
-		case "Placeholder":
-			fail("Placeholder marks should not be rebased");
 		default:
 			unreachableCase(type);
 	}

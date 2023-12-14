@@ -31,8 +31,6 @@ import {
 	DeltaDetachedNodeBuild,
 	DeltaRoot,
 	ITreeCursorSynchronous,
-	mapCursorField,
-	StoredSchemaCollection,
 	DeltaDetachedNodeId,
 	ChangeAtomIdRangeMap,
 } from "../../core";
@@ -52,14 +50,7 @@ import {
 	setInRangeMap,
 } from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import {
-	EncodedChunk,
-	chunkTree,
-	decode,
-	defaultChunkPolicy,
-	schemaCompressedEncode,
-	uncompressedEncode,
-} from "../chunked-forest";
+import { TreeChunk, chunkTree, defaultChunkPolicy } from "../chunked-forest";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -74,7 +65,7 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler";
-import { FieldKind, FieldKindWithEditor, FullSchemaPolicy, withEditor } from "./fieldKind";
+import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
@@ -215,14 +206,14 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdRangeMap<readonly EncodedChunk[]> = new Map();
+		const allBuilds: ChangeAtomIdRangeMap<readonly TreeChunk[]> = new Map();
 		for (const taggedChange of changes) {
 			const revision = revisionFromTaggedChange(taggedChange);
 			const change = taggedChange.change;
 			if (change.builds) {
 				for (const [revisionKey, rangeMapData] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
-					const rangeMap: RangeMap<readonly EncodedChunk[]> = [];
+					const rangeMap: RangeMap<readonly TreeChunk[]> = [];
 					for (const { start, length, value } of rangeMapData) {
 						// Check for duplicate builds and prefer earlier ones.
 						// There are two scenarios where we might get duplicate builds:
@@ -849,7 +840,7 @@ export function intoDelta(
 	if (change.builds && change.builds.size > 0) {
 		const builds: DeltaDetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
-			const cursor = decode(tree).cursor();
+			const cursor = tree.cursor();
 			assert(
 				cursor.getFieldLength() === 1,
 				0x853 /* each encoded chunk should only contain 1 node. */,
@@ -1124,7 +1115,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
-	builds?: ChangeAtomIdRangeMap<readonly EncodedChunk[]>,
+	builds?: ChangeAtomIdRangeMap<readonly TreeChunk[]>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1176,35 +1167,23 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public buildTrees(
 		firstId: ChangesetLocalId,
 		newContent: ITreeCursor | readonly ITreeCursor[],
-		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): GlobalEditDescription {
 		const content = isReadonlyArray(newContent) ? newContent : [newContent];
 		const length = content.length;
 		if (length === 0) {
 			return { type: "global" };
 		}
-		const builds: ChangeAtomIdRangeMap<readonly EncodedChunk[]> = new Map();
-		const rangeMap: RangeMap<readonly EncodedChunk[]> = [];
+		const builds: ChangeAtomIdRangeMap<readonly TreeChunk[]> = new Map();
+		const rangeMap: RangeMap<readonly TreeChunk[]> = [];
 		builds.set(undefined, rangeMap);
 
-		const fieldCursors = content.map((cursor) =>
-			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
-		);
-		const nodeCursors = fieldCursors
-			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
-			.flat();
-		const encodedTrees =
-			shapeInfo !== undefined
-				? nodeCursors.map((cursor) =>
-						schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
-				  )
-				: nodeCursors.map(uncompressedEncode);
+		const trees = content.map((cursor) => chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy));
 
 		assert(
 			getFromRangeMap(rangeMap, firstId, length) === undefined,
 			"Unexpected duplicate build ID",
 		);
-		setInRangeMap(rangeMap, firstId, length, encodedTrees);
+		setInRangeMap(rangeMap, firstId, length, trees);
 
 		return {
 			type: "global",
@@ -1313,7 +1292,7 @@ export interface FieldEditDescription {
  */
 export interface GlobalEditDescription {
 	type: "global";
-	builds?: ChangeAtomIdRangeMap<readonly EncodedChunk[]>;
+	builds?: ChangeAtomIdRangeMap<readonly TreeChunk[]>;
 }
 
 /**

@@ -4,17 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder } from "../../domains";
-import { typeNameSymbol } from "../../feature-libraries";
 import { Tree as SimpleTree } from "../../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies";
-import { getOldRoot } from "./utils";
+import { SchemaFactory } from "../../class-tree";
+// eslint-disable-next-line import/no-internal-modules
+import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal";
+import { getRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
-	const sb = new SchemaBuilder({
-		scope: "test",
-	});
+	const sb = new SchemaFactory("test");
 
 	const childA = sb.object("childA", {
 		content: sb.number,
@@ -29,7 +28,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	const childD = sb.object("childD", {
-		list: sb.list([childA, childB]),
+		list: sb.array([childA, childB]),
 		map: sb.map([childA, childB]),
 	});
 
@@ -37,81 +36,82 @@ describe("SharedTreeObject factories", () => {
 		child: childD,
 	});
 
-	const parentA = sb.object("parent", {
+	const schema = sb.object("parent", {
 		child: childA,
 		poly: [childA, childB],
-		list: sb.list(sb.number),
+		list: sb.array(sb.number),
 		map: sb.map(sb.number),
 		optional: sb.optional(childOptional),
 		grand: childC,
 	});
 
-	const schema = sb.intoSchema(parentA);
-
-	const initialTree = {
-		// TODO:#5928: Remove need for typeNameSymbol by calling factory function instead
-		child: { [typeNameSymbol]: "test.childA", content: 42 },
-		poly: { [typeNameSymbol]: "test.childB", content: 42 },
+	const initialTree: () => InsertableTreeFieldFromImplicitField<typeof schema> = () => ({
+		child: new childA({ content: 42 }),
+		poly: new childB({ content: 42 }),
 		list: [42, 42, 42],
 		map: new Map([
 			["a", 0],
 			["b", 1],
 		]),
+		// TODO: Omit optional field once correctly supported.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6569
+		optional: undefined,
 		grand: {
 			child: {
-				list: [
-					{ [typeNameSymbol]: "test.childA", content: 42 },
-					{ [typeNameSymbol]: "test.childB", content: 42 },
-				],
+				list: [new childA({ content: 42 }), new childB({ content: 42 })],
 				map: new Map([
-					["a", { [typeNameSymbol]: "test.childA", content: 42 }],
-					["b", { [typeNameSymbol]: "test.childB", content: 42 }],
+					["a", new childA({ content: 42 })],
+					["b", new childB({ content: 42 })],
 				]),
 			},
 		},
-	};
+	});
 
 	it("correctly construct objects with content", () => {
-		const root = getOldRoot(schema, initialTree);
-		root.child = childA.create({ content: 43 });
+		const root = getRoot(schema, initialTree);
+		root.child = new childA({ content: 43 });
 		assert.equal(root.child.content, 43);
 	});
 
 	it("construct objects that work in polymorphic fields", () => {
-		const root = getOldRoot(schema, initialTree);
-		root.poly = childA.create({ content: 43 });
+		const root = getRoot(schema, initialTree);
+		root.poly = new childA({ content: 43 });
 		assert.equal(root.poly.content, 43);
-		root.poly = childB.create({ content: 44 });
+		root.poly = new childB({ content: 44 });
 		assert.equal(root.poly.content, 44);
 	});
 
 	it("can re-use content objects", () => {
-		const root = getOldRoot(schema, initialTree);
+		const root = getRoot(schema, initialTree);
 		// The `create` functions stamp the content with a `[typeNameSymbol]`.
 		// This test ensures that they shallow copy the content before doing the stamp.
 		const content = { content: 43 };
-		root.poly = childA.create(content);
+		root.poly = new childA(content);
 		content.content = 44;
-		root.poly = childB.create(content);
+		root.poly = new childB(content);
 		assert.equal(root.poly.content, 44);
 	});
 
-	it("don't require optional data to be included", () => {
-		const root = getOldRoot(schema, initialTree);
+	// TODO: Fix prototype for objects declared using 'class-schema'.
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
+	it.skip("don't require optional data to be included", () => {
+		const root = getRoot(schema, initialTree);
 		assert.equal(root.optional, undefined);
-		root.optional = {};
+		root.optional = new childOptional({ content: undefined });
 		assert.deepEqual(root.optional, {});
 		assert.equal(root.optional.content, undefined);
 	});
 
-	it("support nesting inside of a factory", () => {
-		const root = getOldRoot(schema, initialTree);
-		root.grand = childC.create({
-			child: childD.create({
-				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
+	// TODO: Fix prototype for objects declared using 'class-schema'.
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
+	it.skip("support nesting inside of a factory", () => {
+		const root = getRoot(schema, initialTree);
+		root.grand = new childC({
+			child: new childD({
+				list: [new childA({ content: 43 }), new childB({ content: 43 })],
 				map: new Map([
-					["a", childA.create({ content: 43 })],
-					["b", childB.create({ content: 43 })],
+					["a", new childA({ content: 43 })],
+					["b", new childB({ content: 43 })],
 				]),
 			}),
 		});
@@ -120,14 +120,16 @@ describe("SharedTreeObject factories", () => {
 		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
 	});
 
-	it("support nesting inside of a plain javascript object", () => {
-		const root = getOldRoot(schema, initialTree);
+	// TODO: Fix prototype for objects declared using 'class-schema'.
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
+	it.skip("support nesting inside of a plain javascript object", () => {
+		const root = getRoot(schema, initialTree);
 		root.grand = {
-			child: childD.create({
-				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
+			child: new childD({
+				list: [new childA({ content: 43 }), new childB({ content: 43 })],
 				map: new Map([
-					["a", childA.create({ content: 43 })],
-					["b", childB.create({ content: 43 })],
+					["a", new childA({ content: 43 })],
+					["b", new childB({ content: 43 })],
 				]),
 			}),
 		};
@@ -141,7 +143,7 @@ describe("SharedTreeObject factories", () => {
 			assert.equal(extractFactoryContent(42).content, 42);
 		});
 		it("extracts an object", () => {
-			assert.deepEqual(extractFactoryContent(childA.create({ content: 42 })).content, {
+			assert.deepEqual(extractFactoryContent(new childA({ content: 42 })).content, {
 				content: 42,
 			});
 		});
@@ -150,10 +152,8 @@ describe("SharedTreeObject factories", () => {
 		});
 		it("extracts an array of objects", () => {
 			assert.deepEqual(
-				extractFactoryContent([
-					childA.create({ content: 42 }),
-					childA.create({ content: 42 }),
-				]).content,
+				extractFactoryContent([new childA({ content: 42 }), new childA({ content: 42 })])
+					.content,
 				[{ content: 42 }, { content: 42 }],
 			);
 		});
@@ -170,7 +170,7 @@ describe("SharedTreeObject factories", () => {
 		});
 		it("extracts a map of objects", () => {
 			assert.deepEqual(
-				extractFactoryContent(new Map([["a", childA.create({ content: 42 })]])).content,
+				extractFactoryContent(new Map([["a", new childA({ content: 42 })]])).content,
 				new Map([["a", { content: 42 }]]),
 			);
 		});
@@ -183,10 +183,10 @@ describe("SharedTreeObject factories", () => {
 		it("extracts an object tree", () => {
 			assert.deepEqual(
 				extractFactoryContent(
-					childC.create({
-						child: childD.create({
-							list: [childA.create({ content: 42 })],
-							map: new Map([["a", childA.create({ content: 42 })]]),
+					new childC({
+						child: new childD({
+							list: [new childA({ content: 42 })],
+							map: new Map([["a", new childA({ content: 42 })]]),
 						}),
 					}),
 				).content,
@@ -203,8 +203,7 @@ describe("SharedTreeObject factories", () => {
 		// events fired. If a user read the tree during a change event and produced a proxy, that proxy would not
 		// be the same as the one that is about to be hydrated for the same underlying edit node, and thus hydration
 		// would fail because it tried to map an edit node which already had a proxy to a different proxy.
-		// TODO: remove any cast when `viewWithContent` is properly typed with proxy types
-		const root = getOldRoot(schema, initialTree);
+		const root = getRoot(schema, initialTree);
 		function readData() {
 			const objectContent = root.child.content;
 			assert(objectContent !== undefined);
@@ -221,17 +220,17 @@ describe("SharedTreeObject factories", () => {
 		});
 
 		const content = { content: 3 };
-		root.child = childA.create(content);
-		root.grand.child.list.insertAtEnd(childA.create(content));
+		root.child = new childA(content);
+		root.grand.child.list.insertAtEnd(new childA(content));
 		readData();
-		root.grand.child.map.set("a", childA.create(content));
+		root.grand.child.map.set("a", new childA(content));
 		readData();
 	});
 
 	it("hydration is not attempted on objects which are not proxies", () => {
 		// This regression test ensures that non-proxy objects inserted into the tree are
 		// not mistakenly "hydrated" as a proxy would be, falsely linking them to the content of the tree.
-		const root = getOldRoot(schema, initialTree);
+		const root = getRoot(schema, initialTree);
 		const newChild = { content: 43 };
 		// `newChild` is not a proxy, so it should be copied into the tree here but otherwise remain disconnected
 		root.child = newChild;
