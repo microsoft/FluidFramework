@@ -126,4 +126,4 @@ export {
 	TrackingGroupCollection,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
-} from "..";
+} from "../index";

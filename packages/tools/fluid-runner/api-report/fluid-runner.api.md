@@ -43,10 +43,10 @@ export interface ICodeLoaderBundle {
 // Warning: (ae-forgotten-export) The symbol "IExportFileResponseSuccess" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "IExportFileResponseFailure" needs to be exported by the entry point index.d.ts
 //
-// @internal (undocumented)
+// @alpha (undocumented)
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
-// @internal
+// @alpha
 export interface IFluidFileConverter {
     execute(container: IContainer, options?: string): Promise<string>;
     getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
@@ -60,7 +60,7 @@ export interface ITelemetryOptions {
     outputFormat?: OutputFormat;
 }
 
-// @internal
+// @alpha
 export enum OutputFormat {
     // (undocumented)
     CSV = 1,

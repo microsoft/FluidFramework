@@ -11,7 +11,7 @@ import {
 /**
  * ODSP Error types.
  * Different error types that may be thrown by the ODSP driver.
- * @internal
+ * @alpha
  */
 export const OdspErrorTypes = {
 	// Inherit base driver error types
@@ -62,7 +62,7 @@ export const OdspErrorTypes = {
 	blockedIPAddress: "blockedIPAddress",
 } as const;
 /**
- * @internal
+ * @alpha
  */
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
@@ -71,7 +71,7 @@ export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes
  * Different error types that may be thrown by the ODSP driver.
  *
  * @deprecated Use {@link (OdspErrorTypes:variable)} instead.
- * @internal
+ * @alpha
  */
 export enum OdspErrorType {
 	/**
@@ -130,7 +130,7 @@ export enum OdspErrorType {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOdspErrorAugmentations {
 	/**
@@ -154,13 +154,13 @@ export interface IOdspErrorAugmentations {
 /**
  * Base interface for all errors and warnings
  * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
- * @internal
+ * @alpha
  */
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
 	readonly errorType: OdspErrorType;
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);

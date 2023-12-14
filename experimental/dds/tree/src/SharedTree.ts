@@ -103,13 +103,13 @@ import { nilUuid } from './UuidUtilities';
 
 /**
  * The write format and associated options used to construct a `SharedTree`
- * @internal
+ * @alpha
  */
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
 /**
  * The type of shared tree options for a given write format
- * @internal
+ * @alpha
  */
 export type SharedTreeOptions<
 	WF extends WriteFormat,
@@ -126,7 +126,7 @@ export type SharedTreeOptions<
 
 /**
  * Configuration options for SharedTree that are independent of write format versions.
- * @internal
+ * @alpha
  */
 export interface SharedTreeBaseOptions {
 	/**
@@ -147,7 +147,7 @@ export interface SharedTreeBaseOptions {
 
 /**
  * Configuration options for a SharedTree with write format 0.0.2
- * @internal
+ * @alpha
  */
 export interface SharedTreeOptions_0_0_2 {
 	/**
@@ -169,7 +169,7 @@ export interface SharedTreeOptions_0_0_2 {
 
 /**
  * Configuration options for a SharedTree with write format 0.1.1
- * @internal
+ * @alpha
  */
 export interface SharedTreeOptions_0_1_1 {
 	/**
@@ -194,7 +194,7 @@ export interface SharedTreeOptions_0_1_1 {
 /**
  * Factory for SharedTree.
  * Includes history in the summary.
- * @internal
+ * @alpha
  */
 export class SharedTreeFactory implements IChannelFactory {
 	/**
@@ -288,7 +288,7 @@ const sortedWriteVersions = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
 
 /**
  * The arguments included when the EditCommitted SharedTreeEvent is emitted.
- * @internal
+ * @alpha
  */
 export interface EditCommittedEventArguments {
 	/** The ID of the edit committed. */
@@ -301,7 +301,7 @@ export interface EditCommittedEventArguments {
 
 /**
  * The arguments included when the {@link SharedTreeEvent.SequencedEditApplied} SharedTreeEvent is emitted.
- * @internal
+ * @alpha
  */
 export interface SequencedEditAppliedEventArguments {
 	/** The ID of the edit committed. */
@@ -320,7 +320,7 @@ export interface SequencedEditAppliedEventArguments {
 
 /**
  * The outcome of an edit.
- * @internal
+ * @alpha
  */
 export type EditApplicationOutcome =
 	| {
@@ -346,7 +346,7 @@ export type EditApplicationOutcome =
 
 /**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
- * @internal
+ * @alpha
  */
 export interface ISharedTreeEvents extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler);
@@ -355,13 +355,13 @@ export interface ISharedTreeEvents extends ISharedObjectEvents {
 
 /**
  * Expected type for a handler of the `EditCommitted` event.
- * @internal
+ * @alpha
  */
 export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
 /**
  * Expected type for a handler of the {@link SharedTreeEvent.SequencedEditApplied} event.
- * @internal
+ * @alpha
  */
 export type SequencedEditAppliedHandler = (args: SequencedEditAppliedEventArguments) => void;
 
@@ -369,7 +369,7 @@ const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isS
 
 /**
  * Contains information resulting from processing stashed shared tree ops
- * @internal
+ * @alpha
  */
 export interface StashedLocalOpMetadata {
 	/** A modified version of the edit in an edit op that should be resubmitted rather than the original edit */
@@ -381,7 +381,7 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
  * A [distributed tree](../Readme.md).
- * @internal
+ * @alpha
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
 	/**

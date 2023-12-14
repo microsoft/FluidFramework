@@ -14,7 +14,16 @@ import {
 } from "../../core";
 import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
-import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./types";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	NoopMarkType,
+	CellId,
+	NoopMark,
+	CellMark,
+	Detach,
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -57,7 +66,7 @@ import {
 	settleMark,
 	compareCellsFromSameRevision,
 } from "./utils";
-import { EmptyInputCellMark } from "./helperTypes";
+import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
 
 /**
  * @alpha
@@ -218,10 +227,19 @@ function composeMarks<TNodeChange>(
 
 			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
 			// so we are just left with the detach portion of the AttachAndDetach.
-			return withRevision(
-				withNodeChange({ ...newAttachAndDetach.detach, count: baseMark.count }, nodeChange),
-				newDetachRevision,
-			);
+			const newDetach: CellMark<Detach, TNodeChange> & Partial<VestigialEndpoint> = {
+				...newAttachAndDetach.detach,
+				count: baseMark.count,
+			};
+			// We may need to apply effects to the source location of the base MoveOut so we annotate the mark with
+			// information about that location.
+			if (isMoveOut(baseMark)) {
+				newDetach.vestigialEndpoint = {
+					revision: baseMark.revision,
+					localId: baseMark.id,
+				};
+			}
+			return withRevision(withNodeChange(newDetach, nodeChange), newDetachRevision);
 		}
 
 		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
@@ -287,10 +305,7 @@ function composeMarks<TNodeChange>(
 			return originalAttach;
 		} else {
 			// Other mark types have been handled by previous conditional branches.
-			assert(
-				newMark.type === NoopMarkType || newMark.type === "Placeholder",
-				0x80a /* Unexpected mark type */,
-			);
+			assert(newMark.type === NoopMarkType, 0x80a /* Unexpected mark type */);
 			return withNodeChange(baseMark, nodeChange);
 		}
 	}
@@ -367,16 +382,18 @@ function composeMarks<TNodeChange>(
 				baseMark.count,
 			);
 
-			// We return a placeholder instead of a noop because there may be more node changes on `newMark`'s source mark
-			// which need to be included here.
-			// We will remove the placeholder during `amendCompose`.
-			return {
-				type: "Placeholder",
+			// We return a noop that is annotated with information about the endpoint it used to be because there may
+			// be more node changes on `newMark`'s source mark which need to be included here.
+			// We will remove the the annotation during `amendCompose` or pruning.
+			const vestige: Mark<TNodeChange> & VestigialEndpoint = {
 				count: baseMark.count,
-				revision: baseMark.revision,
-				id: baseMark.id,
+				vestigialEndpoint: {
+					revision: baseMark.revision,
+					localId: baseMark.id,
+				},
 				changes: composeChildChanges(nodeChange, nodeChanges, composeChild),
 			};
+			return vestige;
 		}
 		const length = baseMark.count;
 		return createNoopMark(length, nodeChange);
@@ -456,13 +473,11 @@ function amendComposeI<TNodeChange>(
 	);
 
 	while (!queue.isEmpty()) {
-		let mark = queue.dequeue();
-		switch (mark.type) {
-			case "Placeholder": {
-				mark = createNoopMark(mark.count, mark.changes);
-			}
-			default:
-				break;
+		const mark = queue.dequeue() as Mark<TNodeChange> & Partial<VestigialEndpoint>;
+		if (mark.vestigialEndpoint !== undefined) {
+			// Any effects that target this endpoint should have been applied either during the first compose pass,
+			// or during the `MarkQueue`'s reading for this pass.
+			delete mark.vestigialEndpoint;
 		}
 		factory.push(mark);
 	}
