@@ -30,7 +30,7 @@ export interface IAudienceOwner extends IAudience {
  *
  * See {@link https://nodejs.org/api/events.html#class-eventemitter | here} for an overview of the `EventEmitter`
  * class.
- * @alpha
+ * @public
  */
 export interface IAudience extends EventEmitter {
 	/**

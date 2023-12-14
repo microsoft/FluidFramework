@@ -85,6 +85,9 @@ function removeBeginningSlash(str: string): string {
 export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}
 
+	/**
+	 * @alpha
+	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
 			const [siteURL, queryString] = request.url.split("?");

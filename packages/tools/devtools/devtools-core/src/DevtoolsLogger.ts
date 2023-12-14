@@ -24,6 +24,22 @@ import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * Logger implementation that posts all telemetry events to the window (globalThis object).
  * This logger is intended to integrate with the Fluid DevTools browser extension.
  *
+ * @remarks Note: external implementations of this interface are not supported.
+ * An `IDevtoolsLogger` can be created via {@link createDevtoolsLogger} - this logger may then be provided to the Fluid
+ * runtime to ensure telemetry messages are flowing to it.
+ * If you wish to enable telemetry functionality in the devtools, you **must** pass this same logger back when
+ * initializing the Devtools.
+ *
+ * @sealed
+ * @internal
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IDevtoolsLogger extends ITelemetryBaseLogger {}
+
+/**
+ * Logger implementation that posts all telemetry events to the window (globalThis object).
+ * This logger is intended to integrate with the Fluid DevTools browser extension.
+ *
  * @remarks
  *
  * This logger optionally wraps a provided base logger, and forwards all events to that logger (in addition to posting
@@ -43,9 +59,8 @@ import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * TODO: Document others as they are added.
  *
  * @sealed
- * @internal
  */
-export class DevtoolsLogger implements ITelemetryBaseLogger {
+class DevtoolsLogger implements IDevtoolsLogger {
 	/**
 	 * Base telemetry logger provided by the consumer.
 	 * All messages sent to the Devtools logger will be forwarded to this.
@@ -137,4 +152,13 @@ export class DevtoolsLogger implements ITelemetryBaseLogger {
 			console.error(error);
 		}
 	}
+}
+
+/**
+ * Creates a new {@link IDevtoolsLogger} by wrapping the provided (optional) base logger.
+ *
+ * @internal
+ */
+export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger {
+	return new DevtoolsLogger(baseLogger);
 }
