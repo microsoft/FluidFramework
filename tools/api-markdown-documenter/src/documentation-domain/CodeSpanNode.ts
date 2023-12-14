@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationParentNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
+import { DocumentationParentNodeBase, type SingleLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";
 
