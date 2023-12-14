@@ -6281,6 +6281,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -6314,6 +6316,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -6347,6 +6351,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -6379,6 +6385,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -6410,6 +6418,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -6442,6 +6452,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -6484,6 +6496,8 @@ importers:
       moment: ^2.21.0
       path-browserify: ^1.0.1
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -6525,6 +6539,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -6569,6 +6585,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       ts-node: ^10.9.1
       tsc-multi: ^1.1.0
@@ -6616,6 +6634,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
@@ -6738,6 +6758,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -6774,12 +6796,15 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/pact-map:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-private/test-dds-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -6808,6 +6833,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -6821,6 +6848,7 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       events: 3.3.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -6841,6 +6869,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -6876,6 +6906,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -6910,6 +6942,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7040,6 +7074,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       ts-node: ^10.9.1
       tsc-multi: ^1.1.0
@@ -7081,6 +7117,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
@@ -7116,6 +7154,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7149,6 +7189,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
@@ -7188,6 +7230,8 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7226,12 +7270,15 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
+      replace-in-file: 6.3.5
       rimraf: 4.4.1
       tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/test-dds-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -7269,6 +7316,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
