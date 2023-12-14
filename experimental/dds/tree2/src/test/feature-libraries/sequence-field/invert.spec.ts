@@ -12,6 +12,8 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core";
+// eslint-disable-next-line import/no-internal-modules
+import { CellId } from "../../../feature-libraries/sequence-field";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
@@ -100,7 +102,11 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("active revive => delete", () => {
-		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const cellId: CellId = {
+			revision: tag1,
+			localId: brand(0),
+			lineage: [{ revision: tag2, id: brand(42), count: 2, offset: 1 }],
+		};
 		const input = Change.revive(0, 2, cellId);
 		const expected: TestChangeset = [Mark.delete(2, brand(0), { redetachId: cellId })];
 		const actual = invert(input);
