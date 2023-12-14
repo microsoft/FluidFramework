@@ -164,7 +164,7 @@
 				// TODO: re-enable once the following API-Extractor bug has been fixed:
 				// https://github.com/microsoft/rushstack/issues/3462
 				"logLevel": "none"
-			}
+			},
 
 			// The @inheritDoc tag needs a TSDoc declaration reference.
 			"ae-unresolved-inheritdoc-base": {
