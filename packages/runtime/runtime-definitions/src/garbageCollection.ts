@@ -31,7 +31,7 @@ export const gcDeletedBlobKey = "__deletedNodes";
 /**
  * Garbage collection data returned by nodes in a Container.
  * Used for running GC in the Container.
- * @alpha
+ * @public
  */
 export interface IGarbageCollectionData {
 	/**

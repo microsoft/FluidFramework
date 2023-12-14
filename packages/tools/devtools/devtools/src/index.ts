@@ -22,7 +22,7 @@ import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type IFluidDevtools as IDevtoolsBase,
 	initializeDevtools as initializeDevtoolsBase,
-	type DevtoolsLogger,
+	type IDevtoolsLogger,
 	type HasContainerKey,
 } from "@fluid-experimental/devtools-core";
 import { type IDisposable } from "@fluidframework/core-interfaces";
@@ -44,7 +44,7 @@ export interface DevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: DevtoolsLogger;
+	logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
@@ -194,5 +194,5 @@ function mapContainerProps(
 // so consumers don't need to import from this one *and* devtools-core.
 // DevtoolsLogger is necessary for consumers to set up Devtools.
 // ContainerDevtoolsProps extends HasContainerKey, so it needs ContainerKey.
-export type { ContainerKey, HasContainerKey } from "@fluid-experimental/devtools-core";
-export { DevtoolsLogger } from "@fluid-experimental/devtools-core";
+export { type ContainerKey, type HasContainerKey } from "@fluid-experimental/devtools-core";
+export { createDevtoolsLogger, type IDevtoolsLogger } from "@fluid-experimental/devtools-core";

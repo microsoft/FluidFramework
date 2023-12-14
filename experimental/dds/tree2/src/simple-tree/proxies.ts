@@ -930,7 +930,7 @@ export function extractFactoryContent(
 	let type: NodeKind;
 	let extractedContent: ExtractedFactoryContent;
 	if (isReadonlyArray(content)) {
-		type = NodeKind.List;
+		type = NodeKind.Array;
 		extractedContent = extractContentArray(
 			content as readonly FactoryContent[],
 			insertedAtIndex,
