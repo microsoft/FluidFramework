@@ -16,7 +16,7 @@ import {
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-	constructor(protected readonly client: Redis.default) {
+	constructor(protected readonly client: Redis.default | Redis.Cluster) {
 		client.on("error", (err) => {
 			winston.error("Error with Redis:", err);
 			Lumberjack.error("Error with Redis:", undefined, err);
@@ -42,7 +42,7 @@ export class SocketIoRedisSubscriptionConnection
 	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> =
 		new Map();
 
-	constructor(client: Redis.default) {
+	constructor(client: Redis.default | Redis.Cluster) {
 		super(client);
 
 		client.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
