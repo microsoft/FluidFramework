@@ -125,6 +125,7 @@ export {
 	ModularChangeFamily,
 	makeModularChangeCodec,
 	RelevantRemovedRootsFromChild,
+	EncodedModularChangeset,
 } from "./modular-schema";
 
 export { Multiplicity } from "./multiplicity";
@@ -295,6 +296,6 @@ export {
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
 
-export { SchemaChange, makeSchemaChangeCodec } from "./schema-edits";
+export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

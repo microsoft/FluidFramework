@@ -19,8 +19,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "schema",
-                            "change": {
+                            "schema": {
                               "new": {
                                 "version": "1.0.0",
                                 "nodeSchema": [
@@ -99,8 +98,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "data",
-                            "change": {
+                            "data": {
                               "maxId": 0,
                               "changes": [
                                 {
@@ -192,8 +190,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "data",
-                            "change": {
+                            "data": {
                               "maxId": 0,
                               "changes": [
                                 {

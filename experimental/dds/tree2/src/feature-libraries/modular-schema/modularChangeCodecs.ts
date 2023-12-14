@@ -13,14 +13,7 @@ import {
 	RevisionInfo,
 	RevisionTag,
 } from "../../core";
-import {
-	brand,
-	fail,
-	JsonCompatibleReadOnly,
-	Mutable,
-	nestedMapFromFlatList,
-	nestedMapToFlatList,
-} from "../../util";
+import { brand, fail, Mutable, nestedMapFromFlatList, nestedMapToFlatList } from "../../util";
 import {
 	ICodecOptions,
 	IJsonCodec,
@@ -48,7 +41,7 @@ export function makeModularChangeCodec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
-): IJsonCodec<ModularChangeset> {
+): IJsonCodec<ModularChangeset, EncodedModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
@@ -228,9 +221,7 @@ export function makeModularChangeCodec(
 				revisions:
 					change.revisions === undefined
 						? change.revisions
-						: (encodeRevisionInfos(
-								change.revisions,
-						  ) as unknown as readonly RevisionInfo[] & JsonCompatibleReadOnly),
+						: encodeRevisionInfos(change.revisions),
 				changes: encodeFieldChangesForJson(change.fieldChanges),
 				builds: encodeBuilds(change.builds),
 			};

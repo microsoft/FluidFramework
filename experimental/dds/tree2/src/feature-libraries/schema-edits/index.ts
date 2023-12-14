@@ -5,3 +5,4 @@
 
 export { makeSchemaChangeCodec } from "./schemaChangeCodecs";
 export { SchemaChange } from "./schemaChangeTypes";
+export { EncodedSchemaChange } from "./schemaChangeFormat";

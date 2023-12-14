@@ -3,21 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { makeModularChangeCodec } from "../feature-libraries";
+import { Static, Type } from "@sinclair/typebox";
+import { EncodedSchemaChange, EncodedModularChangeset } from "../feature-libraries";
 
-// These can't be an interfaces or they don't get the special string indexer bonus property.
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type EncodedModularChange = {
-	type: "data";
-	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
-};
+export const EncodedSharedTreeInnerChange = Type.Object({
+	schema: Type.Optional(EncodedSchemaChange),
+	data: Type.Optional(EncodedModularChangeset),
+});
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type EncodedSchemaChange = {
-	type: "schema";
-	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
-};
+export type EncodedSharedTreeInnerChange = Static<typeof EncodedSharedTreeInnerChange>;
 
-export interface EncodedSharedTreeChange {
-	readonly changes: readonly (EncodedModularChange | EncodedSchemaChange)[];
-}
+export const EncodedSharedTreeChange = Type.Object({
+	changes: Type.Array(EncodedSharedTreeInnerChange),
+});
+
+export type EncodedSharedTreeChange = Static<typeof EncodedSharedTreeChange>;

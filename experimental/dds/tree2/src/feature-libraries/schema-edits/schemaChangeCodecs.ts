@@ -10,23 +10,20 @@ import { SchemaChange } from "./schemaChangeTypes";
 
 export function makeSchemaChangeCodec({
 	jsonValidator: validator,
-}: ICodecOptions): IJsonCodec<SchemaChange> {
+}: ICodecOptions): IJsonCodec<SchemaChange, EncodedSchemaChange> {
 	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });
 	return {
 		encode: (schemaChange) => {
-			return schemaChange.schema !== undefined
-				? {
-						new: schemaCodec.encode(schemaChange.schema.new),
-						old: schemaCodec.encode(schemaChange.schema.old),
-				  }
-				: {};
+			return {
+				new: schemaCodec.encode(schemaChange.schema.new),
+				old: schemaCodec.encode(schemaChange.schema.old),
+			};
 		},
-		decode: (json) => {
-			const encodedSchemaChange = json as EncodedSchemaChange;
+		decode: (encoded) => {
 			return {
 				schema: {
-					new: schemaCodec.decode(encodedSchemaChange.new),
-					old: schemaCodec.decode(encodedSchemaChange.old),
+					new: schemaCodec.decode(encoded.new),
+					old: schemaCodec.decode(encoded.old),
 				},
 			};
 		},

@@ -19,8 +19,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "data",
-                            "change": {
+                            "data": {
                               "changes": [
                                 {
                                   "fieldKey": "rootFieldKey",
@@ -49,8 +48,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "data",
-                            "change": {
+                            "data": {
                               "changes": [
                                 {
                                   "fieldKey": "rootFieldKey",
@@ -89,8 +87,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "data",
-                            "change": {
+                            "data": {
                               "changes": [
                                 {
                                   "fieldKey": "rootFieldKey",
@@ -136,8 +133,7 @@
                             "change": {
                               "changes": [
                                 {
-                                  "type": "data",
-                                  "change": {
+                                  "data": {
                                     "changes": [
                                       {
                                         "fieldKey": "rootFieldKey",
@@ -173,8 +169,7 @@
                             "change": {
                               "changes": [
                                 {
-                                  "type": "data",
-                                  "change": {
+                                  "data": {
                                     "changes": [
                                       {
                                         "fieldKey": "rootFieldKey",

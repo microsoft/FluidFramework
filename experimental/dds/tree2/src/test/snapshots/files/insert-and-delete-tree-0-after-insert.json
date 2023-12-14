@@ -19,8 +19,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "data",
-                            "change": {
+                            "data": {
                               "maxId": 0,
                               "changes": [
                                 {

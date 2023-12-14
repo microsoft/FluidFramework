@@ -13,6 +13,6 @@ export type EncodedSchemaChange = {
 };
 
 export const EncodedSchemaChange = Type.Object({
-	new: Type.Optional(Format),
-	old: Type.Optional(Format),
+	new: Format,
+	old: Format,
 });

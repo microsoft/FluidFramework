@@ -84,6 +84,7 @@ import {
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 import { makeModularChangeCodec } from "./modularChangeCodecs";
+import { EncodedModularChangeset } from "./modularChangeFormat";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -94,7 +95,7 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly latestCodec: IJsonCodec<ModularChangeset>;
+	public readonly latestCodec: IJsonCodec<ModularChangeset, EncodedModularChangeset>;
 
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 

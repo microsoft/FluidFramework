@@ -19,8 +19,7 @@
                       "change": {
                         "changes": [
                           {
-                            "type": "schema",
-                            "change": {
+                            "schema": {
                               "new": {
                                 "version": "1.0.0",
                                 "nodeSchema": [
