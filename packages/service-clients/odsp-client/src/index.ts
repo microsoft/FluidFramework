@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { type TokenResponse } from "@fluidframework/odsp-driver-definitions";
 export type {
 	OdspConnectionConfig,
 	OdspClientProps,
