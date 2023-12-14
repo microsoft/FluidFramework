@@ -123,7 +123,7 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	ModularChangeFamily,
-	makeModularChangeCodec,
+	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
 } from "./modular-schema";

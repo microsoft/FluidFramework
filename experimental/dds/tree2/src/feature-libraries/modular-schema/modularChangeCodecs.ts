@@ -37,7 +37,7 @@ import {
 	EncodedRevisionInfo,
 } from "./modularChangeFormat";
 
-export function makeModularChangeCodec(
+export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,

@@ -83,7 +83,7 @@ import {
 	NodeChangeset,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
-import { makeModularChangeCodec } from "./modularChangeCodecs";
+import { makeV0Codec } from "./modularChangeCodecs";
 import { EncodedModularChangeset } from "./modularChangeFormat";
 
 /**
@@ -103,7 +103,7 @@ export class ModularChangeFamily
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		codecOptions: ICodecOptions,
 	) {
-		this.latestCodec = makeModularChangeCodec(fieldKinds, new RevisionTagCodec(), codecOptions);
+		this.latestCodec = makeV0Codec(fieldKinds, new RevisionTagCodec(), codecOptions);
 		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 

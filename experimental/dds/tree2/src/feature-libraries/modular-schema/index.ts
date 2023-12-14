@@ -62,4 +62,4 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 } from "./modularChangeFamily";
-export { makeModularChangeCodec } from "./modularChangeCodecs";
+export { makeV0Codec } from "./modularChangeCodecs";
