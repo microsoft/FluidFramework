@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Heading } from "../Heading";
+import { type Heading } from "../Heading";
 import {
 	DocumentationParentNodeBase,
-	MultiLineDocumentationNode,
-	SingleLineDocumentationNode,
+	type MultiLineDocumentationNode,
+	type SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";
