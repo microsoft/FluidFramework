@@ -957,6 +957,11 @@ export type isAny<T> = boolean extends (T extends never ? true : false) ? true :
 export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1 ? true : 1 extends T["length"] ? boolean : false;
 
 // @alpha
+export interface ISchemaEditor {
+    setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
+}
+
+// @alpha
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
 // @beta
@@ -971,7 +976,8 @@ export interface ISharedTree extends ISharedObject, ITree {
 
 // @alpha
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
-    setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
+    // (undocumented)
+    schema: ISchemaEditor;
 }
 
 // @alpha (undocumented)

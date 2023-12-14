@@ -8,10 +8,10 @@ import { DefaultEditBuilder, IDefaultEditBuilder, ModularChangeFamily } from "..
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 
 /**
- * SharedTree editor for transactional tree data and schema changes.
+ * Editor for schema changes.
  * @alpha
  */
-export interface ISharedTreeEditor extends IDefaultEditBuilder {
+export interface ISchemaEditor {
 	/**
 	 * Updates the stored schema.
 	 * @param oldSchema - The schema being overwritten.
@@ -22,6 +22,14 @@ export interface ISharedTreeEditor extends IDefaultEditBuilder {
 }
 
 /**
+ * SharedTree editor for transactional tree data and schema changes.
+ * @alpha
+ */
+export interface ISharedTreeEditor extends IDefaultEditBuilder {
+	schema: ISchemaEditor;
+}
+
+/**
  * Implementation of {@link IDefaultEditBuilder} based on the default set of supported field kinds.
  * @sealed
  */
@@ -29,6 +37,8 @@ export class SharedTreeEditBuilder
 	extends DefaultEditBuilder
 	implements ChangeFamilyEditor, ISharedTreeEditor
 {
+	public readonly schema: ISchemaEditor;
+
 	public constructor(
 		modularChangeFamily: ModularChangeFamily,
 		private readonly changeReceiver: (change: SharedTreeChange) => void,
@@ -38,16 +48,18 @@ export class SharedTreeEditBuilder
 				changes: [{ type: "data", innerChange: change }],
 			}),
 		);
-	}
 
-	public setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void {
-		this.changeReceiver({
-			changes: [
-				{
-					type: "schema",
-					innerChange: { schema: { new: newSchema, old: oldSchema } },
-				},
-			],
-		});
+		this.schema = {
+			setStoredSchema: (oldSchema, newSchema) => {
+				this.changeReceiver({
+					changes: [
+						{
+							type: "schema",
+							innerChange: { schema: { new: newSchema, old: oldSchema } },
+						},
+					],
+				});
+			},
+		};
 	}
 }

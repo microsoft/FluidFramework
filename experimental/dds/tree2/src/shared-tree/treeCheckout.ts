@@ -378,7 +378,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public updateSchema(newSchema: TreeStoredSchema): void {
-		this.editor.setStoredSchema(this.storedSchema, newSchema);
+		this.editor.schema.setStoredSchema(this.storedSchema, newSchema);
 	}
 
 	/**

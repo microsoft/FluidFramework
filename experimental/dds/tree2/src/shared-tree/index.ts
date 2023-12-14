@@ -31,4 +31,4 @@ export {
 
 export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";
 
-export { ISharedTreeEditor } from "./sharedTreeEditBuilder";
+export { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder";

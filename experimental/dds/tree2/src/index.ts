@@ -245,6 +245,7 @@ export {
 	ITreeViewFork,
 	buildTreeConfiguration,
 	ISharedTreeEditor,
+	ISchemaEditor,
 } from "./shared-tree";
 
 export {
