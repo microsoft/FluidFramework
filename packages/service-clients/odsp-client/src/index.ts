@@ -12,3 +12,4 @@ export type {
 } from "./interfaces";
 export { OdspClient } from "./odspClient";
 export { type IOdspTokenProvider } from "./token";
+export { type TokenResponse } from "@fluidframework/odsp-driver-definitions";
