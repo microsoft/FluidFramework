@@ -32,8 +32,6 @@ import {
 	DeltaDetachedNodeBuild,
 	DeltaRoot,
 	ITreeCursorSynchronous,
-	mapCursorField,
-	StoredSchemaCollection,
 	DeltaDetachedNodeId,
 } from "../../core";
 import { RevisionTagCodec } from "../../shared-tree-core";
@@ -50,14 +48,7 @@ import {
 	Mutable,
 } from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import {
-	EncodedChunk,
-	chunkTree,
-	decode,
-	defaultChunkPolicy,
-	schemaCompressedEncode,
-	uncompressedEncode,
-} from "../chunked-forest";
+import { TreeChunk, chunkTree, defaultChunkPolicy } from "../chunked-forest";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -72,7 +63,7 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler";
-import { FieldKind, FieldKindWithEditor, FullSchemaPolicy, withEditor } from "./fieldKind";
+import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
@@ -213,7 +204,7 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdMap<EncodedChunk> = new Map();
+		const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
 		for (const taggedChange of changes) {
 			const revision = revisionFromTaggedChange(taggedChange);
 			const change = taggedChange.change;
@@ -846,7 +837,7 @@ export function intoDelta(
 	if (change.builds && change.builds.size > 0) {
 		const builds: DeltaDetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
-			const cursor = decode(tree).cursor();
+			const cursor = tree.cursor();
 			assert(
 				cursor.getFieldLength() === 1,
 				0x853 /* each encoded chunk should only contain 1 node. */,
@@ -1121,7 +1112,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
-	builds?: ChangeAtomIdMap<EncodedChunk>,
+	builds?: ChangeAtomIdMap<TreeChunk>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1173,35 +1164,21 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public buildTrees(
 		firstId: ChangesetLocalId,
 		newContent: ITreeCursor | readonly ITreeCursor[],
-		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): GlobalEditDescription {
 		const content = isReadonlyArray(newContent) ? newContent : [newContent];
 		const length = content.length;
 		if (length === 0) {
 			return { type: "global" };
 		}
-		const builds: ChangeAtomIdMap<EncodedChunk> = new Map();
+		const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
 		let id = firstId;
 
-		const fieldCursors = content.map((cursor) =>
-			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
-		);
-		const nodeCursors = fieldCursors
-			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
-			.flat();
-		const encodedTrees =
-			shapeInfo !== undefined
-				? nodeCursors.map((cursor) =>
-						schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
-				  )
-				: nodeCursors.map(uncompressedEncode);
-
 		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const tree of encodedTrees) {
+		for (const cursor of content) {
 			assert(!innerMap.has(id), 0x854 /* Unexpected duplicate build ID */);
-			innerMap.set(id, tree);
+			innerMap.set(id, chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy));
 			id = brand((id as number) + 1);
 		}
 		return {
@@ -1311,7 +1288,7 @@ export interface FieldEditDescription {
  */
 export interface GlobalEditDescription {
 	type: "global";
-	builds?: ChangeAtomIdMap<EncodedChunk>;
+	builds?: ChangeAtomIdMap<TreeChunk>;
 }
 
 /**

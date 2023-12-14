@@ -57,10 +57,10 @@ For example, when using the `AzureClient` API you would do something like this (
 to `initializeDevtools()` _and_ to `new AzureClient()`):
 
 ```typescript
-import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
+import { createDevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
 
 // Instantiate the logger
-const devtoolsLogger = new DevtoolsLogger();
+const devtoolsLogger = createDevtoolsLogger();
 
 // Pass the logger when instantiating the AzureClient
 const clientProps = {
@@ -98,12 +98,12 @@ at the same time, you can pass an existing logger to the `DevtoolsLogger` constr
 it receives to that logger as well:
 
 ```typescript
-import { DevtoolsLogger } from "@fluid-experimental/devtools";
+import { createDevtoolsLogger } from "@fluid-experimental/devtools";
 
 // Your application's logger
 const yourApplicationLogger = getInstanceOfYourApplicationLogger();
 
-const devtoolsLogger = new DevtoolsLogger(yourApplicationLogger);
+const devtoolsLogger = createDevtoolsLogger(yourApplicationLogger);
 
 // Pass devtoolsLogger to initializeDevtools() and to your application as described above
 ```

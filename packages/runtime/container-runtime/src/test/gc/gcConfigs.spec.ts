@@ -143,7 +143,6 @@ describe("Garbage Collection configurations", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
-			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
 		});
 	}

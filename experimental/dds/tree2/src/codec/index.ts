@@ -17,6 +17,7 @@ export {
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
+	IJsonCodecWithContext,
 } from "./codec";
 export { DiscriminatedUnionDispatcher, unionOptions } from "./discriminatedUnions";
 export { noopValidator } from "./noopValidator";
