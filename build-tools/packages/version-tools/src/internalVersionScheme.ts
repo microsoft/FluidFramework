@@ -54,7 +54,7 @@ export const ALLOWED_PRERELEASE_IDENTIFIERS = [DEFAULT_PRERELEASE_IDENTIFIER, "r
  * @param internalVersion - A version in the Fluid internal version scheme.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * `REQUIRED_PRERELEASE_IDENTIFIER`.
+ * `ALLOWED_PRERELEASE_IDENTIFIERS`.
  *
  * @returns A tuple of [publicVersion, internalVersion, prereleaseIdentifier]
  */
@@ -118,7 +118,7 @@ export function fromInternalScheme(
  * @param version - The internal version.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param prereleaseIdentifier - The prerelease indentifier to use in the Fluid internal version. Defaults to
- * `REQUIRED_PRERELEASE_IDENTIFIER`.
+ * `ALLOWED_PRERELEASE_IDENTIFIERS`.
  *
  * @returns A version in the Fluid internal version scheme.
  */
@@ -229,7 +229,7 @@ export function validateVersionScheme(
  * @param version - The version to check. If it is `undefined`, returns false.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * `REQUIRED_PRERELEASE_IDENTIFIER`.
+ * `ALLOWED_PRERELEASE_IDENTIFIERS`.
  * @returns True if the version matches the Fluid internal version scheme.
  */
 export function isInternalVersionScheme(
@@ -254,7 +254,7 @@ export function isInternalVersionScheme(
  *
  * @param range - The range string to check.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * `REQUIRED_PRERELEASE_IDENTIFIER`.
+ * `ALLOWED_PRERELEASE_IDENTIFIERS`.
  * @returns True if the range string matches the Fluid internal version scheme.
  */
 export function isInternalVersionRange(range: string, allowAnyPrereleaseId = false): boolean {
@@ -262,7 +262,22 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 		return false;
 	}
 
-	if (!range.startsWith(">=")) {
+	const semverRange = new semver.Range(range);
+	// If range is composed of multiple ranges (uses `||`), then
+	if (semverRange.set.length > 1) {
+		for (const rangeSet of semverRange.set) {
+			if (!isInternalVersionRange(rangeSet.join(" "), allowAnyPrereleaseId)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// There is one set.
+	const singleRangeSet = semverRange.set[0];
+
+	// Prerelease ranges must have comparator operators. This definition expects at least one '>='.
+	if (singleRangeSet.find((comparator) => comparator.operator === ">=") === undefined) {
 		return false;
 	}
 
@@ -272,10 +287,25 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 	}
 
 	// if allowAnyPrereleaseId === true, then allowPrereleases is implied to be true
-	return isInternalVersionScheme(
-		minVer,
-		/* allowPrereleases */ allowAnyPrereleaseId,
-		allowAnyPrereleaseId,
+	if (
+		!isInternalVersionScheme(
+			minVer,
+			/* allowPrereleases */ allowAnyPrereleaseId,
+			allowAnyPrereleaseId,
+		)
+	) {
+		return false;
+	}
+
+	// For internal version, range should not exceed the scope of single internal version.
+	// There should be a limit spec in range set (has '<' operator) with same prefix.
+	const prereleasePrefix = `${minVer.major}.${minVer.minor}.${minVer.patch}-${minVer.prerelease[0]}.`;
+	return (
+		singleRangeSet.find(
+			(comparator) =>
+				comparator.operator === "<" &&
+				comparator.semver.version.startsWith(prereleasePrefix),
+		) !== undefined
 	);
 }
 
@@ -425,6 +455,11 @@ export function detectInternalVersionConstraintType(range: string): "minor" | "p
 		throw new Error(`Range ${range} is not a Fluid internal version range.`);
 	}
 
+	// These cases are not expected to be positive; nor are robust.
+	// internalPrerelease only applies to versions, which won't have ~ or ^.
+	// internal ranges are restricted to uses of `>=` even though semver would permit more.
+	// For prerelease spec (internal range), ~ and ^ are interpreted as >= by semver.
+	// Why not just use the bump and checks all the time?
 	if (range.startsWith("~")) {
 		return "patch";
 	} else if (range.startsWith("^")) {
@@ -435,5 +470,6 @@ export function detectInternalVersionConstraintType(range: string): "minor" | "p
 	const minor = bumpInternalVersion(minVer, "minor");
 
 	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
+	// maxSatisfying could return null in case of exact version. Should that return as "minor"?
 	return maxSatisfying === patch ? "patch" : "minor";
 }

@@ -125,65 +125,36 @@ describe("internalScheme", () => {
 			assert.isFalse(result);
 		});
 
-		it(">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 is internal", () => {
-			const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`;
-			assert.isTrue(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0 is internal", () => {
-			const input = `>=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0`;
-			assert.isTrue(isInternalVersionRange(input));
-		});
-
-		// This test case should fail but it doesn't. "Fluid internal version ranges" should always have a prerelease
-		// identifier that matches between the upper and lower bound. It's skipped because I think the case it guards
-		// against isn't likely, so I don't think it's worth the cost of fixing it.
-		//
-		// The reason the code behaves wrong is because it only checks the lower bound of the range to see if it's an
-		// internal version. If the lower bound version is internal, then the function returns true.
-		it.skip(">=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0 is not internal", () => {
-			const input = `>=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0 is internal", () => {
-			const input = `>=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0`;
-			assert.isTrue(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0 is not internal", () => {
-			const input = `>=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0 is internal when allowAnyPrereleaseId is true", () => {
-			const input = `>=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0`;
-			assert.isTrue(isInternalVersionRange(input, true));
-		});
-
-		it(">=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0 is internal when allowAnyPrereleaseId is true", () => {
-			const input = `>=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0`;
-			assert.isTrue(isInternalVersionRange(input, true));
-		});
-
-		it(">=1.0.0 <2.0.0 is not internal", () => {
-			const input = `>=1.0.0 <2.0.0`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-2.2.1 <2.0.0-3.0.0 is not internal", () => {
-			const input = `>=2.0.0-2.2.1 <2.0.0-3.0.0`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it("^2.0.0-internal.2.2.1 is not internal", () => {
-			const input = `^2.0.0-internal.2.2.1`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it("~2.0.0-internal.2.2.1 is not internal", () => {
-			const input = `~2.0.0-internal.2.2.1`;
-			assert.isFalse(isInternalVersionRange(input));
+		const cases: [
+			isInternal: boolean,
+			input: string,
+			allowAnyPrereleaseId: boolean | undefined,
+		][] = [
+			[true, ">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0", undefined],
+			[true, ">=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0", undefined],
+			[false, ">=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0", undefined],
+			[
+				true,
+				">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 || >=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0",
+				undefined,
+			],
+			[false, ">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 || >=1.0.0 <2.0.0", undefined],
+			[true, ">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0", undefined],
+			[false, ">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0", undefined],
+			[true, ">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0", true],
+			[true, ">=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0", true],
+			[false, ">=1.0.0 <2.0.0", undefined],
+			[false, ">=2.0.0-2.2.1 <2.0.0-3.0.0", undefined],
+			[false, "^2.0.0-internal.2.2.1", undefined],
+			[false, "~2.0.0-internal.2.2.1", undefined],
+		];
+		cases.forEach(([isInternal, input, allowAnyPrereleaseId]) => {
+			it(`${input} is ${isInternal ? "" : "not "}internal${
+				allowAnyPrereleaseId ? " when allowAnyPrereleaseId is true" : ""
+			}`, () =>
+				(isInternal ? assert.isTrue : assert.isFalse)(
+					isInternalVersionRange(input, allowAnyPrereleaseId),
+				));
 		});
 	});
 
