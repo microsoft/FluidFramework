@@ -17,6 +17,8 @@ import {
 	Any,
 	FieldKinds,
 	LeafNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
 	TreeFieldSchema,
 	TreeNodeSchema,
 	TreeNodeSchemaBase,
@@ -142,23 +144,28 @@ describe("storedToViewSchema", () => {
 				assert.equal(nodeSchema.name, key);
 				if (storedNodeSchema.mapFields !== undefined) {
 					// Since its tested separately, assume fields are converted correctly.
-					assert(nodeSchema.mapFields !== undefined);
+					assert(nodeSchema instanceof MapNodeSchema);
 				} else {
-					assert(nodeSchema.mapFields === undefined);
+					assert(!(nodeSchema instanceof MapNodeSchema));
 				}
 
-				assert.equal(nodeSchema.leafValue, storedNodeSchema.leafValue);
-
 				assert.equal(
-					storedNodeSchema.objectNodeFields.size,
-					nodeSchema.objectNodeFields.size,
+					(nodeSchema as Partial<LeafNodeSchema>).leafValue,
+					storedNodeSchema.leafValue,
 				);
 
-				// Since its tested separately, assume fields are converted correctly, and just compare keys to make sure all fields were converted.
-				assert.deepEqual(
-					new Set(storedNodeSchema.objectNodeFields.keys()),
-					new Set(nodeSchema.objectNodeFields.keys()),
-				);
+				if (nodeSchema instanceof ObjectNodeSchema) {
+					assert.equal(
+						storedNodeSchema.objectNodeFields.size,
+						nodeSchema.objectNodeFields.size,
+					);
+
+					// Since it's tested separately, assume fields are converted correctly, and just compare keys to make sure all fields were converted.
+					assert.deepEqual(
+						new Set(storedNodeSchema.objectNodeFields.keys()),
+						new Set(nodeSchema.objectNodeFields.keys()),
+					);
+				}
 			}
 		});
 	});
