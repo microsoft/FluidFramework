@@ -7,6 +7,8 @@ module.exports = {
 	rules: {
 		"prefer-arrow-callback": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+
+		// This rule causes linting to crash with a "Error: Circularity detected while resolving configuration: /common/build/build-common/tsconfig.base.json"
 		"import/namespace": "off",
 	},
 	parserOptions: {
