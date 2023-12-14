@@ -95,7 +95,8 @@ const getFsManagerFactory = (
 			fsManagerFactory: memfsManagerFactory,
 			getFsSpy: () =>
 				spy(memfsManagerFactory.volume.promises as unknown as IFileSystemPromises),
-			fsCheckSizeBytes: () => JSON.stringify(memfsManagerFactory.volume.toJSON()).length,
+			fsCheckSizeBytes: () =>
+				JSON.stringify(Object.values(memfsManagerFactory.volume.toJSON()).join()).length,
 			fsCleanup: () => {
 				memfsManagerFactory.volume.reset();
 			},
@@ -159,9 +160,6 @@ testFileSystems.forEach((fileSystem) => {
 			});
 
 			afterEach(() => {
-				process.stdout.write(
-					`\nFinal storage size: ${Math.ceil(fsCheckSizeBytes() / 1_024)}kb\n`,
-				);
 				// Reset storage volume after each test.
 				fsCleanup();
 				// Reset Sinon spies after each test.
@@ -262,6 +260,14 @@ testFileSystems.forEach((fileSystem) => {
 					checkFullStorageAccessBaselinePerformance(
 						testMode,
 						getCurrentStorageAccessCallCounts(),
+					);
+					// Tests run against commit 7620034bac63c5e3c4cb85f666a41c46012e8a49 on Dec 13, 2023
+					// showed that the final storage size was 13kb, or 23kb for low-io mode where summary blobs are not shared.
+					const finalStorageSizeKb = Math.ceil(fsCheckSizeBytes() / 1_024);
+					const expectedMaxStorageSizeKb = testMode.enableLowIoWrite ? 23 : 13;
+					assert(
+						Math.ceil(fsCheckSizeBytes() / 1_024) <= expectedMaxStorageSizeKb,
+						`Storage size should be <= ${expectedMaxStorageSizeKb}kb. Got ${finalStorageSizeKb}`,
 					);
 				}
 			});
