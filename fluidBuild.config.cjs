@@ -168,7 +168,7 @@ module.exports = {
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
 				"^experimental/dds/tree2/package.json",
-        "^experimental/dds/sequence-deprecated/package.json",
+				"^experimental/dds/sequence-deprecated/package.json",
 				"^experimental/framework/tree-react-api/package.json",
 				"^packages/common/.*/package.json",
 				"^packages/dds/.*/package.json",
