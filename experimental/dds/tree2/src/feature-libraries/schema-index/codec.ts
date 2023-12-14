@@ -3,81 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
 import {
-	FieldKindIdentifierSchema,
 	TreeFieldStoredSchema,
-	FieldKey,
-	FieldKeySchema,
 	TreeStoredSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
-	TreeSchemaIdentifierSchema,
+	FieldKey,
 	ValueSchema,
-} from "../core";
-import { brand, fail, Named } from "../util";
-import { ICodecOptions, IJsonCodec } from "../codec";
-
-const version = "1.0.0" as const;
-
-const FieldSchemaFormatBase = Type.Object({
-	kind: FieldKindIdentifierSchema,
-	types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
-});
-
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
-
-const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
-
-const NamedFieldSchemaFormat = Type.Composite(
-	[
-		FieldSchemaFormatBase,
-		Type.Object({
-			name: FieldKeySchema,
-		}),
-	],
-	noAdditionalProps,
-);
-
-const TreeNodeSchemaFormat = Type.Object(
-	{
-		name: TreeSchemaIdentifierSchema,
-		objectNodeFields: Type.Array(NamedFieldSchemaFormat),
-		mapFields: Type.Optional(FieldSchemaFormat),
-		// TODO: don't use external type here!
-		leafValue: Type.Optional(Type.Enum(ValueSchema)),
-	},
-	noAdditionalProps,
-);
-
-/**
- * Format for encoding as json.
- *
- * For consistency all lists are sorted and undefined values are omitted.
- *
- * This chooses to use lists of named objects instead of maps:
- * this choice is somewhat arbitrary, but avoids user data being used as object keys,
- * which can sometimes be an issue (for example handling that for "__proto__" can require care).
- */
-export const Format = Type.Object(
-	{
-		version: Type.Literal(version),
-		nodeSchema: Type.Array(TreeNodeSchemaFormat),
-		rootFieldSchema: FieldSchemaFormat,
-	},
-	noAdditionalProps,
-);
-
-export type Format = Static<typeof Format>;
-type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-type TreeNodeSchemaFormat = Static<typeof TreeNodeSchemaFormat>;
-type NamedFieldSchemaFormat = Static<typeof NamedFieldSchemaFormat>;
-
-const Versioned = Type.Object({
-	version: Type.String(),
-});
-type Versioned = Static<typeof Versioned>;
+} from "../../core";
+import { brand, fail, invertMap, Named } from "../../util";
+import { ICodecOptions, IJsonCodec } from "../../codec";
+import {
+	FieldSchemaFormat,
+	Format,
+	PersistedValueSchema,
+	TreeNodeSchemaFormat,
+	Versioned,
+	version,
+} from "./format";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
 	const treeNodeSchema: TreeNodeSchemaFormat[] = [];
@@ -113,9 +57,29 @@ function encodeTree(
 		objectNodeFields: [...schema.objectNodeFields]
 			.map(([k, v]) => encodeNamedField(k, v))
 			.sort(compareNamed),
-		leafValue: schema.leafValue,
+		...(schema.leafValue === undefined
+			? {}
+			: { leafValue: encodeValueSchema(schema.leafValue) }),
 	};
 	return out;
+}
+
+const valueSchemaEncode = new Map([
+	[ValueSchema.Number, PersistedValueSchema.Number],
+	[ValueSchema.String, PersistedValueSchema.String],
+	[ValueSchema.Boolean, PersistedValueSchema.Boolean],
+	[ValueSchema.FluidHandle, PersistedValueSchema.FluidHandle],
+	[ValueSchema.Null, PersistedValueSchema.Null],
+]);
+
+const valueSchemaDecode = invertMap(valueSchemaEncode);
+
+function encodeValueSchema(inMemory: ValueSchema): PersistedValueSchema {
+	return valueSchemaEncode.get(inMemory) ?? fail("missing PersistedValueSchema");
+}
+
+function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
+	return valueSchemaDecode.get(inMemory) ?? fail("missing ValueSchema");
 }
 
 function encodeField(schema: TreeFieldStoredSchema): FieldSchemaFormat {
@@ -164,7 +128,7 @@ function decodeTree(schema: TreeNodeSchemaFormat): TreeNodeStoredSchema {
 				decodeField(field),
 			]),
 		),
-		leafValue: schema.leafValue,
+		leafValue: schema.leafValue === undefined ? undefined : decodeValueSchema(schema.leafValue),
 	};
 	return out;
 }
@@ -172,7 +136,7 @@ function decodeTree(schema: TreeNodeSchemaFormat): TreeNodeStoredSchema {
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
  *
- * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
+ * TODO: This should reuse common utilities to do version checking and schema checking.
  */
 export function makeSchemaCodec({
 	jsonValidator: validator,

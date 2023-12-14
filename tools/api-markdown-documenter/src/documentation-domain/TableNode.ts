@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationParentNodeBase, MultiLineDocumentationNode } from "./DocumentationNode";
+import { DocumentationParentNodeBase, type MultiLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode";
+import { type TableBodyRowNode, type TableHeaderRowNode } from "./TableRowNode";
 
 // TODOs:
 // - Support alignment properties in Table, TableRow and TableCell (inherit pattern for resolution)

@@ -23,10 +23,7 @@ import {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	IInboundSignalMessage,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannel } from ".";
 
@@ -47,8 +44,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
-		IDisposable,
-		Partial<IProvideFluidDataStoreRegistry> {
+		IDisposable {
 	readonly id: string;
 
 	readonly IFluidHandleContext: IFluidHandleContext;
