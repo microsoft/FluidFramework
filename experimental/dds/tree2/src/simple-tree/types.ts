@@ -45,10 +45,10 @@ export type Unhydrated<T> = T;
 export type TreeNode = TreeListNodeOld | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
 /**
- * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
+ * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
  * @beta
  */
-export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
+export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
