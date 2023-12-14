@@ -74,7 +74,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/protocol-base": "^2.0.1",
+		"@fluidframework/protocol-base": "^3.0.0-223236",
 		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"node-fetch": "^2.6.9",
