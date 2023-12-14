@@ -155,12 +155,7 @@ export class SharedTree
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 	/**
 	 * The most recent sequenceNumber on a message processed by this `SharedTree`.
-	 * Updated before processing an op, such that reading `currentSeq` while processing an op
-	 * gives the sequenceNumber of the op currently being processed.
-	 * `undefined` if no message has been processed, e.g. for a detached document or document loaded
-	 * from summary without any subsequent ops.
-	 * @remarks - Most rebasing is built atop a revision system decoupled from message sequence number.
-	 * However, this is sometimes necessary to interop with Fluid runtime APIs, e.g. for incremental summarization.
+	 * This sequence number is can be retrieved by the collabWindow in summarizers for incremental summarization.
 	 */
 	private currentSeq: number | undefined;
 
