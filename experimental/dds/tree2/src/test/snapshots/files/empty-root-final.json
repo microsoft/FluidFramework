@@ -84,8 +84,24 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": []
+                  "keys": [],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": []
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }

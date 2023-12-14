@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { TreeListNode } from "../../simple-tree";
 import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree";
+import { TreeArrayNode } from "../../simple-tree";
 import { getRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
@@ -18,7 +18,7 @@ describe("SharedTree proxies", () => {
 
 	const schema = sb.object("parent", {
 		object: childSchema,
-		list: sb.list(sb.number),
+		list: sb.array(sb.number),
 		// Is there a way to avoid the cast to 'any' when using 'class-schema'?
 		// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6551
 		map: sb.map("map", sb.optional(sb.string) as any),
@@ -80,7 +80,7 @@ describe("SharedTreeObject", () => {
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
 		map: sb.map("map", sb.string),
-		list: sb.list(numberChild),
+		list: sb.array(numberChild),
 		handle: sb.handle,
 	});
 
@@ -191,7 +191,7 @@ describe("SharedTreeList", () => {
 	describe("inserting nodes created by factory", () => {
 		const _ = new SchemaFactory("test");
 		const obj = _.object("Obj", { id: _.string });
-		const schema = _.list(obj);
+		const schema = _.array(obj);
 
 		// TODO: Fix prototype for objects declared using 'class-schema'.
 		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
@@ -251,41 +251,41 @@ describe("SharedTreeList", () => {
 
 	describe("inserting inlined content", () => {
 		const _ = new SchemaFactory("test");
-		const schema = _.list(_.number);
+		const schema = _.array(_.number);
 
 		it("insertAtStart()", () => {
 			const list = getRoot(schema, () => []);
-			list.insertAtStart(TreeListNode.inline([0, 1]));
+			list.insertAtStart(TreeArrayNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAtStart(0, TreeListNode.inline([1]), 2);
+			list.insertAtStart(0, TreeArrayNode.inline([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtStart(0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
+			list.insertAtStart(0, 1, TreeArrayNode.inline([2, 3]), 4, TreeArrayNode.inline([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
 		it("insertAtEnd()", () => {
 			const list = getRoot(schema, () => []);
-			list.insertAtEnd(TreeListNode.inline([0, 1]));
+			list.insertAtEnd(TreeArrayNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAtEnd(0, TreeListNode.inline([1]), 2);
+			list.insertAtEnd(0, TreeArrayNode.inline([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtEnd(0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
+			list.insertAtEnd(0, 1, TreeArrayNode.inline([2, 3]), 4, TreeArrayNode.inline([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
 		it("insertAt()", () => {
 			const list = getRoot(schema, () => []);
-			list.insertAt(0, TreeListNode.inline([0, 1]));
+			list.insertAt(0, TreeArrayNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAt(0, 0, TreeListNode.inline([1]), 2);
+			list.insertAt(0, 0, TreeArrayNode.inline([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAt(0, 0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
+			list.insertAt(0, 0, 1, TreeArrayNode.inline([2, 3]), 4, TreeArrayNode.inline([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 	});
@@ -293,11 +293,11 @@ describe("SharedTreeList", () => {
 	describe("inserting primitive", () => {
 		const _ = new SchemaFactory("test");
 		const schema = _.object("Obj", {
-			numbers: _.list(_.number),
-			strings: _.list(_.string),
-			booleans: _.list(_.boolean),
-			handles: _.list(_.handle),
-			poly: _.list([_.number, _.string, _.boolean, _.handle]),
+			numbers: _.array(_.number),
+			strings: _.array(_.string),
+			booleans: _.array(_.boolean),
+			handles: _.array(_.handle),
+			poly: _.array([_.number, _.string, _.boolean, _.handle]),
 		});
 		const initialTree = () => ({
 			numbers: [],
@@ -348,7 +348,7 @@ describe("SharedTreeList", () => {
 
 	describe("removing items", () => {
 		const _ = new SchemaFactory("test");
-		const schema = _.list(_.number);
+		const schema = _.array(_.number);
 
 		it("removeAt()", () => {
 			const list = getRoot(schema, () => [0, 1, 2]);
@@ -399,7 +399,7 @@ describe("SharedTreeList", () => {
 	describe("moving items", () => {
 		describe("within the same list", () => {
 			const _ = new SchemaFactory("test");
-			const schema = _.list(_.number);
+			const schema = _.array(_.number);
 			const initialTree = () => [0, 1, 2, 3];
 
 			it("moveToStart()", () => {
@@ -484,8 +484,8 @@ describe("SharedTreeList", () => {
 			const _ = new SchemaFactory("test");
 
 			const schema = _.object("parent", {
-				listA: _.list(_.string),
-				listB: _.list(_.string),
+				listA: _.array(_.string),
+				listB: _.array(_.string),
 			});
 
 			const initialTree = () => ({
@@ -556,8 +556,8 @@ describe("SharedTreeList", () => {
 		describe("between lists with overlapping types", () => {
 			const _ = new SchemaFactory("test");
 
-			const listA = _.list([_.string, _.number]);
-			const listB = _.list([_.number, _.boolean]);
+			const listA = _.array([_.string, _.number]);
+			const listB = _.array([_.number, _.boolean]);
 
 			const schema = _.object("parent", {
 				listA,

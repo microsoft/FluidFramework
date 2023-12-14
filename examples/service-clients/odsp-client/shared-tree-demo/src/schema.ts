@@ -18,8 +18,8 @@ export class Letter extends sb.object("Letter", {
 }) {}
 
 export class App extends sb.object("App", {
-	letters: sb.list(Letter),
-	word: sb.list(Letter),
+	letters: sb.array(Letter),
+	word: sb.array(Letter),
 }) {}
 
 export const treeConfiguration = new TreeConfiguration(App, () => ({

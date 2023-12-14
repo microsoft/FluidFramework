@@ -208,7 +208,7 @@ export function convertNodeSchema(
 				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
 				break;
 			}
-			case NodeKind.List: {
+			case NodeKind.Array: {
 				const fieldInfo = schema.info as ImplicitAllowedTypes;
 				const field = FlexTreeFieldSchema.create(
 					FieldKinds.sequence,
