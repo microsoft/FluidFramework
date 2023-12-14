@@ -77,6 +77,7 @@ import {
 	ChangeFamily,
 	TaggedChange,
 	FieldUpPath,
+	TreeStoredSchemaRepository,
 	initializeForest,
 	AllowedUpdateType,
 	IEditableForest,
@@ -98,7 +99,6 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 	DeltaProtoNode,
-	TreeStoredSchemaRepository,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";

@@ -56,6 +56,7 @@ function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
 	return {
 		storedSchema: repository,
 		updateSchema: (newSchema: TreeSchema) => {
+			// This test repository applies the schema immediately.
 			repository.apply(newSchema);
 		},
 	};

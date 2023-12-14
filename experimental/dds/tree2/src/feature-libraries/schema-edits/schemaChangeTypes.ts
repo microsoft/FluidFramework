@@ -7,8 +7,7 @@ import { TreeStoredSchema } from "../../core";
 
 export interface SchemaChange {
 	/**
-	 * If this property is an object, then it contains the new stored schema for the document and the old schema for inverting.
-	 * If this property is undefined, then processing it should do nothing (e.g. because it is the result of a conflict).
+	 * This property contains the new stored schema for the document and the old schema for inverting.
 	 */
-	readonly schema?: { new: TreeStoredSchema; old: TreeStoredSchema };
+	readonly schema: { new: TreeStoredSchema; old: TreeStoredSchema };
 }

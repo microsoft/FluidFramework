@@ -86,7 +86,6 @@ export class ViewSchema {
 	 * Compute a schema that `original` could be viewed as using adapters as needed.
 	 *
 	 * TODO: have a way for callers to get invalidated on schema updates.
-	 * Maybe pass in EditableTreeStoredSchema and optional ObservingDependent?
 	 */
 	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
 		// Sanity check on adapters:

@@ -8,6 +8,7 @@ import { OptionalChangeset } from "../optional-field";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
+	ChangeRebaser,
 	UpPath,
 	ITreeCursor,
 	ChangeFamilyEditor,
@@ -18,15 +19,14 @@ import {
 	DeltaRoot,
 	StoredSchemaCollection,
 	ChangesetLocalId,
-	ChangeRebaser,
 	DeltaDetachedNodeId,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
+	ModularChangeFamily,
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
-	ModularChangeFamily,
 	FieldEditDescription,
 	FullSchemaPolicy,
 	intoDelta as intoModularDelta,

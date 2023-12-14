@@ -4,27 +4,20 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { ICodecFamily, ICodecOptions, IJsonCodec, makeCodecFamily } from "../../codec";
+import { ICodecOptions, IJsonCodec } from "../../codec";
 import { Format, makeSchemaCodec } from "../schemaIndexFormat";
 import { SchemaChange } from "./schemaChangeTypes";
 
-interface DataEncodedSchemaChange {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type EncodedSchemaChange = {
 	readonly new: Format;
 	readonly old: Format;
-}
-
-interface EmptyEncodedSchemaChange {}
-
-export type EncodedSchemaChange = DataEncodedSchemaChange | EmptyEncodedSchemaChange;
+};
 
 export const EncodedSchemaChange = Type.Object({
 	new: Type.Optional(Format),
 	old: Type.Optional(Format),
 });
-
-function isDataEncodedSchemaChange(change: EncodedSchemaChange): change is DataEncodedSchemaChange {
-	return (change as DataEncodedSchemaChange).new !== undefined;
-}
 
 export function makeSchemaChangeCodec({
 	jsonValidator: validator,
@@ -41,20 +34,13 @@ export function makeSchemaChangeCodec({
 		},
 		decode: (json) => {
 			const encodedSchemaChange = json as EncodedSchemaChange;
-			if (isDataEncodedSchemaChange(encodedSchemaChange)) {
-				return {
-					schema: {
-						new: schemaCodec.decode(encodedSchemaChange.new),
-						old: schemaCodec.decode(encodedSchemaChange.old),
-					},
-				};
-			}
-			return {};
+			return {
+				schema: {
+					new: schemaCodec.decode(encodedSchemaChange.new),
+					old: schemaCodec.decode(encodedSchemaChange.old),
+				},
+			};
 		},
 		encodedSchema: EncodedSchemaChange,
 	};
-}
-
-export function makeSchemaChangeCodecFamily(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([[0, makeSchemaChangeCodec(options)]]);
 }

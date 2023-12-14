@@ -139,7 +139,7 @@ describe("Schema Evolution Examples", () => {
 		const view = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection);
 
 		// Now lets imagine using this application on a new empty document.
-		// EditableTreeStoredSchema defaults to a state that permits no document states at all.
+		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
 		// To permit an empty document, we have to define a root field, and permit it to be empty.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));

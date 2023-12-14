@@ -90,12 +90,6 @@ export class SharedTreeChangeFamily
 						),
 					};
 				case "schema": {
-					if (innerChange.innerChange.schema === undefined) {
-						return {
-							type: "schema",
-							innerChange: {},
-						};
-					}
 					return {
 						type: "schema",
 						innerChange: {
