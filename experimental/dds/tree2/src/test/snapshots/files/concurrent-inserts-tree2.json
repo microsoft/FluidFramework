@@ -17,259 +17,452 @@
                   "trunk": [
                     {
                       "change": {
-                        "maxId": 0,
-                        "changes": [
+                        "encodedChanges": [
                           {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
-                              {
-                                "count": 1,
-                                "effect": {
-                                  "insert": {
-                                    "id": 0
+                            "type": "schema",
+                            "change": {
+                              "new": {
+                                "version": "1.0.0",
+                                "nodeSchema": [
+                                  {
+                                    "name": "com.fluidframework.json.array",
+                                    "objectNodeFields": [
+                                      {
+                                        "kind": "Sequence",
+                                        "types": [
+                                          "com.fluidframework.json.object",
+                                          "com.fluidframework.json.array",
+                                          "com.fluidframework.leaf.number",
+                                          "com.fluidframework.leaf.boolean",
+                                          "com.fluidframework.leaf.string",
+                                          "com.fluidframework.leaf.null"
+                                        ],
+                                        "name": ""
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "com.fluidframework.json.object",
+                                    "mapFields": {
+                                      "kind": "Optional",
+                                      "types": [
+                                        "com.fluidframework.json.object",
+                                        "com.fluidframework.json.array",
+                                        "com.fluidframework.leaf.number",
+                                        "com.fluidframework.leaf.boolean",
+                                        "com.fluidframework.leaf.string",
+                                        "com.fluidframework.leaf.null"
+                                      ]
+                                    },
+                                    "objectNodeFields": []
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.boolean",
+                                    "objectNodeFields": [],
+                                    "leafValue": 2
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.handle",
+                                    "objectNodeFields": [],
+                                    "leafValue": 3
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.null",
+                                    "objectNodeFields": [],
+                                    "leafValue": 4
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.number",
+                                    "objectNodeFields": [],
+                                    "leafValue": 0
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.string",
+                                    "objectNodeFields": [],
+                                    "leafValue": 1
                                   }
-                                },
-                                "cellId": {
-                                  "localId": 0
+                                ],
+                                "rootFieldSchema": {
+                                  "kind": "Sequence",
+                                  "types": [
+                                    "com.fluidframework.json.object",
+                                    "com.fluidframework.json.array",
+                                    "com.fluidframework.leaf.number",
+                                    "com.fluidframework.leaf.boolean",
+                                    "com.fluidframework.leaf.string",
+                                    "com.fluidframework.leaf.null"
+                                  ]
+                                }
+                              },
+                              "old": {
+                                "version": "1.0.0",
+                                "nodeSchema": [
+                                  {
+                                    "name": "com.fluidframework.json.array",
+                                    "objectNodeFields": [
+                                      {
+                                        "kind": "Sequence",
+                                        "types": [
+                                          "com.fluidframework.json.object",
+                                          "com.fluidframework.json.array",
+                                          "com.fluidframework.leaf.number",
+                                          "com.fluidframework.leaf.boolean",
+                                          "com.fluidframework.leaf.string",
+                                          "com.fluidframework.leaf.null"
+                                        ],
+                                        "name": ""
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "name": "com.fluidframework.json.object",
+                                    "mapFields": {
+                                      "kind": "Optional",
+                                      "types": [
+                                        "com.fluidframework.json.object",
+                                        "com.fluidframework.json.array",
+                                        "com.fluidframework.leaf.number",
+                                        "com.fluidframework.leaf.boolean",
+                                        "com.fluidframework.leaf.string",
+                                        "com.fluidframework.leaf.null"
+                                      ]
+                                    },
+                                    "objectNodeFields": []
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.boolean",
+                                    "objectNodeFields": [],
+                                    "leafValue": 2
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.handle",
+                                    "objectNodeFields": [],
+                                    "leafValue": 3
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.null",
+                                    "objectNodeFields": [],
+                                    "leafValue": 4
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.number",
+                                    "objectNodeFields": [],
+                                    "leafValue": 0
+                                  },
+                                  {
+                                    "name": "com.fluidframework.leaf.string",
+                                    "objectNodeFields": [],
+                                    "leafValue": 1
+                                  }
+                                ],
+                                "rootFieldSchema": {
+                                  "kind": "Sequence",
+                                  "types": [
+                                    "com.fluidframework.json.object",
+                                    "com.fluidframework.json.array",
+                                    "com.fluidframework.leaf.number",
+                                    "com.fluidframework.leaf.boolean",
+                                    "com.fluidframework.leaf.string",
+                                    "com.fluidframework.leaf.null"
+                                  ]
                                 }
                               }
-                            ]
+                            },
+                            "isConflicted": false
                           }
-                        ],
-                        "builds": [
-                          [
-                            0,
-                            {
-                              "version": 1,
-                              "identifiers": [],
-                              "shapes": [
-                                {
-                                  "c": {
-                                    "extraFields": 1,
-                                    "fields": []
-                                  }
-                                },
-                                {
-                                  "a": 0
-                                }
-                              ],
-                              "data": [
-                                1,
-                                [
-                                  "com.fluidframework.leaf.string",
-                                  true,
-                                  "y",
-                                  []
-                                ]
-                              ]
-                            }
-                          ]
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000002",
+                      "revision": "beefbeef-beef-4000-8000-000000000003",
                       "sequenceNumber": -9007199254740990,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
                     {
                       "change": {
-                        "maxId": 1,
-                        "changes": [
+                        "encodedChanges": [
                           {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
-                              {
-                                "count": 1,
-                                "effect": {
-                                  "insert": {
-                                    "id": 1
-                                  }
-                                },
-                                "cellId": {
-                                  "localId": 1
-                                }
-                              }
-                            ]
-                          }
-                        ],
-                        "builds": [
-                          [
-                            1,
-                            {
-                              "version": 1,
-                              "identifiers": [],
-                              "shapes": [
+                            "type": "data",
+                            "change": {
+                              "maxId": 0,
+                              "changes": [
                                 {
-                                  "c": {
-                                    "extraFields": 1,
-                                    "fields": []
-                                  }
-                                },
-                                {
-                                  "a": 0
+                                  "fieldKey": "rootFieldKey",
+                                  "fieldKind": "Sequence",
+                                  "change": [
+                                    {
+                                      "count": 1,
+                                      "effect": {
+                                        "insert": {
+                                          "id": 0
+                                        }
+                                      },
+                                      "cellId": {
+                                        "localId": 0
+                                      }
+                                    }
+                                  ]
                                 }
                               ],
-                              "data": [
-                                1,
+                              "builds": [
                                 [
-                                  "com.fluidframework.leaf.string",
-                                  true,
-                                  "x",
-                                  []
+                                  0,
+                                  {
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "y",
+                                        []
+                                      ]
+                                    ]
+                                  }
                                 ]
                               ]
-                            }
-                          ]
+                            },
+                            "isConflicted": false
+                          }
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000003",
+                      "revision": "beefbeef-beef-4000-8000-000000000004",
                       "sequenceNumber": -9007199254740989,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
                     {
                       "change": {
-                        "maxId": 1,
-                        "changes": [
+                        "encodedChanges": [
                           {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
-                              {
-                                "count": 2
-                              },
-                              {
-                                "count": 2,
-                                "effect": {
-                                  "insert": {
-                                    "id": 0
-                                  }
-                                },
-                                "cellId": {
-                                  "localId": 0
+                            "type": "data",
+                            "change": {
+                              "maxId": 1,
+                              "changes": [
+                                {
+                                  "fieldKey": "rootFieldKey",
+                                  "fieldKind": "Sequence",
+                                  "change": [
+                                    {
+                                      "count": 1,
+                                      "effect": {
+                                        "insert": {
+                                          "id": 1
+                                        }
+                                      },
+                                      "cellId": {
+                                        "localId": 1
+                                      }
+                                    }
+                                  ]
                                 }
-                              }
-                            ]
+                              ],
+                              "builds": [
+                                [
+                                  1,
+                                  {
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "x",
+                                        []
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            },
+                            "isConflicted": false
                           }
-                        ],
-                        "builds": [
-                          [
-                            0,
-                            {
-                              "version": 1,
-                              "identifiers": [],
-                              "shapes": [
-                                {
-                                  "c": {
-                                    "extraFields": 1,
-                                    "fields": []
-                                  }
-                                },
-                                {
-                                  "a": 0
-                                }
-                              ],
-                              "data": [
-                                1,
-                                [
-                                  "com.fluidframework.leaf.string",
-                                  true,
-                                  "a",
-                                  []
-                                ]
-                              ]
-                            }
-                          ],
-                          [
-                            1,
-                            {
-                              "version": 1,
-                              "identifiers": [],
-                              "shapes": [
-                                {
-                                  "c": {
-                                    "extraFields": 1,
-                                    "fields": []
-                                  }
-                                },
-                                {
-                                  "a": 0
-                                }
-                              ],
-                              "data": [
-                                1,
-                                [
-                                  "com.fluidframework.leaf.string",
-                                  true,
-                                  "c",
-                                  []
-                                ]
-                              ]
-                            }
-                          ]
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                      "revision": "beefbeef-beef-4000-8000-000000000005",
                       "sequenceNumber": -9007199254740988,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
                     {
                       "change": {
-                        "maxId": 2,
-                        "changes": [
+                        "encodedChanges": [
                           {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
-                              {
-                                "count": 3
-                              },
-                              {
-                                "count": 1,
-                                "effect": {
-                                  "insert": {
-                                    "id": 2
-                                  }
-                                },
-                                "cellId": {
-                                  "localId": 2
-                                }
-                              }
-                            ]
-                          }
-                        ],
-                        "builds": [
-                          [
-                            2,
-                            {
-                              "version": 1,
-                              "identifiers": [],
-                              "shapes": [
+                            "type": "data",
+                            "change": {
+                              "maxId": 1,
+                              "changes": [
                                 {
-                                  "c": {
-                                    "extraFields": 1,
-                                    "fields": []
-                                  }
-                                },
-                                {
-                                  "a": 0
+                                  "fieldKey": "rootFieldKey",
+                                  "fieldKind": "Sequence",
+                                  "change": [
+                                    {
+                                      "count": 2
+                                    },
+                                    {
+                                      "count": 2,
+                                      "effect": {
+                                        "insert": {
+                                          "id": 0
+                                        }
+                                      },
+                                      "cellId": {
+                                        "localId": 0
+                                      }
+                                    }
+                                  ]
                                 }
                               ],
-                              "data": [
-                                1,
+                              "builds": [
                                 [
-                                  "com.fluidframework.leaf.string",
-                                  true,
-                                  "b",
-                                  []
+                                  0,
+                                  {
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "a",
+                                        []
+                                      ]
+                                    ]
+                                  }
+                                ],
+                                [
+                                  1,
+                                  {
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "c",
+                                        []
+                                      ]
+                                    ]
+                                  }
                                 ]
                               ]
-                            }
-                          ]
+                            },
+                            "isConflicted": false
+                          }
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000005",
+                      "revision": "beefbeef-beef-4000-8000-000000000006",
                       "sequenceNumber": -9007199254740987,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    },
+                    {
+                      "change": {
+                        "encodedChanges": [
+                          {
+                            "type": "data",
+                            "change": {
+                              "maxId": 2,
+                              "changes": [
+                                {
+                                  "fieldKey": "rootFieldKey",
+                                  "fieldKind": "Sequence",
+                                  "change": [
+                                    {
+                                      "count": 3
+                                    },
+                                    {
+                                      "count": 1,
+                                      "effect": {
+                                        "insert": {
+                                          "id": 2
+                                        }
+                                      },
+                                      "cellId": {
+                                        "localId": 2
+                                      }
+                                    }
+                                  ]
+                                }
+                              ],
+                              "builds": [
+                                [
+                                  2,
+                                  {
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "b",
+                                        []
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              ]
+                            },
+                            "isConflicted": false
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000007",
+                      "sequenceNumber": -9007199254740986,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     }
                   ],
