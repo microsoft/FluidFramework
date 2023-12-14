@@ -23,7 +23,7 @@ class Buffer_2 extends Uint8Array {
 }
 export { Buffer_2 as Buffer }
 
-// @internal
+// @alpha
 export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
 
 // @public

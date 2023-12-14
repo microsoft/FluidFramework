@@ -12,7 +12,7 @@ import { TreeView } from './TreeView';
  * change is actually applied.
  * The path only contains edits that were successfully applied.
  * This path is always empty for a change that has no concurrent edits.
- * @internal
+ * @alpha
  */
 export interface ReconciliationPath {
 	/**
@@ -28,7 +28,7 @@ export interface ReconciliationPath {
 
 /**
  * An edit in the `ReconciliationPath`.
- * @internal
+ * @alpha
  */
 export interface ReconciliationEdit {
 	/**
@@ -52,7 +52,7 @@ export interface ReconciliationEdit {
 
 /**
  * A change in the `ReconciliationPath`.
- * @internal
+ * @alpha
  */
 export interface ReconciliationChange {
 	/**

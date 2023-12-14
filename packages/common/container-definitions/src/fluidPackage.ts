@@ -64,7 +64,7 @@ export interface IFluidPackage {
 /**
  * Check if the package.json defines a Fluid package
  * @param pkg - the package json data to check if it is a Fluid package.
- * @internal
+ * @alpha
  */
 export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 	typeof pkg === "object" &&
