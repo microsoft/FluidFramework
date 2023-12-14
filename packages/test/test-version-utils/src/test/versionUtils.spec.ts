@@ -41,13 +41,19 @@ describe("versionUtils", () => {
 			checkRequestedVersionSatisfies("2.3.5", -1, adjustPublicMajor, "^1.0.0");
 		});
 
-		it("bumping internal releases to public releases (adjustPublicMajor = false)", () => {
+		it("bumping internal/rc releases to public releases (adjustPublicMajor = false)", () => {
 			const adjustPublicMajor = false;
 			checkRequestedVersionSatisfies("2.0.0-internal.1.0.0", -1, adjustPublicMajor, "^1.0.0");
 			checkRequestedVersionSatisfies("2.0.0-internal.1.1.0", -1, adjustPublicMajor, "^1.0.0");
 			checkRequestedVersionSatisfies("2.0.0-internal.1.1.1", -1, adjustPublicMajor, "^1.0.0");
 			checkRequestedVersionSatisfies("2.0.0-internal.1.2.3", -1, adjustPublicMajor, "^1.0.0");
 			checkRequestedVersionSatisfies("2.0.0-internal.1.4.2", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.1.0.0", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.1.1.0", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.1.1.1", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.1.2.3", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.1.4.2", -1, adjustPublicMajor, "^1.0.0");
+
 			checkRequestedVersionSatisfies(
 				"2.0.0-internal.1.4.2",
 				-2,
@@ -62,6 +68,11 @@ describe("versionUtils", () => {
 				"^0.58.0",
 			);
 			checkRequestedVersionSatisfies("2.0.0-internal.2.0.1", -2, adjustPublicMajor, "^1.0.0");
+
+			checkRequestedVersionSatisfies("2.0.0-rc.1.4.2", -2, adjustPublicMajor, "^0.59.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.2.0.0", -2, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.2.0.0", -3, adjustPublicMajor, "^0.58.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.2.0.1", -2, adjustPublicMajor, "^1.0.0");
 		});
 
 		it("bumping internal releases to public releases (adjustPublicMajor = true)", () => {
@@ -81,6 +92,12 @@ describe("versionUtils", () => {
 				"^0.59.0",
 			);
 			checkRequestedVersionSatisfies("2.0.0-internal.6.4.0", -1, adjustPublicMajor, "^1.0.0");
+
+			checkRequestedVersionSatisfies("2.0.0-rc.1.0.0", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.2.0.0", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.1.0.0", -2, adjustPublicMajor, "^0.59.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.2.0.0", -2, adjustPublicMajor, "^0.59.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.6.4.0", -1, adjustPublicMajor, "^1.0.0");
 		});
 
 		it("bumping internal releases to other internal releases", () => {
