@@ -71,9 +71,9 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/gitresources": "^2.0.1",
 		"@fluidframework/protocol-base": "^2.0.1",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^0.26.0",
+		"axios": "^1.6.2",
 		"lz4js": "^0.2.0",
 		"url": "^0.11.0",
 		"uuid": "^9.0.0"

@@ -19,7 +19,7 @@ import {
 	RestLessClient,
 } from "@fluidframework/server-services-client";
 import fetch from "cross-fetch";
-import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
+import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
 import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
@@ -224,11 +224,11 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	}
 
 	private async generateHeaders(
-		requestHeaders?: AxiosRequestHeaders | undefined,
-	): Promise<Record<string, string>> {
+		requestHeaders?: RawAxiosRequestHeaders | undefined,
+	): Promise<RawAxiosRequestHeaders> {
 		const token = await this.getToken();
 		assert(token !== undefined, 0x679 /* token should be present */);
-		const headers: Record<string, string> = {
+		const headers: RawAxiosRequestHeaders  = {
 			...requestHeaders,
 			[DriverVersionHeaderName]: driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
