@@ -238,6 +238,8 @@ export class OdspDelayLoadedDeltaStream {
 
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
+				this.clearJoinSessionTimer();
+				// Clear the timer as it is going to be scheduled again as part of refreshing join session.
 				getWithRetryForTokenRefresh(async (options) => {
 					await this.joinSession(
 						requestSocketToken,
