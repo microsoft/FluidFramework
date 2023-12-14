@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-static",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,6 +68,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -115,6 +116,22 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_FluidContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_ServiceAudience": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IRootDataObject": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

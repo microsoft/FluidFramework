@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -20,7 +18,6 @@ import {
 	makeHandlesSerializable,
 	parseHandles,
 	SharedObject,
-	SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -29,6 +26,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
@@ -98,7 +96,7 @@ export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 			conflictingValue: MatrixItem<T>,
 			target: IEventThisPlaceHolder,
 		) => void,
-	);
+	): void;
 }
 
 /**
@@ -544,7 +542,7 @@ export class SharedMatrix<T = any>
 	 * Runs serializer on the GC data for this SharedMatrix.
 	 * All the IFluidHandle's stored in the cells represent routes to other objects.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		for (let row = 0; row < this.rowCount; row++) {
 			for (let col = 0; col < this.colCount; col++) {
 				serializer.stringify(this.getCell(row, col), this.handle);
@@ -609,6 +607,7 @@ export class SharedMatrix<T = any>
 	}
 
 	private rebasePosition(
+		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 		pos: number,
 		referenceSequenceNumber: number,

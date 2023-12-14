@@ -333,6 +333,7 @@ declare function get_current_ClassDeclaration_TestFluidObject():
 declare function use_old_ClassDeclaration_TestFluidObject(
     use: TypeOnly<old.TestFluidObject>): void;
 use_old_ClassDeclaration_TestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestFluidObject());
 
 /*

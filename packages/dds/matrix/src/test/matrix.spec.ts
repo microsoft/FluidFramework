@@ -74,7 +74,7 @@ describe("Matrix1", () => {
 				let matrix: SharedMatrix<number>;
 
 				// Test IMatrixConsumer that builds a copy of `matrix` via observed events.
-				let consumer: TestConsumer<undefined | null | number>;
+				let consumer: TestConsumer<number>;
 
 				// Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
 				// equivalent, and then returns the 2nd matrix.

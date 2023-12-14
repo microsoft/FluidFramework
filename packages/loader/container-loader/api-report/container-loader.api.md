@@ -14,7 +14,6 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
@@ -22,8 +21,6 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IRequestHeader } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
@@ -118,15 +115,11 @@ export class Loader implements IHostLoader {
         canReconnect?: boolean;
         clientDetailsOverride?: IClientDetails;
     }): Promise<IContainer>;
-    // @deprecated (undocumented)
-    get IFluidRouter(): IFluidRouter;
     // (undocumented)
     rehydrateDetachedContainerFromSnapshot(snapshot: string, createDetachedProps?: {
         canReconnect?: boolean;
         clientDetailsOverride?: IClientDetails;
     }): Promise<IContainer>;
-    // @deprecated (undocumented)
-    request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
     // (undocumented)
@@ -135,9 +128,6 @@ export class Loader implements IHostLoader {
 
 // @alpha
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
-
-// @internal @deprecated
-export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
 
 // @internal
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

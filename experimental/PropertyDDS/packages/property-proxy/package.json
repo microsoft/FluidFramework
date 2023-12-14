@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-proxy",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Proxify PropertyTree to interact with them in a JavaScript like manner",
 	"homepage": "https://fluidframework.com",
 	"repository": {

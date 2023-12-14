@@ -442,7 +442,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
+export type Primitive = number | boolean | null | string | undefined;
 
 // @internal
 export namespace RootDataVisualizations {
