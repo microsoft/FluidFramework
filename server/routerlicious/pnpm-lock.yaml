@@ -116,7 +116,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/common-definitions': ^1.0.0
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
@@ -161,7 +161,7 @@ importers:
       webpack: ^5.82.0
     dependencies:
       '@fluidframework/common-definitions': 1.0.0
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
       '@fluidframework/protocol-definitions': 3.1.0-220363
@@ -214,7 +214,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-lambdas-driver-previous': npm:@fluidframework/server-lambdas-driver@2.0.0
       '@fluidframework/server-services-client': workspace:~
@@ -239,7 +239,7 @@ importers:
       serialize-error: ^8.1.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -273,7 +273,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-lambdas': workspace:~
@@ -307,7 +307,7 @@ importers:
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-memory-orderer': link:../memory-orderer
@@ -350,7 +350,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-base': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-220363
@@ -383,7 +383,7 @@ importers:
       webpack: ^5.82.0
       ws: ^7.4.6
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/protocol-base': link:../protocol-base
       '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-lambdas': link:../lambdas
@@ -425,7 +425,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base-previous': npm:@fluidframework/protocol-base@2.0.0
@@ -444,7 +444,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-definitions': 3.1.0-220363
       events: 3.3.0
@@ -472,7 +472,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-220363
@@ -503,7 +503,7 @@ importers:
       typescript: ~4.5.5
       winston: ^3.6.0
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-kafka-orderer': link:../kafka-orderer
@@ -543,7 +543,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-220363
@@ -607,7 +607,7 @@ importers:
       winston: ^3.6.0
       ws: ^7.4.6
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-kafka-orderer': link:../kafka-orderer
@@ -680,7 +680,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-services-client': workspace:~
@@ -726,7 +726,7 @@ importers:
       uuid: ^9.0.0
       winston: ^3.6.0
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
@@ -781,7 +781,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
@@ -811,7 +811,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^9.0.0
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
       '@fluidframework/protocol-definitions': 3.1.0-220363
@@ -850,7 +850,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-220363
@@ -868,7 +868,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-client': link:../services-client
@@ -948,7 +948,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
@@ -971,7 +971,7 @@ importers:
       sinon: ^9.2.3
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -1044,7 +1044,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
@@ -1088,7 +1088,7 @@ importers:
       uuid: ^9.0.0
       winston: ^3.6.0
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
       '@fluidframework/protocol-definitions': 3.1.0-220363
@@ -1141,7 +1141,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-telemetry-previous': npm:@fluidframework/server-services-telemetry@2.0.0
       '@types/mocha': ^10.0.1
@@ -1161,7 +1161,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^9.0.0
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       json-stringify-safe: 5.0.1
       path-browserify: 1.0.1
       serialize-error: 8.1.0
@@ -1279,7 +1279,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
@@ -1308,7 +1308,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^9.0.0
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
       '@fluidframework/protocol-definitions': 3.1.0-220363
@@ -1344,7 +1344,7 @@ importers:
   packages/tinylicious:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/common-utils': ^3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
@@ -1409,7 +1409,7 @@ importers:
       uuid: ^9.0.0
       winston: ^3.6.0
     dependencies:
-      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/common-utils': 3.0.0-220318
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
       '@fluidframework/protocol-definitions': 3.1.0-220363
@@ -2825,6 +2825,19 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       sha.js: 2.4.11
+    dev: true
+
+  /@fluidframework/common-utils/3.0.0-220318:
+    resolution: {integrity: sha512-tDuL81/FxrjCY4CaAonLRaL1kkHYJCKF7upqzO5HgJ1zIeEzTt4XFtcX3ZsXvzp5Q3TvTy1CWye3qr8ELBB+nQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 1.0.0
+      '@types/events': 3.0.0
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: false
 
   /@fluidframework/core-interfaces/2.0.0-internal.7.0.0:
     resolution: {integrity: sha512-znZqbn0ew7aqrnjFf+sfNsnajjZ9z9PHycrfzkVfo6YAW1WKuTi7VmZwUyLGVDIAJ86qlQW4/kI9WL4OypzSFA==}

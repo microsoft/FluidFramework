@@ -144,19 +144,13 @@ export class MockDeltaManager
 		return undefined as any as string;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
-	public get maxMessageSize(): number {
-		return 0;
-	}
+	public readonly maxMessageSize: number = 0;
 
 	public get serviceConfiguration(): IClientConfiguration {
 		return undefined as any as IClientConfiguration;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
-	public get active(): boolean {
-		return true;
-	}
+	public readonly active: boolean = true;
 
 	public close(): void {}
 

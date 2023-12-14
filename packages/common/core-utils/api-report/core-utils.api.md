@@ -29,8 +29,8 @@ export class Heap<T> {
     // (undocumented)
     comp: IComparer<T>;
     count(): number;
-    get(): T;
-    peek(): IHeapNode<T>;
+    get(): T | undefined;
+    peek(): IHeapNode<T> | undefined;
     remove(node: IHeapNode<T>): void;
     update(node: IHeapNode<T>): void;
 }

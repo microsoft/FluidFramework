@@ -8,7 +8,6 @@
 
 import {
 	Client,
-	ICombiningOp,
 	ISegment,
 	LocalReferencePosition,
 	PropertiesManager,
@@ -106,11 +105,12 @@ export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet;
+	public properties: PropertySet = createMap<any>();
+
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 */
-	public propertyManager: PropertiesManager;
+	public propertyManager: PropertiesManager = new PropertiesManager();
 
 	/***/
 	public get stickiness(): IntervalStickiness {
@@ -141,9 +141,6 @@ export class SequenceInterval implements ISerializableInterval {
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
 	) {
-		this.propertyManager = new PropertiesManager();
-		this.properties = {};
-
 		if (props) {
 			this.addProperties(props);
 		}
@@ -332,10 +329,8 @@ export class SequenceInterval implements ISerializableInterval {
 		newProps: PropertySet,
 		collab: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
-		this.initializeProperties();
-		return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
+		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
 	}
 
 	/**
@@ -420,7 +415,6 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
-			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
@@ -428,15 +422,6 @@ export class SequenceInterval implements ISerializableInterval {
 			);
 		}
 		return newInterval;
-	}
-
-	private initializeProperties(): void {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
 	}
 }
 
@@ -568,10 +553,6 @@ export function createSequenceInterval(
 		beginRefType = ReferenceType.Transient;
 		endRefType = ReferenceType.Transient;
 	} else {
-		if (intervalType === IntervalType.Nest) {
-			beginRefType = ReferenceType.NestBegin;
-			endRefType = ReferenceType.NestEnd;
-		}
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)
