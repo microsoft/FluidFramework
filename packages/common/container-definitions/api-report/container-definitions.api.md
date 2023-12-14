@@ -41,7 +41,7 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @alpha
+// @public
 export namespace ConnectionState {
     export type CatchingUp = 1;
     export type Connected = 2;
@@ -49,7 +49,7 @@ export namespace ConnectionState {
     export type EstablishingConnection = 3;
 }
 
-// @alpha
+// @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
 // @internal @deprecated
@@ -228,7 +228,7 @@ export interface IContainerLoadMode {
     pauseAfterLoad?: boolean;
 }
 
-// @alpha
+// @public
 export type ICriticalContainerError = IErrorBase;
 
 // @public @sealed
