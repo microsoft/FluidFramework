@@ -5,7 +5,6 @@
 ```ts
 
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/telemetry-utils';
 
@@ -14,11 +13,8 @@ export interface CategoryFilter {
     categories: TelemetryEventCategory[];
 }
 
-// @internal @sealed
-export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
-    constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig);
-    send(event: ITelemetryBaseEvent): void;
-}
+// @internal
+export function createLogger(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig): ITelemetryBaseLogger;
 
 // @internal
 export interface FluidAppInsightsLoggerConfig {
