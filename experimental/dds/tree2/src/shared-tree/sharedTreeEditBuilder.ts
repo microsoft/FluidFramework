@@ -9,6 +9,7 @@ import { SharedTreeChange } from "./sharedTreeChangeTypes";
 
 /**
  * Editor for schema changes.
+ * The only currently supported operation is to replace the stored schema.
  * @alpha
  */
 export interface ISchemaEditor {
@@ -26,6 +27,10 @@ export interface ISchemaEditor {
  * @alpha
  */
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
+	/**
+	 * Editor for schema changes.
+	 * @alpha
+	 */
 	schema: ISchemaEditor;
 }
 

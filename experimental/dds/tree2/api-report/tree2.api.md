@@ -976,7 +976,6 @@ export interface ISharedTree extends ISharedObject, ITree {
 
 // @alpha
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
-    // (undocumented)
     schema: ISchemaEditor;
 }
 
