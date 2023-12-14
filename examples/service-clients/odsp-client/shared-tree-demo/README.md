@@ -15,4 +15,4 @@ You can run this example using the following steps:
     - For an even faster build, you can add the package name to the build command, like this:
       `pnpm run build:fast --nolint @fluid-example/shared-tree-demo`
 1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
-1. Login with your M365 tenant email and password to see the example in action on your web browser. If you encounter issues like `Need admin approval`, consider using a private or incognito window to execute the example.
+1. Login with your M365 tenant email and password to see the example in action on your web browser. If you encounter issues like `Need admin approval`, consider using a private or incognito window to execute the example. In particular, beware of Edge's work profiles which will sign in automatically with the linked Microsoft credentials, which might not have access to the M356 tenant.
