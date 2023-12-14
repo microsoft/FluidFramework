@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, TreeFieldStoredSchema, MapTree, TreeStoredSchema } from "../core";
+import { FieldKey, TreeFieldStoredSchema, MapTree } from "../core";
+import { FlexTreeSchema } from "./typed-schema";
 
 /**
  * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
@@ -16,7 +17,7 @@ export interface TreeDataContext {
 	/**
 	 * Schema for the document which the tree will be used in.
 	 */
-	readonly schema: TreeStoredSchema;
+	readonly schema: FlexTreeSchema;
 
 	/**
 	 * Procedural data generator for fields.
