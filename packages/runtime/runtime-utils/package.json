@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-utils",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Collection of utility functions for Fluid Runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -113,6 +113,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_requestFluidObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

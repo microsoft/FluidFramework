@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Serializable } from '@fluidframework/datastore-definitions';
 import type {
 	EditId,
 	Definition,
@@ -94,7 +93,7 @@ export interface EditBase<TChange> {
  * TODO:#51984: Allow opting into heuristic blobbing in snapshots with a special IFluid key.
  * @internal
  */
-export type Payload = Serializable;
+export type Payload = any;
 
 /**
  * Json compatible map as object.

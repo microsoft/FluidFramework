@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/aqueduct",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "A set of implementations for Fluid Framework interfaces.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -123,6 +123,44 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_getDefaultObjectFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_getObjectFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_getObjectWithIdFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_defaultRouteRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_mountableViewRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_DataObject": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IRootDataObjectFactory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_PureDataObject": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDataObjectProps": {
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -2,12 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiEntryPoint, ApiItem, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+import {
+	type ApiEntryPoint,
+	type ApiItem,
+	type ApiModel,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
 
-import { DocumentNode, SectionNode } from "../documentation-domain";
+import { type DocumentNode, type SectionNode } from "../documentation-domain";
 import { createDocument } from "./Utilities";
 import {
-	ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration";
 import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities";

@@ -64,6 +64,7 @@ describe("Dehydrate Container", () => {
 		);
 
 		// Validate the ".component" blob.
+
 		// const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
 		// const defaultDataStoreBlob =
 		// 	snapshotTree.trees.default.blobsContents?.[defaultDataStoreBlobId];
@@ -84,6 +85,8 @@ describe("Dehydrate Container", () => {
 		// 	"rootattributes",
 		// 	"The root sub-tree's content is incorrect",
 		// );
+
+    
 		assert.strictEqual(
 			snapshotTree.trees.default.trees.root.unreferenced,
 			undefined,

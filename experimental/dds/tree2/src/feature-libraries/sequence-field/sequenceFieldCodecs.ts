@@ -22,6 +22,7 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
+	MovePlaceholder,
 } from "./types";
 import { Changeset as ChangesetSchema, Encoded } from "./format";
 import { isNoopMark } from "./utils";
@@ -41,6 +42,10 @@ function makeV0Codec<TNodeChange>(
 				case "MoveIn":
 					return {
 						moveIn: {
+							revision:
+								effect.revision === undefined
+									? undefined
+									: revisionTagCodec.encode(effect.revision),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
@@ -65,24 +70,28 @@ function makeV0Codec<TNodeChange>(
 								effect.revision === undefined
 									? undefined
 									: revisionTagCodec.encode(effect.revision),
-							detachIdOverride:
-								effect.detachIdOverride === undefined
+							redetachId:
+								effect.redetachId === undefined
 									? undefined
-									: encodeChangeAtomId(revisionTagCodec, effect.detachIdOverride),
+									: cellIdCodec.encode(effect.redetachId),
 							id: effect.id,
 						},
 					};
 				case "MoveOut":
 					return {
 						moveOut: {
+							revision:
+								effect.revision === undefined
+									? undefined
+									: revisionTagCodec.encode(effect.revision),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
 									: encodeChangeAtomId(revisionTagCodec, effect.finalEndpoint),
-							detachIdOverride:
-								effect.detachIdOverride === undefined
+							redetachId:
+								effect.redetachId === undefined
 									? undefined
-									: encodeChangeAtomId(revisionTagCodec, effect.detachIdOverride),
+									: cellIdCodec.encode(effect.redetachId),
 							id: effect.id,
 						},
 					};
@@ -93,8 +102,17 @@ function makeV0Codec<TNodeChange>(
 							detach: markEffectCodec.encode(effect.detach) as Encoded.Detach,
 						},
 					};
-				case NoopMarkType:
 				case "Placeholder":
+					return {
+						placeholder: {
+							revision:
+								effect.revision === undefined
+									? undefined
+									: revisionTagCodec.encode(effect.revision),
+							id: effect.id,
+						},
+					};
+				case NoopMarkType:
 					fail(`Mark type: ${type} should not be encoded.`);
 				default:
 					unreachableCase(type);
@@ -111,11 +129,14 @@ function makeV0Codec<TNodeChange>(
 		MarkEffect
 	>({
 		moveIn(encoded: Encoded.MoveIn): MoveIn {
-			const { id, finalEndpoint } = encoded;
+			const { id, finalEndpoint, revision } = encoded;
 			const mark: MoveIn = {
 				type: "MoveIn",
 				id,
 			};
+			if (revision !== undefined) {
+				mark.revision = revisionTagCodec.decode(revision);
+			}
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = decodeChangeAtomId(revisionTagCodec, finalEndpoint);
 			}
@@ -133,7 +154,7 @@ function makeV0Codec<TNodeChange>(
 			return mark;
 		},
 		delete(encoded: Encoded.Delete): Delete {
-			const { id, revision, detachIdOverride } = encoded;
+			const { id, revision, redetachId } = encoded;
 			const mark: Delete = {
 				type: "Delete",
 				id,
@@ -141,22 +162,36 @@ function makeV0Codec<TNodeChange>(
 			if (revision !== undefined) {
 				mark.revision = revisionTagCodec.decode(revision);
 			}
-			if (detachIdOverride !== undefined) {
-				mark.detachIdOverride = decodeChangeAtomId(revisionTagCodec, detachIdOverride);
+			if (redetachId !== undefined) {
+				mark.redetachId = cellIdCodec.decode(redetachId);
 			}
 			return mark;
 		},
 		moveOut(encoded: Encoded.MoveOut): MoveOut {
-			const { id, finalEndpoint, detachIdOverride } = encoded;
+			const { id, finalEndpoint, redetachId, revision } = encoded;
 			const mark: MoveOut = {
 				type: "MoveOut",
 				id,
 			};
+			if (revision !== undefined) {
+				mark.revision = revisionTagCodec.decode(revision);
+			}
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = decodeChangeAtomId(revisionTagCodec, finalEndpoint);
 			}
-			if (detachIdOverride !== undefined) {
-				mark.detachIdOverride = decodeChangeAtomId(revisionTagCodec, detachIdOverride);
+			if (redetachId !== undefined) {
+				mark.redetachId = cellIdCodec.decode(redetachId);
+			}
+			return mark;
+		},
+		placeholder(encoded: Encoded.MovePlaceholder): MovePlaceholder {
+			const { id, revision } = encoded;
+			const mark: MovePlaceholder = {
+				type: "Placeholder",
+				id,
+			};
+			if (revision !== undefined) {
+				mark.revision = revisionTagCodec.decode(revision);
 			}
 			return mark;
 		},

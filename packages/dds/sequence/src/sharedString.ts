@@ -4,9 +4,6 @@
  */
 
 import {
-	ICombiningOp,
-	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
@@ -41,11 +38,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	 * @param refType - The reference type of the marker
 	 * @param props - The properties of the marker
 	 */
-	insertMarker(
-		pos: number,
-		refType: ReferenceType,
-		props?: PropertySet,
-	): IMergeTreeInsertMsg | undefined;
+	insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
 
 	/**
 	 * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
@@ -115,7 +108,7 @@ export class SharedString
 		relativePos1: IRelativePosition,
 		refType: ReferenceType,
 		props?: PropertySet,
-	) {
+	): void {
 		const segment = new Marker(refType);
 		if (props) {
 			segment.addProperties(props);
@@ -128,17 +121,13 @@ export class SharedString
 	/**
 	 * {@inheritDoc ISharedString.insertMarker}
 	 */
-	public insertMarker(
-		pos: number,
-		refType: ReferenceType,
-		props?: PropertySet,
-	): IMergeTreeInsertMsg | undefined {
+	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
 		const segment = new Marker(refType);
 		if (props) {
 			segment.addProperties(props);
 		}
 
-		return this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -147,7 +136,11 @@ export class SharedString
 	 * @param text - The text to insert
 	 * @param props - The properties of text
 	 */
-	public insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet) {
+	public insertTextRelative(
+		relativePos1: IRelativePosition,
+		text: string,
+		props?: PropertySet,
+	): void {
 		const segment = new TextSegment(text);
 		if (props) {
 			segment.addProperties(props);
@@ -160,7 +153,7 @@ export class SharedString
 	/**
 	 * {@inheritDoc ISharedString.insertText}
 	 */
-	public insertText(pos: number, text: string, props?: PropertySet) {
+	public insertText(pos: number, text: string, props?: PropertySet): void {
 		const segment = new TextSegment(text);
 		if (props) {
 			segment.addProperties(props);
@@ -176,7 +169,7 @@ export class SharedString
 	 * @param text - The text to replace the range with
 	 * @param props - Optional. The properties of the replacement text
 	 */
-	public replaceText(start: number, end: number, text: string, props?: PropertySet) {
+	public replaceText(start: number, end: number, text: string, props?: PropertySet): void {
 		this.replaceRange(start, end, TextSegment.make(text, props));
 	}
 
@@ -186,38 +179,17 @@ export class SharedString
 	 * @param end - The exclusive end of the range to replace
 	 * @returns the message sent.
 	 */
-	public removeText(start: number, end: number): IMergeTreeRemoveMsg {
-		return this.removeRange(start, end);
-	}
-
-	/**
-	 * Annotates the marker with the provided properties and calls the callback on consensus.
-	 * @param marker - The marker to annotate
-	 * @param props - The properties to annotate the marker with
-	 * @param consensusCallback - The callback called when consensus is reached
-	 *
-	 * @deprecated We no longer intend to support this functionality and it will
-	 * be removed in a future release. There is no replacement for this
-	 * functionality.
-	 */
-	public annotateMarkerNotifyConsensus(
-		marker: Marker,
-		props: PropertySet,
-		callback: (m: Marker) => void,
-	) {
-		this.guardReentrancy(() =>
-			this.client.annotateMarkerNotifyConsensus(marker, props, callback),
-		);
+	public removeText(start: number, end: number): void {
+		this.removeRange(start, end);
 	}
 
 	/**
 	 * Annotates the marker with the provided properties.
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
-		this.guardReentrancy(() => this.client.annotateMarker(marker, props, combiningOp));
+	public annotateMarker(marker: Marker, props: PropertySet) {
+		this.guardReentrancy(() => this.client.annotateMarker(marker, props));
 	}
 
 	/**
@@ -430,10 +402,8 @@ const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
 	} else {
 		if (placeholder && placeholder.length > 0) {
 			const placeholderText =
-				placeholder === "*"
-					? // eslint-disable-next-line @typescript-eslint/no-base-to-string
-					  `\n${segment.toString()}`
-					: placeholder.repeat(segment.cachedLength);
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
+				placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
 			textSegment.text += placeholderText;
 		} else {
 			const marker = segment as Marker;

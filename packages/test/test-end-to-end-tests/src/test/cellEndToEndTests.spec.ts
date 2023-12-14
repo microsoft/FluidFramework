@@ -311,7 +311,7 @@ describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvide
 	let dataObject: ITestFluidObject;
 	let sharedCell: SharedCell;
 	let containerRuntime: ContainerRuntime;
-	let changedEventData: Serializable[];
+	let changedEventData: Serializable<unknown>[];
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],

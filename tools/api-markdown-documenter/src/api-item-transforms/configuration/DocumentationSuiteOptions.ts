@@ -4,16 +4,16 @@
  */
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
-	ApiDeclaredItem,
-	ApiItem,
+	type ApiDeclaredItem,
+	type ApiItem,
 	ApiItemKind,
-	ApiPackage,
-	Excerpt,
+	type ApiPackage,
+	type Excerpt,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
 import {
-	ApiMemberKind,
+	type ApiMemberKind,
 	getQualifiedApiItemName,
 	getReleaseTag,
 	getUnscopedPackageName,
@@ -278,14 +278,17 @@ export namespace DefaultDocumentationSuiteOptions {
 	 */
 	export function defaultGetFileNameForItem(apiItem: ApiItem): string {
 		switch (apiItem.kind) {
-			case ApiItemKind.Model:
+			case ApiItemKind.Model: {
 				return "index";
-			case ApiItemKind.Package:
+			}
+			case ApiItemKind.Package: {
 				return Utilities.getSafeFilenameForName(
 					getUnscopedPackageName(apiItem as ApiPackage),
 				);
-			default:
+			}
+			default: {
 				return getQualifiedApiItemName(apiItem);
+			}
 		}
 	}
 
@@ -312,8 +315,9 @@ export namespace DefaultDocumentationSuiteOptions {
 				: "";
 
 		switch (apiItem.kind) {
-			case ApiItemKind.Model:
+			case ApiItemKind.Model: {
 				return "API Overview";
+			}
 			case ApiItemKind.CallSignature:
 			case ApiItemKind.ConstructSignature:
 			case ApiItemKind.IndexSignature: {
@@ -323,8 +327,9 @@ export namespace DefaultDocumentationSuiteOptions {
 				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
 				return `${excerpt}${headingTextPostfix}`;
 			}
-			default:
+			default: {
 				return `${apiItem.displayName}${headingTextPostfix}`;
+			}
 		}
 	}
 
@@ -335,17 +340,20 @@ export namespace DefaultDocumentationSuiteOptions {
 	 */
 	export function defaultGetLinkTextForItem(apiItem: ApiItem): string {
 		switch (apiItem.kind) {
-			case ApiItemKind.Model:
+			case ApiItemKind.Model: {
 				return "Packages";
+			}
 			case ApiItemKind.CallSignature:
 			case ApiItemKind.ConstructSignature:
-			case ApiItemKind.IndexSignature:
+			case ApiItemKind.IndexSignature: {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
 				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-			default:
+			}
+			default: {
 				return Utilities.getConciseSignature(apiItem);
+			}
 		}
 	}
 
