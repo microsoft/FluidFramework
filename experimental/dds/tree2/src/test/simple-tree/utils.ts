@@ -64,18 +64,25 @@ export function makeSchema<TSchema extends ImplicitFieldSchema>(
 	return fn(new SchemaFactory(`test.schema.${Math.random().toString(36).slice(2)}`));
 }
 
+// Returns true if the given function is a class constructor (i.e., should be invoked with 'new')
+// eslint-disable-next-line @typescript-eslint/ban-types
+function isCtor(candidate: Function) {
+	return candidate.prototype?.constructor.name !== undefined;
+}
+
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
  */
 export function getRoot<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema | ((factory: SchemaFactory) => TSchema),
-	data: InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	if (typeof schema === "function") {
+	// Schema objects may also be class constructors.
+	if (typeof schema === "function" && !isCtor(schema)) {
 		// eslint-disable-next-line no-param-reassign
 		schema = makeSchema(schema as (builder: SchemaFactory) => TSchema);
 	}
-	const config = new TreeConfiguration(schema, () => data);
+	const config = new TreeConfiguration(schema as TSchema, initialTree);
 	const factory = new TreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,
