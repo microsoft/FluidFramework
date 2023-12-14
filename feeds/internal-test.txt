@@ -96,7 +96,6 @@ fluid-framework
 @fluid-experimental/property-changeset
 @fluid-experimental/property-binder
 @fluid-example/table-document
-@fluid-experimental/azure-scenario-runner
 @fluidframework/azure-end-to-end-tests
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service
