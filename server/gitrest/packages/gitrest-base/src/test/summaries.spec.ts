@@ -93,8 +93,7 @@ const getFsManagerFactory = (
 		const memfsManagerFactory = new MemFsManagerFactory();
 		return {
 			fsManagerFactory: memfsManagerFactory,
-			getFsSpy: () =>
-				spy(memfsManagerFactory.volume.promises as unknown as IFileSystemPromises),
+			getFsSpy: () => spy(memfsManagerFactory.volume as unknown as IFileSystemPromises),
 			fsCheckSizeBytes: () =>
 				JSON.stringify(Object.values(memfsManagerFactory.volume.toJSON()).join()).length,
 			fsCleanup: () => {

@@ -72,6 +72,13 @@ function assertBaselineMaintained(
 			`Storage access count for ${key} exceeded baseline. Expected ${baseline[key]}, got ${actual[key]}`,
 		);
 	}
+	// const baselineSum = Object.values(baseline).reduce((a, b) => a + b, 0);
+	// const actualSum = Object.values(actual).reduce((a, b) => a + b, 0);
+	// process.stdout.write(
+	// 	`Storage access count baseline maintained. Expected ${baselineSum}, got ${actualSum}\n${JSON.stringify(
+	// 		actual,
+	// 	)}\n`,
+	// );
 }
 
 export function checkInitialWriteStorageAccessBaselinePerformance(
