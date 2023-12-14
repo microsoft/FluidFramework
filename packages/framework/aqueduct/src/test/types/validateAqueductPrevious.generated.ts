@@ -91,7 +91,6 @@ declare function get_current_ClassDeclaration_DataObject():
 declare function use_old_ClassDeclaration_DataObject(
     use: TypeOnly<old.DataObject>): void;
 use_old_ClassDeclaration_DataObject(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DataObject());
 
 /*
@@ -164,20 +163,7 @@ declare function get_current_InterfaceDeclaration_IDataObjectProps():
 declare function use_old_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<old.IDataObjectProps>): void;
 use_old_InterfaceDeclaration_IDataObjectProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDataObjectProps());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootDataObjectFactory": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootDataObjectFactory": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -201,7 +187,6 @@ declare function get_current_ClassDeclaration_PureDataObject():
 declare function use_old_ClassDeclaration_PureDataObject(
     use: TypeOnly<old.PureDataObject>): void;
 use_old_ClassDeclaration_PureDataObject(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PureDataObject());
 
 /*
@@ -227,75 +212,3 @@ declare function use_old_ClassDeclaration_PureDataObjectFactory(
     use: TypeOnly<old.PureDataObjectFactory<any,any>>): void;
 use_old_ClassDeclaration_PureDataObjectFactory(
     get_current_ClassDeclaration_PureDataObjectFactory());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_defaultRouteRequestHandler": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_defaultRouteRequestHandler": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getDefaultObjectFromContainer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getDefaultObjectFromContainer": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getObjectFromContainer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getObjectFromContainer": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getObjectWithIdFromContainer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getObjectWithIdFromContainer": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_mountableViewRequestHandler": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_mountableViewRequestHandler": {"backCompat": false}
-*/
