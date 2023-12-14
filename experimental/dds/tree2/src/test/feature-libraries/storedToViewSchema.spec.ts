@@ -160,7 +160,7 @@ describe("storedToViewSchema", () => {
 						nodeSchema.objectNodeFields.size,
 					);
 
-					// Since its tested separately, assume fields are converted correctly, and just compare keys to make sure all fields were converted.
+					// Since it's tested separately, assume fields are converted correctly, and just compare keys to make sure all fields were converted.
 					assert.deepEqual(
 						new Set(storedNodeSchema.objectNodeFields.keys()),
 						new Set(nodeSchema.objectNodeFields.keys()),

@@ -500,7 +500,6 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  *
  * @alpha
  */
-
 export interface FlexTreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaCollection {
 	/**
@@ -540,7 +539,6 @@ export function intoStoredSchemaCollection(treeSchema: SchemaCollection): Stored
  * It is convenient that this can be used as a StoredSchemaCollection with no conversion.
  * There there isn't a design requirement for this however, so this extends clause can be removed later if needed.
  */
-
 export interface SchemaCollection {
 	/**
 	 * {@inheritdoc SchemaCollection}

@@ -347,7 +347,7 @@ function checkInput(condition: boolean, message: string | (() => string)): asser
 }
 
 /**
- * @returns all types, for which the data is schema-compatible.
+ * @returns all types for which the data is schema-compatible.
  */
 export function getPossibleTypes(
 	context: FlexTreeSchema,
