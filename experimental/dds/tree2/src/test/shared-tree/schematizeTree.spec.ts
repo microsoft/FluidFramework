@@ -13,12 +13,7 @@ import {
 	NewFieldContent,
 } from "../../feature-libraries";
 import { CheckoutEvents } from "../../shared-tree";
-import {
-	AllowedUpdateType,
-	InMemoryStoredSchemaRepository,
-	TreeStoredSchema,
-	cloneSchemaData,
-} from "../../core";
+import { AllowedUpdateType, InMemoryStoredSchemaRepository, TreeStoredSchema } from "../../core";
 import { jsonSequenceRootSchema } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
@@ -77,11 +72,13 @@ describe("schematizeTree", () => {
 					// this test should be updated to use it to greatly increase its validation.
 
 					const storedSchema = new InMemoryStoredSchemaRepository();
-					let previousSchema: TreeStoredSchema = cloneSchemaData(storedSchema);
+					let previousSchema: TreeStoredSchema = new InMemoryStoredSchemaRepository(
+						storedSchema,
+					);
 					expectSchema(storedSchema, previousSchema);
 
 					storedSchema.on("afterSchemaChange", () => {
-						previousSchema = cloneSchemaData(storedSchema);
+						previousSchema = new InMemoryStoredSchemaRepository(storedSchema);
 					});
 
 					let currentData: NewFieldContent;

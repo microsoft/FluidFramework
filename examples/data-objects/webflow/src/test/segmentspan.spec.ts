@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TextSegment } from "@fluidframework/merge-tree";
+import { TextSegment } from "@fluidframework/sequence";
 import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { FlowDocument } from "../document/index.js";
