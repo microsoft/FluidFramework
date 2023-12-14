@@ -330,6 +330,18 @@ describe("versionUtils", () => {
 				adjustPublicMajor,
 				"^1.0.0-0",
 			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-dev-rc.1.0.0.223149",
+				-1,
+				adjustPublicMajor,
+				"^2.0.0-internal.8.0.0",
+			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-dev-rc.1.5.3.223149",
+				-2,
+				adjustPublicMajor,
+				"^2.0.0-internal.7.0.0",
+			);
 		});
 	});
 
