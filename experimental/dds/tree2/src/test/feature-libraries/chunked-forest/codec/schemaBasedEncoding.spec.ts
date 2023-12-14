@@ -9,6 +9,7 @@ import {
 	defaultSchemaPolicy,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
+	TreeCompressionStrategy,
 } from "../../../../feature-libraries";
 
 import {
@@ -19,9 +20,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
 import {
-	makeSchemaCompressedCodec,
+	Context,
+	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
+} from "../../../../feature-libraries/chunked-forest/codec/codecs";
 import {
 	AnyShape,
 	EncoderCache,
@@ -240,6 +242,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
+		// TODO: test non size 1 batches
 		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
 				const storedSchema = intoStoredSchema(schemaData);
@@ -248,17 +251,16 @@ describe("schemaBasedEncoding", () => {
 				const cache = buildCache(storedSchema, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
-				const codec = makeSchemaCompressedCodec(
-					{ jsonValidator: typeboxValidator },
-					storedSchema,
-					defaultSchemaPolicy,
-				);
+				const context: Context = {
+					encodeType: TreeCompressionStrategy.Compressed,
+					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+				};
+				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator })(context);
 				// End to end test
-				const encoded = codec.encode(cursorForJsonableTreeField(tree));
+				const encoded = codec.encode([cursorForJsonableTreeField(tree)]);
 				const result = codec.decode(encoded);
-				const resultTree = jsonableTreesFromFieldCursor(result);
-				assert.deepEqual(resultTree, tree);
-				assert.equal(resultTree.length, tree.length);
+				const resultTree = result.map(jsonableTreesFromFieldCursor);
+				assert.deepEqual(resultTree, [tree]);
 			});
 		}
 	});

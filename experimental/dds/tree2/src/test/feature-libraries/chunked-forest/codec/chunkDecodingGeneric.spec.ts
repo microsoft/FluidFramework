@@ -14,7 +14,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric";
 
 import {
-	EncodedChunkGeneric,
+	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric";
 import {
@@ -47,8 +47,8 @@ type Constant = Static<typeof Constant>;
 type StringShape = Static<typeof StringShape>;
 type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 
-const EncodedChunk = EncodedChunkGeneric(version, EncodedChunkShape);
-type EncodedChunk = Static<typeof EncodedChunk>;
+const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
+type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;
 
 class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
 	public readonly topLevelLength: number = 1;
@@ -135,27 +135,31 @@ describe("chunkDecodingGeneric", () => {
 	});
 
 	it("decode: constant shape", () => {
-		const encoded: EncodedChunk = {
+		const encoded: EncodedFieldBatch = {
 			version,
 			identifiers: [],
 			shapes: [{ a: 0 }],
-			data: [0, 5],
+			data: [[0, 5]],
 		};
 		const cache = new DecoderContext(encoded.identifiers, encoded.shapes);
-		const chunk = decode(decoderLibrary, cache, encoded, rootDecoder);
+		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
+		assert(chunks.length === 1);
+		const chunk = chunks[0];
 		assert(chunk instanceof TestChunk2);
 		assert.equal(chunk.value, 5);
 	});
 
 	it("decode: flexible shape", () => {
-		const encoded: EncodedChunk = {
+		const encoded: EncodedFieldBatch = {
 			version,
 			identifiers: [],
 			shapes: [{ b: "content" }],
-			data: [0],
+			data: [[0]],
 		};
 		const cache = new DecoderContext(encoded.identifiers, encoded.shapes);
-		const chunk = decode(decoderLibrary, cache, encoded, rootDecoder);
+		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
+		assert(chunks.length === 1);
+		const chunk = chunks[0];
 		assert(chunk instanceof TestChunk1);
 		assert.equal(chunk.value, "content");
 	});

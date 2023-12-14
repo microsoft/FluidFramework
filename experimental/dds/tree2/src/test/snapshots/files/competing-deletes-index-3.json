@@ -283,71 +283,54 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
+                  "keys": [
+                    "rootFieldKey",
+                    "repair-6"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            0,
-                            [],
-                            "com.fluidframework.leaf.number",
-                            true,
-                            1,
-                            [],
-                            "com.fluidframework.leaf.number",
-                            true,
-                            2,
-                            []
-                          ]
-                        ]
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
                       }
                     ],
-                    [
-                      "repair-6",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
+                    "data": [
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          0,
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
                           1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            3,
-                            []
-                          ]
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
+                          2,
+                          []
                         ]
-                      }
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          3,
+                          []
+                        ]
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }

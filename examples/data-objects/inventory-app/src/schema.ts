@@ -12,7 +12,7 @@ export class Part extends builder.object("Part", {
 	quantity: builder.number,
 }) {}
 export class Inventory extends builder.object("Inventory", {
-	parts: builder.list(Part),
+	parts: builder.array(Part),
 }) {}
 
 export const treeConfiguration = new TreeConfiguration(
