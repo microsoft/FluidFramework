@@ -61,8 +61,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

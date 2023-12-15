@@ -5,7 +5,7 @@
 			"path": "../../../../"
 		},
 		{
-			"name": "@fluid-experimental/tree2",
+			"name": "@fluidframework/tree",
 			"path": ".."
 		}
 	],
