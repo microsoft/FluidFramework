@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/presence-tracker",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"private": true,
 	"description": "Example Data Object that tracks page focus for Audience members using signals.",
 	"homepage": "https://fluidframework.com",
@@ -43,7 +43,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"fluid-framework": "workspace:~",

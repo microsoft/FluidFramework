@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-loader",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid container loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,8 +72,8 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^2.0.1",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-base": "^3.0.0-223236",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",
@@ -124,6 +124,17 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerExperimental": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Loader": {
+				"backCompat": false
+			}
+		}
 	}
 }

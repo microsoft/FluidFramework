@@ -403,7 +403,7 @@ export function validateStablePlace(
 
 /**
  * The result of validating a place.
- * @internal
+ * @alpha
  */
 export enum PlaceValidationResult {
 	Valid = 'Valid',
@@ -415,7 +415,7 @@ export enum PlaceValidationResult {
 
 /**
  * The result of validating a bad place.
- * @internal
+ * @alpha
  */
 export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValidationResult.Valid>;
 
@@ -471,7 +471,7 @@ export function validateStableRange(
 
 /**
  * The kinds of result of validating a range.
- * @internal
+ * @alpha
  */
 export enum RangeValidationResultKind {
 	Valid = 'Valid',
@@ -482,7 +482,7 @@ export enum RangeValidationResultKind {
 
 /**
  * The result of validating a range.
- * @internal
+ * @alpha
  */
 export type RangeValidationResult =
 	| RangeValidationResultKind.Valid
@@ -496,7 +496,7 @@ export type RangeValidationResult =
 
 /**
  * The result of validating a bad range.
- * @internal
+ * @alpha
  */
 export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValidationResultKind.Valid>;
 

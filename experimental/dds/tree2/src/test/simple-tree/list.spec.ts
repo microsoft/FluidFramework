@@ -4,24 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../domains";
-import { TreeField } from "../../simple-tree";
-import { getOldRoot, pretty } from "./utils";
-
-const builder = new SchemaBuilder({ scope: "test" });
-
-export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
-
-export const numberList = builder.fieldNode("List<number>", builder.sequence(leaf.number));
-
-// TODO: Using separate arrays for 'numbers' and 'strings' is a workaround for
-//       UnboxNodeUnion not unboxing unions.
-const root = builder.object("root", {
-	strings: stringList,
-	numbers: numberList,
-});
-
-const schema = builder.intoSchema(root);
+import { getRoot, pretty } from "./utils";
 
 describe("List", () => {
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
@@ -56,25 +39,22 @@ describe("List", () => {
 		return Array.from({ length }, (_, i) => String.fromCodePoint(0x41 + i));
 	}
 
-	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
-	function createTree(): TreeField<typeof schema.rootFieldSchema> {
-		return getOldRoot(schema, { numbers: [], strings: [] });
-	}
-
-	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
-		const list = createTree().numbers;
-		list.insertAtStart(...items);
+		const list = getRoot(
+			(_) => _.array(_.number),
+			() => items,
+		);
 		assert.deepEqual(list, items);
 		return list;
 	}
 
-	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
-		const list = createTree().strings;
-		list.insertAtStart(...items);
+		const list = getRoot(
+			(_) => _.array(_.string),
+			() => items,
+		);
 		assert.deepEqual(list, items);
 		return list;
 	}
@@ -112,6 +92,11 @@ describe("List", () => {
 			test0("Object.prototype.toString", (target: unknown) =>
 				Object.prototype.toString.call(target),
 			);
+
+			// An older technique for detecting arrays is to use the 'instanceof' operator.
+			// However, this is not reliable in the presence of multiple global contexts (e.g.,
+			// if an Array is passed across frame boundaries.)
+			test0("instanceof Array", (target: unknown) => target instanceof Array);
 
 			// 'deepEquals' requires that objects have the same prototype to be considered equal.
 			test0(
@@ -672,7 +657,7 @@ describe("List", () => {
 			});
 
 			describe("toLocaleString()", () => {
-				// TODO: Use 'test2' once we unbox unions.
+				// TODO: Consider generalizing 'test2' to support this test.
 				const check = (array: readonly number[]) => {
 					const expected = array.toLocaleString();
 					it(prettyCall("toLocaleString", array, [], expected), () => {
@@ -689,7 +674,7 @@ describe("List", () => {
 			});
 
 			describe("toString()", () => {
-				// TODO: Use 'test2' once we unbox unions.
+				// TODO: Consider generalizing 'test2' to support this test.
 				const check = (array: readonly number[]) => {
 					const expected = array.toString();
 					it(prettyCall("toString", array, [], expected), () => {

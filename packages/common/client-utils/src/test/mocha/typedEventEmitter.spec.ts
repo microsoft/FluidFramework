@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
-import { TypedEventEmitter } from "../..";
+import { TypedEventEmitter } from "../../typedEventEmitter";
 
 describe("TypedEventEmitter", () => {
 	it("Validate Function proxies", () => {

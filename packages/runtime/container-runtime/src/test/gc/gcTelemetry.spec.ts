@@ -5,12 +5,11 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ConfigTypes, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
 	TelemetryDataTag,
-	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,

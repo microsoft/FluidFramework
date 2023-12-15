@@ -15,7 +15,7 @@ import {
 	Multiplicity,
 	SchemaLibrary,
 	TreeNodeSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -24,13 +24,14 @@ import {
 	valueSymbol,
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
+	intoStoredSchemaCollection,
 } from "../feature-libraries";
 import { TreeContent } from "../shared-tree";
 import { leaf, SchemaBuilder } from "../domains";
 
 interface TestTree {
 	readonly name: string;
-	readonly schemaData: TreeSchema;
+	readonly schemaData: FlexTreeSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: () => JsonableTree[];
 }
@@ -130,6 +131,7 @@ export const recursiveType = builder.objectRecursive("recursiveType", {
 });
 
 export const library = builder.intoLibrary();
+export const storedLibrary = intoStoredSchemaCollection(library);
 
 export const testTrees: readonly TestTree[] = [
 	testField("empty", library, SchemaBuilder.optional([]), undefined),

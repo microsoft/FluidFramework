@@ -9,11 +9,11 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -121,7 +121,6 @@ describe("Garbage Collection Stats", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
-			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {
 				gcMessagesCount++;
 				lastGCMessage = message;

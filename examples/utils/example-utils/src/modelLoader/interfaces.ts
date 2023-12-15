@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-
 /**
  * Object returned from calling IModelLoader.createDetached().
  * @internal
@@ -56,12 +53,3 @@ export interface IModelLoader<ModelType> {
 	 */
 	loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType>;
 }
-
-/**
- * The callback signature that the container author will provide.  It must return a promise for the container's model.
- * @internal
- */
-export type ModelMakerCallback<ModelType> = (
-	runtime: IContainerRuntime,
-	container: IContainer,
-) => Promise<ModelType>;

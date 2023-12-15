@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/local-driver",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.9.0.0",
 	"description": "Fluid local driver",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -10,6 +10,18 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"browser": {
@@ -25,6 +37,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
 		"build:test": "tsc-multi --config ./tsc-multi.test.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -72,13 +85,13 @@
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^2.0.1",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-base": "^3.0.0-223236",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^2.0.1",
-		"@fluidframework/server-services-client": "^2.0.1",
-		"@fluidframework/server-services-core": "^2.0.1",
-		"@fluidframework/server-test-utils": "^2.0.1",
+		"@fluidframework/server-local-server": "^3.0.0-223236",
+		"@fluidframework/server-services-client": "^3.0.0-223236",
+		"@fluidframework/server-services-core": "^3.0.0-223236",
+		"@fluidframework/server-test-utils": "^3.0.0-223236",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"events": "^3.1.0",
 		"jsrsasign": "^10.5.25",
@@ -107,6 +120,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
+		"renamer": "^4.0.0",
 		"rimraf": "^4.4.0",
 		"socket.io-client": "^4.6.1",
 		"tsc-multi": "^1.1.0",
