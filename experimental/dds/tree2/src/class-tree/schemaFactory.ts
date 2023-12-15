@@ -26,7 +26,7 @@ import {
 	mapStaticDispatchMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/proxies";
-import { TreeArrayNode } from "../simple-tree";
+import { TreeArrayNode, TreeNode } from "../simple-tree";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema";
 import {
 	AllowedTypes,
@@ -37,7 +37,6 @@ import {
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
-	NodeBase,
 	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
@@ -187,12 +186,12 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		TKind,
-		NodeBase,
+		TreeNode,
 		FlexTreeNode | unknown,
 		TImplicitlyConstructable
 	> {
 		const identifier = this.scoped(name);
-		class schema extends NodeBase {
+		class schema extends TreeNode {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
@@ -213,7 +212,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				}
 				// TODO: make this a better user facing error, and explain how to copy explicitly.
 				assert(
-					!(input instanceof NodeBase),
+					!(input instanceof TreeNode),
 					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
 				);
 			}

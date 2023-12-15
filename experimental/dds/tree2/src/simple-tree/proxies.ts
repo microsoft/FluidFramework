@@ -37,9 +37,9 @@ import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier } from "../core";
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeBase, NodeKind } from "../class-tree/schemaTypes";
+import { NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
-import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
+import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, Unhydrated, TreeNode } from "./types";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
@@ -931,7 +931,7 @@ export function extractFactoryContent(
 	}
 
 	assert(
-		!(content instanceof NodeBase),
+		!(content instanceof TreeNode),
 		0x844 /* Unhydrated insertion content should have FlexNode */,
 	);
 
@@ -954,7 +954,7 @@ export function extractFactoryContent(
 		type = NodeKind.Leaf;
 	}
 
-	if (input instanceof NodeBase) {
+	if (input instanceof TreeNode) {
 		const kindFromSchema = getNodeKind(input);
 		assert(kindFromSchema === type, 0x845 /* kind of data should match kind of schema */);
 	}
@@ -1157,9 +1157,9 @@ function modifyChildren<T extends FlexTreeNode>(
 }
 
 // TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
-function getNodeKind(node: NodeBase): NodeKind {
+function getNodeKind(node: TreeNode): NodeKind {
 	return (
-		getClassSchema(getFlexNode(node as TreeNode).schema)?.kind ??
+		getClassSchema(getFlexNode(node).schema)?.kind ??
 		fail("NodeBase should always have class schema")
 	);
 }
