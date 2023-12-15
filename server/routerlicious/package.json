@@ -55,7 +55,7 @@
 		"test": "pnpm run -r --no-sort --stream --no-bail test",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
 		"test:coverage": "c8 npm run test:report",
-		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
+		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
 		"test:report": "pnpm run -r --no-sort --stream --no-bail test -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "pnpm run -r --stream tsc",
 		"typetests:gen": "pnpm -r typetests:gen",
