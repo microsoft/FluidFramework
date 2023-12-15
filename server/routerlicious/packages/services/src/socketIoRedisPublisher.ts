@@ -29,14 +29,9 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 	private readonly events = new EventEmitter();
 
 	constructor(options: Redis.RedisOptions, enableClustering: boolean = false) {
-		if (enableClustering) {
-			this.redisClient = new Redis.Cluster(
-				[{ port: options.port, host: options.host }],
-				options,
-			);
-		} else {
-			this.redisClient = new Redis.default(options);
-		}
+		this.redisClient = enableClustering
+			? new Redis.Cluster([{ port: options.port, host: options.host }], options)
+			: new Redis.default(options);
 
 		this.redisClient = new Redis.default(options);
 		this.io = new SocketIoEmitter(this.redisClient);
