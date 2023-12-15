@@ -1272,7 +1272,7 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
 
 			const tree = provider.trees[0];
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.view.events);
+			const { undoStack } = createTestUndoRedoStacks(tree.view.events);
 
 			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
