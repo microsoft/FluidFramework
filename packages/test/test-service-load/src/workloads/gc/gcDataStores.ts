@@ -1000,6 +1000,7 @@ export class RootDataObject extends DataObject implements ITestRunner {
 			sendFunc(event, logLevel);
 			if (
 				event.eventName.includes("InactiveObject") ||
+				event.eventName.includes("TombstoneReadyObject") ||
 				event.eventName.includes("SweepReadyObject") ||
 				event.eventName.includes("GC_Tombstone") ||
 				event.eventName.includes("GC_Deleted")
