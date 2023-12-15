@@ -122,8 +122,8 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"**/*.d.*ts",
-			"**/src/test/**/*.ts",
-			"**/dist/test/**/*.js",
+			"**/src/test/**/*.*ts",
+			"**/dist/test/**/*.*js",
 			"experimental/examples/**",
 			"experimental/PropertyDDS/examples/**",
 			"**/*.bundle.js",
@@ -138,10 +138,10 @@
 			".jsx"
 		],
 		"include": [
-			"packages/**/src/**/*.ts",
-			"packages/**/dist/**/*.js",
-			"experimental/**/src/**/*.ts",
-			"experimental/**/dist/**/*.js"
+			"packages/**/src/**/*.*ts",
+			"packages/**/dist/**/*.*js",
+			"experimental/**/src/**/*.*ts",
+			"experimental/**/dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
