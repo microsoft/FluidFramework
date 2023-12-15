@@ -408,6 +408,7 @@ export class GarbageCollector implements IGarbageCollector {
 					{
 						eventName: "GCInitializationOrUpdateFailed",
 						gcConfigs: JSON.stringify(this.configs),
+						clientId,
 					},
 					error,
 				);
