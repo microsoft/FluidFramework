@@ -43,7 +43,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0"
+		"@fluidframework/protocol-definitions": "^3.1.0-223007"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
