@@ -37,9 +37,15 @@ docVersions.forEach((version) => {
 	const apiDocsDirectoryPath = (renderMultiVersion) ? 
 		path.resolve(__dirname, "..", "content", "docs", "apis", version) :
 		path.resolve(__dirname, "..", "content", "docs", "apis");
+	
+	// TODO: remove check for 2.0 and just set uriDirectoryPath to include version.
+	// currently publishing to base apis directory until 2.0 release
+	const uriRootDirectoryPath = (renderMultiVersion) ? 
+		`/docs/apis/${version}` :
+		`/docs/apis`;
 
 	apiDocRenders.push(
-		renderApiDocumentation(apiReportsDirectoryPath, apiDocsDirectoryPath, version).then(
+		renderApiDocumentation(apiReportsDirectoryPath, apiDocsDirectoryPath, uriRootDirectoryPath).then(
 			() => {
 				console.log(chalk.green(`${version} API docs written!`));
 			},

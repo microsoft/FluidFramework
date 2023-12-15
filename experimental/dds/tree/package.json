@@ -41,7 +41,6 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -51,6 +50,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"buffer": "^6.0.3",
 		"denque": "^1.5.1",
 		"lru-cache": "^6.0.0",

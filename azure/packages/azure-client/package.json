@@ -76,7 +76,6 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-local-service": "workspace:~",
@@ -86,6 +85,7 @@
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

@@ -27,8 +27,8 @@ This command updates all snapshots in this folder -- both whole trees and schema
 
 If you find that the snapshot tests break, this means you've modified the persisted format of SharedTree. This generally comes with compatibility consequences:
 
-1. Can previous versions of `@fluid-experimental/tree2` correctly parse the content of the new snapshot?
-2. Can the current version of `@fluid-experimental/tree2` correctly parse snapshots that might exist "in the wild?"
+1. Can previous versions of `@fluidframework/tree` correctly parse the content of the new snapshot?
+2. Can the current version of `@fluidframework/tree` correctly parse snapshots that might exist "in the wild?"
 
 If the answer is "yes" to both questions, you can update the snapshots by [regenerating the snapshots](#updating-and-regenerating). Otherwise, your feature needs careful planning with compatibility in mind: see [schema versioning.md] for some best practices.
 
