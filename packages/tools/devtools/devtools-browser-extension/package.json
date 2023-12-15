@@ -48,15 +48,15 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/tsc/test/**/*.js",
+			"src/test/**/*.*ts",
+			"dist/tsc/test/**/*.*js",
 			"dist/e2e-tests/**",
 			"dist/bundle/**"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/tsc/**/*.js"
+			"src/**/*.*ts",
+			"dist/tsc/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [

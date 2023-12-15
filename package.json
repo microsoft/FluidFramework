@@ -121,7 +121,7 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"**/*.d.ts",
+			"**/*.d.*ts",
 			"**/src/test/**/*.ts",
 			"**/dist/test/**/*.js",
 			"experimental/examples/**",
