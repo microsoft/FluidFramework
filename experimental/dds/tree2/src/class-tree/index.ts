@@ -17,6 +17,7 @@ export {
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeMapNode,
+	TreeLeafValue,
 } from "./schemaTypes";
 export { SchemaFactory } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi";

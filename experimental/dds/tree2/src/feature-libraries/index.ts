@@ -273,6 +273,8 @@ export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
+export { valueSchemaAllows } from "./valueUtilities";
+
 export {
 	InsertableFlexNode,
 	InsertableFlexField,

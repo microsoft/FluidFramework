@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
 import { FlexListToUnion, LazyItem } from "../feature-libraries";
 import { Unhydrated, TreeMapNodeBase } from "../simple-tree";
@@ -324,3 +325,10 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes>
 		TreeNodeFromImplicitAllowedTypes<T>,
 		InsertableTreeNodeFromImplicitAllowedTypes<T>
 	> {}
+
+/**
+ * Value that may be stored as a leaf node.
+ * @beta
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
