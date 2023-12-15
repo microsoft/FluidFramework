@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { sequenceConfig } from "./config";
 import { isVestigialEndpoint } from "./helperTypes";
 import { Mark, MarkList } from "./types";
-import { isNoopMark, tryMergeMarks as tryMergeMarks } from "./utils";
+import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -31,27 +32,30 @@ export class MarkListFactory<TNodeChange> {
 	}
 
 	public pushContent(mark: Mark<TNodeChange>): void {
+		if (isTombstone(mark) && sequenceConfig.cellOrdering !== "Tombstone") {
+			return;
+		}
 		if (
 			isNoopMark(mark) &&
 			mark.changes === undefined &&
-			mark.cellId === undefined &&
-			!isVestigialEndpoint(mark)
+			!isVestigialEndpoint(mark) &&
+			!isTombstone(mark)
 		) {
 			this.pushOffset(mark.count);
-		} else {
-			if (this.offset > 0) {
-				this.list.push({ count: this.offset });
-				this.offset = 0;
-			}
-			const prev = this.list[this.list.length - 1];
-			if (prev !== undefined && prev.type === mark.type) {
-				const merged = tryMergeMarks(prev, mark);
-				if (merged !== undefined) {
-					this.list.splice(this.list.length - 1, 1, merged);
-					return;
-				}
-			}
-			this.list.push(mark);
+			return;
 		}
+		if (this.offset > 0) {
+			this.list.push({ count: this.offset });
+			this.offset = 0;
+		}
+		const prev = this.list[this.list.length - 1];
+		if (prev !== undefined && prev.type === mark.type) {
+			const merged = tryMergeMarks(prev, mark);
+			if (merged !== undefined) {
+				this.list.splice(this.list.length - 1, 1, merged);
+				return;
+			}
+		}
+		this.list.push(mark);
 	}
 }

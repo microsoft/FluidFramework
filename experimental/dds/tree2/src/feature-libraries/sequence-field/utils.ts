@@ -475,7 +475,7 @@ export function isImpactful(
 }
 
 export function isTombstone<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> & { cellId: CellId } {
-	return mark.type === NoopMarkType && mark.cellId !== undefined;
+	return mark.type === NoopMarkType && mark.cellId !== undefined && mark.changes === undefined;
 }
 
 export function isNoopMark<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> {

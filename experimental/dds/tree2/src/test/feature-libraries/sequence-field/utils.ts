@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { strict } from "assert";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
@@ -27,8 +28,39 @@ import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../..
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 // eslint-disable-next-line import/no-internal-modules
+import { isTombstone } from "../../../feature-libraries/sequence-field/utils";
+import {
+	CellOrderingMethod,
+	sequenceConfig,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/config";
+// eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { TestChangeset } from "./testEdits";
+
+export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
+	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
+	strict.deepEqual(actual, updatedExpected);
+}
+
+export function purgeUnusedCellOrderingInfo<T>(change: SF.Changeset<T>): SF.Changeset<T> {
+	switch (sequenceConfig.cellOrdering) {
+		case CellOrderingMethod.Tombstone:
+			return withoutLineage(change);
+		case CellOrderingMethod.Lineage:
+			return withoutTombstones(change);
+		default:
+			unreachableCase(sequenceConfig.cellOrdering);
+	}
+}
+
+export function skipOnLineageMethod(title: string, fn: () => void): void {
+	if (sequenceConfig.cellOrdering === CellOrderingMethod.Lineage) {
+		it.skip(title, fn);
+	} else {
+		it(title, fn);
+	}
+}
 
 export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
@@ -74,10 +106,15 @@ function composeI<T>(
 	composer: (childChanges: TaggedChange<T>[]) => T,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset<T> {
+	const updatedChanges = changes.map(({ change, revision, rollbackOf }) => ({
+		change: purgeUnusedCellOrderingInfo(change),
+		revision,
+		rollbackOf,
+	}));
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
 	let composed = SF.compose(
-		changes,
+		updatedChanges,
 		composer,
 		idAllocator,
 		moveEffects,
@@ -85,7 +122,7 @@ function composeI<T>(
 			? Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
 				: revInfos
-			: defaultRevisionMetadataFromChanges(changes),
+			: defaultRevisionMetadataFromChanges(updatedChanges),
 	);
 
 	if (moveEffects.isInvalidated) {
@@ -250,6 +287,17 @@ export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 			delete cloned.cellId.lineage;
 			delete cloned.cellId.adjacentCells;
 			factory.push(cloned);
+		}
+	}
+
+	return factory.list;
+}
+
+export function withoutTombstones<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
+	const factory = new SF.MarkListFactory<T>();
+	for (const mark of changeset) {
+		if (!isTombstone(mark)) {
+			factory.push(mark);
 		}
 	}
 

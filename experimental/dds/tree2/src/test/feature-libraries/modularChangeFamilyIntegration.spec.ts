@@ -169,7 +169,15 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldBExpected = [{ count: 1, changes: node2Expected }];
+			const fieldBExpected = [
+				{ count: 1, changes: node2Expected },
+				// The two marks below a not essential and only exist because we're currently using tombstone
+				{ count: 1 },
+				{
+					count: 1,
+					cellId: { revision: tag1, localId: 0, adjacentCells: [{ id: 0, count: 1 }] },
+				},
+			];
 
 			const node1Expected = {
 				fieldChanges: new Map([
@@ -177,7 +185,15 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldAExpected = [{ count: 1, changes: node1Expected }];
+			const fieldAExpected = [
+				{ count: 1, changes: node1Expected },
+				// The two marks below a not essential and only exist because we're currently using tombstone
+				{ count: 1 },
+				{
+					count: 1,
+					cellId: { revision: tag1, localId: 1, adjacentCells: [{ id: 1, count: 1 }] },
+				},
+			];
 
 			const expected: ModularChangeset = {
 				fieldChanges: new Map([

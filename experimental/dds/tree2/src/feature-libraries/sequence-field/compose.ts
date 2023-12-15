@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeAtomId,
 	makeAnonChange,
@@ -69,6 +69,7 @@ import {
 	compareCellPositionsUsingTombstones,
 } from "./utils";
 import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
+import { CellOrderingMethod, sequenceConfig } from "./config";
 
 /**
  * @alpha
@@ -567,21 +568,47 @@ export class ComposeQueue<T> {
 				return this.dequeueNew();
 			}
 
-			const newCellId = getInputCellId(newMark, this.newRevision, this.revisionMetadata);
-			assert(newCellId !== undefined, "Both marks should have cell IDs");
-			const comparison = compareCellPositionsUsingTombstones(
-				baseCellId,
-				this.baseMarksCellSources,
-				newCellId,
-				this.newMarksCellSources,
-				this.revisionMetadata,
-			);
-			if (comparison < 0) {
-				return this.dequeueBase();
-			} else if (comparison > 0) {
-				return this.dequeueNew();
-			} else {
-				return this.dequeueBoth();
+			switch (sequenceConfig.cellOrdering) {
+				case CellOrderingMethod.Tombstone: {
+					const newCellId = getInputCellId(
+						newMark,
+						this.newRevision,
+						this.revisionMetadata,
+					);
+					assert(newCellId !== undefined, "Both marks should have cell IDs");
+					const comparison = compareCellPositionsUsingTombstones(
+						baseCellId,
+						this.baseMarksCellSources,
+						newCellId,
+						this.newMarksCellSources,
+						this.revisionMetadata,
+					);
+					if (comparison < 0) {
+						return this.dequeueBase();
+					} else if (comparison > 0) {
+						return this.dequeueNew();
+					} else {
+						return this.dequeueBoth();
+					}
+				}
+				case CellOrderingMethod.Lineage: {
+					const cmp = compareCellPositions(
+						baseCellId,
+						baseMark.count,
+						newMark,
+						this.newRevision,
+						this.revisionMetadata,
+					);
+					if (cmp < 0) {
+						return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
+					} else if (cmp > 0) {
+						return { newMark: this.newMarks.dequeueUpTo(cmp) };
+					} else {
+						return this.dequeueBoth();
+					}
+				}
+				default:
+					unreachableCase(sequenceConfig.cellOrdering);
 			}
 		} else if (areOutputCellsEmpty(baseMark)) {
 			return this.dequeueBase();
@@ -633,7 +660,6 @@ interface ComposeMarks<T> {
  * - If N is negative, then the first N cells of `baseMark` (or all its cells if N is greater than its length)
  * are before the first cell of `newMark`.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function compareCellPositions(
 	baseCellId: CellId,
 	baseCellCount: number,
