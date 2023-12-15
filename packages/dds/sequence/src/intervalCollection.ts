@@ -7,7 +7,7 @@
 /* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	addProperties,
@@ -54,6 +54,7 @@ import {
 	startReferenceSlidingPreference,
 	sequenceIntervalHelpers,
 	createInterval,
+	IntervalDeltaOpType,
 } from "./intervals";
 import {
 	EndpointIndex,
@@ -1770,13 +1771,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return rebased;
 	}
 
-	public applyStashedOp(op: IValueTypeOperationValue): unknown {
-		let metadata: IMapMessageLocalMetadata | undefined;
+	public applyStashedOp(op: IValueTypeOperationValue): IMapMessageLocalMetadata {
 		let interval: TInterval | undefined;
 		let props: PropertySet | undefined;
 		let intervalId: string;
 		switch (op.opName) {
-			case IntervalOpType.ADD:
+			case IntervalDeltaOpType.ADD:
 				assert(op.value.start !== undefined, "start is undefined");
 				assert(op.value.end !== undefined, "end is undefined");
 				interval = this.add({
@@ -1784,18 +1784,15 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					end: op.value.end,
 					props: op.value.properties,
 				});
-				metadata = {
+				return {
 					localSeq: this.getNextLocalSeq(),
 				};
-				this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
-				break;
-			case IntervalOpType.DELETE:
+			case IntervalDeltaOpType.DELETE:
 				this.removeIntervalById(op.value.properties?.intervalId);
-				metadata = {
+				return {
 					localSeq: this.getNextLocalSeq(),
 				};
-				break;
-			case IntervalOpType.CHANGE:
+			case IntervalDeltaOpType.CHANGE: {
 				assert(op.value.properties !== undefined, "properties is undefined");
 				({ intervalId, ...props } = op.value.properties);
 				interval = this.change(intervalId, {
@@ -1803,17 +1800,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					end: op.value.end,
 					props,
 				});
-				metadata = {
+				const metadata = {
 					localSeq: this.getNextLocalSeq(),
 				};
 				if (interval !== undefined) {
 					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
 				}
-				break;
+				return metadata;
+			}
 			default:
-				metadata = undefined;
+				unreachableCase(op.opName, `Unknown interval op type: ${op.opName}`);
 		}
-		return metadata;
 	}
 
 	private getSlideToSegment(
