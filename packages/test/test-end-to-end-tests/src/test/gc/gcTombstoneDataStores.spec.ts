@@ -1127,7 +1127,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				]);
 
 				// Mark one of the data stores and attachment blob as referenced so that they are not tombstones anymore.
-				// Note that sweepTimeout was shrunk below sessionExpiry, otherwise we'd need to load a new container and
+				// Note that tombstoneTimeout was shrunk below sessionExpiry, otherwise we'd need to load a new container and
 				// use the allowTombstone header to even get the handle and revive these.
 				mainDataStore._root.set("newDataStore", newDataStore.handle);
 				mainDataStore._root.set("blob", blobHandle);

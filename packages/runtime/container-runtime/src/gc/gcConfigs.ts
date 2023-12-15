@@ -72,7 +72,8 @@ export function generateGCConfigs(
 		gcEnabled = gcVersionInBaseSnapshot > 0;
 		sessionExpiryTimeoutMs = createParams.metadata?.sessionExpiryTimeoutMs;
 		tombstoneTimeoutMs =
-			createParams.metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
+			createParams.metadata?.sweepTimeoutMs ??
+			computeTombstoneTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
 		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
 		// This Test Override only applies for new containers
@@ -90,7 +91,7 @@ export function generateGCConfigs(
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
 		tombstoneTimeoutMs =
-			testOverrideTombstoneTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
+			testOverrideTombstoneTimeoutMs ?? computeTombstoneTimeout(sessionExpiryTimeoutMs);
 
 		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
 		if (gcGeneration !== undefined) {
@@ -132,7 +133,7 @@ export function generateGCConfigs(
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and sweepTimeout is provided, the following conditions have to be met to run sweep:
+	 * Assuming overall GC is enabled and Tombstone Timeout is present, the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be enabled for this container.
 	 * 2. Sweep should be enabled for this session.
@@ -211,7 +212,7 @@ export function generateGCConfigs(
  * The buffer is added to account for any clock skew or other edge cases.
  * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
  */
-function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
+function computeTombstoneTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
 	const bufferMs = oneDayMs;
 	return sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
 }

@@ -71,7 +71,8 @@ describe("Garbage Collection configurations", () => {
 
 	const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
 	const testOverrideInactiveTimeoutKey = "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs";
-	const testOverrideSweepTimeoutKey = "Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs";
+	const testOverrideTombstoneTimeoutKey =
+		"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs";
 	const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
 
 	let gc: GcWithPrivates | undefined;
@@ -417,8 +418,8 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert(gc.configs.tombstoneTimeoutMs === undefined, "tombstoneTimeoutMs incorrect");
 		});
-		it("TestOverride.SweepTimeout set, sessionExpiry on", () => {
-			injectedSettings[testOverrideSweepTimeoutKey] = 123;
+		it("TestOverride.TombstoneTimeoutMs set, sessionExpiry on", () => {
+			injectedSettings[testOverrideTombstoneTimeoutKey] = 123;
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert(
@@ -427,8 +428,8 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert(gc.configs.tombstoneTimeoutMs === 123, "tombstoneTimeoutMs incorrect");
 		});
-		it("TestOverride.SweepTimeout set, sessionExpiry off", () => {
-			injectedSettings[testOverrideSweepTimeoutKey] = 123;
+		it("TestOverride.TombstoneTimeoutMs set, sessionExpiry off", () => {
+			injectedSettings[testOverrideTombstoneTimeoutKey] = 123;
 			injectedSettings[runSessionExpiryKey] = false;
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
@@ -532,8 +533,8 @@ describe("Garbage Collection configurations", () => {
 				"tombstoneTimeoutMs incorrect",
 			);
 		});
-		it("defaultSessionExpiryDurationMs, TestOverride.SweepTimeout set", () => {
-			injectedSettings[testOverrideSweepTimeoutKey] = 7890;
+		it("defaultSessionExpiryDurationMs, TestOverride.TombstoneTimeoutMs set", () => {
+			injectedSettings[testOverrideTombstoneTimeoutKey] = 7890;
 			gc = createGcWithPrivateMembers();
 			assert.equal(
 				gc.configs.sessionExpiryTimeoutMs,
@@ -576,7 +577,7 @@ describe("Garbage Collection configurations", () => {
 			);
 		});
 		it("IGCMetadata.sessionExpiryTimeoutMs, backfill tombstoneTimeoutMs", () => {
-			injectedSettings[testOverrideSweepTimeoutKey] = 1337; // Should be ignored
+			injectedSettings[testOverrideTombstoneTimeoutKey] = 1337; // Should be ignored
 			gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: 456 } /* metadata */);
 			assert.equal(
 				gc.configs.sessionExpiryTimeoutMs,
@@ -591,7 +592,7 @@ describe("Garbage Collection configurations", () => {
 			);
 		});
 		it("IGCMetadata.sessionExpiryTimeoutMs and IGCMetadata.tombstoneTimeoutMs", () => {
-			injectedSettings[testOverrideSweepTimeoutKey] = 1337; // Should be ignored
+			injectedSettings[testOverrideTombstoneTimeoutKey] = 1337; // Should be ignored
 			gc = createGcWithPrivateMembers(
 				{ sessionExpiryTimeoutMs: 456, sweepTimeoutMs: 789 } /* metadata */,
 			);
@@ -604,7 +605,7 @@ describe("Garbage Collection configurations", () => {
 			assert.equal(gc.configs.tombstoneTimeoutMs, 789, "tombstoneTimeoutMs incorrect");
 		});
 		it("IGCMetadata.tombstoneTimeoutMs only", () => {
-			injectedSettings[testOverrideSweepTimeoutKey] = 1337; // Should be ignored
+			injectedSettings[testOverrideTombstoneTimeoutKey] = 1337; // Should be ignored
 			// This could happen if you used TestOverride.TombstoneTimeoutMs but had SessionExpiry disabled, then loaded that container.
 			gc = createGcWithPrivateMembers({ sweepTimeoutMs: 789 } /* metadata */);
 			assert.equal(
@@ -631,9 +632,9 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert.equal(gc.configs.tombstoneTimeoutMs, undefined, "tombstoneTimeoutMs incorrect");
 		});
-		it("RunSessionExpiry setting turned off, TestOverride.SweepTimeout set", () => {
+		it("RunSessionExpiry setting turned off, TestOverride.TombstoneTimeoutMs set", () => {
 			injectedSettings[runSessionExpiryKey] = false;
-			injectedSettings[testOverrideSweepTimeoutKey] = 7890;
+			injectedSettings[testOverrideTombstoneTimeoutKey] = 7890;
 			injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
 			gc = createGcWithPrivateMembers();
 			assert.equal(
@@ -878,7 +879,7 @@ describe("Garbage Collection configurations", () => {
 					);
 				});
 			});
-			it("inactiveTimeout must not be greater than sweepTimeout", () => {
+			it("inactiveTimeout must not be greater than tombstoneTimeout", () => {
 				injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 					Number.MAX_VALUE;
 				assert.throws(
@@ -886,7 +887,7 @@ describe("Garbage Collection configurations", () => {
 						gc = createGcWithPrivateMembers();
 					},
 					(e: IErrorBase) => e.errorType === "usageError",
-					"inactiveTimeout must not be greater than sweepTimeout",
+					"inactiveTimeout must not be greater than tombstoneTimeout",
 				);
 			});
 		});
