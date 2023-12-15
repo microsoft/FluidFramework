@@ -61,6 +61,16 @@
 				"types": "./dist/deltaManager.d.ts",
 				"default": "./dist/deltaManager.cjs"
 			}
+		},
+		"./test/utils": {
+			"import": {
+				"types": "./lib/utils.d.mts",
+				"default": "./lib/utils.mjs"
+			},
+			"require": {
+				"types": "./dist/utils.d.ts",
+				"default": "./dist/utils.cjs"
+			}
 		}
 	},
 	"main": "dist/index.cjs",
