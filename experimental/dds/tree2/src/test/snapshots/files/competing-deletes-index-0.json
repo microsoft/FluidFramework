@@ -54,12 +54,6 @@
                                 },
                                 "cellId": {
                                   "localId": 0,
-                                  "adjacentCells": [
-                                    [
-                                      0,
-                                      1
-                                    ]
-                                  ],
                                   "revision": "beefbeef-beef-4000-8000-000000000007"
                                 }
                               }
@@ -87,12 +81,6 @@
                                 },
                                 "cellId": {
                                   "localId": 0,
-                                  "adjacentCells": [
-                                    [
-                                      0,
-                                      1
-                                    ]
-                                  ],
                                   "revision": "beefbeef-beef-4000-8000-000000000008"
                                 }
                               }
