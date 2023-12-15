@@ -8,10 +8,6 @@
 				"logLevel": "warning",
 				"addToApiReportFile": true
 			},
-			"ae-undocumented": {
-				"logLevel": "warning",
-				"addToApiReportFile": true
-			},
 			"ae-unresolved-link": {
 				"logLevel": "warning",
 				"addToApiReportFile": true
