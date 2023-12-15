@@ -95,7 +95,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
     containerData?: Record<string, IFluidLoadable>;
 }
 
-// @internal
+// @alpha
 export type ContainerKey = string;
 
 // @internal
@@ -155,7 +155,7 @@ export interface ContainerStateMetadata extends HasContainerKey {
     userId?: string;
 }
 
-// @internal
+// @alpha
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
 // @internal
@@ -368,7 +368,7 @@ export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>,
 // @internal
 export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
-// @internal
+// @alpha
 export interface HasContainerKey {
     containerKey: ContainerKey;
 }
@@ -378,7 +378,7 @@ export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
 }
 
-// @internal @sealed
+// @alpha @sealed
 export interface IDevtoolsLogger extends ITelemetryBaseLogger {
 }
 

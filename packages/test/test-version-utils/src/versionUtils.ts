@@ -370,7 +370,7 @@ export function getRequestedVersion(
 
 	// if the baseVersion passed is an internal version
 	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
-		const [publicVersion, internalVersion /* prereleaseIdentifier */] = fromInternalScheme(
+		const [publicVersion, internalVersion, prereleaseIdentifier] = fromInternalScheme(
 			baseVersion,
 			/** allowPrereleases */ true,
 			/** allowAnyPrereleaseId */ true,
@@ -379,6 +379,7 @@ export function getRequestedVersion(
 		const internalSchemeRange = internalSchema(
 			publicVersion.version,
 			internalVersion.version,
+			prereleaseIdentifier,
 			requested,
 		);
 		return resolveVersion(internalSchemeRange, false);
@@ -411,8 +412,25 @@ export function getRequestedVersion(
 	return resolveVersion(`^0.${requestedMinorVersion}.0-0`, false);
 }
 
-function internalSchema(publicVersion: string, internalVersion: string, requested: number): string {
-	if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+function internalSchema(
+	publicVersion: string,
+	internalVersion: string,
+	prereleaseIdentifier: string,
+	requested: number,
+): string {
+	// Here we handle edge cases of converting the early rc/internal releases.
+	// We convert early rc releases to internal releases, and early internal releases to public releases.
+	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {
+		if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+			if (requested === -1) {
+				return `^2.0.0-internal.8.0.0`;
+			}
+
+			if (requested === -2) {
+				return `^2.0.0-internal.7.0.0`;
+			}
+		}
+	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
 		if (requested === -1) {
 			return `^1.0.0-0`;
 		}
@@ -457,9 +475,13 @@ function internalSchema(publicVersion: string, internalVersion: string, requeste
 		throw new Error(err as string);
 	}
 
-	return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${
-		parsedVersion.major
-	}.0.0`;
+	// We treat internal and rc as valid; other values should be coerced to "internal"
+	const idToUse = ["internal", "rc"].includes(prereleaseIdentifier)
+		? prereleaseIdentifier
+		: "internal";
+	return `>=${publicVersion}-${idToUse}.${
+		parsedVersion.major - 1
+	}.0.0 <${publicVersion}-${idToUse}.${parsedVersion.major}.0.0`;
 }
 
 /**
