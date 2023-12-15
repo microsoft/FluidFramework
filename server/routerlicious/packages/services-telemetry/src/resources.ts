@@ -63,7 +63,8 @@ export enum HttpProperties {
 	requestContentLength = "requestContentLength",
 	responseContentLength = "responseContentLength",
 	responseTime = "responseTime",
-	responseLatencyMs = "responseLatencyMs",
+	responsePrefinishToFinishLatencyMs = "responsePrefinishToFinishLatencyMs",
+	responseFinishToCloseLatencyMs = "responseFinishToCloseLatencyMs",
 	status = "status",
 	url = "url",
 }
