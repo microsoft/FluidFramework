@@ -32,7 +32,7 @@ describeInstallVersions(
 	let provider: ITestObjectProvider;
 	let oldMap: SharedMap;
 	let newMap: SharedMap;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async () => provider.reset());

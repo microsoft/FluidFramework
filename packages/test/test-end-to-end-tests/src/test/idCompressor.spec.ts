@@ -108,7 +108,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory);
 
-	beforeEach(async () => {
+	beforeEach("setupContainers", async () => {
 		provider = getTestObjectProvider();
 		container1 = await createContainer();
 		mainDataStore = (await container1.getEntryPoint()) as TestDataObject;
@@ -622,7 +622,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
 	});
@@ -681,7 +681,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 	const createContainer = async (config?: ITestContainerConfig): Promise<IContainer> =>
 		provider.makeTestContainer(config);
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 

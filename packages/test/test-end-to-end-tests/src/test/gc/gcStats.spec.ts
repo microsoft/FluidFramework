@@ -59,7 +59,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		return summaryStats;
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		// These tests validate the GC stats in summary by calling summarize directly on the container runtime.
 		// They do not post these summaries or download them. So, it doesn't need to run against real services.

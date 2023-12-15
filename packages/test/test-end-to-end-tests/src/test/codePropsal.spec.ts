@@ -103,7 +103,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 	let containers: IContainer[];
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		containers = [];
 

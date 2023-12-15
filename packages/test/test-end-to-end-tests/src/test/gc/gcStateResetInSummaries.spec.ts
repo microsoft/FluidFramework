@@ -174,7 +174,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 		await waitForContainerConnection(container);
 	}
 
-	beforeEach(async function () {
+	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		// These tests validate the end-to-end behavior of summaries when GC is enabled / disabled. This behavior
 		// is not affected by the service. So, it doesn't need to run against real services.

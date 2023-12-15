@@ -103,7 +103,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider) => {
 			);
 		};
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			provider = getTestObjectProvider();
 			loader = provider.makeTestLoader(testContainerConfig);
 			container1 = await createAndAttachContainer(

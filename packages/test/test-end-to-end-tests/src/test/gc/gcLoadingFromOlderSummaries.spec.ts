@@ -77,7 +77,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		await waitForContainerConnection(container);
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(testConfig);
 		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;

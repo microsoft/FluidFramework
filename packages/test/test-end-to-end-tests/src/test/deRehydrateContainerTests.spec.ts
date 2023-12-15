@@ -237,7 +237,7 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 		return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
 	};
 
-	beforeEach(async function () {
+	beforeEach("createLoader", async function () {
 		provider = getTestObjectProvider();
 		if (
 			compare(provider.driver.version, "0.46.0") === -1 &&

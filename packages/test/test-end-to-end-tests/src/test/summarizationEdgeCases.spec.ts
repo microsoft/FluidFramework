@@ -47,7 +47,7 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider) =
 		});
 	};
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 

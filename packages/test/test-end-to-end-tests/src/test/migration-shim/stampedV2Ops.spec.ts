@@ -199,7 +199,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	const originalValue = 3;
 	const newValue = 4;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);

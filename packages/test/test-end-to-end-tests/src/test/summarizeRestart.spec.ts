@@ -34,7 +34,7 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 		return provider.makeTestContainer(testContainerConfig);
 	};
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
 	});

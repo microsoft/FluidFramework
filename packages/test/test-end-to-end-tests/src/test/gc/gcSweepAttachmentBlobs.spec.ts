@@ -106,13 +106,13 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		return { dataStore, summarizer, summarizerContainer };
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
 	describe("Attachment blobs in attached container", () => {
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -366,7 +366,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach(async function () {
+		beforeEach("conditionalSkip", async function () {
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
@@ -724,7 +724,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			return { summarizer, summarizerContainer };
 		}
 
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -1045,7 +1045,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			);
 		}
 
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}

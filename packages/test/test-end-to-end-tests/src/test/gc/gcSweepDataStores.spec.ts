@@ -65,7 +65,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
 			this.skip();
@@ -536,7 +536,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	});
 
 	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {
-		beforeEach(() => {
+		beforeEach("setValidateSummaryBeforeUpload", () => {
 			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
 		});
 

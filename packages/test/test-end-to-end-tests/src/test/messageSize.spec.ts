@@ -41,7 +41,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async () => provider.reset());

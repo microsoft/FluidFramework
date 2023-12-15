@@ -35,7 +35,7 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	let dataObject1: ITestFluidObject;
@@ -43,7 +43,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 	let sharedDirectory2: ISharedDirectory;
 	let sharedDirectory3: ISharedDirectory;
 
-	beforeEach(async () => {
+	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
@@ -512,7 +512,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 			let root1SubDir;
 			let root2SubDir;
 			let root3SubDir;
-			beforeEach(async () => {
+			beforeEach("createSubdirectories", async () => {
 				sharedDirectory1.createSubDirectory("testSubDir").set("dummyKey", "dummyValue");
 
 				await provider.ensureSynchronized();
@@ -834,7 +834,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 
 describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -854,7 +854,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const configWithFeatureGates = {
 			...testContainerConfig,
 			loaderProps: {
@@ -1262,14 +1262,14 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 
 describeCompat("SharedDirectory ordering maintenance", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	let sharedDirectory1: ISharedDirectory;
 	let sharedDirectory2: ISharedDirectory;
 	let sharedDirectory3: ISharedDirectory;
 
-	beforeEach(async () => {
+	beforeEach("createSharedDirectories", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;

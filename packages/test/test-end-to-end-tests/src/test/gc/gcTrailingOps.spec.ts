@@ -119,7 +119,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			);
 		}
 
-		beforeEach(async function () {
+		beforeEach("getTestObjectProvider", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "local") {
 				this.skip();

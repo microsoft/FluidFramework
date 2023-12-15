@@ -75,7 +75,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
 			this.skip();
@@ -262,7 +262,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	// If these tests start failing due to "runtime is closed" errors try first adjusting `sweepTimeoutMs` above
 	describe("Using tombstone data stores not allowed (per config)", () => {
-		beforeEach(() => {
+		beforeEach("extraSettings", () => {
 			// Allow Loading but not Usage
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
@@ -452,7 +452,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			request_allowTombstone: JSON.stringify({ allowTombstone: true }),
 		};
 
-		beforeEach(() => {
+		beforeEach("extraSettings", () => {
 			// Allow Usage but not Loading
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
@@ -933,7 +933,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			}
 		}
 
-		beforeEach(() => {
+		beforeEach("extraSettings", () => {
 			// This is not the typical configuration we expect (usage may be allowed), but keeping it more strict for the tests
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
@@ -1274,7 +1274,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	 * events were logged to data stores were un-tombstoned unexpectedly, etc.
 	 */
 	describe("No unexpected tombstone behavior", () => {
-		beforeEach(() => {
+		beforeEach("extraSettings", () => {
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 		});

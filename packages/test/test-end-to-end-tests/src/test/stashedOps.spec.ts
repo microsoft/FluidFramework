@@ -187,7 +187,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let directory1: ISharedDirectory;
 	let waitForSummary: () => Promise<void>;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		loader = provider.makeTestLoader(testContainerConfig);
 		container1 = await createAndAttachContainer(
