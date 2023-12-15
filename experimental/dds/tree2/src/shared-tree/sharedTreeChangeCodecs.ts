@@ -22,7 +22,7 @@ import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedT
 export function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<ModularChangeset, EncodedModularChangeset>,
 	{ jsonValidator: validator }: ICodecOptions,
-): IJsonCodec<SharedTreeChange> {
+): IJsonCodec<SharedTreeChange, EncodedSharedTreeChange> {
 	const schemaChangeCodec = makeSchemaChangeCodec({ jsonValidator: validator });
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
@@ -60,8 +60,7 @@ export function makeSharedTreeChangeCodec(
 			}
 			return { changes };
 		},
-		decode: (json) => {
-			const encodedChange = json as unknown as EncodedSharedTreeChange;
+		decode: (encodedChange) => {
 			const changes: Mutable<SharedTreeChange["changes"]> = [];
 			for (const subChange of encodedChange.changes) {
 				changes.push(decoderLibrary.dispatch(subChange));
