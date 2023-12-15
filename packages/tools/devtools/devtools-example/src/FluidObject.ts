@@ -14,7 +14,7 @@ import {
 	SharedTreeFactory,
 	SchemaFactory,
 	TreeConfiguration,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
