@@ -23,7 +23,7 @@ export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
 	> {}
 
 /**
- * A {@link NodeBase} which implements 'readonly T[]' and the list mutation APIs.
+ * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @beta
  */
 export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
@@ -34,7 +34,7 @@ export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedT
 	> {}
 
 /**
- * A {@link NodeBase} which implements 'readonly T[]' and the list mutation APIs.
+ * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @beta
  */
 export const TreeArrayNode = {

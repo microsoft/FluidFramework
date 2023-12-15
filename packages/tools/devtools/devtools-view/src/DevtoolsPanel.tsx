@@ -4,7 +4,7 @@
  */
 import React from "react";
 
-import { type IMessageRelay } from "@fluid-experimental/devtools-core";
+import { type IMessageRelay } from "@fluidframework/devtools-core";
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
@@ -15,7 +15,7 @@ import { MessageRelayContext } from "./MessageRelayContext";
  */
 export interface DevtoolsPanelProps {
 	/**
-	 * An instance of {@link @fluid-experimental/devtools-core#IMessageRelay} that can handle message passing between the
+	 * An instance of {@link @fluidframework/devtools-core#IMessageRelay} that can handle message passing between the
 	 * devtools's "brain" and its UI, in whatever context the latter is being rendered (e.g. in the same page as the
 	 * application, or in the browser's Devtools panel).
 	 */

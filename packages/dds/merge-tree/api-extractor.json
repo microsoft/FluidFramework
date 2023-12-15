@@ -6,10 +6,6 @@
 			// TODO: Fix violations and remove this rule override
 			"ae-forgotten-export": {
 				"logLevel": "none"
-			},
-			// TODO: Add missing documentation and remove this rule override
-			"ae-undocumented": {
-				"logLevel": "none"
 			}
 		}
 	}
