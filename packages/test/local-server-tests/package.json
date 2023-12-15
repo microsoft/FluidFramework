@@ -12,12 +12,14 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "commonjs",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -52,6 +54,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",

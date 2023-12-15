@@ -96,7 +96,7 @@
 		"test:benchmark:report": "pnpm run -r --no-sort --stream --no-bail test:benchmark:report --reporterOptions reportDir=./benchmarkOutput",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
 		"test:coverage": "c8 npm test",
-		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
+		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
 		"test:jest": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --color",
 		"test:jest:bail": "assign-test-ports && pnpm run -r --no-sort --stream test:jest",
 		"test:jest:report": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --ci",

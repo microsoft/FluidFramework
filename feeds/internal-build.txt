@@ -4,8 +4,8 @@
 @fluid-tools/webpack-fluid-loader
 @fluidframework/fluid-runner
 @fluid-tools/fetch-tool
-@fluid-experimental/devtools-core
-@fluid-experimental/devtools
+@fluidframework/devtools-core
+@fluidframework/devtools
 @fluidframework/test-utils
 @fluid-internal/test-service-load
 @fluidframework/test-driver-definitions
@@ -73,7 +73,7 @@ fluid-framework
 @fluid-experimental/react-inputs
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects
-@fluid-experimental/tree2
+@fluidframework/tree
 @fluid-experimental/tree
 @fluid-experimental/sequence-deprecated
 @fluid-experimental/sharejs-json1
