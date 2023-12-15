@@ -106,5 +106,8 @@
 				"script": false
 			}
 		}
+	},
+	"typeValidation": {
+		"broken": {}
 	}
 }

@@ -82,7 +82,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0",
+		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.3.0",
 		"@fluid-tools/build-cli": "^0.28.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
