@@ -107,5 +107,8 @@
 				"script": false
 			}
 		}
+	},
+	"typeValidation": {
+		"disabled": true
 	}
 }

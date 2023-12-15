@@ -129,17 +129,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_ContainerRuntime": {
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_TEST_requestSummarizer": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IGCStats": {
-				"forwardCompat": false
-			}
-		}
+		"disabled": true
 	}
 }

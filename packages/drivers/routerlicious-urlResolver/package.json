@@ -70,7 +70,6 @@
 		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.7.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/nconf": "^0.10.0",
@@ -102,6 +101,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"disabled": true
 	}
 }

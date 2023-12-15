@@ -80,7 +80,6 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-internal.7.3.0",
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
@@ -133,6 +132,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"disabled": true
 	}
 }

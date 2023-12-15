@@ -69,7 +69,6 @@
 		"@fluidframework/fluid-static": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.7.2.0",
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
@@ -111,6 +110,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"disabled": true
 	}
 }

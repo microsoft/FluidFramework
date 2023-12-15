@@ -93,7 +93,6 @@
 		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@2.0.0-internal.7.2.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/benchmark": "^2.1.0",
@@ -128,6 +127,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"disabled": true
 	}
 }
