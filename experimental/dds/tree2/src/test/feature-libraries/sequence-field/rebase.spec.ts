@@ -17,6 +17,7 @@ import {
 	shallowCompose,
 	rebaseOverComposition,
 	rebaseOverChanges,
+	onBothConfigs,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -28,7 +29,7 @@ function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTa
 	return rebaseI(change, tagChange(base, baseRev ?? tag1));
 }
 
-describe("SequenceField - Rebase", () => {
+onBothConfigs("SequenceField - Rebase", () => {
 	describe("no changes ↷ *", () => {
 		for (const [name, testCase] of Object.entries(cases)) {
 			it(`no changes ↷ ${name}`, () => {

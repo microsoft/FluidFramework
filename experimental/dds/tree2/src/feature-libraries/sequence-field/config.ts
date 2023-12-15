@@ -13,5 +13,5 @@ export interface SequenceConfig {
 }
 
 export const sequenceConfig: SequenceConfig = {
-	cellOrdering: CellOrderingMethod.Lineage,
+	cellOrdering: CellOrderingMethod.Tombstone,
 };

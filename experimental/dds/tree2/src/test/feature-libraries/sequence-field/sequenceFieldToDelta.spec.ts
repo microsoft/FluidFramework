@@ -27,7 +27,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertFieldChangesEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { toDelta } from "./utils";
+import { onBothConfigs, toDelta } from "./utils";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
@@ -49,7 +49,7 @@ const childChange1 = TestChange.mint([0], 1);
 const childChange1Delta = TestChange.toDelta(tagChange(childChange1, tag));
 const detachId = { major: tag, minor: 42 };
 
-describe("SequenceField - toDelta", () => {
+onBothConfigs("SequenceField - toDelta", () => {
 	it("empty mark list", () => {
 		const actual = toDeltaShallow([]);
 		assert.deepEqual(actual, {});
