@@ -13,7 +13,6 @@ import { TestChange } from "../../testChange";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { populatedMarks } from "./populatedMarks";
 import { ChangeMaker as Change, cases } from "./testEdits";
-import { describeForBothConfigs } from "./utils";
 
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 	successes: [
@@ -31,7 +30,7 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 	],
 };
 
-describeForBothConfigs("SequenceField encoding", () => {
+describe("SequenceField encoding", () => {
 	makeEncodingTestSuite(
 		SF.sequenceFieldChangeCodecFactory(TestChange.codec, new RevisionTagCodec()),
 		encodingTestData,

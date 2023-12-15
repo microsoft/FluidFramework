@@ -55,28 +55,41 @@ export function purgeUnusedCellOrderingInfo<T>(change: SF.Changeset<T>): SF.Chan
 	}
 }
 
-export function skipOnLineageMethod(title: string, fn: () => void): void {
-	if (sequenceConfig.cellOrdering === CellOrderingMethod.Lineage) {
+export function skipOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Lineage) {
 		it.skip(title, fn);
 	} else {
 		it(title, fn);
 	}
 }
 
-export function skipOnTombstoneMethod(title: string, fn: () => void): void {
-	if (sequenceConfig.cellOrdering === CellOrderingMethod.Tombstone) {
+export function onlyOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Lineage) {
+		it(title, fn);
+	} else {
+		it.skip(title, fn);
+	}
+}
+
+export function skipOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
 		it.skip(title, fn);
 	} else {
 		it(title, fn);
 	}
 }
 
-export function describeForBothConfigs(
-	title: string,
-	fn: (orderingMethod: CellOrderingMethod) => void,
-): void {
+export function onlyOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
+		it(title, fn);
+	} else {
+		it.skip(title, fn);
+	}
+}
+
+export function describeForBothConfigs(title: string, fn: (config: SequenceConfig) => void): void {
 	describe(title, () => {
-		for (const method of [CellOrderingMethod.Lineage, CellOrderingMethod.Tombstone]) {
+		for (const method of [CellOrderingMethod.Tombstone, CellOrderingMethod.Lineage]) {
 			describe(`${method}-based cell ordering`, () => {
 				withOrderingMethod(method, fn);
 			});
@@ -86,27 +99,16 @@ export function describeForBothConfigs(
 
 export function withOrderingMethod(
 	method: CellOrderingMethod,
-	fn: (orderingMethod: CellOrderingMethod) => void,
+	fn: (config: SequenceConfig) => void,
 ) {
 	const priorMethod = sequenceConfig.cellOrdering;
 	const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
 	mutableConfig.cellOrdering = method;
-	// console.debug(`Setting cell ordering method to ${method}`);
 	try {
-		fn(method);
+		fn(sequenceConfig);
 	} finally {
 		mutableConfig.cellOrdering = priorMethod;
 	}
-}
-
-export function itWithConfig(
-	orderingMethod: CellOrderingMethod,
-	title: string,
-	fn: () => void,
-): void {
-	it(title, () => {
-		withOrderingMethod(orderingMethod, fn);
-	});
 }
 
 export function composeNoVerify(
