@@ -93,8 +93,7 @@ describe("SharedTree", () => {
 		const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
 		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
 
-		// TODO: concurrent use of schematize should not double initialize. Should use constraints so second run conflicts.
-		it.skip("Concurrent Schematize", () => {
+		it("concurrent Schematize", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
 				schema: stringSequenceRootSchema,

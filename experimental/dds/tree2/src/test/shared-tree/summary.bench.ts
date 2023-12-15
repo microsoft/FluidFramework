@@ -25,7 +25,7 @@ import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTre
 
 // number of nodes in test for wide trees
 const nodesCountWide: [numberOfNodes: number, minLength: number, maxLength: number][] = [
-	[1, 1000, 8500],
+	[1, 1000, 7000],
 	[10, 1000, 10000],
 	[100, 1000, 500000],
 ];

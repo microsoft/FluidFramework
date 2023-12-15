@@ -21,9 +21,9 @@ import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedT
 
 export function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<ModularChangeset, EncodedModularChangeset>,
-	{ jsonValidator: validator }: ICodecOptions,
+	codecOptions: ICodecOptions,
 ): IJsonCodec<SharedTreeChange, EncodedSharedTreeChange> {
-	const schemaChangeCodec = makeSchemaChangeCodec({ jsonValidator: validator });
+	const schemaChangeCodec = makeSchemaChangeCodec(codecOptions);
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		EncodedSharedTreeInnerChange,
