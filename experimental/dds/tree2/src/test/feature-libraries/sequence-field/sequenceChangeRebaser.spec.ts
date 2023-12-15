@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/core-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
@@ -37,6 +37,8 @@ import {
 	prune,
 	describeForBothConfigs,
 	withOrderingMethod,
+	assertChangesetsEqual,
+	withoutTombstones,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -56,17 +58,49 @@ function generateAdjacentCells(maxId: number): SF.IdRange[] {
 	return [{ id: brand(0), count: maxId + 1 }];
 }
 
+const hasAdjacentCells = (m: SF.Mark<TestChange>): boolean => m.cellId?.adjacentCells !== undefined;
+function withAdjacentTombstones(marks: readonly SF.Mark<TestChange>[]): SF.Mark<TestChange>[] {
+	const output = [...marks];
+	let markIdx = marks.findIndex(hasAdjacentCells);
+	assert(
+		markIdx !== -1 && marks.slice(markIdx + 1).findIndex(hasAdjacentCells) === -1,
+		"Expected to find exactly one mark with adjacent cells in lineage",
+	);
+	const mark = marks[markIdx];
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const cellId = mark.cellId!;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const adjacentCells = cellId.adjacentCells!;
+	assert(adjacentCells.length === 1, "This utility only supports one range of adjacent cells");
+	const countBefore = cellId.localId - adjacentCells[0].id;
+	if (countBefore > 0) {
+		output.splice(markIdx, 0, Mark.tomb(cellId.revision, adjacentCells[0].id, countBefore));
+		markIdx += 1;
+	}
+	const countAfter = adjacentCells[0].count - countBefore - mark.count;
+	if (countAfter > 0) {
+		output.splice(
+			markIdx + 1,
+			0,
+			Mark.tomb(cellId.revision, brand(cellId.localId + mark.count), countAfter),
+		);
+	}
+	return output;
+}
+
 const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
 	["NestedChange", (i) => Change.modify(i, TestChange.mint([], 1))],
 	[
 		"NestedChangeUnderRemovedNode",
 		(i, max) => [
 			...(i > 0 ? [{ count: i }] : []),
-			Mark.modify(TestChange.mint([], 1), {
-				revision: tag1,
-				localId: brand(i),
-				adjacentCells: generateAdjacentCells(max),
-			}),
+			...withAdjacentTombstones([
+				Mark.modify(TestChange.mint([], 1), {
+					revision: tag1,
+					localId: brand(i),
+					adjacentCells: generateAdjacentCells(max),
+				}),
+			]),
 		],
 	],
 	[
@@ -88,12 +122,16 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	["Delete", (i) => Change.delete(i, 2)],
 	[
 		"Revive",
-		(i, max) =>
-			Change.revive(2, 2, {
-				revision: tag1,
-				localId: brand(i),
-				adjacentCells: generateAdjacentCells(max),
-			}),
+		(i, max) => [
+			Mark.skip(2),
+			...withAdjacentTombstones([
+				Mark.revive(2, {
+					revision: tag1,
+					localId: brand(i),
+					adjacentCells: generateAdjacentCells(max),
+				}),
+			]),
+		],
 	],
 	[
 		"TransientRevive",
@@ -116,20 +154,24 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	[
 		"ReturnFrom",
 		(i, max) =>
-			Change.return(i, 2, 1, {
-				revision: tag3,
-				localId: brand(i),
-				adjacentCells: generateAdjacentCells(max),
-			}),
+			withAdjacentTombstones(
+				Change.return(i, 2, 1, {
+					revision: tag3,
+					localId: brand(i),
+					adjacentCells: generateAdjacentCells(max),
+				}),
+			),
 	],
 	[
 		"ReturnTo",
 		(i, max) =>
-			Change.return(1, 2, i, {
-				revision: tag3,
-				localId: brand(i),
-				adjacentCells: generateAdjacentCells(max),
-			}),
+			withAdjacentTombstones(
+				Change.return(1, 2, i, {
+					revision: tag3,
+					localId: brand(i),
+					adjacentCells: generateAdjacentCells(max),
+				}),
+			),
 	],
 ];
 deepFreeze(testChanges);
@@ -155,6 +197,10 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
 					continue;
 				}
+				if (name1.startsWith("Return") && name2.startsWith("Return")) {
+					// These cases are malformed because changesets have inconsistent description of empty cells locations
+					continue;
+				}
 				it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () =>
 					withConfig(() => {
 						const maxOffset = 4;
@@ -169,10 +215,10 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 								const r1 = rebaseTagged(change1, change2);
 								const r2 = rebaseTagged(r1, inv);
 
-								const change1NoLineage = withoutLineage(change1.change);
-								const r2NoLineage = withoutLineage(r2.change);
-								// We do not expect exact equality because r2 may have accumulated some lineage.
-								assert.deepEqual(r2NoLineage, change1NoLineage);
+								assertChangesetsEqual(
+									withoutTombstones(withoutLineage(r2.change)),
+									withoutTombstones(withoutLineage(change1.change)),
+								);
 							}
 						}
 					}));
@@ -202,6 +248,10 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
 					continue;
 				}
+				if (name1.startsWith("Return") && name2.startsWith("Return")) {
+					// These cases are malformed because changesets have inconsistent description of empty cells locations
+					continue;
+				}
 				const title = `${name1} ↷ [${name2}), undo(${name2}] => ${name1}`;
 				it(title, () =>
 					withConfig(() => {
@@ -216,8 +266,10 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 								const inv = tagChange(invert(change2), tag6);
 								const r1 = rebaseTagged(change1, change2);
 								const r2 = rebaseTagged(r1, inv);
-								const change1NoLineage = withoutLineage(change1.change);
-								assert.deepEqual(withoutLineage(r2.change), change1NoLineage);
+								assertChangesetsEqual(
+									withoutTombstones(withoutLineage(r2.change)),
+									withoutTombstones(withoutLineage(change1.change)),
+								);
 							}
 						}
 					}),
@@ -249,6 +301,10 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
 					continue;
 				}
+				if (name1.startsWith("Return") && name2.startsWith("Return")) {
+					// These cases are malformed because changesets have inconsistent description of empty cells locations
+					continue;
+				}
 				it(title, () =>
 					withConfig(() => {
 						const maxOffset = 4;
@@ -267,9 +323,9 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 								const r1 = rebaseTagged(change1, change2);
 								const r2 = rebaseTagged(r1, inverse2);
 								const r3 = rebaseTagged(r2, change2);
-								assert.deepEqual(
-									withoutLineage(r3.change),
-									withoutLineage(r1.change),
+								assertChangesetsEqual(
+									withoutTombstones(withoutLineage(r3.change)),
+									withoutTombstones(withoutLineage(r1.change)),
 								);
 							}
 						}
@@ -292,7 +348,8 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 					];
 					const actual = compose(changes);
 					const pruned = prune(actual);
-					assert.deepEqual(pruned, []);
+					const noTombstones = withoutTombstones(pruned);
+					assertChangesetsEqual(noTombstones, []);
 				}));
 		}
 	});
@@ -314,7 +371,8 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 					const changes = [inv, taggedChange];
 					const actual = compose(changes);
 					const pruned = prune(actual);
-					assert.deepEqual(pruned, []);
+					const noTombstones = withoutTombstones(pruned);
+					assertChangesetsEqual(noTombstones, []);
 				}));
 		}
 	});
@@ -376,7 +434,7 @@ describeForBothConfigs("SequenceField - Rebaser Axioms", (config) => {
 
 								const normalizedIndividual =
 									withNormalizedLineage(rebasedIndividually);
-								assert.deepEqual(normalizedComposition, normalizedIndividual);
+								assertChangesetsEqual(normalizedComposition, normalizedIndividual);
 							}),
 						);
 					}
@@ -572,7 +630,7 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 		const pruned1 = prune(change1.change);
 		const pruned2 = prune(change2.change);
 
-		return assert.deepEqual(withoutLineage(pruned1), withoutLineage(pruned2));
+		return assertChangesetsEqual(withoutLineage(pruned1), withoutLineage(pruned2));
 	},
 };
 
@@ -639,7 +697,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 			const insertB2 = rebaseTagged(insertB, inverseA);
 			const insertB3 = rebaseTagged(insertB2, insertA);
-			assert.deepEqual(withoutLineage(insertB3.change), insertB.change);
+			assertChangesetsEqual(withoutLineage(insertB3.change), insertB.change);
 		}));
 
 	it("(Insert, delete) ↷ adjacent insert", () =>
@@ -650,7 +708,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			const insertA2 = rebaseTagged(insertA, insertT);
 			const inverseA = tagRollbackInverse(invert(insertA), tag4, insertA.revision);
 			const deleteB2 = rebaseOverChanges(deleteB, [inverseA, insertT, insertA2]);
-			assert.deepEqual(deleteB2.change, deleteB.change);
+			assertChangesetsEqual(deleteB2.change, deleteB.change);
 		}));
 
 	it("Nested inserts composition", () =>
@@ -661,7 +719,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			const inverseB = tagRollbackInverse(invert(insertB), tag4, insertB.revision);
 
 			const composed = compose([inverseB, inverseA, insertA, insertB]);
-			assert.deepEqual(composed, []);
+			assertChangesetsEqual(composed, []);
 		}));
 
 	it("Nested inserts ↷ adjacent insert", () =>
@@ -674,7 +732,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			const insertB2 = rebaseTagged(insertB, inverseA);
 			const insertB3 = rebaseTagged(insertB2, insertX);
 			const insertB4 = rebaseTagged(insertB3, insertA2);
-			assert.deepEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
+			assertChangesetsEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
 		}));
 
 	it("[Delete AC, Revive AC] ↷ Insert B", () =>
@@ -689,7 +747,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			const revAC4 = rebaseTagged(revAC3, delAC2);
 			// The rebased versions of the local edits should still cancel-out
 			const actual = compose([delAC2, revAC4]);
-			assert.deepEqual(actual, []);
+			assertChangesetsEqual(actual, []);
 		}));
 
 	// See bug 4104
@@ -700,7 +758,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			const undo = tagChange(moveInverse, tag2);
 			const moveRollback = tagRollbackInverse(moveInverse, tag3, tag1);
 			const rebasedUndo = rebaseOverChanges(undo, [moveRollback, move]);
-			assert.deepEqual(rebasedUndo, undo);
+			assertChangesetsEqual(rebasedUndo.change, undo.change);
 		}));
 
 	it("delete ↷ two inverse inserts", () =>
@@ -738,8 +796,9 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 						lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
 					},
 				}),
+				Mark.tomb(tag1),
 			];
-			assert.deepEqual(cRebasedToTrunk.change, expected);
+			assertChangesetsEqual(cRebasedToTrunk.change, expected);
 		}));
 
 	it("[insert, insert] ↷ insert", () =>
@@ -751,7 +810,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			const insertB = tagChange([{ count: 1 }, Mark.insert(1, brand(0))], tag3);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, insertT, insertA2]);
 			const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
-			assert.deepEqual(insertB2.change, expected);
+			assertChangesetsEqual(insertB2.change, expected);
 		}));
 
 	it("[revive, insert] ↷ no change", () =>
@@ -771,7 +830,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 				}),
 			];
 
-			assert.deepEqual(insertB2.change, expected);
+			assertChangesetsEqual(insertB2.change, expected);
 		}));
 });
 
@@ -805,7 +864,7 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 				),
 			];
 
-			assert.deepEqual(composed, expected);
+			assertChangesetsEqual(composed, expected);
 		}));
 
 	it("[insert, insert] ↷ adjacent delete", () =>
@@ -836,7 +895,7 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 				}),
 			];
 
-			assert.deepEqual(AiTAB, expected);
+			assertChangesetsEqual(AiTAB, expected);
 		}));
 });
 
@@ -849,7 +908,7 @@ describeForBothConfigs("SequenceField - Composed sandwich rebasing", (config) =>
 			const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 			const sandwich = compose([inverseA, insertA]);
 			const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
-			assert.deepEqual(insertB2.change, insertB.change);
+			assertChangesetsEqual(insertB2.change, insertB.change);
 		}));
 });
 
@@ -869,7 +928,8 @@ describeForBothConfigs("SequenceField - Examples", (config) => {
 						lineage: [{ revision: tag2, id: brand(42), count: 1, offset: 0 }],
 					},
 				}),
+				Mark.tomb(tag2, brand(42)),
 			];
-			assert.deepEqual(redetach, expected);
+			assertChangesetsEqual(redetach, expected);
 		}));
 });
