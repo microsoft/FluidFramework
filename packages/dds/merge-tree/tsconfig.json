@@ -9,5 +9,6 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"preserveConstEnums": true,
+		"noImplicitAny": true,
 	},
 }

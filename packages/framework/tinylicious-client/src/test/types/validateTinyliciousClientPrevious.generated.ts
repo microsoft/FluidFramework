@@ -96,26 +96,14 @@ use_old_TypeAliasDeclaration_ITinyliciousAudience(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TinyliciousAudience": {"forwardCompat": false}
+* "RemovedClassDeclaration_TinyliciousAudience": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_TinyliciousAudience():
-    TypeOnly<old.TinyliciousAudience>;
-declare function use_current_ClassDeclaration_TinyliciousAudience(
-    use: TypeOnly<current.TinyliciousAudience>): void;
-use_current_ClassDeclaration_TinyliciousAudience(
-    get_old_ClassDeclaration_TinyliciousAudience());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TinyliciousAudience": {"backCompat": false}
+* "RemovedClassDeclaration_TinyliciousAudience": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_TinyliciousAudience():
-    TypeOnly<current.TinyliciousAudience>;
-declare function use_old_ClassDeclaration_TinyliciousAudience(
-    use: TypeOnly<old.TinyliciousAudience>): void;
-use_old_ClassDeclaration_TinyliciousAudience(
-    get_current_ClassDeclaration_TinyliciousAudience());
 
 /*
 * Validate forward compat by using old type in place of current type

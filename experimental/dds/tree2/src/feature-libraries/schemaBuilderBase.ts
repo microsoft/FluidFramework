@@ -14,7 +14,7 @@ import {
 	AllowedTypes,
 	TreeNodeSchema,
 	TreeFieldSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	FlexList,
 	Unenforced,
 	Any,
@@ -171,12 +171,12 @@ export class SchemaBuilderBase<
 	 */
 	public intoSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
-	): TreeSchema<NormalizeField<TSchema, TDefaultKind>> {
+	): FlexTreeSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
 		const field: NormalizeField<TSchema, TDefaultKind> = this.normalizeField(root);
 		const library = this.finalizeCommon(field);
 
-		const typed: TreeSchema<NormalizeField<TSchema, TDefaultKind>> = {
+		const typed: FlexTreeSchema<NormalizeField<TSchema, TDefaultKind>> = {
 			nodeSchema: library.nodeSchema,
 			adapters: library.adapters,
 			rootFieldSchema: field,

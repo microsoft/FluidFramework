@@ -2,7 +2,15 @@
 
 ## [3.1.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.1.0)
 
-`ISequencedDocumentMessage` properties `compression` and `expHash1` are deprecated. They have been extracted into a separate interface `ISequencedDocumentMessageExperimental` and should be used from there instead.
+### Deprecated properties on ISequencedDocumentMessage
+
+`ISequencedDocumentMessage` properties `compression` and `expHash1` are deprecated. They have been extracted into a
+separate interface `ISequencedDocumentMessageExperimental` and should be used from there instead.
+
+### Package now works properly with TypeScript's node16 moduleResolution
+
+The package now has an "exports" field in its package.json so node16 moduleResolution will work
+for both CJS and ESM.
 
 ## [3.0.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.0.0)
 

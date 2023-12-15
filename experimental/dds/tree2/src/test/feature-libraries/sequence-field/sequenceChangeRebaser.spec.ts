@@ -18,7 +18,7 @@ import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtil
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { brand } from "../../../util";
+import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
@@ -161,9 +161,10 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
 
+							const change1NoLineage = withoutLineage(change1.change);
 							const r2NoLineage = withoutLineage(r2.change);
 							// We do not expect exact equality because r2 may have accumulated some lineage.
-							assert.deepEqual(r2NoLineage, change1.change);
+							assert.deepEqual(r2NoLineage, change1NoLineage);
 						}
 					}
 				});
@@ -206,7 +207,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const inv = tagChange(invert(change2), tag6);
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
-							assert.deepEqual(withoutLineage(r2.change), change1.change);
+							const change1NoLineage = withoutLineage(change1.change);
+							assert.deepEqual(withoutLineage(r2.change), change1NoLineage);
 						}
 					}
 				});
@@ -356,20 +358,37 @@ describe("SequenceField - Rebaser Axioms", () => {
 	});
 });
 
+interface NodeState {
+	/**
+	 * Unique ID associated with the node.
+	 */
+	id: number;
+	/**
+	 * The list of intentions that have been applied to this subtree.
+	 * This is used to generate new nested changes for a node.
+	 */
+	nested: number[];
+}
+
 interface TestState {
 	/**
-	 * The current length of the sequence being edited
+	 * Represents the state of the sequence field.
 	 */
-	length: number;
+	currentState: NodeState[];
+	config: TestConfig;
+}
+
+interface TestConfig {
 	/**
-	 * The highest index that will be iterated to to generate inserts, deletes, and moves
+	 * The maximum length that the sequence should be as part of the test.
 	 */
-	maxIndex: number;
+	maxLength: number;
 	/**
 	 * An array of node counts to operate on. For instance, passing [1, 3] would generate inserts, moves, and
 	 * deletes that operate on one node at a time and then 3 nodes at a time.
 	 */
 	numNodes: number[];
+	allocator: IdAllocator;
 }
 
 type SequenceFieldTestState = FieldStateTree<TestState, TestChangeset>;
@@ -382,121 +401,153 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<SequenceFieldTestState> {
-	const { numNodes, maxIndex } = state.content;
-	const iterationCap = Math.min(maxIndex, state.content.length);
+	const { currentState, config } = state.content;
 
+	// TODO: support for undoing earlier edits
+	// TODO: fix bugs encountered when this is enabled
 	// Undo the most recent edit
-	if (state.mostRecentEdit !== undefined) {
-		assert(state.parent?.content !== undefined, "Must have parent state to undo");
-		const undoIntention = mintIntention();
-		const invertedEdit = invert(state.mostRecentEdit.changeset);
-		yield {
-			content: state.parent.content,
-			mostRecentEdit: {
-				changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
-				intention: undoIntention,
-				description: `Undo:${state.mostRecentEdit.description}`,
-			},
-			parent: state,
-		};
-	}
+	// if (state.mostRecentEdit !== undefined) {
+	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
+	// 	const undoIntention = mintIntention();
+	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	yield {
+	// 		content: state.parent.content,
+	// 		mostRecentEdit: {
+	// 			changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
+	// 			intention: undoIntention,
+	// 			description: `Undo(${state.mostRecentEdit.description})`,
+	// 		},
+	// 		parent: state,
+	// 	};
+	// }
 
-	for (const nodeCount of numNodes) {
-		for (let i = 0; i <= iterationCap; i++) {
-			// Insert nodeCount nodes
-			const insertIntention = mintIntention();
-			yield {
-				content: {
-					length: state.content.length + nodeCount,
-					maxIndex,
-					numNodes,
-				},
-				mostRecentEdit: {
-					changeset: tagChange(
-						Change.insert(i, nodeCount),
-						tagFromIntention(insertIntention),
-					),
-					intention: insertIntention,
-					description: `Insert${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
-				},
-				parent: state,
-			};
-
-			// Don't generate deletes past the length of the sequence
-			if (i + nodeCount <= state.content.length) {
-				// Delete nodeCount nodes
-				const deleteIntention = mintIntention();
+	for (const nodeCount of config.numNodes) {
+		// Insert nodeCount nodes
+		if (nodeCount + currentState.length <= config.maxLength) {
+			const inserted = makeArray(nodeCount, () => ({
+				id: config.allocator.allocate(),
+				nested: [],
+			}));
+			const insertedString = inserted.map((n) => n.id).join(",");
+			for (let i = 0; i <= currentState.length; i += 1) {
+				const insertIntention = mintIntention();
+				const newState = [...currentState];
+				newState.splice(i, 0, ...inserted);
 				yield {
 					content: {
-						length: state.content.length - nodeCount,
-						maxIndex,
-						numNodes,
+						currentState: newState,
+						config,
 					},
 					mostRecentEdit: {
 						changeset: tagChange(
-							Change.delete(i, nodeCount),
-							tagFromIntention(deleteIntention),
+							Change.insert(i, nodeCount),
+							tagFromIntention(insertIntention),
 						),
-						intention: deleteIntention,
-						description: `Delete${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}At${i}`,
+						intention: insertIntention,
+						description: `Add(${insertedString}@${i})`,
 					},
 					parent: state,
 				};
 			}
+		}
 
-			// Only generate moves when we're moving less than the length of the whole sequence
-			if (state.content.length > nodeCount) {
-				// MoveIn nodeCount nodes
+		const maxDetachIndex = currentState.length - nodeCount;
+
+		// Delete nodeCount nodes
+		for (let iSrc = 0; iSrc <= maxDetachIndex; iSrc += 1) {
+			const stateWithoutDetached = [...currentState];
+			const detached = stateWithoutDetached.splice(iSrc, nodeCount);
+			const detachedString = detached.map((n) => n.id).join(",");
+			const deleteIntention = mintIntention();
+			yield {
+				content: {
+					currentState: stateWithoutDetached,
+					config,
+				},
+				mostRecentEdit: {
+					changeset: tagChange(
+						Change.delete(iSrc, nodeCount),
+						tagFromIntention(deleteIntention),
+					),
+					intention: deleteIntention,
+					description: `Del(${detachedString})`,
+				},
+				parent: state,
+			};
+
+			// Move nodeCount nodes
+			for (let iDst = 0; iDst <= currentState.length; iDst += 1) {
 				const moveInIntention = mintIntention();
+				const newState = [...stateWithoutDetached];
+				newState.splice(iDst - iDst < iSrc ? 0 : nodeCount, 0, ...detached);
 				yield {
-					content: state.content,
+					content: {
+						currentState: newState,
+						config,
+					},
 					mostRecentEdit: {
 						changeset: tagChange(
-							Change.move(1, nodeCount, i),
+							Change.move(iSrc, nodeCount, iDst),
 							tagFromIntention(moveInIntention),
 						),
 						intention: moveInIntention,
-						description: `MoveIn${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}From1To${i}`,
-					},
-					parent: state,
-				};
-
-				// MoveOut nodeCount nodes
-				const moveOutIntention = mintIntention();
-				yield {
-					content: state.content,
-					mostRecentEdit: {
-						changeset: tagChange(
-							Change.move(i, nodeCount, 1),
-							tagFromIntention(moveOutIntention),
-						),
-						intention: moveOutIntention,
-						description: `MoveOut${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}From${i}To1`,
+						description: `Mov(${detachedString})To${iDst}`,
 					},
 					parent: state,
 				};
 			}
 		}
 	}
+
+	// Make nested changes to a node
+	for (let i = 0; i < currentState.length; i += 1) {
+		const modifyIntention = mintIntention();
+		const nestedChange = config.allocator.allocate();
+		const newState = [...currentState];
+		const node = currentState[i];
+		newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
+		yield {
+			content: {
+				currentState: newState,
+				config,
+			},
+			mostRecentEdit: {
+				changeset: tagChange(
+					Change.modify(i, TestChange.mint(node.nested, nestedChange)),
+					tagFromIntention(modifyIntention),
+				),
+				intention: modifyIntention,
+				description: `Mod(${nestedChange}on${node.id})`,
+			},
+			parent: state,
+		};
+	}
 };
 
-describe.skip("SequenceField - State-based Rebaser Axioms", () => {
+describe("SequenceField - State-based Rebaser Axioms", () => {
+	const allocator = idAllocatorFromMaxId();
+	const startingLength = 2;
+	const startingState: NodeState[] = makeArray(startingLength, () => ({
+		id: allocator.allocate(),
+		nested: [],
+	}));
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1, 3], maxIndex: 2 } }],
+		[
+			{
+				content: {
+					currentState: startingState,
+					config: { maxLength: 5, numNodes: [2], allocator },
+				},
+			},
+		],
 		generateChildStates,
 		{
 			rebase,
 			invert,
-			compose: (changes, metadata) => compose(changes),
+			compose: (changes, metadata) => compose(changes, metadata),
 			rebaseComposed: (metadata, change, ...baseChanges) => {
-				const composedChanges = compose(baseChanges);
-				return rebase(change, makeAnonChange(composedChanges));
+				const composedChanges = compose(baseChanges, metadata);
+				return rebase(change, makeAnonChange(composedChanges), metadata);
 			},
 			assertEqual: (change1, change2) => {
 				if (change1 === undefined && change2 === undefined) {
@@ -507,14 +558,16 @@ describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 					return false;
 				}
 
-				return assert.deepEqual(
-					withoutLineage(change1.change),
-					withoutLineage(change2.change),
-				);
+				const pruned1 = prune(change1.change);
+				const pruned2 = prune(change2.change);
+
+				return assert.deepEqual(withoutLineage(pruned1), withoutLineage(pruned2));
 			},
 		},
 		{
-			groupSubSuites: true,
+			groupSubSuites: false,
+			numberOfEditsToVerifyAssociativity: 3,
+			skipRebaseOverCompose: false,
 		},
 	);
 });
@@ -633,6 +686,22 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
 		assert.deepEqual(insertB2.change, expected);
 	});
+
+	it("[revive, insert] ↷ no change", () => {
+		const reviveA = tagChange([Mark.revive(2, { revision: tag1, localId: brand(0) })], tag2);
+		const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+		const inverseA = tagRollbackInverse(invert(reviveA), tag4, tag2);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, reviveA]);
+		const expected = [
+			Mark.skip(1),
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 2, offset: 1 }],
+			}),
+		];
+
+		assert.deepEqual(insertB2.change, expected);
+	});
 });
 
 describe("SequenceField - Sandwich composing", () => {
@@ -664,6 +733,36 @@ describe("SequenceField - Sandwich composing", () => {
 
 		assert.deepEqual(composed, expected);
 	});
+
+	it("[insert, insert] ↷ adjacent delete", () => {
+		const deleteT = tagChange([Mark.delete(1, brand(0))], tag1);
+		const insertA = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
+		const insertA2 = rebaseTagged(insertA, deleteT);
+		const inverseA = tagRollbackInverse(invert(insertA), tag4, tag2);
+		const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, deleteT, insertA2]);
+		const TAB = compose([deleteT, insertA2, insertB2]);
+		const AiTAB = compose(
+			[inverseA, makeAnonChange(TAB)],
+			[
+				{ revision: tag4, rollbackOf: tag2 },
+				{ revision: tag1 },
+				{ revision: tag2 },
+				{ revision: tag3 },
+			],
+		);
+
+		const expected = [
+			Mark.delete(1, { revision: tag1, localId: brand(0) }),
+			Mark.insert(1, {
+				revision: tag3,
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
+
+		assert.deepEqual(AiTAB, expected);
+	});
 });
 
 describe("SequenceField - Composed sandwich rebasing", () => {
@@ -674,5 +773,24 @@ describe("SequenceField - Composed sandwich rebasing", () => {
 		const sandwich = compose([inverseA, insertA]);
 		const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
 		assert.deepEqual(insertB2.change, insertB.change);
+	});
+});
+
+describe("SequenceField - Examples", () => {
+	it("a detach can end up with a redetachId that contains lineage", () => {
+		const revive = tagChange([Mark.revive(1, { revision: tag1, localId: brand(0) })], tag3);
+		const concurrentRemove = tagChange([Mark.delete(1, brand(42))], tag2);
+		const rebasedRevive = rebaseTagged(revive, concurrentRemove);
+		const redetach = invert(rebasedRevive);
+		const expected = [
+			Mark.delete(1, brand(0), {
+				redetachId: {
+					revision: tag1,
+					localId: brand(0),
+					lineage: [{ revision: tag2, id: brand(42), count: 1, offset: 0 }],
+				},
+			}),
+		];
+		assert.deepEqual(redetach, expected);
 	});
 });

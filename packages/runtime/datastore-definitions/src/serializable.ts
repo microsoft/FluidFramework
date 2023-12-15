@@ -24,4 +24,4 @@ import { Jsonable } from "./jsonable";
  * ```
  * @alpha
  */
-export type Serializable<T = any> = Jsonable<T, IFluidHandle>;
+export type Serializable<T> = Jsonable<T, IFluidHandle>;

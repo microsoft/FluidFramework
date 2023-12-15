@@ -1,9 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "../../../common/build/build-common/api-extractor-base.json",
-	"dtsRollup": {
-		"enabled": true
-	},
 	"messages": {
 		"extractorMessageReporting": {
 			// TODO: Fix violations and remove this rule override

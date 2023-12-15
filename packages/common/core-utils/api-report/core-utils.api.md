@@ -4,10 +4,10 @@
 
 ```ts
 
-// @internal
+// @alpha
 export function assert(condition: boolean, message: string | number): asserts condition;
 
-// @internal
+// @alpha
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
 // @alpha
@@ -29,8 +29,8 @@ export class Heap<T> {
     // (undocumented)
     comp: IComparer<T>;
     count(): number;
-    get(): T;
-    peek(): IHeapNode<T>;
+    get(): T | undefined;
+    peek(): IHeapNode<T> | undefined;
     remove(node: IHeapNode<T>): void;
     update(node: IHeapNode<T>): void;
 }
@@ -74,7 +74,7 @@ export class Lazy<T> {
     get value(): T;
 }
 
-// @internal
+// @alpha
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;

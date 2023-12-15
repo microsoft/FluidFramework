@@ -26,14 +26,13 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
-	IIdCompressor,
-	IIdCompressorCore,
 } from "@fluidframework/runtime-definitions";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
- * @internal
+ * @alpha
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;

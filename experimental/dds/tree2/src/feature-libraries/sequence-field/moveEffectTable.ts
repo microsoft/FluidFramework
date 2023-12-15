@@ -4,12 +4,12 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionTag } from "../../core";
+import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types";
 import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
-import { MoveMarkEffect } from "./helperTypes";
+import { MoveMarkEffect, tryGetVestigialEndpoint } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -21,7 +21,7 @@ export interface MoveEffect<T> {
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.
 	 */
-	modifyAfter?: T;
+	modifyAfter?: TaggedChange<T>;
 
 	/**
 	 * A mark which should be moved to the same position as this mark.
@@ -53,7 +53,7 @@ export interface MovePartition<TNodeChange> {
 	// Undefined means the partition is the same size as the input.
 	count?: number;
 	replaceWith?: Mark<TNodeChange>[];
-	modifyAfter?: TNodeChange;
+	modifyAfter?: TaggedChange<TNodeChange>;
 }
 
 export function setMoveEffect<T>(
@@ -95,6 +95,17 @@ export function isMoveOut(effect: MarkEffect): effect is MoveOut {
 
 export function isMoveIn(effect: MarkEffect): effect is MoveIn {
 	return effect.type === "MoveIn";
+}
+
+export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
+	switch (effect.type) {
+		case "MoveIn":
+			return effect;
+		case "AttachAndDetach":
+			return getMoveIn(effect.attach);
+		default:
+			return undefined;
+	}
 }
 
 function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
@@ -139,17 +150,19 @@ function applyMoveEffectsToDest(
 }
 
 function applyMoveEffectsToSource<T>(
-	mark: CellMark<MoveOut, T>,
+	mark: Mark<T>,
+	endpoint: ChangeAtomId,
+	updateFinalEndpoint: boolean,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T> {
 	let nodeChange = mark.changes;
 	const modifyAfter = getModifyAfter(
 		effects,
-		mark.revision ?? revision,
-		mark.id,
+		endpoint.revision ?? revision,
+		endpoint.localId,
 		mark.count,
 		consumeEffect,
 	);
@@ -162,7 +175,9 @@ function applyMoveEffectsToSource<T>(
 	}
 
 	const newMark = cloneMark(mark);
-	applySourceEffects(newMark, mark.count, revision, effects, consumeEffect);
+	if (updateFinalEndpoint && isMoveOut(newMark)) {
+		applySourceEffects(newMark, mark.count, revision, effects, consumeEffect);
+	}
 
 	if (nodeChange !== undefined) {
 		newMark.changes = nodeChange;
@@ -215,220 +230,224 @@ export function applyMoveEffectsToMark<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T>[] {
-	if (isAttachAndDetachEffect(mark)) {
-		if (isMoveIn(mark.attach)) {
-			if (isMoveOut(mark.detach)) {
-				// Move effects should not be applied to intermediate move locations.
-				return [mark];
-			}
-			const attachRevision = mark.attach.revision ?? revision;
-			const effect = getMoveEffect(
-				effects,
-				CrossFieldTarget.Destination,
-				attachRevision,
-				mark.attach.id,
-				mark.count,
-			);
+	return applyMoveEffectsToActiveMarks<T>(
+		applyMoveEffectsToVestigialMarks<T>(
+			[mark],
+			effects,
+			revision,
+			consumeEffect,
+			composeChildren,
+		),
+		revision,
+		effects,
+		consumeEffect,
+		composeChildren,
+	);
+}
 
-			if (effect.length < mark.count) {
-				const [firstMark, secondMark] = splitMark(mark, effect.length);
-				const updatedAttach = firstMark.attach as MoveIn;
-				applyMoveEffectsToDest(
-					updatedAttach,
-					firstMark.count,
-					attachRevision,
-					effects,
-					consumeEffect,
-				);
-				return [
-					{
-						...firstMark,
-						attach: updatedAttach,
-					},
-					...applyMoveEffectsToMark(
-						secondMark,
-						revision,
-						effects,
-						consumeEffect,
-						composeChildren,
-					),
-				];
-			} else {
-				const updatedAttach = { ...mark.attach };
-				applyMoveEffectsToDest(
-					updatedAttach,
-					mark.count,
-					attachRevision,
-					effects,
-					consumeEffect,
-				);
-				return [
-					{
-						...mark,
-						attach: updatedAttach,
-					},
-				];
-			}
-		}
-
-		if (isMoveOut(mark.detach)) {
-			const detachRevision = mark.detach.revision ?? revision;
+function applyMoveEffectsToVestigialMarks<T>(
+	inputQueue: Mark<T>[],
+	effects: MoveEffectTable<T>,
+	revision: RevisionTag | undefined,
+	consumeEffect: boolean,
+	composeChildren: ((a: T | undefined, b: TaggedChange<T>) => T | undefined) | undefined,
+): Mark<T>[] {
+	const outputQueue: Mark<T>[] = [];
+	let mark = inputQueue.shift();
+	while (mark !== undefined) {
+		const vestige = tryGetVestigialEndpoint(mark);
+		if (vestige !== undefined) {
 			const effect = getMoveEffect(
 				effects,
 				CrossFieldTarget.Source,
-				detachRevision,
-				mark.detach.id,
+				vestige.revision ?? revision,
+				vestige.localId,
 				mark.count,
 			);
-
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
-				applySourceEffects(
-					firstMark.detach as MoveOut,
-					firstMark.count,
-					detachRevision,
+				mark = firstMark;
+				inputQueue.unshift(secondMark);
+			}
+
+			outputQueue.push(
+				applyMoveEffectsToSource(
+					mark,
+					vestige,
+					false,
+					revision,
 					effects,
 					consumeEffect,
-				);
+					composeChildren,
+				),
+			);
+		} else {
+			outputQueue.push(mark);
+		}
+		mark = inputQueue.shift();
+	}
+	return outputQueue;
+}
 
-				const newFirstChanges = getModifyAfter(
-					effects,
-					detachRevision,
-					firstMark.detach.id,
-					firstMark.count,
-					consumeEffect,
-				);
-
-				if (newFirstChanges !== undefined) {
-					assert(
-						composeChildren !== undefined,
-						0x813 /* Must provide a change composer if modifying moves */,
+function applyMoveEffectsToActiveMarks<T>(
+	inputQueue: Mark<T>[],
+	revision: RevisionTag | undefined,
+	effects: MoveEffectTable<T>,
+	consumeEffect: boolean,
+	composeChildren: ((a: T | undefined, b: TaggedChange<T>) => T | undefined) | undefined,
+) {
+	const outputQueue: Mark<T>[] = [];
+	let mark = inputQueue.shift();
+	while (mark !== undefined) {
+		if (isAttachAndDetachEffect(mark)) {
+			if (isMoveIn(mark.attach)) {
+				if (isMoveOut(mark.detach)) {
+					// Move effects should not be applied to intermediate move locations.
+					outputQueue.push(mark);
+				} else {
+					const attachRevision = mark.attach.revision ?? revision;
+					const effect = getMoveEffect(
+						effects,
+						CrossFieldTarget.Destination,
+						attachRevision,
+						mark.attach.id,
+						mark.count,
 					);
-					firstMark.changes = composeChildren(firstMark.changes, newFirstChanges);
-				}
 
-				return [
-					firstMark,
-					...applyMoveEffectsToMark(
-						secondMark,
-						revision,
+					let updatedAttach: MoveIn;
+					if (effect.length < mark.count) {
+						const [firstMark, secondMark] = splitMark(mark, effect.length);
+						mark = firstMark;
+						updatedAttach = firstMark.attach as MoveIn;
+						inputQueue.unshift(secondMark);
+					} else {
+						updatedAttach = { ...mark.attach };
+					}
+					applyMoveEffectsToDest(
+						updatedAttach,
+						mark.count,
+						attachRevision,
 						effects,
 						consumeEffect,
-						composeChildren,
-					),
-				];
-			}
-
-			const newMark = cloneMark(mark);
-			applySourceEffects(
-				newMark.detach as MoveOut,
-				mark.count,
-				detachRevision,
-				effects,
-				consumeEffect,
-			);
-
-			const newChanges = getModifyAfter(
-				effects,
-				detachRevision,
-				mark.detach.id,
-				mark.count,
-				consumeEffect,
-			);
-
-			if (newChanges !== undefined) {
-				assert(
-					composeChildren !== undefined,
-					0x814 /* Must provide a change composer if modifying moves */,
-				);
-				newMark.changes = composeChildren(mark.changes, newChanges);
-			}
-
-			return [newMark];
-		}
-	} else if (isMoveMark(mark)) {
-		const type = mark.type;
-		switch (type) {
-			case "MoveOut": {
+					);
+					outputQueue.push({
+						...mark,
+						attach: updatedAttach,
+					});
+				}
+			} else if (isMoveOut(mark.detach)) {
+				const detachRevision = mark.detach.revision ?? revision;
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Source,
-					mark.revision ?? revision,
-					mark.id,
+					detachRevision,
+					mark.detach.id,
 					mark.count,
 				);
 
 				if (effect.length < mark.count) {
 					const [firstMark, secondMark] = splitMark(mark, effect.length);
-					return [
-						applyMoveEffectsToSource(
-							firstMark,
-							revision,
-							effects,
-							consumeEffect,
-							composeChildren,
-						),
-						...applyMoveEffectsToMark(
-							secondMark,
-							revision,
-							effects,
-							consumeEffect,
-							composeChildren,
-						),
-					];
+					mark = firstMark;
+					inputQueue.unshift(secondMark);
 				}
 
-				return [
-					applyMoveEffectsToSource(
-						mark,
-						revision,
-						effects,
-						consumeEffect,
-						composeChildren,
-					),
-				];
-			}
-			case "MoveIn": {
-				const effect = getMoveEffect(
-					effects,
-					CrossFieldTarget.Destination,
-					mark.revision ?? revision,
-					mark.id,
+				const newMark = cloneMark(mark);
+				applySourceEffects(
+					newMark.detach as MoveOut,
 					mark.count,
+					detachRevision,
+					effects,
+					consumeEffect,
 				);
 
-				if (effect.length < mark.count) {
-					const [firstMark, secondMark] = splitMark(mark, effect.length);
+				const newChanges = getModifyAfter(
+					effects,
+					detachRevision,
+					mark.detach.id,
+					mark.count,
+					consumeEffect,
+				);
+
+				if (newChanges !== undefined) {
+					assert(
+						composeChildren !== undefined,
+						0x814 /* Must provide a change composer if modifying moves */,
+					);
+					newMark.changes = composeChildren(mark.changes, newChanges);
+				}
+
+				outputQueue.push(newMark);
+			} else {
+				outputQueue.push(mark);
+			}
+		} else if (isMoveMark(mark)) {
+			const type = mark.type;
+			switch (type) {
+				case "MoveOut": {
+					const effect = getMoveEffect(
+						effects,
+						CrossFieldTarget.Source,
+						mark.revision ?? revision,
+						mark.id,
+						mark.count,
+					);
+
+					if (effect.length < mark.count) {
+						const [firstMark, secondMark] = splitMark(mark, effect.length);
+						mark = firstMark;
+						inputQueue.unshift(secondMark);
+					}
+
+					outputQueue.push(
+						applyMoveEffectsToSource(
+							mark,
+							{ revision: mark.revision, localId: mark.id },
+							true,
+							revision,
+							effects,
+							consumeEffect,
+							composeChildren,
+						),
+					);
+					break;
+				}
+				case "MoveIn": {
+					const effect = getMoveEffect(
+						effects,
+						CrossFieldTarget.Destination,
+						mark.revision ?? revision,
+						mark.id,
+						mark.count,
+					);
+
+					if (effect.length < mark.count) {
+						const [firstMark, secondMark] = splitMark(mark, effect.length);
+						mark = firstMark;
+						inputQueue.unshift(secondMark);
+					}
+
+					const newMark = cloneMark(mark);
 					applyMoveEffectsToDest(
-						firstMark,
-						firstMark.count,
+						newMark as CellMark<MoveIn, T>,
+						mark.count,
 						revision,
 						effects,
 						consumeEffect,
 					);
-					return [
-						firstMark,
-						...applyMoveEffectsToMark(
-							secondMark,
-							revision,
-							effects,
-							consumeEffect,
-							composeChildren,
-						),
-					];
+					outputQueue.push(newMark);
+					break;
 				}
-
-				const newMark = cloneMark(mark);
-				applyMoveEffectsToDest(newMark, mark.count, revision, effects, consumeEffect);
-				return [newMark];
+				default:
+					unreachableCase(type);
 			}
-			default:
-				unreachableCase(type);
+		} else {
+			outputQueue.push(mark);
 		}
+		mark = inputQueue.shift();
 	}
-	return [mark];
+	return outputQueue;
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.
@@ -441,7 +460,7 @@ export function getModifyAfter<T>(
 	id: MoveId,
 	count: number,
 	consumeEffect: boolean = true,
-): T | undefined {
+): TaggedChange<T> | undefined {
 	const target = CrossFieldTarget.Source;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 

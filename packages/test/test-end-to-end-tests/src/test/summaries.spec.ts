@@ -14,7 +14,6 @@ import {
 	ISummaryRuntimeOptions,
 	DefaultSummaryConfiguration,
 	SummaryCollection,
-	TEST_requestSummarizer,
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -83,34 +82,15 @@ async function createMainContainerAndSummarizer(
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
-	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
-	await waitForSummarizerConnection(summarizer);
+	const { summarizer } = await createSummarizer(
+		provider,
+		container,
+		containerConfig ?? testContainerConfig,
+	);
 	return {
 		mainContainer: container,
 		summarizer,
 	};
-}
-
-async function createSummarizerFromContainer(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	containerConfig?: ITestContainerConfig,
-): Promise<ISummarizer> {
-	const loader = provider.makeTestLoader(containerConfig ?? testContainerConfig);
-	const absoluteUrl = await container.getAbsoluteUrl("");
-	if (absoluteUrl === undefined) {
-		throw new Error("URL could not be resolved");
-	}
-	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
-	await waitForSummarizerConnection(summarizer);
-	return summarizer;
-}
-
-async function waitForSummarizerConnection(summarizer: ISummarizer): Promise<void> {
-	const runtime = (summarizer as any).runtime as ContainerRuntime;
-	if (!runtime.connected) {
-		return new Promise((resolve) => runtime.once("connected", () => resolve()));
-	}
 }
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
@@ -559,7 +539,11 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		await flushPromises();
 
 		// Create new summarizer
-		const summarizer2 = await createSummarizerFromContainer(provider, mainContainer);
+		const { summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			mainContainer,
+			testContainerConfig,
+		);
 
 		// Second summary should be discarded
 		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
@@ -578,7 +562,11 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		await flushPromises();
 
 		// Create new summarizer
-		const summarizer3 = await createSummarizerFromContainer(provider, mainContainer);
+		const { summarizer: summarizer3 } = await createSummarizer(
+			provider,
+			mainContainer,
+			testContainerConfig,
+		);
 
 		// Summarize third time
 		const result3: ISummarizeResults = summarizer3.summarizeOnDemand({ reason: "test3" });
@@ -630,7 +618,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		);
 		summarizer.close();
 
-		const summarizer2 = await createSummarizerFromContainer(
+		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			configForSingleCommitSummary,
@@ -676,7 +664,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		await flushPromises();
 
 		// Create new summarizer
-		const summarizer2 = await createSummarizerFromContainer(
+		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			configForSingleCommitSummary,
@@ -701,7 +689,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		await flushPromises();
 
 		// Create new summarizer
-		const summarizer3 = await createSummarizerFromContainer(
+		const { summarizer: summarizer3 } = await createSummarizer(
 			provider,
 			mainContainer,
 			configForSingleCommitSummary,

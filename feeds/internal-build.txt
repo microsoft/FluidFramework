@@ -12,14 +12,15 @@
 @fluid-internal/test-app-insights-logger
 @fluidframework/mocha-test-setup
 @fluid-experimental/odsp-client
+@fluid-experimental/odsp-end-to-end-tests
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
+@fluidframework/id-compressor
 @fluidframework/datastore-definitions
 @fluidframework/datastore
 @fluidframework/container-runtime-definitions
 @fluidframework/container-runtime
-@fluidframework/location-redirection-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/view-interfaces
@@ -33,7 +34,7 @@
 fluid-framework
 @fluidframework/dds-interceptions
 @fluidframework/data-object-base
-@fluid-experimental/app-insights-logger
+@fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
 @fluidframework/agent-scheduler

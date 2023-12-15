@@ -27,7 +27,7 @@ export function getGitMode(value: SummaryObject): string;
 // @internal
 export function getGitType(value: SummaryObject): "blob" | "tree";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProtocolHandler {
     // (undocumented)
     readonly attributes: IDocumentAttributes;
@@ -55,7 +55,7 @@ export interface IQuorumSnapshot {
     values: QuorumProposalsSnapshot["values"];
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IScribeProtocolState {
     // (undocumented)
     members: [string, ISequencedClient][];

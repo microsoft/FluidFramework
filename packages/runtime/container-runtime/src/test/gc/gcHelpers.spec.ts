@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import { GCFeatureMatrix } from "../../gc";
 // eslint-disable-next-line import/no-internal-modules
-import { shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "../../gc/gcHelpers";
+import { shouldAllowGcSweep } from "../../gc/gcHelpers";
 
 describe("Garbage Collection Helpers Tests", () => {
-	describe("shouldAllowGcTombstoneEnforcement", () => {
+	describe("[TEMP] shouldAllowGcTombstoneEnforcement - Show behavior change as it's replaced by shouldAllowGcSweep", () => {
 		const testCases: {
 			persisted: number | undefined;
 			current: number | undefined;
@@ -48,7 +48,7 @@ describe("Garbage Collection Helpers Tests", () => {
 		];
 		testCases.forEach(({ persisted, current, expectedShouldAllowValue }) => {
 			it(`persisted=${persisted}, current=${current}`, () => {
-				const shouldAllow = shouldAllowGcTombstoneEnforcement(persisted, current);
+				const shouldAllow = shouldAllowGcSweep({ tombstoneGeneration: persisted }, current);
 				assert.equal(shouldAllow, expectedShouldAllowValue);
 			});
 		});
@@ -63,12 +63,12 @@ describe("Garbage Collection Helpers Tests", () => {
 			{
 				persisted: {},
 				current: undefined,
-				expectedShouldAllowValue: false,
+				expectedShouldAllowValue: true,
 			},
 			{
-				persisted: { sweepGeneration: 1 },
+				persisted: { gcGeneration: 1 },
 				current: undefined,
-				expectedShouldAllowValue: false,
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: {},
@@ -82,26 +82,31 @@ describe("Garbage Collection Helpers Tests", () => {
 			},
 			{
 				persisted: { tombstoneGeneration: 1 },
-				current: 0,
-				expectedShouldAllowValue: false,
-			},
-			{
-				persisted: { sweepGeneration: 0 },
-				current: 0,
-				expectedShouldAllowValue: true,
-			},
-			{
-				persisted: { sweepGeneration: 1 },
 				current: 1,
 				expectedShouldAllowValue: true,
 			},
 			{
-				persisted: { sweepGeneration: 1 },
+				persisted: { tombstoneGeneration: 1 },
+				current: 0,
+				expectedShouldAllowValue: false,
+			},
+			{
+				persisted: { gcGeneration: 0 },
+				current: 0,
+				expectedShouldAllowValue: true,
+			},
+			{
+				persisted: { gcGeneration: 1 },
+				current: 1,
+				expectedShouldAllowValue: true,
+			},
+			{
+				persisted: { gcGeneration: 1 },
 				current: 2,
 				expectedShouldAllowValue: false,
 			},
 			{
-				persisted: { sweepGeneration: 2 },
+				persisted: { gcGeneration: 2 },
 				current: 1,
 				expectedShouldAllowValue: false,
 			},

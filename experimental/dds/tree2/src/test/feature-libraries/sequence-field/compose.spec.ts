@@ -14,6 +14,7 @@ import {
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionInfo,
+	TaggedChange,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -972,7 +973,7 @@ describe("SequenceField - Compose", () => {
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 				{ count: 1 },
 				Mark.moveOut(1, brand(0), {
-					detachIdOverride: { revision: tag1, localId: brand(0) },
+					redetachId: { revision: tag1, localId: brand(0) },
 				}),
 			],
 			tag3,
@@ -1103,17 +1104,559 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(composed, expected);
 	});
 
-	it("same revision - no overlap", () => {
-		const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 3 }];
-		const cellA = Mark.modify("A", { revision: tag1, localId: brand(1), adjacentCells });
-		const cellC = Mark.modify("C", { revision: tag1, localId: brand(3), adjacentCells });
+	it("move-in+delete ○ modify", () => {
+		const changes = TestChange.mint([], 42);
+		const [mo, mi] = Mark.move(1, { revision: tag1, localId: brand(1) });
+		const attachDetach = Mark.attachAndDetach(
+			mi,
+			Mark.delete(1, { revision: tag2, localId: brand(2) }),
+		);
+		const base = makeAnonChange([mo, attachDetach]);
+		const modify = tagChange(
+			[Mark.modify(changes, { revision: tag2, localId: brand(2) })],
+			tag3,
+		);
+		const actual = shallowCompose([base, modify]);
+		const expected = [{ ...mo, changes }, attachDetach];
+		assert.deepEqual(actual, expected);
+	});
 
-		const composedAC = shallowCompose([tagChange([cellA], tag2), tagChange([cellC], tag3)]);
-		const composedCA = shallowCompose([tagChange([cellC], tag3), tagChange([cellA], tag2)]);
+	it("effect management for [move, modify, move]", () => {
+		const changes = TestChange.mint([], 42);
+		const [mo, mi] = Mark.move(1, brand(0));
+		const move = tagChange([mo, mi], tag1);
+		const modify = tagChange([Mark.modify(changes)], tag2);
+		const moveBack = tagChange([mi, mo], tag3);
+		const childComposer = (childChanges: TaggedChange<TestChange>[]): TestChange => {
+			assert.equal(childChanges.length, 1);
+			assert.deepEqual(childChanges[0].change, changes);
+			assert.equal(childChanges[0].revision, tag2);
+			return TestChange.compose(childChanges);
+		};
+		compose([move, modify, moveBack], undefined, childComposer);
+	});
 
-		const expected = [cellA, cellC];
+	describe("empty cell ordering", () => {
+		describe("cells named in the same earlier revision", () => {
+			it("A ○ A", () => {
+				const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 1 }];
+				const markA = Mark.modify(TestChange.mint([], 1), {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells,
+				});
+				const markB = Mark.modify(TestChange.mint([1], 2), {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells,
+				});
 
-		assert.deepEqual(composedAC, expected);
-		assert.deepEqual(composedCA, expected);
+				const changeX = tagChange([markA], tag2);
+				const changeY = tagChange([markB], tag3);
+				const composedAB = compose([changeX, changeY]);
+
+				const expected = [
+					Mark.modify(TestChange.mint([], [1, 2]), {
+						revision: tag1,
+						localId: brand(1),
+						adjacentCells,
+					}),
+				];
+				assert.deepEqual(composedAB, expected);
+			});
+
+			it("A ○ B", () => {
+				const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 2 }];
+				const markA = Mark.modify("A", {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells,
+				});
+				const markB = Mark.modify("B", {
+					revision: tag1,
+					localId: brand(2),
+					adjacentCells,
+				});
+
+				const changeA = tagChange([markA], tag2);
+				const changeB = tagChange([markB], tag3);
+				const composedAB = shallowCompose([changeA, changeB]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedAB, expected);
+			});
+
+			it("B ○ A", () => {
+				const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 2 }];
+				const markA = Mark.modify("A", {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells,
+				});
+				const markB = Mark.modify("B", {
+					revision: tag1,
+					localId: brand(2),
+					adjacentCells,
+				});
+
+				const changeA = tagChange([markA], tag2);
+				const changeB = tagChange([markB], tag3);
+				const composedBA = shallowCompose([changeB, changeA]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedBA, expected);
+			});
+		});
+
+		describe("cells named in different earlier revisions", () => {
+			it("older A ○ newer B", () => {
+				const markA = Mark.modify("A", {
+					revision: tag1,
+					localId: brand(1),
+					lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
+				});
+				const markB = Mark.modify("B", {
+					revision: tag2,
+					localId: brand(2),
+				});
+
+				const changeX = tagChange([markA], tag3);
+				const changeY = tagChange([markB], tag4);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+
+			it("newer A ○ older B", () => {
+				const markA = Mark.modify("A", {
+					revision: tag2,
+					localId: brand(1),
+				});
+				const markB = Mark.modify("B", {
+					revision: tag1,
+					localId: brand(2),
+					lineage: [{ revision: tag2, id: brand(1), count: 1, offset: 1 }],
+				});
+
+				const changeX = tagChange([markA], tag3);
+				const changeY = tagChange([markB], tag4);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+
+			it("older B ○ newer A", () => {
+				const markB = Mark.modify("B", {
+					revision: tag1,
+					localId: brand(2),
+					lineage: [{ revision: tag2, id: brand(1), count: 1, offset: 1 }],
+				});
+				const markA = Mark.modify("A", {
+					revision: tag2,
+					localId: brand(1),
+				});
+
+				const changeX = tagChange([markB], tag3);
+				const changeY = tagChange([markA], tag4);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+
+			it("newer B ○ older A", () => {
+				const markB = Mark.modify("B", {
+					revision: tag2,
+					localId: brand(2),
+				});
+				const markA = Mark.modify("A", {
+					revision: tag1,
+					localId: brand(1),
+					lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
+				});
+
+				const changeX = tagChange([markB], tag3);
+				const changeY = tagChange([markA], tag4);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+		});
+
+		describe("cell for later change named in base", () => {
+			it("ABC ○ B", () => {
+				const changeX = tagChange(
+					[
+						Mark.modify("A", { revision: tag1, localId: brand(1) }),
+						Mark.delete(
+							1,
+							{ revision: tag2, localId: brand(2) },
+							{ cellId: { revision: tag1, localId: brand(2) } },
+						),
+						Mark.modify("C", { revision: tag1, localId: brand(3) }),
+					],
+					tag2,
+				);
+				const markB = Mark.modify("B", {
+					revision: tag2,
+					localId: brand(2),
+					adjacentCells: [{ id: brand(2), count: 1 }],
+				});
+
+				const changeY = tagChange([markB], tag3);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [
+					Mark.modify("A", { revision: tag1, localId: brand(1) }),
+					Mark.delete(
+						1,
+						{ revision: tag2, localId: brand(2) },
+						{ cellId: { revision: tag1, localId: brand(2) }, changes: "B" },
+					),
+					Mark.modify("C", { revision: tag1, localId: brand(3) }),
+				];
+				assert.deepEqual(composedXY, expected);
+			});
+		});
+
+		describe("both cells named in their own change", () => {
+			it("B ○ A - no lineage", () => {
+				const cellA = Mark.insert(1, {
+					revision: tag1,
+					localId: brand(1),
+				});
+				const cellB = Mark.insert(1, {
+					revision: tag2,
+					localId: brand(2),
+				});
+
+				const composed = shallowCompose(
+					[makeAnonChange([cellB]), makeAnonChange([cellA])],
+					[{ revision: tag2 }, { revision: tag2 }],
+				);
+
+				const expected = [cellA, cellB];
+				assert.deepEqual(composed, expected);
+			});
+
+			// TODO: make this pass
+			it.skip("A ○ C - with lineage for B on both marks", () => {
+				const cellA = Mark.delete(
+					1,
+					{
+						revision: tag3,
+						localId: brand(1),
+					},
+					{
+						cellId: {
+							revision: tag1,
+							localId: brand(1),
+							lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
+						},
+					},
+				);
+				const cellC = Mark.insert(1, {
+					revision: tag4,
+					localId: brand(3),
+					lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 1 }],
+				});
+
+				const composed = shallowCompose(
+					[makeAnonChange([cellA]), makeAnonChange([cellC])],
+					[{ revision: tag3 }, { revision: tag4 }],
+				);
+
+				const expected = [cellA, cellC];
+				assert.deepEqual(composed, expected);
+			});
+
+			it("C ○ A - with lineage for B on both marks", () => {
+				const cellA = Mark.insert(1, {
+					revision: tag4,
+					localId: brand(1),
+					lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
+				});
+				const cellC = Mark.delete(
+					1,
+					{
+						revision: tag3,
+						localId: brand(1),
+					},
+					{
+						cellId: {
+							revision: tag1,
+							localId: brand(1),
+							lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
+						},
+					},
+				);
+
+				const composed = shallowCompose(
+					[makeAnonChange([cellC]), makeAnonChange([cellA])],
+					[{ revision: tag3 }, { revision: tag4 }],
+				);
+
+				const expected = [cellA, cellC];
+				assert.deepEqual(composed, expected);
+			});
+
+			// TODO: make this pass
+			it.skip("A ○ C - with lineage for B on C", () => {
+				const cellA = Mark.delete(1, { revision: tag2, localId: brand(1) });
+				const cellC = Mark.insert(1, {
+					revision: tag3,
+					localId: brand(3),
+					lineage: [{ revision: tag1, id: brand(2), count: 1, offset: 1 }],
+				});
+
+				const composed = shallowCompose(
+					[makeAnonChange([cellA]), makeAnonChange([cellC])],
+					[{ revision: tag2 }, { revision: tag3 }],
+				);
+
+				const expected = [cellA, cellC];
+				assert.deepEqual(composed, expected);
+			});
+
+			it("C ○ A - with lineage for B on C", () => {
+				const cellA = Mark.modify("A", { revision: tag2, localId: brand(1) });
+				const cellC = Mark.insert(1, {
+					revision: tag3,
+					localId: brand(3),
+					lineage: [{ revision: tag1, id: brand(2), count: 1, offset: 1 }],
+				});
+
+				const composed = shallowCompose(
+					[makeAnonChange([cellC]), makeAnonChange([cellA])],
+					[{ revision: tag2 }, { revision: tag3 }],
+				);
+
+				const expected = [cellA, cellC];
+				assert.deepEqual(composed, expected);
+			});
+		});
+
+		describe("both cells named in earlier change", () => {
+			// This is the only test that makes sense because the earlier change must include marks
+			// for all the cells that it names.
+			it("ABC ○ A", () => {
+				const markB = Mark.delete(
+					3,
+					{ revision: tag2, localId: brand(1) },
+					{ cellId: { revision: tag1, localId: brand(1) } },
+				);
+				const markA = Mark.modify("B", {
+					revision: tag2,
+					localId: brand(2),
+					adjacentCells: [{ id: brand(1), count: 3 }],
+				});
+
+				const changeX = tagChange([markB], tag2);
+				const changeY = tagChange([markA], tag3);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [
+					Mark.delete(
+						1,
+						{ revision: tag2, localId: brand(1) },
+						{ cellId: { revision: tag1, localId: brand(1) } },
+					),
+					Mark.delete(
+						1,
+						{ revision: tag2, localId: brand(2) },
+						{ cellId: { revision: tag1, localId: brand(2) }, changes: "B" },
+					),
+					Mark.delete(
+						1,
+						{ revision: tag2, localId: brand(3) },
+						{ cellId: { revision: tag1, localId: brand(3) } },
+					),
+				];
+				assert.deepEqual(composedXY, expected);
+			});
+		});
+
+		describe("cell for earlier change named earlier - cell for later change named in later change", () => {
+			it.skip("A ○ B", () => {
+				const markA = Mark.modify("A", {
+					revision: tag1,
+					localId: brand(1),
+				});
+				const markB = Mark.insert(1, {
+					revision: tag3,
+					localId: brand(2),
+					// tiebreak: Tiebreak.Right,
+				});
+
+				const changeX = tagChange([markA], tag2);
+				const changeY = tagChange([markB], tag3);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+			it("B ○ A", () => {
+				const markB = Mark.modify("B", {
+					revision: tag1,
+					localId: brand(2),
+				});
+				const markA = Mark.insert(1, {
+					revision: tag3,
+					localId: brand(1),
+				});
+
+				const changeX = tagChange([markB], tag2);
+				const changeY = tagChange([markA], tag3);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+		});
+
+		describe("cell for earlier change named earlier - cell for later change named after earlier change", () => {
+			describe("cell for later change named through removal", () => {
+				it("A ○ B", () => {
+					const markA = Mark.modify("A", {
+						revision: tag1,
+						localId: brand(1),
+					});
+					const markNamesB = Mark.delete(1, {
+						revision: tag3,
+						localId: brand(2),
+					});
+					const markB = Mark.modify("B", {
+						revision: tag3,
+						localId: brand(2),
+					});
+
+					const change2 = tagChange([markA], tag2);
+					const change3 = tagChange([markNamesB], tag3);
+					const change4 = tagChange([markB], tag4);
+					const composedXY = shallowCompose([change2, change3, change4]);
+
+					const expected = [markA, { ...markNamesB, changes: "B" }];
+					assert.deepEqual(composedXY, expected);
+				});
+
+				it("B ○ A", () => {
+					const markB = Mark.modify("B", {
+						revision: tag1,
+						localId: brand(2),
+					});
+					const markNamesA = Mark.delete(1, {
+						revision: tag3,
+						localId: brand(1),
+					});
+					const markA = Mark.modify("A", {
+						revision: tag3,
+						localId: brand(1),
+					});
+
+					const change2 = tagChange([Mark.skip(1), markB], tag2);
+					const change3 = tagChange([markNamesA], tag3);
+					const change4 = tagChange([markA], tag4);
+					const composedXY = shallowCompose([change2, change3, change4]);
+
+					const expected = [{ ...markNamesA, changes: "A" }, markB];
+					assert.deepEqual(composedXY, expected);
+				});
+			});
+
+			describe("cell for later change named through insert", () => {
+				// This case requires Tiebreak.Right to be supported.
+				it.skip("A ○ B", () => {
+					const markA = Mark.modify("A", {
+						revision: tag1,
+						localId: brand(1),
+					});
+					const markNamesB = Mark.attachAndDetach(
+						Mark.insert(1, {
+							revision: tag3,
+							localId: brand(2),
+							// tiebreak: Tiebreak.Right,
+						}),
+						Mark.delete(1, { revision: tag3, localId: brand(2) }),
+					);
+					const markB = Mark.modify("B", {
+						revision: tag3,
+						localId: brand(2),
+					});
+
+					const change2 = tagChange([markA], tag2);
+					const change3 = tagChange([markNamesB], tag3);
+					const change4 = tagChange([markB], tag4);
+					const composedXY = shallowCompose([change2, change3, change4]);
+
+					const expected = [markA, { ...markNamesB, changes: "B" }];
+					assert.deepEqual(composedXY, expected);
+				});
+
+				it("B ○ A", () => {
+					const markB = Mark.modify("B", {
+						revision: tag1,
+						localId: brand(2),
+					});
+					const markNamesA = Mark.attachAndDetach(
+						Mark.insert(1, { revision: tag3, localId: brand(1) }),
+						Mark.delete(1, { revision: tag3, localId: brand(1) }),
+					);
+					const markA = Mark.modify("A", {
+						revision: tag3,
+						localId: brand(1),
+					});
+
+					const change2 = tagChange([markB], tag2);
+					const change3 = tagChange([markNamesA], tag3);
+					const change4 = tagChange([markA], tag4);
+					const composedXY = shallowCompose([change2, change3, change4]);
+
+					const expected = [{ ...markNamesA, changes: "A" }, markB];
+					assert.deepEqual(composedXY, expected);
+				});
+			});
+		});
+
+		describe("cell for earlier change named in earlier change - cell for later change named before earlier change", () => {
+			it("A ○ B", () => {
+				const markA = Mark.attachAndDetach(
+					Mark.insert(1, { revision: tag2, localId: brand(1) }),
+					Mark.delete(1, { revision: tag2, localId: brand(1) }),
+				);
+				const markB = Mark.modify("B", {
+					localId: brand(2),
+					revision: tag1,
+					lineage: [{ revision: tag2, id: brand(1), count: 1, offset: 1 }],
+				});
+
+				const changeX = tagChange([markA], tag2);
+				const changeY = tagChange([markB], tag3);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+			it("B ○ A", () => {
+				const markB = Mark.attachAndDetach(
+					Mark.insert(1, { revision: tag2, localId: brand(2) }),
+					Mark.delete(1, { revision: tag2, localId: brand(2) }),
+				);
+				const markA = Mark.modify("A", {
+					localId: brand(1),
+					revision: tag1,
+					lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
+				});
+
+				const changeX = tagChange([markB], tag2);
+				const changeY = tagChange([markA], tag3);
+				const composedXY = shallowCompose([changeX, changeY]);
+
+				const expected = [markA, markB];
+				assert.deepEqual(composedXY, expected);
+			});
+		});
 	});
 });

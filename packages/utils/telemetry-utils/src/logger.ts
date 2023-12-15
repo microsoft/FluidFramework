@@ -60,19 +60,19 @@ export enum TelemetryDataTag {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
@@ -375,7 +375,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
- * @internal
+ * @alpha
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;

@@ -17,6 +17,7 @@
                   "trunk": [
                     {
                       "change": {
+                        "maxId": 1,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
@@ -30,17 +31,6 @@
                                       "fieldKey": "root 1 child",
                                       "fieldKind": "Optional",
                                       "change": {
-                                        "b": [
-                                          [
-                                            {
-                                              "localId": 1
-                                            },
-                                            {
-                                              "type": "com.fluidframework.leaf.number",
-                                              "value": 40
-                                            }
-                                          ]
-                                        ],
                                         "m": [
                                           [
                                             {
@@ -51,7 +41,7 @@
                                           ]
                                         ],
                                         "d": {
-                                          "localId": 2
+                                          "localId": 0
                                         }
                                       }
                                     }
@@ -60,7 +50,41 @@
                               }
                             ]
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              1,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.number",
+                                  true,
+                                  40,
+                                  []
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000006",
                       "sequenceNumber": 4,
@@ -68,33 +92,16 @@
                     },
                     {
                       "change": {
+                        "maxId": 3,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "b": [
-                                [
-                                  {
-                                    "localId": 4
-                                  },
-                                  {
-                                    "type": "optional-field.TestNode",
-                                    "fields": {
-                                      "root 2 child": [
-                                        {
-                                          "type": "com.fluidframework.leaf.number",
-                                          "value": 41
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              ],
                               "m": [
                                 [
                                   {
-                                    "localId": 4
+                                    "localId": 3
                                   },
                                   0,
                                   true
@@ -102,14 +109,55 @@
                                 [
                                   0,
                                   {
-                                    "localId": 5
+                                    "localId": 2
                                   },
                                   false
                                 ]
                               ]
                             }
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              3,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "optional-field.TestNode",
+                                  false,
+                                  [
+                                    "root 2 child",
+                                    [
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      41,
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000007",
                       "sequenceNumber": 5,
@@ -117,25 +165,16 @@
                     },
                     {
                       "change": {
+                        "maxId": 5,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "b": [
-                                [
-                                  {
-                                    "localId": 4
-                                  },
-                                  {
-                                    "type": "optional-field.TestNode"
-                                  }
-                                ]
-                              ],
                               "m": [
                                 [
                                   {
-                                    "localId": 4
+                                    "localId": 3
                                   },
                                   0,
                                   true
@@ -143,7 +182,7 @@
                                 [
                                   0,
                                   {
-                                    "localId": 5
+                                    "localId": 2
                                   },
                                   false
                                 ]
@@ -151,8 +190,8 @@
                               "c": [
                                 [
                                   {
-                                    "revision": "beefbeef-beef-4000-8000-000000000007",
-                                    "localId": 5
+                                    "localId": 2,
+                                    "revision": "beefbeef-beef-4000-8000-000000000007"
                                   },
                                   {
                                     "fieldChanges": [
@@ -160,17 +199,6 @@
                                         "fieldKey": "root 1 child",
                                         "fieldKind": "Optional",
                                         "change": {
-                                          "b": [
-                                            [
-                                              {
-                                                "localId": 1
-                                              },
-                                              {
-                                                "type": "com.fluidframework.leaf.number",
-                                                "value": 42
-                                              }
-                                            ]
-                                          ],
                                           "m": [
                                             [
                                               {
@@ -182,7 +210,7 @@
                                             [
                                               0,
                                               {
-                                                "localId": 2
+                                                "localId": 0
                                               },
                                               false
                                             ]
@@ -194,7 +222,7 @@
                                 ],
                                 [
                                   {
-                                    "localId": 4
+                                    "localId": 3
                                   },
                                   {
                                     "fieldChanges": [
@@ -202,28 +230,17 @@
                                         "fieldKey": "root 3 child",
                                         "fieldKind": "Optional",
                                         "change": {
-                                          "b": [
-                                            [
-                                              {
-                                                "localId": 7
-                                              },
-                                              {
-                                                "type": "com.fluidframework.leaf.number",
-                                                "value": 43
-                                              }
-                                            ]
-                                          ],
                                           "m": [
                                             [
                                               {
-                                                "localId": 7
+                                                "localId": 5
                                               },
                                               0,
                                               true
                                             ]
                                           ],
                                           "d": {
-                                            "localId": 8
+                                            "localId": 4
                                           }
                                         }
                                       }
@@ -233,7 +250,66 @@
                               ]
                             }
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              1,
+                              0
+                            ],
+                            [
+                              3,
+                              1
+                            ],
+                            [
+                              5,
+                              2
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.number",
+                                  true,
+                                  42,
+                                  []
+                                ]
+                              ],
+                              [
+                                1,
+                                [
+                                  "optional-field.TestNode",
+                                  false,
+                                  []
+                                ]
+                              ],
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.number",
+                                  true,
+                                  43,
+                                  []
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-00000000000b",
                       "sequenceNumber": 6,
@@ -241,6 +317,7 @@
                     },
                     {
                       "change": {
+                        "maxId": 5,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
@@ -255,17 +332,6 @@
                                         "fieldKey": "root 3 child",
                                         "fieldKind": "Optional",
                                         "change": {
-                                          "b": [
-                                            [
-                                              {
-                                                "localId": 1
-                                              },
-                                              {
-                                                "type": "com.fluidframework.leaf.number",
-                                                "value": 44
-                                              }
-                                            ]
-                                          ],
                                           "m": [
                                             [
                                               {
@@ -277,7 +343,7 @@
                                             [
                                               0,
                                               {
-                                                "localId": 2
+                                                "localId": 0
                                               },
                                               false
                                             ]
@@ -290,7 +356,41 @@
                               ]
                             }
                           }
-                        ]
+                        ],
+                        "builds": {
+                          "builds": [
+                            [
+                              1,
+                              0
+                            ]
+                          ],
+                          "trees": {
+                            "version": 1,
+                            "identifiers": [],
+                            "shapes": [
+                              {
+                                "c": {
+                                  "extraFields": 1,
+                                  "fields": []
+                                }
+                              },
+                              {
+                                "a": 0
+                              }
+                            ],
+                            "data": [
+                              [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.number",
+                                  true,
+                                  44,
+                                  []
+                                ]
+                              ]
+                            ]
+                          }
+                        }
                       },
                       "revision": "beefbeef-beef-4000-8000-00000000000c",
                       "sequenceNumber": 7,
@@ -384,272 +484,136 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
+                  "keys": [
+                    "rootFieldKey",
+                    "repair-6",
+                    "repair-8",
+                    "repair-9",
+                    "repair-10",
+                    "repair-11",
+                    "repair-12",
+                    "repair-14",
+                    "repair-15"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "optional-field.TestNode",
+                          false,
                           [
-                            "optional-field.TestNode",
-                            false,
+                            "root 3 child",
                             [
-                              "root 3 child",
-                              [
-                                "com.fluidframework.leaf.number",
-                                true,
-                                44,
-                                []
-                              ]
+                              "com.fluidframework.leaf.number",
+                              true,
+                              44,
+                              []
                             ]
                           ]
                         ]
-                      }
-                    ],
-                    [
-                      "repair-6",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            43,
-                            []
-                          ]
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          43,
+                          []
                         ]
-                      }
-                    ],
-                    [
-                      "repair-7",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "optional-field.TestNode",
-                            false,
-                            []
-                          ]
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          42,
+                          []
                         ]
-                      }
-                    ],
-                    [
-                      "repair-8",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            43,
-                            []
-                          ]
+                      ],
+                      [
+                        1,
+                        [
+                          "optional-field.TestNode",
+                          false,
+                          []
                         ]
-                      }
-                    ],
-                    [
-                      "repair-9",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            44,
-                            []
-                          ]
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          43,
+                          []
                         ]
-                      }
-                    ],
-                    [
-                      "repair-11",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            42,
-                            []
-                          ]
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          44,
+                          []
                         ]
-                      }
-                    ],
-                    [
-                      "repair-12",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            40,
-                            []
-                          ]
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          40,
+                          []
                         ]
-                      }
-                    ],
-                    [
-                      "repair-14",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
+                      ],
+                      [
+                        1,
+                        [
+                          "optional-field.TestNode",
+                          false,
                           [
-                            "optional-field.TestNode",
-                            false,
+                            "root 1 child",
                             [
-                              "root 1 child",
-                              [
-                                "com.fluidframework.leaf.number",
-                                true,
-                                42,
-                                []
-                              ]
+                              "com.fluidframework.leaf.number",
+                              true,
+                              42,
+                              []
                             ]
                           ]
                         ]
-                      }
-                    ],
-                    [
-                      "repair-15",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
+                      ],
+                      [
+                        1,
+                        [
+                          "optional-field.TestNode",
+                          false,
                           [
-                            "optional-field.TestNode",
-                            false,
+                            "root 2 child",
                             [
-                              "root 2 child",
-                              [
-                                "com.fluidframework.leaf.number",
-                                true,
-                                41,
-                                []
-                              ]
+                              "com.fluidframework.leaf.number",
+                              true,
+                              41,
+                              []
                             ]
                           ]
                         ]
-                      }
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -669,42 +633,42 @@
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      4,
-                      7
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000b",
-                      7,
+                      1,
                       8
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      1,
-                      11
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000b",
-                      2,
-                      12
+                      3,
+                      9
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
                       5,
+                      10
+                    ],
+                    [
+                      "beefbeef-beef-4000-8000-00000000000b",
+                      0,
+                      12
+                    ],
+                    [
+                      "beefbeef-beef-4000-8000-00000000000b",
+                      2,
                       15
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
-                      2,
+                      0,
                       6
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
                       1,
-                      9
+                      11
                     ],
                     [
                       "beefbeef-beef-4000-8000-000000000007",
-                      5,
+                      2,
                       14
                     ]
                   ],
