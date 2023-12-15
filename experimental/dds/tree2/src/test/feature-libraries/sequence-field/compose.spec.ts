@@ -17,6 +17,8 @@ import {
 	TaggedChange,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { sequenceConfig } from "../../../feature-libraries/sequence-field/config";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
@@ -29,7 +31,6 @@ import {
 	skipOnLineageMethod,
 	withOrderingMethod,
 } from "./utils";
-import { sequenceConfig } from "../../../feature-libraries/sequence-field/config";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();

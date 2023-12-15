@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator, fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import {
