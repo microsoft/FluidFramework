@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TreeConfiguration, SchemaFactory } from "@fluid-experimental/tree2";
+import { TreeConfiguration, SchemaFactory } from "@fluidframework/tree";
 
 const sb = new SchemaFactory("fc1db2e8-0a00-11ee-be56-0242ac120002");
 

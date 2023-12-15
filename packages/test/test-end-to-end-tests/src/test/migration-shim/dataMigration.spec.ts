@@ -23,7 +23,7 @@ import {
 	type TreeView,
 	TreeConfiguration,
 	SchemaFactory,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,

@@ -44,12 +44,12 @@
 		"@fluid-example/bubblebench-common": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

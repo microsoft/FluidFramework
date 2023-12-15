@@ -66,7 +66,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -79,7 +78,8 @@
 		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~"
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0",

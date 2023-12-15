@@ -28,7 +28,6 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
@@ -37,6 +36,7 @@
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"source-map-loader": "^2.0.0"
 	},
 	"devDependencies": {

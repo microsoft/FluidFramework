@@ -34,8 +34,8 @@
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-properties": "workspace:~",
-		"@fluid-experimental/tree2": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~"
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
