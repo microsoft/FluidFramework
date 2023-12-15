@@ -114,52 +114,7 @@
                               }
                             }
                           }
-                        ],
-                        "builds": {
-                          "builds": [
-                            [
-                              0,
-                              0
-                            ],
-                            [
-                              1,
-                              1
-                            ]
-                          ],
-                          "trees": {
-                            "version": 1,
-                            "identifiers": [],
-                            "shapes": [
-                              {
-                                "c": {
-                                  "extraFields": 1,
-                                  "fields": []
-                                }
-                              },
-                              {
-                                "a": 0
-                              }
-                            ],
-                            "data": [
-                              [
-                                1,
-                                [
-                                  "has-sequence-map.SeqMap",
-                                  false,
-                                  []
-                                ]
-                              ],
-                              [
-                                1,
-                                [
-                                  "has-sequence-map.SeqMap",
-                                  false,
-                                  []
-                                ]
-                              ]
-                            ]
-                          }
-                        }
+                        ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000003",
                       "sequenceNumber": -9007199254740990,
@@ -211,50 +166,41 @@
                                   ]
                                 }
                               ],
-                              "builds": [
-                                [
-                                  0,
-                                  {
-                                    "version": 1,
-                                    "identifiers": [],
-                                    "shapes": [
-                                      {
-                                        "c": {
-                                          "extraFields": 1,
-                                          "fields": []
-                                        }
-                                      },
-                                      {
-                                        "a": 0
-                                      }
-                                    ],
-                                    "data": [
-                                      1,
-                                      [
-                                        "has-sequence-map.SeqMap",
-                                        false,
-                                        []
-                                      ]
-                                    ]
-                                  }
+                              "builds": {
+                                "builds": [
+                                  [
+                                    0,
+                                    0
+                                  ],
+                                  [
+                                    1,
+                                    1
+                                  ]
                                 ],
-                                [
-                                  1,
-                                  {
-                                    "version": 1,
-                                    "identifiers": [],
-                                    "shapes": [
-                                      {
-                                        "c": {
-                                          "extraFields": 1,
-                                          "fields": []
-                                        }
-                                      },
-                                      {
-                                        "a": 0
+                                "trees": {
+                                  "version": 1,
+                                  "identifiers": [],
+                                  "shapes": [
+                                    {
+                                      "c": {
+                                        "extraFields": 1,
+                                        "fields": []
                                       }
+                                    },
+                                    {
+                                      "a": 0
+                                    }
+                                  ],
+                                  "data": [
+                                    [
+                                      1,
+                                      [
+                                        "has-sequence-map.SeqMap",
+                                        false,
+                                        []
+                                      ]
                                     ],
-                                    "data": [
+                                    [
                                       1,
                                       [
                                         "has-sequence-map.SeqMap",
@@ -262,9 +208,9 @@
                                         []
                                       ]
                                     ]
-                                  }
-                                ]
-                              ]
+                                  ]
+                                }
+                              }
                             }
                           }
                         ]

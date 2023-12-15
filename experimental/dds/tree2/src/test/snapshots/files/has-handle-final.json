@@ -120,65 +120,51 @@
                       "change": {
                         "changes": [
                           {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Optional",
-                            "change": {
-                              "m": [
-                                [
-                                  {
-                                    "localId": 1
-                                  },
-                                  0,
-                                  true
-                                ]
-                              ],
-                              "d": {
-                                "localId": 0
-                              }
-                            }
-                          }
-                        ],
-                        "builds": {
-                          "builds": [
-                            [
-                              1,
-                              0
-                            ]
-                          ],
-                          "trees": {
-                            "version": 1,
-                            "identifiers": [],
-                            "shapes": [
-                              {
-                                "c": {
-                                  "extraFields": 1,
-                                  "fields": []
-                                }
-                              },
-                              {
-                                "a": 0
-                              }
-                            ],
-                            "data": [
-                              [
-                                1,
-                                [
-                                  1,
-                                  {
-                                    "version": 1,
-                                    "identifiers": [],
-                                    "shapes": [
-                                      {
-                                        "c": {
-                                          "extraFields": 1,
-                                          "fields": []
-                                        }
-                                      },
-                                      {
-                                        "a": 0
-                                      }
+                            "data": {
+                              "maxId": 1,
+                              "changes": [
+                                {
+                                  "fieldKey": "rootFieldKey",
+                                  "fieldKind": "Optional",
+                                  "change": {
+                                    "m": [
+                                      [
+                                        {
+                                          "localId": 1
+                                        },
+                                        0,
+                                        true
+                                      ]
                                     ],
-                                    "data": [
+                                    "d": {
+                                      "localId": 0
+                                    }
+                                  }
+                                }
+                              ],
+                              "builds": {
+                                "builds": [
+                                  [
+                                    1,
+                                    0
+                                  ]
+                                ],
+                                "trees": {
+                                  "version": 1,
+                                  "identifiers": [],
+                                  "shapes": [
+                                    {
+                                      "c": {
+                                        "extraFields": 1,
+                                        "fields": []
+                                      }
+                                    },
+                                    {
+                                      "a": 0
+                                    }
+                                  ],
+                                  "data": [
+                                    [
                                       1,
                                       [
                                         "com.fluidframework.leaf.handle",
@@ -190,12 +176,12 @@
                                         []
                                       ]
                                     ]
-                                  }
-                                ]
-                              ]
-                            ]
+                                  ]
+                                }
+                              }
+                            }
                           }
-                        }
+                        ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000005",
                       "sequenceNumber": -9007199254740989,

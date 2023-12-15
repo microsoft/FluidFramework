@@ -86,73 +86,9 @@
                                   "kind": "Sequence"
                                 }
                               }
-                            ]
+                            }
                           }
-                        ],
-                        "builds": {
-                          "builds": [
-                            [
-                              0,
-                              0
-                            ]
-                          ],
-                          "trees": {
-                            "version": 1,
-                            "identifiers": [],
-                            "shapes": [
-                              {
-                                "c": {
-                                  "extraFields": 1,
-                                  "fields": []
-                                }
-                              },
-                              {
-                                "a": 0
-                              }
-                            ],
-                            "data": [
-                              [
-                                1,
-                                [
-                                  "Node",
-                                  false,
-                                  [
-                                    "foo",
-                                    [
-                                      "Node",
-                                      true,
-                                      "a",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "b",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "c",
-                                      []
-                                    ],
-                                    "bar",
-                                    [
-                                      "Node",
-                                      true,
-                                      "d",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "e",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "f",
-                                      []
-                                    ]
-                                  ]
-                                ]
-                              ]
-                            ]
-                          }
-                        }
+                        ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000003",
                       "sequenceNumber": 1,
@@ -183,24 +119,29 @@
                                   ]
                                 }
                               ],
-                              "builds": [
-                                [
-                                  0,
-                                  {
-                                    "version": 1,
-                                    "identifiers": [],
-                                    "shapes": [
-                                      {
-                                        "c": {
-                                          "extraFields": 1,
-                                          "fields": []
-                                        }
-                                      },
-                                      {
-                                        "a": 0
+                              "builds": {
+                                "builds": [
+                                  [
+                                    0,
+                                    0
+                                  ]
+                                ],
+                                "trees": {
+                                  "version": 1,
+                                  "identifiers": [],
+                                  "shapes": [
+                                    {
+                                      "c": {
+                                        "extraFields": 1,
+                                        "fields": []
                                       }
-                                    ],
-                                    "data": [
+                                    },
+                                    {
+                                      "a": 0
+                                    }
+                                  ],
+                                  "data": [
+                                    [
                                       1,
                                       [
                                         "Node",
@@ -239,9 +180,9 @@
                                         ]
                                       ]
                                     ]
-                                  }
-                                ]
-                              ]
+                                  ]
+                                }
+                              }
                             }
                           }
                         ]
