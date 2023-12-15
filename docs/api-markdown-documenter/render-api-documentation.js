@@ -21,31 +21,17 @@ const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
-async function renderApiDocumentation(version) {
-	const apiReportsDirectoryPath = path.resolve(
-		__dirname,
-		"..",
-		"_api-extractor-temp",
-		version,
-		"_build",
-	);
-
-	// TODO: remove check for 2.0 and just set apiDocsDirectoryPath to include version.
-	// currently publishing to base apis directory until 2.0 release
-	const apiDocsDirectoryPath = (version === '2.0') ? 
-		path.resolve(__dirname, "..", "content", "docs", "apis") :
-		path.resolve(__dirname, "..", "content", "docs", "apis", version);
-
+async function renderApiDocumentation(inputDir, outputDir, version) {
 	// Delete existing documentation output
 	console.log("Removing existing generated API docs...");
-	await fs.ensureDir(apiDocsDirectoryPath);
-	await fs.emptyDir(apiDocsDirectoryPath);
+	await fs.ensureDir(outputDir);
+	await fs.emptyDir(outputDir);
 
 	// Process API reports
 	console.log("Loading API model...");
 	console.group();
 
-	const apiModel = await loadModel(apiReportsDirectoryPath);
+	const apiModel = await loadModel(inputDir);
 
 	console.groupEnd();
 
@@ -129,7 +115,7 @@ async function renderApiDocumentation(version) {
 				throw error;
 			}
 
-			let filePath = path.join(apiDocsDirectoryPath, `${document.documentPath}.md`);
+			let filePath = path.join(outputDir, `${document.documentPath}.md`);
 
 			try {
 				// Hugo uses a special file-naming syntax to represent documents with "child" documents in the same directory.
