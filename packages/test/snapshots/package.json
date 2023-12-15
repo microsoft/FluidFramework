@@ -31,8 +31,8 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --experimental-worker --ignore \"dist/test/generate/*\" dist/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:new": "mocha --experimental-worker dist/test/generate/new.spec.*js --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:update": "mocha --experimental-worker dist/test/generate/update.spec.*js --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:new": "mocha --experimental-worker \"dist/test/generate/new.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:update": "mocha --experimental-worker \"dist/test/generate/update.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"tsc": "tsc"
 	},
 	"c8": {
