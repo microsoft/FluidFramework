@@ -63,14 +63,16 @@ export function skipOnLineageMethod(title: string, fn: () => void): void {
 	}
 }
 
-export function onBothConfigs(fn: () => void): void {
-	for (const method of [CellOrderingMethod.Lineage, CellOrderingMethod.Tombstone]) {
-		describe(`${method}-based cell ordering`, () => {
-			const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
-			mutableConfig.cellOrdering = method;
-			fn();
-		});
-	}
+export function onBothConfigs(title: string, fn: () => void): void {
+	describe(title, () => {
+		for (const method of [CellOrderingMethod.Lineage, CellOrderingMethod.Tombstone]) {
+			describe(`${method}-based cell ordering`, () => {
+				const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
+				mutableConfig.cellOrdering = method;
+				fn();
+			});
+		}
+	});
 }
 
 export function composeNoVerify(
