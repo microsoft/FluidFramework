@@ -28,13 +28,20 @@ import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId, Mutable } fr
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 // eslint-disable-next-line import/no-internal-modules
-import { isTombstone } from "../../../feature-libraries/sequence-field/utils";
+import { isRedetach } from "../../../feature-libraries/sequence-field/rebase";
+import {
+	isAttachAndDetachEffect,
+	isTombstone,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/utils";
 import {
 	CellOrderingMethod,
 	SequenceConfig,
 	sequenceConfig,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/config";
+// eslint-disable-next-line import/no-internal-modules
+import { Detach } from "../../../feature-libraries/sequence-field";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { TestChangeset } from "./testEdits";
@@ -105,7 +112,12 @@ export function withOrderingMethod(
 	const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
 	mutableConfig.cellOrdering = method;
 	try {
-		fn(sequenceConfig);
+		// It's important that return a new object here rather `sequenceConfig` because `fn` may keep a reference to it
+		// (e.g., a lambda's closure) while it may be mutated between the time that reference it taken and the time the
+		// config is read.
+		// Most notably, this is the case when using `describeForBothConfigs` which mutates `sequenceConfig` but does
+		// not run the tests within it immediately.
+		fn({ ...sequenceConfig });
 	} finally {
 		mutableConfig.cellOrdering = priorMethod;
 	}
@@ -266,10 +278,12 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 }
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
+	const cleanChange = { ...change, change: purgeUnusedCellOrderingInfo(change.change) };
+	deepFreeze(cleanChange);
 	const table = SF.newCrossFieldTable();
-	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
+	const revisionMetadata = defaultRevisionMetadataFromChanges([cleanChange]);
 	let inverted = SF.invert(
-		change,
+		cleanChange,
 		TestChange.invert,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
@@ -282,7 +296,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		table.srcQueries.clear();
 		table.dstQueries.clear();
 		inverted = SF.invert(
-			change,
+			cleanChange,
 			TestChange.invert,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
@@ -331,15 +345,19 @@ export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>
 export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	const factory = new SF.MarkListFactory<T>();
 	for (const mark of changeset) {
-		if (mark.cellId?.lineage === undefined && mark.cellId?.adjacentCells === undefined) {
-			factory.push(mark);
-		} else {
-			const cloned = SF.cloneMark(mark);
-			assert(cloned.cellId !== undefined, "Should have cell ID");
+		const cloned = SF.cloneMark(mark);
+		if (cloned.cellId !== undefined) {
 			delete cloned.cellId.lineage;
 			delete cloned.cellId.adjacentCells;
-			factory.push(cloned);
 		}
+		if (isRedetach(cloned)) {
+			const detach = isAttachAndDetachEffect(cloned) ? cloned.detach : (cloned as Detach);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			delete detach.redetachId!.lineage;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			delete detach.redetachId!.adjacentCells;
+		}
+		factory.push(cloned);
 	}
 
 	return factory.list;

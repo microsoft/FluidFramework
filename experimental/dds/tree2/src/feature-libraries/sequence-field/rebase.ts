@@ -236,7 +236,7 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 	return factory.list;
 }
 
-function isRedetach(effect: MarkEffect): boolean {
+export function isRedetach(effect: MarkEffect): boolean {
 	switch (effect.type) {
 		case "Delete":
 		case "MoveOut":

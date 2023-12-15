@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -15,13 +14,16 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { CellId } from "../../../feature-libraries/sequence-field";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
-import { invert as invertChange, describeForBothConfigs, withOrderingMethod } from "./utils";
+import {
+	invert as invertChange,
+	describeForBothConfigs,
+	withOrderingMethod,
+	assertChangesetsEqual,
+} from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 function invert(change: TestChangeset, tag?: RevisionTag): TestChangeset {
-	deepFreeze(change);
 	return invertChange(tagChange(change, tag ?? tag1));
 }
 
@@ -30,10 +32,8 @@ const tag2: RevisionTag = mintRevisionTag();
 
 const childChange1 = TestChange.mint([0], 1);
 const childChange2 = TestChange.mint([1], 2);
-const childChange3 = TestChange.mint([2], 3);
 const inverseChildChange1 = TestChange.invert(childChange1);
 const inverseChildChange2 = TestChange.invert(childChange2);
-const inverseChildChange3 = TestChange.invert(childChange3);
 
 describeForBothConfigs("SequenceField - Invert", (config) => {
 	const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
@@ -42,7 +42,15 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input: TestChangeset = [];
 			const expected: TestChangeset = [];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
+		}));
+
+	it("tombstones", () =>
+		withConfig(() => {
+			const input: TestChangeset = [Mark.tomb(tag1, brand(0))];
+			const expected: TestChangeset = [Mark.tomb(tag1, brand(0))];
+			const actual = invert(input);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("child changes", () =>
@@ -50,7 +58,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input = Change.modify(0, childChange1);
 			const expected = Change.modify(0, inverseChildChange1);
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("child changes of removed content", () =>
@@ -59,7 +67,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input = Change.modifyDetached(0, childChange1, detachEvent);
 			const actual = invert(input);
 			const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("insert => delete", () =>
@@ -67,7 +75,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input = Change.insert(0, 2);
 			const expected = Change.delete(0, 2);
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("insert & modify => modify & delete", () =>
@@ -75,7 +83,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input = [Mark.insert(1, brand(0), { changes: childChange1 })];
 			const expected = [Mark.delete(1, brand(0), { changes: inverseChildChange1 })];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("delete => revive", () =>
@@ -93,7 +101,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				Mark.revive(1, { revision: tag1, localId: brand(1) }),
 			];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("delete => revive (with rollback ID)", () =>
@@ -102,7 +110,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input = tagRollbackInverse([Mark.delete(2, brand(0))], tag1, tag2);
 			const expected = [Mark.revive(2, detachId)];
 			const actual = invertChange(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("delete => revive (with override ID)", () =>
@@ -111,11 +119,11 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input: TestChangeset = [Mark.delete(2, brand(5), { redetachId })];
 			const expected = [Mark.revive(2, redetachId, { id: brand(5) })];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("active revive => delete", () =>
-		withConfig(() => {
+		withOrderingMethod(config.cellOrdering, () => {
 			const cellId: CellId = {
 				revision: tag1,
 				localId: brand(0),
@@ -124,7 +132,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input = Change.revive(0, 2, cellId);
 			const expected: TestChangeset = [Mark.delete(2, brand(0), { redetachId: cellId })];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("move => return", () =>
@@ -142,7 +150,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				Mark.moveOut(1, brand(1)),
 			];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("move backward => return", () =>
@@ -160,7 +168,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				Mark.returnTo(2, brand(0), { revision: tag1, localId: brand(0) }),
 			];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("return => return", () =>
@@ -185,7 +193,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				}),
 			];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("pin live nodes => skip", () =>
@@ -193,7 +201,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const input = [Mark.pin(1, brand(0), { changes: childChange1 })];
 			const expected: TestChangeset = [Mark.modify(inverseChildChange1)];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("pin removed nodes => remove", () =>
@@ -207,7 +215,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				}),
 			];
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
+			assertChangesetsEqual(actual, expected);
 		}));
 
 	it("insert & delete => revive & delete", () =>
@@ -226,7 +234,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				}),
 			];
 
-			assert.deepEqual(inverse, expected);
+			assertChangesetsEqual(inverse, expected);
 		}));
 
 	it("revive & delete => revive & delete", () =>
@@ -248,7 +256,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 					redetachId: startId,
 				}),
 			];
-			assert.deepEqual(inverse, expected);
+			assertChangesetsEqual(inverse, expected);
 		}));
 
 	it("Insert and move => move and delete", () =>
@@ -271,7 +279,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				Mark.moveOut(1, brand(1), { changes: inverseChildChange1 }),
 			];
 
-			assert.deepEqual(inverse, expected);
+			assertChangesetsEqual(inverse, expected);
 		}));
 
 	it("revive & move => move & delete", () =>
@@ -298,7 +306,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				{ count: 1 },
 				Mark.moveOut(1, detachId.localId, { changes: inverseChildChange1 }),
 			];
-			assert.deepEqual(inverse, expected);
+			assertChangesetsEqual(inverse, expected);
 		}));
 
 	it("Move and delete => revive and return", () =>
@@ -319,7 +327,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				}),
 			];
 
-			assert.deepEqual(inverse, expected);
+			assertChangesetsEqual(inverse, expected);
 		}));
 
 	it("Move chain => return chain", () =>
@@ -355,7 +363,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				}),
 			];
 
-			assert.deepEqual(inverse, expected);
+			assertChangesetsEqual(inverse, expected);
 		}));
 
 	describe("Redundant changes", () => {
@@ -368,7 +376,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 
 				const actual = invert(input, tag1);
 				const expected = Change.modifyDetached(0, inverseChildChange1, cellId);
-				assert.deepEqual(actual, expected);
+				assertChangesetsEqual(actual, expected);
 			}));
 
 		it("delete (same detach ID through metadata)", () =>
@@ -380,7 +388,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 
 				const actual = invertChange(tagRollbackInverse(input, tag2, tag1));
 				const expected = Change.modifyDetached(0, inverseChildChange1, cellId);
-				assert.deepEqual(actual, expected);
+				assertChangesetsEqual(actual, expected);
 			}));
 
 		it("delete (different detach ID)", () =>
@@ -402,7 +410,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 						redetachId: startId,
 					}),
 				];
-				assert.deepEqual(actual, expected);
+				assertChangesetsEqual(actual, expected);
 			}));
 
 		it("redundant revive => skip", () =>
@@ -418,7 +426,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 					Mark.modify(inverseChildChange2),
 				];
 				const actual = invert(input);
-				assert.deepEqual(actual, expected);
+				assertChangesetsEqual(actual, expected);
 			}));
 	});
 });
