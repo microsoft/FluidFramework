@@ -67,9 +67,9 @@
                           ]
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000003",
+                      "revision": 1,
                       "sequenceNumber": 2,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],
                   "branches": []

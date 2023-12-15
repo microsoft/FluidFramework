@@ -4,7 +4,7 @@
  */
 
 import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import { Brand, brandedNumberType } from "../util";
 import { SessionIdSchema, RevisionTag, RevisionTagSchema, EncodedRevisionTag } from "../core";
 

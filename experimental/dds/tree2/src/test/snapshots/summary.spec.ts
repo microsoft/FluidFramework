@@ -4,7 +4,6 @@
  */
 
 import path from "path";
-import { useAsyncDeterministicStableId } from "../../util";
 import {
 	createSnapshot,
 	dirPathTail,
@@ -33,24 +32,22 @@ describe("snapshot tests", () => {
 		const itFn = only ? it.only : skip ? it.skip : it;
 
 		itFn(`${regenerateSnapshots ? "regenerate " : ""}for ${testName}`, async () => {
-			await useAsyncDeterministicStableId(async () => {
-				return runScenario(async (tree, innerName) => {
-					const fullName = `${testName}-${innerName}`;
+			await runScenario(async (tree, innerName) => {
+				const fullName = `${testName}-${innerName}`;
 
-					if (testNames.has(fullName)) {
-						throw new Error(`Duplicate snapshot name: ${fullName}`);
-					}
+				if (testNames.has(fullName)) {
+					throw new Error(`Duplicate snapshot name: ${fullName}`);
+				}
 
-					testNames.add(fullName);
+				testNames.add(fullName);
 
-					const { summary } = await tree.summarize(true);
-					// eslint-disable-next-line unicorn/prefer-ternary
-					if (regenerateSnapshots) {
-						await createSnapshot(getFilepath(fullName), summary);
-					} else {
-						await verifyEqualPastSnapshot(getFilepath(fullName), summary, fullName);
-					}
-				});
+				const { summary } = await tree.summarize(true);
+				// eslint-disable-next-line unicorn/prefer-ternary
+				if (regenerateSnapshots) {
+					await createSnapshot(getFilepath(fullName), summary);
+				} else {
+					await verifyEqualPastSnapshot(getFilepath(fullName), summary, fullName);
+				}
 			});
 		});
 	}

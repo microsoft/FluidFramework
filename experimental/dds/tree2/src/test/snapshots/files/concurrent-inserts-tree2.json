@@ -67,7 +67,7 @@
                           ]
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000002",
+                      "revision": -2,
                       "sequenceNumber": -9007199254740990,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
@@ -123,7 +123,7 @@
                           ]
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000003",
+                      "revision": -3,
                       "sequenceNumber": -9007199254740989,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
@@ -209,7 +209,7 @@
                           ]
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                      "revision": -4,
                       "sequenceNumber": -9007199254740988,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
@@ -268,7 +268,7 @@
                           ]
                         ]
                       },
-                      "revision": "beefbeef-beef-4000-8000-000000000005",
+                      "revision": -5,
                       "sequenceNumber": -9007199254740987,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     }

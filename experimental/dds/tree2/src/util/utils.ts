@@ -6,11 +6,6 @@
 import { assert } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
-import {
-	generateStableId as runtimeGenerateStableId,
-	assertIsStableId,
-	StableId,
-} from "@fluidframework/id-compressor";
 
 /**
  * Subset of Map interface.
@@ -312,78 +307,6 @@ export function assertNonNegativeSafeInteger(index: number) {
  * @alpha
  */
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
-
-/**
- * The counter used to generate deterministic stable ids for testing purposes.
- */
-let deterministicStableIdCount: number | undefined;
-
-/**
- * Runs `f` with {@link generateStableId} altered to return sequential StableIds starting as a fixed seed.
- * Used to make test logic that uses {@link generateStableId} deterministic.
- *
- * @remarks Only use this function for testing purposes.
- *
- * @example
- *
- * ```typescript
- * function f() {
- *    const id = generateStableId();
- *    ...
- * }
- * const result = useDeterministicStableId(f());
- * ```
- */
-export function useDeterministicStableId<T>(f: () => T): T {
-	assert(
-		deterministicStableIdCount === undefined,
-		0x6ce /* useDeterministicStableId cannot be nested */,
-	);
-	deterministicStableIdCount = 1;
-	try {
-		return f();
-		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
-		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
-	} finally {
-		deterministicStableIdCount = undefined;
-	}
-}
-
-export async function useAsyncDeterministicStableId<T>(f: () => Promise<T>): Promise<T> {
-	assert(
-		deterministicStableIdCount === undefined,
-		0x79f /* useAsyncDeterministicStableId cannot be nested */,
-	);
-	deterministicStableIdCount = 1;
-	try {
-		return await f();
-		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
-		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
-	} finally {
-		deterministicStableIdCount = undefined;
-	}
-}
-
-/**
- * Generates a random StableId.
- *
- * For test usage desiring deterministic results, see {@link useDeterministicStableId}.
- */
-export function generateStableId(): StableId {
-	if (deterministicStableIdCount !== undefined) {
-		assert(
-			deterministicStableIdCount < 281_474_976_710_656,
-			0x6cf /* The maximum valid value for deterministicStableIdCount is 16^12 */,
-		);
-		// Tried to generate a unique id prefixing it with the word 'beef'
-		return assertIsStableId(
-			`beefbeef-beef-4000-8000-${(deterministicStableIdCount++)
-				.toString(16)
-				.padStart(12, "0")}`,
-		);
-	}
-	return runtimeGenerateStableId();
-}
 
 /**
  * Convert an object into a Map.

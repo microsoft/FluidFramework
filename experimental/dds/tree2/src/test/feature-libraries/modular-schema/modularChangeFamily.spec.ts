@@ -59,6 +59,7 @@ import { singleJsonCursor } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
 import { ValueChangeset, valueField } from "./basicRebasers";
+import { SessionId } from "@fluidframework/id-compressor";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
@@ -849,12 +850,17 @@ describe("ModularChangeFamily", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<ModularChangeset, EncodedModularChangeset> = {
+		const sessionId = "session1" as SessionId;
+		const encodingTestData: EncodingTestData<
+			ModularChangeset,
+			EncodedModularChangeset,
+			SessionId
+		> = {
 			successes: [
-				["without constrain", rootChange1a],
-				["with constrain", rootChange3],
-				["with node existence constraint", rootChange4],
-				["without node field changes", rootChangeWithoutNodeFieldChanges],
+				["without constraint", rootChange1a, sessionId],
+				["with constraint", rootChange3, sessionId],
+				["with node existence constraint", rootChange4, sessionId],
+				["without node field changes", rootChangeWithoutNodeFieldChanges, sessionId],
 			],
 		};
 

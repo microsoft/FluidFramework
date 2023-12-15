@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/runtime-definitions";
+import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { OptionalChangeset } from "../optional-field";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
@@ -56,7 +56,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.rebaser;
 	}
 
-	public get codecs(): ICodecFamily<DefaultChangeset> {
+	public get codecs(): ICodecFamily<DefaultChangeset, SessionId> {
 		return this.modularFamily.codecs;
 	}
 

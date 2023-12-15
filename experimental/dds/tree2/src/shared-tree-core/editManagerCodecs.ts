@@ -4,15 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec, IMultiFormatCodec } from "../codec";
+import { ICodecOptions, IJsonCodec, IMultiFormatCodec, SessionAwareCodec } from "../codec";
 import { EncodedRevisionTag, RevisionTag } from "../core";
 import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
 import { SummaryData } from "./editManager";
 import { Commit, EncodedCommit, EncodedEditManager } from "./editManagerFormat";
+import { SessionId } from "@fluidframework/id-compressor";
 
 export function makeEditManagerCodec<TChangeset>(
-	changeCodec: IMultiFormatCodec<TChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	changeCodec: IMultiFormatCodec<
+		TChangeset,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		SessionId
+	>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>> {
 	const format = validator.compile(
@@ -21,8 +27,8 @@ export function makeEditManagerCodec<TChangeset>(
 
 	const encodeCommit = <T extends Commit<TChangeset>>(commit: T) => ({
 		...commit,
-		revision: revisionTagCodec.encode(commit.revision),
-		change: changeCodec.json.encode(commit.change),
+		revision: revisionTagCodec.encode(commit.revision, commit.sessionId),
+		change: changeCodec.json.encode(commit.change, commit.sessionId),
 	});
 
 	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(commit: T) => ({
@@ -38,7 +44,7 @@ export function makeEditManagerCodec<TChangeset>(
 				branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
 					sessionId,
 					{
-						base: revisionTagCodec.encode(branch.base),
+						base: revisionTagCodec.encode(branch.base, sessionId),
 						commits: branch.commits.map(encodeCommit),
 					},
 				]),

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/id-compressor";
 import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field";
@@ -18,18 +19,23 @@ import {
 import { populatedMarks } from "./populatedMarks";
 import { ChangeMaker as Change, cases } from "./testEdits";
 
-const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
+type TestCase = [string, Changeset<TestChange>, SessionId];
+
+const sessionId = "session1" as SessionId;
+const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, SessionId> = {
 	successes: [
-		["with child change", Change.modify(1, TestChange.mint([], 1))],
-		["without child change", Change.delete(2, 2)],
+		["with child change", Change.modify(1, TestChange.mint([], 1)), sessionId],
+		["without child change", Change.delete(2, 2), sessionId],
 		[
 			"with repair data",
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
+			sessionId,
 		],
-		...Object.entries(cases),
-		...populatedMarks.map((mark): [string, Changeset<TestChange>] => [
+		...Object.entries(cases).map<TestCase>(([name, change]) => [name, change, sessionId]),
+		...populatedMarks.map<TestCase>((mark) => [
 			"type" in mark ? mark.type : "NoOp",
 			[mark],
+			sessionId,
 		]),
 	],
 };

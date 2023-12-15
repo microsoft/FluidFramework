@@ -4,26 +4,26 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { SessionId } from "@fluidframework/runtime-definitions";
-import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec";
+import { SessionId } from "@fluidframework/id-compressor";
+import { ICodecFamily, SessionAwareCodec, makeCodecFamily } from "../../codec";
 import type { NodeChangeset } from "../modular-schema";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 
 export function makeGenericChangeCodec(
-	childCodec: IJsonCodec<NodeChangeset>,
-): ICodecFamily<GenericChangeset> {
+	childCodec: SessionAwareCodec<NodeChangeset>,
+): ICodecFamily<GenericChangeset, SessionId> {
 	return makeCodecFamily([[0, makeV0Codec(childCodec)]]);
 }
 
 function makeV0Codec(
-	childCodec: IJsonCodec<NodeChangeset>,
-): IJsonCodec<GenericChangeset, EncodedGenericChangeset> {
+	childCodec: SessionAwareCodec<NodeChangeset>,
+): SessionAwareCodec<GenericChangeset, EncodedGenericChangeset> {
 	return {
-		encode: (change: GenericChangeset): EncodedGenericChangeset => {
+		encode: (change: GenericChangeset, originatorId: SessionId): EncodedGenericChangeset => {
 			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => ({
 				index,
-				nodeChange: childCodec.encode(nodeChange),
+				nodeChange: childCodec.encode(nodeChange, originatorId),
 			}));
 			return encoded;
 		},

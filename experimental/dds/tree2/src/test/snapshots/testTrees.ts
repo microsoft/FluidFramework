@@ -42,6 +42,7 @@ import {
 	rootFieldKey,
 } from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
@@ -65,7 +66,11 @@ function generateCompleteTree(
 	nodesPerField: number,
 ): ISharedTree {
 	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+		new MockFluidDataStoreRuntime({
+			clientId: "test-client",
+			id: "test",
+			idCompressor: createIdCompressor(sessionId),
+		}),
 		"test",
 	);
 	const view = tree.schematizeInternal({
@@ -122,6 +127,12 @@ function generateTreeRecursively(
 		}
 	}
 }
+
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees() {
@@ -308,7 +319,11 @@ export function generateTestTrees() {
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
 				const baseTree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor: createIdCompressor(sessionId),
+					}),
 					"test",
 				);
 
@@ -370,7 +385,11 @@ export function generateTestTrees() {
 					initialTree: undefined,
 				};
 				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor: createIdCompressor(sessionId),
+					}),
 					"test",
 				);
 				const view = tree.schematizeInternal(config).checkout;
@@ -405,7 +424,11 @@ export function generateTestTrees() {
 				};
 
 				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor: createIdCompressor(sessionId),
+					}),
 					"test",
 				);
 				const view = tree.schematizeInternal(config).checkout;

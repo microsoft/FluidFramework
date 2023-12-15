@@ -4,7 +4,7 @@
  */
 
 import { Type, TSchema } from "@sinclair/typebox";
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import { JsonCompatibleReadOnly } from "../util";
 import { EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core";
 

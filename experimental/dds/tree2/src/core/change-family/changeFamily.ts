@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/id-compressor";
 import { ICodecFamily } from "../../codec";
 import { ChangeRebaser } from "../rebase";
 
@@ -10,7 +11,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly codecs: ICodecFamily<TChange>;
+	readonly codecs: ICodecFamily<TChange, SessionId>;
 }
 
 export interface ChangeFamilyEditor {

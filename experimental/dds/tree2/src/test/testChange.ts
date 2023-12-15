@@ -4,7 +4,6 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { Type } from "@sinclair/typebox";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -18,10 +17,11 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 } from "../core";
-import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
-import { RecursiveReadonly, brand } from "../util";
+import { SessionAwareCodec, makeCodecFamily } from "../codec";
+import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util";
 import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { deepFreeze } from "./utils";
+import { SessionId } from "@fluidframework/id-compressor";
 
 export interface NonEmptyTestChange {
 	/**
@@ -195,7 +195,10 @@ export interface AnchorRebaseData {
 }
 
 const emptyChange: TestChange = { intentions: [] };
-const codec: IJsonCodec<TestChange> = makeValueCodec(Type.Any());
+const codec: SessionAwareCodec<TestChange> = {
+	encode: (x) => x as unknown as JsonCompatibleReadOnly,
+	decode: (x) => x as unknown as TestChange,
+};
 
 export const TestChange = {
 	emptyChange,
@@ -295,7 +298,7 @@ export function testChangeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		codecs: makeCodecFamily<TestChange>([[0, TestChange.codec]]),
+		codecs: makeCodecFamily<TestChange, SessionId>([[0, TestChange.codec]]),
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),

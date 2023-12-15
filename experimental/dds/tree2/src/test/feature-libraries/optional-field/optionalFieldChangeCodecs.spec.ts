@@ -13,15 +13,16 @@ import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
-import { IJsonCodec } from "../../../codec";
+import { SessionAwareCodec } from "../../../codec";
 import { changesetForChild } from "../fieldKindTestUtils";
 import { RevisionTagCodec } from "../../../shared-tree-core";
+import { SessionId } from "@fluidframework/id-compressor";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
 const encodedChild = "encoded child";
 
-const childCodec1: IJsonCodec<NodeChangeset> = {
+const childCodec1: SessionAwareCodec<NodeChangeset> = {
 	encode: (change: NodeChangeset) => {
 		assert.deepEqual(change, nodeChange1);
 		return encodedChild;
@@ -63,13 +64,14 @@ const change1WithChildChange: OptionalChangeset = {
 
 describe("defaultFieldChangeCodecs", () => {
 	describe("OptionalChangeset", () => {
-		const encodingTestData: EncodingTestData<OptionalChangeset, unknown> = {
+		const sessionId = "session1" as SessionId;
+		const encodingTestData: EncodingTestData<OptionalChangeset, unknown, SessionId> = {
 			successes: [
-				["set from empty", change1],
-				["set from non-empty", change2],
-				["child change", changeWithChildChange],
-				["field set with child change", change1WithChildChange], // Note: should only get sent over the wire when using transaction APIs.
-				["undone field change", change2Inverted],
+				["set from empty", change1, sessionId],
+				["set from non-empty", change2, sessionId],
+				["child change", changeWithChildChange, sessionId],
+				["field set with child change", change1WithChildChange, sessionId], // Note: should only get sent over the wire when using transaction APIs.
+				["undone field change", change2Inverted, sessionId],
 			],
 		};
 

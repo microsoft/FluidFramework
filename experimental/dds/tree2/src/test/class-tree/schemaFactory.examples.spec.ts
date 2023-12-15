@@ -118,7 +118,10 @@ describe("Class based end to end example", () => {
 	// Confirm that the alternative syntax for the config from the example above (config2) actually works.
 	it("config2", () => {
 		const factory = new TreeFactory({});
-		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const theTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const view: TreeView<Canvas> = theTree.schematize(config2);
 	});
 });

@@ -125,6 +125,7 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 // Testing utilities
 
@@ -371,7 +372,7 @@ export class TestTreeProviderLite {
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
 	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
-	 *
+	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
 	 * @example
 	 *
 	 * ```typescript
@@ -384,14 +385,17 @@ export class TestTreeProviderLite {
 	public constructor(
 		trees = 1,
 		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+		useDeterministicSessionIds = true,
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTree[] = [];
+		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
+			const sessionId = random.uuid4() as SessionId;
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
-				idCompressor: createIdCompressor(),
+				idCompressor: createIdCompressor(sessionId),
 			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
 			this.runtimeFactory.createContainerRuntime(runtime);
@@ -824,15 +828,21 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 
 export const mockIntoDelta = (delta: DeltaRoot) => delta;
 
-export interface EncodingTestData<TDecoded, TEncoded> {
+export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	/**
 	 * Contains test cases which should round-trip successfully through all persisted formats.
 	 */
-	successes: [name: string, data: TDecoded][];
+	successes: TContext extends void
+		? [name: string, data: TDecoded][]
+		: [name: string, data: TDecoded, context: TContext][];
 	/**
 	 * Contains malformed encoded data which a particular version's codec should fail to decode.
 	 */
-	failures?: { [version: string]: [name: string, data: TEncoded][] };
+	failures?: {
+		[version: string]: TContext extends void
+			? [name: string, data: TEncoded][]
+			: [name: string, data: TEncoded, context: TContext][];
+	};
 }
 
 const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
@@ -855,9 +865,9 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
  * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
  * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded, TEncoded>(
-	family: ICodecFamily<TDecoded>,
-	encodingTestData: EncodingTestData<TDecoded, TEncoded>,
+export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
+	family: ICodecFamily<TDecoded, TContext>,
+	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 ): void {
 	for (const version of family.getSupportedFormats()) {
@@ -877,16 +887,13 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
-							for (const [name, data] of encodingTestData.successes) {
+							for (const [name, data, context] of encodingTestData.successes) {
 								it(name, () => {
-									let encoded = jsonCodec.encode(data);
+									let encoded = jsonCodec.encode(data, context!);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									const decoded = jsonCodec.decode(
-										encoded,
-										new MockIdCompressor().localSessionId,
-									);
+									const decoded = jsonCodec.decode(encoded, context!);
 									assertEquivalent(decoded, data);
 								});
 							}
@@ -896,13 +903,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 			});
 
 			describe("can binary roundtrip", () => {
-				for (const [name, data] of encodingTestData.successes) {
+				for (const [name, data, context] of encodingTestData.successes) {
 					it(name, () => {
-						const encoded = codec.binary.encode(data);
-						const decoded = codec.binary.decode(
-							encoded,
-							new MockIdCompressor().localSessionId,
-						);
+						const encoded = codec.binary.encode(data, context!);
+						const decoded = codec.binary.decode(encoded, context!);
 						assertEquivalent(decoded, data);
 					});
 				}
@@ -911,9 +915,11 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 			const failureCases = encodingTestData.failures?.[version] ?? [];
 			if (failureCases.length > 0) {
 				describe("rejects malformed data", () => {
-					for (const [name, encodedData] of failureCases) {
+					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible));
+							assert.throws(() =>
+								jsonCodec.decode(encodedData as JsonCompatible, context!),
+							);
 						});
 					}
 				});

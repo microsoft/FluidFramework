@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, SessionId } from "@fluidframework/runtime-definitions";
-import { IJsonCodec } from "../codec";
+import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { SessionAwareCodec } from "../codec";
 import { EncodedRevisionTag, RevisionTag } from "../core";
 
-export class RevisionTagCodec implements IJsonCodec<RevisionTag, EncodedRevisionTag> {
+export class RevisionTagCodec implements SessionAwareCodec<RevisionTag, EncodedRevisionTag> {
 	public constructor(private readonly idCompressor?: IIdCompressor) {}
 
 	public encode(tag: RevisionTag) {
@@ -18,11 +18,7 @@ export class RevisionTagCodec implements IJsonCodec<RevisionTag, EncodedRevision
 		);
 		return this.idCompressor.normalizeToOpSpace(tag) as EncodedRevisionTag;
 	}
-	public decode(tag: EncodedRevisionTag, originatorId?: SessionId) {
-		assert(
-			originatorId !== undefined,
-			"Origin SessionId must be provided to decode a revision tag",
-		);
+	public decode(tag: EncodedRevisionTag, originatorId: SessionId) {
 		assert(
 			this.idCompressor !== undefined,
 			"IdCompressor must be provided to encode a revision tag",

@@ -4,7 +4,8 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../codec";
+import { ICodecFamily, makeCodecFamily } from "../codec";
+import { makeValueCodec } from "./codec/utils";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -20,8 +21,9 @@ import {
 import { brand, fail } from "../util";
 import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from "../core";
 import { leaf } from "../domains";
+import { SessionId } from "@fluidframework/id-compressor";
 
-export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
+export const counterCodecFamily: ICodecFamily<number, SessionId> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],
 ]);
 

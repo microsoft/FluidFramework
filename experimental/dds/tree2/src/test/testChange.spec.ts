@@ -19,6 +19,7 @@ import { TestChange } from "./testChange";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
 import { deepFreeze, mintRevisionTag } from "./utils";
+import { SessionId } from "@fluidframework/id-compressor";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -97,9 +98,10 @@ describe("TestChange", () => {
 	it("can be encoded in JSON", () => {
 		const codec = TestChange.codec;
 		const empty = TestChange.emptyChange;
+		const context: SessionId = "session1" as SessionId;
 		const normal = TestChange.mint([0, 1], [2, 3]);
-		assert.deepEqual(empty, codec.decode(codec.encode(empty)));
-		assert.deepEqual(normal, codec.decode(codec.encode(normal)));
+		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
+		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));
 	});
 });
 

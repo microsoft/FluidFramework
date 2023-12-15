@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import { GraphCommit } from "../core";
 
 export interface DecodedMessage<TChange> {

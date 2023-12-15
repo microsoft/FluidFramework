@@ -54,7 +54,10 @@ describe("Recursive Class based end to end example", () => {
 
 	it("lists", () => {
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		// Explicit constructor call
 		{
@@ -91,7 +94,10 @@ describe("Recursive Class based end to end example", () => {
 
 	it("maps", () => {
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		const view: TreeView<MapRecursive> = tree.schematize(
 			new TreeConfiguration(MapRecursive, () => new MapRecursive(undefined)),

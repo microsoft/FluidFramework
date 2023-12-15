@@ -5,7 +5,7 @@
 
 import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangesetLocalId,
 	EncodedRevisionTag,
@@ -29,6 +29,7 @@ import {
 	IMultiFormatCodec,
 	makeCodecFamily,
 	SchemaValidationFunction,
+	SessionAwareCodec,
 } from "../../codec";
 import {
 	FieldChangeMap,
@@ -49,10 +50,10 @@ import {
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
-): IJsonCodec<ModularChangeset> {
-	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
+): SessionAwareCodec<ModularChangeset> {
+	const nodeChangesetCodec: SessionAwareCodec<NodeChangeset, EncodedNodeChangeset> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
 		encodedSchema: EncodedNodeChangeset,
@@ -70,11 +71,18 @@ function makeV0Codec(
 		};
 	};
 
+	type FieldCodec = IMultiFormatCodec<
+		FieldChangeset,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		SessionId
+	>;
+
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
 			compiledSchema?: SchemaValidationFunction<TAnySchema>;
-			codec: IMultiFormatCodec<FieldChangeset>;
+			codec: FieldCodec;
 		}
 	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
 
@@ -85,19 +93,22 @@ function makeV0Codec(
 	const getFieldChangesetCodec = (
 		fieldKind: FieldKindIdentifier,
 	): {
-		codec: IMultiFormatCodec<FieldChangeset>;
 		compiledSchema?: SchemaValidationFunction<TAnySchema>;
+		codec: FieldCodec;
 	} => {
 		const entry = fieldChangesetCodecs.get(fieldKind);
 		assert(entry !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
 		return entry;
 	};
 
-	function encodeFieldChangesForJson(change: FieldChangeMap): EncodedFieldChangeMap {
+	function encodeFieldChangesForJson(
+		change: FieldChangeMap,
+		originatorId: SessionId,
+	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
 		for (const [field, fieldChange] of change) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
-			const encodedChange = codec.json.encode(fieldChange.change);
+			const encodedChange = codec.json.encode(fieldChange.change, originatorId);
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 				fail("Encoded change didn't pass schema validation.");
 			}
@@ -115,12 +126,15 @@ function makeV0Codec(
 		return encodedFields;
 	}
 
-	function encodeNodeChangesForJson(change: NodeChangeset): EncodedNodeChangeset {
+	function encodeNodeChangesForJson(
+		change: NodeChangeset,
+		originatorId: SessionId,
+	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
-			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges);
+			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges, originatorId);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -132,7 +146,7 @@ function makeV0Codec(
 
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
-		originatorId?: SessionId,
+		originatorId: SessionId,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -171,7 +185,10 @@ function makeV0Codec(
 		return decodedChange;
 	}
 
-	function encodeBuilds(builds: ModularChangeset["builds"]): EncodedBuilds | undefined {
+	function encodeBuilds(
+		builds: ModularChangeset["builds"],
+		originatorId: SessionId,
+	): EncodedBuilds | undefined {
 		if (builds === undefined) {
 			return undefined;
 		}
@@ -179,32 +196,41 @@ function makeV0Codec(
 			// `undefined` does not round-trip through JSON strings, so it needs special handling.
 			// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 			// We therefore optimize for the common case by omitting the revision when it is undefined.
-			r !== undefined ? [revisionTagCodec.encode(r), i, t] : [i, t],
+			r !== undefined ? [revisionTagCodec.encode(r, originatorId), i, t] : [i, t],
 		);
 		return encoded.length === 0 ? undefined : encoded;
 	}
 
-	function decodeBuilds(encoded: EncodedBuilds | undefined): ModularChangeset["builds"] {
+	function decodeBuilds(
+		encoded: EncodedBuilds | undefined,
+		originatorId: SessionId,
+	): ModularChangeset["builds"] {
 		if (encoded === undefined || encoded.length === 0) {
 			return undefined;
 		}
 		const list: [RevisionTag | undefined, ChangesetLocalId, any][] = encoded.map((tuple) =>
 			tuple.length === 3
-				? [revisionTagCodec.decode(tuple[0]), tuple[1], tuple[2]]
+				? [revisionTagCodec.decode(tuple[0], originatorId), tuple[1], tuple[2]]
 				: [undefined, ...tuple],
 		);
 		return nestedMapFromFlatList(list);
 	}
 
-	function encodeRevisionInfos(revisions: readonly RevisionInfo[]): EncodedRevisionInfo[] {
+	function encodeRevisionInfos(
+		revisions: readonly RevisionInfo[],
+		originatorId: SessionId,
+	): EncodedRevisionInfo[] {
 		const encodedRevisions = [];
 		for (const revision of revisions) {
 			const encodedRevision: Mutable<EncodedRevisionInfo> = {
-				revision: revisionTagCodec.encode(revision.revision),
+				revision: revisionTagCodec.encode(revision.revision, originatorId),
 			};
 
 			if (revision.rollbackOf !== undefined) {
-				encodedRevision.rollbackOf = revisionTagCodec.encode(revision.rollbackOf);
+				encodedRevision.rollbackOf = revisionTagCodec.encode(
+					revision.rollbackOf,
+					originatorId,
+				);
 			}
 
 			encodedRevisions.push(encodedRevision);
@@ -215,7 +241,7 @@ function makeV0Codec(
 
 	function decodeRevisionInfos(
 		revisions: readonly EncodedRevisionInfo[],
-		originatorId?: SessionId,
+		originatorId: SessionId,
 	): RevisionInfo[] {
 		const decodedRevisions = [];
 		for (const revision of revisions) {
@@ -224,7 +250,10 @@ function makeV0Codec(
 			};
 
 			if (revision.rollbackOf !== undefined) {
-				decodedRevision.rollbackOf = revisionTagCodec.decode(revision.rollbackOf);
+				decodedRevision.rollbackOf = revisionTagCodec.decode(
+					revision.rollbackOf,
+					originatorId,
+				);
 			}
 
 			decodedRevisions.push(decodedRevision);
@@ -234,7 +263,7 @@ function makeV0Codec(
 	}
 
 	return {
-		encode: (change) => {
+		encode: (change, originatorId) => {
 			return {
 				maxId: change.maxId,
 				revisions:
@@ -242,9 +271,10 @@ function makeV0Codec(
 						? change.revisions
 						: (encodeRevisionInfos(
 								change.revisions,
+								originatorId,
 						  ) as unknown as readonly RevisionInfo[] & JsonCompatibleReadOnly),
-				changes: encodeFieldChangesForJson(change.fieldChanges),
-				builds: encodeBuilds(change.builds),
+				changes: encodeFieldChangesForJson(change.fieldChanges, originatorId),
+				builds: encodeBuilds(change.builds, originatorId),
 			};
 		},
 		decode: (change, originatorId) => {
@@ -253,7 +283,7 @@ function makeV0Codec(
 				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, originatorId),
 			};
 			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeBuilds(encodedChange.builds);
+				decoded.builds = decodeBuilds(encodedChange.builds, originatorId);
 			}
 			if (encodedChange.revisions !== undefined) {
 				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, originatorId);
@@ -269,8 +299,8 @@ function makeV0Codec(
 
 export function makeModularChangeCodecFamily(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
-): ICodecFamily<ModularChangeset> {
+): ICodecFamily<ModularChangeset, SessionId> {
 	return makeCodecFamily([[0, makeV0Codec(fieldKinds, revisionTagCodec, options)]]);
 }

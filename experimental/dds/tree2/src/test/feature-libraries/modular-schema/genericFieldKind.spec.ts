@@ -26,12 +26,13 @@ import {
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils";
-import { IJsonCodec } from "../../../codec";
+import { IJsonCodec, SessionAwareCodec } from "../../../codec";
 import { RevisionTagCodec } from "../../../shared-tree-core";
 import { singleJsonCursor } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
+import { SessionId } from "@fluidframework/id-compressor";
 
 const valueFieldKey: FieldKey = brand("Value");
 
@@ -398,7 +399,7 @@ describe("Generic FieldKind", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<GenericChangeset, unknown> = {
+		const encodingTestData: EncodingTestData<GenericChangeset, unknown, SessionId> = {
 			successes: [
 				[
 					"Misc",
@@ -412,11 +413,12 @@ describe("Generic FieldKind", () => {
 							nodeChange: nodeChange1To2,
 						},
 					],
+					"session1" as SessionId,
 				],
 			],
 		};
 
-		const throwCodec: IJsonCodec<any> = {
+		const throwCodec: SessionAwareCodec<any> = {
 			encode: unexpectedDelegate,
 			decode: unexpectedDelegate,
 		};
@@ -424,13 +426,13 @@ describe("Generic FieldKind", () => {
 		const leafCodec = valueHandler
 			.codecsFactory(throwCodec, new RevisionTagCodec())
 			.resolve(0).json;
-		const childCodec: IJsonCodec<NodeChangeset> = {
-			encode: (nodeChange) => {
+		const childCodec: SessionAwareCodec<NodeChangeset> = {
+			encode: (nodeChange, originatorId) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
-				return leafCodec.encode(valueChange);
+				return leafCodec.encode(valueChange, originatorId);
 			},
-			decode: (nodeChange) => {
-				const valueChange = leafCodec.decode(nodeChange);
+			decode: (nodeChange, originatorId) => {
+				const valueChange = leafCodec.decode(nodeChange, originatorId);
 				return nodeChangeFromValueChange(valueChange);
 			},
 		};

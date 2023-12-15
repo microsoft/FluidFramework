@@ -5,7 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/core-utils";
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	ChangeFamily,

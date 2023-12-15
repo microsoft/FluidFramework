@@ -4,7 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeFamily,

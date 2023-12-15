@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
@@ -13,22 +13,22 @@ import { fail, JsonCompatibleReadOnly } from "../util";
  * Translates decoded data to encoded data.
  * @remarks Typically paired with an {@link IEncoder}.
  */
-export interface IEncoder<TDecoded, TEncoded> {
+export interface IEncoder<TDecoded, TEncoded, TContext> {
 	/**
 	 * Encodes `obj` into some encoded format.
 	 */
-	encode(obj: TDecoded): TEncoded;
+	encode(obj: TDecoded, context: TContext): TEncoded;
 }
 
 /**
  * Translates encoded data to decoded data.
  * @remarks Typically paired with an {@link IEncoder}.
  */
-export interface IDecoder<TDecoded, TEncoded> {
+export interface IDecoder<TDecoded, TEncoded, TContext> {
 	/**
 	 * Decodes `obj` from some encoded format.
 	 */
-	decode(obj: TEncoded, originatorId?: SessionId): TDecoded;
+	decode(obj: TEncoded, context: TContext): TDecoded;
 }
 
 /**
@@ -89,18 +89,35 @@ export interface ICodecOptions {
  * If provided, `TValidate` allows the input type passed to `decode` to be different than `TEncoded`.
  * This is useful when, for example, the type being decoded is `unknown` and must be validated to be a `TEncoded` before being decoded to a `TDecoded`.
  */
-export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly, TValidate = TEncoded>
-	extends IEncoder<TDecoded, TEncoded>,
-		IDecoder<TDecoded, TValidate> {
+export interface IJsonCodec<
+	TDecoded,
+	TEncoded = JsonCompatibleReadOnly,
+	TValidate = TEncoded,
+	TContext = void,
+> extends IEncoder<TDecoded, TEncoded, TContext>,
+		IDecoder<TDecoded, TValidate, TContext> {
 	encodedSchema?: TAnySchema;
 }
 
 /**
+ * Specialization of {@link IJsonCodec} for codecs requiring the originator ID as context.
+ *
+ * @privateRemarks -
+ * TODO: This type is likely better placed nearer to editing code, where knowledge of the session id is
+ * a common concern for encoding revision tags using id compressor.
+ */
+export type SessionAwareCodec<
+	TDecoded,
+	TEncoded = JsonCompatibleReadOnly,
+	TValidate = TEncoded,
+> = IJsonCodec<TDecoded, TEncoded, TValidate, SessionId>;
+
+/**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
  */
-export interface IBinaryCodec<TDecoded>
-	extends IEncoder<TDecoded, IsoBuffer>,
-		IDecoder<TDecoded, IsoBuffer> {}
+export interface IBinaryCodec<TDecoded, TContext = void>
+	extends IEncoder<TDecoded, IsoBuffer, TContext>,
+		IDecoder<TDecoded, IsoBuffer, TContext> {}
 
 /**
  * Contains knowledge of how to encode some in-memory type into JSON and binary formats,
@@ -117,9 +134,10 @@ export interface IMultiFormatCodec<
 	TDecoded,
 	TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
 	TJsonValidate = TJsonEncoded,
+	TContext = void,
 > {
-	json: IJsonCodec<TDecoded, TJsonEncoded, TJsonValidate>;
-	binary: IBinaryCodec<TDecoded>;
+	json: IJsonCodec<TDecoded, TJsonEncoded, TJsonValidate, TContext>;
+	binary: IBinaryCodec<TDecoded, TContext>;
 
 	/** Ensures multi-format codecs cannot also be single-format codecs. */
 	encode?: never;
@@ -135,8 +153,12 @@ export interface IMultiFormatCodec<
  * the `formatVersion` parameter)
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
+ *
+ * @privateRemarks - This interface currently assumes all codecs in a family require the same encode/decode context,
+ * which isn't necessarily true.
+ * This may need to be relaxed in the future.
  */
-export interface ICodecFamily<TDecoded> {
+export interface ICodecFamily<TDecoded, TContext = void> {
 	/**
 	 * @returns a codec that can be used to encode and decode data in the specified format.
 	 * @throws - if the format version is not supported by this family.
@@ -144,7 +166,9 @@ export interface ICodecFamily<TDecoded> {
 	 * logged properties or directly using some logger) when a format version is requested that is not supported.
 	 * This ensures that applications can diagnose compatibility issues.
 	 */
-	resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
+	resolve(
+		formatVersion: number,
+	): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
 
 	/**
 	 * @returns an iterable of all format versions supported by this family.
@@ -156,12 +180,25 @@ export interface ICodecFamily<TDecoded> {
  * Creates a codec family from a registry of codecs.
  * Any codec that is not a {@link IMultiFormatCodec} will be wrapped with a default binary encoding.
  */
-export function makeCodecFamily<TDecoded>(
+export function makeCodecFamily<TDecoded, TContext>(
 	registry: Iterable<
-		[formatVersion: number, codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>]
+		[
+			formatVersion: number,
+			codec:
+				| IMultiFormatCodec<
+						TDecoded,
+						JsonCompatibleReadOnly,
+						JsonCompatibleReadOnly,
+						TContext
+				  >
+				| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+		]
 	>,
-): ICodecFamily<TDecoded> {
-	const codecs: Map<number, IMultiFormatCodec<TDecoded>> = new Map();
+): ICodecFamily<TDecoded, TContext> {
+	const codecs: Map<
+		number,
+		IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+	> = new Map();
 	for (const [formatVersion, codec] of registry) {
 		if (codecs.has(formatVersion)) {
 			fail("Duplicate codecs specified.");
@@ -181,25 +218,29 @@ export function makeCodecFamily<TDecoded>(
 	};
 }
 
-class DefaultBinaryCodec<TDecoded> implements IBinaryCodec<TDecoded> {
-	public constructor(private readonly jsonCodec: IJsonCodec<TDecoded>) {}
+class DefaultBinaryCodec<TDecoded, TContext> implements IBinaryCodec<TDecoded, TContext> {
+	public constructor(
+		private readonly jsonCodec: IJsonCodec<TDecoded, unknown, unknown, TContext>,
+	) {}
 
-	public encode(change: TDecoded): IsoBuffer {
-		const jsonable = this.jsonCodec.encode(change);
+	public encode(change: TDecoded, context: TContext): IsoBuffer {
+		const jsonable = this.jsonCodec.encode(change, context);
 		const json = JSON.stringify(jsonable);
 		return IsoBuffer.from(json);
 	}
 
-	public decode(change: IsoBuffer, originatorId: SessionId): TDecoded {
+	public decode(change: IsoBuffer, context: TContext): TDecoded {
 		const json = bufferToString(change, "utf8");
 		const jsonable = JSON.parse(json);
-		return this.jsonCodec.decode(jsonable, originatorId);
+		return this.jsonCodec.decode(jsonable, context);
 	}
 }
 
-function isJsonCodec<TDecoded>(
-	codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>,
-): codec is IJsonCodec<TDecoded> {
+function isJsonCodec<TDecoded, TContext>(
+	codec:
+		| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+		| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+): codec is IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	return typeof codec.encode === "function" && typeof codec.decode === "function";
 }
 
@@ -207,9 +248,9 @@ function isJsonCodec<TDecoded>(
  * Constructs a {@link IMultiFormatCodec} from a `IJsonCodec` using a generic binary encoding that simply writes
  * the json representation of the object to a buffer.
  */
-export function withDefaultBinaryEncoding<TDecoded>(
-	jsonCodec: IJsonCodec<TDecoded>,
-): IMultiFormatCodec<TDecoded> {
+export function withDefaultBinaryEncoding<TDecoded, TContext>(
+	jsonCodec: IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	return {
 		json: jsonCodec,
 		binary: new DefaultBinaryCodec(jsonCodec),
@@ -220,88 +261,28 @@ export function withDefaultBinaryEncoding<TDecoded>(
  * Ensures that the provided single or multi-format codec has a binary encoding.
  * Adapts the json encoding using {@link withDefaultBinaryEncoding} if necessary.
  */
-export function ensureBinaryEncoding<TDecoded>(
-	codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>,
-): IMultiFormatCodec<TDecoded> {
+export function ensureBinaryEncoding<TDecoded, TContext>(
+	codec:
+		| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+		| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 	return isJsonCodec(codec) ? withDefaultBinaryEncoding(codec) : codec;
 }
 
 /**
  * Codec for objects which carry no information.
  */
-export const unitCodec: IMultiFormatCodec<0> = {
-	json: {
-		encode: () => 0,
-		decode: () => 0,
-	},
-	binary: {
-		encode: () => IsoBuffer.from(""),
-		decode: () => 0,
-	},
-};
-
-/**
- * Creates a json codec for objects which are just a json compatible value
- * and can be serialized as-is.
- *
- * This type of encoding is only appropriate if the persisted type (which should be defined in a persisted format file)
- * happens to be convenient for in-memory usage as well.
- *
- * @remarks Beware that this API can cause accidental extraneous data in the persisted format.
- * Consider the following example:
- * ```typescript
- * interface MyPersistedType {
- *     foo: string;
- *     id: number;
- * }
- * const MyPersistedType = Type.Object({
- *     foo: Type.String(),
- *     id: Type.Number()
- * });
- *
- * const codec = makeValueCodec<MyPersistedType>();
- *
- * // Later, in some other file...
- * interface SomeInMemoryType extends MyPersistedType {
- *     someOtherProperty: string;
- * }
- *
- * const someInMemoryObject: SomeInMemoryType = {
- *     foo:	"bar",
- *     id: 0,
- *     someOtherProperty: "this shouldn't be here and ends up in the persisted format"
- * }
- *
- * const encoded = codec.encode(someInMemoryObject);
- * ```
- * This all typechecks and passes at runtime, but the persisted format will contain the extraneous
- * `someOtherProperty` field.
- * It's unlikely a real-life example would be this simple, but the principle is the same.
- *
- * This issue can be avoided by using JSON schema that doesn't accept additional properties:
- *
- * ```typescript
- * const MyPersistedType = Type.Object({
- *     foo: Type.String(),
- *     id: Type.Number()
- * }, {
- *     additionalProperties: false
- * });
- * ```
- */
-export function makeValueCodec<Schema extends TSchema>(
-	schema: Schema,
-	validator?: JsonValidator,
-): IJsonCodec<Static<Schema>> {
-	return withSchemaValidation(
-		schema,
-		{
-			encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
-			decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
+export const unitCodec: IMultiFormatCodec<0, JsonCompatibleReadOnly, JsonCompatibleReadOnly, any> =
+	{
+		json: {
+			encode: () => 0,
+			decode: () => 0,
 		},
-		validator,
-	);
-}
+		binary: {
+			encode: () => IsoBuffer.from(""),
+			decode: () => 0,
+		},
+	};
 
 /**
  * Wraps a codec with JSON schema validation for its encoded type.
@@ -311,28 +292,29 @@ export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
 	TEncodedFormat = JsonCompatibleReadOnly,
+	TContext = void,
 >(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat>,
+	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TEncodedFormat, TContext>,
 	validator?: JsonValidator,
-): IJsonCodec<TInMemoryFormat, TEncodedFormat> {
+): IJsonCodec<TInMemoryFormat, TEncodedFormat, TEncodedFormat, TContext> {
 	if (!validator) {
 		return codec;
 	}
 	const compiledFormat = validator.compile(schema);
 	return {
-		encode: (obj: TInMemoryFormat) => {
-			const encoded = codec.encode(obj);
+		encode: (obj: TInMemoryFormat, context: TContext) => {
+			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return encoded;
 		},
-		decode: (encoded: TEncodedFormat, originatorId: SessionId) => {
+		decode: (encoded: TEncodedFormat, context: TContext) => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
-			return codec.decode(encoded, originatorId) as unknown as TInMemoryFormat;
+			return codec.decode(encoded, context) as unknown as TInMemoryFormat;
 		},
 	};
 }
