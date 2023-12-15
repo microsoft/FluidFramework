@@ -1267,6 +1267,24 @@ describe("SharedTree", () => {
 			);
 			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
+
+		it("can be undone at the tip", async () => {
+			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+
+			const tree = provider.trees[0];
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.view.events);
+
+			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
+
+			tree.view.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(jsonSequenceRootSchema));
+
+			const revertible = undoStack.pop();
+			revertible?.revert();
+
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
+		});
 	});
 
 	describe("Stashed ops", () => {
