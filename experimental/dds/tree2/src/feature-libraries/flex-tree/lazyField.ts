@@ -304,7 +304,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		const content: ITreeCursorSynchronous[] = isCursor(value)
 			? prepareFieldCursorForInsert(value)
 			: Array.from(value, (item) =>
-					cursorFromContextualData(this.context, this.schema.types, item),
+					cursorFromContextualData(this.context, this.schema.allowedTypeSet, item),
 			  );
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
@@ -465,7 +465,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content: ITreeCursorSynchronous[] = isCursor(newContent)
 			? prepareNodeCursorForInsert(newContent)
-			: [cursorFromContextualData(this.context, this.schema.types, newContent)];
+			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
@@ -507,7 +507,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 				? []
 				: isCursor(newContent)
 				? prepareNodeCursorForInsert(newContent)
-				: [cursorFromContextualData(this.context, this.schema.types, newContent)];
+				: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.optionalEditor();
 		assert(
 			content.length <= 1,

@@ -4,9 +4,9 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
-/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { strict as assert } from "assert";
 import fs from "fs";
@@ -22,15 +22,15 @@ import {
 	PropertyAction,
 	RedBlackTree,
 	SortedDictionary,
-	Stack,
 } from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import {
 	IJSONMarkerSegment,
 	IMergeNode,
 	ISegment,
-	Marker,
 	reservedMarkerIdKey,
+	compareNumbers,
+	compareStrings,
 } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
@@ -44,7 +44,6 @@ import { JsonSegmentSpecs } from "../snapshotChunks";
 import { getStats, specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
-import { ProxString, TST } from "./tst";
 
 function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,
@@ -146,10 +145,6 @@ function log(message: any) {
 		logLines.push(message.toString());
 	}
 }
-
-const compareStrings = (a: string, b: string) => a.localeCompare(b);
-
-const compareNumbers = (a: number, b: number) => a - b;
 
 function printStringProperty(p?: Property<string, string>) {
 	log(`[${p?.key}, ${p?.data}]`);
@@ -682,20 +677,6 @@ export function mergeTreeCheckedTest() {
 
 type SharedStringJSONSegment = IJSONTextSegment & IJSONMarkerSegment;
 
-// enum AsyncRoundState {
-//     Insert,
-//     Remove,
-//     Tail
-// }
-
-// interface AsyncRoundInfo {
-//     clientIndex: number;
-//     state: AsyncRoundState;
-//     insertSegmentCount?: number;
-//     removeSegmentCount?: number;
-//     iterIndex: number;
-// }
-
 export function TestPack(verbose = true) {
 	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const minSegCount = 1;
@@ -712,12 +693,8 @@ export function TestPack(verbose = true) {
 		return str;
 	}
 
-	const checkIncr = false;
-
 	let getTextTime = 0;
 	let getTextCalls = 0;
-	let incrGetTextTime = 0;
-	let incrGetTextCalls = 0;
 	const catchUpTime = 0;
 	const catchUps = 0;
 
@@ -738,17 +715,11 @@ export function TestPack(verbose = true) {
 			client.accumOps
 		).toFixed(1);
 		const aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
-		let aveIncrGetTextTime = "off";
 		let aveCatchUpTime = "off";
 		if (catchUps > 0) {
 			aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
 		}
-		if (checkIncr) {
-			aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
-		}
-		log(
-			`get text time: ${aveGetTextTime} incr: ${aveIncrGetTextTime} catch up ${aveCatchUpTime}`,
-		);
+		log(`get text time: ${aveGetTextTime} catch up ${aveCatchUpTime}`);
 		log(
 			`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`,
 		);
@@ -770,8 +741,6 @@ export function TestPack(verbose = true) {
 		const clientCount = 5;
 		const fileSegCount = 0;
 		let initString = "";
-		const asyncExec = false;
-		const includeMarkers = false;
 
 		if (!startFile) {
 			initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -798,19 +767,10 @@ export function TestPack(verbose = true) {
 
 		function checkTextMatch() {
 			// log(`checking text match @${server.getCurrentSeq()}`);
-			let clockStart = clock();
+			const clockStart = clock();
 			const serverText = server.getText();
 			getTextTime += elapsedMicroseconds(clockStart);
 			getTextCalls++;
-			if (checkIncr) {
-				clockStart = clock();
-				const serverIncrText = server.incrementalGetText();
-				incrGetTextTime += elapsedMicroseconds(clockStart);
-				incrGetTextCalls++;
-				if (serverIncrText !== serverText) {
-					log("incr get text mismatch");
-				}
-			}
 			for (const client of clients) {
 				const cliText = client.getText();
 				if (cliText !== serverText) {
@@ -866,12 +826,6 @@ export function TestPack(verbose = true) {
 			);
 			const preLen = client.getLength();
 			const pos = random.integer(0, preLen);
-			if (includeMarkers) {
-				const insertMarkerOp = client.insertMarkerLocal(pos, ReferenceType.Tile, {
-					[reservedTileLabelsKey]: "test",
-				});
-				server.enqueueMsg(client.makeOpMessage(insertMarkerOp!, UnassignedSequenceNumber));
-			}
 			const insertTextOp = client.insertTextLocal(pos, text);
 			server.enqueueMsg(client.makeOpMessage(insertTextOp!, UnassignedSequenceNumber));
 
@@ -917,74 +871,6 @@ export function TestPack(verbose = true) {
 
 		let errorCount = 0;
 
-		// function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
-		//     if (asyncInfo.state === AsyncRoundState.Insert) {
-		//         if (!asyncInfo.insertSegmentCount) {
-		//             asyncInfo.insertSegmentCount = randSmallSegmentCount();
-		//         }
-		//         if (asyncInfo.clientIndex === clients.length) {
-		//             asyncInfo.state = AsyncRoundState.Remove;
-		//             asyncInfo.iterIndex = 0;
-		//         }
-		//         else {
-		//             let client = clients[asyncInfo.clientIndex];
-		//             if (startFile) {
-		//                 randomWordMove(client);
-		//             }
-		//             else {
-		//                 randomSpateOfInserts(client, asyncInfo.iterIndex);
-		//             }
-		//             asyncInfo.iterIndex++;
-		//             if (asyncInfo.iterIndex === asyncInfo.insertSegmentCount) {
-		//                 asyncInfo.clientIndex++;
-		//                 asyncInfo.insertSegmentCount = undefined;
-		//                 asyncInfo.iterIndex = 0;
-		//             }
-		//         }
-		//     }
-		//     if (asyncInfo.state === AsyncRoundState.Remove) {
-		//         if (!asyncInfo.removeSegmentCount) {
-		//             asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
-		//             if (asyncInfo.removeSegmentCount < 1) {
-		//                 asyncInfo.removeSegmentCount = 1;
-		//             }
-		//         }
-		//         if (asyncInfo.clientIndex === clients.length) {
-		//             asyncInfo.state = AsyncRoundState.Tail;
-		//         }
-		//         else {
-		//             let client = clients[asyncInfo.clientIndex];
-		//             if (startFile) {
-		//                 randomWordMove(client);
-		//             }
-		//             else {
-		//                 randomSpateOfInserts(client, asyncInfo.iterIndex);
-		//             }
-		//             asyncInfo.iterIndex++;
-		//             if (asyncInfo.iterIndex === asyncInfo.removeSegmentCount) {
-		//                 asyncInfo.clientIndex++;
-		//                 asyncInfo.removeSegmentCount = undefined;
-		//                 asyncInfo.iterIndex = 0;
-		//             }
-		//         }
-		//     }
-		//     if (asyncInfo.state === AsyncRoundState.Tail) {
-		//         finishRound(roundCount);
-		//     }
-		//     else {
-		//         setImmediate(asyncRoundStep, asyncInfo, roundCount);
-		//     }
-		// }
-
-		// function asyncRound(roundCount: number) {
-		//     let asyncInfo = <AsyncRoundInfo>{
-		//         clientIndex: 0,
-		//         iterIndex: 0,
-		//         state: AsyncRoundState.Insert
-		//     }
-		//     setImmediate(asyncRoundStep, asyncInfo, roundCount);
-		// }
-
 		const extractSnapTime = 0;
 		const extractSnapOps = 0;
 		function finishRound(roundCount: number) {
@@ -996,15 +882,6 @@ export function TestPack(verbose = true) {
 				clientProcessSome(client, true);
 			}
 
-			/*
-                        if (checkTextMatch()) {
-                            log(`round: ${i}`);
-                            break;
-                        }
-            */
-			// log(server.getText());
-			// log(server.mergeTree.toString());
-			// log(getStats(server.mergeTree));
 			if (0 === roundCount % 100) {
 				const clockStart = clock();
 				if (checkTextMatch()) {
@@ -1079,11 +956,6 @@ export function TestPack(verbose = true) {
 						randomWordMove(client);
 					} else {
 						randomSpateOfRemoves(client);
-						if (includeMarkers) {
-							if (client.getLength() > 200) {
-								randomSpateOfRemoves(client);
-							}
-						}
 					}
 				}
 				if (serverProcessSome(server)) {
@@ -1096,27 +968,15 @@ export function TestPack(verbose = true) {
 
 		const startTime = Date.now();
 		let checkTime = 0;
-		let asyncRoundCount = 0;
 
-		function asyncStep() {
-			round(asyncRoundCount);
-			asyncRoundCount++;
-			if (asyncRoundCount < rounds) {
-				setImmediate(asyncStep);
+		for (let i = 0; i < rounds; i++) {
+			round(i);
+			if (errorCount > 0) {
+				break;
 			}
 		}
+		tail();
 
-		if (asyncExec) {
-			setImmediate(asyncStep);
-		} else {
-			for (let i = 0; i < rounds; i++) {
-				round(i);
-				if (errorCount > 0) {
-					break;
-				}
-			}
-			tail();
-		}
 		function tail() {
 			reportTiming(server);
 			reportTiming(clients[2]);
@@ -1488,12 +1348,6 @@ export function TestPack(verbose = true) {
 	};
 }
 
-function compareProxStrings(a: ProxString<number>, b: ProxString<number>) {
-	const ascore = a.invDistance * 200 + a.val;
-	const bscore = b.invDistance * 200 + b.val;
-	return bscore - ascore;
-}
-
 const createLocalOpArgs = (
 	type: MergeTreeDeltaType,
 	sequenceNumber: number,
@@ -1503,106 +1357,6 @@ const createLocalOpArgs = (
 		sequenceNumber,
 	} as ISequencedDocumentMessage,
 });
-
-function shuffle<T>(a: T[]) {
-	let currentIndex = a.length;
-	let temp: T;
-	let randomIndex: number;
-
-	// While there remain elements to shuffle...
-	while (0 !== currentIndex) {
-		// Pick a remaining element...
-		randomIndex = Math.floor(Math.random() * currentIndex);
-		currentIndex--;
-
-		// And swap it with the current element.
-		temp = a[currentIndex];
-		a[currentIndex] = a[randomIndex];
-		a[randomIndex] = temp;
-	}
-
-	return a;
-}
-
-function tst() {
-	const tree = new TST<boolean>();
-	const entries = [
-		"giraffe",
-		"hut",
-		"aardvark",
-		"gold",
-		"hover",
-		"yurt",
-		"hot",
-		"antelope",
-		"gift",
-		"banana",
-	];
-	for (const entry of entries) {
-		tree.put(entry, true);
-	}
-	for (const entry of entries) {
-		log(`get ${entry}: ${tree.get(entry)}`);
-	}
-	const p1 = tree.keysWithPrefix("g");
-	const p2 = tree.keysWithPrefix("gi");
-	log(p1);
-	log(p2);
-	const p3 = tree.neighbors("hat");
-	log(p3);
-	const ntree = new TST<number>();
-	const filename = path.join(__dirname, "../../public/literature/dict.txt");
-	const content = fs.readFileSync(filename, "utf8");
-	const splitContent = content.split(/\r\n|\n/g);
-	let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt");
-	let corpusContent = fs.readFileSync(corpusFilename, "utf8");
-	const corpusTree = new TST<number>();
-	function addCorpus(_corpusContent: string, _corpusTree: TST<number>) {
-		let count = 0;
-		const re = /\b\w+\b/g;
-		let result: RegExpExecArray | null;
-		do {
-			result = re.exec(_corpusContent);
-			if (result) {
-				const candidate = result[0];
-				count++;
-				const val = _corpusTree.get(candidate);
-				if (val !== undefined) {
-					_corpusTree.put(candidate, val + 1);
-				} else {
-					_corpusTree.put(candidate, 1);
-				}
-			}
-		} while (result);
-		return count;
-	}
-	const clockStart = clock();
-	addCorpus(corpusContent, corpusTree);
-	corpusFilename = path.join(__dirname, "../../public/literature/shakespeare.txt");
-	corpusContent = fs.readFileSync(corpusFilename, "utf8");
-	addCorpus(corpusContent, corpusTree);
-	const a = shuffle(splitContent);
-	for (const entry of a) {
-		const freq = corpusTree.get(entry);
-		if (freq !== undefined) {
-			ntree.put(entry, freq);
-		} else {
-			ntree.put(entry, 1);
-		}
-	}
-	log(`size: ${ntree.size()}; random insert takes ${clockStart.trace().duration}ms`);
-	for (const entry of a) {
-		if (!ntree.get(entry)) {
-			log(`biff ${entry}`);
-		}
-	}
-	let p4 = ntree.neighbors("het").sort(compareProxStrings);
-	log(p4);
-	p4 = ntree.neighbors("peech").sort(compareProxStrings);
-	log(p4);
-	p4 = ntree.neighbors("tihs").sort(compareProxStrings);
-	log(p4);
-}
 
 export class RandomPack {
 	random: IRandom;
@@ -1647,10 +1401,6 @@ export class RandomPack {
 	}
 }
 
-function docNodeToString(docNode: DocumentNode) {
-	return typeof docNode === "string" ? docNode : docNode.name;
-}
-
 export type DocumentNode = string | DocumentTree;
 /**
  * Generate and model documents from the following tree grammar:
@@ -1684,7 +1434,6 @@ export class DocumentTree {
 				});
 				this.pos++;
 			} else {
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				const trid = docNode.name + this.ids[docNode.name].toString();
 				docNode.id = trid;
 				id = this.ids[docNode.name]++;
@@ -1692,7 +1441,7 @@ export class DocumentTree {
 					[reservedMarkerIdKey]: trid,
 					[reservedRangeLabelsKey]: [docNode.name],
 				};
-				let behaviors = ReferenceType.NestBegin;
+				let behaviors = ReferenceType.Simple;
 				if (docNode.name === "row") {
 					props[reservedTileLabelsKey] = ["pg"];
 					behaviors |= ReferenceType.Tile;
@@ -1706,148 +1455,13 @@ export class DocumentTree {
 			}
 			if (docNode.name !== "pg") {
 				const etrid = `end-${docNode.name}${id?.toString()}`;
-				client.insertMarkerLocal(this.pos, ReferenceType.NestEnd, {
+				client.insertMarkerLocal(this.pos, ReferenceType.Simple, {
 					[reservedMarkerIdKey]: etrid,
 					[reservedRangeLabelsKey]: [docNode.name],
 				});
 				this.pos++;
 			}
 		}
-	}
-
-	checkStacksAllPositions(client: TestClient) {
-		let errorCount = 0;
-		let pos = 0;
-		const verbose = false;
-		const stacks = {
-			box: new Stack<string>(),
-			row: new Stack<string>(),
-		};
-
-		function printStack(stack: Stack<string>) {
-			// eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
-			for (const item in stack.items) {
-				log(item);
-			}
-		}
-
-		function printStacks() {
-			for (const name of ["box", "row"]) {
-				log(`${name}:`);
-				printStack(stacks[name]);
-			}
-		}
-
-		function checkTreeStackEmpty(treeStack: Stack<string>) {
-			if (!treeStack.empty()) {
-				errorCount++;
-				log("mismatch: client stack empty; tree stack not");
-			}
-		}
-
-		const checkNodeStacks = (docNode: DocumentNode) => {
-			if (typeof docNode === "string") {
-				const text = docNode;
-				const epos = pos + text.length;
-				if (verbose) {
-					log(`stacks for [${pos}, ${epos}): ${text}`);
-					printStacks();
-				}
-				const cliStacks = client.getStackContext(pos, ["box", "row"]);
-				for (const name of ["box", "row"]) {
-					const cliStack = cliStacks[name];
-					const treeStack = <Stack<string>>stacks[name];
-					if (cliStack) {
-						const len = cliStack.items.length;
-						if (len > 0) {
-							if (len !== treeStack.items.length) {
-								log(
-									`stack length mismatch cli ${len} tree ${treeStack.items.length}`,
-								);
-								errorCount++;
-							}
-							for (let i = 0; i < len; i++) {
-								const cliMarkerId = (cliStack.items[i] as Marker).getId();
-								const treeMarkerId = treeStack.items[i];
-								if (cliMarkerId !== treeMarkerId) {
-									errorCount++;
-									log(
-										`mismatch index ${i}: ${cliMarkerId} !== ${treeMarkerId} pos ${pos} text ${text}`,
-									);
-									printStack(treeStack);
-									log(client.mergeTree.toString());
-								}
-							}
-						} else {
-							checkTreeStackEmpty(treeStack);
-						}
-					} else {
-						checkTreeStackEmpty(treeStack);
-					}
-				}
-				pos = epos;
-			} else {
-				pos++;
-				if (docNode.name === "pg") {
-					checkNodeStacks(docNode.children[0]);
-				} else {
-					stacks[docNode.name].push(docNode.id);
-					for (const child of docNode.children) {
-						checkNodeStacks(child);
-					}
-					stacks[docNode.name].pop();
-					pos++;
-				}
-			}
-		};
-
-		let prevPos = -1;
-		let prevChild: DocumentNode | undefined;
-
-		// log(client.mergeTree.toString());
-		for (const rootChild of this.children) {
-			if (prevPos >= 0) {
-				if (typeof prevChild !== "string" && prevChild?.name === "row") {
-					const id = prevChild.id;
-					const endId = `end-${id}`;
-					const endRowMarker = <Marker>client.getMarkerFromId(endId);
-					const endRowPos = client.getPosition(endRowMarker);
-					prevPos = endRowPos;
-				}
-				const tilePos = client.findTile(prevPos + 1, "pg", false);
-				if (tilePos) {
-					if (tilePos.pos !== pos) {
-						errorCount++;
-						log(
-							`next tile ${tilePos.tile} found from pos ${prevPos} at ${tilePos.pos} compare to ${pos}`,
-						);
-					}
-				}
-			}
-			if (verbose) {
-				log(`next child ${pos} with name ${docNodeToString(rootChild)}`);
-			}
-			prevPos = pos;
-			prevChild = rootChild;
-			// printStacks();
-			checkNodeStacks(rootChild);
-		}
-		return errorCount;
-	}
-
-	private generateClient() {
-		const client = new TestClient();
-		client.startOrUpdateCollaboration("Fred");
-		for (const child of this.children) {
-			this.addToMergeTree(client, child);
-		}
-		return client;
-	}
-
-	static test1() {
-		const doc = DocumentTree.generateDocument();
-		const client = doc.generateClient();
-		return doc.checkStacksAllPositions(client);
 	}
 
 	static generateDocument() {
@@ -1949,11 +1563,6 @@ function findReplacePerf(filename: string) {
 	log(`${cFetches} fetches and ${cReplaces} replaces took ${elapsed} microseconds`);
 }
 
-const testTST = false;
-if (testTST) {
-	tst();
-}
-
 const baseDir = "../../src/test/literature";
 const testTimeout = 60000;
 
@@ -1966,10 +1575,6 @@ describe("Routerlicious", () => {
 			const testPack = TestPack(true);
 			testPack.firstTest();
 		});
-
-		it("hierarchy", () => {
-			assert(DocumentTree.test1() === 0, logLines.join("\n"));
-		}).timeout(testTimeout);
 
 		it("randolicious", () => {
 			const testPack = TestPack(false);

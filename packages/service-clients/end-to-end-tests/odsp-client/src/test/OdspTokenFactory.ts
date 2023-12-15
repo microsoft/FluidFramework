@@ -12,15 +12,15 @@ import {
 	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils";
 import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
-import { OdspTestCredentials } from "./OdspClientFactory";
+import { IOdspCredentials } from "./OdspClientFactory";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
  */
 export class OdspTestTokenProvider implements IOdspTokenProvider {
-	private readonly creds: OdspTestCredentials;
+	private readonly creds: IOdspCredentials;
 
-	constructor(credentials: OdspTestCredentials) {
+	constructor(credentials: IOdspCredentials) {
 		this.creds = credentials;
 	}
 

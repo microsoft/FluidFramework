@@ -11,9 +11,8 @@ export {
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,
-	gcTombstoneGenerationOptionName,
 	gcDisableThrowOnTombstoneLoadOptionName,
-	gcSweepGenerationOptionName,
+	gcGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
 	gcVersionUpgradeToV4Key,
@@ -36,6 +35,7 @@ export {
 	disableDatastoreSweepKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
+	GarbageCollectionMessage,
 } from "./gcDefinitions";
 export {
 	cloneGCData,

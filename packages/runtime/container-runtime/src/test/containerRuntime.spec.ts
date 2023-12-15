@@ -24,9 +24,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-	ConfigTypes,
 	createChildLogger,
-	IConfigProviderBase,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
@@ -34,7 +32,14 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IErrorBase, IResponse, FluidObject, IGenericError } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IResponse,
+	FluidObject,
+	IGenericError,
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
@@ -1112,9 +1117,11 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-				const futureRuntimeMessage = {
-					type: "FROM_THE_FUTURE",
+				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+					Record<string, unknown> = {
+					type: "FROM THE FUTURE",
 					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
 				};
 
 				const packedOp: Omit<
@@ -1143,11 +1150,9 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
-				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-					Record<string, unknown> = {
-					type: "FROM THE FUTURE",
+				const futureRuntimeMessage = {
+					type: "FROM_THE_FUTURE",
 					contents: "Hello",
-					compatDetails: { behavior: "FailToProcess" },
 				};
 
 				const packedOp: Omit<
@@ -1300,7 +1305,9 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				const responseFromRequestMethod = await (containerRuntime as any).request({
+					url: "/",
+				});
 				assert.deepEqual(
 					responseFromRequestMethod,
 					myResponse,

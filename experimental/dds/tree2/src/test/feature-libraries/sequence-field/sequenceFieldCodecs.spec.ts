@@ -11,6 +11,7 @@ import { RevisionTagCodec } from "../../../shared-tree-core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
+import { populatedMarks } from "./populatedMarks";
 import { ChangeMaker as Change, cases } from "./testEdits";
 
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
@@ -21,10 +22,11 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 			"with repair data",
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
 		],
-		// TODO: Include revive case here or in other encode/decode tests in this file.
-		// It's likely we need a different notion of equality, as revive involves a ProtoNode type
-		// and deep equality of that test case fails on comparing two `StackCursor`s.
-		...Object.entries(cases).filter(([key]) => key !== "revive"),
+		...Object.entries(cases),
+		...populatedMarks.map((mark): [string, Changeset<TestChange>] => [
+			"type" in mark ? mark.type : "NoOp",
+			[mark],
+		]),
 	],
 };
 

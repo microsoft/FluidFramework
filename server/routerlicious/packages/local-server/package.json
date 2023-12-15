@@ -57,8 +57,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/common-utils": "^3.0.0-223006",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
 		"@fluidframework/server-services-client": "workspace:~",
@@ -73,7 +73,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server-previous": "npm:@fluidframework/server-local-server@2.0.0",
 		"@microsoft/api-extractor": "^7.38.3",

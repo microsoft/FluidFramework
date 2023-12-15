@@ -20,7 +20,6 @@ import {
 	ISummaryBlob,
 	TreeEntry,
 	ITreeEntry,
-	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
 	ISummaryStats,
@@ -29,6 +28,7 @@ import {
 	ITelemetryContext,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -155,7 +155,7 @@ export function addSummarizeResultToSummary(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
@@ -225,7 +225,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
- * @internal
+ * @alpha
  */
 export function convertToSummaryTreeWithStats(
 	snapshot: ITree,
@@ -298,12 +298,14 @@ export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false)
  * @param snapshot - snapshot in ISnapshotTree format
  * @internal
  */
-export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats {
+export function convertSnapshotTreeToSummaryTree(
+	snapshot: ISnapshotTreeWithBlobContents,
+): ISummaryTreeWithStats {
 	const builder = new SummaryTreeBuilder();
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
-		if ((snapshot as any).blobsContents !== undefined) {
-			const content: ArrayBufferLike = (snapshot as any).blobsContents[id];
+		if (snapshot.blobsContents !== undefined) {
+			const content: ArrayBufferLike = snapshot.blobsContents[id];
 			if (content !== undefined) {
 				decoded = bufferToString(content, "utf-8");
 			}

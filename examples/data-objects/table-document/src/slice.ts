@@ -5,8 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
+import { PropertySet } from "@fluidframework/sequence";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
@@ -70,15 +69,10 @@ export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> 
 		this.doc.setCellValue(row, col, value, properties);
 	}
 
-	public annotateRows(
-		startRow: number,
-		endRow: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
 		this.validateInSlice(startRow, undefined);
 		this.validateInSlice(endRow - 1, undefined);
-		this.doc.annotateRows(startRow, endRow, properties, op);
+		this.doc.annotateRows(startRow, endRow, properties);
 	}
 
 	public getRowProperties(row: number): PropertySet {
@@ -86,15 +80,10 @@ export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> 
 		return this.doc.getRowProperties(row);
 	}
 
-	public annotateCols(
-		startCol: number,
-		endCol: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
 		this.validateInSlice(undefined, startCol);
 		this.validateInSlice(undefined, endCol - 1);
-		this.doc.annotateCols(startCol, endCol, properties, op);
+		this.doc.annotateCols(startCol, endCol, properties);
 	}
 
 	public getColProperties(col: number): PropertySet {
@@ -135,10 +124,13 @@ export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> 
 
 		this.root.set(ConfigKey.docId, initialState.docId);
 		this.root.set(ConfigKey.name, initialState.name);
-		this.maybeDoc = await handleFromLegacyUri<TableDocument>(
-			`/${initialState.docId}`,
-			this.context.containerRuntime,
-		).get();
+		const response = await this.context.IFluidHandleContext.resolveHandle({
+			url: `/${initialState.docId}`,
+		});
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			throw new Error("Could not resolve handle");
+		}
+		this.maybeDoc = response.value;
 		this.root.set(initialState.docId, this.maybeDoc.handle);
 		await this.ensureDoc();
 		this.createValuesRange(

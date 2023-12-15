@@ -9,7 +9,6 @@
  * @packageDocumentation
  */
 
-export { AzureAudience } from "./AzureAudience";
 export { AzureClient } from "./AzureClient";
 export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 export type {

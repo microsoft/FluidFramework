@@ -6,7 +6,7 @@
 import { FieldKey } from "../core";
 import {
 	TreeFieldSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	FlexTreeTypedField,
 	FlexTreeContext,
 	NodeKeyManager,
@@ -75,7 +75,7 @@ export class CheckoutFlexTreeView<
 	public readonly editableTree: FlexTreeTypedField<TRoot>;
 	public constructor(
 		public readonly checkout: TCheckout,
-		public readonly schema: TreeSchema<TRoot>,
+		public readonly schema: FlexTreeSchema<TRoot>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
 		private readonly onDispose?: () => void,
