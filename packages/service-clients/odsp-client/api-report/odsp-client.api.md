@@ -12,16 +12,16 @@ import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
-// @alpha
+// @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-// @alpha
+// @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
     fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
@@ -36,31 +36,33 @@ export class OdspClient {
     }>;
 }
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export interface OdspClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: OdspConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 
-// @alpha
+// @beta
 export interface OdspConnectionConfig {
     driveId: string;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
 }
 
-// @alpha
+// @beta
 export interface OdspContainerServices {
     audience: IOdspAudience;
 }
 
-// @alpha
+// @beta
 export interface OdspMember extends IMember {
     email: string;
     name: string;
     userId: string;
 }
+
+export { TokenResponse }
 
 // (No @packageDocumentation comment for this package)
 

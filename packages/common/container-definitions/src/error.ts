@@ -7,7 +7,7 @@ import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
 
 /**
  * Different error types the ClientSession may report out to the Host.
- * @internal
+ * @alpha
  */
 export const ContainerErrorTypes = {
 	...FluidErrorTypes,
@@ -19,7 +19,7 @@ export const ContainerErrorTypes = {
 } as const;
 
 /**
- * @internal
+ * @alpha
  */
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
@@ -89,6 +89,6 @@ export interface ContainerWarning extends IErrorBase {
  * - {@link @fluidframework/odsp-driver-definitions#OdspErrorType}
  *
  * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
- * @alpha
+ * @public
  */
 export type ICriticalContainerError = IErrorBase;

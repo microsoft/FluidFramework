@@ -6,14 +6,13 @@
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IErrorBase } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IErrorBase } from "@fluidframework/core-interfaces";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	MonitoringContext,
 	mixinMonitoringContext,
 	createChildLogger,

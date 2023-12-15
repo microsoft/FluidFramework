@@ -11,6 +11,7 @@ import {
 } from "../../../feature-libraries/schema-index/schemaSummarizer";
 import { storedEmptyFieldSchema } from "../../../core";
 import { jsonSequenceRootSchema } from "../../utils";
+import { intoStoredSchema } from "../../../feature-libraries";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
@@ -31,7 +32,7 @@ describe("schemaSummarizer", () => {
 		});
 
 		it("simple", () => {
-			const encoded = encodeTreeSchema(jsonSequenceRootSchema);
+			const encoded = encodeTreeSchema(intoStoredSchema(jsonSequenceRootSchema));
 			const snapshot = {
 				rootFieldSchema: {
 					kind: "Sequence",

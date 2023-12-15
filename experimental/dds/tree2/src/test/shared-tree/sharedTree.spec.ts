@@ -14,7 +14,8 @@ import {
 	TreeFieldSchema,
 	SchemaBuilderInternal,
 	boxedIterator,
-	TreeSchema,
+	FlexTreeSchema,
+	intoStoredSchema,
 } from "../../feature-libraries";
 import {
 	ChunkedForest,
@@ -82,6 +83,7 @@ describe("SharedTree", () => {
 			name: "Schematize Tree Tests",
 		});
 		const schema = builder.intoSchema(SchemaBuilder.optional(leaf.number));
+		const storedSchema = intoStoredSchema(schema);
 
 		const builderGeneralized = new SchemaBuilder({
 			scope: "test",
@@ -89,6 +91,7 @@ describe("SharedTree", () => {
 		});
 
 		const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
+		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
 
 		// TODO: concurrent use of schematize should not double initialize. Should use constraints so second run conflicts.
 		it.skip("Concurrent Schematize", () => {
@@ -119,7 +122,7 @@ describe("SharedTree", () => {
 
 		it("noop upgrade", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
-			tree.storedSchema.update(schema);
+			tree.storedSchema.update(storedSchema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
 			const schematized = tree.schematizeInternal({
@@ -133,7 +136,7 @@ describe("SharedTree", () => {
 
 		it("incompatible upgrade errors", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
-			tree.storedSchema.update(schemaGeneralized);
+			tree.storedSchema.update(storedSchemaGeneralized);
 			assert.throws(() => {
 				tree.schematizeInternal({
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -145,7 +148,7 @@ describe("SharedTree", () => {
 
 		it("upgrade schema", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
-			tree.storedSchema.update(schema);
+			tree.storedSchema.update(storedSchema);
 			const schematized = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
@@ -177,8 +180,8 @@ describe("SharedTree", () => {
 			lint: { rejectEmpty: false, rejectForbidden: false },
 		}).intoSchema(TreeFieldSchema.empty);
 
-		function updateSchema(tree: SharedTree, schema: TreeSchema): void {
-			tree.storedSchema.update(schema);
+		function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
+			tree.storedSchema.update(intoStoredSchema(schema));
 			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
 			tree.view.events.emit("afterBatch");
 		}
@@ -276,7 +279,7 @@ describe("SharedTree", () => {
 		{
 			const snapshot = sharedTree.contentSnapshot();
 			assert.deepEqual(snapshot.tree, [{ type: leaf.string.name, value: "x" }]);
-			expectSchemaEqual(snapshot.schema, stringSequenceRootSchema);
+			expectSchemaEqual(snapshot.schema, intoStoredSchema(stringSequenceRootSchema));
 		}
 	});
 
@@ -296,7 +299,10 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.deepEqual(view1.editableTree.asArray, [value]);
-		expectSchemaEqual(provider.trees[0].storedSchema, stringSequenceRootSchema);
+		expectSchemaEqual(
+			provider.trees[0].storedSchema,
+			intoStoredSchema(stringSequenceRootSchema),
+		);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		validateTreeConsistency(provider.trees[0], provider.trees[1]);
@@ -571,7 +577,7 @@ describe("SharedTree", () => {
 	// AB#5745: Enable this test once it passes.
 	it.skip("can tolerate incomplete transactions when attaching", async () => {
 		const onCreate = (tree: SharedTree) => {
-			tree.storedSchema.update(stringSequenceRootSchema);
+			tree.storedSchema.update(intoStoredSchema(stringSequenceRootSchema));
 			tree.view.transaction.start();
 			const view = assertSchema(tree, stringSequenceRootSchema).editableTree;
 			view.insertAtStart(["A"]);
@@ -1244,7 +1250,7 @@ describe("SharedTree", () => {
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
-			pausedTree.storedSchema.update(stringSequenceRootSchema);
+			pausedTree.storedSchema.update(intoStoredSchema(stringSequenceRootSchema));
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
@@ -1256,8 +1262,14 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const otherLoadedTree = provider.trees[1];
-			expectSchemaEqual(tree.contentSnapshot().schema, stringSequenceRootSchema);
-			expectSchemaEqual(otherLoadedTree.storedSchema, stringSequenceRootSchema);
+			expectSchemaEqual(
+				tree.contentSnapshot().schema,
+				intoStoredSchema(stringSequenceRootSchema),
+			);
+			expectSchemaEqual(
+				otherLoadedTree.storedSchema,
+				intoStoredSchema(stringSequenceRootSchema),
+			);
 		});
 	});
 
@@ -1290,7 +1302,7 @@ describe("SharedTree", () => {
 				},
 			};
 			const tree = provider.trees[0].view;
-			initializeTestTree(tree, initialTreeState, testSchema);
+			initializeTestTree(tree, initialTreeState, intoStoredSchema(testSchema));
 
 			// building the anchor for anchor stability test
 			const cursor = tree.forest.allocateCursor();
@@ -1408,7 +1420,7 @@ describe("SharedTree", () => {
 
 function assertSchema<TRoot extends TreeFieldSchema>(
 	tree: ISharedTree,
-	schema: TreeSchema<TRoot>,
+	schema: FlexTreeSchema<TRoot>,
 ): FlexTreeView<TRoot> {
 	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
 }

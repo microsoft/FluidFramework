@@ -322,7 +322,7 @@ export type ISummaryConfiguration =
 	| ISummaryConfigurationHeuristics;
 
 /**
- * @internal
+ * @alpha
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
@@ -478,7 +478,7 @@ export enum RuntimeHeaders {
 }
 
 /** True if a tombstoned object should be returned without erroring
- * @internal
+ * @alpha
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 /**
@@ -489,12 +489,12 @@ export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the 
 
 /**
  * Tombstone error responses will have this header set to true
- * @internal
+ * @alpha
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @internal
+ * @alpha
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
