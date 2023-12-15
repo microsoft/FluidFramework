@@ -24,13 +24,14 @@ import {
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils";
-import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
+import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 // eslint-disable-next-line import/no-internal-modules
 import { isTombstone } from "../../../feature-libraries/sequence-field/utils";
 import {
 	CellOrderingMethod,
+	SequenceConfig,
 	sequenceConfig,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/config";
@@ -59,6 +60,16 @@ export function skipOnLineageMethod(title: string, fn: () => void): void {
 		it.skip(title, fn);
 	} else {
 		it(title, fn);
+	}
+}
+
+export function onBothConfigs(fn: () => void): void {
+	for (const method of [CellOrderingMethod.Lineage, CellOrderingMethod.Tombstone]) {
+		describe(`${method}-based cell ordering`, () => {
+			const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
+			mutableConfig.cellOrdering = method;
+			fn();
+		});
 	}
 }
 
