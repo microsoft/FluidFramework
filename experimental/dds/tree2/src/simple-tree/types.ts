@@ -35,20 +35,20 @@ export type Unhydrated<T> = T;
 /**
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  *
+ * @remarks
+ * Base type which all nodes extend.
  * @privateRemarks
- * This is a union of all possible tree node types.
- * Since the tree node types are not covariant over their schema, the fact that this works is non-trivial.
- * TODO: Type tests to ensure that various tree node types are actually assignable to this.
- *
- * Using default parameters, this could be combined with TypedNode.
- */
-export type TreeNode = TreeListNodeOld | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
-
-/**
- * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
+ * Adding a member which all nodes have, like a type symbol, would produce much strong typing for this.
  * @beta
  */
-export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class TreeNode {}
+
+/**
+ * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
+ * @beta
+ */
+export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -343,5 +343,4 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
 	? TreeListNodeOld<TSchema["info"]["allowedTypes"]>
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNode<TSchema>
-	: // TODO: this should be able to be replaced with `TreeNode` to provide stronger typing in some edge cases, like TypedNode<TreeNodeSchema>
-	  unknown;
+	: TreeNode;

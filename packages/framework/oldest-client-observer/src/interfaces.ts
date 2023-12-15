@@ -9,7 +9,7 @@ import { IQuorumClients } from "@fluidframework/protocol-definitions";
 
 /**
  * Events emitted by {@link IOldestClientObservable}.
- * @internal
+ * @alpha
  */
 export interface IOldestClientObservableEvents extends IEvent {
 	(event: "connected", listener: () => void);
@@ -21,7 +21,7 @@ export interface IOldestClientObservableEvents extends IEvent {
  * (both expose the relevant API surface and eventing).  However, really this info probably shouldn't live on either,
  * since neither is really the source of truth (they are just the only currently-available plumbing options).
  * It's information about the connection, so the real source of truth is lower (at the connection layer).
- * @internal
+ * @alpha
  */
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
 	getQuorum(): IQuorumClients;
@@ -37,14 +37,14 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
 
 /**
  * Events emitted by {@link IOldestClientObservable}.
- * @internal
+ * @alpha
  */
 export interface IOldestClientObserverEvents extends IEvent {
 	(event: "becameOldest" | "lostOldest", listener: () => void);
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
 	isOldest(): boolean;

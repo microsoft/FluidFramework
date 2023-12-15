@@ -13,7 +13,7 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
-				// Test files are run in node only so additional node libraries can be used.
+				// This rule causes linting to crash with a "Error: Circularity detected while resolving configuration: /common/build/build-common/tsconfig.base.json"
 				"import/namespace": "off",
 			},
 		},

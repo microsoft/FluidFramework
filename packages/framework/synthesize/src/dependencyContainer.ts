@@ -16,7 +16,7 @@ import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
- * @internal
+ * @alpha
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	private readonly providers = new Map<keyof TMap, FluidObjectProvider<any>>();

@@ -16,25 +16,29 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
                               {
-                                "count": 1,
-                                "effect": {
-                                  "delete": {
-                                    "id": 1
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 1
+                                      }
+                                    }
                                   }
-                                }
+                                ]
                               }
                             ]
                           }
-                        ]
-                      },
-                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                        }
+                      ],
+                      "revision": "beefbeef-beef-4000-8000-000000000006",
                       "sequenceNumber": 3,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     }
@@ -43,7 +47,7 @@
                     [
                       "beefbeef-beef-4000-8000-000000000001",
                       {
-                        "base": "beefbeef-beef-4000-8000-000000000004",
+                        "base": "beefbeef-beef-4000-8000-000000000006",
                         "commits": []
                       }
                     ]
@@ -149,36 +153,36 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "repair-1",
+                  "keys": [
+                    "repair-1"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "42",
-                            []
-                          ]
-                        ]
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
                       }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "42",
+                          []
+                        ]
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -197,7 +201,7 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-000000000004",
+                      "beefbeef-beef-4000-8000-000000000006",
                       1,
                       1
                     ]

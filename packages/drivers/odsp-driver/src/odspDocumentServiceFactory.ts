@@ -31,7 +31,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export function createLocalOdspDocumentServiceFactory(
 	localSnapshot: Uint8Array | string,

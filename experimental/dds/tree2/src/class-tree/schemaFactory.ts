@@ -17,7 +17,6 @@ import {
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
-import { TreeListNode } from "../simple-tree";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
@@ -27,6 +26,7 @@ import {
 	mapStaticDispatchMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/proxies";
+import { TreeArrayNode, TreeNode } from "../simple-tree";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema";
 import {
 	AllowedTypes,
@@ -37,7 +37,6 @@ import {
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
-	NodeBase,
 	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
@@ -187,12 +186,12 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		TKind,
-		NodeBase,
+		TreeNode,
 		FlexTreeNode | unknown,
 		TImplicitlyConstructable
 	> {
 		const identifier = this.scoped(name);
-		class schema extends NodeBase {
+		class schema extends TreeNode {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
@@ -213,7 +212,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				}
 				// TODO: make this a better user facing error, and explain how to copy explicitly.
 				assert(
-					!(input instanceof NodeBase),
+					!(input instanceof TreeNode),
 					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
 				);
 			}
@@ -361,7 +360,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
-	 * @remarks See remarks on {@link SchemaFactory.namedList}.
+	 * @remarks See remarks on {@link SchemaFactory.namedArray}.
 	 */
 	public namedMap<
 		Name extends TName | string,
@@ -420,7 +419,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeListNode:interface)}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @remarks
 	 * The identifier for this List is defined as a function of the provided types.
@@ -450,18 +449,18 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the ease of accidentally giving two different calls o this different subclasses)
 	 * when working with structural typing.
 	 */
-	public list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
+	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
 	): TreeNodeSchema<
 		`${TScope}.List<${string}>`,
-		NodeKind.List,
-		TreeListNode<T>,
+		NodeKind.Array,
+		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link (TreeListNode:interface)}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
@@ -470,24 +469,24 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * class NamedList extends factory.list("name", factory.number) {}
 	 * ```
 	 */
-	public list<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public array<const Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
-		NodeKind.List,
-		TreeListNode<T>,
+		NodeKind.Array,
+		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true
 	>;
 
-	public list<const T extends ImplicitAllowedTypes>(
+	public array<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
 		`${TScope}.${string}`,
-		NodeKind.List,
-		TreeListNode<T>,
+		NodeKind.Array,
+		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true
 	> {
@@ -495,20 +494,20 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedList(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
-				NodeKind.List,
-				TreeListNode<T>,
+				NodeKind.Array,
+				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 				true
 			>;
 		}
-		return this.namedList(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link (TreeListNode:interface)}.
+	 * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
@@ -522,7 +521,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * `src/class-tree/schemaFactoryRecursive.ts:42:9 - error TS2310: Type 'List' recursively references itself as a base type.`
 	 * Once recursive APIs are better sorted out and integrated into this class, switch this back to private.
 	 */
-	public namedList<
+	public namedArray<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
@@ -533,8 +532,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		implicitlyConstructable: ImplicitlyConstructable,
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
-		NodeKind.List,
-		TreeListNode<T>,
+		NodeKind.Array,
+		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable
 	> {
@@ -542,13 +541,13 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
 		class schema extends this.nodeSchema(
 			name,
-			NodeKind.List,
+			NodeKind.Array,
 			allowedTypes,
 			implicitlyConstructable,
 		) {
 			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
 			public get length(): number {
-				return getSequenceField(this as unknown as TreeListNode).length;
+				return getSequenceField(this as unknown as TreeArrayNode).length;
 			}
 			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
@@ -575,8 +574,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 
 		return schema as unknown as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
-			NodeKind.List,
-			TreeListNode<T>,
+			NodeKind.Array,
+			TreeArrayNode<T>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable
 		>;

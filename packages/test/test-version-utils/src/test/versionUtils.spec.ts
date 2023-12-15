@@ -24,11 +24,17 @@ const checkRequestedVersionSatisfies = (
 	adjustPublicMajor,
 	expectedVersion,
 ) => {
-	const version = getRequestedVersion(baseVersion, requested, adjustPublicMajor);
-	assert(
-		satisfies(version, expectedVersion),
-		`getRequestedVersion("${baseVersion}", ${requested}) -> ${version} does not satisfy ${expectedVersion}`,
-	);
+	try {
+		const version = getRequestedVersion(baseVersion, requested, adjustPublicMajor);
+		assert(
+			satisfies(version, expectedVersion),
+			`getRequestedVersion("${baseVersion}", ${requested}) -> ${version} does not satisfy ${expectedVersion}`,
+		);
+	} catch (e) {
+		throw new Error(
+			`Failed to resolve getRequestedVersion("${baseVersion}", ${requested}) -> ${expectedVersion}: ${e}`,
+		);
+	}
 };
 
 describe("versionUtils", () => {
@@ -48,6 +54,7 @@ describe("versionUtils", () => {
 			checkRequestedVersionSatisfies("2.0.0-internal.1.1.1", -1, adjustPublicMajor, "^1.0.0");
 			checkRequestedVersionSatisfies("2.0.0-internal.1.2.3", -1, adjustPublicMajor, "^1.0.0");
 			checkRequestedVersionSatisfies("2.0.0-internal.1.4.2", -1, adjustPublicMajor, "^1.0.0");
+
 			checkRequestedVersionSatisfies(
 				"2.0.0-internal.1.4.2",
 				-2,
@@ -64,7 +71,7 @@ describe("versionUtils", () => {
 			checkRequestedVersionSatisfies("2.0.0-internal.2.0.1", -2, adjustPublicMajor, "^1.0.0");
 		});
 
-		it("bumping internal releases to public releases (adjustPublicMajor = true)", () => {
+		it("bumping internal/rc releases to public releases (adjustPublicMajor = true)", () => {
 			const adjustPublicMajor = true;
 			checkRequestedVersionSatisfies("2.0.0-internal.1.0.0", -1, adjustPublicMajor, "^1.0.0");
 			checkRequestedVersionSatisfies("2.0.0-internal.2.0.0", -1, adjustPublicMajor, "^1.0.0");
@@ -81,6 +88,12 @@ describe("versionUtils", () => {
 				"^0.59.0",
 			);
 			checkRequestedVersionSatisfies("2.0.0-internal.6.4.0", -1, adjustPublicMajor, "^1.0.0");
+
+			checkRequestedVersionSatisfies("2.0.0-rc.1.0.0", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.2.0.0", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.1.0.0", -2, adjustPublicMajor, "^0.59.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.2.0.0", -2, adjustPublicMajor, "^0.59.0");
+			checkRequestedVersionSatisfies("2.0.0-rc.6.4.0", -1, adjustPublicMajor, "^1.0.0");
 		});
 
 		it("bumping internal releases to other internal releases", () => {
@@ -195,6 +208,54 @@ describe("versionUtils", () => {
 			);
 		});
 
+		it("bumping rc releases to other rc/internal releases", () => {
+			const adjustPublicMajor = false;
+			checkRequestedVersionSatisfies(
+				"2.0.0-rc.1.0.0",
+				-1,
+				adjustPublicMajor,
+				"^2.0.0-internal.8.0.0",
+			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-rc.1.2.0",
+				-1,
+				adjustPublicMajor,
+				"^2.0.0-internal.8.0.0",
+			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-rc.1.2.4",
+				-1,
+				adjustPublicMajor,
+				"^2.0.0-internal.8.0.0",
+			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-rc.1.3.4",
+				-1,
+				adjustPublicMajor,
+				"^2.0.0-internal.8.0.0",
+			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-rc.1.3.4",
+				-2,
+				adjustPublicMajor,
+				"^2.0.0-internal.7.0.0",
+			);
+
+			// These tests should be enabled once 2.0.0-rc.1.0.0 is released (currently throws trying to fetch the unreleased packages)
+			// checkRequestedVersionSatisfies(
+			// 	"2.0.0-rc.2.0.0",
+			// 	-1,
+			// 	adjustPublicMajor,
+			// 	"^2.0.0-rc.1.0.0",
+			// );
+			// checkRequestedVersionSatisfies(
+			// 	"2.0.0-rc.2.0.0",
+			// 	-2,
+			// 	adjustPublicMajor,
+			// 	"^2.0.0-internal.8.0.0",
+			// );
+		});
+
 		it("error cases for malformed versions", () => {
 			assert.strictEqual(getRequestedVersion("2.0.0", 0), "2.0.0");
 			assert.strictEqual(getRequestedVersion("2.0.0", undefined), "2.0.0");
@@ -268,6 +329,18 @@ describe("versionUtils", () => {
 				-2,
 				adjustPublicMajor,
 				"^1.0.0-0",
+			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-dev-rc.1.0.0.223149",
+				-1,
+				adjustPublicMajor,
+				"^2.0.0-internal.8.0.0",
+			);
+			checkRequestedVersionSatisfies(
+				"2.0.0-dev-rc.1.5.3.223149",
+				-2,
+				adjustPublicMajor,
+				"^2.0.0-internal.7.0.0",
 			);
 		});
 	});

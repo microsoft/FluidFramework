@@ -4,8 +4,8 @@
 @fluid-tools/webpack-fluid-loader
 @fluidframework/fluid-runner
 @fluid-tools/fetch-tool
-@fluid-experimental/devtools-core
-@fluid-experimental/devtools
+@fluidframework/devtools-core
+@fluidframework/devtools
 @fluid-private/test-version-utils
 @fluidframework/test-utils
 @fluid-internal/test-service-load
@@ -40,7 +40,7 @@
 fluid-framework
 @fluidframework/dds-interceptions
 @fluidframework/data-object-base
-@fluid-experimental/app-insights-logger
+@fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
 @fluidframework/agent-scheduler
@@ -80,7 +80,7 @@ fluid-framework
 @fluid-experimental/react-inputs
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects
-@fluid-experimental/tree2
+@fluidframework/tree
 @fluid-experimental/tree
 @fluid-experimental/sequence-deprecated
 @fluid-experimental/sharejs-json1

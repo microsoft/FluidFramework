@@ -10,7 +10,6 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
@@ -18,7 +17,7 @@ import { ICodecOptions, noopValidator } from "../codec";
 import {
 	Compatibility,
 	FieldKey,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	JsonableTree,
 	TreeStoredSchema,
 	makeDetachedFieldIndex,
@@ -30,12 +29,8 @@ import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	ForestSummarizer,
-	SchemaSummarizer as SchemaSummarizer,
-	DefaultChangeFamily,
-	DefaultEditBuilder,
-	DefaultChangeset,
+	SchemaSummarizer,
 	buildForest,
-	SchemaEditor,
 	TreeFieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
@@ -44,15 +39,16 @@ import {
 	nodeKeyFieldKey as defailtNodeKeyFieldKey,
 	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
-	TreeSchema,
+	FlexTreeSchema,
 	ViewSchema,
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
+	makeFieldBatchCodec,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
+import { brand, disposeSymbol, fail } from "../util";
 import {
 	ITree,
 	TreeConfiguration,
@@ -70,6 +66,9 @@ import {
 } from "./schematizedTree";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
 import { FlexTreeView, CheckoutFlexTreeView } from "./treeView";
+import { SharedTreeChange } from "./sharedTreeChangeTypes";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -135,7 +134,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * instead of a separate callback.
 	 */
 	requireSchema<TRoot extends TreeFieldSchema>(
-		schema: TreeSchema<TRoot>,
+		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 	): FlexTreeView<TRoot> | undefined;
 }
@@ -146,14 +145,16 @@ export interface ISharedTree extends ISharedObject, ITree {
  * TODO: detail compatibility requirements.
  */
 export class SharedTree
-	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
+	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
 {
 	private readonly _events: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
 	public readonly view: TreeCheckout;
-	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	public get storedSchema(): TreeStoredSchemaRepository {
+		return this.view.storedSchema;
+	}
 
 	/**
 	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
@@ -173,25 +174,27 @@ export class SharedTree
 		telemetryContextPrefix: string,
 	) {
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository();
+		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
 		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
+		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			schema,
 			defaultSchemaPolicy,
 			options.summaryEncodeType,
+			fieldBatchCodec,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
-		const defaultChangeFamily = new DefaultChangeFamily(options);
+		const innerChangeFamily = new SharedTreeChangeFamily(options);
 		const changeFamily = makeMitigatedChangeFamily(
-			defaultChangeFamily,
-			DefaultChangeFamily.emptyChange,
+			innerChangeFamily,
+			SharedTreeChangeFamily.emptyChange,
 			(error: unknown) => {
 				// TODO:6344 Add telemetry for these errors.
 				// Rethrowing the error has a different effect depending on the context in which the
@@ -220,14 +223,11 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 		);
-		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
 		this._events = createEmitter<CheckoutEvents>();
+		const localBranch = this.getLocalBranch();
 		this.view = createTreeCheckout({
-			branch: this.getLocalBranch(),
+			branch: localBranch,
 			changeFamily,
-			// TODO:
-			// This passes in a version of schema thats not wrapped with the editor.
-			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
 			events: this._events,
@@ -236,7 +236,7 @@ export class SharedTree
 	}
 
 	public requireSchema<TRoot extends TreeFieldSchema>(
-		schema: TreeSchema<TRoot>,
+		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
@@ -277,7 +277,7 @@ export class SharedTree
 			}
 		};
 
-		afterSchemaChanges(this._events, this.storedSchema, onSchemaChange);
+		afterSchemaChanges(this._events, this.view, onSchemaChange);
 		return view2;
 	}
 
@@ -286,7 +286,7 @@ export class SharedTree
 		try {
 			moveToDetachedField(this.view.forest, cursor);
 			return {
-				schema: new InMemoryStoredSchemaRepository(this.storedSchema),
+				schema: this.storedSchema.clone(),
 				tree: jsonableTreeFromFieldCursor(cursor),
 			};
 		} finally {
@@ -311,11 +311,11 @@ export class SharedTree
 		// Check for empty.
 		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
 			this.view.transaction.start();
-			initializeContent(this.storedSchema, config.schema, () => {
+			initializeContent(this.view, config.schema, () => {
 				const field = { field: rootFieldKey, parent: undefined };
 				const content = normalizeNewFieldContent(
-					{ schema: this.storedSchema },
-					this.storedSchema.rootFieldSchema,
+					{ schema: config.schema },
+					config.schema.rootFieldSchema,
 					config.initialTree,
 				);
 				switch (this.storedSchema.rootFieldSchema.kind.identifier) {
@@ -342,7 +342,7 @@ export class SharedTree
 			this.view.transaction.commit();
 		}
 
-		schematize(this.view.events, this.storedSchema, config);
+		schematize(this.view.events, this.view, config);
 
 		return (
 			this.requireSchema(
@@ -360,41 +360,6 @@ export class SharedTree
 		const flexConfig = toFlexConfig(config);
 		const view = this.schematizeInternal(flexConfig);
 		return new ClassWrapperTreeView(view);
-	}
-
-	/**
-	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
-	 * Whatever pattern is adopted should probably also handle multiple versions of changeset operations.
-	 * A single top level enum listing all ops (including their different versions),
-	 * with at least fine grained enough detail to direct them to the correct subsystem would be a good approach.
-	 * The current use-case (with an op applying to a specific index) is a temporary hack,
-	 * and its not clear how it would fit into such a system if implemented in shared-tree-core:
-	 * maybe op dispatch is part of the shared-tree level?
-	 */
-	protected override processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		// TODO: Get rid of this `as any`. There should be a better way to narrow the type of message.contents.
-		if (!this.storedSchema.tryHandleOp(message.contents as any)) {
-			super.processCore(message, local, localOpMetadata);
-		}
-	}
-
-	protected override reSubmitCore(
-		content: JsonCompatibleReadOnly,
-		localOpMetadata: unknown,
-	): void {
-		if (!this.storedSchema.tryResubmitOp(content)) {
-			super.reSubmitCore(content, localOpMetadata);
-		}
-	}
-
-	protected override applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		if (!this.storedSchema.tryApplyStashedOp(content)) {
-			return super.applyStashedOp(content);
-		}
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {

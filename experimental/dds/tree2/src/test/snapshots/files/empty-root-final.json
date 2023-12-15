@@ -14,7 +14,67 @@
               "String": {
                 "type": "blob",
                 "content": {
-                  "trunk": [],
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "schema": {
+                            "new": {
+                              "version": "1.0.0",
+                              "nodeSchema": [
+                                {
+                                  "name": "com.fluidframework.leaf.boolean",
+                                  "objectNodeFields": [],
+                                  "leafValue": 2
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.handle",
+                                  "objectNodeFields": [],
+                                  "leafValue": 3
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.null",
+                                  "objectNodeFields": [],
+                                  "leafValue": 4
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.number",
+                                  "objectNodeFields": [],
+                                  "leafValue": 0
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.string",
+                                  "objectNodeFields": [],
+                                  "leafValue": 1
+                                },
+                                {
+                                  "name": "test trees.TestInner",
+                                  "mapFields": {
+                                    "kind": "Sequence"
+                                  },
+                                  "objectNodeFields": []
+                                }
+                              ],
+                              "rootFieldSchema": {
+                                "kind": "Sequence"
+                              }
+                            },
+                            "old": {
+                              "version": "1.0.0",
+                              "nodeSchema": [],
+                              "rootFieldSchema": {
+                                "kind": "Forbidden",
+                                "types": []
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": "beefbeef-beef-4000-8000-000000000003",
+                      "sequenceNumber": -9007199254740990,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    }
+                  ],
                   "branches": []
                 },
                 "encoding": "utf-8"
@@ -84,8 +144,24 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": []
+                  "keys": [],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": []
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }

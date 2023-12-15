@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TreeListNode } from "../simple-tree";
 import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries";
+import { TreeArrayNode } from "../simple-tree";
 import {
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -35,11 +35,11 @@ export class SchemaFactoryRecursive<
 	 * new MyRecursiveList({x: theData});
 	 * ```
 	 */
-	public listRecursive<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
 	) {
-		class List extends this.namedList(name, allowedTypes, true, false) {
+		class RecursiveArray extends this.namedArray(name, allowedTypes, true, false) {
 			public constructor(
 				data: { x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> } | FlexTreeNode,
 			) {
@@ -51,10 +51,10 @@ export class SchemaFactoryRecursive<
 			}
 		}
 
-		return List as unknown as TreeNodeSchemaClass<
+		return RecursiveArray as unknown as TreeNodeSchemaClass<
 			`${TScope}.${string}`,
-			NodeKind.List,
-			TreeListNode<T>,
+			NodeKind.Array,
+			TreeArrayNode<T>,
 			{ x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> },
 			false
 		>;

@@ -8,13 +8,6 @@ import { FlexListToUnion, LazyItem } from "../feature-libraries";
 import { Unhydrated, TreeMapNodeBase } from "../simple-tree";
 
 /**
- * Base type which all nodes extend.
- * @beta
- */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class NodeBase {}
-
-/**
  * Helper used to produce types for object nodes.
  * @beta
  */
@@ -168,9 +161,9 @@ export enum NodeKind {
 	 */
 	Map,
 	/**
-	 * A node which serves as a list, storing children in an ordered sequence.
+	 * A node which serves as an array, storing children in an ordered sequence.
 	 */
-	List,
+	Array,
 	/**
 	 * A node which stores a heterogenous collection of children in named fields.
 	 * @remarks

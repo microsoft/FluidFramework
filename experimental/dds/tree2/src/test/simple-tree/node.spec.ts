@@ -5,78 +5,88 @@
 
 import { strict as assert } from "assert";
 import { rootFieldKey } from "../../core";
-import { TreeStatus, Any } from "../../feature-libraries";
-import { TreeNode, Tree, InsertableTreeRoot, TreeField } from "../../simple-tree";
-import { SchemaBuilder } from "../../domains";
-import { getOldRoot } from "./utils";
+import { TreeStatus } from "../../feature-libraries";
+import { TreeNode } from "../../simple-tree";
+import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree";
+import { getRoot, makeSchema } from "./utils";
 
 describe("node API", () => {
-	const sb = new SchemaBuilder({ scope: "object" });
+	const sb = new SchemaFactory("object");
 	const object = sb.object("child", {
 		content: sb.number,
 	});
-	const list = sb.list(object);
-	const parent = sb.object("parent", { object, list });
-	const treeSchema = sb.intoSchema(parent);
-	const initialTree: InsertableTreeRoot<typeof treeSchema> = {
+	const list = sb.array(object);
+	const treeSchema = sb.object("parent", { object, list });
+
+	const never = makeSchema((_) => _.object("never", {}));
+
+	const initialTree = () => ({
 		object: { content: 42 },
 		list: [{ content: 42 }, { content: 42 }, { content: 42 }],
-	};
+	});
 
 	describe("schema", () => {
 		it("object", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.schema(root.object), object);
 		});
 
 		it("list", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.schema(root.list), list);
 		});
 	});
 
 	describe("is", () => {
 		it("object", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
+
+			// 'root.object' is an 'object'
 			assert.equal(Tree.is(root.object, object), true);
+
+			// 'root.object' is not a 'list'
 			assert.equal(Tree.is(root.object, list), false);
-			assert.throws(() =>
-				Tree.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
-			);
+
+			// 'root.object' cannot be a 'never'
+			assert.throws(() => Tree.is(root.object, never));
 		});
 
 		it("list", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
+
+			// 'root.list' is a 'list'
 			assert.equal(Tree.is(root.list, list), true);
+
+			// 'root.list' is not an 'object'
 			assert.equal(Tree.is(root.list, object), false);
-			assert.throws(() =>
-				Tree.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
-			);
+
+			// 'root.list' cannot be a 'never'
+			assert.throws(() => Tree.is(root.object, never));
 		});
 	});
 
 	describe("parent", () => {
 		it("object", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			const child = root.object;
 			const p = Tree.parent(child);
 			assert.equal(Tree.parent(root.object), root);
 		});
 
 		it("list", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.parent(root.list), root);
 		});
 
 		it("root", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.parent(root), undefined);
 		});
 	});
 
 	describe("key", () => {
 		it("object", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			for (const key of Object.keys(root) as Iterable<keyof typeof root>) {
 				const child = root[key];
 				assert.equal(Tree.key(child), key);
@@ -84,7 +94,7 @@ describe("node API", () => {
 		});
 
 		it("list", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			for (let key = 0; key < root.list.length; key += 1) {
 				const child = root.list[key];
 				assert.equal(Tree.key(child), key);
@@ -92,18 +102,18 @@ describe("node API", () => {
 		});
 
 		it("root", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.key(root), rootFieldKey);
 		});
 	});
 
 	describe("treeStatus", () => {
 		it("object", () => {
-			const root = getOldRoot(treeSchema, initialTree);
+			const root = getRoot(treeSchema, initialTree);
 			const o = root.object;
 			assert(o !== undefined);
 			assert.equal(Tree.status(o), TreeStatus.InDocument);
-			root.object = object.create({ content: 43 });
+			root.object = new object({ content: 43 });
 			assert.equal(Tree.status(o), TreeStatus.Removed);
 		});
 
@@ -119,9 +129,9 @@ describe("node API", () => {
 	});
 
 	describe("events", () => {
-		function check(mutate: (root: TreeField<typeof treeSchema.rootFieldSchema>) => void) {
+		function check(mutate: (root: NodeFromSchema<typeof treeSchema>) => void) {
 			it(".on(..) must subscribe to change event", () => {
-				const root = getOldRoot(treeSchema, initialTree);
+				const root = getRoot(treeSchema, initialTree);
 				const log: any[][] = [];
 
 				Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
@@ -138,7 +148,7 @@ describe("node API", () => {
 			});
 
 			it(".on(..) must return unsubscribe function", () => {
-				const root = getOldRoot(treeSchema, initialTree);
+				const root = getRoot(treeSchema, initialTree);
 				const log: any[][] = [];
 
 				const unsubscribe = Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {

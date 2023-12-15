@@ -11,7 +11,6 @@ import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
-	NodeBase,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -24,6 +23,7 @@ import {
 } from "../../class-tree/schemaFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 import { TreeFactory } from "../../treeFactory";
+import { TreeNode } from "../../simple-tree";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -31,7 +31,7 @@ import { TreeFactory } from "../../treeFactory";
 	class Note extends schema.object("Note", { text: schema.string }) {}
 
 	class NodeMap extends schema.map("Notes", Note) {}
-	class NodeList extends schema.list("Notes", Note) {}
+	class NodeList extends schema.array("Notes", Note) {}
 
 	// eslint-disable-next-line no-inner-declarations
 	function f(n: NodeMap): void {
@@ -167,7 +167,7 @@ describe("schemaFactory", () => {
 			});
 
 			assert(root instanceof Point);
-			assert(root instanceof NodeBase);
+			assert(root instanceof TreeNode);
 			assert(Reflect.has(root, "selected"));
 			assert.equal(root.selected, false);
 			// Ensure modification works
@@ -245,7 +245,7 @@ describe("schemaFactory", () => {
 		}) {}
 
 		class NodeMap extends schema.map("NoteMap", Note) {}
-		class NodeList extends schema.list("NoteList", Note) {}
+		class NodeList extends schema.array("NoteList", Note) {}
 
 		class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
@@ -272,7 +272,7 @@ describe("schemaFactory", () => {
 			const builder = new SchemaFactory("test");
 
 			class Inventory extends builder.object("Inventory", {
-				parts: builder.list(builder.number),
+				parts: builder.array(builder.number),
 			}) {}
 
 			const treeConfiguration = new TreeConfiguration(
@@ -294,21 +294,21 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 
 			// Explicit structural example
-			const MyList = factory.list(factory.number);
+			const MyList = factory.array(factory.number);
 			type MyList = NodeFromSchema<typeof MyList>;
 
 			// Inline structural example
-			factory.object("Foo", { myList: factory.list(factory.number) });
+			factory.object("Foo", { myList: factory.array(factory.number) });
 
 			function broken() {
 				// @ts-expect-error structural list schema are not typed as classes.
-				class NotAClass extends factory.list(factory.number) {}
+				class NotAClass extends factory.array(factory.number) {}
 			}
 		});
 
 		it("Named", () => {
 			const factory = new SchemaFactory("test");
-			class NamedList extends factory.list("name", factory.number) {
+			class NamedList extends factory.array("name", factory.number) {
 				public testProperty = false;
 			}
 
@@ -325,7 +325,7 @@ describe("schemaFactory", () => {
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
-			assert(listNode instanceof NodeBase);
+			assert(listNode instanceof TreeNode);
 			assert(Reflect.has(listNode, "testProperty"));
 			assert.equal(listNode.testProperty, false);
 			listNode.testProperty = true;
@@ -337,7 +337,7 @@ describe("schemaFactory", () => {
 
 		it("Unhydrated", () => {
 			const factory = new SchemaFactory("test");
-			class NamedList extends factory.list("name", factory.number) {}
+			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
 	});
@@ -380,7 +380,7 @@ describe("schemaFactory", () => {
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
-			assert(mapNode instanceof NodeBase);
+			assert(mapNode instanceof TreeNode);
 			assert(Reflect.has(mapNode, "testProperty"));
 			assert.equal(mapNode.testProperty, false);
 			mapNode.testProperty = true;
@@ -406,7 +406,7 @@ describe("schemaFactory", () => {
 		// It will be used below to generate test cases of the various combinations.
 		const comboSchemaFactory = new SchemaFactory("combo");
 		class ComboChildObject extends comboSchemaFactory.object("comboObjectChild", {}) {}
-		class ComboChildList extends comboSchemaFactory.list(
+		class ComboChildList extends comboSchemaFactory.array(
 			"comboListChild",
 			comboSchemaFactory.null,
 		) {}
@@ -417,7 +417,7 @@ describe("schemaFactory", () => {
 		class ComboParentObject extends comboSchemaFactory.object("comboObjectParent", {
 			child: [ComboChildObject, ComboChildList, ComboChildMap],
 		}) {}
-		class ComboParentList extends comboSchemaFactory.list("comboListParent", [
+		class ComboParentList extends comboSchemaFactory.array("comboListParent", [
 			ComboChildObject,
 			ComboChildList,
 			ComboChildMap,

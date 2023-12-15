@@ -1757,9 +1757,9 @@ use_old_TypeAliasDeclaration_SubmitSummaryResult(
 * "TypeAliasDeclaration_SummarizeResultPart": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummarizeResultPart():
-    TypeOnly<old.SummarizeResultPart<any,any>>;
+    TypeOnly<old.SummarizeResultPart<any>>;
 declare function use_current_TypeAliasDeclaration_SummarizeResultPart(
-    use: TypeOnly<current.SummarizeResultPart<any,any>>): void;
+    use: TypeOnly<current.SummarizeResultPart<any>>): void;
 use_current_TypeAliasDeclaration_SummarizeResultPart(
     get_old_TypeAliasDeclaration_SummarizeResultPart());
 
@@ -1769,9 +1769,9 @@ use_current_TypeAliasDeclaration_SummarizeResultPart(
 * "TypeAliasDeclaration_SummarizeResultPart": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummarizeResultPart():
-    TypeOnly<current.SummarizeResultPart<any,any>>;
+    TypeOnly<current.SummarizeResultPart<any>>;
 declare function use_old_TypeAliasDeclaration_SummarizeResultPart(
-    use: TypeOnly<old.SummarizeResultPart<any,any>>): void;
+    use: TypeOnly<old.SummarizeResultPart<any>>): void;
 use_old_TypeAliasDeclaration_SummarizeResultPart(
     get_current_TypeAliasDeclaration_SummarizeResultPart());
 
