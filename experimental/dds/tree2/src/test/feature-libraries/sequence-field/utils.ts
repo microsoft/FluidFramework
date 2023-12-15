@@ -63,6 +63,14 @@ export function skipOnLineageMethod(title: string, fn: () => void): void {
 	}
 }
 
+export function skipOnTombstoneMethod(title: string, fn: () => void): void {
+	if (sequenceConfig.cellOrdering === CellOrderingMethod.Tombstone) {
+		it.skip(title, fn);
+	} else {
+		it(title, fn);
+	}
+}
+
 export function onBothConfigs(title: string, fn: () => void): void {
 	describe(title, () => {
 		for (const method of [CellOrderingMethod.Lineage, CellOrderingMethod.Tombstone]) {

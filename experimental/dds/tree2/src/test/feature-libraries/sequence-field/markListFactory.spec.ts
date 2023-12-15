@@ -13,6 +13,7 @@ import {
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { MarkMaker as Mark } from "./testEdits";
+import { skipOnLineageMethod, skipOnTombstoneMethod } from "./utils";
 
 const dummyMark = Mark.delete(1, brand(0));
 const type: TreeNodeSchemaIdentifier = brand("Node");
@@ -41,11 +42,18 @@ describe("SequenceField - MarkListFactory", () => {
 		assert.deepStrictEqual(factory.list, [{ count: 84 }, dummyMark]);
 	});
 
-	it("Hides no-op marks over empty cells", () => {
+	skipOnTombstoneMethod("Hides tombstones", () => {
 		const factory = new SF.MarkListFactory();
 		factory.push({ cellId: { localId: brand(0) }, count: 42 });
 		factory.pushContent(dummyMark);
 		assert.deepStrictEqual(factory.list, [dummyMark]);
+	});
+
+	skipOnLineageMethod("Does not hide tombstones", () => {
+		const factory = new SF.MarkListFactory();
+		factory.push({ cellId: { localId: brand(0) }, count: 42 });
+		factory.pushContent(dummyMark);
+		assert.deepStrictEqual(factory.list, [{ cellId: { localId: 0 }, count: 42 }, dummyMark]);
 	});
 
 	it("Does not insert an offset when there is no content after the offset", () => {
