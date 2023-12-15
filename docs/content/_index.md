@@ -196,9 +196,9 @@ summary: "An open-source client technology stack that enables real-time collabor
   >}}
 {{< /cta_container  >}} -->
 <!-- {{ partial "carousel.html" (dict "context" . "items" "1" "height" "50" "unit" "%" "duration" "7000") }} -->
-<div class="value-props">
+<!-- <div class="value-props">
     <h2><strong>What our customers are saying about Fluid Framework: </strong></h2>
-</div>
+</div> -->
 <!-- {{< carousel items="1" height="500" unit="px" duration="1000" >}} -->
 
 <!-- {{<swimlane_container fullPage="yes">}}

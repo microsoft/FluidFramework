@@ -25,35 +25,35 @@
 <div class="jumbotron {{$class}}">
     <div class="container">
         <div class="row">
-            <div class="col-md-12 copy">
+            <div class="col-md-6 copy">
                 <div class="row">
                     <h1>{{$lead}}</h1>
                     <div class="lead">
                         <p>{{ $subText }}</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-12">
+            </div> 
+            <div class="col-md-6">
                 <div class="ratio ratio-16x9">
-                    <iframe width="600" height="300" src="{{$imgURL}}" title="Fluid Framework video"></iframe>
+                    <iframe width="590" height="300" src="{{$imgURL}}" title="Fluid Framework video"></iframe>
                 </div>
-                <div class="hero-img" id="jumbotron-{{$uniqueImgID}}" style="background-image: url('{{$imgURL}}')">
-                </div>
+                <!-- <div class="hero-img" id="jumbotron-{{$uniqueImgID}}" style="background-image: url('{{$imgURL}}')">
+                </div> -->
             </div>
         </div>
     </div>
-    <div class="container">
+    <!-- <div class="container">
         <div class="row">
                 <div class="download-hero primary-buttons">
-                    <div class="col-md-12">
+                    <div class="col-md-4">
                         <a class="link-button dlink" href="/docs/start/tutorial">Get Started</a>
                     </div>
-                    <div class="col-sm-12">
+                    <div class="col-md-4">
                         <a class="link-button dlink" href="/docs/start/tutorial">Demo</a>
                     </div>
                 </div>
         </div>
-    </div>
+    </div> -->
 </div>
 
 {{ else }}
