@@ -51,8 +51,8 @@ summary: "An open-source client technology stack that enables real-time collabor
                 </div>
                 <div class="col-sm-4 col-xs-6">
                     <div class="value-prop" id="home-value-prop-open-source-link">
-                        <div class="value-prop-icon open-source"></div>
-                            <b>Better Performance</b>
+                        <div class="value-prop-icon better-perf"></div>
+                            <b>Industry-leading speed & performance</b>
                         </div>
                     </div>
                 </div>
