@@ -100,9 +100,9 @@ use_old_ClassDeclaration_DataObject(
 * "ClassDeclaration_DataObjectFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DataObjectFactory():
-    TypeOnly<old.DataObjectFactory<any,any>>;
+    TypeOnly<old.DataObjectFactory<any>>;
 declare function use_current_ClassDeclaration_DataObjectFactory(
-    use: TypeOnly<current.DataObjectFactory<any,any>>): void;
+    use: TypeOnly<current.DataObjectFactory<any>>): void;
 use_current_ClassDeclaration_DataObjectFactory(
     get_old_ClassDeclaration_DataObjectFactory());
 
@@ -112,9 +112,9 @@ use_current_ClassDeclaration_DataObjectFactory(
 * "ClassDeclaration_DataObjectFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DataObjectFactory():
-    TypeOnly<current.DataObjectFactory<any,any>>;
+    TypeOnly<current.DataObjectFactory<any>>;
 declare function use_old_ClassDeclaration_DataObjectFactory(
-    use: TypeOnly<old.DataObjectFactory<any,any>>): void;
+    use: TypeOnly<old.DataObjectFactory<any>>): void;
 use_old_ClassDeclaration_DataObjectFactory(
     get_current_ClassDeclaration_DataObjectFactory());
 
@@ -210,9 +210,9 @@ use_old_ClassDeclaration_PureDataObject(
 * "ClassDeclaration_PureDataObjectFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_PureDataObjectFactory():
-    TypeOnly<old.PureDataObjectFactory<any,any>>;
+    TypeOnly<old.PureDataObjectFactory<any>>;
 declare function use_current_ClassDeclaration_PureDataObjectFactory(
-    use: TypeOnly<current.PureDataObjectFactory<any,any>>): void;
+    use: TypeOnly<current.PureDataObjectFactory<any>>): void;
 use_current_ClassDeclaration_PureDataObjectFactory(
     get_old_ClassDeclaration_PureDataObjectFactory());
 
@@ -222,9 +222,9 @@ use_current_ClassDeclaration_PureDataObjectFactory(
 * "ClassDeclaration_PureDataObjectFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_PureDataObjectFactory():
-    TypeOnly<current.PureDataObjectFactory<any,any>>;
+    TypeOnly<current.PureDataObjectFactory<any>>;
 declare function use_old_ClassDeclaration_PureDataObjectFactory(
-    use: TypeOnly<old.PureDataObjectFactory<any,any>>): void;
+    use: TypeOnly<old.PureDataObjectFactory<any>>): void;
 use_old_ClassDeclaration_PureDataObjectFactory(
     get_current_ClassDeclaration_PureDataObjectFactory());
 

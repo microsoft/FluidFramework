@@ -4,7 +4,7 @@
  */
 import React from "react";
 
-import type { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
+import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core";
 import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
 import { EditableView } from "./EditableView";
 

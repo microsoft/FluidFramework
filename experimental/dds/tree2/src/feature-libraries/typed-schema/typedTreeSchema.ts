@@ -9,12 +9,12 @@ import {
 	EmptyKey,
 	FieldKey,
 	TreeNodeStoredSchema,
-	StoredSchemaCollection,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
-	TreeStoredSchema,
 	TreeTypeSet,
 	ValueSchema,
+	TreeStoredSchema,
+	StoredSchemaCollection,
 } from "../../core";
 import {
 	MakeNominal,
@@ -23,6 +23,7 @@ import {
 	compareSets,
 	oneFromSet,
 	Assume,
+	mapIterable,
 } from "../../util";
 import { FieldKinds } from "../default-schema";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
@@ -66,21 +67,15 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 export abstract class TreeNodeSchemaBase<
 	const out Name extends string = string,
 	const out Specification = unknown,
-> implements TreeNodeStoredSchema
-{
+> {
 	protected _typeCheck?: MakeNominal;
 	protected constructor(
 		public readonly builder: Named<string>,
 		public readonly name: TreeNodeSchemaIdentifier<Name>,
 		public readonly info: Specification,
+		public readonly stored: TreeNodeStoredSchema,
 	) {}
 	public abstract getFieldSchema(field: FieldKey): TreeFieldSchema;
-
-	// These members implement TreeNodeStoredSchema, allowing view schema to be used as stored schema.
-
-	public abstract readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
-	public abstract readonly mapFields?: TreeFieldStoredSchema | undefined;
-	public abstract readonly leafValue?: ValueSchema | undefined;
 }
 
 /**
@@ -90,11 +85,9 @@ export class MapNodeSchema<
 	const out Name extends string = string,
 	const out Specification extends Unenforced<MapFieldSchema> = MapFieldSchema,
 > extends TreeNodeSchemaBase<Name, Specification> {
-	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema> = new Map();
-	public override get mapFields(): MapFieldSchema {
+	public get mapFields(): MapFieldSchema {
 		return this.info as MapFieldSchema;
 	}
-	public override readonly leafValue = undefined;
 
 	protected _typeCheck2?: MakeNominal;
 	public static create<const Name extends string, const Specification extends MapFieldSchema>(
@@ -102,7 +95,10 @@ export class MapNodeSchema<
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
 	): MapNodeSchema<Name, Specification> {
-		return new MapNodeSchema(builder, name, specification);
+		return new MapNodeSchema(builder, name, specification, {
+			objectNodeFields: new Map(),
+			mapFields: specification as MapFieldSchema,
+		});
 	}
 
 	public override getFieldSchema(field: FieldKey): MapFieldSchema {
@@ -117,9 +113,7 @@ export class LeafNodeSchema<
 	const out Name extends string = string,
 	const out Specification extends Unenforced<ValueSchema> = ValueSchema,
 > extends TreeNodeSchemaBase<Name, Specification> {
-	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema> = new Map();
-	public override readonly mapFields = undefined;
-	public override get leafValue(): ValueSchema {
+	public get leafValue(): ValueSchema {
 		return this.info as ValueSchema;
 	}
 
@@ -129,7 +123,10 @@ export class LeafNodeSchema<
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
 	): LeafNodeSchema<Name, Specification> {
-		return new LeafNodeSchema(builder, name, specification);
+		return new LeafNodeSchema(builder, name, specification, {
+			objectNodeFields: new Map(),
+			leafValue: specification,
+		});
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldSchema {
@@ -144,9 +141,6 @@ export class ObjectNodeSchema<
 	const out Name extends string = string,
 	const out Specification extends Unenforced<Fields> = Fields,
 > extends TreeNodeSchemaBase<Name, Specification> {
-	public override readonly mapFields = undefined;
-	public override readonly leafValue = undefined;
-
 	protected _typeCheck2?: MakeNominal;
 
 	public static create<const Name extends string, const Specification extends Fields>(
@@ -179,9 +173,9 @@ export class ObjectNodeSchema<
 		>,
 		// Allows reading fields through the normal map.
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
-		public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>,
+		public readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>,
 	) {
-		super(builder, name, info);
+		super(builder, name, info, { objectNodeFields });
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldSchema {
@@ -197,10 +191,6 @@ export class FieldNodeSchema<
 	Name extends string = string,
 	Specification extends Unenforced<TreeFieldSchema> = TreeFieldSchema,
 > extends TreeNodeSchemaBase<Name, Specification> {
-	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
-	public override readonly mapFields = undefined;
-	public override readonly leafValue = undefined;
-
 	protected _typeCheck2?: MakeNominal;
 	public static create<const Name extends string, const Specification extends TreeFieldSchema>(
 		builder: Named<string>,
@@ -215,12 +205,14 @@ export class FieldNodeSchema<
 		name: TreeNodeSchemaIdentifier<Name>,
 		info: Specification,
 	) {
-		super(builder, name, info);
-		this.objectNodeFields = new Map([[EmptyKey, this.info as TreeFieldSchema]]);
+		const objectNodeFields = new Map([[EmptyKey, info as TreeFieldSchema]]);
+		super(builder, name, info, { objectNodeFields });
 	}
 
-	public override getFieldSchema(field: FieldKey): TreeFieldSchema {
-		return field === EmptyKey ? (this.info as TreeFieldSchema) : TreeFieldSchema.empty;
+	public override getFieldSchema(field?: FieldKey): TreeFieldSchema {
+		return (field ?? EmptyKey) === EmptyKey
+			? (this.info as TreeFieldSchema)
+			: TreeFieldSchema.empty;
 	}
 }
 
@@ -508,8 +500,7 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  *
  * @alpha
  */
-
-export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
+export interface FlexTreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaCollection {
 	/**
 	 * Schema for the root field which contains the whole tree.
@@ -525,12 +516,25 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
 	readonly adapters: Adapters;
 }
 
-{
-	// It is convenient that TreeSchema can be used as a TreeStoredSchema with no conversion.
-	// This type check ensures this ability is not broken on accident (if it needs to be broken on purpose for some reason thats fine: just delete this check).
-	// Since TypeScript does not allow extending two types with the same field (even if they are compatible),
-	// this check cannot be done by adding an extends clause to TreeSchema.
-	type _check = requireAssignableTo<TreeSchema, TreeStoredSchema>;
+/**
+ * Converts a {@link FlexTreeSchema} into a {@link TreeStoredSchema}.
+ */
+export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
+	return {
+		rootFieldSchema: treeSchema.rootFieldSchema,
+		...intoStoredSchemaCollection(treeSchema),
+	};
+}
+
+/**
+ * Converts a {@link SchemaCollection} into a {@link StoredSchemaCollection}.
+ */
+export function intoStoredSchemaCollection(treeSchema: SchemaCollection): StoredSchemaCollection {
+	return {
+		nodeSchema: new Map(
+			mapIterable(treeSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
+		),
+	};
 }
 
 /**
@@ -541,8 +545,7 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
  * It is convenient that this can be used as a StoredSchemaCollection with no conversion.
  * There there isn't a design requirement for this however, so this extends clause can be removed later if needed.
  */
-
-export interface SchemaCollection extends StoredSchemaCollection {
+export interface SchemaCollection {
 	/**
 	 * {@inheritdoc SchemaCollection}
 	 */

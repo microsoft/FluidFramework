@@ -6,8 +6,8 @@ import * as Path from "node:path";
 
 import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import { Heading } from "../Heading";
-import { Link } from "../Link";
+import { type Heading } from "../Heading";
+import { type Link } from "../Link";
 import { getQualifiedApiItemName, getReleaseTag } from "../utilities";
 import {
 	type ApiItemTransformationConfiguration,

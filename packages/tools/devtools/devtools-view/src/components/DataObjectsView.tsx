@@ -13,7 +13,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	type RootHandleNode,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 
 import { useMessageRelay } from "../MessageRelayContext";
 import { TreeDataView } from "./data-visualization";

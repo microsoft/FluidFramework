@@ -129,7 +129,6 @@ export {
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
-	getPrimaryField,
 	typeNameSymbol,
 	valueSymbol,
 	ContextuallyTypedNodeDataObject,
@@ -159,7 +158,7 @@ export {
 	cursorFromContextualData,
 	AllowedTypes,
 	TreeNodeSchema as FlexTreeNodeSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	TreeFieldSchema,
@@ -224,7 +223,13 @@ export {
 	MapFieldSchema,
 } from "./feature-libraries";
 
-export { TreeListNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
+export {
+	TreeArrayNode,
+	TreeMapNodeBase,
+	Unhydrated,
+	IterableTreeListContent,
+	TreeNode,
+} from "./simple-tree";
 
 export {
 	ISharedTree,
@@ -254,7 +259,6 @@ export {
 	SchemaFactory,
 	Tree,
 	TreeApi,
-	NodeBase,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,

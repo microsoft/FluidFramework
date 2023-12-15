@@ -16,8 +16,9 @@ import {
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { ILoaderOptions } from "@fluidframework/container-loader";
-import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {

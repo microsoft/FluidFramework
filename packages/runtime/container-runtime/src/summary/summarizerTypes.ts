@@ -418,7 +418,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**

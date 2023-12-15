@@ -125,7 +125,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     waitAttached(): Promise<void>;
 }
 
-// @internal
+// @alpha
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     // (undocumented)
@@ -157,7 +157,7 @@ export interface ISharedObjectRegistry {
 // @internal
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
-// @internal
+// @alpha
 export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => Promise<{
     path: string[];
     content: string;

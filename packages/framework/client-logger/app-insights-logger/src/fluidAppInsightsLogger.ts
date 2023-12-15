@@ -11,7 +11,7 @@ import {
 import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 
 /**
- * The configuration object for the {@link FluidAppInsightsLogger}
+ * The configuration object for creating the logger via {@link createLogger}.
  * @internal
  */
 export interface FluidAppInsightsLoggerConfig {
@@ -123,9 +123,8 @@ export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter
  * or else logging will not occur.
  *
  * @sealed
- * @internal
  */
-export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
+class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**
 	 * The Azure ApplicationInsights client utilized by this logger.
 	 * The ApplicationInsights instance MUST be initialized with client.loadAppInsights()
@@ -302,4 +301,20 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 			}
 		}
 	}
+}
+
+/**
+ * Creates an {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
+ * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API.
+ *
+ * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights(),
+ * or else logging will not occur.
+ *
+ * @internal
+ */
+export function createLogger(
+	client: ApplicationInsights,
+	config?: FluidAppInsightsLoggerConfig,
+): ITelemetryBaseLogger {
+	return new FluidAppInsightsLogger(client, config);
 }

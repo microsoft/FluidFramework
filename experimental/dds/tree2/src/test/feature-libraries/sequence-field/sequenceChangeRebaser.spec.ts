@@ -499,30 +499,29 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 		}
 	}
 
-	// TODO: fix bugs encountered when this is enabled
-	// Made nested changes to a node
-	// for (let i = 0; i < currentState.length; i += 1) {
-	// 	const modifyIntention = mintIntention();
-	// 	const nestedChange = config.allocator.allocate();
-	// 	const newState = [...currentState];
-	// 	const node = currentState[i];
-	// 	newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
-	// 	yield {
-	// 		content: {
-	// 			currentState: newState,
-	// 			config,
-	// 		},
-	// 		mostRecentEdit: {
-	// 			changeset: tagChange(
-	// 				Change.modify(i, TestChange.mint(node.nested, nestedChange)),
-	// 				tagFromIntention(modifyIntention),
-	// 			),
-	// 			intention: modifyIntention,
-	// 			description: `Mod(${nestedChange}on${node.id})`,
-	// 		},
-	// 		parent: state,
-	// 	};
-	// }
+	// Make nested changes to a node
+	for (let i = 0; i < currentState.length; i += 1) {
+		const modifyIntention = mintIntention();
+		const nestedChange = config.allocator.allocate();
+		const newState = [...currentState];
+		const node = currentState[i];
+		newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
+		yield {
+			content: {
+				currentState: newState,
+				config,
+			},
+			mostRecentEdit: {
+				changeset: tagChange(
+					Change.modify(i, TestChange.mint(node.nested, nestedChange)),
+					tagFromIntention(modifyIntention),
+				),
+				intention: modifyIntention,
+				description: `Mod(${nestedChange}on${node.id})`,
+			},
+			parent: state,
+		};
+	}
 };
 
 describe("SequenceField - State-based Rebaser Axioms", () => {
@@ -687,6 +686,22 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
 		assert.deepEqual(insertB2.change, expected);
 	});
+
+	it("[revive, insert] ↷ no change", () => {
+		const reviveA = tagChange([Mark.revive(2, { revision: tag1, localId: brand(0) })], tag2);
+		const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+		const inverseA = tagRollbackInverse(invert(reviveA), tag4, tag2);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, reviveA]);
+		const expected = [
+			Mark.skip(1),
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 2, offset: 1 }],
+			}),
+		];
+
+		assert.deepEqual(insertB2.change, expected);
+	});
 });
 
 describe("SequenceField - Sandwich composing", () => {
@@ -758,5 +773,24 @@ describe("SequenceField - Composed sandwich rebasing", () => {
 		const sandwich = compose([inverseA, insertA]);
 		const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
 		assert.deepEqual(insertB2.change, insertB.change);
+	});
+});
+
+describe("SequenceField - Examples", () => {
+	it("a detach can end up with a redetachId that contains lineage", () => {
+		const revive = tagChange([Mark.revive(1, { revision: tag1, localId: brand(0) })], tag3);
+		const concurrentRemove = tagChange([Mark.delete(1, brand(42))], tag2);
+		const rebasedRevive = rebaseTagged(revive, concurrentRemove);
+		const redetach = invert(rebasedRevive);
+		const expected = [
+			Mark.delete(1, brand(0), {
+				redetachId: {
+					revision: tag1,
+					localId: brand(0),
+					lineage: [{ revision: tag2, id: brand(42), count: 1, offset: 0 }],
+				},
+			}),
+		];
+		assert.deepEqual(redetach, expected);
 	});
 });

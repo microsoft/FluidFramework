@@ -46,7 +46,6 @@ import { reservedTileLabelsKey } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
-import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TrackingGroup } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -616,7 +615,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     posFromRelativePos(relativePos: IRelativePosition): number;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected processGCDataCore(serializer: SummarySerializer): void;
+    protected processGCDataCore(serializer: IFluidSerializer): void;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
     removeRange(start: number, end: number): void;
