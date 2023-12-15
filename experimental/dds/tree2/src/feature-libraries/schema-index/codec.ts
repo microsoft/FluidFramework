@@ -18,6 +18,8 @@ import {
 	storedSchemaDecodeDispatcher,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../core/schema-stored/schema";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeNodeSchemaDataFormat } from "../../core/schema-stored/format";
 import { Format, TreeNodeSchemaFormat, Versioned } from "./format";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
@@ -40,7 +42,7 @@ function encodeTree(
 ): TreeNodeSchemaFormat {
 	const out: TreeNodeSchemaFormat = {
 		name,
-		data: schema.encode(),
+		data: schema.encode() as TreeNodeSchemaDataFormat,
 	};
 	return out;
 }

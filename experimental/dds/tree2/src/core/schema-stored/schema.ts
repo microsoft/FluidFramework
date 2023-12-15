@@ -114,7 +114,13 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
 
-	public abstract encode(): TreeNodeSchemaDataFormat;
+	/**
+	 * @privateRemarks
+	 * Returns TreeNodeSchemaDataFormat.
+	 * This is not enforced by the class to avoid leaking these types out of the package,
+	 * but is runtime validated by the codec.
+	 */
+	public abstract encode(): unknown;
 }
 
 /**
@@ -135,12 +141,12 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): TreeNodeSchemaDataFormat {
+	public override encode(): unknown {
 		return {
 			object: [...this.objectNodeFields]
 				.map(([k, v]) => encodeNamedField(k, v))
 				.sort(compareNamed),
-		};
+		} satisfies TreeNodeSchemaDataFormat;
 	}
 }
 
@@ -160,8 +166,8 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): TreeNodeSchemaDataFormat {
-		return { map: encodeField(this.mapFields) };
+	public override encode(): unknown {
+		return { map: encodeField(this.mapFields) } satisfies TreeNodeSchemaDataFormat;
 	}
 }
 
@@ -185,8 +191,8 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): TreeNodeSchemaDataFormat {
-		return { leaf: encodeValueSchema(this.leafValue) };
+	public override encode(): unknown {
+		return { leaf: encodeValueSchema(this.leafValue) } satisfies TreeNodeSchemaDataFormat;
 	}
 }
 

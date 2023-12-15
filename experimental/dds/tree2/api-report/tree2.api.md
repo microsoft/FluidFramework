@@ -1782,7 +1782,7 @@ export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out 
     get types(): TreeTypeSet;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TreeFieldStoredSchema {
     // (undocumented)
     readonly kind: FieldKindSpecifier;
@@ -1869,10 +1869,11 @@ interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind exte
 }
 
 // @alpha (undocumented)
-export interface TreeNodeStoredSchema {
-    readonly leafValue?: ValueSchema;
-    readonly mapFields?: TreeFieldStoredSchema;
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+export abstract class TreeNodeStoredSchema {
+    // (undocumented)
+    abstract encode(): unknown;
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @alpha
