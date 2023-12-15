@@ -116,8 +116,6 @@ export type GCFeatureMatrix =
 /**
  * Deprecated properties formerly included in @see IGCMetadata.
  * These may be found in old snapshots, so we need to support them for backwards compatibility.
- *
- * @alpha
  */
 export interface IGCMetadata_Deprecated {
 	/**
@@ -165,7 +163,14 @@ export interface IGCMetadata {
 	readonly sweepEnabled?: boolean;
 	/** If this is present, the session for this container will expire after this time and the container will close */
 	readonly sessionExpiryTimeoutMs?: number;
-	/** How long to wait after an object is unreferenced before it becomes a Tombstone (precursor to being deleted) */
+	/**
+	 * How long to wait after an object is unreferenced before it becomes a Tombstone.
+	 *
+	 * After this point, there's a grace period before the object is deleted.
+	 * @see IGCRuntimeOptions.sweepGracePeriodMs
+	 *
+	 * So the full sweep timeout in a session is tombstoneTimeoutMs + sweepGracePeriodMs.
+	 */
 	readonly tombstoneTimeoutMs?: number;
 }
 

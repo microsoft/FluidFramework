@@ -137,7 +137,7 @@ export function generateGCConfigs(
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and Tombstone Timeout is present, the following conditions have to be met to run sweep:
+	 * Assuming overall GC is enabled and Tombstone timeout is present, the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be enabled for this container.
 	 * 2. Sweep should be enabled for this session.
@@ -158,7 +158,7 @@ export function generateGCConfigs(
 
 	// Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
 	if (tombstoneTimeoutMs !== undefined && inactiveTimeoutMs > tombstoneTimeoutMs) {
-		throw new UsageError("inactive timeout should not be greater than the sweep timeout");
+		throw new UsageError("inactive timeout should not be greater than the tombstone timeout");
 	}
 
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.

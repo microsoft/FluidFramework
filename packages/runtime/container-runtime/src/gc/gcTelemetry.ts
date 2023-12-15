@@ -66,13 +66,20 @@ interface INodeUsageProps extends ICommonProps {
 }
 
 /**
- * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector. There are 4 types of
- * telemetry logged:
+ * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector.
+ *
+ * These events are not logged as errors, just generic events, since there can be false positives:
+ *
  * 1. inactiveObject telemetry - When an inactive node is used - A node that has been unreferenced for inactiveTimeoutMs.
- * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for tombstoneTimeoutMs.
- * 3. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
- * 4. Sweep / deleted telemetry - When a node is detected as sweep ready in the sweep phase.
- * 5. Unknown outbound reference telemetry - When a node is referenced but GC is not explicitly notified of it.
+ * 2. tombstoneReadyObject telemetry - When a tombstone-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs.
+ * 3. sweepReadyObject telemetry - When a sweep-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs + sweepGracePeriodMs.
+ *
+ * These events are logged as errors since they are based on the core GC logic:
+ *
+ * 1. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
+ * 2. Unknown outbound reference telemetry - When a node is referenced but GC was not notified of it when the new reference appeared.
+ *
+ * Note: The telemetry for a Deleted node being used is logged elsewhere in this package.
  */
 export class GCTelemetryTracker {
 	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
