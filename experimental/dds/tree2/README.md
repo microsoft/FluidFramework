@@ -1,12 +1,5 @@
 # @fluidframework/tree
 
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
 
 ## Status
