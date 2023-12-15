@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
+import { makeRandom, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
 	createDDSFuzzSuite,
@@ -10,11 +10,10 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { createIdCompressor } from "@fluidframework/id-compressor";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { failureDirectory, onCreate } from "./fuzzUtils";
+import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -78,7 +77,7 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			idCompressorFactory: createIdCompressor,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -107,7 +106,7 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			idCompressorFactory: createIdCompressor,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 
 		createDDSFuzzSuite(model, options);

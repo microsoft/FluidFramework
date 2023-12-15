@@ -82,6 +82,7 @@ export interface ICodecOptions {
 }
 
 /**
+ * TODO: Document TContext
  * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to TypeScript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
@@ -105,6 +106,8 @@ export interface IJsonCodec<
  * @privateRemarks -
  * TODO: This type is likely better placed nearer to editing code, where knowledge of the session id is
  * a common concern for encoding revision tags using id compressor.
+ * TODO: Rename; it's not so much 'aware' as 'requiring' the session id to function, which is generally how
+ * context should be used for codecs.
  */
 export type SessionAwareCodec<
 	TDecoded,

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { NodeChangeset } from "../../../feature-libraries";
 import { JsonCompatibleReadOnly, brand } from "../../../util";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
+import { EncodingTestData, MockIdCompressor, makeEncodingTestSuite } from "../../utils";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
@@ -76,7 +76,7 @@ describe("defaultFieldChangeCodecs", () => {
 		};
 
 		makeEncodingTestSuite(
-			makeOptionalFieldCodecFamily(childCodec1, new RevisionTagCodec()),
+			makeOptionalFieldCodecFamily(childCodec1, new RevisionTagCodec(new MockIdCompressor())),
 			encodingTestData,
 		);
 	});

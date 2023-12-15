@@ -23,6 +23,7 @@ import {
 import { fakeIdAllocator, brand } from "../../../util";
 import {
 	EncodingTestData,
+	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils";
@@ -424,7 +425,7 @@ describe("Generic FieldKind", () => {
 		};
 
 		const leafCodec = valueHandler
-			.codecsFactory(throwCodec, new RevisionTagCodec())
+			.codecsFactory(throwCodec, new RevisionTagCodec(new MockIdCompressor()))
 			.resolve(0).json;
 		const childCodec: SessionAwareCodec<NodeChangeset> = {
 			encode: (nodeChange, originatorId) => {
@@ -438,7 +439,10 @@ describe("Generic FieldKind", () => {
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(childCodec, new RevisionTagCodec()),
+			genericFieldKind.changeHandler.codecsFactory(
+				childCodec,
+				new RevisionTagCodec(new MockIdCompressor()),
+			),
 			encodingTestData,
 		);
 	});

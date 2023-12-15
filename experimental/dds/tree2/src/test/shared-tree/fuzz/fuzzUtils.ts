@@ -4,6 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
+import { createIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	moveToDetachedField,
 	Anchor,
@@ -18,6 +19,7 @@ import { FieldKinds, TreeFieldSchema, FlexTreeObjectNodeTyped } from "../../../f
 import { SharedTree, ITreeCheckout, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.objectRecursive("node", {
@@ -100,3 +102,13 @@ export const failureDirectory = pathJoin(
 	__dirname,
 	"../../../../src/test/shared-tree/fuzz/failures",
 );
+
+export const deterministicIdCompressorFactory: (
+	seed: number,
+) => () => ReturnType<typeof createIdCompressor> = (seed) => {
+	const random = makeRandom(seed);
+	return () => {
+		const sessionId = random.uuid4() as SessionId;
+		return createIdCompressor(sessionId);
+	};
+};
