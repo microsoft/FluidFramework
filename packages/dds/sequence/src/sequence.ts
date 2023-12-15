@@ -730,12 +730,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		let metadata;
-		metadata = this.intervalCollections.tryGetStashedOpLocalMetadata(content);
-		if (metadata === undefined) {
-			const parsedContent: IMergeTreeOp = parseHandles(content, this.serializer);
-			metadata = this.client.applyStashedOp(parsedContent);
-		}
+		const parsedContent = parseHandles(content, this.serializer)
+		const metadata =
+			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent )
+			?? this.client.applyStashedOp(parsedContent);
 		assert(!!metadata, "Metadata is undefined");
 		return metadata;
 	}
