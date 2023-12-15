@@ -7,6 +7,7 @@
 		"noImplicitAny": false,
 		"noImplicitThis": true,
 		"noUnusedLocals": false,
+		"strict": true,
 		"strictBindCallApply": true,
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,

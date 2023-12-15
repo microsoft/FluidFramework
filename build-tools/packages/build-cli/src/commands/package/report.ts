@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Package } from "@fluidframework/build-tools";
+import { Package, PackageJson } from "@fluidframework/build-tools";
 import { Flags, ux } from "@oclif/core";
 import * as JSON5 from "json5";
 import path from "node:path";
@@ -25,8 +25,9 @@ interface PackageMetadata extends Record<string, string | boolean | undefined> {
 	hasApiScript?: boolean;
 	hasDocsFluidBuildTasks?: boolean;
 	hasExportsField?: boolean;
+	hasAlphaExport?: boolean;
 	hasTscMultiDep?: boolean;
-  hasRenameTypesScript?: boolean;
+	hasRenameTypesScript?: boolean;
 	runsTests?: boolean;
 	usesNewTsConfigs?: boolean;
 	usesTscMulti?: boolean;
@@ -59,7 +60,8 @@ export default class PackageReportCommand extends PackageCommand<typeof PackageR
 	private readonly packageMetadata: Record<string, string | boolean | undefined>[] = [];
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { packageJson } = pkg;
+		// eslint-disable-next-line prefer-destructuring
+		const packageJson: PackageJson = pkg.packageJson;
 		const tsConfigPath = path.resolve(pkg.directory, "tsconfig.json");
 		let tsconfig: TsConfigJson | undefined;
 		if (existsSync(tsConfigPath)) {
@@ -68,6 +70,9 @@ export default class PackageReportCommand extends PackageCommand<typeof PackageR
 
 		const usesNewTsConfigs =
 			tsconfig?.extends !== "@fluidframework/build-common/ts-common-config.json";
+
+		const exportsField = packageJson.exports;
+		const hasAlphaExport = Object.hasOwn((exportsField as object) ?? {}, "./alpha");
 
 		const metadata: PackageMetadata = {
 			// package: pkg,
@@ -88,8 +93,9 @@ export default class PackageReportCommand extends PackageCommand<typeof PackageR
 				"build:docs",
 			),
 			hasExportsField: Object.hasOwn(packageJson, "exports"),
+			hasAlphaExport,
 			hasTscMultiDep: Object.hasOwn(packageJson.devDependencies ?? {}, "tsc-multi"),
-      hasRenameTypesScript: pkg.getScript("build:rename-types") !== undefined,
+			hasRenameTypesScript: pkg.getScript("build:rename-types") !== undefined,
 			runsTests: pkg.getScript("test") !== undefined,
 			usesTscMulti: pkg.getScript("tsc")?.includes("tsc-multi"),
 			usesNewTsConfigs,
@@ -135,13 +141,15 @@ export default class PackageReportCommand extends PackageCommand<typeof PackageR
 					header: "exports",
 					minWidth: 5,
 				},
-        usesNewTsConfigs: {},
+				hasAlphaExport: {},
+				usesNewTsConfigs: {},
 				hasTscMultiDep: {
 					minWidth: 5,
 				},
 				usesTscMulti: {
 					minWidth: 5,
 				},
+				hasRenameTypesScript: {},
 			},
 			{
 				...this.flags, // parsed flags

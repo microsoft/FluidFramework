@@ -80,6 +80,7 @@ importers:
       '@types/chai-arrays': ^2.0.0
       '@types/fs-extra': ^8.1.2
       '@types/inquirer': ^8.2.6
+      '@types/json5': ^2.2.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.18.6
       '@types/node-fetch': ^2.5.10
@@ -107,6 +108,7 @@ importers:
       gray-matter: ^4.0.3
       human-id: ^4.0.0
       inquirer: ^8.2.5
+      json5: ^2.2.3
       jssm: ^5.89.2
       jssm-viz-cli: ^5.89.2
       latest-version: ^5.1.0
@@ -158,6 +160,7 @@ importers:
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
+      json5: 2.2.3
       jssm: 5.89.2
       jssm-viz-cli: 5.89.2
       latest-version: 5.1.0
@@ -186,6 +189,7 @@ importers:
       '@types/chai-arrays': 2.0.0
       '@types/fs-extra': 8.1.2
       '@types/inquirer': 8.2.6
+      '@types/json5': 2.2.0
       '@types/mocha': 9.1.1
       '@types/node': 18.18.6
       '@types/node-fetch': 2.6.4
