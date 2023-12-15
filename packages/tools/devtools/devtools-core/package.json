@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-experimental/devtools-core",
+	"name": "@fluidframework/devtools-core",
 	"version": "2.0.0-rc.1.0.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
@@ -66,7 +66,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -79,13 +78,14 @@
 		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~"
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0",
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",

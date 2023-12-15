@@ -1,4 +1,4 @@
-# @fluid-experimental/tree2
+# @fluidframework/tree
 
 ## 2.0.0-internal.8.0.0
 

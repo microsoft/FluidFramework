@@ -25,7 +25,7 @@ import {
 	disposeSymbol,
 	SchemaFactory,
 	TreeConfiguration,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,

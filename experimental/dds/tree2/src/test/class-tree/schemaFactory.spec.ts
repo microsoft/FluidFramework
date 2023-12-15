@@ -11,7 +11,6 @@ import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
-	NodeBase,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -24,6 +23,7 @@ import {
 } from "../../class-tree/schemaFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 import { TreeFactory } from "../../treeFactory";
+import { TreeNode } from "../../simple-tree";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -167,7 +167,7 @@ describe("schemaFactory", () => {
 			});
 
 			assert(root instanceof Point);
-			assert(root instanceof NodeBase);
+			assert(root instanceof TreeNode);
 			assert(Reflect.has(root, "selected"));
 			assert.equal(root.selected, false);
 			// Ensure modification works
@@ -325,7 +325,7 @@ describe("schemaFactory", () => {
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
-			assert(listNode instanceof NodeBase);
+			assert(listNode instanceof TreeNode);
 			assert(Reflect.has(listNode, "testProperty"));
 			assert.equal(listNode.testProperty, false);
 			listNode.testProperty = true;
@@ -380,7 +380,7 @@ describe("schemaFactory", () => {
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
-			assert(mapNode instanceof NodeBase);
+			assert(mapNode instanceof TreeNode);
 			assert(Reflect.has(mapNode, "testProperty"));
 			assert.equal(mapNode.testProperty, false);
 			mapNode.testProperty = true;

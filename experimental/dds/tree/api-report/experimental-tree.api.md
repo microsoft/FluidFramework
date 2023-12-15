@@ -25,9 +25,9 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { ITree } from '@fluid-experimental/tree2';
+import { ITree } from '@fluidframework/tree';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { TreeFactory } from '@fluid-experimental/tree2';
+import { TreeFactory } from '@fluidframework/tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal

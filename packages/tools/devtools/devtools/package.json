@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-experimental/devtools",
+	"name": "@fluidframework/devtools",
 	"version": "2.0.0-rc.1.0.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
@@ -63,16 +63,16 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.7.2.0",
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.7.2.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",

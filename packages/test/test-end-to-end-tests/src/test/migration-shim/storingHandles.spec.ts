@@ -25,7 +25,7 @@ import {
 	SchemaFactory,
 	TreeConfiguration,
 	TreeFactory,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {

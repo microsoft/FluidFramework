@@ -14,7 +14,7 @@ import {
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
 } from '@fluidframework/runtime-definitions';
-import { type ITree, type TreeFactory } from '@fluid-experimental/tree2';
+import { type ITree, type TreeFactory } from '@fluidframework/tree';
 import { AttachState } from '@fluidframework/container-definitions';
 import { assert } from '@fluidframework/core-utils';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
