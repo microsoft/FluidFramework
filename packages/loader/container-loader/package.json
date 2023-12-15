@@ -11,6 +11,58 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./test/container": {
+			"import": {
+				"types": "./lib/container.d.mts",
+				"default": "./lib/container.mjs"
+			},
+			"require": {
+				"types": "./dist/container.d.ts",
+				"default": "./dist/container.cjs"
+			}
+		},
+		"./test/contracts": {
+			"import": {
+				"types": "./lib/contracts.d.mts",
+				"default": "./lib/contracts.mjs"
+			},
+			"require": {
+				"types": "./dist/contracts.d.ts",
+				"default": "./dist/contracts.cjs"
+			}
+		},
+		"./test/connectionManager": {
+			"import": {
+				"types": "./lib/connectionManager.d.mts",
+				"default": "./lib/connectionManager.mjs"
+			},
+			"require": {
+				"types": "./dist/connectionManager.d.ts",
+				"default": "./dist/connectionManager.cjs"
+			}
+		},
+		"./test/deltaManager": {
+			"import": {
+				"types": "./lib/deltaManager.d.mts",
+				"default": "./lib/deltaManager.mjs"
+			},
+			"require": {
+				"types": "./dist/deltaManager.d.ts",
+				"default": "./dist/deltaManager.cjs"
+			}
+		}
+	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
@@ -24,8 +76,9 @@
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc-multi --config tsc-multi.test.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -106,6 +159,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
+		"renamer": "^4.0.0",
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
 		"tsc-multi": "^1.1.0",
