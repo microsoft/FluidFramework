@@ -188,7 +188,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				referenced,
 			);
 
-			// The referenced state will not change.
+			// The reference state will transition now due to the trailing op sent next.
 			referenced = !referenced;
 
 			// If beforeSweepTimeout, send the trailing op that transitions the data store's reference state first
@@ -226,8 +226,8 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				summary1.summaryVersion,
 			);
 
-			// Ensure trailing ops are processed and summarize.
-			await provider.ensureSynchronized();
+			// Summarize now. The trailing ops will be processed before summarize happens because summarizer connects
+			// in write mode and so, all ops sequenced before its join op are processed before it connects.
 			const summary2 = await summarizeNow(summarizer);
 
 			// Validate that the data store has transitioned correctly
