@@ -19,9 +19,7 @@ describe("SharedTree proxies", () => {
 	const schema = sb.object("parent", {
 		object: childSchema,
 		list: sb.array(sb.number),
-		// Is there a way to avoid the cast to 'any' when using 'class-schema'?
-		// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6551
-		map: sb.map("map", sb.optional(sb.string) as any),
+		map: sb.map("map", sb.string),
 	});
 
 	const initialTree = () => ({
@@ -33,27 +31,21 @@ describe("SharedTree proxies", () => {
 		]),
 	});
 
-	// TODO: Fix proxy caching after 'schema-class' conversion.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6557
-	it.skip("cache and reuse objects", () => {
+	it("cache and reuse objects", () => {
 		const root = getRoot(schema, initialTree);
 		const objectProxy = root.object;
 		const objectProxyAgain = root.object;
 		assert.equal(objectProxyAgain, objectProxy);
 	});
 
-	// TODO: Fix proxy caching after 'schema-class' conversion.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6557
-	it.skip("cache and reuse lists", () => {
+	it("cache and reuse lists", () => {
 		const root = getRoot(schema, initialTree);
 		const listProxy = root.list;
 		const listProxyAgain = root.list;
 		assert.equal(listProxyAgain, listProxy);
 	});
 
-	// TODO: Fix proxy caching after 'schema-class' conversion.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6557
-	it.skip("cache and reuse maps", () => {
+	it("cache and reuse maps", () => {
 		const root = getRoot(schema, initialTree);
 		const mapProxy = root.map;
 		const mapProxyAgain = root.map;
