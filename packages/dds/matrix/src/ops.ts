@@ -26,7 +26,7 @@ export interface IMatrixCellMsg extends IMatrixMsg {
 	type: MatrixOp.set;
 	row: number;
 	col: number;
-	value: Serializable;
+	value: Serializable<unknown>;
 }
 
 export interface IMatrixSwitchSetCellPolicy extends IMatrixMsg {

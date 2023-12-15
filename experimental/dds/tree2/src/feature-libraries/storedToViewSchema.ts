@@ -7,7 +7,7 @@ import { TreeStoredSchema, TreeNodeSchemaIdentifier, TreeFieldStoredSchema } fro
 import { fail } from "../util";
 import { defaultSchemaPolicy } from "./default-schema";
 import {
-	TreeSchema,
+	FlexTreeSchema,
 	TreeNodeSchema,
 	MapFieldSchema,
 	TreeFieldSchema,
@@ -27,7 +27,7 @@ import {
  * Assumes the schema uses the default field kinds.
  * @alpha
  */
-export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema {
+export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema {
 	const map: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
 	for (const [identifier, innerSchema] of schema.nodeSchema) {
 		if (innerSchema.leafValue !== undefined) {

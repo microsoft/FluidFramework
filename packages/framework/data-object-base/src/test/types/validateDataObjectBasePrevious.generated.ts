@@ -43,6 +43,7 @@ declare function get_current_ClassDeclaration_LazyLoadedDataObject():
 declare function use_old_ClassDeclaration_LazyLoadedDataObject(
     use: TypeOnly<old.LazyLoadedDataObject>): void;
 use_old_ClassDeclaration_LazyLoadedDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LazyLoadedDataObject());
 
 /*

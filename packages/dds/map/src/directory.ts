@@ -18,7 +18,7 @@ import {
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import * as path from "path-browserify";
+import path from "path-browserify";
 import { RedBlackTree } from "@fluidframework/merge-tree";
 import {
 	IDirectory,

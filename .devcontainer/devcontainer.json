@@ -15,11 +15,16 @@
 	"overrideCommand": false,
 
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"dbaeumer.vscode-eslint",
-		"ms-azuretools.vscode-docker",
-		"mutantdino.resourcemonitor"
-	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"ms-azuretools.vscode-docker",
+				"mutantdino.resourcemonitor"
+			]
+		}
+	},
 
 	// Forward port for Tinylicious
 	"forwardPorts": [7070],

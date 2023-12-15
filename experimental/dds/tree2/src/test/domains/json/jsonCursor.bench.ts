@@ -20,6 +20,7 @@ import {
 	cursorForMapTreeNode,
 	cursorForJsonableTreeNode,
 	buildChunkedForest,
+	intoStoredSchema,
 } from "../../../feature-libraries";
 import {
 	FieldKey,
@@ -61,7 +62,7 @@ function bench(
 		scope: "JsonCursor benchmark",
 		libraries: [jsonSchema],
 	}).intoSchema(SchemaBuilder.optional(jsonRoot));
-	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
+	const schema = new InMemoryStoredSchemaRepository(intoStoredSchema(schemaCollection));
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;

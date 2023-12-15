@@ -27,9 +27,9 @@ type TypeOnly<T> = T extends number
 * "TypeAliasDeclaration_AsyncFluidObjectProvider": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_AsyncFluidObjectProvider():
-    TypeOnly<old.AsyncFluidObjectProvider<any,any>>;
+    TypeOnly<old.AsyncFluidObjectProvider<any>>;
 declare function use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
-    use: TypeOnly<current.AsyncFluidObjectProvider<any,any>>): void;
+    use: TypeOnly<current.AsyncFluidObjectProvider<any>>): void;
 use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
     get_old_TypeAliasDeclaration_AsyncFluidObjectProvider());
 
@@ -39,9 +39,9 @@ use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
 * "TypeAliasDeclaration_AsyncFluidObjectProvider": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_AsyncFluidObjectProvider():
-    TypeOnly<current.AsyncFluidObjectProvider<any,any>>;
+    TypeOnly<current.AsyncFluidObjectProvider<any>>;
 declare function use_old_TypeAliasDeclaration_AsyncFluidObjectProvider(
-    use: TypeOnly<old.AsyncFluidObjectProvider<any,any>>): void;
+    use: TypeOnly<old.AsyncFluidObjectProvider<any>>): void;
 use_old_TypeAliasDeclaration_AsyncFluidObjectProvider(
     get_current_TypeAliasDeclaration_AsyncFluidObjectProvider());
 
