@@ -1,5 +1,37 @@
 # fluid-framework
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   azure-client: Removed deprecated FluidStatic classes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    Several FluidStatic classes were unnecessarily exposed and were deprecated in an earlier release. They have been replaced with creation functions. This helps us
+    keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
+    public surface area of downstream packages. The removed classes are as follows:
+
+    -   `AzureAudience` (use `IAzureAudience` instead)
+    -   `TinyliciousAudience` (use `ITinyliciousAudience` instead)
+    -   `DOProviderContainerRuntimeFactory`
+    -   `FluidContainer`
+    -   `ServiceAudience`
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   azure-client: Deprecated FluidStatic Classes ([#18402](https://github.com/microsoft/FluidFramework/issues/18402)) [589ec39de5](https://github.com/microsoft/FluidFramework/commits/589ec39de52116c7f782319e6f6aa61bc5aa9964)
+
+    Several FluidStatic classes were unnecessarily exposed. They have been replaced with creation functions. This helps us
+    keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
+    public surface area of downstream packages. The deprecated classes are as follows:
+
+    -   `AzureAudience` (use `IAzureAudience` instead)
+    -   `TinyliciousAudience` (use `ITinyliciousAudience` instead)
+    -   `DOProviderContainerRuntimeFactory`
+    -   `FluidContainer`
+    -   `ServiceAudience`
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

@@ -108,37 +108,9 @@ export class FluidDataStoreRuntime
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
-	 * @deprecated Instantiate the class using its constructor instead.
-	 *
-	 * Loads the data store runtime
-	 * @param context - The data store context
-	 * @param sharedObjectRegistry - The registry of shared objects used by this data store
-	 * @param existing - If loading from an existing file.
-	 */
-	public static load(
-		context: IFluidDataStoreContext,
-		sharedObjectRegistry: ISharedObjectRegistry,
-		existing: boolean,
-	): FluidDataStoreRuntime {
-		return new FluidDataStoreRuntime(
-			context,
-			sharedObjectRegistry,
-			existing,
-			async (dataStoreRuntime) => dataStoreRuntime.entryPoint,
-		);
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
 	public readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
@@ -446,7 +418,7 @@ export class FluidDataStoreRuntime
 
 		this.verifyNotClosed();
 
-		assert(!this.contexts.has(id), "addChannel() with existing ID");
+		assert(!this.contexts.has(id), 0x865 /* addChannel() with existing ID */);
 
 		const type = channel.attributes.type;
 		const factory = this.sharedObjectRegistry.get(channel.attributes.type);
@@ -1184,7 +1156,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- * @internal
+ * @alpha
  */
 export const mixinSummaryHandler = (
 	handler: (

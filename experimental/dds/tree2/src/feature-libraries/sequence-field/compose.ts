@@ -14,7 +14,16 @@ import {
 } from "../../core";
 import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
-import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./types";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	NoopMarkType,
+	CellId,
+	NoopMark,
+	CellMark,
+	Detach,
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -26,6 +35,7 @@ import {
 	MoveEffect,
 	isMoveIn,
 	isMoveOut,
+	getMoveIn,
 } from "./moveEffectTable";
 import {
 	getInputLength,
@@ -56,7 +66,7 @@ import {
 	settleMark,
 	compareCellsFromSameRevision,
 } from "./utils";
-import { EmptyInputCellMark } from "./helperTypes";
+import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
 
 /**
  * @alpha
@@ -170,11 +180,24 @@ function composeMarks<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
-	const nodeChange = composeChildChanges(
+	let nodeChange = composeChildChanges(
 		baseMark.changes,
 		newMark.changes === undefined ? undefined : tagChange(newMark.changes, newRev),
 		composeChild,
 	);
+	if (nodeChange !== undefined) {
+		const baseSource = getMoveIn(baseMark);
+		if (baseSource !== undefined) {
+			setModifyAfter(
+				moveEffects,
+				getEndpoint(baseSource, undefined),
+				nodeChange,
+				newRev,
+				composeChild,
+			);
+			nodeChange = undefined;
+		}
+	}
 	if (isImpactfulCellRename(newMark, newRev, revisionMetadata)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
@@ -204,10 +227,19 @@ function composeMarks<TNodeChange>(
 
 			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
 			// so we are just left with the detach portion of the AttachAndDetach.
-			return withRevision(
-				withNodeChange({ ...newAttachAndDetach.detach, count: baseMark.count }, nodeChange),
-				newDetachRevision,
-			);
+			const newDetach: CellMark<Detach, TNodeChange> & Partial<VestigialEndpoint> = {
+				...newAttachAndDetach.detach,
+				count: baseMark.count,
+			};
+			// We may need to apply effects to the source location of the base MoveOut so we annotate the mark with
+			// information about that location.
+			if (isMoveOut(baseMark)) {
+				newDetach.vestigialEndpoint = {
+					revision: baseMark.revision,
+					localId: baseMark.id,
+				};
+			}
+			return withRevision(withNodeChange(newDetach, nodeChange), newDetachRevision);
 		}
 
 		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
@@ -273,10 +305,7 @@ function composeMarks<TNodeChange>(
 			return originalAttach;
 		} else {
 			// Other mark types have been handled by previous conditional branches.
-			assert(
-				newMark.type === NoopMarkType || newMark.type === "Placeholder",
-				0x80a /* Unexpected mark type */,
-			);
+			assert(newMark.type === NoopMarkType, 0x80a /* Unexpected mark type */);
 			return withNodeChange(baseMark, nodeChange);
 		}
 	}
@@ -295,36 +324,13 @@ function composeMarks<TNodeChange>(
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
-		if (isMoveIn(baseMark) && nodeChange !== undefined) {
-			setModifyAfter(
-				moveEffects,
-				getEndpoint(baseMark, undefined),
-				nodeChange,
-				newRev,
-				composeChild,
-			);
-			return baseMark;
-		}
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
 		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
-		let localNodeChange = nodeChange;
 
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(withRevision(newMark, newRev));
-
-		if (isMoveIn(attach) && nodeChange !== undefined) {
-			setModifyAfter(
-				moveEffects,
-				getEndpoint(attach, undefined),
-				nodeChange,
-				newRev,
-				composeChild,
-			);
-
-			localNodeChange = undefined;
-		}
 
 		if (isMoveIn(attach) && isMoveOut(detach)) {
 			const finalSource = getEndpoint(attach, undefined);
@@ -354,10 +360,7 @@ function composeMarks<TNodeChange>(
 
 		if (areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
-			return withNodeChange(
-				{ count: baseMark.count, cellId: baseMark.cellId },
-				localNodeChange,
-			);
+			return withNodeChange({ count: baseMark.count, cellId: baseMark.cellId }, nodeChange);
 		}
 		return normalizeCellRename(
 			{
@@ -367,7 +370,7 @@ function composeMarks<TNodeChange>(
 				attach,
 				detach,
 			},
-			localNodeChange,
+			nodeChange,
 		);
 	} else {
 		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
@@ -379,16 +382,18 @@ function composeMarks<TNodeChange>(
 				baseMark.count,
 			);
 
-			// We return a placeholder instead of a noop because there may be more node changes on `newMark`'s source mark
-			// which need to be included here.
-			// We will remove the placeholder during `amendCompose`.
-			return {
-				type: "Placeholder",
+			// We return a noop that is annotated with information about the endpoint it used to be because there may
+			// be more node changes on `newMark`'s source mark which need to be included here.
+			// We will remove the the annotation during `amendCompose` or pruning.
+			const vestige: Mark<TNodeChange> & VestigialEndpoint = {
 				count: baseMark.count,
-				revision: baseMark.revision,
-				id: baseMark.id,
+				vestigialEndpoint: {
+					revision: baseMark.revision,
+					localId: baseMark.id,
+				},
 				changes: composeChildChanges(nodeChange, nodeChanges, composeChild),
 			};
+			return vestige;
 		}
 		const length = baseMark.count;
 		return createNoopMark(length, nodeChange);
@@ -463,30 +468,16 @@ function amendComposeI<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>();
-	const queue = new MarkQueue(
-		marks,
-		undefined,
-		moveEffects,
-		true,
-		fakeIdAllocator,
-		// TODO: Should pass in revision for new changes
-		(a, b) => composeChildChanges(a, b, composeChild),
+	const queue = new MarkQueue(marks, undefined, moveEffects, true, fakeIdAllocator, (a, b) =>
+		composeChildChanges(a, b, composeChild),
 	);
 
 	while (!queue.isEmpty()) {
-		let mark = queue.dequeue();
-		switch (mark.type) {
-			case "Placeholder": {
-				const modifyAfter = getModifyAfter(moveEffects, mark.revision, mark.id, mark.count);
-				if (modifyAfter !== undefined) {
-					const changes = composeChildChanges(mark.changes, modifyAfter, composeChild);
-					mark = createNoopMark(mark.count, changes);
-				} else {
-					mark = createNoopMark(mark.count, mark.changes);
-				}
-			}
-			default:
-				break;
+		const mark = queue.dequeue() as Mark<TNodeChange> & Partial<VestigialEndpoint>;
+		if (mark.vestigialEndpoint !== undefined) {
+			// Any effects that target this endpoint should have been applied either during the first compose pass,
+			// or during the `MarkQueue`'s reading for this pass.
+			delete mark.vestigialEndpoint;
 		}
 		factory.push(mark);
 	}
@@ -673,7 +664,7 @@ function compareCellPositions(
 
 	assert(
 		baseCellId.revision !== undefined && newCellId.revision !== undefined,
-		"Cells should have defined revisions",
+		0x858 /* Cells should have defined revisions */,
 	);
 
 	if (!isNewAttach(newMark)) {
@@ -695,7 +686,7 @@ function compareCellPositions(
 	const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
 	assert(
 		newRevisionIndex !== undefined,
-		"A cell from a new attach should have a defined revision index",
+		0x859 /* A cell from a new attach should have a defined revision index */,
 	);
 
 	// We use the tiebreaking policy of the newer cell.

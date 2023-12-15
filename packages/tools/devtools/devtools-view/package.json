@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-rc.1.0.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -59,7 +59,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
@@ -69,7 +69,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
+		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",

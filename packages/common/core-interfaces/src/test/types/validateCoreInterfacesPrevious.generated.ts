@@ -147,9 +147,9 @@ use_old_TypeAliasDeclaration_FluidObjectKeys(
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_FluidObjectProviderKeys():
-    TypeOnly<old.FluidObjectProviderKeys<any,any>>;
+    TypeOnly<old.FluidObjectProviderKeys<any>>;
 declare function use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<current.FluidObjectProviderKeys<any,any>>): void;
+    use: TypeOnly<current.FluidObjectProviderKeys<any>>): void;
 use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_old_TypeAliasDeclaration_FluidObjectProviderKeys());
 
@@ -159,9 +159,9 @@ use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_FluidObjectProviderKeys():
-    TypeOnly<current.FluidObjectProviderKeys<any,any>>;
+    TypeOnly<current.FluidObjectProviderKeys<any>>;
 declare function use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<old.FluidObjectProviderKeys<any,any>>): void;
+    use: TypeOnly<old.FluidObjectProviderKeys<any>>): void;
 use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_current_TypeAliasDeclaration_FluidObjectProviderKeys());
 
@@ -624,50 +624,26 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidRouter": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IFluidRouter": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_IFluidRouter():
-    TypeOnly<typeof old.IFluidRouter>;
-declare function use_current_VariableDeclaration_IFluidRouter(
-    use: TypeOnly<typeof current.IFluidRouter>): void;
-use_current_VariableDeclaration_IFluidRouter(
-    get_old_VariableDeclaration_IFluidRouter());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidRouter": {"backCompat": false}
+* "RemovedVariableDeclaration_IFluidRouter": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IFluidRouter():
-    TypeOnly<typeof current.IFluidRouter>;
-declare function use_old_VariableDeclaration_IFluidRouter(
-    use: TypeOnly<typeof old.IFluidRouter>): void;
-use_old_VariableDeclaration_IFluidRouter(
-    get_current_VariableDeclaration_IFluidRouter());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidRouter": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidRouter": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IFluidRouter():
-    TypeOnly<old.IFluidRouter>;
-declare function use_current_InterfaceDeclaration_IFluidRouter(
-    use: TypeOnly<current.IFluidRouter>): void;
-use_current_InterfaceDeclaration_IFluidRouter(
-    get_old_InterfaceDeclaration_IFluidRouter());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidRouter": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidRouter": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidRouter():
-    TypeOnly<current.IFluidRouter>;
-declare function use_old_InterfaceDeclaration_IFluidRouter(
-    use: TypeOnly<old.IFluidRouter>): void;
-use_old_InterfaceDeclaration_IFluidRouter(
-    get_current_InterfaceDeclaration_IFluidRouter());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -864,26 +840,14 @@ use_old_InterfaceDeclaration_IProvideFluidLoadable(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideFluidRouter": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidRouter": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IProvideFluidRouter():
-    TypeOnly<old.IProvideFluidRouter>;
-declare function use_current_InterfaceDeclaration_IProvideFluidRouter(
-    use: TypeOnly<current.IProvideFluidRouter>): void;
-use_current_InterfaceDeclaration_IProvideFluidRouter(
-    get_old_InterfaceDeclaration_IProvideFluidRouter());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideFluidRouter": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidRouter": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProvideFluidRouter():
-    TypeOnly<current.IProvideFluidRouter>;
-declare function use_old_InterfaceDeclaration_IProvideFluidRouter(
-    use: TypeOnly<old.IProvideFluidRouter>): void;
-use_old_InterfaceDeclaration_IProvideFluidRouter(
-    get_current_InterfaceDeclaration_IProvideFluidRouter());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1323,9 +1287,9 @@ use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
 * "InterfaceDeclaration_Tagged": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_Tagged():
-    TypeOnly<old.Tagged<any,any>>;
+    TypeOnly<old.Tagged<any>>;
 declare function use_current_InterfaceDeclaration_Tagged(
-    use: TypeOnly<current.Tagged<any,any>>): void;
+    use: TypeOnly<current.Tagged<any>>): void;
 use_current_InterfaceDeclaration_Tagged(
     get_old_InterfaceDeclaration_Tagged());
 
@@ -1335,9 +1299,9 @@ use_current_InterfaceDeclaration_Tagged(
 * "InterfaceDeclaration_Tagged": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_Tagged():
-    TypeOnly<current.Tagged<any,any>>;
+    TypeOnly<current.Tagged<any>>;
 declare function use_old_InterfaceDeclaration_Tagged(
-    use: TypeOnly<old.Tagged<any,any>>): void;
+    use: TypeOnly<old.Tagged<any>>): void;
 use_old_InterfaceDeclaration_Tagged(
     get_current_InterfaceDeclaration_Tagged());
 

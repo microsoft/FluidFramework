@@ -9,6 +9,13 @@ module.exports = {
 		project: ["./tsconfig.json"],
 	},
 	rules: {
+		// Rule is reported in a lot of places where it would be invalid to follow the suggested pattern
+		"@typescript-eslint/class-literal-property-style": "off",
+
+		// Comparing general input strings against system-known values (via enums) is used commonly to support
+		// extensibility.
+		"@typescript-eslint/no-unsafe-enum-comparison": "off",
+
 		/**
 		 * This package utilizes internals of api-documenter that are not exported by the package root.
 		 *

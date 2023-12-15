@@ -1,0 +1,90 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-service-clients pipeline
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+      - lts
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+- name: testPackage
+  value: "@fluidframework/azure-end-to-end-tests"
+  readonly: true
+- name: testOdspPackage
+  value: "@fluid-experimental/odsp-end-to-end-tests"
+  readonly: true
+
+stages:
+  # Run Azure Client FRS Tests
+  - stage:
+    displayName: e2e - azure client with frs
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:azure
+        artifactBuildId: $(resources.pipeline.client.runID)
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+          azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
+          azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
+
+  - stage:
+    displayName: e2e - azure client with azure local service
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:tinylicious
+        artifactBuildId: $(resources.pipeline.client.runID)
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          # Disable colorization for tinylicious logs (not useful when printing to a file)
+          logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+          logger__morganFormat: tiny
+  
+  - stage:
+    displayName: e2e - odsp client with odsp service
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testOdspPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:odsp:run
+        artifactBuildId: $(resources.pipeline.client.runID)
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          odsp__client__client__id: $(odsp-client-clientId)
+          odsp__client__client__secret: $(odsp-client-clientSecret)
+          odsp__client__siteUrl: $(odsp-client-siteUrl)
+          odsp__client__driveId: $(odsp-client-driveId)
+          odsp__client__login__username: $(odsp-client-login-username)
+          odsp__client__login__password: $(odsp-client-login-password)
+          odsp__client2__login__username: $(odsp-client2-login-username)
+          odsp__client2__login__password: $(odsp-client2-login-password)

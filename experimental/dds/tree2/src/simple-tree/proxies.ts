@@ -216,7 +216,11 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 						| FlexTreeOptionalField<AllowedTypes>;
 
 					const { content, hydrateProxies } = extractFactoryContent(value);
-					const cursor = cursorFromNodeData(content, flexNode.context, fieldSchema.types);
+					const cursor = cursorFromNodeData(
+						content,
+						flexNode.context.schema,
+						fieldSchema.allowedTypeSet,
+					);
 					modifyChildren(
 						flexNode,
 						() => {
@@ -324,7 +328,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -345,7 +349,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -369,7 +373,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -716,7 +720,11 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getFlexNode(this);
 
 			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
-			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
+			const cursor = cursorFromNodeData(
+				content,
+				node.context.schema,
+				node.schema.mapFields.allowedTypeSet,
+			);
 			modifyChildren(
 				node,
 				(mapNode) => mapNode.set(key, cursor),
@@ -922,12 +930,15 @@ export function extractFactoryContent(
 		content = input as FactoryContent;
 	}
 
-	assert(!(content instanceof NodeBase), "Unhydrated insertion content should have FlexNode");
+	assert(
+		!(content instanceof NodeBase),
+		0x844 /* Unhydrated insertion content should have FlexNode */,
+	);
 
 	let type: NodeKind;
 	let extractedContent: ExtractedFactoryContent;
 	if (isReadonlyArray(content)) {
-		type = NodeKind.List;
+		type = NodeKind.Array;
 		extractedContent = extractContentArray(
 			content as readonly FactoryContent[],
 			insertedAtIndex,
@@ -945,7 +956,7 @@ export function extractFactoryContent(
 
 	if (input instanceof NodeBase) {
 		const kindFromSchema = getNodeKind(input);
-		assert(kindFromSchema === type, "kind of data should match kind of schema");
+		assert(kindFromSchema === type, 0x845 /* kind of data should match kind of schema */);
 	}
 
 	if (fromFactory) {

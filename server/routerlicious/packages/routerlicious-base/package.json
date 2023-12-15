@@ -50,9 +50,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0",
+		"@fluidframework/common-utils": "^3.0.0-223006",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",
@@ -86,7 +86,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@2.0.0",
