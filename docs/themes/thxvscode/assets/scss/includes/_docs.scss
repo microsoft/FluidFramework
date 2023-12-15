@@ -296,10 +296,10 @@
     color: $link-color !important;
 }
 
-#docs-navbar > .nav > .active > div:not(.area),
-#docs-navbar > .nav > .active .active > div,
 #docs-navbar > .nav > .active > a:not(.area),
-#docs-navbar > .nav > .active .active > a {
+#docs-navbar > .nav > .active .active > a,
+#docs-navbar > .nav > .active > div:not(.area),
+#docs-navbar > .nav > .active .active > div{
     font-weight: bold;
 }
 
