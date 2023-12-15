@@ -28,7 +28,7 @@ import {
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IChannel } from ".";
+import { IChannel } from "./channel";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
