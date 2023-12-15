@@ -4,20 +4,20 @@
  */
 import {
 	ApiDocumentedItem,
-	ApiItem,
+	type ApiItem,
 	ApiItemKind,
-	ApiPackage,
-	ApiPropertyItem,
+	type ApiPackage,
+	type ApiPropertyItem,
 	ApiReturnTypeMixin,
-	Excerpt,
-	Parameter,
+	type Excerpt,
+	type Parameter,
 	ReleaseTag,
-	TypeParameter,
+	type TypeParameter,
 } from "@microsoft/api-extractor-model";
 
 import {
 	CodeSpanNode,
-	DocumentationNode,
+	type DocumentationNode,
 	HeadingNode,
 	LinkNode,
 	PlainTextNode,
@@ -29,8 +29,8 @@ import {
 	TableNode,
 } from "../../documentation-domain";
 import {
-	ApiFunctionLike,
-	ApiModifier,
+	type ApiFunctionLike,
+	type ApiModifier,
 	getDefaultValueBlock,
 	getModifiers,
 	getReleaseTag,
@@ -40,7 +40,7 @@ import {
 import { getLinkForApiItem } from "../ApiItemTransformUtilities";
 import { transformTsdocSection } from "../TsdocNodeTransforms";
 import { getTsdocNodeTransformationOptions } from "../Utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
 
 /**
@@ -160,30 +160,34 @@ export function createSummaryTable(
 		case ApiItemKind.Constructor:
 		case ApiItemKind.Function:
 		case ApiItemKind.Method:
-		case ApiItemKind.MethodSignature:
+		case ApiItemKind.MethodSignature: {
 			return createFunctionLikeSummaryTable(
 				apiItems.map((apiItem) => apiItem as ApiFunctionLike),
 				itemKind,
 				config,
 				options,
 			);
+		}
 
 		case ApiItemKind.Property:
-		case ApiItemKind.PropertySignature:
+		case ApiItemKind.PropertySignature: {
 			return createPropertiesTable(
 				apiItems.map((apiItem) => apiItem as ApiPropertyItem),
 				config,
 				options,
 			);
+		}
 
-		case ApiItemKind.Package:
+		case ApiItemKind.Package: {
 			return createPackagesTable(
 				apiItems.map((apiItem) => apiItem as ApiPackage),
 				config,
 			);
+		}
 
-		default:
+		default: {
 			return createDefaultSummaryTable(apiItems, itemKind, config, options);
+		}
 	}
 }
 
@@ -787,13 +791,17 @@ export function createTypeExcerptCell(
  */
 function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
 	switch (itemKind) {
-		case ApiItemKind.EnumMember:
+		case ApiItemKind.EnumMember: {
 			return "Flag";
-		case ApiItemKind.MethodSignature:
+		}
+		case ApiItemKind.MethodSignature: {
 			return ApiItemKind.Method;
-		case ApiItemKind.PropertySignature:
+		}
+		case ApiItemKind.PropertySignature: {
 			return ApiItemKind.Property;
-		default:
+		}
+		default: {
 			return itemKind;
+		}
 	}
 }

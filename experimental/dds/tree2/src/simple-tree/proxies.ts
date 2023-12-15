@@ -37,9 +37,9 @@ import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier } from "../core";
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeBase, NodeKind } from "../class-tree/schemaTypes";
+import { NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
-import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
+import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, Unhydrated, TreeNode } from "./types";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
@@ -216,7 +216,11 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 						| FlexTreeOptionalField<AllowedTypes>;
 
 					const { content, hydrateProxies } = extractFactoryContent(value);
-					const cursor = cursorFromNodeData(content, flexNode.context, fieldSchema.types);
+					const cursor = cursorFromNodeData(
+						content,
+						flexNode.context.schema,
+						fieldSchema.allowedTypeSet,
+					);
 					modifyChildren(
 						flexNode,
 						() => {
@@ -324,7 +328,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -345,7 +349,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -369,7 +373,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			);
 			const cursor = cursorFromFieldData(
 				content,
-				sequenceField.context,
+				sequenceField.context.schema,
 				sequenceField.schema,
 			);
 
@@ -716,7 +720,11 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getFlexNode(this);
 
 			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
-			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
+			const cursor = cursorFromNodeData(
+				content,
+				node.context.schema,
+				node.schema.mapFields.allowedTypeSet,
+			);
 			modifyChildren(
 				node,
 				(mapNode) => mapNode.set(key, cursor),
@@ -923,14 +931,14 @@ export function extractFactoryContent(
 	}
 
 	assert(
-		!(content instanceof NodeBase),
+		!(content instanceof TreeNode),
 		0x844 /* Unhydrated insertion content should have FlexNode */,
 	);
 
 	let type: NodeKind;
 	let extractedContent: ExtractedFactoryContent;
 	if (isReadonlyArray(content)) {
-		type = NodeKind.List;
+		type = NodeKind.Array;
 		extractedContent = extractContentArray(
 			content as readonly FactoryContent[],
 			insertedAtIndex,
@@ -946,7 +954,7 @@ export function extractFactoryContent(
 		type = NodeKind.Leaf;
 	}
 
-	if (input instanceof NodeBase) {
+	if (input instanceof TreeNode) {
 		const kindFromSchema = getNodeKind(input);
 		assert(kindFromSchema === type, 0x845 /* kind of data should match kind of schema */);
 	}
@@ -1149,9 +1157,9 @@ function modifyChildren<T extends FlexTreeNode>(
 }
 
 // TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
-function getNodeKind(node: NodeBase): NodeKind {
+function getNodeKind(node: TreeNode): NodeKind {
 	return (
-		getClassSchema(getFlexNode(node as TreeNode).schema)?.kind ??
+		getClassSchema(getFlexNode(node).schema)?.kind ??
 		fail("NodeBase should always have class schema")
 	);
 }

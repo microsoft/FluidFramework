@@ -38,7 +38,7 @@ import { createOdspAudienceMember } from "./odspAudience";
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
  * @sealed
- * @alpha
+ * @beta
  */
 export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -196,7 +196,7 @@ export class OdspClient {
 		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
 		assert(
 			rootDataObject.IRootDataObject !== undefined,
-			"entryPoint must be of type IRootDataObject",
+			0x878 /* entryPoint must be of type IRootDataObject */,
 		);
 		return rootDataObject.IRootDataObject;
 	}

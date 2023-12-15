@@ -2,24 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { IConfigProviderBase, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { OdspClient, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
 
-import {
-	IConfigProviderBase,
-	MockLogger,
-	createMultiSinkLogger,
-} from "@fluidframework/telemetry-utils";
+import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { OdspTestTokenProvider } from "./OdspTokenFactory";
 
 /**
- * Interface representing the credentials required for testing odsp-client.
+ * Interface representing the odsp-client login account credentials.
  */
-export interface OdspTestCredentials {
-	clientId: string;
-	clientSecret: string;
+export interface IOdspLoginCredentials {
 	username: string;
 	password: string;
+}
+
+/**
+ * Interface representing extended credentials for odsp-client, including AAD information.
+ * Extends the basic login credentials with client ID and client secret.
+ */
+export interface IOdspCredentials extends IOdspLoginCredentials {
+	clientId: string;
+	clientSecret: string;
 }
 
 /**
@@ -27,12 +30,14 @@ export interface OdspTestCredentials {
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createOdspClient(
-	creds: OdspTestCredentials,
+	creds: IOdspLoginCredentials,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
 	const siteUrl = process.env.odsp__client__siteUrl as string;
 	const driveId = process.env.odsp__client__driveId as string;
+	const clientId = process.env.odsp__client__client__id as string;
+	const clientSecret = process.env.odsp__client__client__secret as string;
 	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
@@ -40,18 +45,27 @@ export function createOdspClient(
 		throw new Error("RaaS drive id is missing");
 	}
 
-	if (
-		creds.clientId === undefined ||
-		creds.clientSecret === undefined ||
-		creds.username === undefined ||
-		creds.password === undefined
-	) {
-		throw new Error("Some of the odsp credentials are undefined");
+	if (clientId === "" || clientId === undefined) {
+		throw new Error("client id is missing");
 	}
+
+	if (clientSecret === "" || clientSecret === undefined) {
+		throw new Error("client secret is missing");
+	}
+
+	if (creds.username === undefined || creds.password === undefined) {
+		throw new Error("username or password is missing for login account");
+	}
+
+	const credentials: IOdspCredentials = {
+		clientId,
+		clientSecret,
+		...creds,
+	};
 
 	const connectionProps: OdspConnectionConfig = {
 		siteUrl,
-		tokenProvider: new OdspTestTokenProvider(creds),
+		tokenProvider: new OdspTestTokenProvider(credentials),
 		driveId,
 	};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {

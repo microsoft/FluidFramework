@@ -15,7 +15,7 @@ import { setValidateRefCount, LocalReferencePosition, SlidingPreference } from "
 import { getSlideToSegoff } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { validateRefCount } from "./testUtils";
-import { TestClient } from "./";
+import { TestClient } from "./testClient";
 
 function getSlideOnRemoveReferencePosition(
 	client: Client,

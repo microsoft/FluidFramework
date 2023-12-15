@@ -6,7 +6,6 @@
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	TreeFieldStoredSchema,
-	ITreeCursorSynchronous,
 	StoredSchemaCollection,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
@@ -14,7 +13,7 @@ import {
 import { FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
 import { Multiplicity } from "../../multiplicity";
-import { EncodedChunk, EncodedValueShape } from "./format";
+import { EncodedFieldBatch, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
 	FieldEncoder,
@@ -26,9 +25,10 @@ import {
 	compressedEncode,
 } from "./compressedEncode";
 import { NodeShape } from "./nodeShape";
+import { FieldBatch } from "./fieldBatch";
 
 /**
- * Encode data from `cursor` in into an `EncodedChunk`.
+ * Encode data from `fieldBatch` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
  * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
@@ -36,9 +36,9 @@ import { NodeShape } from "./nodeShape";
 export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-	cursor: ITreeCursorSynchronous,
-): EncodedChunk {
-	return compressedEncode(cursor, buildCache(schema, policy));
+	fieldBatch: FieldBatch,
+): EncodedFieldBatch {
+	return compressedEncode(fieldBatch, buildCache(schema, policy));
 }
 
 export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {

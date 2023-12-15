@@ -11,7 +11,7 @@ import {
 	type IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 
-import { type TreeFactory } from '@fluid-experimental/tree2';
+import { type TreeFactory } from '@fluidframework/tree';
 import { SharedTreeShim } from './sharedTreeShim.js';
 import { attributesMatch } from './utils.js';
 

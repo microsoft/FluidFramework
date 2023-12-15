@@ -11,7 +11,6 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
-	NodeBase,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	ImplicitAllowedTypes,
@@ -22,6 +21,7 @@ export {
 export { SchemaFactory } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi";
 export { toFlexConfig } from "./toFlexSchema";
+export { SchemaFactoryRecursive } from "./schemaFactoryRecursive";
 
 export {
 	adaptEnum,

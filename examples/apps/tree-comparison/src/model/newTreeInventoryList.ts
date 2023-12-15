@@ -12,7 +12,7 @@ import {
 	typeboxValidator,
 	TreeFactory,
 	NodeFromSchema,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -32,7 +32,7 @@ export class InventoryItem extends builder.object("Contoso:InventoryItem-1.0.0",
 	// The number in stock
 	quantity: builder.number,
 }) {}
-const InventoryItemList = builder.list(InventoryItem);
+const InventoryItemList = builder.array(InventoryItem);
 type InventoryItemList = NodeFromSchema<typeof InventoryItemList>;
 
 export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {

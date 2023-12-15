@@ -7,11 +7,11 @@ import { TreeStatus } from "../feature-libraries";
 import { TreeNode, Tree as TreeSimple } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { getClassSchema } from "../simple-tree/proxies";
-import { NodeBase, NodeFromSchema, NodeKind, TreeNodeSchema } from "./schemaTypes";
+import { NodeFromSchema, NodeKind, TreeNodeSchema } from "./schemaTypes";
 import { getFlexSchema } from "./toFlexSchema";
 
 /**
- * Provides various functions for analyzing {@link NodeBase}s.
+ * Provides various functions for analyzing {@link TreeNode}s.
  *
  * @privateRemarks
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
@@ -23,7 +23,7 @@ export interface TreeApi {
 	/**
 	 * The schema information for this node.
 	 */
-	schema<T extends NodeBase>(node: NodeBase): TreeNodeSchema<string, NodeKind, unknown, T>;
+	schema<T extends TreeNode>(node: TreeNode): TreeNodeSchema<string, NodeKind, unknown, T>;
 	/**
 	 * Narrow the type of the given value if it satisfies the given schema.
 	 * @example
@@ -40,32 +40,32 @@ export interface TreeApi {
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
-	parent(node: NodeBase): NodeBase | undefined;
+	parent(node: TreeNode): TreeNode | undefined;
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
-	 * If `node` is an element in a {@link (TreeListNode:interface)}, this returns the index of `node` in the list (a `number`).
+	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the list (a `number`).
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
-	key(node: NodeBase): string | number;
+	key(node: TreeNode): string | number;
 	/**
 	 * Register an event listener on the given node.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
 	on<K extends keyof TreeNodeEvents>(
-		node: NodeBase,
+		node: TreeNode,
 		eventName: K,
 		listener: TreeNodeEvents[K],
 	): () => void;
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
-	readonly status: (node: NodeBase) => TreeStatus;
+	readonly status: (node: TreeNode) => TreeStatus;
 }
 
 /**
- * The `Tree` object holds various functions for analyzing {@link NodeBase}s.
+ * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  * @beta
  */
 export const nodeApi: TreeApi = {
@@ -76,8 +76,8 @@ export const nodeApi: TreeApi = {
 	): value is NodeFromSchema<TSchema> => {
 		return TreeSimple.is(value, getFlexSchema(schema));
 	},
-	schema<T extends NodeBase>(node: NodeBase): TreeNodeSchema<string, NodeKind, unknown, T> {
-		return getClassSchema(TreeSimple.schema(node as TreeNode)) as TreeNodeSchema<
+	schema<T extends TreeNode>(node: TreeNode): TreeNodeSchema<string, NodeKind, unknown, T> {
+		return getClassSchema(TreeSimple.schema(node)) as TreeNodeSchema<
 			string,
 			NodeKind,
 			unknown,
@@ -87,7 +87,7 @@ export const nodeApi: TreeApi = {
 };
 
 /**
- * A collection of events that can be raised by a {@link NodeBase}.
+ * A collection of events that can be raised by a {@link TreeNode}.
  * @beta
  */
 export interface TreeNodeEvents {

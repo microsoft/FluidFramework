@@ -196,7 +196,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 			maybe?.movedSeq === undefined &&
 			maybe?.movedSeqs === undefined &&
 			maybe?.wasMovedOnInsert === undefined,
-		"movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set",
+		0x86d /* movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set */,
 	);
 }
 
@@ -587,10 +587,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 			case MergeTreeDeltaType.OBLITERATE:
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
-				assert(moveInfo !== undefined, "On obliterate ack, missing move info!");
+				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
 				this.localMovedSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
-				assert(seqIdx !== -1, "expected movedSeqs to contain unacked seq");
+				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
 				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
