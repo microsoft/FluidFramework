@@ -22,7 +22,7 @@ const fs = require("fs-extra");
  * This purpose of this method is to transfer the api json content from originalPath to targetPath.
  * Currently, the paths are configured such that originalPath is the _api-extractor-temp-{version}-doc-models
  * directory in the root of the repo (where the content either downloaded or generated with api-extractor).
- * targetPath is currently configured to be docs/_api-extractor-temp/{version}/(_build or _staging)
+ * targetPath is currently configured to be docs/_api-extractor-temp/{version}
  */
 const main = async (originalPath, targetPath) => {
 	// Clear output folders.
