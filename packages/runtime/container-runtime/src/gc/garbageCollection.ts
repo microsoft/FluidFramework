@@ -833,7 +833,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
-			sweepTimeoutMs: this.configs.tombstoneTimeoutMs, // Named as "sweep timeout" for legacy reasons
+			tombstoneTimeoutMs: this.configs.tombstoneTimeoutMs,
 		};
 	}
 

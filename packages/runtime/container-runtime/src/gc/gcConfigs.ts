@@ -31,6 +31,7 @@ import {
 	gcDisableThrowOnTombstoneLoadOptionName,
 	defaultSweepGracePeriodMs,
 	gcGenerationOptionName,
+	IGCMetadata_Deprecated,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
 
@@ -63,18 +64,21 @@ export function generateGCConfigs(
 	 * 1. Whether running GC mark phase is allowed or not.
 	 * 2. Whether running GC sweep phase is allowed or not.
 	 * 3. Whether GC session expiry is enabled or not.
-	 * For existing containers, we get this information from the createParams.metadata blob of its summary.
+	 * For existing containers, we get this information from the metadata blob of its summary.
 	 */
 	if (createParams.existing) {
-		gcVersionInBaseSnapshot = getGCVersion(createParams.metadata);
-		// Existing documents which did not have createParams.metadata blob or had GC disabled have version as 0. For all
+		const metadata = createParams.metadata;
+		gcVersionInBaseSnapshot = getGCVersion(metadata);
+		// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
 		// other existing documents, GC is enabled.
 		gcEnabled = gcVersionInBaseSnapshot > 0;
-		sessionExpiryTimeoutMs = createParams.metadata?.sessionExpiryTimeoutMs;
+		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
+		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
 		tombstoneTimeoutMs =
-			createParams.metadata?.sweepTimeoutMs ??
-			computeTombstoneTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
-		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
+			metadata?.tombstoneTimeoutMs ??
+			legacyPersistedSweepTimeoutMs ?? // Backfill old documents that have sweepTimeoutMs instead of tombstoneTimeoutMs
+			computeTombstoneTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist either value
+		persistedGcFeatureMatrix = metadata?.gcFeatureMatrix;
 	} else {
 		// This Test Override only applies for new containers
 		const testOverrideTombstoneTimeoutMs = mc.config.getNumber(

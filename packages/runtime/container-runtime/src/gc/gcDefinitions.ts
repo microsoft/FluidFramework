@@ -114,6 +114,23 @@ export type GCFeatureMatrix =
 	  };
 
 /**
+ * Deprecated properties formerly included in @see IGCMetadata.
+ * These may be found in old snapshots, so we need to support them for backwards compatibility.
+ *
+ * @alpha
+ */
+export interface IGCMetadata_Deprecated {
+	/**
+	 * How long to wait after an object is unreferenced before deleting it via GC Sweep
+	 *
+	 * @deprecated Replaced by @see IGCMetadata.tombstoneTimeoutMs
+	 */
+	readonly sweepTimeoutMs?: number;
+}
+
+/**
+ * GC-specific metadata to be written into the summary.
+ *
  * @alpha
  */
 export interface IGCMetadata {
@@ -148,8 +165,8 @@ export interface IGCMetadata {
 	readonly sweepEnabled?: boolean;
 	/** If this is present, the session for this container will expire after this time and the container will close */
 	readonly sessionExpiryTimeoutMs?: number;
-	/** How long to wait after an object is unreferenced before deleting it via GC Sweep */
-	readonly sweepTimeoutMs?: number; //* Explain about tombstoneTimeoutMs
+	/** How long to wait after an object is unreferenced before it becomes a Tombstone (precursor to being deleted) */
+	readonly tombstoneTimeoutMs?: number;
 }
 
 /**

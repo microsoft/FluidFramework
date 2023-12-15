@@ -385,7 +385,7 @@ describe("Garbage Collection Tests", () => {
 						: undefined;
 				const gcOptions = { sweepGracePeriodMs };
 				return createGarbageCollector({ baseSnapshot, gcOptions }, gcBlobsMap, {
-					sweepTimeoutMs: tombstoneTimeoutMs,
+					tombstoneTimeoutMs,
 				});
 			};
 
@@ -1759,7 +1759,7 @@ describe("Garbage Collection Tests", () => {
 			[attributesBlobId, {}],
 		]);
 		const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap, {
-			sweepTimeoutMs: defaultTombstoneTimeoutMs,
+			tombstoneTimeoutMs: defaultTombstoneTimeoutMs,
 		});
 
 		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
