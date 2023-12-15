@@ -12,7 +12,7 @@ import {
 	TreeFactory,
 	SchemaFactory,
 	TreeConfiguration,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {

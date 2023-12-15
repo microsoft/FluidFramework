@@ -42,9 +42,9 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/tree-react-api": "workspace:~",
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

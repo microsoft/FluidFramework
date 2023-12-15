@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-experimental/tree2",
+	"name": "@fluidframework/tree",
 	"version": "2.0.0-rc.1.0.0",
 	"description": "Tree",
 	"homepage": "https://fluidframework.com",
@@ -52,13 +52,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [

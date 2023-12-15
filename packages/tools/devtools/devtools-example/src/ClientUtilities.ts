@@ -5,7 +5,7 @@
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type IContainer } from "@fluidframework/container-definitions";
-import { type IDevtoolsLogger } from "@fluid-experimental/devtools-core";
+import { type IDevtoolsLogger } from "@fluidframework/devtools-core";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import { type AppData } from "./FluidObject";
 import { RuntimeFactory, type IAppModel } from "./Container";

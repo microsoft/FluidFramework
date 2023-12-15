@@ -15,24 +15,14 @@ import {
 	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SummaryType } from "@fluidframework/protocol-definitions";
-import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../../codec";
-import {
-	TreeFieldStoredSchema,
-	TreeStoredSchema,
-	StoredSchemaRepository,
-	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	schemaDataIsEmpty,
-	SchemaEvents,
-} from "../../core";
+import { ICodecOptions, IJsonCodec } from "../../codec";
+import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core";
 import {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../../util";
+import { JsonCompatible } from "../../util";
 import { Format } from "./format";
 import { encodeRepo, makeSchemaCodec } from "./codec";
 
@@ -65,7 +55,7 @@ export class SchemaSummarizer implements Summarizable {
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly schema: StoredSchemaRepository,
+		private readonly schema: MutableTreeStoredSchema,
 		options: ICodecOptions,
 		collabWindow: CollabWindow,
 	) {
@@ -234,6 +224,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		}
 
 		return undefined;
+		this.schema.apply(decoded);
 	}
 }
 

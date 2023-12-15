@@ -23,6 +23,7 @@ export {
 	ChangesetLocalIdSchema,
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
+	EncodedModularChangeset,
 } from "./modularChangeFormat";
 export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind";
 export {
@@ -61,3 +62,4 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 } from "./modularChangeFamily";
+export { makeV0Codec } from "./modularChangeCodecs";

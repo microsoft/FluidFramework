@@ -47,7 +47,7 @@ export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
 export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
 
 export const onCreate = (tree: SharedTree) => {
-	tree.storedSchema.update(intoStoredSchema(fuzzSchema));
+	tree.view.updateSchema(intoStoredSchema(fuzzSchema));
 };
 
 /**

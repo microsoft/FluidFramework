@@ -16,7 +16,7 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaFactory, TreeConfiguration, TreeFactory } from "@fluid-experimental/tree2";
+import { SchemaFactory, TreeConfiguration, TreeFactory } from "@fluidframework/tree";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces";
 import {

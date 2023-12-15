@@ -78,7 +78,7 @@ import {
 	ChangeFamily,
 	TaggedChange,
 	FieldUpPath,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	initializeForest,
 	AllowedUpdateType,
 	IEditableForest,
@@ -624,7 +624,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	const view = createTreeCheckout({
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(intoStoredSchema(content.schema)),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	return new CheckoutFlexTreeView(
 		view,
@@ -661,7 +661,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	const branch = createTreeCheckout({
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(intoStoredSchema(content.schema)),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(
@@ -672,6 +672,10 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	);
 	return view.editableTree;
 }
+
+export const requiredBooleanRootSchema = new SchemaBuilder({
+	scope: "RequiredBool",
+}).intoSchema(SchemaBuilder.required(leaf.boolean));
 
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
@@ -776,14 +780,14 @@ export function initializeTestTree(
 	schema: TreeStoredSchema = intoStoredSchema(wrongSchema),
 ): void {
 	if (state === undefined) {
-		tree.storedSchema.update(schema);
+		tree.updateSchema(schema);
 		return;
 	}
 
 	if (!Array.isArray(state)) {
 		initializeTestTree(tree, [state], schema);
 	} else {
-		tree.storedSchema.update(schema);
+		tree.updateSchema(schema);
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {

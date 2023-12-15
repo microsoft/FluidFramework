@@ -60,7 +60,7 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	StoredSchemaRepository,
+	TreeStoredSchemaSubscription,
 	FieldKindIdentifier,
 	TreeTypeSet,
 	TreeStoredSchema,
@@ -223,7 +223,13 @@ export {
 	MapFieldSchema,
 } from "./feature-libraries";
 
-export { TreeArrayNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
+export {
+	TreeArrayNode,
+	TreeMapNodeBase,
+	Unhydrated,
+	IterableTreeListContent,
+	TreeNode,
+} from "./simple-tree";
 
 export {
 	ISharedTree,
@@ -243,6 +249,8 @@ export {
 	FlexTreeView,
 	ITreeViewFork,
 	buildTreeConfiguration,
+	ISharedTreeEditor,
+	ISchemaEditor,
 } from "./shared-tree";
 
 export {
@@ -253,7 +261,6 @@ export {
 	SchemaFactory,
 	Tree,
 	TreeApi,
-	NodeBase,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
