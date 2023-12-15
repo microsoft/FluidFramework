@@ -26,7 +26,6 @@ import {
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
-	makeFieldBatchCodec,
 } from "../chunked-forest";
 import { TreeCompressionStrategy } from "../treeCompressionUtils";
 import {
