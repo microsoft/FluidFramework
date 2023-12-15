@@ -15,6 +15,8 @@ import {
 	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import { ICodecOptions, IJsonCodec } from "../../codec";
 import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core";
 import {
@@ -23,26 +25,11 @@ import {
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { JsonCompatible } from "../../util";
+import { CollabWindow } from "../incrementalSummarizationUtils";
 import { Format } from "./format";
 import { encodeRepo, makeSchemaCodec } from "./codec";
 
 const schemaStringKey = "SchemaString";
-
-/**
- * Manages the collaboration window for incremental summarization.
- */
-export interface CollabWindow {
-	/**
-	 * Function which returns the most recent sequenceNumber on a message processed by `SharedTree`.
-	 * Updated before processing an op, such that reading `currentSeq` while processing an op
-	 * gives the sequenceNumber of the op currently being processed.
-	 * `undefined` if no message has been processed, e.g. for a detached document or document loaded
-	 * from summary without any subsequent ops.
-	 * @remarks - Most rebasing is built atop a revision system decoupled from message sequence number.
-	 * However, this is sometimes necessary to interop with Fluid runtime APIs, e.g. for incremental summarization.
-	 */
-	getCurrentSeq: () => number | undefined;
-}
 /**
  * Provides methods for summarizing and loading a schema repository.
  */
@@ -128,103 +115,8 @@ export class SchemaSummarizer implements Summarizable {
 		const schemaString = bufferToString(schemaBuffer, "utf-8");
 		// Currently no Fluid handles are used, so just use JSON.parse.
 		const decoded = this.codec.decode(JSON.parse(schemaString));
-		this.schema.update(decoded);
-		this.schemaIndexLastChangedSeq = 0;
-	}
-}
-
-interface SchemaOp {
-	readonly type: "SchemaOp";
-	readonly data: Format;
-}
-
-/**
- * Wraps a StoredSchemaRepository, adjusting its "update" function to hook into Fluid Ops.
- *
- * TODO: this should be more integrated with transactions.
- */
-export class SchemaEditor<TRepository extends StoredSchemaRepository>
-	implements StoredSchemaRepository
-{
-	private readonly codec: IJsonCodec<TreeStoredSchema, Format, unknown>;
-	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
-	public constructor(
-		public readonly inner: TRepository,
-		private readonly submit: (op: SchemaOp) => void,
-		options: ICodecOptions,
-	) {
-		this.codec = makeSchemaCodec(options);
-		this.formatValidator = options.jsonValidator.compile(Format);
-	}
-
-	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
-		return this.inner.on(eventName, listener);
-	}
-
-	/**
-	 * @returns true if this is a schema op and was handled.
-	 *
-	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
-	 * See TODO on `SharedTree.processCore`.
-	 */
-	public tryHandleOp(encodedOp: JsonCompatibleReadOnly): boolean {
-		const op = this.tryDecodeOp(encodedOp);
-		if (op !== undefined) {
-			// TODO: This does not correctly handle concurrency of schema edits.
-			this.inner.update(op);
-			return true;
-		}
-		return false;
-	}
-
-	public tryApplyStashedOp(encodedOp: JsonCompatibleReadOnly): boolean {
-		return this.tryHandleOp(encodedOp);
-	}
-
-	/**
-	 * @returns true iff this is a schema op and was submitted.
-	 *
-	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
-	 * See TODO on `SharedTree.processCore`.
-	 */
-	public tryResubmitOp(content: JsonCompatibleReadOnly): boolean {
-		const op: JsonCompatibleReadOnly = content;
-		if (isJsonObject(op) && op.type === "SchemaOp") {
-			assert(
-				this.formatValidator.check(op.data),
-				0x79b /* unexpected format for resubmitted schema op */,
-			);
-			const schemaOp: SchemaOp = {
-				type: op.type,
-				data: op.data,
-			};
-			this.submit(schemaOp);
-			return true;
-		}
-		return false;
-	}
-
-	public update(newSchema: TreeStoredSchema): void {
-		const op: SchemaOp = { type: "SchemaOp", data: this.codec.encode(newSchema) };
-		this.submit(op);
-		this.inner.update(newSchema);
-	}
-
-	public get rootFieldSchema(): TreeFieldStoredSchema {
-		return this.inner.rootFieldSchema;
-	}
-
-	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
-		return this.inner.nodeSchema;
-	}
-
-	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): TreeStoredSchema | undefined {
-		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
-			return this.codec.decode(encodedOp.data);
-		}
-
-		return undefined;
 		this.schema.apply(decoded);
+		this.schemaIndexLastChangedSeq = 0;
 	}
 }
 

@@ -152,12 +152,6 @@ export class SharedTree
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
 	public readonly view: TreeCheckout;
-	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	/**
-	 * The most recent sequenceNumber on a message processed by this `SharedTree`.
-	 * This sequence number is can be retrieved by the collabWindow in summarizers for incremental summarization.
-	 */
-	private currentSeq: number | undefined;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.view.storedSchema;
 	}
@@ -187,7 +181,7 @@ export class SharedTree
 				: buildForest();
 		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.currentSeq,
+			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const forestSummarizer = new ForestSummarizer(

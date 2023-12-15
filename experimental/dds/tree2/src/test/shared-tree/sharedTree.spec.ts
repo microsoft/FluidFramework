@@ -439,16 +439,14 @@ describe("SharedTree", () => {
 				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
 				await provider.ensureSynchronized();
-				const tree1 = provider.trees[0].schematizeInternal({
-					schema: stringSequenceRootSchema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: ["B"],
-				});
+				const tree1 = provider.trees[0];
+				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
-				tree1.editableTree.insertAt(0, ["A"]);
+				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				view1.editableTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
 				const { summaryTree } = await provider.summarize();
@@ -475,16 +473,13 @@ describe("SharedTree", () => {
 				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
 				await provider.ensureSynchronized();
-				const tree1 = provider.trees[0].schematizeInternal({
-					schema: stringSequenceRootSchema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: ["B"],
-				});
-
+				const tree1 = provider.trees[0];
+				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
-				tree1.editableTree.insertAt(0, ["A"]);
+				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				view1.editableTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
 				validateSchemaStringType(
@@ -493,7 +488,7 @@ describe("SharedTree", () => {
 					SummaryType.Handle,
 				);
 
-				provider.trees[0].storedSchema.update(intoStoredSchema(stringSequenceRootSchema));
+				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 				await provider.ensureSynchronized();
 				validateSchemaStringType(
 					(await provider.summarize()).summaryTree,
