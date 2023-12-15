@@ -15,6 +15,8 @@ import {
 	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../../codec";
 import {
 	TreeFieldStoredSchema,

@@ -494,7 +494,7 @@ describe("SharedTree", () => {
 					SummaryType.Handle,
 				);
 
-				provider.trees[0].storedSchema.update(stringSequenceRootSchema);
+				provider.trees[0].storedSchema.update(intoStoredSchema(stringSequenceRootSchema));
 				await provider.ensureSynchronized();
 				validateSchemaStringType(
 					(await provider.summarize()).summaryTree,
