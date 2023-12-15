@@ -150,11 +150,11 @@
                                             {{ $categoryPlural := index $plurals $category }}
 
                                             <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
-                                                <div href="#" class="api-item-kind {{ $categoryLower }}-link" 
+                                                <a href="#" class="api-item-kind {{ $categoryLower }}-link" 
                                                     data-toggle="collapse" data-target="#{{ $categoryLower }}-{{ $isCurrentPage }}-content"
                                                 >
                                                     {{ $categoryPlural }}
-                                                </div>
+                                                </a>
                                                 
                                                 <ul id="{{ $categoryLower }}-{{ $isCurrentPage }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
                                                     {{ range $item := index $apiDetails $category }}
