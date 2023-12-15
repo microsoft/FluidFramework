@@ -181,6 +181,32 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 6 - 3);
 	});
 
+	it("can complete a transaction that spans trunk eviction", () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const tree = new TestSharedTreeCore(runtime);
+		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
+		tree.connect({
+			deltaConnection: runtime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
+		tree.getLocalBranch().on("revertible", (revertible) => {
+			revertible.discard();
+		});
+
+		changeTree(tree);
+		factory.processAllMessages();
+		assert.equal(getTrunkLength(tree), 1);
+		const branch1 = tree.getLocalBranch().fork();
+		branch1.startTransaction();
+		changeTree(tree);
+		changeTree(tree);
+		factory.processAllMessages();
+		branch1.commitTransaction();
+	});
+
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const tree = new TestSharedTreeCore(runtime);
