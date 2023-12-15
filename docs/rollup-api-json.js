@@ -28,7 +28,7 @@ const main = async (originalPath, targetPath) => {
 	// Clear output folders.
 	await fs.emptyDir(targetPath);
 
-	// Copy all the files to staging that need to be present for member processing.
+	// Copy files from originalPath to targetPath
 	console.log(`Copying final files from ${originalPath} to ${targetPath}`);
 	await cpy(originalPath, targetPath).on("progress", (progress) => {
 		if (progress.percent === 1) {
