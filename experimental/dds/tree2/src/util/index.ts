@@ -12,9 +12,13 @@ export {
 	brandedStringType,
 	extractFromOpaque,
 	ExtractFromOpaque,
+	fromErased,
+	Erased,
+	ErasedType,
 	NameFromBranded,
 	Opaque,
 	ValueFromBranded,
+	brandErased,
 } from "./brand";
 export {
 	deleteFromNestedMap,

@@ -87,6 +87,7 @@ export {
 	DiscardResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
+	ErasedTreeNodeSchemaDataFormat,
 } from "./core";
 
 export {
@@ -298,6 +299,8 @@ export {
 	AllowOptionalNotFlattened,
 	isAny,
 	BrandedKeyContent,
+	ErasedType,
+	Erased,
 } from "./util";
 
 export {

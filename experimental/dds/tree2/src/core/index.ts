@@ -136,6 +136,11 @@ export {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
+	BrandedTreeNodeSchemaDataFormat,
+	decodeFieldSchema,
+	encodeFieldSchema,
+	storedSchemaDecodeDispatcher,
+	ErasedTreeNodeSchemaDataFormat,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";

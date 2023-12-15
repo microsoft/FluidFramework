@@ -4,7 +4,17 @@
  */
 
 import { DiscriminatedUnionDispatcher } from "../../codec";
-import { MakeNominal, Named, brand, compareNamed, fail, invertMap } from "../../util";
+import {
+	Brand,
+	Erased,
+	MakeNominal,
+	Named,
+	brand,
+	brandErased,
+	compareNamed,
+	fail,
+	invertMap,
+} from "../../util";
 import {
 	FieldKey,
 	FieldKindIdentifier,
@@ -109,6 +119,14 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 };
 
 /**
+ * Opaque type erased handle to the encoded representation of the contents of a stored schema.
+ * @alpha
+ */
+export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDataFormat"> {}
+export interface BrandedTreeNodeSchemaDataFormat
+	extends Brand<TreeNodeSchemaDataFormat, ErasedTreeNodeSchemaDataFormat> {}
+
+/**
  * @alpha
  */
 export abstract class TreeNodeStoredSchema {
@@ -117,10 +135,10 @@ export abstract class TreeNodeStoredSchema {
 	/**
 	 * @privateRemarks
 	 * Returns TreeNodeSchemaDataFormat.
-	 * This is not enforced by the class to avoid leaking these types out of the package,
-	 * but is runtime validated by the codec.
+	 * This is uses an opaque type to avoid leaking these types out of the package,
+	 * and is runtime validated by the codec.
 	 */
-	public abstract encode(): unknown;
+	public abstract encode(): ErasedTreeNodeSchemaDataFormat;
 }
 
 /**
@@ -141,12 +159,12 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): unknown {
-		return {
+	public override encode(): ErasedTreeNodeSchemaDataFormat {
+		return brandErased<BrandedTreeNodeSchemaDataFormat>({
 			object: [...this.objectNodeFields]
 				.map(([k, v]) => encodeNamedField(k, v))
 				.sort(compareNamed),
-		} satisfies TreeNodeSchemaDataFormat;
+		});
 	}
 }
 
@@ -166,8 +184,10 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): unknown {
-		return { map: encodeField(this.mapFields) } satisfies TreeNodeSchemaDataFormat;
+	public override encode(): ErasedTreeNodeSchemaDataFormat {
+		return brandErased<BrandedTreeNodeSchemaDataFormat>({
+			map: encodeFieldSchema(this.mapFields),
+		});
 	}
 }
 
@@ -191,8 +211,10 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encode(): unknown {
-		return { leaf: encodeValueSchema(this.leafValue) } satisfies TreeNodeSchemaDataFormat;
+	public override encode(): ErasedTreeNodeSchemaDataFormat {
+		return brandErased<BrandedTreeNodeSchemaDataFormat>({
+			leaf: encodeValueSchema(this.leafValue),
+		});
 	}
 }
 
@@ -207,11 +229,11 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 			new Map(
 				data.map((field): [FieldKey, TreeFieldStoredSchema] => [
 					brand(field.name),
-					decodeField(field),
+					decodeFieldSchema(field),
 				]),
 			),
 		),
-	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeField(data)),
+	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
 });
 
 const valueSchemaEncode = new Map([
@@ -232,7 +254,7 @@ function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
 	return valueSchemaDecode.get(inMemory) ?? fail("missing ValueSchema");
 }
 
-export function encodeField(schema: TreeFieldStoredSchema): FieldSchemaFormat {
+export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
 	const out: FieldSchemaFormat = {
 		kind: schema.kind.identifier,
 	};
@@ -244,12 +266,12 @@ export function encodeField(schema: TreeFieldStoredSchema): FieldSchemaFormat {
 
 function encodeNamedField<T>(name: T, schema: TreeFieldStoredSchema): FieldSchemaFormat & Named<T> {
 	return {
-		...encodeField(schema),
+		...encodeFieldSchema(schema),
 		name,
 	};
 }
 
-export function decodeField(schema: FieldSchemaFormat): TreeFieldStoredSchema {
+export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSchema {
 	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: { identifier: schema.kind },

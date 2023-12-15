@@ -5,6 +5,7 @@
 
 import { TUnsafe, Type } from "@sinclair/typebox";
 import { Covariant, isAny } from "./typeCheck";
+import { Assume } from "./utils";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -19,7 +20,53 @@ import { Covariant, isAny } from "./typeCheck";
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
  * @alpha
  */
-export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType &
+	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
+
+/**
+ * "opaque" handle which can be used to expose a branded type without referencing its value type.
+ *
+ * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
+ * uses the type name instead of expanding it:
+ * ```typescript
+ * export interface MyType extends Erased<"myPackage.MyType">{}
+ * ```
+ * @alpha
+ */
+export type Erased<Name extends string> = ErasedType<Name>;
+
+/**
+ * Helper for {@link Erased}.
+ * This is split out into its own as that's the only way to:
+ * - have doc comments for the member.
+ * - make the member protected (so you don't accidentally try and read it).
+ * - get nominal typing (so types produced without using this class can never be assignable to it).
+ *
+ * See `InternalTypes.MakeNominal` for some more details.
+ *
+ * Do not use this class with `instanceof`: this will always be false at runtime,
+ * but the compiler may think it's true in some cases.
+ *
+ * @sealed
+ * @alpha
+ */
+export abstract class ErasedType<out Name extends string> {
+	/**
+	 * Compile time only marker to make type checking more strict.
+	 * This method will not exist at runtime and accessing it is invalid.
+	 * See {@link Brand} for details.
+	 *
+	 * @privateRemarks
+	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
+	 * The method takes in never to help emphasize that its not callable.
+	 */
+	protected abstract brand(dummy: never): Name;
+
+	/**
+	 * This class should never exist at runtime, so make it un-constructable.
+	 */
+	private constructor() {}
+}
 
 /**
  * Helper for {@link Brand}.
@@ -29,7 +76,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
- * See {@link InternalTypes#MakeNominal} for some more details.
+ * See `InternalTypes.MakeNominal` for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
@@ -76,7 +123,10 @@ export abstract class BrandedType<out ValueType, Name extends string> {
  * ```
  * @alpha
  */
-export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name>
+export type Opaque<T extends Brand<any, string>> = T extends BrandedType<
+	infer ValueType,
+	infer Name
+>
 	? BrandedType<ValueType, Name>
 	: never;
 
@@ -129,6 +179,20 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
 }
 
 /**
+ * Converts a {@link Erased} handle to the underlying branded type.
+ *
+ * It is assumed that only code that produces these "opaque" handles does this conversion,
+ * allowing these handles to be considered opaque.
+ * @alpha
+ */
+export function fromErased<
+	TBranded extends BrandedType<unknown, string>,
+	TName extends string = NameFromBranded<TBranded>,
+>(value: ErasedType<TName>): TBranded {
+	return value as unknown as TBranded;
+}
+
+/**
  * Adds a type {@link Brand} to a value.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
@@ -150,6 +214,18 @@ export function brandOpaque<T extends BrandedType<any, string>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
 ): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {
 	return value as BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
+}
+
+/**
+ * Adds a type {@link Brand} to a value, returning it as a {@link Erased} handle.
+ *
+ * Only do this when specifically allowed by the requirements of the type being converted to.
+ * @alpha
+ */
+export function brandErased<T extends BrandedType<any, string>>(
+	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
+): ErasedType<NameFromBranded<T>> {
+	return value as ErasedType<NameFromBranded<T>>;
 }
 
 /**

@@ -9,22 +9,18 @@ import {
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
 	schemaFormat,
-} from "../../core";
-import { brand, compareNamed, fail } from "../../util";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import {
-	decodeField,
-	encodeField,
+	BrandedTreeNodeSchemaDataFormat,
+	decodeFieldSchema,
+	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../core/schema-stored/schema";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeNodeSchemaDataFormat } from "../../core/schema-stored/format";
+} from "../../core";
+import { brand, compareNamed, fail, fromErased } from "../../util";
+import { ICodecOptions, IJsonCodec } from "../../codec";
 import { Format, TreeNodeSchemaFormat, Versioned } from "./format";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
 	const treeNodeSchema: TreeNodeSchemaFormat[] = [];
-	const rootFieldSchema = encodeField(repo.rootFieldSchema);
+	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
 	for (const [name, schema] of repo.nodeSchema) {
 		treeNodeSchema.push(encodeTree(name, schema));
 	}
@@ -42,7 +38,7 @@ function encodeTree(
 ): TreeNodeSchemaFormat {
 	const out: TreeNodeSchemaFormat = {
 		name,
-		data: schema.encode() as TreeNodeSchemaDataFormat,
+		data: fromErased<BrandedTreeNodeSchemaDataFormat>(schema.encode()),
 	};
 	return out;
 }
@@ -56,7 +52,7 @@ function decode(f: Format): TreeStoredSchema {
 		nodeSchema.set(brand(tree.name), decodeTree(tree));
 	}
 	return {
-		rootFieldSchema: decodeField(f.rootFieldSchema),
+		rootFieldSchema: decodeFieldSchema(f.rootFieldSchema),
 		nodeSchema,
 	};
 }
