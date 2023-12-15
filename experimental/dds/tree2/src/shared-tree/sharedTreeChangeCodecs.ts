@@ -67,6 +67,7 @@ export function makeSharedTreeChangeCodec(
 			}
 			return { changes };
 		},
+		encodedSchema: EncodedSharedTreeChange,
 	};
 }
 
