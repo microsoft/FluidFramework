@@ -62,7 +62,7 @@
 		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.0.0-internal.7.2.0",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@microsoft/api-extractor": "^7.38.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
