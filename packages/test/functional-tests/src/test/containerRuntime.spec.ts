@@ -21,9 +21,9 @@ import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/
 import { ConnectionManager } from "@fluidframework/container-loader/test/connectionManager";
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
-import { ScheduleManager } from "@fluidframework/container-runtime/dist/scheduleManager";
+import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
 // eslint-disable-next-line import/no-internal-modules
-import { DeltaScheduler } from "@fluidframework/container-runtime/dist/deltaScheduler";
+import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
 
 describe("Container Runtime", () => {
 	/**

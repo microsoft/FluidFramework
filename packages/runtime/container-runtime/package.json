@@ -11,6 +11,78 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./test/containerRuntime": {
+			"import": {
+				"types": "./lib/containerRuntime.d.mts",
+				"default": "./lib/containerRuntime.mjs"
+			},
+			"require": {
+				"types": "./dist/containerRuntime.d.ts",
+				"default": "./dist/containerRuntime.cjs"
+			}
+		},
+		"./test/deltaScheduler": {
+			"import": {
+				"types": "./lib/deltaScheduler.d.mts",
+				"default": "./lib/deltaScheduler.mjs"
+			},
+			"require": {
+				"types": "./dist/deltaScheduler.d.ts",
+				"default": "./dist/deltaScheduler.cjs"
+			}
+		},
+		"./test/scheduleManager": {
+			"import": {
+				"types": "./lib/scheduleManager.d.mts",
+				"default": "./lib/scheduleManager.mjs"
+			},
+			"require": {
+				"types": "./dist/scheduleManager.d.ts",
+				"default": "./dist/scheduleManager.cjs"
+			}
+		},
+		"./test/blobManager": {
+			"import": {
+				"types": "./lib/blobManager.d.mts",
+				"default": "./lib/blobManager.mjs"
+			},
+			"require": {
+				"types": "./dist/blobManager.d.ts",
+				"default": "./dist/blobManager.cjs"
+			}
+		},
+		"./test/summary": {
+			"import": {
+				"types": "./lib/summary/index.d.mts",
+				"default": "./lib/summary/index.mjs"
+			},
+			"require": {
+				"types": "./dist/summary/index.d.ts",
+				"default": "./dist/summary/index.cjs"
+			}
+		},
+		"./test/gc": {
+			"import": {
+				"types": "./lib/gc/index.d.mts",
+				"default": "./lib/gc/index.mjs"
+			},
+			"require": {
+				"types": "./gc/index.d.ts",
+				"default": "./gc/index.cjs"
+			}
+		}
+	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
@@ -26,7 +98,7 @@
 		"build:genver": "gen-version",
 		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
 		"build:test": "tsc-multi --config ./tsc-multi.test.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
