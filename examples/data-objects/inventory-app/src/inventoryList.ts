@@ -4,13 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import {
-	ForestType,
-	TreeFactory,
-	TreeView,
-	typeboxValidator,
-	ITree,
-} from "@fluid-experimental/tree2";
+import { ForestType, TreeFactory, TreeView, typeboxValidator, ITree } from "@fluidframework/tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Inventory, treeConfiguration } from "./schema";
 

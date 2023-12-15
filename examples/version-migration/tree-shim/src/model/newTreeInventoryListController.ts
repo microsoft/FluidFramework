@@ -12,7 +12,7 @@ import {
 	Tree,
 	TreeConfiguration,
 	disposeSymbol,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
