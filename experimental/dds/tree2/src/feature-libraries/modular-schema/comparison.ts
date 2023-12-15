@@ -46,6 +46,16 @@ export function allowsTreeSuperset(
 		}
 		return false;
 	}
+
+	assert(
+		original instanceof MapNodeStoredSchema || original instanceof ObjectNodeStoredSchema,
+		"unsupported node kind",
+	);
+	assert(
+		superset instanceof MapNodeStoredSchema || superset instanceof ObjectNodeStoredSchema,
+		"unsupported node kind",
+	);
+
 	if (original instanceof MapNodeStoredSchema) {
 		if (superset instanceof MapNodeStoredSchema) {
 			return allowsFieldSuperset(
@@ -57,39 +67,50 @@ export function allowsTreeSuperset(
 		}
 		return false;
 	}
-	if (original instanceof ObjectNodeStoredSchema) {
-		if (superset instanceof ObjectNodeStoredSchema) {
-			return compareSets({
-				a: original.objectNodeFields,
-				b: superset.objectNodeFields,
-				aExtra: (originalField) =>
-					allowsFieldSuperset(
-						policy,
-						originalData,
-						original.objectNodeFields.get(originalField) ??
-							fail("missing expected field"),
-						normalizeField(undefined),
-					),
-				bExtra: (supersetField) =>
-					allowsFieldSuperset(
-						policy,
-						originalData,
-						normalizeField(undefined),
-						superset.objectNodeFields.get(supersetField) ??
-							fail("missing expected field"),
-					),
-				same: (sameField) =>
-					allowsFieldSuperset(
-						policy,
-						originalData,
-						original.objectNodeFields.get(sameField) ?? fail("missing expected field"),
-						superset.objectNodeFields.get(sameField) ?? fail("missing expected field"),
-					),
-			});
+
+	assert(original instanceof ObjectNodeStoredSchema, "unsupported node kind");
+	if (superset instanceof MapNodeStoredSchema) {
+		for (const [_key, field] of original.objectNodeFields) {
+			if (
+				!allowsFieldSuperset(
+					policy,
+					originalData,
+					normalizeField(field),
+					normalizeField(superset.mapFields),
+				)
+			) {
+				return false;
+			}
 		}
-		return false;
+		return true;
 	}
-	fail("unsupported node kind");
+	assert(superset instanceof ObjectNodeStoredSchema, "unsupported node kind");
+
+	return compareSets({
+		a: original.objectNodeFields,
+		b: superset.objectNodeFields,
+		aExtra: (originalField) =>
+			allowsFieldSuperset(
+				policy,
+				originalData,
+				original.objectNodeFields.get(originalField) ?? fail("missing expected field"),
+				normalizeField(undefined),
+			),
+		bExtra: (supersetField) =>
+			allowsFieldSuperset(
+				policy,
+				originalData,
+				normalizeField(undefined),
+				superset.objectNodeFields.get(supersetField) ?? fail("missing expected field"),
+			),
+		same: (sameField) =>
+			allowsFieldSuperset(
+				policy,
+				originalData,
+				original.objectNodeFields.get(sameField) ?? fail("missing expected field"),
+				superset.objectNodeFields.get(sameField) ?? fail("missing expected field"),
+			),
+	});
 }
 
 /**
