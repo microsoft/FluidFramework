@@ -10,7 +10,7 @@ import {
 	type ContainerKey,
 	createDevtoolsLogger,
 	initializeDevtools,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";

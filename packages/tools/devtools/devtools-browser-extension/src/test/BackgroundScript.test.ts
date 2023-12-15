@@ -12,7 +12,7 @@ import {
 	CloseContainer,
 	TelemetryEvent,
 	devtoolsMessageSource,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 
 import { type Globals } from "../Globals";
 import { type DevToolsInitMessage, extensionMessageSource } from "../messaging";

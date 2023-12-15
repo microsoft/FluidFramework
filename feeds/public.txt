@@ -4,8 +4,8 @@
 @fluid-tools/webpack-fluid-loader
 @fluidframework/fluid-runner
 @fluid-tools/fetch-tool
-@fluid-experimental/devtools-core
-@fluid-experimental/devtools
+@fluidframework/devtools-core
+@fluidframework/devtools
 @fluidframework/test-utils
 @fluidframework/test-driver-definitions
 @fluidframework/mocha-test-setup
