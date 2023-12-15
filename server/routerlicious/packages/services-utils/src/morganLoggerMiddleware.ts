@@ -70,34 +70,36 @@ export function jsonMorganLoggerMiddleware(
 	enableLatencyMetric: boolean = false,
 ): express.RequestHandler {
 	return (request, response, next): void => {
-		const responseLatencyP = new Promise<IResponseLatency>((resolve, reject) => {
-			let complete = false;
-			let prefinishTime: number | undefined;
-			let finishTime: number | undefined;
-			const prefinishListener = () => {
-				prefinishTime = performance.now();
-			};
-			const finishListener = () => {
-				finishTime = performance.now();
-			};
-			response.once("prefinish", prefinishListener);
-			response.once("finish", finishListener);
-			response.once("close", () => {
-				response.removeListener("prefinish", prefinishListener);
-				response.removeListener("finish", finishListener);
-				const closeTime = performance.now();
-				if (!complete) {
-					complete = true;
-					resolve({ prefinishTime, finishTime, closeTime });
-				}
-			});
-			response.once("error", (error) => {
-				if (!complete) {
-					complete = true;
-					reject(error);
-				}
-			});
-		});
+		const responseLatencyP = enableLatencyMetric
+			? new Promise<IResponseLatency>((resolve, reject) => {
+					let complete = false;
+					let prefinishTime: number | undefined;
+					let finishTime: number | undefined;
+					const prefinishListener = () => {
+						prefinishTime = performance.now();
+					};
+					const finishListener = () => {
+						finishTime = performance.now();
+					};
+					response.once("prefinish", prefinishListener);
+					response.once("finish", finishListener);
+					response.once("close", () => {
+						response.removeListener("prefinish", prefinishListener);
+						response.removeListener("finish", finishListener);
+						const closeTime = performance.now();
+						if (!complete) {
+							complete = true;
+							resolve({ prefinishTime, finishTime, closeTime });
+						}
+					});
+					response.once("error", (error) => {
+						if (!complete) {
+							complete = true;
+							reject(error);
+						}
+					});
+			  })
+			: undefined;
 		const startTime = performance.now();
 		const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
 		morgan<express.Request, express.Response>((tokens, req, res) => {
@@ -138,7 +140,7 @@ export function jsonMorganLoggerMiddleware(
 				httpMetric.setProperty("durationInMs", endTime - startTime);
 				// Wait for response 'close' event to signal that the response is completed.
 				responseLatencyP
-					.then((responseLatency) => {
+					?.then((responseLatency) => {
 						const prefinishToFinishDurationMs: number =
 							responseLatency.prefinishTime === undefined ||
 							responseLatency.finishTime === undefined
