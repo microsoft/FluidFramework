@@ -1776,7 +1776,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		let props: PropertySet | undefined;
 		let intervalId: string;
 		switch (op.opName) {
-			case IntervalDeltaOpType.ADD:
+			case IntervalDeltaOpType.ADD: {
 				assert(op.value.start !== undefined, "start is undefined");
 				assert(op.value.end !== undefined, "end is undefined");
 				interval = this.add({
@@ -1784,9 +1784,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					end: op.value.end,
 					props: op.value.properties,
 				});
-				return {
+				const metadata = {
 					localSeq: this.getNextLocalSeq(),
 				};
+				if (interval !== undefined) {
+					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				}
+				return metadata;
+			}
 			case IntervalDeltaOpType.DELETE:
 				this.removeIntervalById(op.value.properties?.intervalId);
 				return {

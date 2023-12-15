@@ -310,7 +310,7 @@ export class DefaultMap<T> {
 		return false;
 	}
 
-	public tryGetStashedOpLocalMetadata(op: unknown): IMapMessageLocalMetadata | undefined{
+	public tryGetStashedOpLocalMetadata(op: unknown): IMapMessageLocalMetadata | undefined {
 		if (isMapOperation(op) && this.messageHandlers.has(op.type)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return this.messageHandlers.get(op.type)!.getStashedOpLocalMetadata(op);

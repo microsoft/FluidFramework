@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/test-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
 
 const stringId = "sharedStringKey";
