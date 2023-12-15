@@ -8,15 +8,15 @@ import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/telemetry-utils';
 
-// @internal
+// @public
 export interface CategoryFilter {
     categories: TelemetryEventCategory[];
 }
 
-// @internal
+// @public
 export function createLogger(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig): ITelemetryBaseLogger;
 
-// @internal
+// @public
 export interface FluidAppInsightsLoggerConfig {
     filtering: {
         mode: "inclusive" | "exclusive";
@@ -24,7 +24,7 @@ export interface FluidAppInsightsLoggerConfig {
     };
 }
 
-// @internal
+// @public
 export interface NamespaceFilter {
     namespacePattern: string;
     namespacePatternExceptions?: Set<string>;
@@ -32,7 +32,7 @@ export interface NamespaceFilter {
 
 export { TelemetryEventCategory }
 
-// @internal
+// @public
 export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
 ```
