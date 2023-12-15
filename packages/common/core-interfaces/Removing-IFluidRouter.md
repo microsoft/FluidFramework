@@ -115,7 +115,7 @@ const retrievedDataStore = await entryPoint?.get();
 
 ### Sub-object routing
 
-Sub-object routing and requesting will continue to work as-is for the most part. The `IFluidDataStoreChannel` interface and `FluidDataStoreRuntime` class have a dedicated `request(...)` method, separate from the `IFluidRouter` concept.
+Sub-object routing and requesting will continue to work as-is for the most part. The `FluidDataStoreRuntime` class has a dedicated `request(...)` method, separate from the `IFluidRouter` concept.
 
 There is only one key thing to keep in mind. If you are using your own `IFluidDataStoreFactory` implementation, you will need to wrap the created `FluidDataStoreRuntime` (in `IFluidDataStoreFactory.instantiateDataStore`) with a `mixinRequestHandler`. This `mixinRequestHandler` should handle default cases like requesting `""`, `"/"`, or `"/?"`.
 
