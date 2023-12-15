@@ -1,0 +1,882 @@
+devtools:
+  Interface:
+    - ContainerDevtoolsProps
+    - DevtoolsProps
+    - IDevtools
+devtools-core:
+  Interface:
+    - HasContainerKey
+    - IDevtoolsLogger
+odsp-client:
+  Interface:
+    - IOdspTokenProvider
+    - OdspClientProps
+    - OdspConnectionConfig
+    - OdspContainerServices
+    - OdspMember
+  Class:
+    - OdspClient
+oldest-client-observer:
+  Interface:
+    - IOldestClientObservable
+    - IOldestClientObservableEvents
+    - IOldestClientObserver
+    - IOldestClientObserverEvents
+  Class:
+    - OldestClientObserver
+tree:
+  Interface:
+    - Build
+    - BuildInternal_0_0_2
+    - BuildInternal
+    - BuildTreeNode
+    - Constraint
+    - ConstraintInternal_0_0_2
+    - ConstraintInternal
+    - Delta
+    - Detach
+    - DetachInternal_0_0_2
+    - DetachInternal
+    - Edit
+    - EditBase
+    - EditCommittedEventArguments
+    - EditingResultBase
+    - ForestNode
+    - HasTraits
+    - HasVariadicTraits
+    - ICheckoutEvents
+    - Insert
+    - InsertInternal_0_0_2
+    - InsertInternal
+    - InternalizedChange
+    - ISharedTreeEvents
+    - LogViewer
+    - NodeData
+    - NodeIdBrand
+    - NodeIdContext
+    - NodeIdConverter
+    - NodeIdGenerator
+    - OrderedEditSet
+    - ParentData
+    - ReconciliationChange
+    - ReconciliationEdit
+    - ReconciliationPath
+    - SequencedEditAppliedEventArguments
+    - SessionUnique
+    - SetValue
+    - SetValueInternal_0_0_2
+    - SetValueInternal
+    - SharedTreeBaseOptions
+    - SharedTreeOptions_0_0_2
+    - SharedTreeOptions_0_1_1
+    - SharedTreeSummaryBase
+    - StablePlace
+    - StablePlaceInternal_0_0_2
+    - StablePlaceInternal
+    - StableRange
+    - StableRangeInternal_0_0_2
+    - StableRangeInternal
+    - StashedLocalOpMetadata
+    - SucceedingTransactionState
+    - TraitLocation
+    - TraitLocationInternal_0_0_2
+    - TraitLocationInternal
+    - TraitMap
+    - TransactionEvents
+    - BadPlaceFailure
+    - BadRangeFailure
+    - ConstraintViolationFailure
+    - DetachedSequenceIdAlreadyInUseFailure
+    - DetachedSequenceNotFoundFailure
+    - DuplicateIdInBuildFailure
+    - IdAlreadyInUseFailure
+    - UnknownIdFailure
+    - UnusedDetachedSequenceFailure
+    - TreeNode
+    - TreeViewNode
+    - TreeViewPlace
+    - TreeViewRange
+    - ValidEditingResult
+  Enum:
+    - ChangeType
+    - ChangeTypeInternal
+    - CheckoutEvent
+    - ConstraintEffect
+    - EditStatus
+    - EditValidationResult
+    - PlaceValidationResult
+    - RangeValidationResultKind
+    - SharedTreeEvent
+    - Side
+    - TransactionEvent
+    - ConstraintViolationKind
+    - FailureKind
+    - WriteFormat
+  Class:
+    - Checkout
+    - EagerCheckout
+    - Forest
+    - RevisionView
+    - SharedTree
+    - SharedTreeFactory
+    - Transaction
+    - TransactionView
+    - TreeView
+  Namespace:
+    - TransactionInternal
+tree2:
+  Interface:
+    - Adapters
+    - AnchorEvents
+    - AnchorLocator
+    - AnchorNode
+    - AnchorSetRootEvents
+    - AnnouncedVisitor
+    - ArrayLikeMut
+    - BrandedMapSubset
+    - CheckoutEvents
+    - ChildLocation
+    - ContextuallyTypedNodeDataObject
+    - Contravariant
+    - Covariant
+    - CursorAdapter
+    - CursorWithNode
+    - DeltaDetachedNodeBuild
+    - DeltaDetachedNodeChanges
+    - DeltaDetachedNodeDestruction
+    - DeltaDetachedNodeId
+    - DeltaDetachedNodeRename
+    - DeltaFieldChanges
+    - DeltaMark
+    - DeltaRoot
+    - DeltaVisitor
+    - DetachedField
+    - EditableTreeEvents
+    - FieldAnchor
+    - FieldKindSpecifier
+    - FieldLocation
+    - FieldMapObject
+    - Fields
+    - FieldUpPath
+    - FlexTreeEntity
+    - FlexTreeField
+    - FlexTreeFieldNode
+    - FlexTreeLeafNode
+    - FlexTreeMapNode
+    - FlexTreeNode
+    - FlexTreeNodeKeyField
+    - FlexTreeObjectNode
+    - FlexTreeOptionalField
+    - FlexTreeRequiredField
+    - FlexTreeSchema
+    - FlexTreeSequenceField
+    - FlexTreeView
+    - Forbidden
+    - ForestEvents
+    - FullSchemaPolicy
+    - GenericFieldsNode
+    - GenericTreeNode
+    - HasListeners
+    - ICodecOptions
+    - IdAllocator
+    - IDefaultEditBuilder
+    - IDisposable
+    - IEditableForest
+    - IEmitter
+    - IForestSubscription
+    - InitializeAndSchematizeConfiguration
+    - MakeNominal
+    - TreeArrayNodeBase
+    - TreeNodeSchemaClass
+    - TreeNodeSchemaCore
+    - TreeNodeSchemaNonClass
+    - Invariant
+    - ISharedTree
+    - ISubscribable
+    - ITransaction
+    - ITree
+    - ITreeCheckout
+    - ITreeCheckoutFork
+    - ITreeCursor
+    - ITreeCursorSynchronous
+    - ITreeSubscriptionCursor
+    - ITreeViewFork
+    - JsonableTree
+    - JsonValidator
+    - LocalNodeKey
+    - MapTree
+    - MarkedArrayLike
+    - Named
+    - NodeData
+    - NodeExistsConstraint
+    - NodeKeyFieldKind
+    - NodeKeys
+    - Optional
+    - OptionalFieldEditBuilder
+    - PathRootPrefix
+    - PathVisitor
+    - PlaceUpPath
+    - Range_2
+    - RangeQueryResult
+    - RangeUpPath
+    - Required_2
+    - Revertible
+    - RootField
+    - SchemaBuilderOptions
+    - SchemaCollection
+    - SchemaConfiguration
+    - SchemaEvents
+    - SchemaLibrary
+    - SchemaLibraryData
+    - SchemaLintConfiguration
+    - SchematizeConfiguration
+    - SchemaValidationFunction
+    - Sequence
+    - SequenceFieldEditBuilder
+    - SharedTreeContentSnapshot
+    - SharedTreeOptions
+    - StoredSchemaCollection
+    - StoredSchemaRepository
+    - TreeAdapter
+    - TreeApi
+    - TreeArrayNode
+    - TreeContent
+    - TreeContext
+    - TreeDataContext
+    - TreeEvent
+    - TreeFieldStoredSchema
+    - TreeLocation
+    - TreeMapNode
+    - TreeMapNodeBase
+    - TreeNodeEvents
+    - TreeNodeStoredSchema
+    - TreeOptions
+    - TreeStoredSchema
+    - TreeView
+    - UpPath
+    - ValueFieldEditBuilder
+  Enum:
+    - AllowedUpdateType
+    - CursorLocationType
+    - DiscardResult
+    - FlexTreeEntityKind
+    - ForestType
+    - FieldKind
+    - NodeKind
+    - ITreeSubscriptionCursorState
+    - Multiplicity
+    - RevertibleKind
+    - RevertResult
+    - TransactionResult
+    - TreeCompressionStrategy
+    - TreeNavigationResult
+    - TreeStatus
+    - ValueSchema
+  Class:
+    - AnchorSet
+    - BrandedType
+    - FieldKind
+    - FieldNodeSchema
+    - FieldSchema
+    - IterableTreeListContent
+    - LeafNodeSchema
+    - MapNodeSchema
+    - NodeBase
+    - ObjectNodeSchema
+    - SchemaBuilderBase
+    - SchemaFactory
+    - SharedTreeFactory
+    - test_RecursiveObject
+    - TreeConfiguration
+    - TreeFactory
+    - TreeFieldSchema
+    - TreeNodeSchemaBase
+  Namespace:
+    - InternalTypedSchemaTypes
+    - InternalTypes
+    - InternalClassTreeTypes
+client-utils:
+  Class:
+    - TypedEventEmitter
+agent-scheduler:
+  Class:
+    - AgentSchedulerFactory
+    - TaskSubscription
+  Interface:
+    - IAgentScheduler
+    - IAgentSchedulerEvents
+    - IProvideAgentScheduler
+    - ITaskSubscriptionEvents
+aqueduct:
+  Class:
+    - BaseContainerRuntimeFactory
+    - ContainerRuntimeFactoryWithDefaultDataStore
+    - DataObject
+    - DataObjectFactory
+    - PureDataObject
+    - PureDataObjectFactory
+  Interface:
+    - DataObjectTypes
+    - IDataObjectProps
+azure-client:
+  Class:
+    - AzureClient
+  Interface:
+    - AzureClientProps
+    - AzureConnectionConfig
+    - AzureContainerServices
+    - AzureContainerVersion
+    - AzureGetVersionsOptions
+    - AzureLocalConnectionConfig
+    - AzureMember
+    - AzureRemoteConnectionConfig
+container-definitions:
+  Enum:
+    - AttachState
+    - LoaderHeader
+  Namespace:
+    - ConnectionState
+  Interface:
+    - ContainerWarning
+    - IAudience
+    - IAudienceOwner
+    - IBatchMessage
+    - ICodeDetailsLoader
+    - IConnectionDetails
+    - IContainer
+    - IContainerContext
+    - IContainerEvents
+    - IDeltaManager
+    - IDeltaManagerEvents
+    - IDeltaQueue
+    - IDeltaQueueEvents
+    - IDeltaSender
+    - IFluidBrowserPackage
+    - IFluidBrowserPackageEnvironment
+    - IFluidCodeDetails
+    - IFluidCodeDetailsComparer
+    - IFluidCodeDetailsConfig
+    - IFluidModule
+    - IFluidModuleWithDetails
+    - IFluidPackage
+    - IFluidPackageEnvironment
+    - IGetPendingLocalStateProps
+    - IHostLoader
+    - ILoader
+    - IProvideFluidCodeDetailsComparer
+    - IProvideLoader
+    - IProvideRuntimeFactory
+    - IRuntime
+    - IRuntimeFactory
+    - ISnapshotTreeWithBlobContents
+container-loader:
+  Enum:
+    - ConnectionState
+  Interface:
+    - ICodeDetailsLoader
+    - IFluidModuleWithDetails
+    - ILoaderOptions
+    - ILoaderProps
+    - ILoaderServices
+    - IProtocolHandler
+  Class:
+    - Loader
+container-runtime:
+  Enum:
+    - CompressionAlgorithms
+    - ContainerMessageType
+  Class:
+    - ContainerRuntime
+    - Summarizer
+    - SummaryCollection
+  Interface:
+    - IAckedSummary
+    - IAckSummaryResult
+    - IBaseSummarizeResult
+    - IBlobManagerLoadInfo
+    - IBroadcastSummaryResult
+    - ICancellableSummarizerController
+    - ICancellationToken
+    - IClientSummaryWatcher
+    - ICompressionRuntimeOptions
+    - IConnectableRuntime
+    - IContainerRuntimeMetadata
+    - IContainerRuntimeOptions
+    - ICreateContainerMetadata
+    - IEnqueueSummarizeOptions
+    - IGCMetadata
+    - IGCRuntimeOptions
+    - IGCStats
+    - IGeneratedSummaryStats
+    - IGenerateSummaryTreeResult
+    - IMarkPhaseStats
+    - INackSummaryResult
+    - IOnDemandSummarizeOptions
+    - IRefreshSummaryAckOptions
+    - IRetriableFailureResult
+    - ISerializedElection
+    - ISubmitSummaryOpResult
+    - ISubmitSummaryOptions
+    - ISummarizeEventProps
+    - ISummarizeOptions
+    - ISummarizer
+    - ISummarizeResults
+    - ISummarizerEvents
+    - ISummarizerInternalsProvider
+    - ISummarizerRuntime
+    - ISummary
+    - ISummaryAckMessage
+    - ISummaryBaseConfiguration
+    - ISummaryCollectionOpEvents
+    - ISummaryConfigurationDisableHeuristics
+    - ISummaryConfigurationDisableSummarizer
+    - ISummaryConfigurationHeuristics
+    - ISummaryNackMessage
+    - ISummaryOpMessage
+    - ISummaryRuntimeOptions
+    - ISweepPhaseStats
+    - IUploadSummaryResult
+    - SubmitSummaryFailureData
+container-runtime-definitions:
+  Interface:
+    - IContainerRuntime
+    - IContainerRuntimeEvents
+    - IContainerRuntimeWithResolveHandle_Deprecated
+core-interfaces:
+  Interface:
+    - IConfigProviderBase
+    - IDisposable
+    - IErrorBase
+    - IErrorEvent
+    - IEvent
+    - IEventProvider
+    - IFluidCodeDetails
+    - IFluidCodeDetailsConfig
+    - IFluidHandle
+    - IFluidHandleContext
+    - IFluidLoadable
+    - IFluidPackage
+    - IFluidPackageEnvironment
+    - IProvideFluidHandle
+    - IProvideFluidHandleContext
+    - IProvideFluidLoadable
+    - IRequest
+    - IRequestHeader
+    - IResponse
+    - ITelemetryBaseEvent
+    - ITelemetryBaseLogger
+    - ITelemetryErrorEvent
+    - ITelemetryGenericEvent
+    - ITelemetryLogger
+    - ITelemetryPerformanceEvent
+    - ITelemetryProperties
+    - IThrottlingWarning
+    - Tagged
+core-utils:
+  Class:
+    - Deferred
+    - LazyPromise
+    - PromiseCache
+  Interface:
+    - PromiseCacheOptions
+counter:
+  Interface:
+    - ISharedCounter
+    - ISharedCounterEvents
+  Class:
+    - SharedCounter
+datastore:
+  Enum:
+    - DataStoreMessageType
+  Class:
+    - FluidDataStoreRuntime
+    - FluidObjectHandle
+  Interface:
+    - ISharedObjectRegistry
+datastore-definitions:
+  Interface:
+    - IChannel
+    - IChannelAttributes
+    - IChannelFactory
+    - IChannelServices
+    - IChannelStorageService
+    - IDeltaConnection
+    - IDeltaHandler
+    - IFluidDataStoreRuntime
+    - IFluidDataStoreRuntimeEvents
+    - Internal_InterfaceOfJsonableTypesWith
+debugger:
+  Namespace:
+    - FluidDebugger
+driver-definitions:
+  Enum:
+    - DriverErrorType
+    - DriverHeader
+    - FetchSource
+    - LoaderCachingPolicy
+  Interface:
+    - DriverPreCheckInfo
+    - IAnyDriverError
+    - IAuthorizationError
+    - IContainerPackageInfo
+    - IDocumentDeltaConnection
+    - IDocumentDeltaConnectionEvents
+    - IDocumentDeltaStorageService
+    - IDocumentService
+    - IDocumentServiceFactory
+    - IDocumentServicePolicies
+    - IDocumentStorageService
+    - IDocumentStorageServicePolicies
+    - IDriverBasicError
+    - IDriverErrorBase
+    - IGenericNetworkError
+    - ILocationRedirectionError
+    - IResolvedUrl
+    - IStream
+    - ISummaryContext
+    - IThrottlingWarning
+    - IUrlResolver
+driver-utils:
+  Interface:
+    - ICompressionStorageConfig
+  Class:
+    - RateLimiter
+  Enum:
+    - SummaryCompressionAlgorithm
+driver-web-cache:
+  Class:
+    - FluidCache
+  Interface:
+    - FluidCacheConfig
+fluid-runner:
+  Interface:
+    - IFluidFileConverter
+  Enum:
+    - OutputFormat
+fluid-static:
+  Interface:
+    - ContainerSchema
+    - IConnection
+    - IFluidContainer
+    - IFluidContainerEvents
+    - IMember
+    - IServiceAudience
+    - IServiceAudienceEvents
+id-compressor:
+  Class:
+    - IdCompressor
+  Interface:
+    - IdCreationRange
+    - IIdCompressor
+    - IIdCompressorCore
+local-driver:
+  Class:
+    - LocalDocumentServiceFactory
+    - LocalResolver
+map:
+  Class:
+    - DirectoryFactory
+    - LocalValueMaker
+    - MapFactory
+    - SharedDirectory
+    - SharedMap
+  Interface:
+    - ICreateInfo
+    - IDirectory
+    - IDirectoryClearOperation
+    - IDirectoryCreateSubDirectoryOperation
+    - IDirectoryDataObject
+    - IDirectoryDeleteOperation
+    - IDirectoryDeleteSubDirectoryOperation
+    - IDirectoryEvents
+    - IDirectorySetOperation
+    - IDirectoryValueChanged
+    - ILocalValue
+    - ISerializableValue
+    - ISerializedValue
+    - ISharedDirectory
+    - ISharedDirectoryEvents
+    - ISharedMap
+    - ISharedMapEvents
+    - IValueChanged
+matrix:
+  Interface:
+    - IRevertible
+    - ISharedMatrixEvents
+    - IUndoConsumer
+  Class:
+    - SharedMatrix
+    - SharedMatrixFactory
+merge-tree:
+  Interface:
+    - AttributionPolicy
+    - IAttributionCollection
+    - IAttributionCollectionSerializer
+    - IAttributionCollectionSpec
+    - IClientEvents
+    - IJSONMarkerSegment
+    - IJSONSegment
+    - IJSONTextSegment
+    - IMarkerDef
+    - IMergeNodeCommon
+    - IMergeTreeAnnotateMsg
+    - IMergeTreeAttributionOptions
+    - IMergeTreeDelta
+    - IMergeTreeDeltaCallbackArgs
+    - IMergeTreeDeltaOpArgs
+    - IMergeTreeGroupMsg
+    - IMergeTreeInsertMsg
+    - IMergeTreeMaintenanceCallbackArgs
+    - IMergeTreeObliterateMsg
+    - IMergeTreeOptions
+    - IMergeTreeRemoveMsg
+    - IMergeTreeSegmentDelta
+    - IMergeTreeTextHelper
+    - IMoveInfo
+    - IRelativePosition
+    - IRemovalInfo
+    - ISegment
+    - ISegmentAction
+    - ITrackingGroup
+    - LocalReferencePosition
+    - MapLike
+    - MergeTreeRevertibleDriver
+    - ReferencePosition
+    - SegmentGroup
+    - SequenceOffsets
+    - SerializedAttributionCollection
+  Class:
+    - BaseSegment
+    - Client
+    - CollaborationWindow
+    - LocalReferenceCollection
+    - Marker
+    - MergeNode
+    - PropertiesManager
+    - SegmentGroupCollection
+    - TextSegment
+    - TrackingGroup
+    - TrackingGroupCollection
+  Enum:
+    - PropertiesRollback
+    - ReferenceType
+odsp-doclib-utils:
+  Interface:
+    - IOdspAuthRequestInfo
+odsp-driver:
+  Class:
+    - EpochTracker
+    - OdspDocumentServiceFactory
+    - OdspDocumentServiceFactoryCore
+    - OdspDriverUrlResolver
+    - OdspDriverUrlResolverForShareLink
+  Interface:
+    - ICacheAndTracker
+    - INonPersistentCache
+    - IOdspCache
+    - IOdspResponse
+    - IPersistedFileCache
+    - IPrefetchSnapshotContents
+    - ISnapshotContents
+    - OdspFluidDataStoreLocator
+    - ShareLinkFetcherProps
+  Enum:
+    - SnapshotFormatSupportType
+odsp-driver-definitions:
+  Interface:
+    - HostStoragePolicy
+    - ICacheEntry
+    - ICollabSessionOptions
+    - IEntry
+    - IFileEntry
+    - IOdspError
+    - IOdspErrorAugmentations
+    - IOdspResolvedUrl
+    - IOdspUrlParts
+    - IOpsCachingPolicy
+    - IPersistedCache
+    - IProvideSessionAwareDriverFactory
+    - IRelaySessionAwareDriverFactory
+    - ISharingLink
+    - ISharingLinkKind
+    - ISnapshotOptions
+    - ISocketStorageDiscovery
+    - OdspResourceTokenFetchOptions
+    - ShareLinkInfoType
+    - TokenFetchOptions
+    - TokenResponse
+  Enum:
+    - OdspErrorType
+    - ShareLinkTypes
+    - SharingLinkRole
+    - SharingLinkScope
+ordered-collection:
+  Class:
+    - ConsensusOrderedCollection
+    - ConsensusQueue
+  Enum:
+    - ConsensusResult
+  Interface:
+    - IConsensusOrderedCollection
+    - IConsensusOrderedCollectionEvents
+    - IOrderedCollection
+    - ISnapshotable
+register-collection:
+  Class:
+    - ConsensusRegisterCollection
+    - ConsensusRegisterCollectionFactory
+  Interface:
+    - IConsensusRegisterCollection
+    - IConsensusRegisterCollectionEvents
+    - IConsensusRegisterCollectionFactory
+  Enum:
+    - ReadPolicy
+routerlicious-driver:
+  Interface:
+    - ITokenProvider
+    - ITokenResponse
+runtime-definitions:
+  Enum:
+    - CreateSummarizerNodeSource
+    - FlushMode
+  Interface:
+    - DetachedAttributionKey
+    - IAttachMessage
+    - IContainerRuntimeBase
+    - IContainerRuntimeBaseEvents
+    - IDataStore
+    - IEnvelope
+    - IExperimentalIncrementalSummaryContext
+    - IFluidDataStoreChannel
+    - IFluidDataStoreContext
+    - IFluidDataStoreContextDetached
+    - IFluidDataStoreContextEvents
+    - IFluidDataStoreFactory
+    - IFluidDataStoreRegistry
+    - IGarbageCollectionData
+    - IGarbageCollectionDetailsBase
+    - IInboundSignalMessage
+    - IProvideFluidDataStoreFactory
+    - IProvideFluidDataStoreRegistry
+    - ISummarizeInternalResult
+    - ISummarizeResult
+    - ISummarizerNode
+    - ISummarizerNodeConfig
+    - ISummarizerNodeConfigWithGC
+    - ISummarizerNodeWithGC
+    - ISummaryStats
+    - ISummaryTreeWithStats
+    - ITelemetryContext
+    - LocalAttributionKey
+    - OpAttributionKey
+runtime-utils:
+  Class:
+    - RequestParser
+    - RuntimeFactoryHelper
+    - SummaryTreeBuilder
+sequence:
+  Interface:
+    - IInterval
+    - IIntervalCollection
+    - IIntervalCollectionEvent
+    - InteriorSequencePlace
+    - IntervalIndex
+    - ISequenceDeltaRange
+    - ISerializableInterval
+    - ISerializedInterval
+    - ISharedIntervalCollection
+    - ISharedSegmentSequenceEvents
+    - ISharedString
+  Enum:
+    - IntervalType
+    - Side
+  Class:
+    - SequenceDeltaEvent
+    - SequenceEvent
+    - SequenceInterval
+    - SequenceMaintenanceEvent
+    - SharedSegmentSequence
+    - SharedString
+    - SharedStringFactory
+shared-object-base:
+  Interface:
+    - IFluidSerializer
+    - ISharedObject
+    - ISharedObjectEvents
+  Class:
+    - SharedObject
+    - SharedObjectCore
+shared-summary-block:
+  Interface:
+    - ISharedSummaryBlock
+  Class:
+    - SharedSummaryBlock
+synthesize:
+  Class:
+    - DependencyContainer
+  Interface:
+    - IFluidDependencySynthesizer
+    - IProvideFluidDependencySynthesizer
+telemetry-utils:
+  Class:
+    - EventEmitterWithErrorHandling
+  Interface:
+    - ITelemetryErrorEventExt
+    - ITelemetryGenericEventExt
+    - ITelemetryLoggerExt
+    - ITelemetryLoggerPropertyBag
+    - ITelemetryLoggerPropertyBags
+    - ITelemetryPerformanceEventExt
+    - ITelemetryPropertiesExt
+test-runtime-utils:
+  Interface:
+    - IMockContainerRuntimeOptions
+    - IMockContainerRuntimePendingMessage
+  Class:
+    - MockContainerRuntime
+    - MockContainerRuntimeFactory
+    - MockContainerRuntimeFactoryForReconnection
+    - MockContainerRuntimeForReconnection
+    - MockDeltaConnection
+    - MockDeltaManager
+    - MockDeltaQueue
+    - MockFluidDataStoreContext
+    - MockFluidDataStoreRuntime
+    - MockHandle
+    - MockObjectStorageService
+    - MockQuorumClients
+    - MockSharedObjectServices
+    - MockStorage
+test-utils:
+  Interface:
+    - IOpProcessingController
+    - IProvideTestFluidObject
+    - ITestFluidObject
+  Class:
+    - LoaderContainerTracker
+fluid-framework:
+  Class:
+    - DirectoryFactory
+    - LocalValueMaker
+    - MapFactory
+    - SharedDirectory
+    - SharedMap
+  Interface:
+    - ICreateInfo
+    - IDirectory
+    - IDirectoryClearOperation
+    - IDirectoryCreateSubDirectoryOperation
+    - IDirectoryDataObject
+    - IDirectoryDeleteOperation
+    - IDirectoryDeleteSubDirectoryOperation
+    - IDirectoryEvents
+    - IDirectorySetOperation
+    - IDirectoryValueChanged
+    - ILocalValue
+    - ISerializableValue
+    - ISerializedValue
+    - ISharedDirectory
+    - ISharedDirectoryEvents
+    - ISharedMap
+    - ISharedMapEvents
+    - IValueChanged
