@@ -4,42 +4,40 @@
 			"opRatePerMin": 600,
 			"progressIntervalMs": 5000,
 			"numClients": 5,
-			"totalSendCount": 300,
+			"totalSendCount": 1200,
 			"faultInjectionMs": {
 				"min": 0,
-				"max": 20000
+				"max": 60000
 			},
 			"optionOverrides": {
-				"comment": "SessionExpiry: 20 seconds. Inactive Timeout: 40 seconds. Sweep Timeout: 45 seconds.",
+				"comment": "SessionExpiry: 20 seconds. Inactive / Sweep Timeout: 40 seconds.",
 				"tinylicious": {
 					"configurations": {
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [45000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [40000],
+						"Fluid.GarbageCollection.ThrowOnTombstoneLoad": [true],
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
 						"Fluid.Summarizer.TryDynamicRetries": [true, false]
 					},
 					"container": {
 						"gcOptions": {
-							"gcAllowed": [true],
-							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
 							"inactiveTimeoutMs": [40000],
-							"sessionExpiryTimeoutMs": [20000]
+							"sessionExpiryTimeoutMs": [20000],
+							"enableGCSweep": [true],
+							"sweepGracePeriodMs": [10000]
 						}
 					}
 				},
 				"odsp": {
 					"configurations": {
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [45000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [40000],
+						"Fluid.GarbageCollection.ThrowOnTombstoneLoad": [true],
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
 						"Fluid.Summarizer.TryDynamicRetries": [true, false]
 					},
 					"container": {
 						"gcOptions": {
-							"gcAllowed": [true],
-							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
 							"inactiveTimeoutMs": [40000],
@@ -53,24 +51,22 @@
 			"opRatePerMin": 800,
 			"progressIntervalMs": 5000,
 			"numClients": 10,
-			"totalSendCount": 16000,
+			"totalSendCount": 32000,
 			"faultInjectionMs": {
 				"min": 0,
 				"max": 600000
 			},
 			"optionOverrides": {
 				"tinylicious": {
-					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
+					"comment": "SessionExpiry: 15 mins. Inactive / Sweep Timeout: 20 mins.",
 					"configurations": {
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1200000],
+						"Fluid.GarbageCollection.ThrowOnTombstoneLoad": [true],
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
 						"Fluid.Summarizer.TryDynamicRetries": [true, false]
 					},
 					"container": {
 						"gcOptions": {
-							"gcAllowed": [true],
-							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
 							"inactiveTimeoutMs": [1200000],
@@ -79,18 +75,16 @@
 					}
 				},
 				"odsp": {
-					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 25 mins. Sweep Timeout: 26 mins.",
+					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive / Sweep Timeout: 25 mins.",
 					"configurations": {
 						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1560000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1500000],
+						"Fluid.GarbageCollection.ThrowOnTombstoneLoad": [true],
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
 						"Fluid.Summarizer.TryDynamicRetries": [true, false]
 					},
 					"container": {
 						"gcOptions": {
-							"gcAllowed": [true],
-							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
 							"inactiveTimeoutMs": [1500000],
@@ -104,46 +98,46 @@
 			"opRatePerMin": 800,
 			"progressIntervalMs": 5000,
 			"numClients": 10,
-			"totalSendCount": 16000,
+			"totalSendCount": 32000,
 			"faultInjectionMs": {
 				"min": 0,
 				"max": 600000
 			},
 			"optionOverrides": {
 				"tinylicious": {
-					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
+					"comment": "SessionExpiry: 5 mins. Inactive / Sweep Timeout: 20 mins. Sweep Grace Period: 1 min",
 					"configurations": {
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1200000],
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
 						"Fluid.Summarizer.TryDynamicRetries": [true, false]
 					},
 					"container": {
 						"gcOptions": {
-							"gcAllowed": [true],
-							"sweepAllowed": [true],
 							"disableGC": [false],
 							"runFullGC": [false],
+							"enableGCSweep": [true],
 							"inactiveTimeoutMs": [1200000],
-							"sessionExpiryTimeoutMs": [900000]
+							"sessionExpiryTimeoutMs": [900000],
+							"sweepGracePeriodMs": [60000]
 						}
 					}
 				},
 				"odsp": {
-					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 25 mins. Sweep Timeout: 26 mins.",
+					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive / Sweep Timeout: 25 mins. Sweep Grace Period: 1 min",
 					"configurations": {
 						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1560000],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1500000],
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
 						"Fluid.Summarizer.TryDynamicRetries": [true, false]
 					},
 					"container": {
 						"gcOptions": {
-							"gcAllowed": [true],
-							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
+							"enableGCSweep": [true],
 							"inactiveTimeoutMs": [1500000],
-							"sessionExpiryTimeoutMs": [900000]
+							"sessionExpiryTimeoutMs": [900000],
+							"sweepGracePeriodMs": [60000]
 						}
 					}
 				}
