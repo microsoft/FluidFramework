@@ -16,145 +16,141 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "schema": {
-                              "new": {
-                                "version": "1.0.0",
-                                "nodeSchema": [
-                                  {
-                                    "name": "com.fluidframework.leaf.boolean",
-                                    "objectNodeFields": [],
-                                    "leafValue": 2
-                                  },
-                                  {
-                                    "name": "com.fluidframework.leaf.handle",
-                                    "objectNodeFields": [],
-                                    "leafValue": 3
-                                  },
-                                  {
-                                    "name": "com.fluidframework.leaf.null",
-                                    "objectNodeFields": [],
-                                    "leafValue": 4
-                                  },
-                                  {
-                                    "name": "com.fluidframework.leaf.number",
-                                    "objectNodeFields": [],
-                                    "leafValue": 0
-                                  },
-                                  {
-                                    "name": "com.fluidframework.leaf.string",
-                                    "objectNodeFields": [],
-                                    "leafValue": 1
-                                  }
-                                ],
-                                "rootFieldSchema": {
-                                  "kind": "Optional",
-                                  "types": [
-                                    "com.fluidframework.leaf.handle"
-                                  ]
+                      "change": [
+                        {
+                          "schema": {
+                            "new": {
+                              "version": "1.0.0",
+                              "nodeSchema": [
+                                {
+                                  "name": "com.fluidframework.leaf.boolean",
+                                  "objectNodeFields": [],
+                                  "leafValue": 2
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.handle",
+                                  "objectNodeFields": [],
+                                  "leafValue": 3
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.null",
+                                  "objectNodeFields": [],
+                                  "leafValue": 4
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.number",
+                                  "objectNodeFields": [],
+                                  "leafValue": 0
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.string",
+                                  "objectNodeFields": [],
+                                  "leafValue": 1
                                 }
-                              },
-                              "old": {
-                                "version": "1.0.0",
-                                "nodeSchema": [],
-                                "rootFieldSchema": {
-                                  "kind": "Forbidden",
-                                  "types": []
-                                }
+                              ],
+                              "rootFieldSchema": {
+                                "kind": "Optional",
+                                "types": [
+                                  "com.fluidframework.leaf.handle"
+                                ]
+                              }
+                            },
+                            "old": {
+                              "version": "1.0.0",
+                              "nodeSchema": [],
+                              "rootFieldSchema": {
+                                "kind": "Forbidden",
+                                "types": []
                               }
                             }
-                          },
-                          {
-                            "data": {
-                              "maxId": 0,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Optional",
-                                  "change": {
-                                    "d": {
-                                      "localId": 0
-                                    }
+                          }
+                        },
+                        {
+                          "data": {
+                            "maxId": 0,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "d": {
+                                    "localId": 0
                                   }
                                 }
-                              ]
-                            }
+                              }
+                            ]
                           }
-                        ]
-                      },
+                        }
+                      ],
                       "revision": "beefbeef-beef-4000-8000-000000000004",
                       "sequenceNumber": -9007199254740990,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "maxId": 1,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Optional",
-                                  "change": {
-                                    "m": [
-                                      [
-                                        {
-                                          "localId": 1
-                                        },
-                                        0,
-                                        true
-                                      ]
-                                    ],
-                                    "d": {
-                                      "localId": 0
-                                    }
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "m": [
+                                    [
+                                      {
+                                        "localId": 1
+                                      },
+                                      0,
+                                      true
+                                    ]
+                                  ],
+                                  "d": {
+                                    "localId": 0
                                   }
                                 }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  1,
+                                  0
+                                ]
                               ],
-                              "builds": {
-                                "builds": [
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1,
+                                      "fields": []
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
                                   [
                                     1,
-                                    0
-                                  ]
-                                ],
-                                "trees": {
-                                  "version": 1,
-                                  "identifiers": [],
-                                  "shapes": [
-                                    {
-                                      "c": {
-                                        "extraFields": 1,
-                                        "fields": []
-                                      }
-                                    },
-                                    {
-                                      "a": 0
-                                    }
-                                  ],
-                                  "data": [
                                     [
-                                      1,
-                                      [
-                                        "com.fluidframework.leaf.handle",
-                                        true,
-                                        {
-                                          "type": "__fluid_handle__",
-                                          "url": "/test/test"
-                                        },
-                                        []
-                                      ]
+                                      "com.fluidframework.leaf.handle",
+                                      true,
+                                      {
+                                        "type": "__fluid_handle__",
+                                        "url": "/test/test"
+                                      },
+                                      []
                                     ]
                                   ]
-                                }
+                                ]
                               }
                             }
                           }
-                        ]
-                      },
+                        }
+                      ],
                       "revision": "beefbeef-beef-4000-8000-000000000005",
                       "sequenceNumber": -9007199254740989,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"

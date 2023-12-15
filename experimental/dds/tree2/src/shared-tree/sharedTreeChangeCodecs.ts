@@ -58,11 +58,11 @@ export function makeSharedTreeChangeCodec(
 					});
 				}
 			}
-			return { changes };
+			return changes;
 		},
 		decode: (encodedChange) => {
 			const changes: Mutable<SharedTreeChange["changes"]> = [];
-			for (const subChange of encodedChange.changes) {
+			for (const subChange of encodedChange) {
 				changes.push(decoderLibrary.dispatch(subChange));
 			}
 			return { changes };

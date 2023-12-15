@@ -13,8 +13,6 @@ export const EncodedSharedTreeInnerChange = Type.Object({
 
 export type EncodedSharedTreeInnerChange = Static<typeof EncodedSharedTreeInnerChange>;
 
-export const EncodedSharedTreeChange = Type.Object({
-	changes: Type.Array(EncodedSharedTreeInnerChange),
-});
+export const EncodedSharedTreeChange = Type.Array(EncodedSharedTreeInnerChange);
 
 export type EncodedSharedTreeChange = Static<typeof EncodedSharedTreeChange>;

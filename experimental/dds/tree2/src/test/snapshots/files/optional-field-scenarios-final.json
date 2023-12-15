@@ -16,19 +16,194 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "maxId": 1,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "ModularEditBuilder.Generic",
-                                  "change": [
-                                    {
-                                      "index": 0,
-                                      "nodeChange": {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  {
+                                    "index": 0,
+                                    "nodeChange": {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "root 1 child",
+                                          "fieldKind": "Optional",
+                                          "change": {
+                                            "m": [
+                                              [
+                                                {
+                                                  "localId": 1
+                                                },
+                                                0,
+                                                true
+                                              ]
+                                            ],
+                                            "d": {
+                                              "localId": 0
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  1,
+                                  0
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1,
+                                      "fields": []
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      40,
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": "beefbeef-beef-4000-8000-000000000007",
+                      "sequenceNumber": 3,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000002"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 3,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "m": [
+                                    [
+                                      {
+                                        "localId": 3
+                                      },
+                                      0,
+                                      true
+                                    ],
+                                    [
+                                      0,
+                                      {
+                                        "localId": 2
+                                      },
+                                      false
+                                    ]
+                                  ]
+                                }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  3,
+                                  0
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1,
+                                      "fields": []
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "optional-field.TestNode",
+                                      false,
+                                      [
+                                        "root 2 child",
+                                        [
+                                          "com.fluidframework.leaf.number",
+                                          true,
+                                          41,
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": "beefbeef-beef-4000-8000-000000000008",
+                      "sequenceNumber": 4,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000002"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 5,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "m": [
+                                    [
+                                      {
+                                        "localId": 3
+                                      },
+                                      0,
+                                      true
+                                    ],
+                                    [
+                                      0,
+                                      {
+                                        "localId": 2
+                                      },
+                                      false
+                                    ]
+                                  ],
+                                  "c": [
+                                    [
+                                      {
+                                        "localId": 2,
+                                        "revision": "beefbeef-beef-4000-8000-000000000008"
+                                      },
+                                      {
                                         "fieldChanges": [
                                           {
                                             "fieldKey": "root 1 child",
@@ -41,381 +216,198 @@
                                                   },
                                                   0,
                                                   true
+                                                ],
+                                                [
+                                                  0,
+                                                  {
+                                                    "localId": 0
+                                                  },
+                                                  false
+                                                ]
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    [
+                                      {
+                                        "localId": 3
+                                      },
+                                      {
+                                        "fieldChanges": [
+                                          {
+                                            "fieldKey": "root 3 child",
+                                            "fieldKind": "Optional",
+                                            "change": {
+                                              "m": [
+                                                [
+                                                  {
+                                                    "localId": 5
+                                                  },
+                                                  0,
+                                                  true
                                                 ]
                                               ],
                                               "d": {
-                                                "localId": 0
+                                                "localId": 4
                                               }
                                             }
                                           }
                                         ]
                                       }
-                                    }
+                                    ]
                                   ]
                                 }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  1,
+                                  0
+                                ],
+                                [
+                                  3,
+                                  1
+                                ],
+                                [
+                                  5,
+                                  2
+                                ]
                               ],
-                              "builds": {
-                                "builds": [
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1,
+                                      "fields": []
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
                                   [
                                     1,
-                                    0
-                                  ]
-                                ],
-                                "trees": {
-                                  "version": 1,
-                                  "identifiers": [],
-                                  "shapes": [
-                                    {
-                                      "c": {
-                                        "extraFields": 1,
-                                        "fields": []
-                                      }
-                                    },
-                                    {
-                                      "a": 0
-                                    }
-                                  ],
-                                  "data": [
                                     [
-                                      1,
-                                      [
-                                        "com.fluidframework.leaf.number",
-                                        true,
-                                        40,
-                                        []
-                                      ]
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      42,
+                                      []
                                     ]
-                                  ]
-                                }
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      "revision": "beefbeef-beef-4000-8000-000000000007",
-                      "sequenceNumber": 3,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000002"
-                    },
-                    {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "maxId": 3,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Optional",
-                                  "change": {
-                                    "m": [
-                                      [
-                                        {
-                                          "localId": 3
-                                        },
-                                        0,
-                                        true
-                                      ],
-                                      [
-                                        0,
-                                        {
-                                          "localId": 2
-                                        },
-                                        false
-                                      ]
-                                    ]
-                                  }
-                                }
-                              ],
-                              "builds": {
-                                "builds": [
-                                  [
-                                    3,
-                                    0
-                                  ]
-                                ],
-                                "trees": {
-                                  "version": 1,
-                                  "identifiers": [],
-                                  "shapes": [
-                                    {
-                                      "c": {
-                                        "extraFields": 1,
-                                        "fields": []
-                                      }
-                                    },
-                                    {
-                                      "a": 0
-                                    }
                                   ],
-                                  "data": [
-                                    [
-                                      1,
-                                      [
-                                        "optional-field.TestNode",
-                                        false,
-                                        [
-                                          "root 2 child",
-                                          [
-                                            "com.fluidframework.leaf.number",
-                                            true,
-                                            41,
-                                            []
-                                          ]
-                                        ]
-                                      ]
-                                    ]
-                                  ]
-                                }
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      "revision": "beefbeef-beef-4000-8000-000000000008",
-                      "sequenceNumber": 4,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000002"
-                    },
-                    {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "maxId": 5,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Optional",
-                                  "change": {
-                                    "m": [
-                                      [
-                                        {
-                                          "localId": 3
-                                        },
-                                        0,
-                                        true
-                                      ],
-                                      [
-                                        0,
-                                        {
-                                          "localId": 2
-                                        },
-                                        false
-                                      ]
-                                    ],
-                                    "c": [
-                                      [
-                                        {
-                                          "localId": 2,
-                                          "revision": "beefbeef-beef-4000-8000-000000000008"
-                                        },
-                                        {
-                                          "fieldChanges": [
-                                            {
-                                              "fieldKey": "root 1 child",
-                                              "fieldKind": "Optional",
-                                              "change": {
-                                                "m": [
-                                                  [
-                                                    {
-                                                      "localId": 1
-                                                    },
-                                                    0,
-                                                    true
-                                                  ],
-                                                  [
-                                                    0,
-                                                    {
-                                                      "localId": 0
-                                                    },
-                                                    false
-                                                  ]
-                                                ]
-                                              }
-                                            }
-                                          ]
-                                        }
-                                      ],
-                                      [
-                                        {
-                                          "localId": 3
-                                        },
-                                        {
-                                          "fieldChanges": [
-                                            {
-                                              "fieldKey": "root 3 child",
-                                              "fieldKind": "Optional",
-                                              "change": {
-                                                "m": [
-                                                  [
-                                                    {
-                                                      "localId": 5
-                                                    },
-                                                    0,
-                                                    true
-                                                  ]
-                                                ],
-                                                "d": {
-                                                  "localId": 4
-                                                }
-                                              }
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    ]
-                                  }
-                                }
-                              ],
-                              "builds": {
-                                "builds": [
                                   [
                                     1,
-                                    0
+                                    [
+                                      "optional-field.TestNode",
+                                      false,
+                                      []
+                                    ]
                                   ],
                                   [
-                                    3,
-                                    1
-                                  ],
-                                  [
-                                    5,
-                                    2
-                                  ]
-                                ],
-                                "trees": {
-                                  "version": 1,
-                                  "identifiers": [],
-                                  "shapes": [
-                                    {
-                                      "c": {
-                                        "extraFields": 1,
-                                        "fields": []
-                                      }
-                                    },
-                                    {
-                                      "a": 0
-                                    }
-                                  ],
-                                  "data": [
+                                    1,
                                     [
-                                      1,
-                                      [
-                                        "com.fluidframework.leaf.number",
-                                        true,
-                                        42,
-                                        []
-                                      ]
-                                    ],
-                                    [
-                                      1,
-                                      [
-                                        "optional-field.TestNode",
-                                        false,
-                                        []
-                                      ]
-                                    ],
-                                    [
-                                      1,
-                                      [
-                                        "com.fluidframework.leaf.number",
-                                        true,
-                                        43,
-                                        []
-                                      ]
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      43,
+                                      []
                                     ]
                                   ]
-                                }
+                                ]
                               }
                             }
                           }
-                        ]
-                      },
+                        }
+                      ],
                       "revision": "beefbeef-beef-4000-8000-00000000000c",
                       "sequenceNumber": 5,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "maxId": 5,
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Optional",
-                                  "change": {
-                                    "c": [
-                                      [
-                                        0,
-                                        {
-                                          "fieldChanges": [
-                                            {
-                                              "fieldKey": "root 3 child",
-                                              "fieldKind": "Optional",
-                                              "change": {
-                                                "m": [
-                                                  [
-                                                    {
-                                                      "localId": 1
-                                                    },
-                                                    0,
-                                                    true
-                                                  ],
-                                                  [
-                                                    0,
-                                                    {
-                                                      "localId": 0
-                                                    },
-                                                    false
-                                                  ]
-                                                ]
-                                              }
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    ]
-                                  }
-                                }
-                              ],
-                              "builds": {
-                                "builds": [
-                                  [
-                                    1,
-                                    0
-                                  ]
-                                ],
-                                "trees": {
-                                  "version": 1,
-                                  "identifiers": [],
-                                  "shapes": [
-                                    {
-                                      "c": {
-                                        "extraFields": 1,
-                                        "fields": []
-                                      }
-                                    },
-                                    {
-                                      "a": 0
-                                    }
-                                  ],
-                                  "data": [
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 5,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "c": [
                                     [
-                                      1,
-                                      [
-                                        "com.fluidframework.leaf.number",
-                                        true,
-                                        44,
-                                        []
-                                      ]
+                                      0,
+                                      {
+                                        "fieldChanges": [
+                                          {
+                                            "fieldKey": "root 3 child",
+                                            "fieldKind": "Optional",
+                                            "change": {
+                                              "m": [
+                                                [
+                                                  {
+                                                    "localId": 1
+                                                  },
+                                                  0,
+                                                  true
+                                                ],
+                                                [
+                                                  0,
+                                                  {
+                                                    "localId": 0
+                                                  },
+                                                  false
+                                                ]
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
                                     ]
                                   ]
                                 }
                               }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  1,
+                                  0
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1,
+                                      "fields": []
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "com.fluidframework.leaf.number",
+                                      true,
+                                      44,
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              }
                             }
                           }
-                        ]
-                      },
+                        }
+                      ],
                       "revision": "beefbeef-beef-4000-8000-00000000000d",
                       "sequenceNumber": 6,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"

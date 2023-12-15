@@ -16,117 +16,111 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
-                                    {
-                                      "count": 2
-                                    },
-                                    {
-                                      "count": 1,
-                                      "effect": {
-                                        "delete": {
-                                          "id": 0
-                                        }
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 2
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
                                       }
                                     }
-                                  ]
-                                }
-                              ]
-                            }
+                                  }
+                                ]
+                              }
+                            ]
                           }
-                        ]
-                      },
+                        }
+                      ],
                       "revision": "beefbeef-beef-4000-8000-000000000022",
                       "sequenceNumber": 2,
                       "sessionId": "beefbeef-beef-4000-8000-00000000001b"
                     },
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
-                                    {
-                                      "count": 2
-                                    },
-                                    {
-                                      "count": 1,
-                                      "effect": {
-                                        "delete": {
-                                          "id": 0
-                                        }
-                                      },
-                                      "cellId": {
-                                        "localId": 0,
-                                        "adjacentCells": [
-                                          [
-                                            0,
-                                            1
-                                          ]
-                                        ],
-                                        "revision": "beefbeef-beef-4000-8000-000000000022"
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 2
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
                                       }
+                                    },
+                                    "cellId": {
+                                      "localId": 0,
+                                      "adjacentCells": [
+                                        [
+                                          0,
+                                          1
+                                        ]
+                                      ],
+                                      "revision": "beefbeef-beef-4000-8000-000000000022"
                                     }
-                                  ]
-                                }
-                              ]
-                            }
+                                  }
+                                ]
+                              }
+                            ]
                           }
-                        ]
-                      },
+                        }
+                      ],
                       "revision": "beefbeef-beef-4000-8000-000000000023",
                       "sequenceNumber": 3,
                       "sessionId": "beefbeef-beef-4000-8000-00000000001c"
                     },
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "data": {
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
-                                    {
-                                      "count": 2
-                                    },
-                                    {
-                                      "count": 1,
-                                      "effect": {
-                                        "delete": {
-                                          "id": 0
-                                        }
-                                      },
-                                      "cellId": {
-                                        "localId": 0,
-                                        "adjacentCells": [
-                                          [
-                                            0,
-                                            1
-                                          ]
-                                        ],
-                                        "revision": "beefbeef-beef-4000-8000-000000000023"
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 2
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
                                       }
+                                    },
+                                    "cellId": {
+                                      "localId": 0,
+                                      "adjacentCells": [
+                                        [
+                                          0,
+                                          1
+                                        ]
+                                      ],
+                                      "revision": "beefbeef-beef-4000-8000-000000000023"
                                     }
-                                  ]
-                                }
-                              ]
-                            }
+                                  }
+                                ]
+                              }
+                            ]
                           }
-                        ]
-                      },
+                        }
+                      ],
                       "revision": "beefbeef-beef-4000-8000-000000000024",
                       "sequenceNumber": 4,
                       "sessionId": "beefbeef-beef-4000-8000-00000000001d"
@@ -139,33 +133,31 @@
                         "base": "00000000-0000-4000-8000-000000000000",
                         "commits": [
                           {
-                            "change": {
-                              "changes": [
-                                {
-                                  "data": {
-                                    "changes": [
-                                      {
-                                        "fieldKey": "rootFieldKey",
-                                        "fieldKind": "Sequence",
-                                        "change": [
-                                          {
-                                            "count": 2
-                                          },
-                                          {
-                                            "count": 1,
-                                            "effect": {
-                                              "delete": {
-                                                "id": 0
-                                              }
+                            "change": [
+                              {
+                                "data": {
+                                  "changes": [
+                                    {
+                                      "fieldKey": "rootFieldKey",
+                                      "fieldKind": "Sequence",
+                                      "change": [
+                                        {
+                                          "count": 2
+                                        },
+                                        {
+                                          "count": 1,
+                                          "effect": {
+                                            "delete": {
+                                              "id": 0
                                             }
                                           }
-                                        ]
-                                      }
-                                    ]
-                                  }
+                                        }
+                                      ]
+                                    }
+                                  ]
                                 }
-                              ]
-                            },
+                              }
+                            ],
                             "revision": "beefbeef-beef-4000-8000-000000000023",
                             "sessionId": "beefbeef-beef-4000-8000-00000000001c"
                           }
@@ -178,33 +170,31 @@
                         "base": "00000000-0000-4000-8000-000000000000",
                         "commits": [
                           {
-                            "change": {
-                              "changes": [
-                                {
-                                  "data": {
-                                    "changes": [
-                                      {
-                                        "fieldKey": "rootFieldKey",
-                                        "fieldKind": "Sequence",
-                                        "change": [
-                                          {
-                                            "count": 2
-                                          },
-                                          {
-                                            "count": 1,
-                                            "effect": {
-                                              "delete": {
-                                                "id": 0
-                                              }
+                            "change": [
+                              {
+                                "data": {
+                                  "changes": [
+                                    {
+                                      "fieldKey": "rootFieldKey",
+                                      "fieldKind": "Sequence",
+                                      "change": [
+                                        {
+                                          "count": 2
+                                        },
+                                        {
+                                          "count": 1,
+                                          "effect": {
+                                            "delete": {
+                                              "id": 0
                                             }
                                           }
-                                        ]
-                                      }
-                                    ]
-                                  }
+                                        }
+                                      ]
+                                    }
+                                  ]
                                 }
-                              ]
-                            },
+                              }
+                            ],
                             "revision": "beefbeef-beef-4000-8000-000000000024",
                             "sessionId": "beefbeef-beef-4000-8000-00000000001d"
                           }
