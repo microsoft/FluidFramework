@@ -9,7 +9,7 @@ export enum CellOrderingMethod {
 }
 
 export interface SequenceConfig {
-	cellOrdering: CellOrderingMethod;
+	readonly cellOrdering: CellOrderingMethod;
 }
 
 export const sequenceConfig: SequenceConfig = {
