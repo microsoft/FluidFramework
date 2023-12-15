@@ -26,7 +26,7 @@ import { IFluidCodeDetails } from "./fluidPackage";
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
  * service.  The transition from detached to attached state is a one-way transition.
- * @alpha
+ * @public
  */
 export enum AttachState {
 	/**

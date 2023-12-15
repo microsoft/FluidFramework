@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
-import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IRequest,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
 	IFluidCodeDetails,
@@ -44,11 +50,7 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import {
-	ConfigTypes,
-	DataCorruptionError,
-	IConfigProviderBase,
-} from "@fluidframework/telemetry-utils";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {

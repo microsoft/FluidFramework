@@ -120,7 +120,7 @@ function invertMark<TNodeChange>(
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
-							detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
+							redetachId: getInputCellId(mark, revision, revisionMetadata),
 					  };
 			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
 		}
@@ -133,7 +133,7 @@ function invertMark<TNodeChange>(
 			};
 
 			if (isReattach(mark)) {
-				deleteMark.detachIdOverride = mark.cellId;
+				deleteMark.redetachId = mark.cellId;
 			}
 
 			const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, invertChild));
@@ -182,7 +182,7 @@ function invertMark<TNodeChange>(
 					detach: {
 						type: "Delete",
 						id: mark.id,
-						detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
+						redetachId: getInputCellId(mark, revision, revisionMetadata),
 					},
 				};
 			}
@@ -200,7 +200,7 @@ function invertMark<TNodeChange>(
 			}
 
 			if (isReattach(mark)) {
-				invertedMark.detachIdOverride = mark.cellId;
+				invertedMark.redetachId = mark.cellId;
 			}
 
 			return applyMovedChanges(invertedMark, revision, crossFieldManager);
@@ -300,8 +300,6 @@ function invertMark<TNodeChange>(
 
 			return inverses;
 		}
-		case "Placeholder":
-			fail("Should not invert placeholder marks");
 		default:
 			unreachableCase(type);
 	}

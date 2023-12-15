@@ -246,7 +246,7 @@ use_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
 declare function get_old_TypeAliasDeclaration_Jsonable():
     TypeOnly<old.Jsonable>;
 declare function use_current_TypeAliasDeclaration_Jsonable(
-    use: TypeOnly<current.Jsonable<any,any>>): void;
+    use: TypeOnly<current.Jsonable<any>>): void;
 use_current_TypeAliasDeclaration_Jsonable(
     get_old_TypeAliasDeclaration_Jsonable());
 
@@ -256,7 +256,7 @@ use_current_TypeAliasDeclaration_Jsonable(
 * "TypeAliasDeclaration_Jsonable": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Jsonable():
-    TypeOnly<current.Jsonable<any,any>>;
+    TypeOnly<current.Jsonable<any>>;
 declare function use_old_TypeAliasDeclaration_Jsonable(
     use: TypeOnly<old.Jsonable>): void;
 use_old_TypeAliasDeclaration_Jsonable(

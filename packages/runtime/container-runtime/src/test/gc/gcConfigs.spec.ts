@@ -6,14 +6,13 @@
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IErrorBase } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IErrorBase } from "@fluidframework/core-interfaces";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	MonitoringContext,
 	mixinMonitoringContext,
 	createChildLogger,
@@ -143,7 +142,6 @@ describe("Garbage Collection configurations", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
-			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
 		});
 	}
