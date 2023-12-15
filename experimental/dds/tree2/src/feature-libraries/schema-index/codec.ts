@@ -5,23 +5,20 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	TreeFieldStoredSchema,
 	TreeStoredSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
-	FieldKey,
-	ValueSchema,
+	schemaFormat,
 } from "../../core";
-import { brand, fail, invertMap, Named } from "../../util";
+import { brand, compareNamed, fail } from "../../util";
 import { ICodecOptions, IJsonCodec } from "../../codec";
 import {
-	FieldSchemaFormat,
-	Format,
-	PersistedValueSchema,
-	TreeNodeSchemaFormat,
-	Versioned,
-	version,
-} from "./format";
+	decodeField,
+	encodeField,
+	storedSchemaDecodeDispatcher,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../core/schema-stored/schema";
+import { Format, TreeNodeSchemaFormat, Versioned } from "./format";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
 	const treeNodeSchema: TreeNodeSchemaFormat[] = [];
@@ -31,20 +28,10 @@ export function encodeRepo(repo: TreeStoredSchema): Format {
 	}
 	treeNodeSchema.sort(compareNamed);
 	return {
-		version,
+		version: schemaFormat.version,
 		nodeSchema: treeNodeSchema,
 		rootFieldSchema,
 	};
-}
-
-function compareNamed(a: Named<string>, b: Named<string>) {
-	if (a.name < b.name) {
-		return -1;
-	}
-	if (a.name > b.name) {
-		return 1;
-	}
-	return 0;
 }
 
 function encodeTree(
@@ -53,50 +40,12 @@ function encodeTree(
 ): TreeNodeSchemaFormat {
 	const out: TreeNodeSchemaFormat = {
 		name,
-		mapFields: schema.mapFields === undefined ? undefined : encodeField(schema.mapFields),
-		objectNodeFields: [...schema.objectNodeFields]
-			.map(([k, v]) => encodeNamedField(k, v))
-			.sort(compareNamed),
-		...(schema.leafValue === undefined
-			? {}
-			: { leafValue: encodeValueSchema(schema.leafValue) }),
+		data: schema.encode(),
 	};
 	return out;
 }
-
-const valueSchemaEncode = new Map([
-	[ValueSchema.Number, PersistedValueSchema.Number],
-	[ValueSchema.String, PersistedValueSchema.String],
-	[ValueSchema.Boolean, PersistedValueSchema.Boolean],
-	[ValueSchema.FluidHandle, PersistedValueSchema.FluidHandle],
-	[ValueSchema.Null, PersistedValueSchema.Null],
-]);
-
-const valueSchemaDecode = invertMap(valueSchemaEncode);
-
-function encodeValueSchema(inMemory: ValueSchema): PersistedValueSchema {
-	return valueSchemaEncode.get(inMemory) ?? fail("missing PersistedValueSchema");
-}
-
-function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
-	return valueSchemaDecode.get(inMemory) ?? fail("missing ValueSchema");
-}
-
-function encodeField(schema: TreeFieldStoredSchema): FieldSchemaFormat {
-	const out: FieldSchemaFormat = {
-		kind: schema.kind.identifier,
-	};
-	if (schema.types !== undefined) {
-		out.types = [...schema.types];
-	}
-	return out;
-}
-
-function encodeNamedField<T>(name: T, schema: TreeFieldStoredSchema): FieldSchemaFormat & Named<T> {
-	return {
-		...encodeField(schema),
-		name,
-	};
+function decodeTree(schema: TreeNodeSchemaFormat): TreeNodeStoredSchema {
+	return storedSchemaDecodeDispatcher.dispatch(schema.data);
 }
 
 function decode(f: Format): TreeStoredSchema {
@@ -108,29 +57,6 @@ function decode(f: Format): TreeStoredSchema {
 		rootFieldSchema: decodeField(f.rootFieldSchema),
 		nodeSchema,
 	};
-}
-
-function decodeField(schema: FieldSchemaFormat): TreeFieldStoredSchema {
-	const out: TreeFieldStoredSchema = {
-		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
-		kind: { identifier: schema.kind },
-		types: schema.types === undefined ? undefined : new Set(schema.types),
-	};
-	return out;
-}
-
-function decodeTree(schema: TreeNodeSchemaFormat): TreeNodeStoredSchema {
-	const out: TreeNodeStoredSchema = {
-		mapFields: schema.mapFields === undefined ? undefined : decodeField(schema.mapFields),
-		objectNodeFields: new Map(
-			schema.objectNodeFields.map((field): [FieldKey, TreeFieldStoredSchema] => [
-				brand(field.name),
-				decodeField(field),
-			]),
-		),
-		leafValue: schema.leafValue === undefined ? undefined : decodeValueSchema(schema.leafValue),
-	};
-	return out;
 }
 
 /**
@@ -150,6 +76,13 @@ export function makeSchemaCodec({
 				versionedValidator.check(encoded),
 				0x5c6 /* Encoded schema should be versioned */,
 			);
+
+			const extraValidator = validator.compile(schemaFormat.FieldSchemaFormat);
+			assert(
+				extraValidator.check(encoded.rootFieldSchema),
+				"rootFieldSchema schema should validate",
+			);
+
 			assert(formatValidator.check(encoded), 0x5c7 /* Encoded schema should validate */);
 			return encoded;
 		},
@@ -158,7 +91,7 @@ export function makeSchemaCodec({
 				fail("invalid serialized schema: did not have a version");
 			}
 			// When more versions exist, we can switch on the version here.
-			if (data.version !== version) {
+			if (data.version !== schemaFormat.version) {
 				fail("Unexpected version for serialized schema");
 			}
 			if (!formatValidator.check(data)) {

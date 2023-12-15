@@ -471,6 +471,20 @@ export interface Named<TName> {
 }
 
 /**
+ * Order {@link Named} objects by their name.
+ * @alpha
+ */
+export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.

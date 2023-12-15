@@ -80,6 +80,7 @@ export {
 	invertMap,
 	oneFromSet,
 	Named,
+	compareNamed,
 	disposeSymbol,
 	IDisposable,
 	capitalize,

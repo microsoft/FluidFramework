@@ -117,15 +117,12 @@ export {
 
 export {
 	FieldKey,
-	FieldKeySchema,
 	TreeNodeSchemaIdentifier,
-	TreeSchemaIdentifierSchema,
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
-	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 	TreeStoredSchema,
@@ -135,6 +132,10 @@ export {
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
+	schemaFormat,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";

@@ -9,11 +9,11 @@ import { compareStrings } from "../../util";
 import {
 	StoredSchemaCollection,
 	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "./schema";
+import { TreeNodeSchemaIdentifier } from "./format";
 
 /**
  * Events for {@link StoredSchemaRepository}.
@@ -108,7 +108,7 @@ export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
 			this.rootFieldSchemaData = data.rootFieldSchema;
 			this.nodeSchemaData = data.nodeSchemaData.clone();
 		} else {
-			this.rootFieldSchemaData = cloneFieldSchemaData(data.rootFieldSchema);
+			this.rootFieldSchemaData = data.rootFieldSchema;
 			this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
 		}
 	}
@@ -121,26 +121,7 @@ export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 function cloneNodeSchemaData(
 	nodeSchema: StoredSchemaCollection["nodeSchema"],
 ): BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
-	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [];
-	for (const [name, schema] of nodeSchema.entries()) {
-		entries.push([
-			name,
-			{
-				mapFields:
-					schema.mapFields === undefined
-						? undefined
-						: cloneFieldSchemaData(schema.mapFields),
-				objectNodeFields: new Map(schema.objectNodeFields),
-				leafValue: schema.leafValue,
-			},
-		]);
-	}
+	// Schema objects are immutable (unlike stored schema repositories), so this shallow copy is fine.
+	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [...nodeSchema.entries()];
 	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
-}
-
-function cloneFieldSchemaData(fieldSchema: TreeFieldStoredSchema): TreeFieldStoredSchema {
-	return {
-		kind: fieldSchema.kind,
-		types: fieldSchema.types === undefined ? undefined : new Set(fieldSchema.types),
-	};
 }

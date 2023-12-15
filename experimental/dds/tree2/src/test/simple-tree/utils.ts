@@ -25,6 +25,7 @@ import { TreeFactory } from "../../treeFactory";
 import { typeboxValidator } from "../../external-utilities";
 import { ForestType } from "../../shared-tree";
 import { flexTreeWithContent } from "../utils";
+import { ajvValidator } from "../codec/ajvValidator";
 
 /**
  * Helper for making small test schemas.
@@ -84,7 +85,8 @@ export function getRoot<TSchema extends ImplicitFieldSchema>(
 	}
 	const config = new TreeConfiguration(schema as TSchema, initialTree);
 	const factory = new TreeFactory({
-		jsonValidator: typeboxValidator,
+		// ajvValidator provides better error information.
+		jsonValidator: ajvValidator,
 		forest: ForestType.Reference,
 	});
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");

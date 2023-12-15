@@ -7,18 +7,15 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeSchemaIdentifierSchema as TreeSchemaIdentifierSchema,
-	FieldKey,
-	FieldKeySchema,
 	TreeTypeSet,
-	FieldKindIdentifier,
-	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeStoredSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
 } from "./schema";
 export {
 	StoredSchemaRepository,
@@ -26,3 +23,8 @@ export {
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "./storedSchemaRepository";
+
+export { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format";
+
+import * as schemaFormat from "./format";
+export { schemaFormat };

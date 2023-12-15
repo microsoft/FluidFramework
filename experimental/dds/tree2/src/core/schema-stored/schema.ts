@@ -3,47 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Brand, brand, brandedStringType } from "../../util";
-
-/**
- * Identifier for a TreeNode schema.
- * Also known as "Definition"
- *
- * Stable identifier, used when persisting data.
- * @alpha
- */
-export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
-	TName,
-	"tree.TreeNodeSchemaIdentifier"
->;
-
-/**
- * TypeBox Schema for encoding {@link TreeNodeSchemaIdentifiers} in persisted data.
- */
-export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaIdentifier>();
-
-/**
- * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
- *
- * Stable identifier, used when persisting data.
- * @alpha
- */
-export type FieldKey = Brand<string, "tree.FieldKey">;
-
-/**
- * TypeBox Schema for encoding {@link FieldKey} in persisted data.
- */
-export const FieldKeySchema = brandedStringType<FieldKey>();
-
-/**
- * Identifier for a FieldKind.
- * Refers to an exact stable policy (ex: specific version of a policy),
- * for how to handle (ex: edit and merge edits to) fields marked with this kind.
- * Persisted in documents as part of stored schema.
- * @alpha
- */
-export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
-export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
+import { DiscriminatedUnionDispatcher } from "../../codec";
+import { MakeNominal, Named, brand, compareNamed, fail, invertMap } from "../../util";
+import {
+	FieldKey,
+	FieldKindIdentifier,
+	FieldSchemaFormat,
+	NamedFieldSchemaFormat,
+	PersistedValueSchema,
+	TreeNodeSchemaDataFormat,
+	TreeNodeSchemaIdentifier,
+} from "./format";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
@@ -102,6 +72,8 @@ export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 }
 
 /**
+ * Schema for a field.
+ * Object implementing this interface should never be modified.
  * @alpha
  */
 export interface TreeFieldStoredSchema {
@@ -139,43 +111,145 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 /**
  * @alpha
  */
-export interface TreeNodeStoredSchema {
+export abstract class TreeNodeStoredSchema {
+	protected _typeCheck!: MakeNominal;
+
+	public abstract encode(): TreeNodeSchemaDataFormat;
+}
+
+/**
+ * @alpha
+ */
+export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
+	 * @param objectNodeFields -
 	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
-	 *
 	 * This refers to the TreeFieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+	public constructor(
+		public readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>,
+	) {
+		super();
+	}
 
+	public override encode(): TreeNodeSchemaDataFormat {
+		return {
+			object: [...this.objectNodeFields]
+				.map(([k, v]) => encodeNamedField(k, v))
+				.sort(compareNamed),
+		};
+	}
+}
+
+/**
+ * @alpha
+ */
+export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * Constraint for fields not mentioned in `objectNodeFields`.
-	 * If undefined, all such fields must be empty.
-	 *
+	 * @param mapFields -
 	 * Allows using using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
-	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
-	readonly mapFields?: TreeFieldStoredSchema;
+	public constructor(public readonly mapFields: TreeFieldStoredSchema) {
+		super();
+	}
 
+	public override encode(): TreeNodeSchemaDataFormat {
+		return { map: encodeField(this.mapFields) };
+	}
+}
+
+/**
+ * @alpha
+ */
+export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
+	 * @param leafValue -
 	 * There are several approaches for how to store actual data in the tree
 	 * (special node types, special field contents, data on nodes etc.)
 	 * as well as several options about how the data should be modeled at this level
 	 * (byte sequence? javascript type? json?),
 	 * as well as options for how much of this would be exposed in the schema language
 	 * (ex: would all nodes with values be special built-ins, or could any schema add them?)
-	 *
 	 * A simple easy to do in javascript approach is taken here:
 	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
 	 * This is simply one approach that can work for modeling them in the internal schema representation.
 	 */
-	readonly leafValue?: ValueSchema;
+	public constructor(public readonly leafValue: ValueSchema) {
+		super();
+	}
+
+	public override encode(): TreeNodeSchemaDataFormat {
+		return { leaf: encodeValueSchema(this.leafValue) };
+	}
+}
+
+export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
+	TreeNodeSchemaDataFormat,
+	[],
+	TreeNodeStoredSchema
+> = new DiscriminatedUnionDispatcher({
+	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
+	object: (data: NamedFieldSchemaFormat[]) =>
+		new ObjectNodeStoredSchema(
+			new Map(
+				data.map((field): [FieldKey, TreeFieldStoredSchema] => [
+					brand(field.name),
+					decodeField(field),
+				]),
+			),
+		),
+	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeField(data)),
+});
+
+const valueSchemaEncode = new Map([
+	[ValueSchema.Number, PersistedValueSchema.Number],
+	[ValueSchema.String, PersistedValueSchema.String],
+	[ValueSchema.Boolean, PersistedValueSchema.Boolean],
+	[ValueSchema.FluidHandle, PersistedValueSchema.FluidHandle],
+	[ValueSchema.Null, PersistedValueSchema.Null],
+]);
+
+const valueSchemaDecode = invertMap(valueSchemaEncode);
+
+function encodeValueSchema(inMemory: ValueSchema): PersistedValueSchema {
+	return valueSchemaEncode.get(inMemory) ?? fail("missing PersistedValueSchema");
+}
+
+function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
+	return valueSchemaDecode.get(inMemory) ?? fail("missing ValueSchema");
+}
+
+export function encodeField(schema: TreeFieldStoredSchema): FieldSchemaFormat {
+	const out: FieldSchemaFormat = {
+		kind: schema.kind.identifier,
+	};
+	if (schema.types !== undefined) {
+		out.types = [...schema.types];
+	}
+	return out;
+}
+
+function encodeNamedField<T>(name: T, schema: TreeFieldStoredSchema): FieldSchemaFormat & Named<T> {
+	return {
+		...encodeField(schema),
+		name,
+	};
+}
+
+export function decodeField(schema: FieldSchemaFormat): TreeFieldStoredSchema {
+	const out: TreeFieldStoredSchema = {
+		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
+		kind: { identifier: schema.kind },
+		types: schema.types === undefined ? undefined : new Set(schema.types),
+	};
+	return out;
 }
 
 /**

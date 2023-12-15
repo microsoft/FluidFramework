@@ -16,9 +16,11 @@ import {
 	CursorLocationType,
 	TreeStoredSchema,
 	StoredSchemaCollection,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
 } from "../../core";
 import { FullSchemaPolicy } from "../modular-schema";
-import { fail } from "../../util";
+import { fail, getOrCreate } from "../../util";
 import { Multiplicity } from "../multiplicity";
 import { TreeChunk, tryGetChunk } from "./chunk";
 import { BasicChunk } from "./basicChunk";
@@ -229,26 +231,24 @@ export function tryShapeFromSchema(
 	type: TreeNodeSchemaIdentifier,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): ShapeInfo {
-	const cached = shapes.get(type);
-	if (cached) {
-		return cached;
-	}
-	const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
-	if (treeSchema.mapFields !== undefined) {
-		return polymorphic;
-	}
-	const fieldsArray: FieldShape[] = [];
-	for (const [key, field] of treeSchema.objectNodeFields) {
-		const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
-		if (fieldShape === undefined) {
-			return polymorphic;
+	return getOrCreate(shapes, type, () => {
+		const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
+		if (treeSchema instanceof LeafNodeStoredSchema) {
+			return new TreeShape(type, true, []);
 		}
-		fieldsArray.push(fieldShape);
-	}
-
-	const shape = new TreeShape(type, treeSchema.leafValue !== undefined, fieldsArray);
-	shapes.set(type, shape);
-	return shape;
+		if (treeSchema instanceof ObjectNodeStoredSchema) {
+			const fieldsArray: FieldShape[] = [];
+			for (const [key, field] of treeSchema.objectNodeFields) {
+				const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
+				if (fieldShape === undefined) {
+					return polymorphic;
+				}
+				fieldsArray.push(fieldShape);
+			}
+			return new TreeShape(type, false, fieldsArray);
+		}
+		return polymorphic;
+	});
 }
 
 /**
