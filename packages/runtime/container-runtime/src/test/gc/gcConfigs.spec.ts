@@ -243,7 +243,7 @@ describe("Garbage Collection configurations", () => {
 			);
 		});
 		it("tombstoneTimeoutMs set", () => {
-			gc = createGcWithPrivateMembers({ tombstoneTimeoutMs: 123 });
+			gc = createGcWithPrivateMembers({ sweepTimeoutMs: 123 });
 			assert.equal(gc.configs.tombstoneTimeoutMs, 123, "tombstoneTimeoutMs incorrect");
 		});
 		it("Metadata Roundtrip", () => {
@@ -251,7 +251,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
-				tombstoneTimeoutMs: 123,
+				sweepTimeoutMs: 123,
 				gcFeatureMatrix: { gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata, {
@@ -274,7 +274,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
-				tombstoneTimeoutMs: 123,
+				sweepTimeoutMs: 123,
 				gcFeatureMatrix: { tombstoneGeneration: 1 }, // legacy file before gcGeneration
 			};
 			gc = createGcWithPrivateMembers(inputMetadata, {
@@ -297,7 +297,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
-				tombstoneTimeoutMs: 123,
+				sweepTimeoutMs: 123,
 				gcFeatureMatrix: { gcGeneration: 1 },
 			};
 			// An app may write both Generation options to ease the transition. Only gcGeneration will be persisted
@@ -324,7 +324,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
-				tombstoneTimeoutMs: 123,
+				sweepTimeoutMs: 123,
 				gcFeatureMatrix: { gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
@@ -346,7 +346,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
-				tombstoneTimeoutMs: 123,
+				sweepTimeoutMs: 123,
 				gcFeatureMatrix: { gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
@@ -443,7 +443,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: false, // hardcoded, not used
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-				tombstoneTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: { gcGeneration: 2 },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
@@ -462,7 +462,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: false, // hardcoded, not used
 				gcFeature: nextGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-				tombstoneTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: undefined,
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
@@ -478,7 +478,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: false, // hardcoded, not used
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-				tombstoneTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: {
 					gcGeneration: 2,
 					// tombstoneGeneration will not be persisted
@@ -593,7 +593,7 @@ describe("Garbage Collection configurations", () => {
 		it("IGCMetadata.sessionExpiryTimeoutMs and IGCMetadata.tombstoneTimeoutMs", () => {
 			injectedSettings[testOverrideSweepTimeoutKey] = 1337; // Should be ignored
 			gc = createGcWithPrivateMembers(
-				{ sessionExpiryTimeoutMs: 456, tombstoneTimeoutMs: 789 } /* metadata */,
+				{ sessionExpiryTimeoutMs: 456, sweepTimeoutMs: 789 } /* metadata */,
 			);
 			assert.equal(
 				gc.configs.sessionExpiryTimeoutMs,
@@ -606,7 +606,7 @@ describe("Garbage Collection configurations", () => {
 		it("IGCMetadata.tombstoneTimeoutMs only", () => {
 			injectedSettings[testOverrideSweepTimeoutKey] = 1337; // Should be ignored
 			// This could happen if you used TestOverride.TombstoneTimeoutMs but had SessionExpiry disabled, then loaded that container.
-			gc = createGcWithPrivateMembers({ tombstoneTimeoutMs: 789 } /* metadata */);
+			gc = createGcWithPrivateMembers({ sweepTimeoutMs: 789 } /* metadata */);
 			assert.equal(
 				gc.configs.sessionExpiryTimeoutMs,
 				undefined,
@@ -672,7 +672,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: false,
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-				tombstoneTimeoutMs: expectedTombstoneTimeoutMs,
+				sweepTimeoutMs: expectedTombstoneTimeoutMs,
 				gcFeatureMatrix: undefined,
 			};
 			const outputMetadata = gc.getMetadata();
