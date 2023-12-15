@@ -40,6 +40,7 @@ import { leaf } from "../../domains";
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
+import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
@@ -169,15 +170,19 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldBExpected = [
+			const fieldBExpected = purgeUnusedCellOrderingInfo([
 				{ count: 1, changes: node2Expected },
 				// The two marks below a not essential and only exist because we're currently using tombstone
 				{ count: 1 },
 				{
 					count: 1,
-					cellId: { revision: tag1, localId: 0, adjacentCells: [{ id: 0, count: 1 }] },
+					cellId: {
+						revision: tag1,
+						localId: brand(0),
+						adjacentCells: [{ id: brand(0), count: 1 }],
+					},
 				},
-			];
+			]);
 
 			const node1Expected = {
 				fieldChanges: new Map([
@@ -185,15 +190,19 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldAExpected = [
+			const fieldAExpected = purgeUnusedCellOrderingInfo([
 				{ count: 1, changes: node1Expected },
-				// The two marks below a not essential and only exist because we're currently using tombstone
+				// The two marks below a not essential and only exist because we're currently using tombstones
 				{ count: 1 },
 				{
 					count: 1,
-					cellId: { revision: tag1, localId: 1, adjacentCells: [{ id: 1, count: 1 }] },
+					cellId: {
+						revision: tag1,
+						localId: brand(1),
+						adjacentCells: [{ id: brand(1), count: 1 }],
+					},
 				},
-			];
+			]);
 
 			const expected: ModularChangeset = {
 				fieldChanges: new Map([
