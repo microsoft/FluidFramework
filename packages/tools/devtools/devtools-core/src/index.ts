@@ -58,7 +58,7 @@ export type {
 export { VisualNodeKind } from "./data-visualization";
 export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features";
 export type { IFluidDevtools } from "./IFluidDevtools";
-export { DevtoolsLogger } from "./DevtoolsLogger";
+export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger";
 export type { FluidDevtoolsProps } from "./FluidDevtools";
 export { initializeDevtools } from "./FluidDevtools";
 export type {

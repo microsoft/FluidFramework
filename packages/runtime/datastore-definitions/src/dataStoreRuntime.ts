@@ -23,16 +23,13 @@ import {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	IInboundSignalMessage,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannel } from ".";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @alpha
+ * @public
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
@@ -43,12 +40,11 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
- * @alpha
+ * @public
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
-		IDisposable,
-		Partial<IProvideFluidDataStoreRegistry> {
+		IDisposable {
 	readonly id: string;
 
 	readonly IFluidHandleContext: IFluidHandleContext;
