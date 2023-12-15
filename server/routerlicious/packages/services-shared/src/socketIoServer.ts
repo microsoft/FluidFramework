@@ -163,21 +163,12 @@ export function create(
 		};
 	}
 
-	let pub: Redis.default | Redis.Cluster;
-	let sub: Redis.default | Redis.Cluster;
-	if (redisConfig.enableClustering) {
-		pub = new Redis.Cluster(
-			[{ port: redisConfig.port, host: redisConfig.host }],
-			clone(options),
-		);
-		sub = new Redis.Cluster(
-			[{ port: redisConfig.port, host: redisConfig.host }],
-			clone(options),
-		);
-	} else {
-		pub = new Redis.default(clone(options));
-		sub = new Redis.default(clone(options));
-	}
+	const pub: Redis.default | Redis.Cluster = redisConfig.enableClustering
+		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], clone(options))
+		: new Redis.default(clone(options));
+	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
+		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], clone(options))
+		: new Redis.default(clone(options));
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);
