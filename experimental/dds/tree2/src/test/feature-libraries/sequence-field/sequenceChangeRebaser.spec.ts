@@ -31,7 +31,7 @@ import {
 	withoutLineage,
 	rebase,
 	prune,
-	onBothConfigs,
+	describeForBothConfigs,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -130,7 +130,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 deepFreeze(testChanges);
 
 // TODO: Refactor these tests to support moves
-onBothConfigs("SequenceField - Rebaser Axioms", () => {
+describeForBothConfigs("SequenceField - Rebaser Axioms", () => {
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
 	 */
@@ -525,7 +525,7 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	}
 };
 
-onBothConfigs("SequenceField - State-based Rebaser Axioms", () => {
+describeForBothConfigs("SequenceField - State-based Rebaser Axioms", () => {
 	const allocator = idAllocatorFromMaxId();
 	const startingLength = 2;
 	const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -573,7 +573,7 @@ onBothConfigs("SequenceField - State-based Rebaser Axioms", () => {
 	);
 });
 
-onBothConfigs("SequenceField - Sandwich Rebasing", () => {
+describeForBothConfigs("SequenceField - Sandwich Rebasing", () => {
 	it("Nested inserts rebasing", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
 		const insertB = tagChange(Change.insert(1, 1), tag2);
@@ -705,7 +705,7 @@ onBothConfigs("SequenceField - Sandwich Rebasing", () => {
 	});
 });
 
-onBothConfigs("SequenceField - Sandwich composing", () => {
+describeForBothConfigs("SequenceField - Sandwich composing", () => {
 	it("insert ↷ redundant delete", () => {
 		const insertA = tagChange(
 			[
@@ -766,7 +766,7 @@ onBothConfigs("SequenceField - Sandwich composing", () => {
 	});
 });
 
-onBothConfigs("SequenceField - Composed sandwich rebasing", () => {
+describeForBothConfigs("SequenceField - Composed sandwich rebasing", () => {
 	it("Nested inserts ↷ []", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
 		const insertB = tagChange(Change.insert(1, 1), tag2);
@@ -777,7 +777,7 @@ onBothConfigs("SequenceField - Composed sandwich rebasing", () => {
 	});
 });
 
-onBothConfigs("SequenceField - Examples", () => {
+describeForBothConfigs("SequenceField - Examples", () => {
 	it("a detach can end up with a redetachId that contains lineage", () => {
 		const revive = tagChange([Mark.revive(1, { revision: tag1, localId: brand(0) })], tag3);
 		const concurrentRemove = tagChange([Mark.delete(1, brand(42))], tag2);

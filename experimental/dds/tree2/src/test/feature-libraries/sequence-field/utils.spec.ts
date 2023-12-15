@@ -16,11 +16,11 @@ import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
 import { populatedMarks } from "./populatedMarks";
-import { onBothConfigs } from "./utils";
+import { describeForBothConfigs } from "./utils";
 
 const vestigialEndpoint: ChangeAtomId = { revision: mintRevisionTag(), localId: brand(42) };
 
-onBothConfigs("SequenceField - Utils", () => {
+describeForBothConfigs("SequenceField - Utils", () => {
 	describe("round-trip splitMark and tryMergeMarks", () => {
 		[
 			...populatedMarks,

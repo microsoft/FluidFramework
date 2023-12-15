@@ -71,15 +71,41 @@ export function skipOnTombstoneMethod(title: string, fn: () => void): void {
 	}
 }
 
-export function onBothConfigs(title: string, fn: () => void): void {
+export function describeForBothConfigs(
+	title: string,
+	fn: (orderingMethod: CellOrderingMethod) => void,
+): void {
 	describe(title, () => {
 		for (const method of [CellOrderingMethod.Lineage, CellOrderingMethod.Tombstone]) {
 			describe(`${method}-based cell ordering`, () => {
-				const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
-				mutableConfig.cellOrdering = method;
-				fn();
+				withOrderingMethod(method, fn);
 			});
 		}
+	});
+}
+
+export function withOrderingMethod(
+	method: CellOrderingMethod,
+	fn: (orderingMethod: CellOrderingMethod) => void,
+) {
+	const priorMethod = sequenceConfig.cellOrdering;
+	const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
+	mutableConfig.cellOrdering = method;
+	// console.debug(`Setting cell ordering method to ${method}`);
+	try {
+		fn(method);
+	} finally {
+		mutableConfig.cellOrdering = priorMethod;
+	}
+}
+
+export function itWithConfig(
+	orderingMethod: CellOrderingMethod,
+	title: string,
+	fn: () => void,
+): void {
+	it(title, () => {
+		withOrderingMethod(orderingMethod, fn);
 	});
 }
 
@@ -159,20 +185,23 @@ export function rebase(
 	base: TaggedChange<TestChangeset>,
 	revisionMetadata?: RebaseRevisionMetadata,
 ): TestChangeset {
-	deepFreeze(change);
-	deepFreeze(base);
+	const cleanChange = purgeUnusedCellOrderingInfo(change);
+	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
+	deepFreeze(cleanChange);
+	deepFreeze(cleanBase);
 
 	const metadata =
 		revisionMetadata ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
-			base.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(
+			defaultRevInfosFromChanges([cleanBase, makeAnonChange(cleanChange)]),
+			[cleanBase.revision],
+		);
 
 	const moveEffects = SF.newCrossFieldTable();
-	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
+	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));
 	let rebasedChange = SF.rebase(
-		change,
-		base,
+		cleanChange,
+		cleanBase,
 		TestChange.rebase,
 		idAllocator,
 		moveEffects,
@@ -181,8 +210,8 @@ export function rebase(
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
 		rebasedChange = SF.rebase(
-			change,
-			base,
+			cleanChange,
+			cleanBase,
 			TestChange.rebase,
 			idAllocator,
 			moveEffects,

@@ -17,7 +17,7 @@ import { CellId } from "../../../feature-libraries/sequence-field";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
-import { invert as invertChange, onBothConfigs } from "./utils";
+import { invert as invertChange, describeForBothConfigs } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 function invert(change: TestChangeset, tag?: RevisionTag): TestChangeset {
@@ -35,7 +35,7 @@ const inverseChildChange1 = TestChange.invert(childChange1);
 const inverseChildChange2 = TestChange.invert(childChange2);
 const inverseChildChange3 = TestChange.invert(childChange3);
 
-onBothConfigs("SequenceField - Invert", () => {
+describeForBothConfigs("SequenceField - Invert", () => {
 	it("no changes", () => {
 		const input: TestChangeset = [];
 		const expected: TestChangeset = [];

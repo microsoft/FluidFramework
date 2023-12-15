@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
@@ -17,7 +16,10 @@ import {
 	shallowCompose,
 	rebaseOverComposition,
 	rebaseOverChanges,
-	onBothConfigs,
+	describeForBothConfigs,
+	assertChangesetsEqual,
+	withoutTombstones,
+	itWithConfig,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -29,58 +31,58 @@ function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTa
 	return rebaseI(change, tagChange(base, baseRev ?? tag1));
 }
 
-onBothConfigs("SequenceField - Rebase", () => {
+describeForBothConfigs("SequenceField - Rebase", (method) => {
 	describe("no changes ↷ *", () => {
 		for (const [name, testCase] of Object.entries(cases)) {
-			it(`no changes ↷ ${name}`, () => {
+			itWithConfig(method, `no changes ↷ ${name}`, () => {
 				const actual = rebase([], testCase);
-				assert.deepEqual(actual, cases.no_change);
+				assertChangesetsEqual(withoutTombstones(actual), cases.no_change);
 			});
 		}
 	});
 
 	describe("* ↷ no changes", () => {
 		for (const [name, testCase] of Object.entries(cases)) {
-			it(`${name} ↷ no changes`, () => {
+			itWithConfig(method, `${name} ↷ no changes`, () => {
 				const actual = rebase(testCase, cases.no_change);
-				assert.deepEqual(actual, testCase);
+				assertChangesetsEqual(actual, testCase);
 			});
 		}
 	});
 
 	describe("* ↷ pin", () => {
 		for (const [name, testCase] of Object.entries(cases)) {
-			it(`${name} ↷ pin`, () => {
+			itWithConfig(method, `${name} ↷ pin`, () => {
 				const actual = rebase(testCase, cases.pin);
-				assert.deepEqual(actual, testCase);
+				assertChangesetsEqual(actual, testCase);
 			});
 		}
 	});
 
-	it("modify ↷ modify", () => {
+	itWithConfig(method, "modify ↷ modify", () => {
 		const change1 = Change.modify(0, TestChange.mint([0], 1));
 		const change2 = Change.modify(0, TestChange.mint([0], 2));
 		const expected = Change.modify(0, TestChange.mint([0, 1], 2));
 		const actual = rebase(change2, change1);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("insert ↷ modify", () => {
+	itWithConfig(method, "insert ↷ modify", () => {
 		const actual = rebase(cases.insert, cases.modify);
-		assert.deepEqual(actual, cases.insert);
+		assertChangesetsEqual(actual, cases.insert);
 	});
 
-	it("modify insert ↷ modify", () => {
+	itWithConfig(method, "modify insert ↷ modify", () => {
 		const actual = rebase(cases.modify_insert, cases.modify);
-		assert.deepEqual(actual, cases.modify_insert);
+		assertChangesetsEqual(actual, cases.modify_insert);
 	});
 
-	it("delete ↷ modify", () => {
+	itWithConfig(method, "delete ↷ modify", () => {
 		const actual = rebase(cases.delete, cases.modify);
-		assert.deepEqual(actual, cases.delete);
+		assertChangesetsEqual(actual, cases.delete);
 	});
 
-	it("revive ↷ modify", () => {
+	itWithConfig(method, "revive ↷ modify", () => {
 		const revive = [
 			Mark.revive(2, { revision: tag1, localId: brand(0) }),
 			Mark.skip(2),
@@ -96,10 +98,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			Mark.modify(TestChange.mint([0], 3)),
 		];
 		const actual = rebase(revive, mods);
-		assert.deepEqual(actual, revive);
+		assertChangesetsEqual(actual, revive);
 	});
 
-	it("modify ↷ delete", () => {
+	itWithConfig(method, "modify ↷ delete", () => {
 		const mods = [
 			Mark.modify(TestChange.mint([0], 1)),
 			{ count: 2 },
@@ -119,7 +121,7 @@ onBothConfigs("SequenceField - Rebase", () => {
 		checkDeltaEquality(actual, expected);
 	});
 
-	it("insert ↷ delete", () => {
+	itWithConfig(method, "insert ↷ delete", () => {
 		const insert = [
 			Mark.insert(1, brand(1)),
 			Mark.skip(2),
@@ -139,7 +141,7 @@ onBothConfigs("SequenceField - Rebase", () => {
 		checkDeltaEquality(actual, expected);
 	});
 
-	it("revive ↷ delete", () => {
+	itWithConfig(method, "revive ↷ delete", () => {
 		const revive = [
 			Mark.revive(1, { revision: tag1, localId: brand(0) }),
 			Mark.skip(2),
@@ -152,18 +154,20 @@ onBothConfigs("SequenceField - Rebase", () => {
 		const expected = [
 			Mark.revive(1, { revision: tag1, localId: brand(0) }),
 			Mark.skip(1),
+			Mark.tomb(tag2, brand(0)),
 			Mark.revive(1, {
 				revision: tag1,
 				localId: brand(1),
 				lineage: [{ revision: tag2, id: brand(0), count: 3, offset: 1 }],
 			}),
+			Mark.tomb(tag2, brand(1), 2),
 			Mark.skip(2),
 			Mark.revive(1, { revision: tag1, localId: brand(2) }),
 		];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("pin ↷ related delete", () => {
+	itWithConfig(method, "pin ↷ related delete", () => {
 		const pin = [Mark.pin(3, brand(0))];
 		const deletion = Change.delete(1, 1);
 		const actual = rebase(pin, deletion, tag2);
@@ -183,10 +187,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			// Later revive is unaffected
 			Mark.pin(1, brand(2)),
 		];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("delete ↷ overlapping delete", () => {
+	itWithConfig(method, "delete ↷ overlapping delete", () => {
 		// Deletes ---DEFGH--
 		const deleteA = [{ count: 3 }, Mark.delete(5, brand(0))];
 		// Deletes --CD-F-HI
@@ -206,6 +210,7 @@ onBothConfigs("SequenceField - Rebase", () => {
 		const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
 		const expected = [
 			{ count: 2 },
+			Mark.tomb(tag1, brand(0), 1),
 			Mark.onEmptyCell(
 				{ revision: tag1, localId: brand(1), adjacentCells: cellsCD },
 				Mark.delete(1, brand(0)),
@@ -220,31 +225,33 @@ onBothConfigs("SequenceField - Rebase", () => {
 				{ revision: tag1, localId: brand(3), adjacentCells: cellsHI },
 				Mark.delete(1, brand(4)),
 			),
+			Mark.tomb(tag1, brand(4), 1),
 		];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("delete ↷ earlier delete", () => {
+	itWithConfig(method, "delete ↷ earlier delete", () => {
 		// Deletes ---DE
 		const deleteA = Change.delete(3, 2);
 		// Deletes AB--
 		const deleteB = Change.delete(0, 2);
 		const actual = rebase(deleteA, deleteB);
 		// Deletes -DE
-		const expected = Change.delete(1, 2);
-		assert.deepEqual(actual, expected);
+		const expected = [Mark.tomb(tag1, brand(0), 2), Mark.skip(1), Mark.delete(2, brand(0))];
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("delete ↷ later delete", () => {
+	itWithConfig(method, "delete ↷ later delete", () => {
 		// Deletes AB--
 		const deleteA = Change.delete(0, 2);
 		// Deletes ---DE
-		const deleteB = Change.delete(2, 2);
+		const deleteB = Change.delete(3, 2);
 		const actual = rebase(deleteA, deleteB);
-		assert.deepEqual(actual, deleteA);
+		const expected = [Mark.delete(2, brand(0)), Mark.skip(1), Mark.tomb(tag1, brand(0), 2)];
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("move ↷ overlapping delete", () => {
+	itWithConfig(method, "move ↷ overlapping delete", () => {
 		// Moves ---DEFGH--
 		const move = [Mark.moveIn(5, brand(0)), { count: 3 }, Mark.moveOut(5, brand(0))];
 		// Deletes --CD-F-HI
@@ -265,6 +272,7 @@ onBothConfigs("SequenceField - Rebase", () => {
 		const expected = [
 			Mark.moveIn(5, brand(0)),
 			{ count: 2 },
+			Mark.tomb(tag1, brand(0)),
 			Mark.onEmptyCell(
 				{
 					revision: tag1,
@@ -287,11 +295,12 @@ onBothConfigs("SequenceField - Rebase", () => {
 				},
 				Mark.moveOut(1, brand(4)),
 			),
+			Mark.tomb(tag1, brand(4)),
 		];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("modify ↷ insert", () => {
+	itWithConfig(method, "modify ↷ insert", () => {
 		const mods = [
 			Mark.modify(TestChange.mint([], 1)),
 			Mark.skip(2),
@@ -304,10 +313,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			Mark.modify(TestChange.mint([], 2)),
 		];
 		const actual = rebase(mods, insert);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("delete ↷ insert", () => {
+	itWithConfig(method, "delete ↷ insert", () => {
 		// Deletes A-CD-E
 		const deletion = [
 			Mark.delete(1, brand(0)),
@@ -328,18 +337,18 @@ onBothConfigs("SequenceField - Rebase", () => {
 			Mark.delete(1, brand(3)),
 		];
 		const actual = rebase(deletion, insert);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("insert ↷ insert", () => {
+	itWithConfig(method, "insert ↷ insert", () => {
 		const insertA = [Mark.insert(1, brand(1)), Mark.skip(2), Mark.insert(1, brand(2))];
 		const insertB = Change.insert(1, 1, brand(3));
 		const actual = rebase(insertA, insertB);
 		const expected = [Mark.insert(1, brand(1)), Mark.skip(3), Mark.insert(1, brand(2))];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("revive ↷ insert", () => {
+	itWithConfig(method, "revive ↷ insert", () => {
 		const revive = [
 			Mark.revive(1, { revision: tag1, localId: brand(0) }),
 			Mark.skip(2),
@@ -347,24 +356,24 @@ onBothConfigs("SequenceField - Rebase", () => {
 		];
 		// TODO: test both tiebreak policies
 		const insert = Change.insert(2, 1);
-		const actual = rebase(revive, insert);
+		const actual = rebase(revive, insert, tag2);
 		const expected = [
 			Mark.revive(1, { revision: tag1, localId: brand(0) }),
 			Mark.skip(3),
 			Mark.revive(2, { revision: tag1, localId: brand(1) }),
 		];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("redundant revive ↷ insert", () => {
+	itWithConfig(method, "redundant revive ↷ insert", () => {
 		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(0) });
 		const insert = Change.insert(1, 1);
 		const actual = rebase(revive, insert);
 		const expected = [Mark.pin(1, brand(0)), Mark.skip(1), Mark.pin(2, brand(1))];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("modify ↷ revive", () => {
+	itWithConfig(method, "modify ↷ revive", () => {
 		const mods = [
 			Mark.modify(TestChange.mint([0], 1)),
 			Mark.skip(2),
@@ -379,10 +388,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			Mark.modify(TestChange.mint([0], 2)),
 		];
 		const actual = rebase(mods, revive);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("delete ↷ revive", () => {
+	itWithConfig(method, "delete ↷ revive", () => {
 		// Deletes A-CD-E
 		const deletion = [
 			Mark.delete(1, brand(0)),
@@ -403,84 +412,115 @@ onBothConfigs("SequenceField - Rebase", () => {
 			Mark.delete(1, brand(3)),
 		];
 		const actual = rebase(deletion, revive);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("insert ↷ revive", () => {
+	itWithConfig(method, "insert ↷ revive", () => {
 		const insert = [Mark.insert(1, brand(1)), Mark.skip(2), Mark.insert(1, brand(2))];
 		const revive = Change.revive(1, 1, { revision: tag1, localId: brand(0) });
 		const actual = rebase(insert, revive);
 		const expected = [Mark.insert(1, brand(1)), Mark.skip(3), Mark.insert(1, brand(2))];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("reviveAA ↷ reviveB => BAA", () => {
+	itWithConfig(method, "reviveAA ↷ reviveB => BAA", () => {
 		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
-		const reviveAA = Change.revive(0, 2, { revision: tag1, localId: brand(0), lineage });
-		const reviveB = Change.revive(0, 1, { revision: tag2, localId: brand(0) });
-		const expected = Change.revive(1, 2, { revision: tag1, localId: brand(0), lineage });
+		const reviveAA = [
+			Mark.tomb(tag2),
+			Mark.revive(2, { revision: tag1, localId: brand(0), lineage }),
+		];
+		const reviveB = [Mark.revive(1, { revision: tag2, localId: brand(0) })];
+		const expected = [
+			Mark.skip(1),
+			Mark.revive(2, { revision: tag1, localId: brand(0), lineage }),
+		];
 		const actual = rebase(reviveAA, reviveB);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("reviveAA ↷ reviveB => AAB", () => {
+	itWithConfig(method, "reviveAA ↷ reviveB => AAB", () => {
 		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
-		const reviveAA = Change.revive(0, 2, { revision: tag1, localId: brand(0), lineage });
-		const reviveB = Change.revive(0, 1, { revision: tag2, localId: brand(0) });
-		const expected = Change.revive(0, 2, { revision: tag1, localId: brand(0), lineage });
+		const reviveAA = [
+			Mark.revive(2, { revision: tag1, localId: brand(0), lineage }),
+			Mark.tomb(tag2),
+		];
+		const reviveB = [Mark.revive(1, { revision: tag2, localId: brand(0) })];
+		const expected = [Mark.revive(2, { revision: tag1, localId: brand(0), lineage })];
 		const actual = rebase(reviveAA, reviveB);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("reviveBB ↷ reviveA => BBA", () => {
-		const reviveBB = Change.revive(0, 2, { revision: tag2, localId: brand(0) });
-		const reviveA = Change.revive(0, 1, {
-			revision: tag1,
-			localId: brand(1),
-			lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 2 }],
-		});
-		const expected = Change.revive(0, 2, { revision: tag2, localId: brand(0) });
+	itWithConfig(method, "reviveBB ↷ reviveA => BBA", () => {
+		const reviveBB = [Mark.revive(2, { revision: tag2, localId: brand(0) })];
+		const reviveA = [
+			Mark.tomb(tag2, brand(0), 2),
+			Mark.revive(1, {
+				revision: tag1,
+				localId: brand(1),
+				lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 2 }],
+			}),
+		];
+		const expected = [Mark.revive(2, { revision: tag2, localId: brand(0) })];
 		const actual = rebase(reviveBB, reviveA);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("reviveBB ↷ reviveA => ABB", () => {
+	itWithConfig(method, "reviveBB ↷ reviveA => ABB", () => {
 		const reviveBB = Change.revive(5, 2, { revision: tag2, localId: brand(0) });
-		const reviveA = Change.revive(5, 1, {
-			revision: tag1,
-			localId: brand(0),
-			lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 0 }],
-		});
-		const expected = Change.revive(6, 2, { revision: tag2, localId: brand(0) });
+		const reviveA = [
+			Mark.skip(5),
+			Mark.revive(1, {
+				revision: tag1,
+				localId: brand(0),
+				lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 0 }],
+			}),
+			Mark.tomb(tag2, brand(0), 2),
+		];
+		const expected = [Mark.skip(6), Mark.revive(2, { revision: tag2, localId: brand(0) })];
 		const actual = rebase(reviveBB, reviveA);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("reviveA ↷ reviveBB => BAB", () => {
+	itWithConfig(method, "reviveA ↷ reviveBB => BAB", () => {
 		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(5), count: 2, offset: 1 }];
-		const reviveA = Change.revive(5, 1, { revision: tag1, localId: brand(6), lineage });
-		const reviveBB = Change.revive(5, 2, { revision: tag2, localId: brand(5) });
-		const expected = Change.revive(6, 1, { revision: tag1, localId: brand(6), lineage });
+		const reviveA = [
+			Mark.skip(5),
+			Mark.tomb(tag2, brand(0)),
+			Mark.revive(1, { revision: tag1, localId: brand(6), lineage }),
+			Mark.tomb(tag2, brand(1)),
+		];
+		const reviveBB = [Mark.skip(5), Mark.revive(2, { revision: tag2, localId: brand(5) })];
+		const expected = [
+			Mark.skip(6),
+			Mark.revive(1, { revision: tag1, localId: brand(6), lineage }),
+		];
 		const actual = rebase(reviveA, reviveBB);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("reviveAA ↷ reviveCB => CBAA", () => {
+	itWithConfig(method, "reviveAA ↷ reviveCB => CBAA", () => {
 		const lineage: SF.LineageEvent[] = [
 			{ revision: tag2, id: brand(0), count: 1, offset: 1 },
 			{ revision: tag3, id: brand(0), count: 1, offset: 1 },
 		];
-		const reviveAA = Change.revive(0, 2, { revision: tag1, localId: brand(0), lineage });
+		const reviveAA = [
+			Mark.tomb(tag3),
+			Mark.tomb(tag2),
+			Mark.revive(2, { revision: tag1, localId: brand(0), lineage }),
+		];
 		const reviveB = [
 			Mark.revive(1, { revision: tag2, localId: brand(0) }),
 			Mark.revive(1, { revision: tag3, localId: brand(0) }),
 		];
-		const expected = Change.revive(2, 2, { revision: tag1, localId: brand(0), lineage });
+		const expected = [
+			Mark.skip(2),
+			Mark.revive(2, { revision: tag1, localId: brand(0), lineage }),
+		];
 		const actual = rebase(reviveAA, reviveB);
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("revive ↷ same revive (base within curr)", () => {
+	itWithConfig(method, "revive ↷ same revive (base within curr)", () => {
 		const reviveABC = [Mark.revive(3, { revision: tag1, localId: brand(1) })];
 		const reviveB = [Mark.revive(1, { revision: tag1, localId: brand(2) })];
 		const actual = rebase(reviveABC, reviveB, tag2);
@@ -489,18 +529,18 @@ onBothConfigs("SequenceField - Rebase", () => {
 			Mark.pin(1, brand(2)),
 			Mark.revive(1, { revision: tag1, localId: brand(3) }),
 		];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("revive ↷ same revive (curr within base)", () => {
+	itWithConfig(method, "revive ↷ same revive (curr within base)", () => {
 		const reviveB = [Mark.revive(1, { revision: tag1, localId: brand(2) })];
 		const reviveABC = [Mark.revive(3, { revision: tag1, localId: brand(1) })];
 		const actual = rebase(reviveB, reviveABC, tag2);
 		const expected = [Mark.skip(1), Mark.pin(1, brand(2))];
-		assert.deepEqual(actual, expected);
+		assertChangesetsEqual(actual, expected);
 	});
 
-	it("concurrent inserts ↷ delete", () => {
+	itWithConfig(method, "concurrent inserts ↷ delete", () => {
 		const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const insertC = tagChange(Change.insert(1, 1), mintRevisionTag());
@@ -510,7 +550,7 @@ onBothConfigs("SequenceField - Rebase", () => {
 		checkDeltaEquality(insertC2.change, expected);
 	});
 
-	it("concurrent inserts ↷ connected delete", () => {
+	itWithConfig(method, "concurrent inserts ↷ connected delete", () => {
 		const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
 		const delB = tagChange(Change.delete(1, 1), mintRevisionTag());
 		const delC = tagChange(Change.delete(0, 1), mintRevisionTag());
@@ -523,7 +563,7 @@ onBothConfigs("SequenceField - Rebase", () => {
 		checkDeltaEquality(insertE2.change, expected);
 	});
 
-	it("concurrent insert and move ↷ delete", () => {
+	itWithConfig(method, "concurrent insert and move ↷ delete", () => {
 		const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const moveC = tagChange(Change.move(2, 1, 1), mintRevisionTag());
@@ -533,32 +573,32 @@ onBothConfigs("SequenceField - Rebase", () => {
 		checkDeltaEquality(moveC2.change, expected);
 	});
 
-	it("modify ↷ move", () => {
+	itWithConfig(method, "modify ↷ move", () => {
 		const inner = TestChange.mint([0], 1);
 		const modify = Change.modify(0, inner);
 		const move = Change.move(0, 1, 4);
 		const expected = Change.modify(3, inner);
 		const rebased = rebase(modify, move);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("delete ↷ move", () => {
+	itWithConfig(method, "delete ↷ move", () => {
 		const deletion = Change.delete(2, 2);
 		const move = Change.move(1, 3, 0);
 		const expected = Change.delete(1, 2);
 		const rebased = rebase(deletion, move);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("move ↷ move", () => {
+	itWithConfig(method, "move ↷ move", () => {
 		const moveA = Change.move(2, 2, 0);
 		const moveB = Change.move(2, 2, 5);
 		const expected = Change.move(0, 2, 5);
 		const rebased = rebase(moveB, moveA);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("return ↷ return (same destination, <=)", () => {
+	itWithConfig(method, "return ↷ return (same destination, <=)", () => {
 		const cellId: ChangeAtomId = {
 			revision: tag3,
 			localId: brand(0),
@@ -566,10 +606,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 		const move = [Mark.returnTo(1, brand(0), cellId), { count: 2 }, Mark.moveOut(1, brand(0))];
 		const expected = [Mark.pin(1, brand(0))];
 		const rebased = rebase(move, move);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("return ↷ return (same destination, =>)", () => {
+	itWithConfig(method, "return ↷ return (same destination, =>)", () => {
 		const cellId: ChangeAtomId = {
 			revision: tag3,
 			localId: brand(0),
@@ -577,10 +617,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 		const move = [Mark.moveOut(1, brand(0)), { count: 2 }, Mark.returnTo(1, brand(0), cellId)];
 		const expected = [{ count: 2 }, Mark.pin(1, brand(0))];
 		const rebased = rebase(move, move);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("return ↷ return (other destination)", () => {
+	itWithConfig(method, "return ↷ return (other destination)", () => {
 		const cellId: ChangeAtomId = {
 			revision: tag3,
 			localId: brand(0),
@@ -611,10 +651,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			}),
 		];
 		const rebased = rebase(return2, return1);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("pin ↷ move", () => {
+	itWithConfig(method, "pin ↷ move", () => {
 		const move = [Mark.moveIn(2, brand(0)), { count: 2 }, Mark.moveOut(2, brand(0))];
 		const pin = [{ count: 2 }, Mark.pin(2, brand(0))];
 		const expected = [
@@ -627,10 +667,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			}),
 		];
 		const rebased = rebase(pin, move);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("delete ↷ composite move", () => {
+	itWithConfig(method, "delete ↷ composite move", () => {
 		const [mo1, mi1] = Mark.move(1, brand(0));
 		const [mo2, mi2] = Mark.move(1, brand(1));
 		const [mo3, mi3] = Mark.move(1, brand(2));
@@ -646,10 +686,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 		const del = Change.delete(0, 1);
 		const rebased = rebase(del, move);
 		const expected = Change.delete(3, 1);
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("rebasing over transient revive changes cell ID", () => {
+	itWithConfig(method, "rebasing over transient revive changes cell ID", () => {
 		const change = TestChange.mint([0], 1);
 		const modify = Change.modifyDetached(0, change, {
 			revision: tag1,
@@ -666,10 +706,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			localId: brand(3),
 			adjacentCells: [{ id: brand(2), count: 2 }],
 		});
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("rebasing over transient adds lineage", () => {
+	itWithConfig(method, "rebasing over transient adds lineage", () => {
 		const insert = Change.insert(0, 1);
 		const transient = [
 			Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.delete(2, brand(2))),
@@ -682,10 +722,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			}),
 		];
 
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("delete ↷ [move, delete]", () => {
+	itWithConfig(method, "delete ↷ [move, delete]", () => {
 		const moveAndDelete = [
 			Mark.moveOut(1, brand(0)),
 			{ count: 1 },
@@ -705,10 +745,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			}),
 		];
 
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("delete ↷ [move, delete] (reverse move direction)", () => {
+	itWithConfig(method, "delete ↷ [move, delete] (reverse move direction)", () => {
 		const moveAndDelete = [
 			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 			{ count: 1 },
@@ -727,10 +767,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			}),
 		];
 
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("move ↷ move and delete", () => {
+	itWithConfig(method, "move ↷ move and delete", () => {
 		const moveAndDelete = [
 			{ count: 1 },
 			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
@@ -752,10 +792,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			}),
 		];
 
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("revive ↷ [revive, move]", () => {
+	itWithConfig(method, "revive ↷ [revive, move]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveAndMove = [
 			Mark.moveOut(1, brand(1), { cellId }),
@@ -773,10 +813,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			{ count: 1 },
 			Mark.moveOut(1, brand(0)),
 		];
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("revive ↷ [revive, move, delete]", () => {
+	itWithConfig(method, "revive ↷ [revive, move, delete]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveMoveDelete = [
 			Mark.moveOut(1, brand(1), { cellId }),
@@ -801,10 +841,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 				Mark.moveOut(1, brand(0)),
 			),
 		];
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("move chain ↷ delete", () => {
+	itWithConfig(method, "move chain ↷ delete", () => {
 		const del = Change.delete(0, 1);
 		const move = [
 			Mark.moveOut(1, brand(0), {
@@ -834,10 +874,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			}),
 		];
 
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("[revive, move] ↷ [revive, move]", () => {
+	itWithConfig(method, "[revive, move] ↷ [revive, move]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveAndMove1 = [
 			Mark.moveOut(1, brand(1), { cellId }),
@@ -856,10 +896,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			{ count: 1 },
 			Mark.moveIn(1, brand(1)),
 		];
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("[revive, return] ↷ [revive, return] (same destination)", () => {
+	itWithConfig(method, "[revive, return] ↷ [revive, return] (same destination)", () => {
 		const cellSrc: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const cellDst: ChangeAtomId = { revision: tag3, localId: brand(0) };
 		const reviveAndMove = [
@@ -869,10 +909,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 		];
 		const rebased = rebase(reviveAndMove, reviveAndMove);
 		const expected = [{ count: 2 }, Mark.pin(1, brand(1))];
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("[revive, return] ↷ [revive, return] (other destination)", () => {
+	itWithConfig(method, "[revive, return] ↷ [revive, return] (other destination)", () => {
 		const cellSrc: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const cellDst1: ChangeAtomId = { revision: tag3, localId: brand(1) };
 		const cellDst2: ChangeAtomId = { revision: tag3, localId: brand(2) };
@@ -893,10 +933,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst2),
 		];
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("delete ↷ move with multiple destinations", () => {
+	itWithConfig(method, "delete ↷ move with multiple destinations", () => {
 		const del = [Mark.delete(2, brand(0))];
 		const move = [
 			Mark.moveOut(2, brand(0)),
@@ -913,11 +953,11 @@ onBothConfigs("SequenceField - Rebase", () => {
 			{ count: 1 },
 			Mark.delete(1, brand(1)),
 		];
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
 	// Tests that lineage is only added for detaches which are contiguous in the output context of the base changeset.
-	it("insert ↷ insert within delete", () => {
+	itWithConfig(method, "insert ↷ insert within delete", () => {
 		const insertAndDelete = [
 			Mark.delete(1, brand(0)),
 			Mark.insert(1, brand(1)),
@@ -932,10 +972,10 @@ onBothConfigs("SequenceField - Rebase", () => {
 				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
 			}),
 		];
-		assert.deepEqual(rebased, expected);
+		assertChangesetsEqual(rebased, expected);
 	});
 
-	it("insert ↷ [delete, insert]", () => {
+	itWithConfig(method, "insert ↷ [delete, insert]", () => {
 		// Because B does not have lineage for A, we should use B's insertion's tiebreak policy
 		// and consider the cell it inserts into to be before the cell emptied by A
 		// Although B and C's inserts appear to be at adjacent positions when rebasing C over B,
@@ -953,11 +993,11 @@ onBothConfigs("SequenceField - Rebase", () => {
 				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
 			}),
 		];
-		assert.deepEqual(c3, expected);
+		assertChangesetsEqual(c3, expected);
 	});
 
 	describe("Over composition", () => {
-		it("insert ↷ [delete, delete]", () => {
+		itWithConfig(method, "insert ↷ [delete, delete]", () => {
 			const deletes: TestChangeset = shallowCompose([
 				tagChange(Change.delete(1, 2), tag1),
 				tagChange(Change.delete(0, 2), tag2),
@@ -974,6 +1014,8 @@ onBothConfigs("SequenceField - Rebase", () => {
 			);
 
 			const expected = [
+				Mark.tomb(tag2),
+				Mark.tomb(tag1, brand(0), 2),
 				Mark.insert(1, {
 					localId: brand(0),
 					lineage: [
@@ -982,11 +1024,12 @@ onBothConfigs("SequenceField - Rebase", () => {
 						{ revision: tag2, id: brand(1), count: 1, offset: 0 },
 					],
 				}),
+				Mark.tomb(tag2, brand(1)),
 			];
-			assert.deepEqual(rebased, expected);
+			assertChangesetsEqual(rebased, expected);
 		});
 
-		it("modify ↷ [delete, delete]", () => {
+		itWithConfig(method, "modify ↷ [delete, delete]", () => {
 			const deletes: TestChangeset = shallowCompose([
 				tagChange(Change.delete(1, 3), tag1),
 				tagChange(Change.delete(0, 2), tag2),
@@ -1003,13 +1046,18 @@ onBothConfigs("SequenceField - Rebase", () => {
 				),
 			);
 
-			const expected = Change.modifyDetached(0, nodeChange, {
-				revision: tag1,
-				localId: brand(2),
-				adjacentCells: [{ id: brand(0), count: 3 }],
-				lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 1 }],
-			});
-			assert.deepEqual(rebased, expected);
+			const expected = [
+				Mark.tomb(tag2),
+				Mark.tomb(tag1, brand(0), 2),
+				Mark.modify(nodeChange, {
+					revision: tag1,
+					localId: brand(2),
+					adjacentCells: [{ id: brand(0), count: 3 }],
+					lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 1 }],
+				}),
+				Mark.tomb(tag2, brand(1)),
+			];
+			assertChangesetsEqual(rebased, expected);
 		});
 	});
 });
