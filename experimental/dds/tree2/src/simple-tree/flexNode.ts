@@ -47,7 +47,7 @@ export function getFlexNode<TSchema extends MapNodeSchema>(
 ): FlexTreeMapNode<TSchema>;
 export function getFlexNode(target: TreeNode): FlexTreeNode;
 export function getFlexNode(target: TreeNode): FlexTreeNode {
-	return flexNodeMap.get(target) ?? fail("Target is not associated with an eflexdit node");
+	return flexNodeMap.get(target) ?? fail("Target is not associated with an flex node");
 }
 
 /**

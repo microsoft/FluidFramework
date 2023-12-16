@@ -8,7 +8,6 @@ import {
 	AllowedUpdateType,
 	Compatibility,
 	TreeStoredSchema,
-	StoredSchemaRepository,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
 } from "../core";
@@ -24,7 +23,7 @@ import {
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISubscribable } from "../events";
-import { CheckoutEvents } from "./treeCheckout";
+import { CheckoutEvents, ITreeCheckout } from "./treeCheckout";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -39,11 +38,17 @@ import { CheckoutEvents } from "./treeCheckout";
  * Since this makes multiple changes, callers may want to wrap it in a transaction.
  */
 export function initializeContent(
-	storedSchema: StoredSchemaRepository,
+	schemaRepository: {
+		storedSchema: ITreeCheckout["storedSchema"];
+		updateSchema: ITreeCheckout["updateSchema"];
+	},
 	newSchema: FlexTreeSchema,
 	setInitialTree: () => void,
 ): void {
-	assert(schemaDataIsEmpty(storedSchema), 0x743 /* cannot initialize after a schema is set */);
+	assert(
+		schemaDataIsEmpty(schemaRepository.storedSchema),
+		0x743 /* cannot initialize after a schema is set */,
+	);
 
 	const schema = intoStoredSchema(newSchema);
 	const rootSchema = schema.rootFieldSchema;
@@ -79,13 +84,13 @@ export function initializeContent(
 		0x5c9 /* Incremental Schema during update should be a allow a superset of the final schema */,
 	);
 	// Update to intermediate schema
-	storedSchema.update(incrementalSchemaUpdate);
+	schemaRepository.updateSchema(incrementalSchemaUpdate);
 	// Insert initial tree
 	setInitialTree();
 
 	// If intermediate schema is not final desired schema, update to the final schema:
 	if (incrementalSchemaUpdate !== schema) {
-		storedSchema.update(schema);
+		schemaRepository.updateSchema(schema);
 	}
 }
 
@@ -101,13 +106,16 @@ export function initializeContent(
  */
 export function schematize(
 	events: ISubscribable<CheckoutEvents>,
-	storedSchema: StoredSchemaRepository,
+	schemaRepository: {
+		storedSchema: ITreeCheckout["storedSchema"];
+		updateSchema: ITreeCheckout["updateSchema"];
+	},
 	config: SchematizeConfiguration,
 ): void {
 	// TODO: support adapters and include them here.
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
 	{
-		const compatibility = viewSchema.checkCompatibility(storedSchema);
+		const compatibility = viewSchema.checkCompatibility(schemaRepository.storedSchema);
 		switch (config.allowedSchemaModifications) {
 			case AllowedUpdateType.None: {
 				if (compatibility.read !== Compatibility.Compatible) {
@@ -130,7 +138,7 @@ export function schematize(
 					);
 				}
 				if (compatibility.write !== Compatibility.Compatible) {
-					storedSchema.update(intoStoredSchema(config.schema));
+					schemaRepository.updateSchema(intoStoredSchema(config.schema));
 				}
 
 				break;
@@ -140,8 +148,8 @@ export function schematize(
 			}
 		}
 	}
-	afterSchemaChanges(events, storedSchema, () => {
-		const compatibility = viewSchema.checkCompatibility(storedSchema);
+	afterSchemaChanges(events, schemaRepository, () => {
+		const compatibility = viewSchema.checkCompatibility(schemaRepository.storedSchema);
 		if (compatibility.read !== Compatibility.Compatible) {
 			fail(
 				"Stored schema changed to one that permits data incompatible with the view schema",
@@ -163,7 +171,10 @@ export function schematize(
  */
 export function afterSchemaChanges(
 	events: ISubscribable<CheckoutEvents>,
-	storedSchema: StoredSchemaRepository,
+	schemaRepository: {
+		storedSchema: ITreeCheckout["storedSchema"];
+		updateSchema: ITreeCheckout["updateSchema"];
+	},
 	callback: () => boolean,
 ): void {
 	// Callback to cleanup afterBatch schema checking.
@@ -175,7 +186,7 @@ export function afterSchemaChanges(
 	// 1. Ensure errors in response to edits like this crash app and report telemetry.
 	// 2. Replace these (and the above) exception based errors with
 	// out of schema handlers which update the schematized view of the tree instead of throwing.
-	const unregister = storedSchema.on("afterSchemaChange", () => {
+	const unregister = schemaRepository.storedSchema.on("afterSchemaChange", () => {
 		// On schema change, setup a callback (deduplicated so its only run once) after a batch of changes.
 		// This avoids erroring about invalid schema in the middle of a batch of changes.
 		// TODO:

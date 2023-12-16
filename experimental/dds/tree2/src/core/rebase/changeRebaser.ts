@@ -97,6 +97,13 @@ export interface TaggedChange<TChangeset> {
 	readonly change: TChangeset;
 }
 
+export function mapTaggedChange<TIn, TOut>(
+	input: TaggedChange<TIn>,
+	change: TOut,
+): TaggedChange<TOut> {
+	return { ...input, change };
+}
+
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
  * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the

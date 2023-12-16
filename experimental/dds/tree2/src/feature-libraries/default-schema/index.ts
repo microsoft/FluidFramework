@@ -23,6 +23,6 @@ export {
 	SequenceFieldEditBuilder,
 	intoDelta,
 	relevantRemovedRoots,
-} from "./defaultChangeFamily";
+} from "./defaultEditBuilder";
 
 export { defaultSchemaPolicy } from "./defaultSchema";

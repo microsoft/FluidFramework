@@ -57,7 +57,8 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/sequence": "workspace:~"
+		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",

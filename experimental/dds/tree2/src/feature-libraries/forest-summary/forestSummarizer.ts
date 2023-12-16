@@ -22,8 +22,8 @@ import {
 	ITreeSubscriptionCursor,
 	makeDetachedFieldIndex,
 	mapCursorField,
-	StoredSchemaRepository,
 	TreeNavigationResult,
+	TreeStoredSchemaSubscription,
 } from "../../core";
 import {
 	Summarizable,
@@ -64,7 +64,7 @@ export class ForestSummarizer implements Summarizable {
 
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly schema: StoredSchemaRepository,
+		private readonly schema: TreeStoredSchemaSubscription,
 		private readonly policy: FullSchemaPolicy,
 		private readonly encodeType: TreeCompressionStrategy,
 		private readonly fieldBatchCodec: FieldBatchCodec,

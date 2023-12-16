@@ -30,3 +30,5 @@ export {
 } from "./schematizedTree";
 
 export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";
+
+export { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder";

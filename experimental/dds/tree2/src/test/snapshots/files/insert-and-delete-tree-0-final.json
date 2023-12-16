@@ -16,25 +16,29 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
                               {
-                                "count": 1,
-                                "effect": {
-                                  "delete": {
-                                    "id": 1
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 1
+                                      }
+                                    }
                                   }
-                                }
+                                ]
                               }
                             ]
                           }
-                        ]
-                      },
-                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                        }
+                      ],
+                      "revision": "beefbeef-beef-4000-8000-000000000006",
                       "sequenceNumber": 3,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     }
@@ -189,7 +193,7 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-000000000004",
+                      "beefbeef-beef-4000-8000-000000000006",
                       1,
                       1
                     ]

@@ -60,7 +60,7 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	StoredSchemaRepository,
+	TreeStoredSchemaSubscription,
 	FieldKindIdentifier,
 	TreeTypeSet,
 	TreeStoredSchema,
@@ -249,6 +249,8 @@ export {
 	FlexTreeView,
 	ITreeViewFork,
 	buildTreeConfiguration,
+	ISharedTreeEditor,
+	ISchemaEditor,
 } from "./shared-tree";
 
 export {
@@ -265,6 +267,7 @@ export {
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeLeafValue,
 
 	// experimental @alpha APIs:
 	adaptEnum,
