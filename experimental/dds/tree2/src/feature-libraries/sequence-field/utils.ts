@@ -164,57 +164,87 @@ export function cellSourcesFromMarks(
 	return set;
 }
 
+export enum CellOrder {
+	SameCell,
+	OldThenNew,
+	NewThenOld,
+}
+
 /**
- * Returns a number N which encodes how the cells of the two marks are aligned.
- * - If N is zero, then the first cells are the same.
- * - If N is positive, then the new cell is before the base cell.
- * - If N is negative, then the base cell is before the new cell.
+ * Returns a {@link CellOrder} which describes how the cells are ordered.
+ *
+ * This function makes the following assumptions:
+ * - The cells represent the same context.
+ * - `oldMarkCell` is from a mark in a changeset that is older than the changeset that contains the mark that
+ * `newMarkCell` is from.
+ * - In terms of sequence index, all cells located before A are also located before B,
+ * and all cells located before B are also located before A.
+ * - If a changeset has a mark/tombstone that describes a cell named in some revision R,
+ * then that changeset must contain marks/tombstones for all cells named in R.
  */
 export function compareCellPositionsUsingTombstones(
-	baseCellId: ChangeAtomId,
-	baseMarksCellSources: ReadonlySet<RevisionTag | undefined>,
-	newCellId: ChangeAtomId,
-	newMarksCellSources: ReadonlySet<RevisionTag | undefined>,
+	oldMarkCell: ChangeAtomId,
+	oldChangeKnowledge: ReadonlySet<RevisionTag | undefined>,
+	newMarkCell: ChangeAtomId,
+	newMarkKnowledge: ReadonlySet<RevisionTag | undefined>,
 	metadata: RevisionMetadataSource,
-): number {
-	if (areEqualChangeAtomIds(baseCellId, newCellId)) {
-		return 0;
-	} else if (newMarksCellSources.has(baseCellId.revision)) {
-		// If both changeset have tombstones for both revisions then those should have the same ordering.
-		assert(!baseMarksCellSources.has(newCellId.revision), "Inconsistent cell ordering");
-		// The new changeset has tombstones for this revision, so a tombstone matching `baseId` must occur later in the new changeset.
-		// This means `newMark` comes before that cell and therefore should be returned first.
-		return 1;
-	} else if (baseMarksCellSources.has(newCellId.revision)) {
-		// The new base has tombstones for this revision, so a tombstone matching `newId` must occur later in the new changeset.
-		// This means `baseMark` comes before that cell and therefore should be returned first.
-		return -1;
+): CellOrder {
+	if (areEqualChangeAtomIds(oldMarkCell, newMarkCell)) {
+		return CellOrder.SameCell;
+	}
+	const oldChangeKnowsOfNewMarkRevision = oldChangeKnowledge.has(newMarkCell.revision);
+	const newChangeKnowsOfBaseMarkRevision = newMarkKnowledge.has(oldMarkCell.revision);
+	if (oldChangeKnowsOfNewMarkRevision && newChangeKnowsOfBaseMarkRevision) {
+		// If both changesets know of both cells, but we've been asked to compare different cells,
+		// Then either the changesets they originate from do not represent the same context,
+		// or the ordering of their cells in inconsistent.
+		assert(false, "Inconsistent cell ordering");
+	}
+	if (newChangeKnowsOfBaseMarkRevision) {
+		// The changeset that contains `newMarkCell` has tombstones for the revision that created `oldMarkCell`,
+		// so a tombstone/mark matching `oldMarkCell` must occur later in the newer changeset.
+		return CellOrder.NewThenOld;
+	} else if (oldChangeKnowsOfNewMarkRevision) {
+		// The changeset that contains `oldMarkCell` has tombstones for revision that created `newMarkCell`,
+		// so a tombstone/mark matching `newMarkCell` must occur later in the older changeset.
+		return CellOrder.OldThenNew;
 	} else {
-		// These tombstones are not ordered relative to each other.
-		// We resort to tie-breaking using the preference (hard-coded to "merge left") of the younger cell.
-		if (newCellId.revision === undefined) {
-			// An undefined revision must mean that the cell was created on the branch we are rebasing.
-			// Since it is newer than the `baseMark`'s cell, it should come first.
-			return 1;
+		// These cells are only ordered through tie-breaking.
+		// Since tie-breaking is hard-coded to "merge left", the younger cell comes first.
+
+		// In the context of rebase, an undefined revision means that the cell was created on the branch that
+		// is undergoing rebasing.
+		// In the context of compose, an undefined revision means we are composing anonymous changesets into
+		// a transaction.
+		// In both cases, it means the cell from the newer changeset is younger.
+		if (newMarkCell.revision === undefined) {
+			return CellOrder.NewThenOld;
+		}
+		// The only case where the old mark cell should have no revision is when composing anonymous changesets
+		// into a transaction, in which case the new mark cell should also have no revision, which is handled above.
+		// In all other cases, the old mark cell should have a revision.
+		assert(oldMarkCell.revision !== undefined, "Old mark cell should have a revision");
+
+		// Note that these indices are for ordering the revisions in which the cells were named, not the revisions
+		// of the changesets in which the marks targeting these cells appear.
+		const oldCellRevisionIndex = metadata.getIndex(oldMarkCell.revision);
+		const newCellRevisionIndex = metadata.getIndex(newMarkCell.revision);
+
+		// If the metadata defines an ordering for the revisions then the cell from the newer revision comes first.
+		if (newCellRevisionIndex !== undefined && oldCellRevisionIndex !== undefined) {
+			return newCellRevisionIndex > oldCellRevisionIndex
+				? CellOrder.NewThenOld
+				: CellOrder.OldThenNew;
 		}
 
-		assert(baseCellId.revision !== undefined, "Base cell should have a revision");
-		const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
-		const newRevisionIndex = metadata.getIndex(newCellId.revision);
-
-		if (newRevisionIndex !== undefined && baseRevisionIndex !== undefined) {
-			return newRevisionIndex > baseRevisionIndex ? 1 : -1;
+		if (newCellRevisionIndex === undefined && oldCellRevisionIndex === undefined) {
+			assert(false, "Unexpected cell ordering scenario");
 		}
 
-		if (newRevisionIndex !== undefined) {
-			return 1;
-		}
-
-		if (baseRevisionIndex !== undefined) {
-			return -1;
-		}
-
-		assert(false, "Unexpected cell ordering scenario");
+		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that
+		// predates the edits that are within the scope of the metadata. Such a cell is therefore older than the one
+		// for which we do have metadata.
+		return oldCellRevisionIndex === undefined ? CellOrder.NewThenOld : CellOrder.OldThenNew;
 	}
 }
 

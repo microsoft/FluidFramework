@@ -67,6 +67,7 @@ import {
 	compareCellsFromSameRevision,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
+	CellOrder,
 } from "./utils";
 import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
 import { CellOrderingMethod, sequenceConfig } from "./config";
@@ -583,12 +584,15 @@ export class ComposeQueue<T> {
 						this.newMarksCellSources,
 						this.revisionMetadata,
 					);
-					if (comparison < 0) {
-						return this.dequeueBase();
-					} else if (comparison > 0) {
-						return this.dequeueNew();
-					} else {
-						return this.dequeueBoth();
+					switch (comparison) {
+						case CellOrder.SameCell:
+							return this.dequeueBoth();
+						case CellOrder.OldThenNew:
+							return this.dequeueBase();
+						case CellOrder.NewThenOld:
+							return this.dequeueNew();
+						default:
+							unreachableCase(comparison);
 					}
 				}
 				case CellOrderingMethod.Lineage: {
