@@ -51,9 +51,9 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"**/*.d.ts",
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"**/*.d.*ts",
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"extension": [
@@ -63,8 +63,8 @@
 			".jsx"
 		],
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"require": [

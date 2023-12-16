@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions } from "../../codec";
+import { ICodecFamily, ICodecOptions, IJsonCodec, makeCodecFamily } from "../../codec";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -33,8 +33,8 @@ import {
 	DeltaRoot,
 	ITreeCursorSynchronous,
 	DeltaDetachedNodeId,
+	EncodedRevisionTag,
 } from "../../core";
-import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	forEachInNestedMap,
@@ -48,7 +48,7 @@ import {
 	Mutable,
 } from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import { TreeChunk, chunkTree, defaultChunkPolicy } from "../chunked-forest";
+import { TreeChunk, chunkTree, defaultChunkPolicy, makeFieldBatchCodec } from "../chunked-forest";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -66,7 +66,6 @@ import {
 import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
-import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -75,6 +74,8 @@ import {
 	NodeChangeset,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
+import { makeV0Codec } from "./modularChangeCodecs";
+import { EncodedModularChangeset } from "./modularChangeFormat";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -85,17 +86,22 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
+	public readonly latestCodec: IJsonCodec<ModularChangeset, EncodedModularChangeset>;
+
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 		codecOptions: ICodecOptions,
 	) {
-		this.codecs = makeModularChangeCodecFamily(
-			this.fieldKinds,
-			new RevisionTagCodec(),
+		this.latestCodec = makeV0Codec(
+			fieldKinds,
+			revisionTagCodec,
+			makeFieldBatchCodec(codecOptions),
 			codecOptions,
 		);
+		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -1155,10 +1161,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (this.transactionDepth === 0) {
 			this.idAllocator = idAllocatorFromMaxId();
 		}
-	}
-
-	public apply(change: ModularChangeset): void {
-		this.applyChange(change);
 	}
 
 	public buildTrees(

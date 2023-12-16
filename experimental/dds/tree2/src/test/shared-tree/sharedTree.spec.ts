@@ -93,8 +93,7 @@ describe("SharedTree", () => {
 		const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
 		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
 
-		// TODO: concurrent use of schematize should not double initialize. Should use constraints so second run conflicts.
-		it.skip("Concurrent Schematize", () => {
+		it("concurrent Schematize", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
 				schema: stringSequenceRootSchema,
@@ -122,7 +121,7 @@ describe("SharedTree", () => {
 
 		it("noop upgrade", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
-			tree.storedSchema.update(storedSchema);
+			tree.view.updateSchema(storedSchema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
 			const schematized = tree.schematizeInternal({
@@ -136,7 +135,7 @@ describe("SharedTree", () => {
 
 		it("incompatible upgrade errors", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
-			tree.storedSchema.update(storedSchemaGeneralized);
+			tree.view.updateSchema(storedSchemaGeneralized);
 			assert.throws(() => {
 				tree.schematizeInternal({
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -148,7 +147,7 @@ describe("SharedTree", () => {
 
 		it("upgrade schema", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
-			tree.storedSchema.update(storedSchema);
+			tree.view.updateSchema(storedSchema);
 			const schematized = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
@@ -181,7 +180,7 @@ describe("SharedTree", () => {
 		}).intoSchema(TreeFieldSchema.empty);
 
 		function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
-			tree.storedSchema.update(intoStoredSchema(schema));
+			tree.view.updateSchema(intoStoredSchema(schema));
 			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
 			tree.view.events.emit("afterBatch");
 		}
@@ -314,7 +313,7 @@ describe("SharedTree", () => {
 	it("can summarize and load", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const value = 42;
-		const summarizingTree = provider.trees[0].schematizeInternal({
+		provider.trees[0].schematizeInternal({
 			schema: jsonSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: [value],
@@ -577,7 +576,7 @@ describe("SharedTree", () => {
 	// AB#5745: Enable this test once it passes.
 	it.skip("can tolerate incomplete transactions when attaching", async () => {
 		const onCreate = (tree: SharedTree) => {
-			tree.storedSchema.update(intoStoredSchema(stringSequenceRootSchema));
+			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 			tree.view.transaction.start();
 			const view = assertSchema(tree, stringSequenceRootSchema).editableTree;
 			view.insertAtStart(["A"]);
@@ -1242,6 +1241,52 @@ describe("SharedTree", () => {
 		provider.processMessages();
 	});
 
+	describe("Schema changes", () => {
+		it("handles two trees schematizing identically at the same time", async () => {
+			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+			const value1 = "42";
+			const value2 = "42";
+
+			const view1 = provider.trees[0].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [value1],
+			});
+
+			provider.trees[1].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [value2],
+			});
+
+			await provider.ensureSynchronized();
+			assert.deepEqual(view1.editableTree.asArray, [value1]);
+			expectSchemaEqual(
+				provider.trees[1].storedSchema,
+				intoStoredSchema(stringSequenceRootSchema),
+			);
+			validateTreeConsistency(provider.trees[0], provider.trees[1]);
+		});
+
+		it("can be undone at the tip", async () => {
+			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+
+			const tree = provider.trees[0];
+			const { undoStack } = createTestUndoRedoStacks(tree.view.events);
+
+			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
+
+			tree.view.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(jsonSequenceRootSchema));
+
+			const revertible = undoStack.pop();
+			revertible?.revert();
+
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
+		});
+	});
+
 	describe("Stashed ops", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
@@ -1250,7 +1295,7 @@ describe("SharedTree", () => {
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
-			pausedTree.storedSchema.update(intoStoredSchema(stringSequenceRootSchema));
+			pausedTree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
