@@ -10,17 +10,16 @@ import {
 	ITreeCursorSynchronous,
 	mapCursorFields,
 	TreeNodeSchemaIdentifier,
-	SimpleObservingDependent,
-	recordDependency,
 	Value,
 	TreeValue,
-	StoredSchemaRepository,
+	TreeStoredSchemaSubscription,
 	CursorLocationType,
 	TreeStoredSchema,
 	StoredSchemaCollection,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
+import { FullSchemaPolicy } from "../modular-schema";
 import { fail } from "../../util";
+import { Multiplicity } from "../multiplicity";
 import { TreeChunk, tryGetChunk } from "./chunk";
 import { BasicChunk } from "./basicChunk";
 import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk";
@@ -37,7 +36,7 @@ export interface Disposable {
  * Creates a ChunkPolicy which responds to schema changes.
  */
 export function makeTreeChunker(
-	schema: StoredSchemaRepository,
+	schema: TreeStoredSchemaSubscription,
 	policy: FullSchemaPolicy,
 ): IChunker {
 	return new Chunker(
@@ -57,8 +56,8 @@ export function makeTreeChunker(
  * and that chunk policy uses caching which thus needs invalidation.
  */
 export interface IChunker extends ChunkPolicy, Disposable {
-	readonly schema: StoredSchemaRepository;
-	clone(schema: StoredSchemaRepository): IChunker;
+	readonly schema: TreeStoredSchemaSubscription;
+	clone(schema: TreeStoredSchemaSubscription): IChunker;
 }
 
 /**
@@ -93,13 +92,10 @@ export class Chunker implements IChunker {
 	 */
 	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 
-	/**
-	 * Tracks the dependencies on `schema`.
-	 */
-	private readonly dependent: SimpleObservingDependent;
+	private unregisterSchemaCallback: (() => void) | undefined;
 
 	public constructor(
-		public readonly schema: StoredSchemaRepository,
+		public readonly schema: TreeStoredSchemaSubscription,
 		public readonly policy: FullSchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
@@ -111,11 +107,9 @@ export class Chunker implements IChunker {
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
-	) {
-		this.dependent = new SimpleObservingDependent(() => this.schemaChanged());
-	}
+	) {}
 
-	public clone(schema: StoredSchemaRepository): IChunker {
+	public clone(schema: TreeStoredSchemaSubscription): IChunker {
 		// This does not preserve the cache.
 		// This is probably fine, but is a potential way it could be optimized in the future (with care to ensure invalidation work properly).
 		return new Chunker(
@@ -133,7 +127,9 @@ export class Chunker implements IChunker {
 		if (cached !== undefined) {
 			return cached;
 		}
-		recordDependency(this.dependent, this.schema);
+		this.unregisterSchemaCallback = this.schema.on("afterSchemaChange", () =>
+			this.schemaChanged(),
+		);
 		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
 	}
 
@@ -144,13 +140,18 @@ export class Chunker implements IChunker {
 
 	private schemaChanged(): void {
 		this.typeShapes.clear();
-		this.dependent.unregisterDependees();
+		if (this.unregisterSchemaCallback) {
+			this.unregisterSchemaCallback();
+			this.unregisterSchemaCallback = undefined;
+		}
 	}
 }
 
 /**
  * Get a TreeChunk for the current node (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
+ *
+ * @param cursor - cursor in nodes mode
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
 	return chunkRange(cursor, policy, 1, true)[0];
@@ -165,6 +166,18 @@ export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
 	const started = cursor.firstNode();
 	assert(started, 0x57c /* field to chunk should have at least one node */);
 	return chunkRange(cursor, policy, length, false);
+}
+
+/**
+ * Get a TreeChunk for the current field (and its children) of cursor.
+ * Like {@link chunkField}, but forces the results into a single TreeChunk.
+ */
+export function chunkFieldSingle(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
+	const chunks = chunkField(cursor, policy);
+	if (chunks.length === 1) {
+		return chunks[0];
+	}
+	return new SequenceChunk(chunks);
 }
 
 /**
@@ -324,6 +337,12 @@ function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
 	);
 }
 
+/**
+ * @param cursor - cursor in nodes mode
+ * @param policy - heuristics to impact chunking
+ * @param length - how many nodes to process (at the top level)
+ * @param skipLastNavigation - if true, leaves the cursor at the last node instead of moving off of it.
+ */
 export function chunkRange(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkPolicy,

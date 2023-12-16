@@ -166,6 +166,7 @@ stages:
       # Job - Build
       - job: build
         displayName: Build
+        timeoutInMinutes: 90
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
@@ -544,6 +545,20 @@ stages:
       condition: succeededOrFailed()
       dependsOn:
         - build
+        # NOTE: This is brittle; we need to only apply these stage dependencies when the corresponding stages actually
+        # get created in the pipeline, in the include-publish-npm-package.yml file, so we want to match the compile-time
+        # conditions *and exact stage names* that exist there. At some point it might be preferable to always create the
+        # stages, control their execution with 'condition:', and update this stage to always depend on all previous
+        # stages (while still running if some of the dependencies were skipped).
+        - ${{ if eq(variables.publish, true) }}:
+          - ${{ if eq(variables['testBuild'], true) }}:
+            - publish_npm_internal_test
+          - ${{ if eq(variables['testBuild'], false) }}:
+            - publish_npm_internal_build
+          - ${{ if and(eq(variables['testBuild'], false), eq(parameters.isReleaseGroup, true)) }}:
+            - publish_npm_internal_dev
+          - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
+            - publish_npm_public
       jobs:
         - job: upload_run_telemetry
           displayName: Upload pipeline run telemetry to Kusto

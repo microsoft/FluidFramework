@@ -10,6 +10,7 @@ import { DeflatedPropertyTreeFactory, LZ4PropertyTreeFactory } from "./propertyT
 /**
  * This class is the extension of SharedPropertyTree which compresses
  * the deltas and summaries communicated to the server by Deflate.
+ * @internal
  */
 export class DeflatedPropertyTree extends SharedPropertyTree {
 	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
@@ -21,6 +22,9 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
 	}
 }
 
+/**
+ * @internal
+ */
 export class LZ4PropertyTree extends SharedPropertyTree {
 	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
 		return runtime.createChannel(id, LZ4PropertyTreeFactory.Type) as LZ4PropertyTree;

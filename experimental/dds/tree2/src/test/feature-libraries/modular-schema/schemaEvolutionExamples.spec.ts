@@ -11,13 +11,13 @@ import {
 	ViewSchema,
 	FieldKinds,
 	defaultSchemaPolicy,
-	TreeSchema,
+	FlexTreeSchema,
 } from "../../../feature-libraries";
 import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	Adapters,
 	Compatibility,
 	storedEmptyFieldSchema,
@@ -27,7 +27,7 @@ import {
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 import { SchemaBuilder, leaf } from "../../../domains";
 
-class TestSchemaRepository extends InMemoryStoredSchemaRepository {
+class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		data?: TreeStoredSchema,
@@ -40,9 +40,9 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
-		if (allowsFieldSuperset(this.policy, this.data, this.rootFieldSchema, schema)) {
-			this.data.rootFieldSchema = schema;
-			this.invalidateDependents();
+		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
+			this.rootFieldSchemaData = schema;
+			this.events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -56,9 +56,9 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 		schema: TreeNodeStoredSchema,
 	): boolean {
 		const original = this.nodeSchema.get(identifier);
-		if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
-			this.data.nodeSchema.set(identifier, schema);
-			this.invalidateDependents();
+		if (allowsTreeSuperset(this.policy, this, original, schema)) {
+			this.nodeSchemaData.set(identifier, schema);
+			this.events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -127,7 +127,7 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: TreeSchema = new SchemaBuilder({
+		const viewCollection: FlexTreeSchema = new SchemaBuilder({
 			scope: "test",
 			name: "basic usage",
 			libraries: [treeViewSchema],
@@ -139,7 +139,7 @@ describe("Schema Evolution Examples", () => {
 		const view = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection);
 
 		// Now lets imagine using this application on a new empty document.
-		// StoredSchemaRepository defaults to a state that permits no document states at all.
+		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
 		// To permit an empty document, we have to define a root field, and permit it to be empty.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
@@ -219,17 +219,17 @@ describe("Schema Evolution Examples", () => {
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
 			assert(stored.tryUpdateTreeSchema(canvas.name, canvas));
-			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
 			assert(stored.tryUpdateTreeSchema(point.name, point));
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(text.name, text));
-			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint));
+			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint.stored));
 			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
-			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
-			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean));
-			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string));
-			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle));
-			assert(stored.tryUpdateTreeSchema(leaf.null.name, leaf.null));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
+			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean.stored));
+			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string.stored));
+			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle.stored));
+			assert(stored.tryUpdateTreeSchema(leaf.null.name, leaf.null.stored));
 
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
@@ -259,7 +259,7 @@ describe("Schema Evolution Examples", () => {
 				items: TreeFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: TreeSchema = builderWithCounter.intoSchema(
+			const viewCollection3: FlexTreeSchema = builderWithCounter.intoSchema(
 				TreeFieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);

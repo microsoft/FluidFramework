@@ -12,6 +12,7 @@ import { SchemaBuilder, leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree";
 import { brand } from "../../util";
+import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries";
 
 describe("toMapTree", () => {
 	it("string", () => {
@@ -20,7 +21,7 @@ describe("toMapTree", () => {
 
 		const tree = "Hello world";
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: leaf.string.name,
@@ -35,7 +36,7 @@ describe("toMapTree", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const schema = schemaBuilder.intoSchema(schemaBuilder.null);
 
-		const actual = nodeDataToMapTree(null, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(null, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: leaf.null.name,
@@ -52,7 +53,7 @@ describe("toMapTree", () => {
 
 		const tree = new MockHandle<string>("mock-fluid-handle");
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: leaf.handle.name,
@@ -71,7 +72,7 @@ describe("toMapTree", () => {
 		const handle = new MockHandle<boolean>(true);
 		const tree = [42, handle, 37];
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: brand("test.list"),
@@ -97,7 +98,7 @@ describe("toMapTree", () => {
 
 		const tree: number[] = [];
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: brand("test.list"),
@@ -124,7 +125,7 @@ describe("toMapTree", () => {
 		];
 		const tree = new Map<string, number | string | null | undefined>(entries);
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: brand("test.map"),
@@ -145,7 +146,7 @@ describe("toMapTree", () => {
 
 		const tree = new Map<string, number>();
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: brand("test.map"),
@@ -172,7 +173,7 @@ describe("toMapTree", () => {
 			d: undefined, // Should be skipped in output
 		};
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: brand("test.object"),
@@ -195,7 +196,7 @@ describe("toMapTree", () => {
 
 		const tree = {};
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: brand("test.object"),
@@ -243,7 +244,7 @@ describe("toMapTree", () => {
 			c,
 		};
 
-		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
 		const expected: MapTree = {
 			type: brand("test.complex-object"),
@@ -374,6 +375,18 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("ambagious unions", () => {
+		const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
+		const a = schemaBuilder.object("a", {});
+		const b = schemaBuilder.object("b", {});
+		const schema = schemaBuilder.intoSchema([a, b]);
+
+		assert.throws(
+			() => nodeDataToMapTree({}, schema, schema.rootFieldSchema.allowedTypeSet),
+			/\["test.a","test.b"]/,
+		);
+	});
+
 	// Our data serialization format does not support certain numeric values.
 	// These tests are intended to verify the mapping behaviors for those values.
 	describe("Incompatible numeric value handling", () => {
@@ -385,7 +398,7 @@ describe("toMapTree", () => {
 			const rootSchema = schemaBuilder.optional([schemaBuilder.number, schemaBuilder.null]);
 			const schema = schemaBuilder.intoSchema(rootSchema);
 
-			const result = nodeDataToMapTree(value, { schema }, schema.rootFieldSchema.types);
+			const result = nodeDataToMapTree(value, schema, schema.rootFieldSchema.allowedTypeSet);
 			assert.equal(result.value, expectedFallbackValue);
 		}
 
@@ -397,8 +410,8 @@ describe("toMapTree", () => {
 			assert.throws(() =>
 				nodeDataToMapTree(
 					Number.POSITIVE_INFINITY,
-					{ schema },
-					schema.rootFieldSchema.types,
+					schema,
+					schema.rootFieldSchema.allowedTypeSet,
 				),
 			);
 		}
@@ -432,7 +445,7 @@ describe("toMapTree", () => {
 			const schemaBuilder = new SchemaBuilder({ scope: "test" });
 			const schema = schemaBuilder.intoSchema(schemaBuilder.number);
 
-			const result = nodeDataToMapTree(-0, { schema }, schema.rootFieldSchema.types);
+			const result = nodeDataToMapTree(-0, schema, schema.rootFieldSchema.allowedTypeSet);
 			assert.equal(result.value, +0);
 		});
 
@@ -446,7 +459,7 @@ describe("toMapTree", () => {
 
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
-			const actual = nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types);
+			const actual = nodeDataToMapTree(input, schema, schema.rootFieldSchema.allowedTypeSet);
 
 			const expected: MapTree = {
 				type: rootSchema.name,
@@ -489,7 +502,9 @@ describe("toMapTree", () => {
 
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
-			assert.throws(() => nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types));
+			assert.throws(() =>
+				nodeDataToMapTree(input, schema, schema.rootFieldSchema.allowedTypeSet),
+			);
 		});
 	});
 });

@@ -194,16 +194,16 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> {
+	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
-			return undefined as FlexTreeTypedNodeUnion<TTypes>;
+			return undefined;
 		}
 
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			makeTree(this.context, cursor),
-		) as FlexTreeTypedNodeUnion<TTypes>;
+		) as unknown as FlexTreeTypedNodeUnion<TTypes>;
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[] {
@@ -219,7 +219,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
-			(cursor) => makeTree(this.context, cursor) as FlexTreeTypedNodeUnion<TTypes>,
+			(cursor) => makeTree(this.context, cursor) as unknown as FlexTreeTypedNodeUnion<TTypes>,
 		);
 	}
 
@@ -304,7 +304,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		const content: ITreeCursorSynchronous[] = isCursor(value)
 			? prepareFieldCursorForInsert(value)
 			: Array.from(value, (item) =>
-					cursorFromContextualData(this.context, this.schema.types, item),
+					cursorFromContextualData(this.context, this.schema.allowedTypeSet, item),
 			  );
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
@@ -465,14 +465,14 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content: ITreeCursorSynchronous[] = isCursor(newContent)
 			? prepareNodeCursorForInsert(newContent)
-			: [cursorFromContextualData(this.context, this.schema.types, newContent)];
+			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0);
+		return this.boxedAt(0) ?? fail("value node must have 1 item");
 	}
 }
 
@@ -507,7 +507,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 				? []
 				: isCursor(newContent)
 				? prepareNodeCursorForInsert(newContent)
-				: [cursorFromContextualData(this.context, this.schema.types, newContent)];
+				: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.optionalEditor();
 		assert(
 			content.length <= 1,

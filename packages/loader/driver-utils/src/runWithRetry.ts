@@ -7,14 +7,13 @@ import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-uti
 import { performance } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { canRetryOnError, getRetryDelayFromError } from "./network";
+import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network";
 import { pkgVersion } from "./packageVersion";
-import { NonRetryableError } from ".";
 
 /**
  * Interface describing an object passed to various network APIs.
  * It allows caller to control cancellation, as well as learn about any delays.
- * @public
+ * @internal
  */
 export interface IProgress {
 	/**
@@ -45,7 +44,7 @@ export interface IProgress {
 }
 
 /**
- * @public
+ * @internal
  */
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
@@ -151,7 +150,7 @@ const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
  * @param delayMs - wait time for previous iteration
  * @param error - error based on which we decide wait time.
  * @returns Wait time to wait for.
- * @public
+ * @internal
  */
 export function calculateMaxWaitTime(delayMs: number, error: unknown): number {
 	const retryDelayFromError = getRetryDelayFromError(error);

@@ -4,13 +4,8 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import {
-	EncodedChunkGeneric,
-	IdentifierOrIndex,
-	ShapeIndex,
-	unionOptions,
-	Count,
-} from "./formatGeneric";
+import { unionOptions } from "../../../codec";
+import { EncodedFieldBatchGeneric, IdentifierOrIndex, ShapeIndex, Count } from "./formatGeneric";
 
 // TODO: Versions from here and schemaIndexFormat.ts should eventually be deduplicated into one version.
 export const version = 1.0;
@@ -18,11 +13,6 @@ export const version = 1.0;
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
 export const validVersions = new Set([version]);
-
-export const Versioned = Type.Object({
-	version: Type.Number(),
-});
-type Versioned = Static<typeof Versioned>;
 
 /**
  * Top level length is implied from length of data array.
@@ -177,5 +167,5 @@ export type EncodedInlineArray = Static<typeof EncodedInlineArray>;
 export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 
-export const EncodedChunk = EncodedChunkGeneric(version, EncodedChunkShape);
-export type EncodedChunk = Static<typeof EncodedChunk>;
+export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
+export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

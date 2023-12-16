@@ -17,7 +17,6 @@ import {
 	rebaseChange,
 	RevisionTag,
 	SessionId,
-	SimpleDependee,
 } from "../core";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
 import {
@@ -29,6 +28,8 @@ import {
 	minSequenceId,
 	SequencedCommit,
 	SummarySessionBranch,
+	decrementSequenceId,
+	maxSequenceId,
 } from "./editManagerFormat";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
@@ -45,7 +46,7 @@ export class EditManager<
 	TEditor extends ChangeFamilyEditor,
 	TChangeset,
 	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
-> extends SimpleDependee {
+> {
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 
@@ -120,7 +121,6 @@ export class EditManager<
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 	) {
-		super("EditManager");
 		this.trunkBase = {
 			revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			change: changeFamily.rebaser.compose([]),
@@ -264,23 +264,35 @@ export class EditManager<
 		if (minimumBranchBaseSequenceId !== undefined) {
 			// If that branch is behind the minimum sequence id, we only want to evict commits older than it,
 			// even if those commits are behind the minimum sequence id
-			trunkTailSequenceId = minSequenceId(trunkTailSequenceId, minimumBranchBaseSequenceId);
+			const sequenceIdBeforeMinimumBranchBase = decrementSequenceId(
+				minimumBranchBaseSequenceId,
+			);
+			trunkTailSequenceId = minSequenceId(
+				trunkTailSequenceId,
+				sequenceIdBeforeMinimumBranchBase,
+			);
 		}
 
 		// TODO get the oldest revertible sequence id from all registered branches, not just the local branch
 		const oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId();
 		if (oldestRevertibleSequenceId !== undefined) {
 			// use a smaller sequence number so that the oldest revertible is not trimmed
-			const sequenceIdBeforeOldestRevertible: SequenceId = {
-				sequenceNumber: brand(oldestRevertibleSequenceId.sequenceNumber - 1),
-			};
+			const sequenceIdBeforeOldestRevertible = decrementSequenceId(
+				oldestRevertibleSequenceId,
+			);
 			trunkTailSequenceId = minSequenceId(
 				trunkTailSequenceId,
 				sequenceIdBeforeOldestRevertible,
 			);
 		}
 
-		const [sequenceId, latestEvicted] = this.getClosestTrunkCommit(trunkTailSequenceId);
+		const [sequenceId, latestEvicted] = this.getClosestTrunkCommit(
+			maxSequenceId(
+				trunkTailSequenceId,
+				this.sequenceMap.minKey() ?? minimumPossibleSequenceId,
+			),
+		);
+
 		// Don't do any work if the commit found by the search is already the tail of the trunk
 		if (latestEvicted !== this.trunkBase) {
 			// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,

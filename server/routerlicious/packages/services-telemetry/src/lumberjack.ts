@@ -14,8 +14,14 @@ import {
 	ILumberFormatter,
 } from "./resources";
 import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
-import { SanitizationLumberFormatter } from "./sanitizationLumberFormatter";
+import {
+	BaseSanitizationLumberFormatter,
+	SanitizationLumberFormatter,
+} from "./sanitizationLumberFormatter";
 
+/**
+ * @internal
+ */
 export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;
 	enableSanitization?: boolean;
@@ -36,6 +42,9 @@ export const setGlobalLumberjackInstance = (lumberjackInstance: Lumberjack) => {
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
 // by calling setup() before Lumberjack can be used - the engines process and emit the collected data.
 // An optional ILumberjackSchemaValidator list can be provided to validate the schema of the data.
+/**
+ * @internal
+ */
 export class Lumberjack {
 	private readonly _engineList: ILumberjackEngine[] = [];
 	private _schemaValidators: ILumberjackSchemaValidator[] | undefined;
@@ -164,6 +173,8 @@ export class Lumberjack {
 		const lumberFormatters: ILumberFormatter[] = [];
 		if (this._options.enableSanitization) {
 			lumberFormatters.push(new SanitizationLumberFormatter());
+		} else {
+			lumberFormatters.push(new BaseSanitizationLumberFormatter());
 		}
 		this._formatters = lumberFormatters;
 
@@ -181,6 +192,7 @@ export class Lumberjack {
 			this._engineList,
 			this._schemaValidators,
 			properties,
+			this._formatters,
 		);
 	}
 
@@ -196,7 +208,12 @@ export class Lumberjack {
 	) {
 		this.errorOnIncompleteSetup();
 		const lumberProperties = this._options.enableGlobalTelemetryContext
-			? { ...properties, ...getGlobalTelemetryContext().getProperties() }
+			? {
+					...(properties instanceof Map
+						? Object.fromEntries(properties.entries())
+						: properties),
+					...getGlobalTelemetryContext().getProperties(),
+			  }
 			: properties;
 		const lumber = new Lumber<string>(
 			Lumberjack.LogMessageEventName,

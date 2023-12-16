@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { _InlineTrick, assertValidIndex, fail, objectToMap } from "../../../util";
+import { assertValidIndex } from "../../../util";
 import { TreeChunk } from "../chunk";
 import { FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities";
 import { TreeValue } from "../../../core";
@@ -169,6 +169,9 @@ export function readStreamStream(stream: StreamCursor): StreamCursor {
 	return { data: content, offset: 0 };
 }
 
+/**
+ * Decodes a chunk within a FieldBatch.
+ */
 export interface ChunkDecoder {
 	/**
 	 * Read from stream, updating the offset.
@@ -177,49 +180,4 @@ export interface ChunkDecoder {
 	 * This chunk is allowed to reference/take ownership of content it reads from the stream.
 	 */
 	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk;
-}
-
-/**
- * Applies a function to the content of a [discriminated union](https://en.wikipedia.org/wiki/Tagged_union)
- * where the function to apply depends on the which value from the union it holds.
- *
- * This uses a rather non-standard encoding of the union where it is an object with many differently named optional fields,
- * and which of the fields is populated determines the content type.
- * This union encoding has the advantage that schema validation (such as that implemented by TypeBox) can validate the data.
- * Other encodings, such as an untagged-union, then tagging the content types with a marker enum require the schema validator to disambiguate the union members,
- * inferring that the enum can be use to differentiate them.
- */
-export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends any[], TResult> {
-	private readonly library: ReadonlyMap<
-		keyof TUnion,
-		(value: unknown, ...args: TArgs) => TResult
-	>;
-
-	public constructor(
-		library: [
-			{
-				readonly [Property in keyof TUnion]-?: (
-					value: Required<TUnion>[Property],
-					...args: TArgs
-				) => TResult;
-			},
-		][_InlineTrick],
-	) {
-		this.library = objectToMap(
-			library as Record<keyof TUnion, (value: unknown, ...args: TArgs) => TResult>,
-		);
-	}
-
-	public dispatch(union: TUnion, ...args: TArgs): TResult {
-		const keys = Reflect.ownKeys(union);
-		assert(
-			keys.length === 1,
-			0x733 /* discriminated union type should have exactly one member */,
-		);
-		const key: keyof TUnion = keys[0] as keyof TUnion;
-		const value = union[key];
-		const factory = this.library.get(key) ?? fail("missing function for union member");
-		const result = factory(value, ...args);
-		return result;
-	}
 }

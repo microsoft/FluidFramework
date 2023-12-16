@@ -11,10 +11,16 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
+/**
+ * @alpha
+ */
 export interface IProvideTestFluidObject {
 	readonly ITestFluidObject: ITestFluidObject;
 }
 
+/**
+ * @alpha
+ */
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
 	root: ISharedMap;
 	readonly runtime: IFluidDataStoreRuntime;

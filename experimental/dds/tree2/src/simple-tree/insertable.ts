@@ -17,19 +17,17 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
-	TreeSchema,
+	FlexTreeSchema,
 } from "../feature-libraries";
 
 /**
  * Data from which a {@link TreeObjectNode} can be built.
- * @alpha
  */
 export type InsertableTreeObjectNode<TSchema extends ObjectNodeSchema> =
 	InsertableTreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
  * Helper for generating the properties of a InsertableTreeObjectNode.
- * @alpha
  */
 export type InsertableTreeObjectNodeFields<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
@@ -45,14 +43,12 @@ export type InsertableTreeObjectNodeFields<
 
 /**
  * Data from which a {@link TreeField} can be built.
- * @alpha
  */
 export type InsertableTreeField<TSchema extends TreeFieldSchema = TreeFieldSchema> =
 	InsertableTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
 /**
  * Helper for implementing InsertableTreeField.
- * @alpha
  */
 export type InsertableTreeFieldInner<
 	Kind extends FieldKind,
@@ -69,7 +65,6 @@ export type InsertableTreeFieldInner<
  * Given multiple node schema types, return the corresponding object type union from which the node could be built.
  *
  * If the types are ambagious, use the schema's factory to construct a unhydrated node instance with the desired type.
- * @alpha
  */
 export type InsertableTreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
 	? unknown
@@ -88,7 +83,6 @@ export type InsertableTreeNodeUnion<TTypes extends AllowedTypes> = TTypes extend
 
 /**
  * Given a node's schema, return the corresponding object from which the node could be built.
- * @alpha
  */
 export type InsertableTypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
@@ -105,7 +99,7 @@ export type InsertableTypedNode<TSchema extends TreeNodeSchema> = TSchema extend
 /**
  * Data which can be built into an entire tree matching the provided schema.
  */
-export type InsertableTreeRoot<TSchema extends TreeSchema> = TSchema extends TreeSchema<
+export type InsertableTreeRoot<TSchema extends FlexTreeSchema> = TSchema extends FlexTreeSchema<
 	infer TRootFieldSchema
 >
 	? InsertableTreeField<TRootFieldSchema>

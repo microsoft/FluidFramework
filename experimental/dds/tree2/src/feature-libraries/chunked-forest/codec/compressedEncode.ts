@@ -12,8 +12,10 @@ import {
 	TreeNodeSchemaIdentifier,
 	Value,
 	forEachNode,
+	FieldKindIdentifier,
 } from "../../../core";
 import { fail, getOrCreate } from "../../../util";
+import { type FieldKind } from "../../modular-schema";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
@@ -21,30 +23,32 @@ import {
 } from "./chunkEncodingGeneric";
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
 import {
-	EncodedChunk,
 	version,
 	EncodedChunkShape,
 	EncodedValueShape,
 	EncodedAnyShape,
 	EncodedNestedArray,
+	EncodedFieldBatch,
 } from "./format";
+import { FieldBatch } from "./fieldBatch";
 
 /**
- * Encode data from `cursor` in into an `EncodedChunk`.
+ * Encode data from `FieldBatch` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
  *
  * Most of the compression strategy comes from the policy provided via `cache`.
  */
-export function compressedEncode(
-	cursor: ITreeCursorSynchronous,
-	cache: EncoderCache,
-): EncodedChunk {
-	const buffer: BufferFormat = [];
+export function compressedEncode(fieldBatch: FieldBatch, cache: EncoderCache): EncodedFieldBatch {
+	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
-	anyFieldEncoder.encodeField(cursor, cache, buffer);
-	return handleShapesAndIdentifiers(version, buffer);
+	for (const cursor of fieldBatch) {
+		const buffer: BufferFormat = [];
+		anyFieldEncoder.encodeField(cursor, cache, buffer);
+		batchBuffer.push(buffer);
+	}
+	return handleShapesAndIdentifiers(version, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -417,6 +421,7 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 	public constructor(
 		private readonly treeEncoder: TreeShapePolicy,
 		private readonly fieldEncoder: FieldShapePolicy,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKind>,
 	) {}
 
 	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

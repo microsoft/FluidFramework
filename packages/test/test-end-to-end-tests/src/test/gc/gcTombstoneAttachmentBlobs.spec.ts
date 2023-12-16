@@ -14,7 +14,7 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -29,7 +29,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) => {
+describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectProvider) => {
 	const sweepTimeoutMs = 200;
 	let settings = {};
 	const gcOptions: IGCRuntimeOptions = {
@@ -262,10 +262,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
 					clientType: "interactive",
 				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
-					clientType: "noninteractive/summarizer",
-				},
 			],
 			async () => {
 				const { dataStore: mainDataStore, summarizer } =
@@ -315,7 +311,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				container2.close();
 
 				// Reference the blob in the main container where it's not a tombstone yet. This should un-tombstone the
-				// blob. It will result in a SweepReadyObject_Revived error log.
+				// blob.
 				mainDataStore._root.set("blob1", blobHandle1);
 
 				// Summarize so that the blob is not a tombstone in the summary.

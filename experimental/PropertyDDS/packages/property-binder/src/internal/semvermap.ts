@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export enum UpgradeType {
 	NONE = 0, // Only applies for exact matches
 	PATCH = 1, // Allow a higher patch version

@@ -87,17 +87,6 @@ describe("SharedString interval collections", () => {
 		);
 	});
 
-	function checkIntervalChange() {
-		const collection = sharedString.getIntervalCollection("test");
-		const interval = collection.add({ start: 0, end: 0 });
-		const intervalId = interval.getIntervalId();
-		assert(intervalId);
-		// @ts-expect-error - require passing both interval endpoints
-		collection.change(intervalId, { start: 1, end: undefined });
-		// @ts-expect-error - require passing both interval endpoints
-		collection.change(intervalId, { start: undefined, end: 1 });
-	}
-
 	describe("in a connected state with a remote SharedString", () => {
 		let sharedString2: SharedString;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
@@ -186,11 +175,103 @@ describe("SharedString interval collections", () => {
 			]);
 		});
 
+		describe("changing endpoints and/or properties", () => {
+			it("changes only endpoints with new signature", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { start: 1, end: 4 });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 1);
+			});
+			it("changes only properties with new signature", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { props: { a: 2 } });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 0,
+					end: 3,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
+			});
+			it("changes endpoints and properties with new signature", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { start: 1, end: 4, props: { a: 2 } });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
+			});
+			it("changes endpoints and properties with new signature on a remote sharedString", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+				containerRuntimeFactory.processAllMessages();
+
+				const collection2 = sharedString2.getIntervalCollection("test");
+				collection.change(id, { start: 1, end: 4, props: { a: 2 } });
+				containerRuntimeFactory.processAllMessages();
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assertIntervalEquals(sharedString2, collection2.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
+				assert.equal(collection2.getIntervalById(id)?.properties.a, 2);
+			});
+			it("passes empty property set to change", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { props: {} });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 0,
+					end: 3,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 1);
+			});
+			it("passes undefined endpoints and properties to change", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { start: undefined, end: undefined, props: undefined });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 0,
+					end: 3,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 1);
+			});
+		});
+
 		// Regression test for bug described in <https://dev.azure.com/fluidframework/internal/_workitems/edit/4477>
 		//
-		// this test involves a crash inside RBTree when multiple intervals slide
+		// This test involves a crash inside RBTree when multiple intervals slide
 		// off the string
-		it.skip("passes regression test for #4477", () => {
+		//
+		// More specifically, previously we didn't properly clear the segment
+		// on local references which became detached, which caused crashes on
+		// some IntervalCollection workflows
+		it("passes regression test for #4477", () => {
 			sharedString.insertText(0, "ABC");
 			sharedString.insertText(0, "D");
 			// DABC

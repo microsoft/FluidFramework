@@ -4,13 +4,6 @@
  */
 
 export {
-	Dependee,
-	Dependent,
-	NamedComputation,
-	ObservingDependent,
-	InvalidationToken,
-	recordDependency,
-	SimpleDependee,
 	EmptyKey,
 	FieldKey,
 	TreeType,
@@ -37,7 +30,17 @@ export {
 	NodeData,
 	GenericTreeNode,
 	JsonableTree,
-	Delta,
+	ProtoNodes,
+	DeltaRoot,
+	DeltaProtoNode,
+	DeltaMark,
+	DeltaDetachedNodeId,
+	DeltaFieldMap,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
+	DeltaDetachedNodeRename,
+	DeltaFieldChanges,
 	rootFieldKey,
 	rootField,
 	ITreeCursor,
@@ -57,7 +60,7 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	StoredSchemaRepository,
+	TreeStoredSchemaSubscription,
 	FieldKindIdentifier,
 	TreeTypeSet,
 	TreeStoredSchema,
@@ -91,7 +94,6 @@ export {
 	Opaque,
 	extractFromOpaque,
 	brand,
-	brandOpaque,
 	ValueFromBranded,
 	NameFromBranded,
 	JsonCompatibleReadOnly,
@@ -120,24 +122,13 @@ export {
 	HasListeners,
 } from "./events";
 
-export {
-	cursorToJsonObject,
-	singleJsonCursor,
-	jsonArray,
-	jsonObject,
-	jsonSchema,
-	nodeKeyField,
-	nodeKeySchema,
-	leaf,
-	SchemaBuilder,
-} from "./domains";
+export { leaf } from "./domains";
 
 export {
 	FieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
-	getPrimaryField,
 	typeNameSymbol,
 	valueSymbol,
 	ContextuallyTypedNodeDataObject,
@@ -161,14 +152,13 @@ export {
 	CursorWithNode,
 	EditableTreeEvents,
 	InternalTypedSchemaTypes,
-	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
 	AllowedTypes,
 	TreeNodeSchema as FlexTreeNodeSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	TreeFieldSchema,
@@ -185,7 +175,6 @@ export {
 	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	InternalEditableTreeTypes,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeOptionalField,
@@ -217,33 +206,29 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	FlexTreeTyped,
 	TreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 	stackTreeFieldCursor,
+	FlexTreeUnknownUnboxed,
+	InsertableFlexNode,
+	InsertableFlexField,
+	AllowedTypesToFlexInsertableTree,
+	ApplyMultiplicity,
+	NormalizeObjectNodeFields,
+	NormalizeFieldSchema,
+	Fields,
+	MapFieldSchema,
 } from "./feature-libraries";
 
 export {
-	TreeObjectNodeFields,
-	TreeField,
-	TreeFieldInner,
-	TypedNode,
-	TreeNodeUnion,
-	TreeListNode,
-	TreeListNodeOld,
-	TreeMapNode,
-	TreeObjectNode,
-	Tree as TreeOld,
-	TreeApi as TreeApiOld,
-	TreeNode,
-	TreeObjectFactory,
-	FactoryTreeSchema,
+	TreeArrayNode,
 	TreeMapNodeBase,
 	Unhydrated,
 	IterableTreeListContent,
+	TreeNode,
 } from "./simple-tree";
 
 export {
@@ -260,14 +245,12 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
-	TypedTreeFactory,
-	TypedTreeOptions,
-	ITree as ITreeOld,
 	SharedTreeContentSnapshot,
 	FlexTreeView,
-	TreeView as TreeViewOld,
 	ITreeViewFork,
 	buildTreeConfiguration,
+	ISharedTreeEditor,
+	ISchemaEditor,
 } from "./shared-tree";
 
 export {
@@ -278,13 +261,24 @@ export {
 	SchemaFactory,
 	Tree,
 	TreeApi,
-	NodeBase,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
 	NodeFromSchema,
+	TreeMapNode,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+
+	// experimental @alpha APIs:
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
+
+	// test recursive schema for checking that d.ts files handles schema correctly
+	test_RecursiveObject,
+	test_RecursiveObject_base,
 } from "./class-tree";
-export { TreeFactory, TreeOptions } from "./treeFactory";
+export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
@@ -293,3 +287,51 @@ export { typeboxValidator } from "./external-utilities";
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";
 export { InternalTypes };
+
+// These would be in InternalTypes above but are `@alpha` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
+export {
+	Invariant,
+	Contravariant,
+	Covariant,
+	BrandedType,
+	ExtractFromOpaque,
+	Assume,
+	AllowOptional,
+	RequiredFields,
+	OptionalFields,
+	_InlineTrick,
+	_RecursiveTrick,
+	FlattenKeys,
+	AllowOptionalNotFlattened,
+	isAny,
+	BrandedKeyContent,
+} from "./util";
+
+export {
+	NormalizeField,
+	NormalizeAllowedTypes,
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	NodeKeys,
+	CollectOptions,
+	TypedFields,
+	UnbrandedName,
+	EmptyObject,
+
+	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
+	// These names also are collision prone.
+	Required,
+	Optional,
+	NodeKeyFieldKind,
+	Forbidden,
+	Sequence,
+} from "./feature-libraries";

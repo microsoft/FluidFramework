@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
-	NodeBase,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -23,6 +23,7 @@ import {
 } from "../../class-tree/schemaFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 import { TreeFactory } from "../../treeFactory";
+import { TreeNode } from "../../simple-tree";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -30,7 +31,7 @@ import { TreeFactory } from "../../treeFactory";
 	class Note extends schema.object("Note", { text: schema.string }) {}
 
 	class NodeMap extends schema.map("Notes", Note) {}
-	class NodeList extends schema.list("Notes", Note) {}
+	class NodeList extends schema.array("Notes", Note) {}
 
 	// eslint-disable-next-line no-inner-declarations
 	function f(n: NodeMap): void {
@@ -166,7 +167,7 @@ describe("schemaFactory", () => {
 			});
 
 			assert(root instanceof Point);
-			assert(root instanceof NodeBase);
+			assert(root instanceof TreeNode);
 			assert(Reflect.has(root, "selected"));
 			assert.equal(root.selected, false);
 			// Ensure modification works
@@ -230,8 +231,7 @@ describe("schemaFactory", () => {
 		});
 	});
 
-	// Skipped since constructing map and list nodes directly is not yet implemented
-	it.skip("mixed", () => {
+	it("mixed", () => {
 		const schema = new SchemaFactory("com.example");
 
 		class Point extends schema.object("Point", {
@@ -245,7 +245,7 @@ describe("schemaFactory", () => {
 		}) {}
 
 		class NodeMap extends schema.map("NoteMap", Note) {}
-		class NodeList extends schema.list("NoteList", Note) {}
+		class NodeList extends schema.array("NoteList", Note) {}
 
 		class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
@@ -262,7 +262,7 @@ describe("schemaFactory", () => {
 		const view: TreeView<Canvas> = tree.schematize(config);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
-		const item = stuff[1];
+		const item = stuff[0];
 		const s: string = item.text;
 		assert.equal(s, "hi");
 	});
@@ -272,7 +272,7 @@ describe("schemaFactory", () => {
 			const builder = new SchemaFactory("test");
 
 			class Inventory extends builder.object("Inventory", {
-				parts: builder.list(builder.number),
+				parts: builder.array(builder.number),
 			}) {}
 
 			const treeConfiguration = new TreeConfiguration(
@@ -294,21 +294,21 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 
 			// Explicit structural example
-			const MyList = factory.list(factory.number);
+			const MyList = factory.array(factory.number);
 			type MyList = NodeFromSchema<typeof MyList>;
 
 			// Inline structural example
-			factory.object("Foo", { myList: factory.list(factory.number) });
+			factory.object("Foo", { myList: factory.array(factory.number) });
 
 			function broken() {
 				// @ts-expect-error structural list schema are not typed as classes.
-				class NotAClass extends factory.list(factory.number) {}
+				class NotAClass extends factory.array(factory.number) {}
 			}
 		});
 
 		it("Named", () => {
 			const factory = new SchemaFactory("test");
-			class NamedList extends factory.list("name", factory.number) {
+			class NamedList extends factory.array("name", factory.number) {
 				public testProperty = false;
 			}
 
@@ -325,7 +325,7 @@ describe("schemaFactory", () => {
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
-			assert(listNode instanceof NodeBase);
+			assert(listNode instanceof TreeNode);
 			assert(Reflect.has(listNode, "testProperty"));
 			assert.equal(listNode.testProperty, false);
 			listNode.testProperty = true;
@@ -335,10 +335,9 @@ describe("schemaFactory", () => {
 			assert.equal(listNode.at(0), 5);
 		});
 
-		// Unhydrated lists are not implemented yet
-		it.skip("Unhydrated", () => {
+		it("Unhydrated", () => {
 			const factory = new SchemaFactory("test");
-			class NamedList extends factory.list("name", factory.number) {}
+			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
 	});
@@ -381,7 +380,7 @@ describe("schemaFactory", () => {
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
-			assert(mapNode instanceof NodeBase);
+			assert(mapNode instanceof TreeNode);
 			assert(Reflect.has(mapNode, "testProperty"));
 			assert.equal(mapNode.testProperty, false);
 			mapNode.testProperty = true;
@@ -391,12 +390,190 @@ describe("schemaFactory", () => {
 			assert.equal(mapNode.get("x"), 5);
 		});
 
-		// Unhydrated maps are not implemented yet
-		it.skip("Unhydrated", () => {
+		it("Unhydrated", () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
 		});
+	});
+
+	describe("produces proxies that can be read after insertion for trees of", () => {
+		// This suite ensures that proxies created via `new X(...)` are "hydrated" after they are inserted into the tree.
+		// After insertion, each of those proxies should be the same object as the corresponding proxy in the tree.
+
+		// This schema allows trees of all the various combinations of containers.
+		// For example, "objects with lists", "lists of maps", "maps of lists", "lists of lists", etc.
+		// It will be used below to generate test cases of the various combinations.
+		const comboSchemaFactory = new SchemaFactory("combo");
+		class ComboChildObject extends comboSchemaFactory.object("comboObjectChild", {}) {}
+		class ComboChildList extends comboSchemaFactory.array(
+			"comboListChild",
+			comboSchemaFactory.null,
+		) {}
+		class ComboChildMap extends comboSchemaFactory.map(
+			"comboMapChild",
+			comboSchemaFactory.null,
+		) {}
+		class ComboParentObject extends comboSchemaFactory.object("comboObjectParent", {
+			child: [ComboChildObject, ComboChildList, ComboChildMap],
+		}) {}
+		class ComboParentList extends comboSchemaFactory.array("comboListParent", [
+			ComboChildObject,
+			ComboChildList,
+			ComboChildMap,
+		]) {}
+		class ComboParentMap extends comboSchemaFactory.map("comboMapParent", [
+			ComboChildObject,
+			ComboChildList,
+			ComboChildMap,
+		]) {}
+		class ComboRoot extends comboSchemaFactory.object("comboRoot", {
+			root: comboSchemaFactory.optional([ComboParentObject, ComboParentList, ComboParentMap]),
+		}) {}
+
+		type ComboParent = ComboParentObject | ComboParentList | ComboParentMap;
+		function isComboParent(value: unknown): value is ComboParent {
+			return (
+				value instanceof ComboParentObject ||
+				value instanceof ComboParentList ||
+				value instanceof ComboParentMap
+			);
+		}
+		type ComboChild = ComboChildObject | ComboChildList | ComboChildMap;
+		function isComboChild(value: unknown): value is ComboChild {
+			return (
+				value instanceof ComboChildObject ||
+				value instanceof ComboChildList ||
+				value instanceof ComboChildMap
+			);
+		}
+		type ComboNode = ComboParent | ComboChild;
+
+		/** Iterates through all the nodes in a combo tree */
+		function* walkComboObjectTree(combo: ComboNode): IterableIterator<ComboNode> {
+			yield combo;
+
+			if (combo instanceof ComboParentObject) {
+				yield* walkComboObjectTree(combo.child);
+			} else if (combo instanceof ComboParentList) {
+				for (const c of combo) {
+					yield* walkComboObjectTree(c);
+				}
+			} else if (combo instanceof ComboParentMap) {
+				for (const c of combo.values()) {
+					yield* walkComboObjectTree(c);
+				}
+			}
+		}
+
+		/** Sorts parent nodes before child nodes */
+		function compareComboNodes(a: ComboNode, b: ComboNode): -1 | 0 | 1 {
+			if (isComboParent(a) && isComboChild(b)) {
+				return 1;
+			}
+			if (isComboChild(a) && isComboParent(b)) {
+				return -1;
+			}
+			return 0;
+		}
+
+		/**
+		 * Defines the structure of a combo tree.
+		 * @example
+		 * A layout of
+		 * ```json
+		 * { "parent": "list", "child": "map" }
+		 * ```
+		 * defines a combo tree which is a list of maps.
+		 */
+		interface ComboTreeLayout {
+			parentType: "object" | "list" | "map";
+			childType: "object" | "list" | "map";
+		}
+
+		/**
+		 * Builds trees of {@link ComboObject}s according to the given {@link ComboTreeLayout}.
+		 * Records all built objects and assigns each a unique ID.
+		 */
+		function createComboTree(layout: ComboTreeLayout) {
+			const nodes: ComboNode[] = [];
+			function createComboParent(): ComboParent {
+				const child = createComboChild();
+				let parent: ComboParent;
+				switch (layout.parentType) {
+					case "object":
+						parent = new ComboParentObject({ child });
+						break;
+					case "list":
+						parent = new ComboParentList([child]);
+						break;
+					case "map":
+						parent = new ComboParentMap(new Map([["child", child]]));
+						break;
+					default:
+						unreachableCase(layout.parentType);
+				}
+				nodes.push(parent);
+				return parent;
+			}
+
+			function createComboChild(): ComboChild {
+				let child: ComboChild;
+				switch (layout.childType) {
+					case "object":
+						child = new ComboChildObject({});
+						break;
+					case "list":
+						child = new ComboChildList([]);
+						break;
+					case "map":
+						child = new ComboChildMap(new Map());
+						break;
+					default:
+						unreachableCase(layout.childType);
+				}
+				nodes.push(child);
+				return child;
+			}
+
+			return { parent: createComboParent(), nodes };
+		}
+
+		const objectTypes = ["object", "list", "map"] as const;
+		for (const parentType of objectTypes) {
+			for (const childType of objectTypes) {
+				// Generate a test for all permutations of object, list and map
+				it(`${parentType} → ${childType}`, () => {
+					const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
+					const factory = new TreeFactory({});
+					const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+					const view = tree.schematize(config);
+					const { parent, nodes } = createComboTree({
+						parentType,
+						childType,
+					});
+
+					function validate(): void {
+						assert(view.root.root !== undefined);
+						const treeObjects = [...walkComboObjectTree(view.root.root)];
+						assert.equal(treeObjects.length, nodes.length);
+						// Sort the objects we built in the same way as the objects in the tree so that we can compare them below
+						nodes.sort(compareComboNodes);
+						treeObjects.sort(compareComboNodes);
+						for (let i = 0; i < nodes.length; i++) {
+							// Each raw object should be reference equal to the corresponding object in the tree.
+							assert.equal(nodes[i], treeObjects[i]);
+						}
+					}
+
+					// Ensure that the proxies can be read during the change, as well as after
+					Tree.on(view.root, "afterChange", () => validate());
+					view.events.on("afterBatch", () => validate());
+					view.root.root = parent;
+					validate();
+				});
+			}
+		}
 	});
 });
 

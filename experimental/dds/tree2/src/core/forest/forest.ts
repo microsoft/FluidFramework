@@ -5,8 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ISubscribable } from "../../events";
-import { Dependee } from "../dependency-tracking";
-import { StoredSchemaRepository, FieldKey } from "../schema-stored";
+import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored";
 import {
 	Anchor,
 	AnchorSet,
@@ -56,7 +55,7 @@ export interface ForestEvents {
  * When invalidating, all outstanding cursors must be freed or cleared.
  * @alpha
  */
-export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
+export interface IForestSubscription extends ISubscribable<ForestEvents> {
 	/**
 	 * Set of anchors this forest is tracking.
 	 *
@@ -72,7 +71,7 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
 	 */
-	clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
+	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
 
 	/**
 	 * Allocates a cursor in the "cleared" state.

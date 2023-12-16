@@ -5,16 +5,17 @@
 
 import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
+ * @internal
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject` in a {@link LoadableObjectRecord}.
+ * @public
  */
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
@@ -22,6 +23,7 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  * A class object of `DataObject` or `SharedObject`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
+ * @public
  */
 export type LoadableObjectClass<T extends IFluidLoadable> =
 	| DataObjectClass<T>
@@ -32,9 +34,10 @@ export type LoadableObjectClass<T extends IFluidLoadable> =
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `DataObject`.
+ * @public
  */
 export type DataObjectClass<T extends IFluidLoadable> = {
-	readonly factory: IFluidDataStoreFactory;
+	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
 } & LoadableObjectCtor<T>;
 
 /**
@@ -42,6 +45,7 @@ export type DataObjectClass<T extends IFluidLoadable> = {
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `SharedObject`.
+ * @public
  */
 export type SharedObjectClass<T extends IFluidLoadable> = {
 	readonly getFactory: () => IChannelFactory;
@@ -51,6 +55,7 @@ export type SharedObjectClass<T extends IFluidLoadable> = {
  * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
  *
  * @typeParam T - The class of the loadable object.
+ * @public
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
@@ -61,6 +66,7 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
  *
  * It includes both the instances of objects that are initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
+ * @public
  */
 export interface ContainerSchema {
 	/**
@@ -96,13 +102,17 @@ export interface ContainerSchema {
 	dynamicObjectTypes?: LoadableObjectClass<any>[];
 }
 
+/**
+ * @internal
+ */
 export interface IProvideRootDataObject {
-	readonly IRootDataObject?: IRootDataObject;
+	readonly IRootDataObject: IRootDataObject;
 }
 
 /**
  * Holds the collection of objects that the container was initially created with, as well as provides the ability
  * to dynamically create further objects during usage.
+ * @internal
  */
 export interface IRootDataObject extends IProvideRootDataObject {
 	/**
@@ -127,6 +137,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
  * @param member - The service-specific member object for the client.
  *
  * @see See {@link IServiceAudienceEvents} for usage details.
+ * @public
  */
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
@@ -139,6 +150,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
  * {@link IServiceAudience.getMembers} method will emit events.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
+ * @public
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 	/**
@@ -172,6 +184,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  * details about the connecting client, such as device information, environment, or a username.
  *
  * @typeParam M - A service-specific {@link IMember} type.
+ * @public
  */
 export interface IServiceAudience<M extends IMember>
 	extends IEventProvider<IServiceAudienceEvents<M>> {
@@ -192,6 +205,7 @@ export interface IServiceAudience<M extends IMember>
  * Base interface for information for each connection made to the Fluid session.
  *
  * @remarks This interface can be extended to provide additional information specific to each service.
+ * @public
  */
 export interface IConnection {
 	/**
@@ -209,6 +223,7 @@ export interface IConnection {
  * Base interface to be implemented to fetch each service's member.
  *
  * @remarks This interface can be extended by each service to provide additional service-specific user metadata.
+ * @public
  */
 export interface IMember {
 	/**
@@ -224,5 +239,6 @@ export interface IMember {
 
 /**
  * An extended member object that includes currentConnection
+ * @public
  */
 export type Myself<M extends IMember = IMember> = M & { currentConnection: string };

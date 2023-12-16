@@ -5,9 +5,7 @@
 
 import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core";
 import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
-import { Multiplicity } from "../modular-schema";
 import {
-	InternalTypedSchemaTypes,
 	TreeFieldSchema,
 	TreeNodeSchema,
 	AllowedTypes,
@@ -16,9 +14,11 @@ import {
 	Fields,
 	FieldNodeSchema,
 	MapNodeSchema,
+	FlexListToUnion,
+	LazyItem,
 } from "../typed-schema";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";
-import { TypedValueOrUndefined } from "./schemaAwareUtil";
+import { Multiplicity } from "../multiplicity";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
@@ -30,12 +30,6 @@ import { TypedValueOrUndefined } from "./schemaAwareUtil";
 export type EmptyObject = {};
 
 /**
- * @alpha
- */
-export type ValuePropertyFromSchema<TSchema extends ValueSchema | undefined> =
-	TSchema extends ValueSchema ? { [valueSymbol]: TreeValue<TSchema> } : EmptyObject;
-
-/**
  * Collects the various parts of the API together.
  * @alpha
  */
@@ -44,17 +38,15 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema | undefined,
 	TName,
 > = TValueSchema extends undefined
-	? FlexibleObject<TValueSchema, TName> & TTypedFields
-	: TypedValueOrUndefined<TValueSchema>;
-/**
- * The name and value part of the `Flexible` API.
- * @alpha
- */
-export type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> = [
-	FlattenKeys<
-		{ [typeNameSymbol]?: UnbrandedName<TName> } & ValuePropertyFromSchema<TValueSchema>
-	>,
-][_InlineTrick];
+	? FlattenKeys<
+			{ [typeNameSymbol]?: UnbrandedName<TName> } & (TValueSchema extends ValueSchema
+				? { [valueSymbol]: TreeValue<TValueSchema> }
+				: EmptyObject)
+	  > &
+			TTypedFields
+	: TValueSchema extends ValueSchema
+	? TreeValue<TValueSchema>
+	: undefined;
 
 /**
  * Remove type brand from name.
@@ -73,19 +65,19 @@ export type UnbrandedName<TName> = [
 export type TypedFields<TFields extends undefined | { readonly [key: string]: TreeFieldSchema }> = [
 	TFields extends { [key: string]: TreeFieldSchema }
 		? {
-				-readonly [key in keyof TFields]: TypedField<TFields[key]>;
+				-readonly [key in keyof TFields]: InsertableFlexField<TFields[key]>;
 		  }
 		: EmptyObject,
 ][_InlineTrick];
 
 /**
- * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
+ * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on FieldKind.
  * @alpha
  */
-export type TypedField<TField extends TreeFieldSchema> = [
+export type InsertableFlexField<TField extends TreeFieldSchema> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
-		AllowedTypesToTypedTrees<TField["allowedTypes"]>
+		AllowedTypesToFlexInsertableTree<TField["allowedTypes"]>
 	>,
 ][_InlineTrick];
 
@@ -104,45 +96,25 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
  * Takes in `AllowedTypes` and returns a TypedTree union.
  * @alpha
  */
-export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
-	T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
-		? InternalTypedSchemaTypes.ArrayToUnion<
-				TypeArrayToTypedTreeArray<
-					Assume<
-						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
-						readonly TreeNodeSchema[]
-					>
-				>
-		  >
+export type AllowedTypesToFlexInsertableTree<T extends AllowedTypes> = [
+	T extends readonly LazyItem<TreeNodeSchema>[]
+		? InsertableFlexNode<Assume<FlexListToUnion<T>, TreeNodeSchema>>
 		: ContextuallyTypedNodeData,
-][_InlineTrick];
-
-/**
- * Takes in `TreeNodeSchema[]` and returns a TypedTree union.
- * @alpha
- */
-export type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
-	T extends readonly [infer Head, ...infer Tail]
-		? [
-				TypedNode<Assume<Head, TreeNodeSchema>>,
-				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>,
-		  ]
-		: [],
 ][_InlineTrick];
 
 /**
  * Generate a schema aware API for a single tree schema.
  * @alpha
  */
-export type TypedNode<TSchema extends TreeNodeSchema> = FlattenKeys<
+export type InsertableFlexNode<TSchema extends TreeNodeSchema> = FlattenKeys<
 	CollectOptions<
 		TSchema extends ObjectNodeSchema<string, infer TFields extends Fields>
 			? TypedFields<TFields>
 			: TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema>
-			? { "": TypedField<TField> }
+			? InsertableFlexField<TField>
 			: TSchema extends MapNodeSchema<string, infer TField extends TreeFieldSchema>
 			? {
-					readonly [P in string]: TypedField<TField>;
+					readonly [P in string]: InsertableFlexField<TField>;
 			  }
 			: EmptyObject,
 		TSchema extends LeafNodeSchema<string, infer TValueSchema> ? TValueSchema : undefined,

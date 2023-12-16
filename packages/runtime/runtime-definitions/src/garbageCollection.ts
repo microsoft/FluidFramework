@@ -3,18 +3,35 @@
  * Licensed under the MIT License.
  */
 
-/** The key for the GC tree in summary. */
+/**
+ * The key for the GC tree in summary.
+ *
+ * @internal
+ */
 export const gcTreeKey = "gc";
-/** They prefix for GC blobs in the GC tree in summary. */
+/**
+ * They prefix for GC blobs in the GC tree in summary.
+ *
+ * @internal
+ */
 export const gcBlobPrefix = "__gc";
-/** The key for tombstone blob in the GC tree in summary. */
+/**
+ * The key for tombstone blob in the GC tree in summary.
+ *
+ * @internal
+ */
 export const gcTombstoneBlobKey = "__tombstones";
-/** The key for deleted nodes blob in the GC tree in summary. */
+/**
+ * The key for deleted nodes blob in the GC tree in summary.
+ *
+ * @internal
+ */
 export const gcDeletedBlobKey = "__deletedNodes";
 
 /**
  * Garbage collection data returned by nodes in a Container.
  * Used for running GC in the Container.
+ * @public
  */
 export interface IGarbageCollectionData {
 	/**
@@ -25,6 +42,7 @@ export interface IGarbageCollectionData {
 
 /**
  * GC details provided to each node during creation.
+ * @alpha
  */
 export interface IGarbageCollectionDetailsBase {
 	/**

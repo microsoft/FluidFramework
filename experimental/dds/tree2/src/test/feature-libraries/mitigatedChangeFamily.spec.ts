@@ -10,6 +10,8 @@ import { makeMitigatedChangeFamily } from "../../feature-libraries";
 const fallback = "Fallback";
 const arg1: any = "arg1";
 const arg2: any = "arg2";
+const arg3: any = "arg3";
+
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
 		assert.equal(changeReceiver, arg1);
@@ -72,8 +74,8 @@ describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
 		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
 		assert.equal(
-			mitigatedReturningRebaser.rebase(arg1, arg2),
-			returningRebaser.rebase(arg1, arg2),
+			mitigatedReturningRebaser.rebase(arg1, arg2, arg3),
+			returningRebaser.rebase(arg1, arg2, arg3),
 		);
 		assert.equal(
 			mitigatedReturningRebaser.invert(arg1, arg2),
@@ -84,7 +86,7 @@ describe("makeMitigatedChangeFamily", () => {
 	describe("catches errors from", () => {
 		it("rebase", () => {
 			errorLog.length = 0;
-			assert.equal(mitigatedThrowingRebaser.rebase(arg1, arg2), fallback);
+			assert.equal(mitigatedThrowingRebaser.rebase(arg1, arg2, arg3), fallback);
 			assert.deepEqual(errorLog, ["rebase"]);
 		});
 		it("invert", () => {

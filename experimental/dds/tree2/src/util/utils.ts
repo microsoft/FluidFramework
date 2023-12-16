@@ -9,8 +9,8 @@ import structuredClone from "@ungap/structured-clone";
 import {
 	generateStableId as runtimeGenerateStableId,
 	assertIsStableId,
-} from "@fluidframework/container-runtime";
-import { StableId } from "@fluidframework/runtime-definitions";
+	StableId,
+} from "@fluidframework/id-compressor";
 
 /**
  * Subset of Map interface.
@@ -31,6 +31,14 @@ export type RecursiveReadonly<T> = {
  * Remove `readonly` from all fields.
  */
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+/**
+ * Make all field required and omits fields whose ony valid value would be `undefined`.
+ * This is analogous to `Required<T>` except it tolerates 'optional undefined'.
+ */
+export type Populated<T> = {
+	[P in keyof T as Exclude<P, T[P] extends undefined ? P : never>]-?: T[P];
+};
 
 /**
  * Casts a readonly object to a mutable one.
@@ -427,6 +435,17 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
 }
 
 /**
+ * Make an inverted copy of a map.
+ *
+ * @returns a map which can look up the keys from the values of the original map.
+ */
+export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
+	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
+	assert(result.size === input.size, "all values in a map must be unique to invert it");
+	return result;
+}
+
+/**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
  * @alpha
  */
@@ -455,7 +474,7 @@ export interface Named<TName> {
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.
- * @alpha
+ * @beta
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
@@ -463,7 +482,7 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
  * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
- * @alpha
+ * @beta
  */
 export interface IDisposable {
 	/**
@@ -495,4 +514,11 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 	}
 
 	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
+}
+
+/**
+ * Compares strings lexically to form a strict partial ordering.
+ */
+export function compareStrings<T extends string>(a: T, b: T): number {
+	return a > b ? 1 : a === b ? 0 : -1;
 }

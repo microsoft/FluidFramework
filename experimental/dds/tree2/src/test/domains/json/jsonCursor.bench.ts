@@ -5,16 +5,14 @@
 
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import { ITreeCursor, jsonableTreeFromCursor, EmptyKey, JsonCompatible, brand } from "../../..";
 import {
-	ITreeCursor,
 	singleJsonCursor,
-	jsonableTreeFromCursor,
-	EmptyKey,
 	cursorToJsonObject,
 	jsonSchema,
-	JsonCompatible,
-	brand,
-} from "../../..";
+	jsonRoot,
+	SchemaBuilder,
+} from "../../../domains";
 import {
 	buildForest,
 	defaultSchemaPolicy,
@@ -22,13 +20,14 @@ import {
 	cursorForMapTreeNode,
 	cursorForJsonableTreeNode,
 	buildChunkedForest,
+	intoStoredSchema,
 } from "../../../feature-libraries";
 import {
 	FieldKey,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	JsonableTree,
 	moveToDetachedField,
+	TreeStoredSchemaRepository,
 } from "../../../core";
 import {
 	basicChunkTree,
@@ -36,7 +35,6 @@ import {
 	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
-import { jsonRoot, SchemaBuilder } from "../../../domains";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize } from "./twitter";
@@ -64,7 +62,7 @@ function bench(
 		scope: "JsonCursor benchmark",
 		libraries: [jsonSchema],
 	}).intoSchema(SchemaBuilder.optional(jsonRoot));
-	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
+	const schema = new TreeStoredSchemaRepository(intoStoredSchema(schemaCollection));
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;

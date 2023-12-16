@@ -15,9 +15,9 @@ import {
 	DataObjectFactoryType,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -77,7 +77,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 	return pendingState;
 };
 
-describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
+describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;

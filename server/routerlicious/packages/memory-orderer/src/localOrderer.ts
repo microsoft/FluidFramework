@@ -89,6 +89,7 @@ class LocalSocketPublisher implements IPublisher {
 
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
+ * @internal
  */
 export class LocalOrderer implements IOrderer {
 	public static async load(

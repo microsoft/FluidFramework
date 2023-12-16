@@ -4,8 +4,14 @@
  */
 
 import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
-import { Brand, brandedNumberType } from "../util";
-import { SessionId, SessionIdSchema, RevisionTag, RevisionTagSchema } from "../core";
+import { Brand, brand, brandedNumberType } from "../util";
+import {
+	SessionId,
+	SessionIdSchema,
+	RevisionTag,
+	RevisionTagSchema,
+	EncodedRevisionTag,
+} from "../core";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -16,6 +22,13 @@ export interface Commit<TChangeset> {
 	/** An identifier representing the session/user/client that made this commit */
 	readonly sessionId: SessionId;
 }
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type EncodedCommit<TChangeset> = {
+	readonly revision: EncodedRevisionTag;
+	readonly change: TChangeset;
+	readonly sessionId: SessionId;
+};
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -46,6 +59,16 @@ export const sequenceIdComparator = (a: SequenceId, b: SequenceId) =>
 export const equalSequenceIds = (a: SequenceId, b: SequenceId) => sequenceIdComparator(a, b) === 0;
 export const minSequenceId = (a: SequenceId, b: SequenceId) =>
 	sequenceIdComparator(a, b) < 0 ? a : b;
+export const maxSequenceId = (a: SequenceId, b: SequenceId) =>
+	sequenceIdComparator(a, b) > 0 ? a : b;
+export const decrementSequenceId = (sequenceId: SequenceId): SequenceId => {
+	return sequenceId.indexInBatch !== undefined
+		? {
+				sequenceNumber: brand(sequenceId.sequenceNumber),
+				indexInBatch: sequenceId.indexInBatch - 1,
+		  }
+		: { sequenceNumber: brand(sequenceId.sequenceNumber - 1) };
+};
 
 /**
  * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary

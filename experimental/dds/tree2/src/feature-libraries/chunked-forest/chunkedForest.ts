@@ -5,17 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	SimpleDependee,
-	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
 	IEditableForest,
 	TreeNavigationResult,
-	StoredSchemaRepository,
+	TreeStoredSchemaSubscription,
 	FieldKey,
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Delta,
 	UpPath,
 	Anchor,
 	FieldAnchor,
@@ -28,6 +25,7 @@ import {
 	Range,
 	ITreeCursorSynchronous,
 	aboveRootPlaceholder,
+	ProtoNodes,
 } from "../../core";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -49,9 +47,7 @@ interface StackNode {
  *
  * This implementation focuses on performance.
  */
-class ChunkedForest extends SimpleDependee implements IEditableForest {
-	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
-
+export class ChunkedForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
 	private readonly events = createEmitter<ForestEvents>();
@@ -64,12 +60,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 	 */
 	public constructor(
 		public roots: BasicChunk,
-		public readonly schema: StoredSchemaRepository,
+		public readonly schema: TreeStoredSchemaSubscription,
 		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
-	) {
-		super("object-forest.ChunkedForest");
-	}
+	) {}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
@@ -79,7 +73,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return this.events.on(eventName, listener);
 	}
 
-	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ChunkedForest {
+	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
 		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
 	}
@@ -123,20 +117,16 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
-				this.forest.invalidateDependents();
 				this.forest.roots.fields.delete(detachedField);
 			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
-				this.forest.invalidateDependents();
+			create(content: ProtoNodes, destination: FieldKey): void {
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				this.forest.invalidateDependents();
 				this.attachEdit(source, count, destination);
 			},
 			detach(source: Range, destination: FieldKey): void {
-				this.forest.invalidateDependents();
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -199,7 +189,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 					newContentSource !== oldContentDestination,
 					0x7b0 /* Replace detached source field and detached destination field must be different */,
 				);
-				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},

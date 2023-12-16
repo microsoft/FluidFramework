@@ -12,10 +12,12 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core";
+// eslint-disable-next-line import/no-internal-modules
+import { CellId } from "../../../feature-libraries/sequence-field";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
-import { composeAnonChanges, invert as invertChange } from "./utils";
+import { invert as invertChange } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 function invert(change: TestChangeset, tag?: RevisionTag): TestChangeset {
@@ -64,12 +66,8 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("insert & modify => modify & delete", () => {
-		const insert = Change.insert(0, 1);
-		const nodeChange = TestChange.mint([], 42);
-		const modify = Change.modify(0, nodeChange);
-		const input = composeAnonChanges([insert, modify]);
-		const inverseModify = Change.modify(0, TestChange.invert(nodeChange));
-		const expected = composeAnonChanges([inverseModify, Change.delete(0, 1)]);
+		const input = [Mark.insert(1, brand(0), { changes: childChange1 })];
+		const expected = [Mark.delete(1, brand(0), { changes: inverseChildChange1 })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -96,57 +94,77 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("delete => revive (with override ID)", () => {
-		const detachIdOverride: ChangeAtomId = { revision: tag2, localId: brand(0) };
-		const input: TestChangeset = [Mark.delete(2, brand(5), { detachIdOverride })];
-		const expected = [Mark.revive(2, detachIdOverride, { id: brand(5) })];
+		const redetachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const input: TestChangeset = [Mark.delete(2, brand(5), { redetachId })];
+		const expected = [Mark.revive(2, redetachId, { id: brand(5) })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("active revive => delete", () => {
-		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const cellId: CellId = {
+			revision: tag1,
+			localId: brand(0),
+			lineage: [{ revision: tag2, id: brand(42), count: 2, offset: 1 }],
+		};
 		const input = Change.revive(0, 2, cellId);
-		const expected: TestChangeset = [Mark.delete(2, brand(0), { detachIdOverride: cellId })];
+		const expected: TestChangeset = [Mark.delete(2, brand(0), { redetachId: cellId })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("move => return", () => {
-		const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 5)]);
-		const expected = composeAnonChanges([
-			Change.modify(3, inverseChildChange1),
-			Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }),
-		]);
+		const input = [
+			Mark.moveOut(1, brand(0), { changes: childChange1 }),
+			Mark.moveOut(1, brand(1)),
+			Mark.skip(3),
+			Mark.moveIn(2, brand(0)),
+		];
+		const expected = [
+			Mark.returnTo(2, brand(0), { revision: tag1, localId: brand(0) }),
+			Mark.skip(3),
+			Mark.moveOut(1, brand(0), { changes: inverseChildChange1 }),
+			Mark.moveOut(1, brand(1)),
+		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("move backward => return", () => {
-		const input = composeAnonChanges([Change.modify(3, childChange1), Change.move(2, 2, 0)]);
-		const expected = composeAnonChanges([
-			Change.modify(1, inverseChildChange1),
-			Change.return(0, 2, 4, { revision: tag1, localId: brand(0) }),
-		]);
+		const input = [
+			Mark.moveIn(2, brand(0)),
+			Mark.skip(3),
+			Mark.moveOut(1, brand(0), { changes: childChange1 }),
+			Mark.moveOut(1, brand(1)),
+		];
+		const expected = [
+			Mark.moveOut(1, brand(0), { changes: inverseChildChange1 }),
+			Mark.moveOut(1, brand(1)),
+			Mark.skip(3),
+			Mark.returnTo(2, brand(0), { revision: tag1, localId: brand(0) }),
+		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("return => return", () => {
-		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
-		const input = composeAnonChanges([
-			Change.modify(0, childChange1),
-			Change.return(0, 2, 5, cellId),
-		]);
+		const cellId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const input = [
+			Mark.moveOut(1, brand(42), { changes: childChange1 }),
+			Mark.moveOut(1, brand(43)),
+			Mark.skip(3),
+			Mark.returnTo(2, brand(42), cellId),
+		];
 
 		const expected: TestChangeset = [
-			Mark.returnTo(2, brand(0), cellId),
+			Mark.returnTo(2, brand(42), { revision: tag1, localId: brand(42) }),
 			{ count: 3 },
-			Mark.moveOut(1, brand(0), {
-				detachIdOverride: cellId,
+			Mark.moveOut(1, brand(42), {
+				redetachId: cellId,
 				changes: inverseChildChange1,
 			}),
-			Mark.moveOut(1, brand(1), {
-				detachIdOverride: { revision: tag1, localId: brand(1) },
+			Mark.moveOut(1, brand(43), {
+				redetachId: { ...cellId, localId: brand(1) },
 			}),
 		];
 		const actual = invert(input);
@@ -165,7 +183,7 @@ describe("SequenceField - Invert", () => {
 		const input = [Mark.pin(1, brand(0), { cellId, changes: childChange1 })];
 		const expected: TestChangeset = [
 			Mark.delete(1, brand(0), {
-				detachIdOverride: cellId,
+				redetachId: cellId,
 				changes: inverseChildChange1,
 			}),
 		];
@@ -206,7 +224,7 @@ describe("SequenceField - Invert", () => {
 			Mark.delete(1, detachId.localId, {
 				cellId: detachId,
 				changes: inverseChildChange1,
-				detachIdOverride: startId,
+				redetachId: startId,
 			}),
 		];
 		assert.deepEqual(inverse, expected);
@@ -251,7 +269,7 @@ describe("SequenceField - Invert", () => {
 			Mark.attachAndDetach(
 				Mark.returnTo(1, detachId.localId, detachId),
 				Mark.delete(1, detachId.localId, {
-					detachIdOverride: startId,
+					redetachId: startId,
 				}),
 			),
 			{ count: 1 },
@@ -353,22 +371,23 @@ describe("SequenceField - Invert", () => {
 				Mark.delete(1, brand(0), {
 					changes: inverseChildChange1,
 					cellId: endId,
-					detachIdOverride: startId,
+					redetachId: startId,
 				}),
 			];
 			assert.deepEqual(actual, expected);
 		});
 
 		it("redundant revive => skip", () => {
-			const input = composeAnonChanges([
-				Change.modify(0, childChange1),
-				Change.redundantRevive(1, 1, { revision: tag1, localId: brand(0) }),
-				Change.modify(2, childChange2),
-			]);
-			const expected = composeAnonChanges([
-				Change.modify(0, inverseChildChange1),
-				Change.modify(2, inverseChildChange2),
-			]);
+			const input = [
+				Mark.modify(childChange1),
+				Mark.pin(1, brand(0), { revision: tag1 }),
+				Mark.modify(childChange2),
+			];
+			const expected = [
+				Mark.modify(inverseChildChange1),
+				Mark.skip(1),
+				Mark.modify(inverseChildChange2),
+			];
 			const actual = invert(input);
 			assert.deepEqual(actual, expected);
 		});

@@ -23,12 +23,7 @@ import {
 	FuzzTestState,
 	viewFromState,
 } from "./fuzzEditGenerators";
-import {
-	applyFieldEdit,
-	applySynchronizationOp,
-	applyTransactionEdit,
-	applyUndoRedoEdit,
-} from "./fuzzEditReducers";
+import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers";
 import { fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
@@ -56,10 +51,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		return state;
 	},
 	transaction: async (state, operation) => {
-		const { contents } = operation;
-		const tree = state.main ?? assert.fail();
-		applyTransactionEdit(tree.checkout, contents);
-		return state;
+		assert.fail(
+			"Transactions are simulated manually in these tests and should not be generated.",
+		);
 	},
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
@@ -83,12 +77,19 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
  */
 describe("Fuzz - composed vs individual changes", () => {
 	const opsPerRun = 20;
-	const runsPerBatch = 20;
+	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
+		delete: 2,
+		move: 2,
+		fieldSelection: {
+			optional: 1,
+			required: 1,
+			sequence: 2,
+			recurse: 1,
+		},
 		start: 0,
 		commit: 0,
 	};

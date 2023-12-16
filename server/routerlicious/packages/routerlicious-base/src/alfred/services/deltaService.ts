@@ -12,6 +12,9 @@ import {
 	ITenantManager,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class DeltaService implements IDeltaService {
 	constructor(
 		protected readonly deltasCollection: ICollection<ISequencedOperationMessage>,

@@ -18,6 +18,10 @@ import {
 	TreeFieldSchema,
 	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
+	cursorForTypedTreeData,
+	TreeNodeSchema,
+	InsertableFlexNode,
+	intoStoredSchema,
 } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
@@ -29,8 +33,23 @@ import {
 	remove,
 	wrongSchema,
 } from "../utils";
-import { AllowedUpdateType, FieldKey, JsonableTree, UpPath, rootFieldKey } from "../../core";
+import {
+	AllowedUpdateType,
+	FieldKey,
+	FieldUpPath,
+	ITreeCursorSynchronous,
+	JsonableTree,
+	UpPath,
+	rootFieldKey,
+} from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
+
+const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
+const rootNode: UpPath = {
+	parent: undefined,
+	parentField: rootFieldKey,
+	parentIndex: 0,
+};
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
@@ -141,7 +160,7 @@ export function generateTestTrees() {
 					},
 				};
 
-				tree1.storedSchema.update(wrongSchema);
+				tree1.updateSchema(intoStoredSchema(wrongSchema));
 
 				// Apply an edit to the tree which inserts a node with a value
 				runSynchronous(tree1, () => {
@@ -197,6 +216,69 @@ export function generateTestTrees() {
 
 				await takeSnapshot(provider.trees[0], "tree-0-final");
 				await takeSnapshot(provider.trees[1], "tree-1-final");
+			},
+		},
+		{
+			/**
+			 * Aims to exercise interesting scenarios that can happen within an optional field with respect to
+			 * EditManager's persisted format.
+			 */
+			name: "optional-field-scenarios",
+			runScenario: async (takeSnapshot) => {
+				const innerBuilder = new SchemaBuilder({
+					scope: "optional-field",
+					libraries: [leaf.library],
+				});
+				const testNode = innerBuilder.map("TestNode", leaf.all);
+				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(testNode));
+
+				const config = {
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema: docSchema,
+					initialTree: undefined,
+				} as const;
+
+				// Enables below editing code to be slightly less verbose
+				const makeCursor = <T extends TreeNodeSchema>(
+					schema: T,
+					data: InsertableFlexNode<T>,
+				): ITreeCursorSynchronous =>
+					cursorForTypedTreeData({ schema: docSchema }, schema, data);
+
+				const provider = new TestTreeProviderLite(2);
+				const tree = provider.trees[0].schematizeInternal(config);
+				const view = tree.checkout;
+				view.editor.optionalField(rootField).set(makeCursor(testNode, {}), true);
+				provider.processMessages();
+				const view2 = provider.trees[1].schematizeInternal(config).checkout;
+
+				view2.editor
+					.optionalField({ parent: rootNode, field: brand("root 1 child") })
+					.set(makeCursor(leaf.number, 40), true);
+				view2.editor
+					.optionalField(rootField)
+					.set(makeCursor(testNode, { "root 2 child": 41 }), false);
+
+				// Transaction with a root and child change
+				runSynchronous(view, () => {
+					view.editor
+						.optionalField({ parent: rootNode, field: brand("root 1 child") })
+						.set(makeCursor(leaf.number, 42), true);
+					view.editor.optionalField(rootField).set(makeCursor(testNode, {}), false);
+					view.editor
+						.optionalField({ parent: rootNode, field: brand("root 3 child") })
+						.set(makeCursor(leaf.number, 43), true);
+				});
+
+				view.editor
+					.optionalField({ parent: rootNode, field: brand("root 3 child") })
+					.set(cursorForTypedTreeData({ schema: docSchema }, leaf.number, 44), false);
+
+				provider.processMessages();
+
+				// EditManager snapshot should involve information about rebasing tree1's edits (a transaction with root & child changes)
+				// over tree2's edits (a root change and a child change outside of the transaction).
+				await takeSnapshot(provider.trees[0], "final");
 			},
 		},
 		{

@@ -5,9 +5,8 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
-import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -18,13 +17,6 @@ import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
-import { ServiceAudience } from '@fluidframework/fluid-static';
-
-// @public @deprecated
-export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // @internal
-    protected createServiceMember(audienceMember: IClient): AzureMember;
-}
 
 // @public
 export class AzureClient {
@@ -74,7 +66,7 @@ export interface AzureContainerVersion {
     id: string;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
@@ -105,7 +97,7 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     type: "remote";
 }
 
-// @public
+// @internal
 export interface AzureUser<T = any> extends IUser {
     additionalDetails?: T;
     name: string;

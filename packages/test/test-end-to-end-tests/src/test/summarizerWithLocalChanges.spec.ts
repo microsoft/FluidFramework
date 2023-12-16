@@ -25,7 +25,7 @@ import {
 	timeoutAwait,
 	createSummarizer,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { MockLogger } from "@fluidframework/telemetry-utils";
@@ -40,7 +40,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/summary/index.js";
+} from "@fluidframework/container-runtime/test/summary";
 
 /**
  * Data object that creates another data object during initialization. This is used to create a scenario
@@ -222,7 +222,7 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	});
 }
 
-describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
+describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach(async function () {

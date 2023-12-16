@@ -8,6 +8,7 @@ import { strict as assert, fail } from "assert";
 import { compareArrays } from "@fluidframework/core-utils";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import {
+	decode,
 	readValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
@@ -26,6 +27,7 @@ import {
 	anyFieldEncoder,
 	anyNodeEncoder,
 	asNodesEncoder,
+	compressedEncode,
 	encodeValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
@@ -34,23 +36,28 @@ import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities";
 import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core";
 import {
 	EncodedChunkShape,
+	EncodedFieldBatch,
 	EncodedValueShape,
+	validVersions,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format";
-import {
-	makeCompressedCodec,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
 import {
 	BufferFormat,
 	IdentifierToken,
 	handleShapesAndIdentifiers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-import { brand } from "../../../../util";
+import { JsonCompatibleReadOnly, brand } from "../../../../util";
 import { typeboxValidator } from "../../../../external-utilities";
 import { cursorForJsonableTreeField } from "../../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldKinds } from "../../../../feature-libraries/default-schema";
+// eslint-disable-next-line import/no-internal-modules
+import { FieldBatch } from "../../../../feature-libraries/chunked-forest";
+import { ICodecOptions, IJsonCodec } from "../../../../codec";
+// eslint-disable-next-line import/no-internal-modules
+import { makeVersionedValidatedCodec } from "../../../../feature-libraries/versioned";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -58,24 +65,40 @@ const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 
 const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
 
+export function makeFieldBatchCodec(
+	options: ICodecOptions,
+	cache: EncoderCache,
+): IJsonCodec<FieldBatch, EncodedFieldBatch, JsonCompatibleReadOnly> {
+	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
+		encode: (data: FieldBatch): EncodedFieldBatch => {
+			return compressedEncode(data, cache);
+		},
+		decode: (data: EncodedFieldBatch): FieldBatch => {
+			// TODO: consider checking data is in schema.
+			return decode(data).map((chunk) => chunk.cursor());
+		},
+	});
+}
+
 describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
 	describe("test trees", () => {
 		for (const [name, jsonable] of testTrees) {
 			it(name, () => {
-				const input = cursorForJsonableTreeField([jsonable]);
+				const input: FieldBatch = [cursorForJsonableTreeField([jsonable])];
 				const cache = new EncoderCache(
 					(fieldShaper: FieldShaper, schemaName: TreeNodeSchemaIdentifier): NodeEncoder =>
 						anyNodeShape,
 					(treeShaper: TreeShaper, field: TreeFieldStoredSchema): FieldEncoder =>
 						anyFieldEncoder,
+					fieldKinds,
 				);
-				const codec = makeCompressedCodec({ jsonValidator: typeboxValidator }, cache);
+				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, cache);
 				const result = codec.encode(input);
 				const decoded = codec.decode(result);
-				const decodedJson = jsonableTreesFromFieldCursor(decoded);
-				assert.deepEqual([jsonable], decodedJson);
+				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
+				assert.deepEqual([[jsonable]], decodedJson);
 			});
 		}
 	});
@@ -96,8 +119,9 @@ describe("compressedEncode", () => {
 				const buffer: BufferFormat<EncodedChunkShape> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
-				const processed = handleShapesAndIdentifiers(version, buffer);
-				const stream = { data: processed.data, offset: 0 };
+				const processed = handleShapesAndIdentifiers(version, [buffer]);
+				assert(processed.data.length === 1);
+				const stream = { data: processed.data[0], offset: 0 };
 				const decoded = readValue(stream, shape);
 				assert(stream.offset === stream.data.length);
 				assert.deepEqual(decoded, value);
@@ -109,6 +133,7 @@ describe("compressedEncode", () => {
 		const cache = new EncoderCache(
 			() => anyNodeShape,
 			() => fail(),
+			fieldKinds,
 		);
 		const buffer = checkNodeEncode(anyNodeEncoder, cache, { type: brand("foo") });
 		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
@@ -119,6 +144,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const buffer = checkFieldEncode(InlineArrayShape.empty, cache, []);
 			assert(compareArrays(buffer, []));
@@ -128,6 +154,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shape = new InlineArrayShape(1, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, cache, [{ type: brand("foo") }]);
@@ -138,6 +165,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shape = new InlineArrayShape(2, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, cache, [
@@ -151,6 +179,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shapeInner = new InlineArrayShape(2, asNodesEncoder(onlyTypeShape));
 			const shapeOuter = new InlineArrayShape(2, shapeInner);
@@ -174,6 +203,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const buffer = checkFieldEncode(new NestedArrayShape(onlyTypeShape), cache, []);
 			assert.deepEqual(buffer, [0]);
@@ -183,6 +213,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shape = new NestedArrayShape(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, cache, [{ type: brand("foo") }]);
@@ -193,6 +224,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shape = new NestedArrayShape(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, cache, [
@@ -207,6 +239,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const buffer = checkFieldEncode(new NestedArrayShape(constantFooShape), cache, [
 				{ type: brand("foo") },
@@ -218,6 +251,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const buffer = checkFieldEncode(new NestedArrayShape(constantFooShape), cache, [
 				{ type: brand("foo") },
@@ -233,6 +267,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, cache, []);
 			// For size purposes, this should remain true
@@ -250,6 +285,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => onlyTypeShape,
 				() => fail(),
+				fieldKinds,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, cache, [{ type: brand("foo") }]);
 			// Should use anyNodeEncoder, which will lookup the shape from cache:
@@ -260,6 +296,7 @@ describe("compressedEncode", () => {
 			const cache = new EncoderCache(
 				() => onlyTypeShape,
 				() => fail(),
+				fieldKinds,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, cache, [
 				{ type: brand("foo") },

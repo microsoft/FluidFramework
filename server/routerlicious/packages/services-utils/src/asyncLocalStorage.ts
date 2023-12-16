@@ -21,6 +21,7 @@ const defaultAsyncLocalStorage = new AsyncLocalStorage<string>();
 
 /**
  * @deprecated Use `getGlobalTelemetryContext().getProperties().correlationId` instead
+ * @internal
  */
 export function getCorrelationId(
 	altAsyncLocalStorage?: AsyncLocalStorage<string>,
@@ -40,6 +41,7 @@ export function getCorrelationId(
 
 /**
  * @deprecated Use `getTelemetryContextPropertiesWithHttpInfo().correlationId` instead
+ * @internal
  */
 export function getCorrelationIdWithHttpFallback(
 	req: Request,
@@ -63,6 +65,7 @@ export function getCorrelationIdWithHttpFallback(
 
 /**
  * @deprecated use `bindTelemetryContext()` instead
+ * @internal
  */
 export const bindCorrelationId =
 	(

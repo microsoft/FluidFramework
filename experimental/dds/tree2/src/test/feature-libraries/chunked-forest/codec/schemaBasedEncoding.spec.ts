@@ -5,7 +5,12 @@
 
 import { strict as assert, fail } from "assert";
 import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
-import { defaultSchemaPolicy, cursorForJsonableTreeField } from "../../../../feature-libraries";
+import {
+	defaultSchemaPolicy,
+	cursorForJsonableTreeField,
+	intoStoredSchema,
+	TreeCompressionStrategy,
+} from "../../../../feature-libraries";
 
 import {
 	buildCache,
@@ -15,9 +20,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
 import {
-	makeSchemaCompressedCodec,
+	Context,
+	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
+} from "../../../../feature-libraries/chunked-forest/codec/codecs";
 import {
 	AnyShape,
 	EncoderCache,
@@ -34,14 +40,16 @@ import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/co
 import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities";
 import {
 	hasOptionalField,
-	library,
 	minimal,
 	numericMap,
 	recursiveType,
+	storedLibrary,
 	testTrees,
 } from "../../../testTrees";
 import { typeboxValidator } from "../../../../external-utilities";
 import { leaf, SchemaBuilder } from "../../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldKinds } from "../../../../feature-libraries/default-schema";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -60,6 +68,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -86,6 +95,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => anyNodeShape,
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -108,6 +118,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -138,9 +149,10 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shape = treeShaper(
-				library,
+				storedLibrary,
 				defaultSchemaPolicy,
 				{ shapeFromField: () => fail() },
 				minimal.name,
@@ -153,10 +165,11 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
-				library,
+				storedLibrary,
 				defaultSchemaPolicy,
 				{
 					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
@@ -188,10 +201,11 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
-				library,
+				storedLibrary,
 				defaultSchemaPolicy,
 				{
 					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
@@ -216,7 +230,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	it("recursiveType", () => {
-		const cache = buildCache(library, defaultSchemaPolicy);
+		const cache = buildCache(storedLibrary, defaultSchemaPolicy);
 		const shape = cache.shapeFromTree(recursiveType.name);
 		const bufferEmpty = checkNodeEncode(shape, cache, { type: recursiveType.name });
 		assert.deepEqual(bufferEmpty, [0]);
@@ -228,24 +242,25 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
+		// TODO: test non size 1 batches
 		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
+				const storedSchema = intoStoredSchema(schemaData);
 				const tree = treeFactory();
 				// Check with checkFieldEncode
-				const cache = buildCache(schemaData, defaultSchemaPolicy);
+				const cache = buildCache(storedSchema, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
-				const codec = makeSchemaCompressedCodec(
-					{ jsonValidator: typeboxValidator },
-					schemaData,
-					defaultSchemaPolicy,
-				);
+				const context: Context = {
+					encodeType: TreeCompressionStrategy.Compressed,
+					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+				};
+				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator })(context);
 				// End to end test
-				const encoded = codec.encode(cursorForJsonableTreeField(tree));
+				const encoded = codec.encode([cursorForJsonableTreeField(tree)]);
 				const result = codec.decode(encoded);
-				const resultTree = jsonableTreesFromFieldCursor(result);
-				assert.deepEqual(resultTree, tree);
-				assert.equal(resultTree.length, tree.length);
+				const resultTree = result.map(jsonableTreesFromFieldCursor);
+				assert.deepEqual(resultTree, [tree]);
 			});
 		}
 	});

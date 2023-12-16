@@ -10,36 +10,26 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedTree, SharedTree, SharedTreeFactory, TreeView } from "../../shared-tree";
+import { SharedTree, SharedTreeFactory } from "../../shared-tree";
 import { typeboxValidator } from "../../external-utilities";
-import { SchemaBuilder } from "../../domains";
-import { AllowedUpdateType } from "../../core";
-import { TreeField } from "../../simple-tree";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 
-const builder = new SchemaBuilder({ scope: "test" });
-const someType = builder.object("foo", {
-	handles: builder.list(builder.handle),
+const builder = new SchemaFactory("test");
+class SomeType extends builder.object("foo", {
+	handles: builder.array(builder.handle),
 	nested: builder.optional(
 		builder.object("bar", {
-			nestedHandles: builder.list(builder.handle),
+			nestedHandles: builder.array(builder.handle),
 		}),
 	),
 	bump: builder.optional(builder.number),
-});
+}) {}
 
-const schema = builder.intoSchema(SchemaBuilder.required(someType));
-
-function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematizeOld({
-		initialTree: {
-			handles: { "": [] },
-			nested: undefined,
-			bump: undefined,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
-}
+const config = new TreeConfiguration(SomeType, () => ({
+	handles: [],
+	nested: undefined,
+	bump: undefined,
+}));
 
 function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -79,7 +69,7 @@ describe("Garbage Collection", () => {
 			this.tree1 = createConnectedTree("tree1", this.containerRuntimeFactory);
 			this.tree2 = createConnectedTree("tree2", this.containerRuntimeFactory);
 
-			this.tree1View = getNewTreeView(this.tree1).root;
+			this.tree1View = this.tree1.schematize(config).root;
 		}
 
 		public get sharedObject() {

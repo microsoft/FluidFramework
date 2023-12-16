@@ -1,5 +1,52 @@
 # @fluidframework/container-definitions
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-definitions: Removed request(...) and IFluidRouter from IContainer [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request(...)` method and `IFluidRouter` property have been removed from `IContainer`. Please use the
+    `IContainer.getEntryPoint()` method to get the container's entry point.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   container-loader: Removed request(...) and IFluidRouter from ILoader and Loader [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request(...)` method and `IFluidRouter` property have been removed from `ILoader` and `Loader`. Instead, after
+    calling `ILoader.resolve(...)`, call the `getEntryPoint()` method on the returned `IContainer`.
+
+    See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+-   container-runtime: Removed IPendingLocalState and IRuntime.notifyAttaching [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The deprecated `IPendingLocalState` and `IRuntime.notifyAttaching` APIs are removed. There is no replacement as they are
+    not longer used.
+
+-   container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request(...)` method and `IFluidRouter` property have been removed from the following places:
+
+    -   `ContainerRuntime`
+    -   `IRuntime`
+    -   `IContainerRuntimeBase`
+
+    Please use the `IRuntime.getEntryPoint()` method to get the runtime's entry point.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   container-definitions: Fix ISnapshotTreeWithBlobContents and mark internal [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    `ISnapshotTreeWithBlobContents` is an internal type that should not be used externally. Additionally, the type didn't
+    match the usage, specifically in runtime-utils where an `any` cast was used to work around undefined blobContents. The
+    type has been updated to reflect that blobContents can be undefined.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

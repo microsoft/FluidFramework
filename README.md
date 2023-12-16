@@ -80,6 +80,8 @@ Dependencies between packages in various layers of the system are enforced via a
 [layer-check](./build-tools/packages/build-tools/src/layerCheck). You can view the full list of packages and layers in
 [PACKAGES.md](./PACKAGES.md).
 
+-   Note: to update the contents of `PACKAGES.md` for local package changes, run `pnpm layer-check --md .`.
+
 ## Setup and Building
 
 Install the required tools:

@@ -14,12 +14,12 @@ import {
 	DataObjectFactoryType,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
-import { IPendingRuntimeState } from "@fluidframework/container-runtime/dist/test";
+import { type IPendingRuntimeState } from "@fluidframework/container-runtime/test/containerRuntime";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
@@ -34,7 +34,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
+describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider) => {
 	describe("from attached container", () => {
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;

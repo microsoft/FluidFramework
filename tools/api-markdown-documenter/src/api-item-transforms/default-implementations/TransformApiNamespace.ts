@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, ApiNamespace } from "@microsoft/api-extractor-model";
+import { type ApiItem, type ApiNamespace } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type SectionNode } from "../../documentation-domain";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { transformApiModuleLike } from "./TransformApiModuleLike";
 
 /**
@@ -16,5 +16,5 @@ export function transformApiNamespace(
 	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
-	return transformApiModuleLike(apiNamespace, apiNamespace.members, config, generateChildContent);
+	return transformApiModuleLike(apiNamespace, config, generateChildContent);
 }

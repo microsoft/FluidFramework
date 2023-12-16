@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamily, ChangeFamilyEditor, ChangeRebaser, TaggedChange } from "../core";
+import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeRebaser,
+	RevisionMetadataSource,
+	TaggedChange,
+} from "../core";
 
 /**
  * Makes a given `ChangeFamily` safer to use by wrapping some of its functions in try-catch blocks.
@@ -54,8 +60,12 @@ export function makeMitigatedRebaser<TChange>(
 		invert: (changes: TaggedChange<TChange>, isRollback: boolean): TChange => {
 			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback));
 		},
-		rebase: (change: TChange, over: TaggedChange<TChange>): TChange => {
-			return withFallback(() => unmitigatedRebaser.rebase(change, over));
+		rebase: (
+			change: TChange,
+			over: TaggedChange<TChange>,
+			revisionMetadata: RevisionMetadataSource,
+		): TChange => {
+			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
 		},
 	};
 }

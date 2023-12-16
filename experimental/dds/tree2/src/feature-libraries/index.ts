@@ -45,13 +45,11 @@ export {
 	typeNameSymbol,
 	valueSymbol,
 	isTreeValue,
-	getPrimaryField,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
 	isContextuallyTypedNodeDataObject,
 	getFieldKind,
-	getFieldSchema,
 	ArrayLikeMut,
 	cursorFromContextualData,
 	cursorsFromContextualData,
@@ -62,19 +60,18 @@ export {
 	normalizeNewFieldContent,
 	NewFieldContent,
 	getPossibleTypes,
+	getAllowedTypes,
 } from "./contextuallyTyped";
 
 export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 
-export { ForestSummarizer } from "./forestSummarizer";
+export { ForestSummarizer } from "./forest-summary";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
-export { SchemaSummarizer, SchemaEditor, encodeTreeSchema } from "./schemaSummarizer";
-// This is exported because its useful for doing comparisons of schema in tests.
-export { makeSchemaCodec } from "./schemaIndexFormat";
+export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/";
 export {
 	stackTreeNodeCursor,
 	CursorAdapter,
@@ -114,27 +111,27 @@ export {
 	CrossFieldManager,
 	CrossFieldTarget,
 	FieldKind,
-	Multiplicity,
 	FullSchemaPolicy,
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
-	RemovedTreesFromChild,
+	ModularChangeFamily,
+	makeV0Codec,
+	RelevantRemovedRootsFromChild,
+	EncodedModularChangeset,
 } from "./modular-schema";
+
+export { Multiplicity } from "./multiplicity";
 
 export {
 	TreeNodeSchema,
 	AllowedTypes,
 	TreeFieldSchema,
-	TreeSchema,
+	FlexTreeSchema,
 	Any,
 	SchemaLibraryData,
 	LazyTreeNodeSchema,
@@ -161,6 +158,11 @@ export {
 	FlexListToUnion,
 	LazyItem,
 	isLazy,
+	NormalizeObjectNodeFields,
+	NormalizeField as NormalizeFieldSchema,
+	Fields,
+	intoStoredSchema,
+	intoStoredSchemaCollection,
 } from "./typed-schema";
 
 export {
@@ -190,10 +192,7 @@ export {
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
-	decode,
-	uncompressedEncode,
-	schemaCompressedEncode,
-	EncodedChunk,
+	makeFieldBatchCodec,
 } from "./chunked-forest";
 
 export {
@@ -223,7 +222,9 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	fieldKinds,
 	intoDelta,
+	relevantRemovedRoots,
 } from "./default-schema";
 
 export {
@@ -231,7 +232,6 @@ export {
 	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	InternalEditableTreeTypes,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeOptionalField,
@@ -251,22 +251,47 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	FlexTreeTyped,
 	Context,
 	TreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
 	isFlexTreeNode,
+
+	// Internal
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	NodeKeys,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
-// Split into separate import and export for compatibility with API-Extractor.
-import * as SchemaAware from "./schema-aware";
-export { SchemaAware };
+export {
+	InsertableFlexNode,
+	InsertableFlexField,
+	AllowedTypesToFlexInsertableTree,
+	ApplyMultiplicity,
+
+	// Internal
+	CollectOptions,
+	TypedFields,
+	UnbrandedName,
+	EmptyObject,
+} from "./schema-aware";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+
+export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits";
+
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

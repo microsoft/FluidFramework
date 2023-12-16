@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TreeField, SchemaBuilder, leaf } from "@fluid-experimental/tree2";
+import { SchemaFactory } from "@fluidframework/tree";
 
-const builder = new SchemaBuilder({ scope: "tree-react-api" });
+const builder = new SchemaFactory("tree-react-api");
 
-export const inventory = builder.object("Contoso:Inventory-1.0.0", {
-	nuts: leaf.number,
-	bolts: leaf.number,
-});
-
-export const schema = builder.intoSchema(inventory);
-
-export type Inventory = TreeField<typeof schema.rootFieldSchema>;
+export class Inventory extends builder.object("Contoso:InventoryItem-1.0.0", {
+	nuts: builder.number,
+	bolts: builder.number,
+}) {}

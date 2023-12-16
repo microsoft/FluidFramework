@@ -33,6 +33,7 @@ WORKDIR /usr/src/server
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY scripts/*.* ./scripts/
+COPY patches/*.* ./patches/
 
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/

@@ -80,11 +80,14 @@ function removeBeginningSlash(str: string): string {
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format. Ex: `${siteUrl}?driveId=${driveId}&itemId=${itemId}&path=${path}`
- * @public
+ * @alpha
  */
 export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}
 
+	/**
+	 * @alpha
+	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
 			const [siteURL, queryString] = request.url.split("?");

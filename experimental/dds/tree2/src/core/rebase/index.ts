@@ -12,6 +12,8 @@ export {
 	GraphCommit,
 	RevisionTag,
 	RevisionTagSchema,
+	EncodedRevisionTag,
+	EncodedChangeAtomId,
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -24,8 +26,11 @@ export {
 	FinalChangeStatus,
 	makeAnonChange,
 	tagChange,
+	mapTaggedChange,
 	tagRollbackInverse,
 	TaggedChange,
+	RevisionMetadataSource,
+	RevisionInfo,
 } from "./changeRebaser";
 export {
 	Exception,
@@ -41,4 +46,6 @@ export {
 	rebaseBranch,
 	BranchRebaseResult,
 	rebaseChange,
+	rebaseChangeOverChanges,
+	revisionMetadataSourceFromInfo,
 } from "./utils";
