@@ -8587,6 +8587,7 @@ importers:
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/sequence': workspace:~
+      '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^18.19.0
       copyfiles: ^2.4.1
@@ -8603,6 +8604,7 @@ importers:
       '@fluidframework/fluid-static': link:../fluid-static
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/sequence': link:../../dds/sequence
+      '@fluidframework/tree': link:../../../experimental/dds/tree2
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli

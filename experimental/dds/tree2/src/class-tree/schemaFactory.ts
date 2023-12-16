@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util";
 import {
 	FlexTreeNode,
@@ -14,6 +14,7 @@ import {
 	markEager,
 	MapNodeSchema,
 	FieldNodeSchema,
+	isFluidHandle,
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
@@ -89,6 +90,29 @@ const numberSchema = makeLeaf(leaf.number);
 const booleanSchema = makeLeaf(leaf.boolean);
 const nullSchema = makeLeaf(leaf.null);
 const handleSchema = makeLeaf(leaf.handle);
+
+/**
+ * Gets the leaf domain schema compatible with a given {@link TreeValue}.
+ */
+export function schemaFromValue(value: TreeValue): TreeNodeSchema {
+	switch (typeof value) {
+		case "boolean":
+			return booleanSchema;
+		case "number":
+			return numberSchema;
+		case "string":
+			return stringSchema;
+		case "object": {
+			if (value === null) {
+				return nullSchema;
+			}
+			assert(isFluidHandle(value), "invalid TreeValue");
+			return handleSchema;
+		}
+		default:
+			unreachableCase(value);
+	}
+}
 
 type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
 	infer Name extends string

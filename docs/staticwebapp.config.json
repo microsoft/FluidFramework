@@ -1,5 +1,16 @@
 {
-	"routes": [],
+	"routes": [
+		{
+			"route": "/docs/fcdocstest",
+			"redirect": "/docs/api/v1",
+			"statusCode": 301
+		},
+		{
+			"route": "/docs/apis/*",
+			"redirect": "/docs/api/v1",
+			"statusCode": 301
+		}
+	],
 	"globalHeaders": {
 		"cache-control": "must-revalidate, max-age=3600"
 	}

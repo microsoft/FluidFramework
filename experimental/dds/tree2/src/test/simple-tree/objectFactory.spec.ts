@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { Tree as SimpleTree } from "../../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies";
-import { SchemaFactory } from "../../class-tree";
+import { SchemaFactory, Tree } from "../../class-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { getFlexNode } from "../../simple-tree/flexNode";
 import { getRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
@@ -212,10 +213,10 @@ describe("SharedTreeObject factories", () => {
 			const mapContent = root.grand.child.map.get("a");
 			assert(mapContent !== undefined);
 		}
-		SimpleTree.on(root, "beforeChange", () => {
+		getFlexNode(root).on("beforeChange", () => {
 			readData();
 		});
-		SimpleTree.on(root, "afterChange", () => {
+		Tree.on(root, "afterChange", () => {
 			readData();
 		});
 

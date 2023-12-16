@@ -14,10 +14,10 @@
  */
 
 const chalk = require("chalk");
+const cpy = require("cpy");
 const fs = require("fs-extra");
 const path = require("path");
 const versions = require("./data/versions.json");
-const { main } = require("./rollup-api-json");
 
 const renderMultiVersion = process.argv[2];
 
@@ -31,14 +31,20 @@ async function stageMetadata(version) {
 	version = version === versions.params.currentVersion ? "" : "-" + version;
 	const originalPath = path.resolve("..", "_api-extractor-temp" + version, "doc-models");
 
+	// Clear output folder
 	await fs.emptyDir(targetPath);
 
 	try {
-		await main(originalPath, targetPath);
+		// Copy files from originalPath to targetPath
+		console.log(`Copying final files from ${originalPath} to ${targetPath}`);
+		await cpy(originalPath, targetPath).on("progress", (progress) => {
+			if (progress.percent === 1) {
+				console.log(`\tCopied ${progress.totalFiles} files.`);
+			}
+		});
 	} catch (error) {
 		throw new Error(
-			`FAILURE: ${version} API metadata could not be staged due to an error.`,
-			error,
+			`FAILURE: ${version} API metadata could not be staged due to an error: ${error}`,
 		);
 	}
 	console.log(chalk.green(`SUCCESS: ${version} API metadata staged!`));
