@@ -115,8 +115,8 @@ describe("ESLint No Release Tag Rule Tests", function () {
 		);
 	});
 
-	// Skipping as the ESLint plug-in is not recognizing `abstract class` to objects inside the `context` method. 
-	// TODO: Need to support `abstract class` for the linter.   
+	// Skipping as the ESLint plug-in is not recognizing `abstract class` to objects inside the `context` method.
+	// TODO: Need to support `abstract class` for the linter.
 	it.skip("Should report errors for including release tags inside the abstract class", async function () {
 		const eslint = createESLintInstance({
 			rules: {

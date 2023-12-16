@@ -6,19 +6,19 @@
 /**
  * @public
  * Not used in the current test suite due to compatibility issue with the ESLint.
-*/
+ */
 abstract class MockAbstractClass {
-    /**
-     * @public
-     */
-    abstract invalidMethod(): void;
+	/**
+	 * @public
+	 */
+	abstract invalidMethod(): void;
 
-    /**
-     * @alpha
-     */
-    abstract invalidSignature: number;
+	/**
+	 * @alpha
+	 */
+	abstract invalidSignature: number;
 
-    abstract validMethod(): boolean;    
+	abstract validMethod(): boolean;
 
-    abstract validSignature: string;
+	abstract validSignature: string;
 }
