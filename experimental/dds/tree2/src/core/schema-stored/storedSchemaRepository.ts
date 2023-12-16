@@ -87,7 +87,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 				this.rootFieldSchemaData = data.rootFieldSchema;
 				this.nodeSchemaData = data.nodeSchemaData.clone();
 			} else {
-				this.rootFieldSchemaData = cloneFieldSchemaData(data.rootFieldSchema);
+				this.rootFieldSchemaData = data.rootFieldSchema;
 				this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
 			}
 		}
