@@ -312,6 +312,7 @@ stages:
               parameters:
                 taskTestStep: ${{ taskTestStep }}
                 buildDirectory: ${{ parameters.buildDirectory }}
+                testCoverage: ${{ eq(variables['testCoverage'], true) }}
 
           # Test - Upload coverage results
           # Some webpacked file using externals introduce file name with quotes in them

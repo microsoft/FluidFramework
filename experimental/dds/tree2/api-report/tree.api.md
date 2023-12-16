@@ -1685,7 +1685,7 @@ export interface TreeApi {
     key(node: TreeNode): string | number;
     on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
-    schema<T extends TreeNode>(node: TreeNode): TreeNodeSchema<string, NodeKind, unknown, T>;
+    schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     readonly status: (node: TreeNode) => TreeStatus;
 }
 
@@ -1792,6 +1792,9 @@ export interface TreeFieldStoredSchema {
     readonly kind: FieldKindSpecifier;
     readonly types?: TreeTypeSet;
 }
+
+// @beta
+export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 // @alpha (undocumented)
 export interface TreeLocation {

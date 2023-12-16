@@ -267,6 +267,7 @@ export {
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeLeafValue,
 
 	// experimental @alpha APIs:
 	adaptEnum,

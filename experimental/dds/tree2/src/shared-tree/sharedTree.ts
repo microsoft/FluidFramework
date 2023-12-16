@@ -180,7 +180,9 @@ export class SharedTree
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
 		const removedRoots = makeDetachedFieldIndex("repair", options);
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
+			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
+		});
 		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
