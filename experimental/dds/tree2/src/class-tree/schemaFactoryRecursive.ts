@@ -30,8 +30,11 @@ export class SchemaFactoryRecursive<
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
 	/**
-	 * For unknown reasons, recursive maps work better (compile in more cases)
-	 * if their constructor takes in an a record that is not required to be an object.
+	 * {@link SchemaFactory.object} except tweaked to work better for recursive types.
+	 * @remarks
+	 * For unknown reasons, recursive objects work better (compile in more cases)
+	 * if they their insertable types and node types are not required to be an object.
+	 * This reduces type safety a bit, but is worth it to make the recursive types actually work at all.
 	 */
 	public objectRecursive<
 		const Name extends TName,
