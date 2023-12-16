@@ -4,6 +4,11 @@
 			"route": "/docs/fcdocstest",
 			"redirect": "/docs/apis",
 			"statusCode": 301
+		},
+		{
+			"route": "/docs/apis/*",
+			"redirect": "/docs/api/v1",
+			"statusCode": 301
 		}
 	],
 	"globalHeaders": {
