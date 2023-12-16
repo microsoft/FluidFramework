@@ -17,8 +17,6 @@ import {
 	TaggedChange,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { sequenceConfig } from "../../../feature-libraries/sequence-field/config";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
@@ -1544,7 +1542,6 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			// TODO: make this pass with CellOrderingMethod.Lineage
 			skipOnLineageMethod(config, "A ○ C - with lineage for B on both marks", () =>
 				withConfig(() => {
-					console.debug(sequenceConfig.cellOrdering);
 					const cellA = Mark.delete(
 						1,
 						{
