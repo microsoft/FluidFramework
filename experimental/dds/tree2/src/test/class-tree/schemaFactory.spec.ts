@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
 import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
 import {
 	ImplicitFieldSchema,
@@ -19,6 +19,7 @@ import {
 } from "../../class-tree/schemaTypes";
 import {
 	SchemaFactory,
+	schemaFromValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../class-tree/schemaFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
@@ -574,6 +575,15 @@ describe("schemaFactory", () => {
 				});
 			}
 		}
+	});
+
+	it("schemaFromValue", () => {
+		const f = new SchemaFactory("");
+		assert.equal(schemaFromValue(1), f.number);
+		assert.equal(schemaFromValue(""), f.string);
+		assert.equal(schemaFromValue(null), f.null);
+		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
+		assert.equal(schemaFromValue(false), f.boolean);
 	});
 });
 

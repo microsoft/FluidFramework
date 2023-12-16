@@ -19,7 +19,6 @@ export {
 } from "./types";
 export { TreeListNodeOld, TreeArrayNode, IterableTreeListContent } from "./treeListNode";
 export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
-export { nodeApi as Tree, TreeApi } from "./node";
 export {
 	InsertableTreeRoot,
 	InsertableTreeField,
