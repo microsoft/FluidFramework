@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema, SchemaFactory, TreeFieldFromImplicitField } from "../../class-tree";
+import {
+	ImplicitFieldSchema,
+	SchemaFactory,
+	TreeFieldFromImplicitField,
+	TreeNodeSchema,
+} from "../../class-tree";
 import { getRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -290,6 +295,8 @@ const tcs: TestCase[] = [
 
 testObjectLike(tcs);
 
+const factory = new SchemaFactory("test");
+
 describe("Object-like", () => {
 	describe("setting an invalid field", () => {
 		// TODO: Restore original behavior for bare '_.object()'?
@@ -308,17 +315,15 @@ describe("Object-like", () => {
 
 	describe("supports setting", () => {
 		describe("primitives", () => {
-			function check<const TSchema extends ImplicitFieldSchema>(
-				schema: TSchema,
-				before: TreeFieldFromImplicitField<TSchema>,
-				after: TreeFieldFromImplicitField<TSchema>,
+			function check<const TNode>(
+				schema: TreeNodeSchema<any, any, TNode>,
+				before: TNode,
+				after: TNode,
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							makeSchema((_) => _.object("", { _value: schema })),
-							() => ({ _value: before }),
-						);
+						class Root extends factory.object("", { _value: schema }) {}
+						const root = getRoot(Root, () => ({ _value: before }));
 						assert.equal(root._value, before);
 						root._value = after;
 						assert.equal(root._value, after);
@@ -327,12 +332,11 @@ describe("Object-like", () => {
 
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							// Is there a way to avoid the cast to 'any' when using 'class-schema'?
-							// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6551
-							makeSchema((_) => _.object("", { _value: _.optional(schema as any) })),
-							() => ({ _value: undefined }),
-						);
+						class Root extends factory.object("", {
+							_value: factory.optional(schema),
+						}) {}
+
+						const root = getRoot(Root, () => ({ _value: undefined }));
 						assert.equal(root._value, undefined);
 						root._value = before;
 						assert.equal(root._value, before);
@@ -360,45 +364,41 @@ describe("Object-like", () => {
 		});
 
 		describe("required object", () => {
-			const schema = makeSchema((_) =>
-				_.object("parent", {
-					child: _.object("child", {
-						objId: _.number,
-					}),
-				}),
-			);
+			class Child extends factory.object("child", {
+				objId: factory.number,
+			}) {}
+			class Schema extends factory.object("parent", {
+				child: Child,
+			}) {}
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
 
 			it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, () => ({ child: before }));
+				const root = getRoot(Schema, () => ({ child: before }));
 				assert.equal(root.child.objId, 0);
-				root.child = after;
+				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
 			});
 		});
 
 		describe("optional object", () => {
-			const schema = makeSchema((_) =>
-				_.object("parent", {
-					child: _.optional(
-						_.object("child", {
-							objId: _.number,
-						}),
-					),
-				}),
-			);
+			class Child extends factory.object("child", {
+				objId: factory.number,
+			}) {}
+			class Schema extends factory.object("parent", {
+				child: factory.optional(Child),
+			}) {}
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
 
 			it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, () => ({ child: undefined }));
+				const root = getRoot(Schema, () => ({ child: undefined }));
 				assert.equal(root.child, undefined);
-				root.child = before;
+				root.child = new Child(before);
 				assert.equal(root.child.objId, 0);
-				root.child = after;
+				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
 			});
 		});

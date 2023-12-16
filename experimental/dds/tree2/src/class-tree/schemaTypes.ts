@@ -293,7 +293,7 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
  * @beta
  */
 export type InsertableTypedNode<T extends TreeNodeSchema> =
-	| (T["implicitlyConstructable"] extends true ? NodeBuilderData<T> : never)
+	| (T extends { implicitlyConstructable: true } ? NodeBuilderData<T> : never)
 	| Unhydrated<NodeFromSchema<T>>;
 
 /**

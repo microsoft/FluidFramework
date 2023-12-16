@@ -41,8 +41,9 @@ export type Unhydrated<T> = T;
  * Adding a member which all nodes have, like a type symbol, would produce much strong typing for this.
  * @beta
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class TreeNode {}
+export abstract class TreeNode {
+	readonly #brand?: unknown;
+}
 
 /**
  * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
