@@ -7,7 +7,6 @@ const { ApiItemKind, ApiItemUtilities } = require("@fluid-tools/api-markdown-doc
 
 const fs = require("fs-extra");
 const path = require("path");
-const yaml = require("js-yaml");
 
 /**
  * Processes documents and generates data required for the nav bar.
@@ -56,9 +55,9 @@ async function buildNavBar(documents, version) {
 	);
 
 	return await Promise.all([
-		saveToFile(`allAPIs.yaml`, version, allAPIs),
-		saveToFile(`packageNameToDisplayName.yaml`, version, packageMap),
-		saveToFile(`displayNameToPackageName.yaml`, version, invertMap(packageMap)),
+		saveToFile("allAPIs.json", version, allAPIs),
+		saveToFile("packageNameToDisplayName.json", version, packageMap),
+		saveToFile("displayNameToPackageName.json", version, invertMap(packageMap)),
 	]);
 }
 
@@ -68,7 +67,7 @@ const saveToFile = async (filename, version, data) => {
 	}
 	fs.writeFile(
 		path.join(__dirname, "..", "data", `${version}/${filename}`),
-		yaml.dump(data),
+		JSON.stringify(data, null, 2),
 		"utf8",
 	);
 };
