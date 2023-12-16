@@ -106,5 +106,3 @@ describe("ESLint Rule Tests", function () {
 		);
 	});
 });
-
-

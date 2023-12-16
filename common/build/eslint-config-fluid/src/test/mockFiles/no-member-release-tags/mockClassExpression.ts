@@ -30,13 +30,23 @@ const mockClassExpression = class {
 	//@public
 	invalidLineComment(): void {}
 
+	// @alpha
+	invalidLineSignature: string;
+
+	/**
+	 * @internal
+	 */
+	inValidSingature: string;
+
 	/**
 	 * Correctly implemented method with valid comment.
 	 */
 	validBlockComment(): void {}
 
-	// Correctly implemented method with a slash comment.
+	// Correctly implemented method with a line comment.
 	validLineComment(): void {}
 
 	validNoComment(): void {}
-}
+
+	validSignature: boolean;
+};

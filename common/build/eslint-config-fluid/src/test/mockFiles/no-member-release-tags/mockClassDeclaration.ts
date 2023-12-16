@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+
 /**
  * @public
  */
@@ -35,10 +36,12 @@ class MockClass {
 	 */
 	validBlockComment(): void {}
 
-	// Correctly implemented method with a slash comment.
+	// Correctly implemented method with a line comment.
 	validLineComment(): void {}
 
 	validNoComment(): void {}
+
+	signature: string;
 }
 
 /**
@@ -56,25 +59,15 @@ class MockClassTwo {
 	invalidAlpha(): void {}
 
 	/**
-	 * @beta
-	 */
-	inValidBeta(): void {}
-
-	/**
 	 * @public
 	 */
 	inValidPublic(): void {}
 
-	//@public
-	invalidLineComment(): void {}
-
 	/**
-	 * Correctly implemented method with valid comment.
+	 * @beta
 	 */
-	validBlockComment(): void {}
+	invalidSignature: boolean;
 
-	// Correctly implemented method with a slash comment.
-	validLineComment(): void {}
-
-	validNoComment(): void {}
+	// Valid property signature.
+	validSignature: void;
 }

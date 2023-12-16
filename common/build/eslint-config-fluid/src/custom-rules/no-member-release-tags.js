@@ -24,31 +24,25 @@ function hasReleaseTag(comment) {
 }
 
 /**
- * Helper function abstracted for reusability for different types of node. 
- * 
+ * Helper function abstracted for reusability for different types of node.
+ *
  * @param node - An AST node which is begin traversed.
  * @param context - The context object containing information that is relevant to the context of the rule.
  * {@link https://eslint.org/docs/latest/extend/custom-rules}
  */
 function errorLoggerHelper(node, context) {
 	const sourceCode = context.sourceCode;
-	const comments = sourceCode.getCommentsInside(node);
-
-	// Array to store class name & line to avoid repetitive logging. 
-	const classesForLog = new Set()
+	const comments = sourceCode.getCommentsBefore(node);
 
 	comments.forEach((comment) => {
 		// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block.
 		const formattedComment = `/** ${comment.value} */`;
 		if (hasReleaseTag(formattedComment)) {
-			// Class Declration has node.id while Class Expression has node.parent.id.
-			const classForLog = `${ node.id ? node.id.name : node.parent.id.name } at line ${node.loc.start.line}`
-			classesForLog.add(classForLog)
+			context.report({
+				node: node,
+				message: `Including the release-tag for ${node.key.name} at line ${node.key.loc.start.line} is not allowed.`,
+			});
 		}
-	});
-	context.report({
-		node: node,
-		message: `Including the release-tag inside the ${Array.from(classesForLog)} is not allowed.`,
 	});
 }
 
@@ -66,12 +60,18 @@ module.exports = {
 	},
 	create(context) {
 		return {
-			ClassDeclaration(node) {
-				errorLoggerHelper(node, context)
+			TSPropertySignature(node) {
+				errorLoggerHelper(node, context);
 			},
-			ClassExpression(node) {
-				errorLoggerHelper(node, context)
-			}
+			PropertyDefinition(node) {
+				errorLoggerHelper(node, context);
+			},
+			MethodDefinition(node) {
+				errorLoggerHelper(node, context);
+			},
+			TSMethodSignature(node) {
+				errorLoggerHelper(node, context);
+			},
 		};
 	},
 };
