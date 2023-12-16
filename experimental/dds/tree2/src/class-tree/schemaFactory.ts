@@ -230,16 +230,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(
-		name: Name,
-		t: T,
-	): TreeNodeSchemaClass<
-		`${TScope}.${Name}`,
-		NodeKind.Object,
-		ObjectFromSchemaRecord<T>,
-		InsertableObjectFromSchemaRecord<T>,
-		true
-	> {
+	>(name: Name, t: T) {
 		const allowAdditionalProperties = true;
 		class schema extends this.nodeSchema(name, NodeKind.Object, t, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
@@ -261,8 +252,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		return schema as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.Object,
-			ObjectFromSchemaRecord<T>,
-			InsertableObjectFromSchemaRecord<T>,
+			object & TreeNode & ObjectFromSchemaRecord<T>,
+			object & InsertableObjectFromSchemaRecord<T>,
 			true
 		>;
 	}
@@ -338,7 +329,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				this.structuralTypes,
 				fullName,
 				() =>
-					this.namedMap(
+					this.namedMap_internal(
 						fullName as TName,
 						nameOrAllowedTypes as T,
 						false,
@@ -352,7 +343,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				true
 			>;
 		}
-		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return this.namedMap_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
@@ -360,9 +351,9 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
-	 * @remarks See remarks on {@link SchemaFactory.namedArray}.
+	 * @remarks See remarks on {@link SchemaFactory.namedArray_internal}.
 	 */
-	public namedMap<
+	public namedMap_internal<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
@@ -494,7 +485,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedArray_internal(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
 				NodeKind.Array,
@@ -503,7 +494,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				true
 			>;
 		}
-		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return this.namedArray_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
@@ -521,7 +512,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * `src/class-tree/schemaFactoryRecursive.ts:42:9 - error TS2310: Type 'List' recursively references itself as a base type.`
 	 * Once recursive APIs are better sorted out and integrated into this class, switch this back to private.
 	 */
-	public namedArray<
+	public namedArray_internal<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,

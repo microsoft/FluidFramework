@@ -42,13 +42,15 @@ export type Unhydrated<T> = T;
  * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class TreeNode {}
+export abstract class TreeNode {}
 
 /**
  * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
  * @beta
  */
-export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
+export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
+	extends ReadonlyArray<T>,
+		TreeNode {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -261,7 +263,7 @@ export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
  *
  * @beta
  */
-export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut> {
+export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
