@@ -5,12 +5,12 @@
 
 const fs = require("fs-extra");
 const path = require("path");
+const {
+	params: { currentVersion, ltsVersion },
+} = require("../data/versions.json");
 
-const versions = require("../data/versions.json");
-const config = require("../staticwebapp.config.json");
-
-const statusCode = 301;
-const { currentVersion, ltsVersion } = versions.params;
+const configFileName = "staticwebapp.config.json";
+const config = require(`../${configFileName}`);
 
 const routes = {
 	"/docs/apis/": `/docs/api/${currentVersion}`,
@@ -19,23 +19,20 @@ const routes = {
 };
 
 /**
- * Processes versions and generates Aliases for redirects.
+ * Reads FF versions, generates redirects, and write redirect rules to azure webapp config json.
  */
 async function buildRedirects() {
-	config.routes = Object.entries(routes).map(([key, value]) => ({
-		route: key,
-		redirect: value,
-		statusCode,
+	config.routes = Object.entries(routes).map(([route, redirect]) => ({
+		route,
+		redirect,
+		statusCode: 301,
 	}));
 
-	await saveToFile("staticwebapp.config.json", config);
+	await fs.writeFile(
+		path.join(__dirname, "..", configFileName),
+		JSON.stringify(config, null, 2),
+		"utf8",
+	);
 }
 
-const saveToFile = async (filename, data) => {
-	const filePath = path.join(__dirname, "..", filename);
-	await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf8");
-};
-
-module.exports = {
-	buildRedirects,
-};
+module.exports = { buildRedirects };
