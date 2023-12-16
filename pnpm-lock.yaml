@@ -5616,6 +5616,7 @@ importers:
 
   experimental/dds/tree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
@@ -5660,8 +5661,10 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -5681,6 +5684,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-private/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark': 0.48.0
@@ -5712,7 +5716,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/framework/data-objects:
@@ -5840,6 +5846,7 @@ importers:
 
   experimental/framework/tree-react-api:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': 0.29.0-222379
       '@fluidframework/build-common': ^2.0.3
@@ -5861,14 +5868,17 @@ importers:
       mocha: ^10.2.0
       prettier: ~3.0.3
       react: ^17.0.1
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/tree': link:../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -5887,8 +5897,10 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/client-utils:
@@ -7238,6 +7250,7 @@ importers:
 
   packages/dds/tree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -7285,8 +7298,10 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
+      renamer: ^4.0.0
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7306,6 +7321,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-private/test-drivers': link:../../test/test-drivers
@@ -7340,7 +7356,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
+      renamer: 4.0.0
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/debugger:

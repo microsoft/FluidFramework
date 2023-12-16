@@ -11,14 +11,38 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./test/EditLog": {
+			"import": {
+				"types": "./lib/EditLog.d.mts",
+				"default": "./lib/EditLog.mjs"
+			},
+			"require": {
+				"types": "./dist/EditLog.d.ts",
+				"default": "./dist/EditLog.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -28,17 +52,17 @@
 		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"postpack": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test",
-		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.*js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
 		"perf:measure": "npm run perf -- --fgrep @Measurement",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:benchmark:report": "mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r node_modules/@fluidframework/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
+		"test:benchmark:report": "mocha \"dist/**/*.tests.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r node_modules/@fluidframework/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha \"dist/**/*.tests.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluidframework/mocha-test-setup",
-		"tsc": "tsc"
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -58,6 +82,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
@@ -89,7 +114,9 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
+		"renamer": "^4.0.0",
 		"rimraf": "^4.4.0",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

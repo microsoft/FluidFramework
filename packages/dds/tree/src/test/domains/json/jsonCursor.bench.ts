@@ -5,7 +5,13 @@
 
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { ITreeCursor, jsonableTreeFromCursor, EmptyKey, JsonCompatible, brand } from "../../..";
+import {
+	ITreeCursor,
+	jsonableTreeFromCursor,
+	EmptyKey,
+	JsonCompatible,
+	brand,
+} from "../../../index";
 import {
 	singleJsonCursor,
 	cursorToJsonObject,
