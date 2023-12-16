@@ -14,6 +14,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
@@ -145,6 +146,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
@@ -157,6 +159,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					undefined,
 					undefined,
 					telemetryContext,
+					incrementalSummaryContext,
 				),
 			);
 		}
@@ -217,7 +220,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		const contents: unknown = this.serializer.decode(message.contents);
 		const { commit, sessionId } = this.messageCodec.decode(contents);
-
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
@@ -299,6 +301,7 @@ export interface Summarizable {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats;
 
 	/**
