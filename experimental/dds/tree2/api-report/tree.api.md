@@ -886,7 +886,7 @@ export interface IEmitter<E extends Events<E>> {
 export interface IForestSubscription extends ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     readonly anchors: AnchorSet;
-    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
+    clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
     getCursorAboveDetachedFields(): ITreeCursorSynchronous;
     readonly isEmpty: boolean;
@@ -987,6 +987,11 @@ export type isAny<T> = boolean extends (T extends never ? true : false) ? true :
 export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1 ? true : 1 extends T["length"] ? boolean : false;
 
 // @alpha
+export interface ISchemaEditor {
+    setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
+}
+
+// @alpha
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
 // @beta
@@ -997,6 +1002,11 @@ export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
     requireSchema<TRoot extends TreeFieldSchema>(schema: FlexTreeSchema<TRoot>, onSchemaIncompatible: () => void): FlexTreeView<TRoot> | undefined;
     schematizeInternal<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): FlexTreeView<TRoot>;
+}
+
+// @alpha
+export interface ISharedTreeEditor extends IDefaultEditBuilder {
+    schema: ISchemaEditor;
 }
 
 // @alpha (undocumented)
@@ -1028,7 +1038,7 @@ export interface ITree extends IChannel {
 
 // @alpha
 export interface ITreeCheckout extends AnchorLocator {
-    readonly editor: IDefaultEditBuilder;
+    readonly editor: ISharedTreeEditor;
     readonly events: ISubscribable<CheckoutEvents>;
     readonly forest: IForestSubscription;
     fork(): ITreeCheckoutFork;
@@ -1036,8 +1046,9 @@ export interface ITreeCheckout extends AnchorLocator {
     merge(view: ITreeCheckoutFork, disposeView: boolean): void;
     rebase(view: ITreeCheckoutFork): void;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    readonly storedSchema: StoredSchemaRepository;
+    readonly storedSchema: TreeStoredSchemaSubscription;
     readonly transaction: ITransaction;
+    updateSchema(newSchema: TreeStoredSchema): void;
 }
 
 // @alpha
@@ -1643,11 +1654,6 @@ export interface StoredSchemaCollection {
     readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
-// @alpha
-export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
-    update(newSchema: TreeStoredSchema): void;
-}
-
 // @alpha (undocumented)
 export class test_RecursiveObject extends test_RecursiveObject_base {
 }
@@ -1906,6 +1912,10 @@ export enum TreeStatus {
 // @alpha
 export interface TreeStoredSchema extends StoredSchemaCollection {
     readonly rootFieldSchema: TreeFieldStoredSchema;
+}
+
+// @alpha
+export interface TreeStoredSchemaSubscription extends ISubscribable<SchemaEvents>, TreeStoredSchema {
 }
 
 // @alpha (undocumented)

@@ -374,7 +374,6 @@ describe("Branches", () => {
 		assertDisposed(() => branch.fork());
 		assertDisposed(() => branch.rebaseOnto(fork));
 		assertDisposed(() => branch.merge(branch.fork()));
-		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
 		assertDisposed(() => branch.startTransaction());
 		assertDisposed(() => branch.commitTransaction());
 		assertDisposed(() => branch.abortTransaction());

@@ -17,7 +17,7 @@ import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	Adapters,
 	Compatibility,
 	storedEmptyFieldSchema,
@@ -27,7 +27,7 @@ import {
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 import { SchemaBuilder, leaf } from "../../../domains";
 
-class TestSchemaRepository extends InMemoryStoredSchemaRepository {
+class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		data?: TreeStoredSchema,
@@ -139,7 +139,7 @@ describe("Schema Evolution Examples", () => {
 		const view = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection);
 
 		// Now lets imagine using this application on a new empty document.
-		// StoredSchemaRepository defaults to a state that permits no document states at all.
+		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
 		// To permit an empty document, we have to define a root field, and permit it to be empty.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));

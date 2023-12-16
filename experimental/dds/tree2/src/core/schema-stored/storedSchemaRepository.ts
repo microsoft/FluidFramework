@@ -16,7 +16,7 @@ import {
 import { TreeNodeSchemaIdentifier } from "./format";
 
 /**
- * Events for {@link StoredSchemaRepository}.
+ * Events for {@link TreeStoredSchemaSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
  * @alpha
@@ -34,30 +34,36 @@ export interface SchemaEvents {
 }
 
 /**
- * Mutable collection of stored schema.
- *
- * TODO: could implement more fine grained dependency tracking.
+ * A collection of stored schema that fires events in response to changes.
  * @alpha
  */
-export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
+export interface TreeStoredSchemaSubscription
+	extends ISubscribable<SchemaEvents>,
+		TreeStoredSchema {}
+
+/**
+ * Mutable collection of stored schema.
+ * @alpha
+ */
+export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
+	 * Mutates the stored schema.
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
 	 */
-	update(newSchema: TreeStoredSchema): void;
+	apply(newSchema: TreeStoredSchema): void;
 }
 
 /**
- * StoredSchemaRepository for in memory use:
- * not hooked up to Fluid (does not create Fluid ops when editing).
+ * Mutable TreeStoredSchema repository.
  */
-export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
+export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
 	protected readonly events = createEmitter<SchemaEvents>();
 
 	/**
-	 * Copies in the provided schema. If `data` is an InMemoryStoredSchemaRepository, it will be cheap-cloned.
+	 * Copies in the provided schema. If `data` is an TreeStoredSchemaRepository, it will be cheap-cloned.
 	 * Otherwise, it will be deep-cloned.
 	 *
 	 * We might not want to store schema in maps long term, as we might want a way to reserve a
@@ -70,13 +76,20 @@ export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
 	public constructor(data?: TreeStoredSchema) {
-		this.rootFieldSchemaData = storedEmptyFieldSchema;
-		this.nodeSchemaData = new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
-			[],
-			compareStrings,
-		);
-		if (data !== undefined) {
-			this.cloneData(data);
+		if (data === undefined) {
+			this.rootFieldSchemaData = storedEmptyFieldSchema;
+			this.nodeSchemaData = new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
+				[],
+				compareStrings,
+			);
+		} else {
+			if (data instanceof TreeStoredSchemaRepository) {
+				this.rootFieldSchemaData = data.rootFieldSchema;
+				this.nodeSchemaData = data.nodeSchemaData.clone();
+			} else {
+				this.rootFieldSchemaData = cloneFieldSchemaData(data.rootFieldSchema);
+				this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
+			}
 		}
 	}
 
@@ -96,21 +109,17 @@ export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
 		return this.rootFieldSchemaData;
 	}
 
-	public update(newSchema: TreeStoredSchema): void {
+	public apply(newSchema: TreeStoredSchema): void {
 		this.events.emit("beforeSchemaChange", newSchema);
+		const clone = new TreeStoredSchemaRepository(newSchema);
 		// In the future, we could use btree's delta functionality to do a more efficient update
-		this.cloneData(newSchema);
+		this.rootFieldSchemaData = clone.rootFieldSchemaData;
+		this.nodeSchemaData = clone.nodeSchemaData;
 		this.events.emit("afterSchemaChange", newSchema);
 	}
 
-	private cloneData(data: TreeStoredSchema): void {
-		if (data instanceof InMemoryStoredSchemaRepository) {
-			this.rootFieldSchemaData = data.rootFieldSchema;
-			this.nodeSchemaData = data.nodeSchemaData.clone();
-		} else {
-			this.rootFieldSchemaData = data.rootFieldSchema;
-			this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
-		}
+	public clone(): TreeStoredSchemaRepository {
+		return new TreeStoredSchemaRepository(this);
 	}
 }
 

@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { SchemaEditor, SchemaSummarizer, encodeTreeSchema } from "./schemaSummarizer";
+export { SchemaSummarizer, encodeTreeSchema } from "./schemaSummarizer";
 export { makeSchemaCodec } from "./codec";
+export { Format } from "./format";
