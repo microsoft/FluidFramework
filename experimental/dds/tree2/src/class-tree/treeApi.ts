@@ -3,11 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { TreeStatus } from "../feature-libraries";
-import { TreeNode, Tree as TreeSimple } from "../simple-tree";
+import { TreeValue } from "../core";
+import {
+	EditableTreeEvents,
+	LeafNodeSchema,
+	Multiplicity,
+	TreeStatus,
+	isTreeValue,
+	valueSchemaAllows,
+} from "../feature-libraries";
+import { TreeNode } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { getClassSchema } from "../simple-tree/proxies";
-import { NodeFromSchema, NodeKind, TreeNodeSchema } from "./schemaTypes";
+import { getFlexNode, tryGetFlexNode } from "../simple-tree/flexNode";
+// eslint-disable-next-line import/no-internal-modules
+import { getClassSchema, getOrCreateNodeProxy } from "../simple-tree/proxies";
+import { schemaFromValue } from "./schemaFactory";
+import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes";
 import { getFlexSchema } from "./toFlexSchema";
 
 /**
@@ -23,7 +34,9 @@ export interface TreeApi {
 	/**
 	 * The schema information for this node.
 	 */
-	schema<T extends TreeNode>(node: TreeNode): TreeNodeSchema<string, NodeKind, unknown, T>;
+	schema<T extends TreeNode | TreeLeafValue>(
+		node: T,
+	): TreeNodeSchema<string, NodeKind, unknown, T>;
 	/**
 	 * Narrow the type of the given value if it satisfies the given schema.
 	 * @example
@@ -69,15 +82,51 @@ export interface TreeApi {
  * @beta
  */
 export const nodeApi: TreeApi = {
-	...(TreeSimple as unknown as TreeApi),
+	parent: (node: TreeNode) => {
+		const editNode = getFlexNode(node).parentField.parent.parent;
+		if (editNode !== undefined) {
+			return getOrCreateNodeProxy(editNode);
+		}
+
+		return undefined;
+	},
+	key: (node: TreeNode) => {
+		const parentField = getFlexNode(node).parentField;
+		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
+			// The parent of `node` is a list
+			return parentField.index;
+		}
+
+		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
+		return parentField.parent.key;
+	},
+	on: <K extends keyof EditableTreeEvents>(
+		node: TreeNode,
+		eventName: K,
+		listener: EditableTreeEvents[K],
+	) => {
+		return getFlexNode(node).on(eventName, listener);
+	},
+	status: (node: TreeNode) => {
+		return getFlexNode(node).treeStatus();
+	},
 	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
 	): value is NodeFromSchema<TSchema> => {
-		return TreeSimple.is(value, getFlexSchema(schema));
+		const flexSchema = getFlexSchema(schema);
+		if (isTreeValue(value)) {
+			return (
+				flexSchema instanceof LeafNodeSchema && valueSchemaAllows(flexSchema.info, value)
+			);
+		}
+		return tryGetFlexNode(value)?.is(flexSchema) ?? false;
 	},
-	schema<T extends TreeNode>(node: TreeNode): TreeNodeSchema<string, NodeKind, unknown, T> {
-		return getClassSchema(TreeSimple.schema(node)) as TreeNodeSchema<
+	schema<T extends TreeNode | TreeValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T> {
+		if (isTreeValue(node)) {
+			return schemaFromValue(node) as TreeNodeSchema<string, NodeKind, unknown, T>;
+		}
+		return getClassSchema(getFlexNode(node).schema) as TreeNodeSchema<
 			string,
 			NodeKind,
 			unknown,

@@ -5,14 +5,6 @@
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
-	TreeFieldSchema,
-	ImplicitFieldSchema as OldImplicitFieldSchema,
-	FlexTreeSchema,
-	InsertableFlexField,
-} from "../../feature-libraries";
-import { InsertableTreeRoot, TreeFieldInner, getProxyForField } from "../../simple-tree";
-import { SchemaBuilder } from "../../domains";
-import {
 	ImplicitFieldSchema,
 	SchemaFactory,
 	TreeConfiguration,
@@ -24,36 +16,6 @@ import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal"
 import { TreeFactory } from "../../treeFactory";
 import { typeboxValidator } from "../../external-utilities";
 import { ForestType } from "../../shared-tree";
-import { flexTreeWithContent } from "../utils";
-
-/**
- * Helper for making small test schemas.
- * @deprecated - use makeSchema instead.
- */
-export function makeOldSchema<const TSchema extends OldImplicitFieldSchema>(
-	fn: (builder: SchemaBuilder) => TSchema,
-) {
-	const builder = new SchemaBuilder({
-		scope: `test.schema.${Math.random().toString(36).slice(2)}`,
-	});
-	const root = fn(builder);
-	return builder.intoSchema(root);
-}
-
-/**
- * Given the schema and initial tree data, returns a hydrated tree node.
- * @deprecated - use getRoot instead.
- */
-export function getOldRoot<TRoot extends TreeFieldSchema>(
-	schema: FlexTreeSchema<TRoot>,
-	initialTree: InsertableTreeRoot<FlexTreeSchema<TRoot>>,
-): TreeFieldInner<TRoot["kind"], TRoot["allowedTypes"], "maybeEmpty"> {
-	const tree = flexTreeWithContent({
-		schema,
-		initialTree: initialTree as InsertableFlexField<TRoot>,
-	});
-	return getProxyForField<typeof schema.rootFieldSchema>(tree);
-}
 
 /**
  * Helper for making small test schemas.

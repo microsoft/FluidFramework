@@ -11,9 +11,11 @@ import {
 	NodeBuilderData,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
+	TreeLeafValue,
 	TreeNodeFromImplicitAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../class-tree/schemaTypes";
+import { TreeValue } from "../../core";
 import { TreeFactory } from "../../treeFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 
@@ -128,5 +130,9 @@ describe("schemaTypes", () => {
 				stuff: [{}],
 			});
 		});
+	});
+
+	it("TreeLeafValue", () => {
+		type _check = requireTrue<areSafelyAssignable<TreeLeafValue, TreeValue>>;
 	});
 });

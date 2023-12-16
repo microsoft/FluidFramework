@@ -57,6 +57,7 @@ import { singleJsonCursor } from "../../../domains";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
+import { RevisionTagCodec } from "../../../shared-tree-core";
 import { ValueChangeset, valueField } from "./basicRebasers";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
@@ -98,7 +99,9 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
+const family = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
+	jsonValidator: typeboxValidator,
+});
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

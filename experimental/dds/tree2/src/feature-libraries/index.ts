@@ -71,7 +71,7 @@ export { ForestSummarizer } from "./forest-summary";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
-export { SchemaSummarizer, SchemaEditor, encodeTreeSchema, makeSchemaCodec } from "./schema-index/";
+export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/";
 export {
 	stackTreeNodeCursor,
 	CursorAdapter,
@@ -119,7 +119,10 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
+	ModularChangeFamily,
+	makeV0Codec,
 	RelevantRemovedRootsFromChild,
+	EncodedModularChangeset,
 } from "./modular-schema";
 
 export { Multiplicity } from "./multiplicity";
@@ -219,6 +222,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	fieldKinds,
 	intoDelta,
 	relevantRemovedRoots,
 } from "./default-schema";
@@ -273,6 +277,8 @@ export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
+export { valueSchemaAllows } from "./valueUtilities";
+
 export {
 	InsertableFlexNode,
 	InsertableFlexField,
@@ -287,4 +293,7 @@ export {
 } from "./schema-aware";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+
+export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits";
+
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

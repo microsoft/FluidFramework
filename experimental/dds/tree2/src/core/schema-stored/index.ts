@@ -21,8 +21,9 @@ export {
 	StoredSchemaCollection,
 } from "./schema";
 export {
-	StoredSchemaRepository,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
+	MutableTreeStoredSchema,
+	TreeStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "./storedSchemaRepository";

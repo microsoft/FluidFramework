@@ -31,6 +31,7 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 	EditDescription,
 } from "../modular-schema";
+import { RevisionTagCodec } from "../../shared-tree-core";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
 export type DefaultChangeset = ModularChangeset;
@@ -43,10 +44,12 @@ export type DefaultChangeset = ModularChangeset;
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public static readonly emptyChange: DefaultChangeset = ModularChangeFamily.emptyChange;
-
 	public constructor(codecOptions: ICodecOptions) {
-		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
+		this.modularFamily = new ModularChangeFamily(
+			fieldKinds,
+			new RevisionTagCodec(),
+			codecOptions,
+		);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -90,7 +93,7 @@ export function relevantRemovedRoots(
 }
 
 /**
- * Default editor for transactions.
+ * Default editor for transactional tree data changes.
  * @alpha
  */
 export interface IDefaultEditBuilder {
@@ -156,10 +159,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	}
 	public exitTransaction(): void {
 		this.modularBuilder.exitTransaction();
-	}
-
-	public apply(change: DefaultChangeset): void {
-		this.modularBuilder.apply(change);
 	}
 
 	public addNodeExistsConstraint(path: UpPath): void {
