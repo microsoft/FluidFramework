@@ -41,7 +41,7 @@ async function stageMetadata(version) {
 			error,
 		);
 	}
-	console.log(chalk.green(`SUCCESS: ${version} API log files staged!`));
+	console.log(chalk.green(`SUCCESS: ${version} API metadata staged!`));
 }
 
 Promise.all(docVersions.map(stageMetadata)).then(
