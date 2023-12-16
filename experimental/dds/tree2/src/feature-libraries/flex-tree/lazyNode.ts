@@ -331,7 +331,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		if (event.propagationStopped) {
 			return;
 		}
-		const parentNode = this.parentField.parent.parent;
+		const parentNode = this.#anchorNode.parent?.slots.get(lazyTreeSlot);
 		if (parentNode !== undefined) {
 			// NOTE: by design, the listeners on a node's #internalEmitter do not need an event object, they just need to
 			// be signaled to do do their thing, but since IEmitter requires an event object to be passed we need to trick
