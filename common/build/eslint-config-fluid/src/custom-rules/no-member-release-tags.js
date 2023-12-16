@@ -40,7 +40,8 @@ function errorLoggerHelper(node, context) {
 		if (hasReleaseTag(formattedComment)) {
 			context.report({
 				node: node,
-				message: `Including the release-tag for ${node.key.name} at line ${node.key.loc.start.line} is not allowed.`,
+				// `node` object has different strucutre based on the AST scope type. 
+				message: `Including the release-tag for ${node.key.name} at line ${node.key.loc.start.line} in ${node.parent.parent.id ? node.parent.parent.id.name : node.parent.parent.parent.id.name } is not allowed.`,
 			});
 		}
 	});

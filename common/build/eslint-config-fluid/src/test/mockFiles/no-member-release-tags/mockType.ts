@@ -11,7 +11,7 @@ type ValidMockType = number;
 /**
  * @public
  */
-type MockTypes = {
+type MockType = {
 	/**
 	 * @public
 	 */

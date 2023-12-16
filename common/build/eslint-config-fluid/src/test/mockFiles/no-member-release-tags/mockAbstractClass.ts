@@ -5,31 +5,20 @@
 
 /**
  * @public
- */
+ * Not used in the current test suite due to compatibility issue with the ESLint.
+*/
 abstract class MockAbstractClass {
-	abstract invalidMockMethod(): string;
+    /**
+     * @public
+     */
+    abstract invalidMethod(): void;
 
-	/**
-	 * @alpha
-	 */
-	invalidMethod(): boolean {
-		return true;
-	}
+    /**
+     * @alpha
+     */
+    abstract invalidSignature: number;
+
+    abstract validMethod(): boolean;    
+
+    abstract validSignature: string;
 }
-
-/**
- * @beta
- */
-class InvalidMockSubClass extends MockAbstractClass {
-	/**
-	 * @beta
-	 * @returns string
-	 */
-	invalidMockMethod(): string {
-		return "Hello World";
-	}
-}
-
-const invalidMockSubClass = new InvalidMockSubClass();
-invalidMockSubClass.invalidMethod();
-invalidMockSubClass.invalidMockMethod();
