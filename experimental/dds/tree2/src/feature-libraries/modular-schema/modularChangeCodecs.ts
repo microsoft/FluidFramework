@@ -13,20 +13,11 @@ import {
 	RevisionInfo,
 	RevisionTag,
 } from "../../core";
+import { brand, fail, Mutable, nestedMapFromFlatList, nestedMapToFlatList } from "../../util";
 import {
-	brand,
-	fail,
-	JsonCompatibleReadOnly,
-	Mutable,
-	nestedMapFromFlatList,
-	nestedMapToFlatList,
-} from "../../util";
-import {
-	ICodecFamily,
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
-	makeCodecFamily,
 	SchemaValidationFunction,
 } from "../../codec";
 import {
@@ -35,7 +26,6 @@ import {
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
-	makeFieldBatchCodec,
 } from "../chunked-forest";
 import { TreeCompressionStrategy } from "../treeCompressionUtils";
 import {
@@ -56,12 +46,12 @@ import {
 	EncodedRevisionInfo,
 } from "./modularChangeFormat";
 
-function makeV0Codec(
+export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	fieldsCodecWithoutContext: FieldBatchCodec,
 	{ jsonValidator: validator }: ICodecOptions,
-): IJsonCodec<ModularChangeset> {
+): IJsonCodec<ModularChangeset, EncodedModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
@@ -268,9 +258,7 @@ function makeV0Codec(
 				revisions:
 					change.revisions === undefined
 						? change.revisions
-						: (encodeRevisionInfos(
-								change.revisions,
-						  ) as unknown as readonly RevisionInfo[] & JsonCompatibleReadOnly),
+						: encodeRevisionInfos(change.revisions),
 				changes: encodeFieldChangesForJson(change.fieldChanges),
 				builds: encodeBuilds(change.builds, fieldsCodecSchemaless),
 			};
@@ -293,14 +281,4 @@ function makeV0Codec(
 		},
 		encodedSchema: EncodedModularChangeset,
 	};
-}
-
-export function makeModularChangeCodecFamily(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-	options: ICodecOptions,
-): ICodecFamily<ModularChangeset> {
-	return makeCodecFamily([
-		[0, makeV0Codec(fieldKinds, revisionTagCodec, makeFieldBatchCodec(options), options)],
-	]);
 }

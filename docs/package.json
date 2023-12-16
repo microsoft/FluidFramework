@@ -72,7 +72,6 @@
 		"node-fetch": "^2.6.9",
 		"prettier": "~2.8.8",
 		"prettier-plugin-go-template": "^0.0.13",
-		"replace-in-file": "^7.0.1",
 		"rimraf": "^5.0.1",
 		"start-server-and-test": "^2.0.0"
 	},

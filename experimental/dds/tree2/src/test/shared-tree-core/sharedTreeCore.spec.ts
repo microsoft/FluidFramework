@@ -309,6 +309,7 @@ describe("SharedTreeCore", () => {
 		} satisfies InitializeAndSchematizeConfiguration;
 
 		const view1 = tree1.schematizeInternal(config);
+		containerRuntimeFactory.processAllMessages();
 		const view2 = tree2.schematizeInternal(config);
 		const editable1 = view1.editableTree;
 		const editable2 = view2.editableTree;
