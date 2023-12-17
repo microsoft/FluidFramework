@@ -10,7 +10,7 @@
 				"max": 60000
 			},
 			"optionOverrides": {
-				"comment": "SessionExpiry: 20 seconds. Inactive / Sweep Timeout: 40 seconds.",
+				"comment": "SessionExpiry: 20 seconds. Inactive / Sweep Timeout: 40 seconds. Sweep Grace Period: 5 seconds",
 				"tinylicious": {
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [40000],
@@ -20,12 +20,10 @@
 					},
 					"container": {
 						"gcOptions": {
-							"disableGC": [false],
-							"runFullGC": [false],
 							"inactiveTimeoutMs": [40000],
 							"sessionExpiryTimeoutMs": [20000],
 							"enableGCSweep": [true],
-							"sweepGracePeriodMs": [10000]
+							"sweepGracePeriodMs": [5000]
 						}
 					}
 				},
@@ -38,8 +36,6 @@
 					},
 					"container": {
 						"gcOptions": {
-							"disableGC": [false],
-							"runFullGC": [false],
 							"inactiveTimeoutMs": [40000],
 							"sessionExpiryTimeoutMs": [20000]
 						}
@@ -67,8 +63,6 @@
 					},
 					"container": {
 						"gcOptions": {
-							"disableGC": [false],
-							"runFullGC": [false],
 							"inactiveTimeoutMs": [1200000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
@@ -85,8 +79,6 @@
 					},
 					"container": {
 						"gcOptions": {
-							"disableGC": [false],
-							"runFullGC": [false],
 							"inactiveTimeoutMs": [1500000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
@@ -113,8 +105,6 @@
 					},
 					"container": {
 						"gcOptions": {
-							"disableGC": [false],
-							"runFullGC": [false],
 							"enableGCSweep": [true],
 							"inactiveTimeoutMs": [1200000],
 							"sessionExpiryTimeoutMs": [900000],
@@ -132,8 +122,6 @@
 					},
 					"container": {
 						"gcOptions": {
-							"disableGC": [false],
-							"runFullGC": [false],
 							"enableGCSweep": [true],
 							"inactiveTimeoutMs": [1500000],
 							"sessionExpiryTimeoutMs": [900000],
