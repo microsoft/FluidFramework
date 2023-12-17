@@ -156,7 +156,7 @@ describe("Garbage Collection configurations", () => {
 		gc = undefined;
 		mockLogger = new MockLogger();
 		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
-		// To ensure inactive timeout is less than sweep timeout.
+		// To ensure inactive timeout is less than tombstone timeout.
 		injectedSettings[testOverrideInactiveTimeoutKey] = 1;
 	});
 
@@ -522,9 +522,9 @@ describe("Garbage Collection configurations", () => {
 		});
 	});
 
-	describe("Session Expiry and Sweep Timeout", () => {
+	describe("Session Expiry and Tombstone Timeout", () => {
 		beforeEach(() => {
-			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
+			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than tombstone timeout
 		});
 
 		// Config sources for Session Expiry:
@@ -532,7 +532,7 @@ describe("Garbage Collection configurations", () => {
 		// 2. IGCRuntimeOptions.sessionExpiryTimeoutMs
 		// 3. IGCMetadata.sessionExpiryTimeoutMs
 		// 4. "Fluid.GarbageCollection.TestOverride.SessionExpiryMs" setting
-		// Config sources for Sweep Timeout:
+		// Config sources for Tombstone Timeout:
 		// 1. IGCMetadata.tombstoneTimeoutMs
 		// 2. IGCMetadata_Deprecated.sweepTimeoutMs (backfill from before two-stage sweep)
 		// 3. Computed from Session Expiry, fixed upper bound for Snapshot Expiry and a fixed buffer (on create, or to backfill existing)
@@ -743,7 +743,7 @@ describe("Garbage Collection configurations", () => {
 
 	describe("Session Behavior (e.g. 'shouldRun' fields)", () => {
 		beforeEach(() => {
-			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
+			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than tombstone timeout
 		});
 
 		describe("shouldRunGC", () => {

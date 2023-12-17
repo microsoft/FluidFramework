@@ -72,7 +72,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		it(`A summary has a datastore and blob referenced, but trailing ops unreferenced them ${
-			tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
+			tombstoneEnabled ? "after tombstone timeout" : "before tombstone timeout"
 		}`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
@@ -139,7 +139,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		it(`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
-			tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
+			tombstoneEnabled ? "after tombstone timeout" : "before tombstone timeout"
 		}`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;

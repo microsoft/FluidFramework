@@ -127,7 +127,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blobs are tombstoned.
+				// Wait for tombstone timeout so that the blobs are tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -211,7 +211,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blobs are tombstoned.
+				// Wait for tombstone timeout so that the blobs are tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -281,7 +281,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
+				// Wait for tombstone timeout so that the blob is tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -364,7 +364,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blobs are tombstoned.
+				// Wait for tombstone timeout so that the blobs are tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -409,7 +409,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			await provider.ensureSynchronized();
 			const summary1 = await summarizeNow(summarizer);
 
-			// Wait for half sweep timeout and load a container. This container will upload a blob with the same content
+			// Wait for half tombstone timeout and load a container. This container will upload a blob with the same content
 			// as above so that it is de-duped. This container should be able to use this blob until its session
 			// expires.
 			await delay(tombstoneTimeoutMs / 2);
@@ -420,7 +420,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				stringToBuffer(blobContents, "utf-8"),
 			);
 
-			// Wait for sweep timeout so that the blob uploaded by the first container is tombstoned.
+			// Wait for tombstone timeout so that the blob uploaded by the first container is tombstoned.
 			await delay(tombstoneTimeoutMs / 2 + 10);
 
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -521,7 +521,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
+				// Wait for tombstone timeout so that the blob is tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -614,7 +614,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
+				// Wait for tombstone timeout so that the blob is tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -735,7 +735,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
+				// Wait for tombstone timeout so that the blob is tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -870,7 +870,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
+				// Wait for tombstone timeout so that the blob is tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -953,7 +953,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
+				// Wait for tombstone timeout so that the blob is tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
@@ -1065,7 +1065,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
+				// Wait for tombstone timeout so that the blob is tombstoned.
 				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.

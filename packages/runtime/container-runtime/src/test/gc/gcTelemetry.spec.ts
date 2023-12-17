@@ -258,7 +258,7 @@ describe("GC Telemetry Tracker", () => {
 				"inactive events not as expected",
 			);
 
-			// Advance the clock to trigger sweep timeout and validate that TombstoneReady events are as expected.
+			// Advance the clock to trigger tombstone timeout and validate that TombstoneReady events are as expected.
 			clock.tick(tombstoneTimeoutMs - inactiveTimeoutMs);
 			mockNodeChanges(nodes);
 			await simulateGCToTriggerEvents(isSummarizerClient);
@@ -324,7 +324,7 @@ describe("GC Telemetry Tracker", () => {
 			// Mark node 2 as unreferenced.
 			markNodesUnreferenced([nodes[2]]);
 
-			// Advance the clock to trigger sweep timeout and validate that tombstone revived event is as expected.
+			// Advance the clock to trigger tombstone timeout and validate that tombstone revived event is as expected.
 			clock.tick(tombstoneTimeoutMs + 1);
 			reviveNode(nodes[1], nodes[2], true /* isTombstoned */);
 			mockLogger.assertMatch(

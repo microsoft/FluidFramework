@@ -156,7 +156,7 @@ export function generateGCConfigs(
 		createParams.gcOptions.inactiveTimeoutMs ??
 		defaultInactiveTimeoutMs;
 
-	// Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
+	// Inactive timeout must be greater than tombstone timeout since a node goes from active -> inactive -> sweep ready.
 	if (tombstoneTimeoutMs !== undefined && inactiveTimeoutMs > tombstoneTimeoutMs) {
 		throw new UsageError("inactive timeout should not be greater than the tombstone timeout");
 	}
@@ -209,8 +209,8 @@ export function generateGCConfigs(
 }
 
 /**
- * Sweep timeout is the time after which unreferenced content can be swept.
- * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
+ * Tombstone timeout is the time after which unreferenced content can be swept.
+ * Tombstone timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
  *
  * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days.
  * The buffer is added to account for any clock skew or other edge cases.

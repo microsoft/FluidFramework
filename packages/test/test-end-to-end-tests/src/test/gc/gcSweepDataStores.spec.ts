@@ -173,7 +173,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	describe("Using swept data stores not allowed", () => {
 		// If this test starts failing due to runtime is closed errors try first adjusting `tombstoneTimeoutMs` above
 		itExpects(
-			"Send ops fails for swept datastores in summarizing container loaded before sweep timeout",
+			"Send ops fails for swept datastores in summarizing container loaded before tombstone timeout",
 			[
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
@@ -205,7 +205,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		);
 
 		itExpects(
-			"Send signals fails for swept datastores in summarizing container loaded before sweep timeout",
+			"Send signals fails for swept datastores in summarizing container loaded before tombstone timeout",
 			[
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",

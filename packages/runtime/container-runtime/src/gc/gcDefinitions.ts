@@ -79,8 +79,8 @@ export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAtt
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
 /**
- * The maximum snapshot cache expiry in the driver. This is used to calculate the sweep timeout.
- * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
+ * The maximum snapshot cache expiry in the driver. This is used to calculate the tombstone timeout.
+ * Tombstone timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
  * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days, i.e., any snapshot
  * in cache will be invalidated before 5 days.
  */
