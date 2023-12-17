@@ -297,7 +297,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			const summary1 = await summarizeNow(summarizer);
 
 			const sweepFullTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
-			// Wait for half sweep timeout and load a container. This container will upload a blob with the same content
+			// Wait for half sweep x timeout and load a container. This container will upload a blob with the same content
 			// as above so that it is de-duped. This container should be able to use this blob until its session
 			// expires.
 			await delay(sweepFullTimeoutMs / 2);
@@ -308,7 +308,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				stringToBuffer(blobContents, "utf-8"),
 			);
 
-			// Wait for sweep timeout so that the blob uploaded by the first container is ready to be deleted.
+			// Wait for sweep x timeout so that the blob uploaded by the first container is ready to be deleted.
 			await delay(sweepFullTimeoutMs / 2 + 10);
 
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.

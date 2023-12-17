@@ -534,8 +534,9 @@ describe("Garbage Collection configurations", () => {
 		// 4. "Fluid.GarbageCollection.TestOverride.SessionExpiryMs" setting
 		// Config sources for Sweep Timeout:
 		// 1. IGCMetadata.tombstoneTimeoutMs
-		// 2. Computed from Session Expiry, fixed upper bound for Snapshot Expiry and a fixed buffer (on create, or to backfill existing)
-		// 3. "Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs" setting (only applicable on create)
+		// 2. IGCMetadata_Deprecated.sweepTimeoutMs (backfill from before two-stage sweep)
+		// 3. Computed from Session Expiry, fixed upper bound for Snapshot Expiry and a fixed buffer (on create, or to backfill existing)
+		// 4. "Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs" setting (only applicable on create)
 
 		it("defaultSessionExpiryDurationMs", () => {
 			gc = createGcWithPrivateMembers();

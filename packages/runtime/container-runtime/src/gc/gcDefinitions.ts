@@ -169,7 +169,7 @@ export interface IGCMetadata {
 	 * After this point, there's a grace period before the object is deleted.
 	 * @see IGCRuntimeOptions.sweepGracePeriodMs
 	 *
-	 * So the full sweep timeout in a session is tombstoneTimeoutMs + sweepGracePeriodMs.
+	 * So the full sweep X timeout in a session is tombstoneTimeoutMs + sweepGracePeriodMs.
 	 */
 	readonly tombstoneTimeoutMs?: number;
 }
