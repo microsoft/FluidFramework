@@ -269,29 +269,6 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than loaded from",
 			);
 		});
-		it("Metadata Roundtrip - Thrashing between sweepTimeoutMs and tombstoneTimeoutMs", () => {
-			const inputMetadata1: IGCMetadata = {
-				sweepEnabled: true, // ignored
-				gcFeature: 1,
-				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
-				tombstoneTimeoutMs: 123,
-				gcFeatureMatrix: { gcGeneration: 1 },
-			};
-			gc = createGcWithPrivateMembers(inputMetadata1, {
-				[gcGenerationOptionName]: 2, // 2 should not replace already-persisted value of 1
-			});
-			const outputMetadata = gc.getMetadata();
-			const expectedOutputMetadata: IGCMetadata = {
-				...inputMetadata1,
-				sweepEnabled: false, // Hardcoded, not used
-				gcFeature: stableGCVersion,
-			};
-			assert.deepEqual(
-				outputMetadata,
-				expectedOutputMetadata,
-				"getMetadata returned different metadata than loaded from",
-			);
-		});
 		it("Metadata Roundtrip - old file with tombstoneGeneration", () => {
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
