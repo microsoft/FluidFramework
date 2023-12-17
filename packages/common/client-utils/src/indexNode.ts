@@ -12,3 +12,6 @@ export {
 } from "./bufferNode";
 export { gitHashFile, hashFile } from "./hashFileNode";
 export { performance } from "./performanceIsomorphic";
+
+// eslint-disable-next-line no-restricted-syntax
+export * from "./indexShared";

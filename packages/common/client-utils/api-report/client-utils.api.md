@@ -13,16 +13,6 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventTransformer } from '@fluidframework/core-interfaces';
 import { TransformedEvent } from '@fluidframework/core-interfaces';
 
-// @internal
-class Buffer_2 extends Uint8Array {
-    static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
-    // (undocumented)
-    static isBuffer(obj: unknown): obj is Buffer_2;
-    // (undocumented)
-    toString(encoding?: "utf8" | "utf-8" | "base64"): string;
-}
-export { Buffer_2 as Buffer }
-
 // @alpha
 export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
 
@@ -58,11 +48,20 @@ export function gitHashFile(file: IsoBuffer): Promise<string>;
 // @internal
 export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
 
-// @internal (undocumented)
-export const IsoBuffer: typeof Buffer_2;
+// @internal
+export function isArrayBuffer(obj: unknown): obj is ArrayBuffer;
 
-// @internal (undocumented)
-export type IsoBuffer = Buffer_2;
+// @internal
+export class IsoBuffer extends Uint8Array {
+    static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
+    // (undocumented)
+    static fromArrayBuffer(arrayBuffer: ArrayBuffer, byteOffset?: number, byteLength?: number): IsoBuffer;
+    // (undocumented)
+    static fromString(str: string, encoding?: string): IsoBuffer;
+    // (undocumented)
+    static isBuffer(obj: unknown): boolean;
+    toString(encoding?: "utf8" | "utf-8" | "base64"): string;
+}
 
 // @internal
 export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
@@ -79,7 +78,7 @@ const performance_2: IsomorphicPerformance;
 export { performance_2 as performance }
 
 // @internal
-export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
+export const stringToBuffer: (input: string, encoding: string) => ArrayBufferLike;
 
 // @internal
 export const toUtf8: (input: string, encoding: string) => string;

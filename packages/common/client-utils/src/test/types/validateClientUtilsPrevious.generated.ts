@@ -24,26 +24,26 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Buffer": {"forwardCompat": false}
+* "RemovedClassDeclaration_Buffer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Buffer():
     TypeOnly<old.Buffer>;
-declare function use_current_ClassDeclaration_Buffer(
+declare function use_current_RemovedClassDeclaration_Buffer(
     use: TypeOnly<current.Buffer>): void;
-use_current_ClassDeclaration_Buffer(
+use_current_RemovedClassDeclaration_Buffer(
     get_old_ClassDeclaration_Buffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Buffer": {"backCompat": false}
+* "RemovedClassDeclaration_Buffer": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_Buffer():
+declare function get_current_RemovedClassDeclaration_Buffer():
     TypeOnly<current.Buffer>;
 declare function use_old_ClassDeclaration_Buffer(
     use: TypeOnly<old.Buffer>): void;
 use_old_ClassDeclaration_Buffer(
-    get_current_ClassDeclaration_Buffer());
+    get_current_RemovedClassDeclaration_Buffer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -120,50 +120,50 @@ use_old_InterfaceDeclaration_ITraceEvent(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IsoBuffer": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IsoBuffer": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IsoBuffer():
     TypeOnly<typeof old.IsoBuffer>;
-declare function use_current_VariableDeclaration_IsoBuffer(
+declare function use_current_RemovedVariableDeclaration_IsoBuffer(
     use: TypeOnly<typeof current.IsoBuffer>): void;
-use_current_VariableDeclaration_IsoBuffer(
+use_current_RemovedVariableDeclaration_IsoBuffer(
     get_old_VariableDeclaration_IsoBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IsoBuffer": {"backCompat": false}
+* "RemovedVariableDeclaration_IsoBuffer": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IsoBuffer():
+declare function get_current_RemovedVariableDeclaration_IsoBuffer():
     TypeOnly<typeof current.IsoBuffer>;
 declare function use_old_VariableDeclaration_IsoBuffer(
     use: TypeOnly<typeof old.IsoBuffer>): void;
 use_old_VariableDeclaration_IsoBuffer(
-    get_current_VariableDeclaration_IsoBuffer());
+    get_current_RemovedVariableDeclaration_IsoBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsoBuffer": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IsoBuffer": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IsoBuffer():
     TypeOnly<old.IsoBuffer>;
-declare function use_current_TypeAliasDeclaration_IsoBuffer(
+declare function use_current_RemovedTypeAliasDeclaration_IsoBuffer(
     use: TypeOnly<current.IsoBuffer>): void;
-use_current_TypeAliasDeclaration_IsoBuffer(
+use_current_RemovedTypeAliasDeclaration_IsoBuffer(
     get_old_TypeAliasDeclaration_IsoBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsoBuffer": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IsoBuffer": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IsoBuffer():
+declare function get_current_RemovedTypeAliasDeclaration_IsoBuffer():
     TypeOnly<current.IsoBuffer>;
 declare function use_old_TypeAliasDeclaration_IsoBuffer(
     use: TypeOnly<old.IsoBuffer>): void;
 use_old_TypeAliasDeclaration_IsoBuffer(
-    get_current_TypeAliasDeclaration_IsoBuffer());
+    get_current_RemovedTypeAliasDeclaration_IsoBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -456,26 +456,26 @@ use_old_VariableDeclaration_performance(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_stringToBuffer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_stringToBuffer": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_stringToBuffer():
     TypeOnly<typeof old.stringToBuffer>;
-declare function use_current_FunctionDeclaration_stringToBuffer(
+declare function use_current_RemovedFunctionDeclaration_stringToBuffer(
     use: TypeOnly<typeof current.stringToBuffer>): void;
-use_current_FunctionDeclaration_stringToBuffer(
+use_current_RemovedFunctionDeclaration_stringToBuffer(
     get_old_FunctionDeclaration_stringToBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_stringToBuffer": {"backCompat": false}
+* "RemovedFunctionDeclaration_stringToBuffer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_stringToBuffer():
+declare function get_current_RemovedFunctionDeclaration_stringToBuffer():
     TypeOnly<typeof current.stringToBuffer>;
 declare function use_old_FunctionDeclaration_stringToBuffer(
     use: TypeOnly<typeof old.stringToBuffer>): void;
 use_old_FunctionDeclaration_stringToBuffer(
-    get_current_FunctionDeclaration_stringToBuffer());
+    get_current_RemovedFunctionDeclaration_stringToBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
