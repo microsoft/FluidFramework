@@ -5,7 +5,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { ITree } from "@fluid-experimental/tree2";
+import { ITree } from "@fluidframework/tree";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { loadFluidData, containerSchema, createFluidData } from "./fluid";
 import { treeConfiguration, Letter } from "./schema";

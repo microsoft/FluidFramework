@@ -352,6 +352,7 @@ The following npm scripts are supported in this directory:
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
+| `download:api:multi` | Download API for all documentation versions and extract the API JSON files locally. |
 | `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |

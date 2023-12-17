@@ -147,9 +147,9 @@ use_old_TypeAliasDeclaration_FluidObjectKeys(
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_FluidObjectProviderKeys():
-    TypeOnly<old.FluidObjectProviderKeys<any,any>>;
+    TypeOnly<old.FluidObjectProviderKeys<any>>;
 declare function use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<current.FluidObjectProviderKeys<any,any>>): void;
+    use: TypeOnly<current.FluidObjectProviderKeys<any>>): void;
 use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_old_TypeAliasDeclaration_FluidObjectProviderKeys());
 
@@ -159,9 +159,9 @@ use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_FluidObjectProviderKeys():
-    TypeOnly<current.FluidObjectProviderKeys<any,any>>;
+    TypeOnly<current.FluidObjectProviderKeys<any>>;
 declare function use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<old.FluidObjectProviderKeys<any,any>>): void;
+    use: TypeOnly<old.FluidObjectProviderKeys<any>>): void;
 use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_current_TypeAliasDeclaration_FluidObjectProviderKeys());
 
@@ -1287,9 +1287,9 @@ use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
 * "InterfaceDeclaration_Tagged": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_Tagged():
-    TypeOnly<old.Tagged<any,any>>;
+    TypeOnly<old.Tagged<any>>;
 declare function use_current_InterfaceDeclaration_Tagged(
-    use: TypeOnly<current.Tagged<any,any>>): void;
+    use: TypeOnly<current.Tagged<any>>): void;
 use_current_InterfaceDeclaration_Tagged(
     get_old_InterfaceDeclaration_Tagged());
 
@@ -1299,9 +1299,9 @@ use_current_InterfaceDeclaration_Tagged(
 * "InterfaceDeclaration_Tagged": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_Tagged():
-    TypeOnly<current.Tagged<any,any>>;
+    TypeOnly<current.Tagged<any>>;
 declare function use_old_InterfaceDeclaration_Tagged(
-    use: TypeOnly<old.Tagged<any,any>>): void;
+    use: TypeOnly<old.Tagged<any>>): void;
 use_old_InterfaceDeclaration_Tagged(
     get_current_InterfaceDeclaration_Tagged());
 
