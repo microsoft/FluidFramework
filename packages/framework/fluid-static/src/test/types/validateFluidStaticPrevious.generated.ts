@@ -48,6 +48,18 @@ use_old_InterfaceDeclaration_ContainerSchema(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_DataObjectClass": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_DataObjectClass():
@@ -68,6 +80,18 @@ declare function use_old_TypeAliasDeclaration_DataObjectClass(
     use: TypeOnly<old.DataObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_DataObjectClass(
     get_current_TypeAliasDeclaration_DataObjectClass());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_FluidContainer": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_FluidContainer": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -168,30 +192,6 @@ use_old_InterfaceDeclaration_IMember(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideRootDataObject": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IProvideRootDataObject():
-    TypeOnly<old.IProvideRootDataObject>;
-declare function use_current_InterfaceDeclaration_IProvideRootDataObject(
-    use: TypeOnly<current.IProvideRootDataObject>): void;
-use_current_InterfaceDeclaration_IProvideRootDataObject(
-    get_old_InterfaceDeclaration_IProvideRootDataObject());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideRootDataObject": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IProvideRootDataObject():
-    TypeOnly<current.IProvideRootDataObject>;
-declare function use_old_InterfaceDeclaration_IProvideRootDataObject(
-    use: TypeOnly<old.IProvideRootDataObject>): void;
-use_old_InterfaceDeclaration_IProvideRootDataObject(
-    get_current_InterfaceDeclaration_IProvideRootDataObject());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRootDataObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRootDataObject():
@@ -199,6 +199,7 @@ declare function get_old_InterfaceDeclaration_IRootDataObject():
 declare function use_current_InterfaceDeclaration_IRootDataObject(
     use: TypeOnly<current.IRootDataObject>): void;
 use_current_InterfaceDeclaration_IRootDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRootDataObject());
 
 /*
@@ -260,30 +261,6 @@ declare function use_old_InterfaceDeclaration_IServiceAudienceEvents(
     use: TypeOnly<old.IServiceAudienceEvents<any>>): void;
 use_old_InterfaceDeclaration_IServiceAudienceEvents(
     get_current_InterfaceDeclaration_IServiceAudienceEvents());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_InitialObjects": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_InitialObjects():
-    TypeOnly<old.InitialObjects<any>>;
-declare function use_current_TypeAliasDeclaration_InitialObjects(
-    use: TypeOnly<current.InitialObjects<any>>): void;
-use_current_TypeAliasDeclaration_InitialObjects(
-    get_old_TypeAliasDeclaration_InitialObjects());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_InitialObjects": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_InitialObjects():
-    TypeOnly<current.InitialObjects<any>>;
-declare function use_old_TypeAliasDeclaration_InitialObjects(
-    use: TypeOnly<old.InitialObjects<any>>): void;
-use_old_TypeAliasDeclaration_InitialObjects(
-    get_current_TypeAliasDeclaration_InitialObjects());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -432,6 +409,18 @@ use_old_TypeAliasDeclaration_Myself(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_ServiceAudience": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_ServiceAudience": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SharedObjectClass": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SharedObjectClass():
@@ -452,75 +441,3 @@ declare function use_old_TypeAliasDeclaration_SharedObjectClass(
     use: TypeOnly<old.SharedObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_SharedObjectClass(
     get_current_TypeAliasDeclaration_SharedObjectClass());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createDOProviderContainerRuntimeFactory": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createDOProviderContainerRuntimeFactory():
-    TypeOnly<typeof old.createDOProviderContainerRuntimeFactory>;
-declare function use_current_FunctionDeclaration_createDOProviderContainerRuntimeFactory(
-    use: TypeOnly<typeof current.createDOProviderContainerRuntimeFactory>): void;
-use_current_FunctionDeclaration_createDOProviderContainerRuntimeFactory(
-    get_old_FunctionDeclaration_createDOProviderContainerRuntimeFactory());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createDOProviderContainerRuntimeFactory": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createDOProviderContainerRuntimeFactory():
-    TypeOnly<typeof current.createDOProviderContainerRuntimeFactory>;
-declare function use_old_FunctionDeclaration_createDOProviderContainerRuntimeFactory(
-    use: TypeOnly<typeof old.createDOProviderContainerRuntimeFactory>): void;
-use_old_FunctionDeclaration_createDOProviderContainerRuntimeFactory(
-    get_current_FunctionDeclaration_createDOProviderContainerRuntimeFactory());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createFluidContainer": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createFluidContainer():
-    TypeOnly<typeof old.createFluidContainer>;
-declare function use_current_FunctionDeclaration_createFluidContainer(
-    use: TypeOnly<typeof current.createFluidContainer>): void;
-use_current_FunctionDeclaration_createFluidContainer(
-    get_old_FunctionDeclaration_createFluidContainer());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createFluidContainer": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createFluidContainer():
-    TypeOnly<typeof current.createFluidContainer>;
-declare function use_old_FunctionDeclaration_createFluidContainer(
-    use: TypeOnly<typeof old.createFluidContainer>): void;
-use_old_FunctionDeclaration_createFluidContainer(
-    get_current_FunctionDeclaration_createFluidContainer());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createServiceAudience": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createServiceAudience():
-    TypeOnly<typeof old.createServiceAudience>;
-declare function use_current_FunctionDeclaration_createServiceAudience(
-    use: TypeOnly<typeof current.createServiceAudience>): void;
-use_current_FunctionDeclaration_createServiceAudience(
-    get_old_FunctionDeclaration_createServiceAudience());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createServiceAudience": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createServiceAudience():
-    TypeOnly<typeof current.createServiceAudience>;
-declare function use_old_FunctionDeclaration_createServiceAudience(
-    use: TypeOnly<typeof old.createServiceAudience>): void;
-use_old_FunctionDeclaration_createServiceAudience(
-    get_current_FunctionDeclaration_createServiceAudience());

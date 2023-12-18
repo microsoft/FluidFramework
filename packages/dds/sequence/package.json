@@ -95,7 +95,7 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.8.0.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.7.2.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
@@ -133,6 +133,26 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedString": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedSegmentSequence": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedSequence": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedString": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"backCompat": false
+			}
+		}
 	}
 }

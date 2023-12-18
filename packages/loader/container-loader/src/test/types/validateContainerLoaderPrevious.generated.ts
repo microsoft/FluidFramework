@@ -91,6 +91,7 @@ declare function get_current_InterfaceDeclaration_IContainerExperimental():
 declare function use_old_InterfaceDeclaration_IContainerExperimental(
     use: TypeOnly<old.IContainerExperimental>): void;
 use_old_InterfaceDeclaration_IContainerExperimental(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerExperimental());
 
 /*
@@ -283,6 +284,7 @@ declare function get_current_ClassDeclaration_Loader():
 declare function use_old_ClassDeclaration_Loader(
     use: TypeOnly<old.Loader>): void;
 use_old_ClassDeclaration_Loader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Loader());
 
 /*
@@ -332,6 +334,18 @@ declare function use_old_FunctionDeclaration_isLocationRedirectionError(
     use: TypeOnly<typeof old.isLocationRedirectionError>): void;
 use_old_FunctionDeclaration_isLocationRedirectionError(
     get_current_FunctionDeclaration_isLocationRedirectionError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type

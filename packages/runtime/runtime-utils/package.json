@@ -82,7 +82,7 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.8.0.0",
+		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.7.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -113,6 +113,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_requestFluidObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

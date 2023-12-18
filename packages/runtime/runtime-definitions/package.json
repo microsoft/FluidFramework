@@ -49,7 +49,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.0.0-internal.8.0.0",
+		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.0.0-internal.7.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
@@ -71,6 +71,41 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false
+			},
+			"VariableDeclaration_initialClusterCapacity": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_initialClusterCapacity": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeBase": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDataStore": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
+				"backCompat": false
+			}
+		}
 	}
 }

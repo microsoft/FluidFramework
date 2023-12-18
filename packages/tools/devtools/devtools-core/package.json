@@ -82,7 +82,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.8.0.0",
+		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0",
 		"@fluid-tools/build-cli": "^0.28.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
@@ -127,6 +127,49 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ContainerDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidHandleNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_TreeNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_UnknownObjectNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ValueNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_VisualNodeBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_VisualTreeNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_VisualValueNode": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_Primitive": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_RootHandleNode": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_VisualChildNode": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_VisualNode": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

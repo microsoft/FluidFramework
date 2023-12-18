@@ -888,30 +888,6 @@ use_old_FunctionDeclaration_isOdcUrl(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isOdspResolvedUrl": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_isOdspResolvedUrl():
-    TypeOnly<typeof old.isOdspResolvedUrl>;
-declare function use_current_FunctionDeclaration_isOdspResolvedUrl(
-    use: TypeOnly<typeof current.isOdspResolvedUrl>): void;
-use_current_FunctionDeclaration_isOdspResolvedUrl(
-    get_old_FunctionDeclaration_isOdspResolvedUrl());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isOdspResolvedUrl": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_isOdspResolvedUrl():
-    TypeOnly<typeof current.isOdspResolvedUrl>;
-declare function use_old_FunctionDeclaration_isOdspResolvedUrl(
-    use: TypeOnly<typeof old.isOdspResolvedUrl>): void;
-use_old_FunctionDeclaration_isOdspResolvedUrl(
-    get_current_FunctionDeclaration_isOdspResolvedUrl());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isSpoUrl": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isSpoUrl():
