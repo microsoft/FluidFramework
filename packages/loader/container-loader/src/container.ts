@@ -1896,6 +1896,14 @@ export class Container
 				]);
 		}
 
+		// Basic validation that the quorum members are in a format we expect, to rule out an erroneous server
+		// response as the root cause of later 0x1cf errors (e.g. a response of null).
+		if (!Array.isArray(quorumSnapshot.members)) {
+			this.mc.logger.sendErrorEvent({
+				eventName: "quorumMembersNotArray",
+			});
+		}
+
 		this.initializeProtocolState(attributes, quorumSnapshot);
 	}
 
