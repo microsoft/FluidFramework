@@ -85,7 +85,7 @@ export interface ChangeRebaser<TChangeset> {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface TaggedChange<TChangeset> {
 	readonly revision: RevisionTag | undefined;
@@ -113,12 +113,12 @@ export function mapTaggedChange<TIn, TOut>(
  * being produced.
  *
  * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
- * @alpha
+ * @internal
  */
 export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
 /**
- * @alpha
+ * @internal
  */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
@@ -127,7 +127,7 @@ export interface RevisionMetadataSource {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface RevisionInfo {
 	readonly revision: RevisionTag;
