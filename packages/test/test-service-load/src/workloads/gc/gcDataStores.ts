@@ -944,6 +944,7 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 		this.partnerActivityObjectsRunning.forEach((activityObject) => {
 			activityObject.stop();
 		});
+		super.stop();
 	}
 }
 
