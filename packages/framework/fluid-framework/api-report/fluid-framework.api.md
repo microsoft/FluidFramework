@@ -245,7 +245,7 @@ export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInpu
 export { AttachState }
 
 // @alpha
-export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
 
 // @alpha
 export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
@@ -537,6 +537,18 @@ export function enumFromStrings<TScope extends string, const Members extends str
     readonly info: unknown;
     readonly implicitlyConstructable: true;
 }>;
+
+// @alpha
+export type Erased<Name extends string> = ErasedType<Name>;
+
+// @alpha
+export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDataFormat"> {
+}
+
+// @alpha @sealed
+export abstract class ErasedType<out Name extends string> {
+    protected abstract brand(dummy: never): Name;
+}
 
 // @beta
 export type Events<E> = {
@@ -1640,7 +1652,7 @@ export class ObjectNodeSchema<const out Name extends string = string, const out 
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
 
 // @alpha
-export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+export type Opaque<T extends Brand<any, string>> = T extends BrandedType<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @alpha (undocumented)
 export interface Optional extends FieldKind<"Optional", Multiplicity.Optional> {
@@ -2230,7 +2242,7 @@ export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out 
     get types(): TreeTypeSet;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TreeFieldStoredSchema {
     // (undocumented)
     readonly kind: FieldKindSpecifier;
@@ -2324,10 +2336,11 @@ interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind exte
 }
 
 // @alpha (undocumented)
-export interface TreeNodeStoredSchema {
-    readonly leafValue?: ValueSchema;
-    readonly mapFields?: TreeFieldStoredSchema;
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+export abstract class TreeNodeStoredSchema {
+    // (undocumented)
+    abstract encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @alpha
