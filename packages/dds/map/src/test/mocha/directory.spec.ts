@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISummaryBlob,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
@@ -71,21 +75,44 @@ function serialize(directory1: SharedDirectory): string {
 }
 
 describe("Directory", () => {
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	describe.only("Handle encoding", () => {
+	function detectHandle(contents: unknown) {
+		const handleFoundMessage = "Found a handle";
+		try {
+			// use JSON.stringify as a hack to traverse the object structure
+			JSON.stringify(contents, (key, value) => {
+				if (key === "__fluid_handle__") {
+					// found a handle can abort object traversal
+					throw new Error(handleFoundMessage);
+				}
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				return value;
+			});
+		} catch (e: any) {
+			if (e.message === handleFoundMessage) {
+				return true;
+			}
+			// Some unexpected error, re-throw
+			throw e;
+		}
+		return false;
+	}
+
+	describe("Handle encoding", () => {
 		it("should not prematurely serialize handles", async () => {
-			const runtime = new MockFluidDataStoreRuntime();
-			const directory = createLocalDirectory("directory", runtime);
+			const runtimeFactory = new (class Factory extends MockContainerRuntimeFactory {
+				public getMessages(): ISequencedDocumentMessage[] {
+					return this.messages;
+				}
+			})();
+			// const runtime = new MockFluidDataStoreRuntime();
+			const directory = createConnectedDirectory("directory", runtimeFactory);
 			const map = createLocalMap("map");
 			directory.set("map", map.handle);
-			assert(true, "ok"); //*
+			const m = runtimeFactory.getMessages()[0];
+			assert(detectHandle(m.contents), "The handle should be detected");
 		});
 	});
+
 	describe("Local state", () => {
 		let directory: SharedDirectory;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
