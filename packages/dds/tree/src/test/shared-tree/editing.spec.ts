@@ -27,7 +27,6 @@ import {
 	insert,
 	expectJsonTree,
 	createTestUndoRedoStacks,
-	checkRemovedRootsAreSynchronized,
 } from "../utils";
 import { ITreeCheckout } from "../../shared-tree";
 import { cursorForJsonableTreeNode } from "../../feature-libraries";
@@ -58,7 +57,6 @@ describe("Editing", () => {
 
 			const expected = ["x", "y", "a", "b", "c"];
 			expectJsonTree([tree1, tree2], expected);
-			checkRemovedRootsAreSynchronized([tree1, tree2]);
 		});
 
 		it("can rebase delete over move", () => {

@@ -25,12 +25,7 @@ import {
 	JsonableTree,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import {
-	buildForest,
-	intoDelta,
-	jsonableTreeFromCursor,
-	jsonableTreeFromFieldCursor,
-} from "../feature-libraries";
+import { buildForest, intoDelta, jsonableTreeFromCursor } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, fail } from "../util";
 import { noopValidator } from "../codec";
