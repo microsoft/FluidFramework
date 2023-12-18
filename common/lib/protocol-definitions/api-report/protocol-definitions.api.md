@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha
+// @public
 export type ConnectionMode = "write" | "read";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum FileMode {
     // (undocumented)
     Directory = "040000",
@@ -30,31 +30,31 @@ export type IApprovedProposal = {
     approvalSequenceNumber: number;
 } & ISequencedProposal;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IAttachment {
     // (undocumented)
     id: string;
 }
 
-// @internal
+// @alpha
 export interface IBlob {
     contents: string;
     encoding: "utf-8" | "base64";
 }
 
-// @alpha
+// @public
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
     sequenceNumber: number;
 }
 
-// @alpha
+// @public
 export interface ICapabilities {
     interactive: boolean;
 }
 
-// @alpha
+// @public
 export interface IClient {
     details: IClientDetails;
     mode: ConnectionMode;
@@ -65,7 +65,7 @@ export interface IClient {
     user: IUser;
 }
 
-// @alpha
+// @public
 export interface IClientConfiguration {
     blockSize: number;
     maxMessageSize: number;
@@ -73,7 +73,7 @@ export interface IClientConfiguration {
     noopTimeFrequency?: number;
 }
 
-// @alpha
+// @public
 export interface IClientDetails {
     capabilities: ICapabilities;
     // (undocumented)
@@ -109,7 +109,7 @@ export interface IConnect {
     versions: string[];
 }
 
-// @internal
+// @alpha
 export interface IConnected {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
@@ -142,7 +142,7 @@ export interface IDocumentAttributes {
     sequenceNumber: number;
 }
 
-// @alpha
+// @public
 export interface IDocumentMessage {
     clientSequenceNumber: number;
     compression?: string;
@@ -175,7 +175,7 @@ export interface INackContent {
     type: NackErrorType;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProcessMessageResult {
     // (undocumented)
     immediateNoOp?: boolean;
@@ -201,7 +201,7 @@ export interface IProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @internal
+// @alpha
 export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off"> {
     // (undocumented)
     off: IQuorum["on"];
@@ -211,7 +211,7 @@ export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Om
     once: IQuorum["on"];
 }
 
-// @alpha
+// @public
 export interface IQuorumClients {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
@@ -242,7 +242,7 @@ export interface IQuorumClientsEvents {
 // @internal @deprecated
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
-// @internal
+// @alpha
 export interface IQuorumProposals {
     // (undocumented)
     get(key: string): unknown;
@@ -277,7 +277,7 @@ export interface ISentSignalMessage extends ISignalMessageBase {
     targetClientId?: string;
 }
 
-// @alpha
+// @public
 export interface ISequencedClient {
     client: IClient;
     sequenceNumber: number;
@@ -289,7 +289,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
     additionalContent: string;
 }
 
-// @alpha
+// @public
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -340,12 +340,12 @@ export interface ISignalClient {
     referenceSequenceNumber?: number;
 }
 
-// @alpha
+// @public
 export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
 }
 
-// @alpha
+// @public
 export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
@@ -381,13 +381,13 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 // @alpha
 export type IsoDate = string;
 
-// @internal
+// @alpha
 export interface ISummaryAck {
     handle: string;
     summaryProposal: ISummaryProposal;
 }
 
-// @alpha
+// @public
 export interface ISummaryAttachment {
     // (undocumented)
     id: string;
@@ -395,7 +395,7 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @alpha
+// @public
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
@@ -412,7 +412,7 @@ export interface ISummaryContent {
     parents: string[];
 }
 
-// @alpha
+// @public
 export interface ISummaryHandle {
     handle: string;
     handleType: SummaryTypeNoHandle;
@@ -420,7 +420,7 @@ export interface ISummaryHandle {
     type: SummaryType.Handle;
 }
 
-// @internal
+// @alpha
 export interface ISummaryNack {
     code?: number;
     message?: string;
@@ -428,7 +428,7 @@ export interface ISummaryNack {
     summaryProposal: ISummaryProposal;
 }
 
-// @internal
+// @alpha
 export interface ISummaryProposal {
     summarySequenceNumber: number;
 }
@@ -443,7 +443,7 @@ export interface ISummaryTokenClaims {
     sub: string;
 }
 
-// @alpha
+// @public
 export interface ISummaryTree {
     // (undocumented)
     tree: {
@@ -454,7 +454,7 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @alpha
+// @public
 export interface ITokenClaims {
     documentId: string;
     exp: number;
@@ -477,14 +477,14 @@ export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
 }
 
-// @alpha
+// @public
 export interface ITrace {
     action: string;
     service: string;
     timestamp: number;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ITree {
     // (undocumented)
     entries: ITreeEntry[];
@@ -492,7 +492,7 @@ export interface ITree {
     unreferenced?: true;
 }
 
-// @internal
+// @alpha
 export type ITreeEntry = {
     path: string;
     mode: FileMode;
@@ -512,7 +512,7 @@ export interface IUploadedSummaryDetails {
     includesProtocolTree?: boolean;
 }
 
-// @alpha
+// @public
 export interface IUser {
     id: string;
 }
@@ -549,7 +549,7 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @internal
+// @alpha
 export enum ScopeType {
     DocRead = "doc:read",
     DocWrite = "doc:write",
@@ -562,13 +562,13 @@ export enum SignalType {
     ClientLeave = "leave"
 }
 
-// @alpha
+// @public
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
-// @internal
+// @alpha
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
-// @alpha
+// @public
 export namespace SummaryType {
     // @internal (undocumented)
     export type Attachment = 4;
@@ -584,13 +584,13 @@ export namespace SummaryType {
     const Attachment: Attachment;
 }
 
-// @alpha
+// @public
 export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
-// @alpha
+// @public
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
-// @internal
+// @alpha
 export enum TreeEntry {
     // (undocumented)
     Attachment = "Attachment",

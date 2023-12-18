@@ -194,7 +194,7 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @internal
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @internal (undocumented)
+// @public (undocumented)
 export interface ICompressionStorageConfig {
     // (undocumented)
     algorithm: SummaryCompressionAlgorithm;
@@ -320,7 +320,7 @@ export class Queue<T> implements IStream<T> {
     read(): Promise<IStreamResult<T>>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class RateLimiter {
     constructor(maxRequests: number);
     // (undocumented)
@@ -355,7 +355,7 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 // @internal (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
-// @internal (undocumented)
+// @public (undocumented)
 export enum SummaryCompressionAlgorithm {
     // (undocumented)
     LZ4 = 1,

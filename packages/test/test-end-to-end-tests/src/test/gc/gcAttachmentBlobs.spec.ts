@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager.js";
+import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,

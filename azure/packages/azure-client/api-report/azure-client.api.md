@@ -5,7 +5,6 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
@@ -18,14 +17,8 @@ import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
-import { ServiceAudience } from '@fluidframework/fluid-static';
 
-// @internal @deprecated
-export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    protected createServiceMember(audienceMember: IClient): AzureMember;
-}
-
-// @internal
+// @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
     copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
@@ -43,7 +36,7 @@ export class AzureClient {
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
 }
 
-// @internal
+// @public
 export interface AzureClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
@@ -52,22 +45,22 @@ export interface AzureClientProps {
     readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
-// @internal
+// @public
 export interface AzureConnectionConfig {
     endpoint: string;
     tokenProvider: ITokenProvider;
     type: AzureConnectionConfigType;
 }
 
-// @internal
+// @public
 export type AzureConnectionConfigType = "local" | "remote";
 
-// @internal
+// @public
 export interface AzureContainerServices {
     audience: IAzureAudience;
 }
 
-// @internal
+// @public
 export interface AzureContainerVersion {
     date?: string;
     id: string;
@@ -82,23 +75,23 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @internal
+// @public
 export interface AzureGetVersionsOptions {
     maxCount: number;
 }
 
-// @internal
+// @public
 export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
     type: "local";
 }
 
-// @internal
+// @public
 export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
     userName: string;
 }
 
-// @internal
+// @public
 export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     tenantId: string;
     type: "remote";
@@ -110,7 +103,7 @@ export interface AzureUser<T = any> extends IUser {
     name: string;
 }
 
-// @internal
+// @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
 export { ITelemetryBaseEvent }

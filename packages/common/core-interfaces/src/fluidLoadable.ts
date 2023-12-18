@@ -6,19 +6,19 @@
 import { IFluidHandle } from "./handles";
 
 /**
- * @internal
+ * @public
  */
 export const IFluidLoadable: keyof IProvideFluidLoadable = "IFluidLoadable";
 
 /**
- * @internal
+ * @public
  */
 export interface IProvideFluidLoadable {
 	readonly IFluidLoadable: IFluidLoadable;
 }
 /**
  * A shared FluidObject has a URL from which it can be referenced
- * @internal
+ * @public
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject

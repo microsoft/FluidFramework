@@ -6,7 +6,7 @@
 import { OptionsMatrix } from "@fluid-private/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { ConfigTypes } from "@fluidframework/telemetry-utils";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {

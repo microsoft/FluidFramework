@@ -29,7 +29,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
- * @internal
+ * @alpha
  */
 export class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper
@@ -57,7 +57,7 @@ export class BaseContainerRuntimeFactory
 	constructor(props: {
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		dependencyContainer?: IFluidDependencySynthesizer;
-		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
 		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;

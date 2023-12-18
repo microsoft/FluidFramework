@@ -28,13 +28,13 @@ const snapshotFileName = "header";
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
 interface ISharedSummaryBlockDataSerializable {
-	[key: string]: Jsonable;
+	[key: string]: Jsonable<unknown>;
 }
 
 /**
  * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
- * @internal
+ * @alpha
  */
 export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBlock {
 	/**
@@ -60,7 +60,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
 	/**
 	 * The data held by this object.
 	 */
-	private readonly data = new Map<string, Jsonable>();
+	private readonly data = new Map<string, Jsonable<unknown>>();
 
 	/**
 	 * Constructs a new SharedSummaryBlock. If the object is non-local, an id and service interfaces will

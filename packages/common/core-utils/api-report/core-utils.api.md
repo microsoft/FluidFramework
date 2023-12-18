@@ -4,13 +4,13 @@
 
 ```ts
 
-// @internal
+// @alpha
 export function assert(condition: boolean, message: string | number): asserts condition;
 
-// @internal
+// @alpha
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
-// @internal
+// @alpha
 export class Deferred<T> {
     constructor();
     get isCompleted(): boolean;
@@ -29,8 +29,8 @@ export class Heap<T> {
     // (undocumented)
     comp: IComparer<T>;
     count(): number;
-    get(): T;
-    peek(): IHeapNode<T>;
+    get(): T | undefined;
+    peek(): IHeapNode<T> | undefined;
     remove(node: IHeapNode<T>): void;
     update(node: IHeapNode<T>): void;
 }
@@ -74,7 +74,7 @@ export class Lazy<T> {
     get value(): T;
 }
 
-// @internal
+// @alpha
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;
@@ -90,7 +90,7 @@ export class LazyPromise<T> implements Promise<T> {
 // @internal
 export const NumberComparer: IComparer<number>;
 
-// @internal
+// @alpha
 export class PromiseCache<TKey, TResult> {
     constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
     add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
@@ -102,7 +102,7 @@ export class PromiseCache<TKey, TResult> {
     remove(key: TKey): boolean;
 }
 
-// @internal
+// @alpha
 export type PromiseCacheExpiry = {
     policy: "indefinite";
 } | {
@@ -110,7 +110,7 @@ export type PromiseCacheExpiry = {
     durationMs: number;
 };
 
-// @internal
+// @alpha
 export interface PromiseCacheOptions {
     expiry?: PromiseCacheExpiry;
     removeOnError?: (error: any) => boolean;

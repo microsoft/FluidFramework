@@ -9,7 +9,7 @@ import { IWebSocket } from "./http";
 
 /**
  * Identifier for an ordering node in the system
- * @internal
+ * @alpha
  */
 export interface INode {
 	// Unique identifier for the node

@@ -21,7 +21,7 @@ export interface IWebServerFactory {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IWebSocket {
 	id: string;
@@ -58,7 +58,7 @@ export interface IWebServer {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IWebSocketServer {
 	on(event: string, listener: (...args: any[]) => void);

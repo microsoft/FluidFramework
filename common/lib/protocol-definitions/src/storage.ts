@@ -21,7 +21,7 @@ export interface IDocumentAttributes {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export enum FileMode {
 	File = "100644",
@@ -32,7 +32,7 @@ export enum FileMode {
 
 /**
  * Raw blob stored within the tree.
- * @internal
+ * @alpha
  */
 export interface IBlob {
 	/**
@@ -43,11 +43,12 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	encoding: "utf-8" | "base64";
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttachment {
 	id: string;
@@ -62,7 +63,7 @@ export interface ICreateBlobResponse {
 
 /**
  * A tree entry wraps a path with a type of node.
- * @internal
+ * @alpha
  */
 export type ITreeEntry = {
 	/**
@@ -92,7 +93,7 @@ export type ITreeEntry = {
 
 /**
  * Type of entries that can be stored in a tree.
- * @internal
+ * @alpha
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -101,7 +102,7 @@ export enum TreeEntry {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITree {
 	entries: ITreeEntry[];

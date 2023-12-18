@@ -14,7 +14,7 @@ import {
 	SharedTreeFactory,
 	SchemaFactory,
 	TreeConfiguration,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -224,7 +224,7 @@ export class AppData extends DataObject {
 		}) {}
 
 		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.list(ChildSchema),
+			childrenOne: builder.array(ChildSchema),
 			childrenTwo: builder.number,
 		}) {}
 

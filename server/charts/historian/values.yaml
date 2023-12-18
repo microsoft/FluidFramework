@@ -35,6 +35,15 @@ historian:
   system:
     httpServer:
       connectionTimeoutMs: 0
+  config:
+    configDumpEnabled: false
+    secretNamesToRedactInConfigDump:
+      - mongo.globalDbEndpoint
+      - mongo.operationsDbEndpoint
+      - redis.pass
+      - redisForTenantCache.pass
+      - redis2.pass
+      - redisForThrottling.pass
 
 gitrest:
   name: gitrest
@@ -70,6 +79,15 @@ gitrest:
   system:
     httpServer:
       connectionTimeoutMs: 0
+  config:
+    configDumpEnabled: false
+    secretNamesToRedactInConfigDump:
+      - mongo.globalDbEndpoint
+      - mongo.operationsDbEndpoint
+      - redis.pass
+      - redisForTenantCache.pass
+      - redis2.pass
+      - redisForThrottling.pass
 
 gitssh:
   name: gitssh

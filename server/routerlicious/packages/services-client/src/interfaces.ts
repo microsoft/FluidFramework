@@ -13,7 +13,7 @@ export interface IAlfredTenant {
 
 /**
  * Session information that includes the server urls and session status
- * @internal
+ * @alpha
  */
 export interface ISession {
 	/**

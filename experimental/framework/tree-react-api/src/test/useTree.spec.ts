@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ForestType,
-	TreeConfiguration,
-	TreeFactory,
-	typeboxValidator,
-} from "@fluid-experimental/tree2";
+import { ForestType, TreeConfiguration, TreeFactory, typeboxValidator } from "@fluidframework/tree";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import React from "react";
 import { SinonSandbox, createSandbox } from "sinon";

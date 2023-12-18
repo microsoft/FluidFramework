@@ -86,7 +86,7 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 /**
  * Interface for tracking clients in the Quorum.
- * @alpha
+ * @public
  */
 export interface IQuorumClients {
 	getMembers(): Map<string, ISequencedClient>;
@@ -101,7 +101,7 @@ export interface IQuorumClients {
 
 /**
  * Interface for tracking proposals in the Quorum.
- * @internal
+ * @alpha
  */
 export interface IQuorumProposals {
 	propose(key: string, value: unknown): Promise<void>;
@@ -128,7 +128,7 @@ export interface IQuorumProposals {
 
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
- * @internal
+ * @alpha
  */
 export interface IQuorum
 	extends Omit<IQuorumClients, "on" | "once" | "off">,
@@ -150,7 +150,7 @@ export interface IProtocolState {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProcessMessageResult {
 	immediateNoOp?: boolean;
