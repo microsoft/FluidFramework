@@ -20,7 +20,7 @@
                         {
                           "schema": {
                             "new": {
-                              "version": "1.0.0",
+                              "version": 1,
                               "nodeSchema": [
                                 {
                                   "name": "com.fluidframework.json.array",
@@ -101,7 +101,7 @@
                               }
                             },
                             "old": {
-                              "version": "1.0.0",
+                              "version": 1,
                               "nodeSchema": [],
                               "rootFieldSchema": {
                                 "kind": "Forbidden",
@@ -411,7 +411,7 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": "1.0.0",
+                  "version": 1,
                   "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",

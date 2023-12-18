@@ -26,7 +26,7 @@ describe("schemaSummarizer", () => {
 					types: [],
 				},
 				nodeSchema: [],
-				version: "1.0.0",
+				version: 1,
 			};
 			assert.deepEqual(encoded, snapshot);
 		});
@@ -34,7 +34,7 @@ describe("schemaSummarizer", () => {
 		it("simple", () => {
 			const encoded = encodeTreeSchema(intoStoredSchema(jsonSequenceRootSchema));
 			const snapshot = {
-				version: "1.0.0",
+				version: 1,
 				nodeSchema: [
 					{
 						name: "com.fluidframework.json.array",

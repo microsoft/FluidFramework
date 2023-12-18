@@ -67,7 +67,7 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": "1.0.0",
+                  "version": 1,
                   "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",

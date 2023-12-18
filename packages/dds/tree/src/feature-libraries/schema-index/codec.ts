@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import {
 	TreeStoredSchema,
 	TreeNodeStoredSchema,
@@ -14,9 +13,10 @@ import {
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 } from "../../core";
-import { brand, compareNamed, fail, fromErased } from "../../util";
+import { brand, compareNamed, fromErased } from "../../util";
 import { ICodecOptions, IJsonCodec } from "../../codec";
-import { Format, TreeNodeSchemaFormat, Versioned } from "./format";
+import { makeVersionedValidatedCodec } from "../versioned";
+import { Format, TreeNodeSchemaFormat } from "./format";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
 	const treeNodeSchema: TreeNodeSchemaFormat[] = [];
@@ -59,43 +59,10 @@ function decode(f: Format): TreeStoredSchema {
 
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
- *
- * TODO: This should reuse common utilities to do version checking and schema checking.
  */
-export function makeSchemaCodec({
-	jsonValidator: validator,
-}: ICodecOptions): IJsonCodec<TreeStoredSchema, Format> {
-	const versionedValidator = validator.compile(Versioned);
-	const formatValidator = validator.compile(Format);
-	return {
-		encode: (data: TreeStoredSchema) => {
-			const encoded = encodeRepo(data);
-			assert(
-				versionedValidator.check(encoded),
-				0x5c6 /* Encoded schema should be versioned */,
-			);
-
-			const extraValidator = validator.compile(schemaFormat.FieldSchemaFormat);
-			assert(
-				extraValidator.check(encoded.rootFieldSchema),
-				"rootFieldSchema schema should validate",
-			);
-
-			assert(formatValidator.check(encoded), 0x5c7 /* Encoded schema should validate */);
-			return encoded;
-		},
-		decode: (data: Format) => {
-			if (!versionedValidator.check(data)) {
-				fail("invalid serialized schema: did not have a version");
-			}
-			// When more versions exist, we can switch on the version here.
-			if (data.version !== schemaFormat.version) {
-				fail("Unexpected version for serialized schema");
-			}
-			if (!formatValidator.check(data)) {
-				fail("Serialized schema failed validation");
-			}
-			return decode(data);
-		},
-	};
+export function makeSchemaCodec(options: ICodecOptions): IJsonCodec<TreeStoredSchema, Format> {
+	return makeVersionedValidatedCodec(options, new Set([schemaFormat.version]), Format, {
+		encode: (data: TreeStoredSchema) => encodeRepo(data),
+		decode: (data: Format) => decode(data),
+	});
 }

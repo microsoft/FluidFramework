@@ -7,7 +7,7 @@ import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import { unionOptions } from "../../codec";
 import { Brand, brandedStringType } from "../../util";
 
-export const version = "1.0.0" as const;
+export const version = 1 as const;
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
