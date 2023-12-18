@@ -62,6 +62,10 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private readonly flat: boolean = false;
 	private readonly copyDstArg: string = "";
 
+	// protected get useHashes(): boolean {
+	// 	return this.copySrcArg.includes(".d.ts");
+	// }
+
 	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
 		super(node, command, taskName);
 
@@ -117,8 +121,7 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 			throw new Error("error parsing command line");
 		}
 		if (!this._srcFiles) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
+			const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg);
 			this._srcFiles = await globFn(srcGlob, {
 				nodir: true,
 				ignore: this.ignore,
@@ -152,6 +155,12 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 
 				return path.join(dstPath, currRelPath);
 			});
+			// this._dstFiles = this._dstFiles.map((file) => {
+			// 	if (file.endsWith(".d.ts")) {
+			// 		return file.slice(0, file.length - 5) + ".d.mts";
+			// 	}
+			// 	return file;
+			// });
 		}
 
 		return this._dstFiles;
