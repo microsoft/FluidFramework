@@ -34,7 +34,7 @@ parameters:
 - name: executionTestPackages
   type: object
   default:
-    - "@fluid-experimental/tree2"
+    - "@fluidframework/tree"
     - "@fluid-experimental/tree"
     - "@fluidframework/merge-tree"
 

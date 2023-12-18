@@ -1,4 +1,4 @@
-# @fluid-experimental/devtools
+# @fluidframework/devtools
 
 ## 2.0.0-internal.8.0.0
 
