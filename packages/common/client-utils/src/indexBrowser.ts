@@ -4,11 +4,11 @@
  */
 
 export {
-	Buffer,
 	bufferToString,
+	isArrayBuffer,
 	IsoBuffer,
 	stringToBuffer,
 	Uint8ArrayToString,
-} from "./bufferNode";
-export { gitHashFile, hashFile } from "./hashFileNode";
+} from "./bufferBrowser";
+export { gitHashFile, hashFile } from "./hashFileBrowser";
 export { performance } from "./performanceIsomorphic";
