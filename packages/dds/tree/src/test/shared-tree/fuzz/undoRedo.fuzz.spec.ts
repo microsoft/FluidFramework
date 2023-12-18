@@ -18,6 +18,7 @@ import {
 	createTestUndoRedoStacks,
 	toJsonableTree,
 	validateTree,
+	validateTreeConsistency,
 } from "../../utils";
 import {
 	makeOpGenerator,
@@ -33,7 +34,6 @@ import {
 	isRevertibleSharedTreeView,
 	onCreate,
 	validateAnchors,
-	validateConsistency,
 } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
@@ -250,7 +250,7 @@ describe("Fuzz - undo/redo", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency,
+			validateConsistency: validateTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 

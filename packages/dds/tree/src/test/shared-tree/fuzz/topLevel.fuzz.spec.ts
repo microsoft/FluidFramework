@@ -97,7 +97,7 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency,
+			validateConsistency: validateTreeConsistency,
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
