@@ -1151,7 +1151,9 @@ type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = 
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes_2 ? InsertableTypedNode<FlexListToUnion<TSchema>> : never;
 
 // @beta
-type InsertableTypedNode<T extends TreeNodeSchema> = (T["implicitlyConstructable"] extends true ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
+type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
+    implicitlyConstructable: true;
+} ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
 declare namespace InternalClassTreeTypes {
     export {
