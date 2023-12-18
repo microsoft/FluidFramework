@@ -11,7 +11,7 @@ import { DefaultChangeFamily } from "../../feature-libraries";
 import { noopValidator } from "../../codec";
 import { singleJsonCursor } from "../../domains";
 import { Editor, makeEditMinter } from "../editMinter";
-import { testIdCompressor } from "../utils";
+import { failCodec, testIdCompressor } from "../utils";
 import {
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,
@@ -45,7 +45,7 @@ describe("EditManager - Bench", () => {
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily(testIdCompressor, {
+	const defaultFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
 		jsonValidator: noopValidator,
 	});
 	const sequencePrepend: Editor = (builder) => {

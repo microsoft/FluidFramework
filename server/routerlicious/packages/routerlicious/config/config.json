@@ -135,7 +135,8 @@
 			"enable": true
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
-		"useNodeCluster": false
+		"useNodeCluster": false,
+		"enableLatencyMetric": false
 	},
 	"riddler": {
 		"useNodeCluster": false

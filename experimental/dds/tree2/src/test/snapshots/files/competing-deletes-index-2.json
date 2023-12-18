@@ -16,101 +16,113 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
                               {
-                                "count": 2
-                              },
-                              {
-                                "count": 1,
-                                "effect": {
-                                  "delete": {
-                                    "id": 0
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 2
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
+                                      }
+                                    }
                                   }
-                                }
+                                ]
                               }
                             ]
                           }
-                        ]
-                      },
-                      "revision": 3,
-                      "sequenceNumber": 3,
+                        }
+                      ],
+                      "revision": 4,
+                      "sequenceNumber": 2,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
                               {
-                                "count": 2
-                              },
-                              {
-                                "count": 1,
-                                "effect": {
-                                  "delete": {
-                                    "id": 0
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 2
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
+                                      }
+                                    },
+                                    "cellId": {
+                                      "localId": 0,
+                                      "adjacentCells": [
+                                        [
+                                          0,
+                                          1
+                                        ]
+                                      ],
+                                      "revision": 4
+                                    }
                                   }
-                                },
-                                "cellId": {
-                                  "localId": 0,
-                                  "adjacentCells": [
-                                    [
-                                      0,
-                                      1
-                                    ]
-                                  ],
-                                  "revision": 3
-                                }
+                                ]
                               }
                             ]
                           }
-                        ]
-                      },
-                      "revision": 516,
-                      "sequenceNumber": 4,
+                        }
+                      ],
+                      "revision": 517,
+                      "sequenceNumber": 3,
                       "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                     },
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
                               {
-                                "count": 2
-                              },
-                              {
-                                "count": 1,
-                                "effect": {
-                                  "delete": {
-                                    "id": 0
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 2
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
+                                      }
+                                    },
+                                    "cellId": {
+                                      "localId": 0,
+                                      "adjacentCells": [
+                                        [
+                                          0,
+                                          1
+                                        ]
+                                      ],
+                                      "revision": 517
+                                    }
                                   }
-                                },
-                                "cellId": {
-                                  "localId": 0,
-                                  "adjacentCells": [
-                                    [
-                                      0,
-                                      1
-                                    ]
-                                  ],
-                                  "revision": 516
-                                }
+                                ]
                               }
                             ]
                           }
-                        ]
-                      },
-                      "revision": 1029,
-                      "sequenceNumber": 5,
+                        }
+                      ],
+                      "revision": 1030,
+                      "sequenceNumber": 4,
                       "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                     }
                   ],
@@ -121,28 +133,32 @@
                         "base": 0,
                         "commits": [
                           {
-                            "change": {
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
+                            "change": [
+                              {
+                                "data": {
+                                  "changes": [
                                     {
-                                      "count": 2
-                                    },
-                                    {
-                                      "count": 1,
-                                      "effect": {
-                                        "delete": {
-                                          "id": 0
+                                      "fieldKey": "rootFieldKey",
+                                      "fieldKind": "Sequence",
+                                      "change": [
+                                        {
+                                          "count": 2
+                                        },
+                                        {
+                                          "count": 1,
+                                          "effect": {
+                                            "delete": {
+                                              "id": 0
+                                            }
+                                          }
                                         }
-                                      }
+                                      ]
                                     }
                                   ]
                                 }
-                              ]
-                            },
-                            "revision": 516,
+                              }
+                            ],
+                            "revision": 517,
                             "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                           }
                         ]
@@ -154,28 +170,32 @@
                         "base": 0,
                         "commits": [
                           {
-                            "change": {
-                              "changes": [
-                                {
-                                  "fieldKey": "rootFieldKey",
-                                  "fieldKind": "Sequence",
-                                  "change": [
+                            "change": [
+                              {
+                                "data": {
+                                  "changes": [
                                     {
-                                      "count": 2
-                                    },
-                                    {
-                                      "count": 1,
-                                      "effect": {
-                                        "delete": {
-                                          "id": 0
+                                      "fieldKey": "rootFieldKey",
+                                      "fieldKind": "Sequence",
+                                      "change": [
+                                        {
+                                          "count": 2
+                                        },
+                                        {
+                                          "count": 1,
+                                          "effect": {
+                                            "delete": {
+                                              "id": 0
+                                            }
+                                          }
                                         }
-                                      }
+                                      ]
                                     }
                                   ]
                                 }
-                              ]
-                            },
-                            "revision": 1029,
+                              }
+                            ],
+                            "revision": 1030,
                             "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                           }
                         ]
@@ -283,71 +303,54 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
+                  "keys": [
+                    "rootFieldKey",
+                    "repair-6"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            0,
-                            [],
-                            "com.fluidframework.leaf.number",
-                            true,
-                            1,
-                            [],
-                            "com.fluidframework.leaf.number",
-                            true,
-                            3,
-                            []
-                          ]
-                        ]
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
                       }
                     ],
-                    [
-                      "repair-6",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
+                    "data": [
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          0,
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
                           1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            2,
-                            []
-                          ]
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
+                          3,
+                          []
                         ]
-                      }
+                      ],
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          2,
+                          []
+                        ]
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -366,7 +369,7 @@
                   "version": 1,
                   "data": [
                     [
-                      1029,
+                      1030,
                       0,
                       6
                     ]

@@ -123,13 +123,14 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	StoredSchemaRepository,
+	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
+	MutableTreeStoredSchema,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 	TreeStoredSchema,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
@@ -137,7 +138,13 @@ export {
 	StoredSchemaCollection,
 } from "./schema-stored";
 
-export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
+export {
+	ChangeFamily,
+	ChangeFamilyCodec,
+	ChangeEncodingContext,
+	ChangeFamilyEditor,
+	EditBuilder,
+} from "./change-family";
 
 export {
 	areEqualChangeAtomIds,
@@ -153,6 +160,7 @@ export {
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
+	mapTaggedChange,
 	noFailure,
 	OutputType,
 	verifyChangeRebaser,

@@ -15,7 +15,7 @@ import { ISubscribable } from "../../events";
 import { IDefaultEditBuilder } from "../default-schema";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../fieldGenerator";
-import { TreeSchema } from "../typed-schema";
+import { FlexTreeSchema } from "../typed-schema";
 import { disposeSymbol, IDisposable } from "../../util";
 import { FlexTreeField } from "./flexTreeTypes";
 import { makeField } from "./lazyField";
@@ -37,7 +37,7 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	 * Schema used within this context.
 	 * All data must conform to these schema.
 	 */
-	readonly schema: TreeSchema;
+	readonly schema: FlexTreeSchema;
 
 	// TODO: Add more members:
 	// - transaction APIs
@@ -66,7 +66,7 @@ export class Context implements FlexTreeContext, IDisposable {
 	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
-		public readonly schema: TreeSchema,
+		public readonly schema: FlexTreeSchema,
 		public readonly forest: IForestSubscription,
 		public readonly editor: IDefaultEditBuilder,
 		public readonly nodeKeys: NodeKeys,
@@ -147,7 +147,7 @@ export class Context implements FlexTreeContext, IDisposable {
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(
-	schema: TreeSchema,
+	schema: FlexTreeSchema,
 	forest: IForestSubscription,
 	editor: IDefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,

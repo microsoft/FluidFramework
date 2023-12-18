@@ -11,7 +11,6 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
-	NodeBase,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	ImplicitAllowedTypes,

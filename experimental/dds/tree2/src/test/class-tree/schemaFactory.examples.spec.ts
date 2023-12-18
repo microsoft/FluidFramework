@@ -50,7 +50,7 @@ class Note extends schema.object("Note", {
 }
 
 class NodeMap extends schema.map("NoteMap", Note) {}
-class NodeList extends schema.list("NoteList", Note) {}
+class NodeList extends schema.array("NoteList", Note) {}
 
 // Example function working on some schema based types.
 // Note that there is no need to use Typed<typeof NodeMap> anymore (either inline or as a separate type declaration).

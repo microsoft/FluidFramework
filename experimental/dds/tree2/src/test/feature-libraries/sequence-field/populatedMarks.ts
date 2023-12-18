@@ -4,7 +4,6 @@
  */
 
 import { SequenceField as SF } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
 import { brand, Populated } from "../../../util";
 import { ChangeAtomId, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
@@ -46,12 +45,11 @@ const detach: Populated<Detach> = {
 	id: brand(0),
 	revision: tag,
 	finalEndpoint: atomId,
-	detachIdOverride: atomId,
+	redetachId: atomId,
 };
 
 export const populatedMarks: PopulatedMark[] = [
 	{ count: 1, cellId, changes },
-	{ type: "Placeholder", count: 1, cellId, changes, id: brand(0), revision: tag },
 	{ type: "Insert", count: 1, cellId, changes, id: brand(0), revision: tag },
 	{
 		type: "MoveIn",
@@ -70,7 +68,7 @@ export const populatedMarks: PopulatedMark[] = [
 		id: brand(0),
 		revision: tag,
 		finalEndpoint: atomId,
-		detachIdOverride: atomId,
+		redetachId: atomId,
 	},
 	{
 		type: "Delete",
@@ -79,7 +77,7 @@ export const populatedMarks: PopulatedMark[] = [
 		changes,
 		id: brand(0),
 		revision: tag,
-		detachIdOverride: atomId,
+		redetachId: atomId,
 	},
 	{
 		type: "AttachAndDetach",

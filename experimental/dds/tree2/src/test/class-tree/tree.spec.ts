@@ -13,7 +13,7 @@ import { TreeFactory } from "../../treeFactory";
 const schema = new SchemaFactory("com.example");
 
 class NodeMap extends schema.map("NoteMap", schema.string) {}
-class NodeList extends schema.list("NoteList", schema.string) {}
+class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
 const factory = new TreeFactory({});
@@ -88,7 +88,7 @@ describe("class-tree tree", () => {
 	});
 
 	it("Nested list", () => {
-		const nestedList = schema.list(schema.list(schema.string));
+		const nestedList = schema.array(schema.array(schema.string));
 		const config = new TreeConfiguration(nestedList, () => [["a"]]);
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),

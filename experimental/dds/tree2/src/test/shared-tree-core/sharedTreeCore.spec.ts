@@ -182,6 +182,32 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 6 - 3);
 	});
 
+	it("can complete a transaction that spans trunk eviction", () => {
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const tree = new TestSharedTreeCore(runtime);
+		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
+		tree.connect({
+			deltaConnection: runtime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
+		tree.getLocalBranch().on("revertible", (revertible) => {
+			revertible.discard();
+		});
+
+		changeTree(tree);
+		factory.processAllMessages();
+		assert.equal(getTrunkLength(tree), 1);
+		const branch1 = tree.getLocalBranch().fork();
+		branch1.startTransaction();
+		changeTree(tree);
+		changeTree(tree);
+		factory.processAllMessages();
+		branch1.commitTransaction();
+	});
+
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = new TestSharedTreeCore(runtime);
@@ -201,6 +227,8 @@ describe("SharedTreeCore", () => {
 		// Calling `factory.processAllMessages()` will result in the minimum sequence number being set to the the
 		// sequence number just before the most recently received changed. Thus, eviction from this point of view
 		// is "off by one"; a commit is only evicted once another commit is sequenced after it.
+		// Eviction is performed up to the trunk commit that no branch has as its trunk base.
+		// Additionally, by policy, the base commit of the trunk is never evicted, which adds another "off by one".
 		//
 		//                                            trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
 		changeTree(tree);
@@ -213,25 +241,25 @@ describe("SharedTreeCore", () => {
 		factory.processAllMessages(); //                     [x (b1, b2, b3), 2]
 		changeTree(tree);
 		factory.processAllMessages(); //                     [x (b1, b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 2);
+		assert.equal(getTrunkLength(tree), 3);
 		branch1.dispose(); //                                [x (b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 2);
+		assert.equal(getTrunkLength(tree), 3);
 		branch2.dispose(); //                                [x (b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 2);
+		assert.equal(getTrunkLength(tree), 3);
 		branch3.dispose(); //                                [x, x, 3]
 		assert.equal(getTrunkLength(tree), 1);
 		const branch4 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4)]
 		changeTree(tree);
 		changeTree(tree);
 		factory.processAllMessages(); //                     [x, x, x (b4), 4, 5]
-		assert.equal(getTrunkLength(tree), 2);
+		assert.equal(getTrunkLength(tree), 3);
 		const branch5 = tree.getLocalBranch().fork(); //     [x, x, x (b4), 4, 5 (b5)]
 		branch4.rebaseOnto(branch5); //                      [x, x, x, 4, 5 (b4, b5)]
 		branch4.dispose(); //                                [x, x, x, 4, 5 (b5)]
 		assert.equal(getTrunkLength(tree), 2);
 		changeTree(tree);
 		factory.processAllMessages(); //                     [x, x, x, x, 5 (b5), 6]
-		assert.equal(getTrunkLength(tree), 1);
+		assert.equal(getTrunkLength(tree), 2);
 		changeTree(tree);
 		branch5.dispose(); //                                [x, x, x, x, x, x, 7]
 		assert.equal(getTrunkLength(tree), 1);
@@ -286,6 +314,7 @@ describe("SharedTreeCore", () => {
 		} satisfies InitializeAndSchematizeConfiguration;
 
 		const view1 = tree1.schematizeInternal(config);
+		containerRuntimeFactory.processAllMessages();
 		const view2 = tree2.schematizeInternal(config);
 		const editable1 = view1.editableTree;
 		const editable2 = view2.editableTree;

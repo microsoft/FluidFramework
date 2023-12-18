@@ -117,7 +117,7 @@ export const gcTombstoneBlobKey = "__tombstones";
 // @internal
 export const gcTreeKey = "gc";
 
-// @internal
+// @alpha
 export interface IAttachMessage {
     id: string;
     snapshot: ITree;
@@ -165,13 +165,13 @@ export { IdCompressor }
 
 export { IdCreationRange }
 
-// @internal
+// @alpha
 export interface IEnvelope {
     address: string;
     contents: any;
 }
 
-// @alpha
+// @public
 export interface IExperimentalIncrementalSummaryContext {
     latestSummarySequenceNumber: number;
     summaryPath: string;
@@ -282,7 +282,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
 }
 
-// @alpha
+// @public
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -299,13 +299,13 @@ export { IIdCompressor }
 
 export { IIdCompressorCore }
 
-// @alpha
+// @public
 export interface IInboundSignalMessage extends ISignalMessage {
     // (undocumented)
     type: string;
 }
 
-// @internal
+// @alpha
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
@@ -393,7 +393,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @alpha
+// @public
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -407,13 +407,13 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @alpha
+// @public
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
     summary: ISummaryTree;
 }
 
-// @alpha
+// @public
 export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;

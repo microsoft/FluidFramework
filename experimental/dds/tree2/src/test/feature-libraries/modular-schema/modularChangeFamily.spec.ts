@@ -17,8 +17,9 @@ import {
 	RelevantRemovedRootsFromChild,
 	chunkTree,
 	defaultChunkPolicy,
-	uncompressedEncode,
-	EncodedChunk,
+	TreeChunk,
+	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -35,10 +36,10 @@ import {
 	DeltaFieldChanges,
 	DeltaRoot,
 	DeltaDetachedNodeId,
+	ChangeEncodingContext,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily } from "../../../codec";
-import { typeboxValidator } from "../../../external-utilities";
+import { ICodecOptions, makeCodecFamily } from "../../../codec";
 import {
 	EncodingTestData,
 	MockIdCompressor,
@@ -60,6 +61,7 @@ import { singleJsonCursor } from "../../../domains";
 import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
 import { ValueChangeset, valueField } from "./basicRebasers";
 import { SessionId } from "@fluidframework/id-compressor";
+import { ajvValidator } from "../../codec";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
@@ -100,9 +102,15 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, new MockIdCompressor(), {
-	jsonValidator: typeboxValidator,
-});
+const codecOptions: ICodecOptions = {
+	jsonValidator: ajvValidator,
+};
+const family = new ModularChangeFamily(
+	fieldKinds,
+	new MockIdCompressor(),
+	makeFieldBatchCodec(codecOptions, { encodeType: TreeCompressionStrategy.Uncompressed }),
+	codecOptions,
+);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -346,13 +354,13 @@ describe("ModularChangeFamily", () => {
 			const change1: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(1))]])],
+					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(1))]])],
 				]),
 			};
 			const change2: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(2))]])],
+					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(2))]])],
 				]),
 			};
 			assert.deepEqual(
@@ -551,8 +559,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 					]),
 				},
 				tag1,
@@ -562,8 +570,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
+						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -577,13 +585,13 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[tag1, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
-					[tag2, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
+					[tag1, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					[tag2, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 					[
 						tag3,
 						new Map([
-							[brand(0), encodedChunkFromCursor(node1)],
-							[brand(2), encodedChunkFromCursor(node1)],
+							[brand(0), treeChunkFromCursor(node1)],
+							[brand(2), treeChunkFromCursor(node1)],
 						]),
 					],
 				]),
@@ -851,16 +859,17 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		const sessionId = "session1" as SessionId;
+		const context: ChangeEncodingContext = { originatorId: sessionId };
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
-			SessionId
+			ChangeEncodingContext
 		> = {
 			successes: [
-				["without constraint", rootChange1a, sessionId],
-				["with constraint", rootChange3, sessionId],
-				["with node existence constraint", rootChange4, sessionId],
-				["without node field changes", rootChangeWithoutNodeFieldChanges, sessionId],
+				["without constraint", rootChange1a, context],
+				["with constraint", rootChange3, context],
+				["with node existence constraint", rootChange4, context],
+				["without node field changes", rootChangeWithoutNodeFieldChanges, context],
 			],
 		};
 
@@ -899,6 +908,6 @@ describe("ModularChangeFamily", () => {
 	});
 });
 
-function encodedChunkFromCursor(cursor: ITreeCursorSynchronous): EncodedChunk {
-	return uncompressedEncode(chunkTree(cursor, defaultChunkPolicy).cursor());
+function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
+	return chunkTree(cursor, defaultChunkPolicy);
 }

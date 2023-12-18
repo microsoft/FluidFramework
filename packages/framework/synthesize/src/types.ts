@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidDependencySynthesizer } from ".";
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
 
 /**
  * This is a condensed version of Record that requires the object has all
@@ -53,7 +53,7 @@ export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjec
 
 /**
  * Multiple ways to provide a Fluid object.
- * @internal
+ * @alpha
  */
 export type FluidObjectProvider<T> =
 	| NonNullable<T>

@@ -83,6 +83,18 @@ export interface ICodecOptions {
 
 /**
  * TODO: Document TContext
+ * `TContext` allows passing context to the codec which may configure how data is encoded/decoded.
+ * This parameter is typically used for:
+ * - Codecs which have can pick from multiple encoding options, and imbue the encoded data with information about which option was used.
+ *   The caller of such a codec can provide context about which encoding choice to make as part of the `encode` call without creating
+ *   additional codecs. Note that this pattern can always be implemented by having the caller create multiple codecs and selecting the
+ *   appropriate one, but depending on API layering this might be less ergonomic.
+ * - Context for the object currently being encoded, which might enable more efficient encoding. When used in this fashion, the codec author
+ *   should be careful to include the context somewhere in the encoded data such that decoding can correctly round-trip.
+ *   For example, a composed set of codecs could implement a form of [dictionary coding](https://en.wikipedia.org/wiki/Dictionary_coder)
+ *   using a context map which was created by the top-level codec and passed to the inner codecs.
+ *   This pattern is used:
+ *   - To avoid repeatedly encoding session ids on commits (only recording it once at the top level)
  * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to TypeScript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
@@ -295,12 +307,13 @@ export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
 	TEncodedFormat = JsonCompatibleReadOnly,
+	TValidate = TEncodedFormat,
 	TContext = void,
 >(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TEncodedFormat, TContext>,
+	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,
 	validator?: JsonValidator,
-): IJsonCodec<TInMemoryFormat, TEncodedFormat, TEncodedFormat, TContext> {
+): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext> {
 	if (!validator) {
 		return codec;
 	}
@@ -313,10 +326,11 @@ export function withSchemaValidation<
 			}
 			return encoded;
 		},
-		decode: (encoded: TEncodedFormat, context: TContext) => {
+		decode: (encoded: TValidate, context: TContext) => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
+			// TODO: would be nice to provide a more specific validate type to the inner codec than the outer one gets.
 			return codec.decode(encoded, context) as unknown as TInMemoryFormat;
 		},
 	};

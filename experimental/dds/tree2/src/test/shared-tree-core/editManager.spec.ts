@@ -355,7 +355,7 @@ describe("EditManager", () => {
 				manager.addSequencedChange(local, brand(2), brand(1));
 				checkChangeList(manager, [1, 2]);
 				manager.advanceMinimumSequenceNumber(brand(2));
-				checkChangeList(manager, [2]);
+				checkChangeList(manager, [1, 2]);
 				fork.dispose();
 				checkChangeList(manager, []);
 			});
@@ -372,11 +372,11 @@ describe("EditManager", () => {
 				manager.advanceMinimumSequenceNumber(brand(2));
 				checkChangeList(manager, [1, 2]);
 				fork1.rebaseOnto(fork2);
-				checkChangeList(manager, [2]);
+				checkChangeList(manager, [1, 2]);
 				fork1.rebaseOnto(manager.localBranch);
-				checkChangeList(manager, [2]);
+				checkChangeList(manager, [1, 2]);
 				fork2.rebaseOnto(manager.localBranch);
-				checkChangeList(manager, []);
+				checkChangeList(manager, [2]);
 			});
 
 			it("Evicts properly when changes come in batches having the same sequence number", () => {

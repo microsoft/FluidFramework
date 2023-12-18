@@ -31,6 +31,7 @@ import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
+	failCodec,
 	mintRevisionTag,
 	testChangeReceiver,
 	testIdCompressor,
@@ -50,7 +51,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, testIdCompressor, {
+const family = new ModularChangeFamily(fieldKinds, testIdCompressor, failCodec, {
 	jsonValidator: typeboxValidator,
 });
 

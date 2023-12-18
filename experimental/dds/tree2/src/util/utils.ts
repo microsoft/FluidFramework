@@ -358,6 +358,17 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
 }
 
 /**
+ * Make an inverted copy of a map.
+ *
+ * @returns a map which can look up the keys from the values of the original map.
+ */
+export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
+	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
+	assert(result.size === input.size, "all values in a map must be unique to invert it");
+	return result;
+}
+
+/**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
  * @alpha
  */

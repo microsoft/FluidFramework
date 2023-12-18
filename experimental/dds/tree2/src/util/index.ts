@@ -74,6 +74,7 @@ export {
 	assertValidRange,
 	assertNonNegativeSafeInteger,
 	objectToMap,
+	invertMap,
 	oneFromSet,
 	Named,
 	disposeSymbol,

@@ -43,6 +43,7 @@ import {
 	StableId,
 	createIdCompressor,
 } from "@fluidframework/id-compressor";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ISharedTree,
 	ITreeCheckout,
@@ -62,7 +63,6 @@ import {
 	createMockNodeKeyManager,
 	TreeFieldSchema,
 	jsonableTreeFromCursor,
-	makeSchemaCodec,
 	mapFieldChanges,
 	mapFieldsChanges,
 	mapMarkList,
@@ -76,6 +76,7 @@ import {
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
 	mapRootChanges,
+	intoStoredSchema,
 } from "../feature-libraries";
 import {
 	moveToDetachedField,
@@ -90,7 +91,7 @@ import {
 	ChangeFamily,
 	TaggedChange,
 	FieldUpPath,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	initializeForest,
 	AllowedUpdateType,
 	IEditableForest,
@@ -114,7 +115,7 @@ import {
 	DeltaProtoNode,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
-import { ICodecFamily, withSchemaValidation } from "../codec";
+import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import {
 	cursorToJsonObject,
@@ -125,7 +126,8 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { makeSchemaCodec } from "../feature-libraries/schema-index/codec";
 
 // Testing utilities
 
@@ -149,6 +151,16 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
 		}
 	}
 }
+
+/**
+ * A {@link IJsonCodec} implementation which fails on encode and decode.
+ *
+ * Useful for testing codecs which compose over other codecs (in cases where the "inner" codec should never be called)
+ */
+export const failCodec: IJsonCodec<any, any, any, any> = {
+	encode: () => assert.fail("Unexpected encode"),
+	decode: () => assert.fail("Unexpected decode"),
+};
 
 /**
  * Recursively freezes the given object.
@@ -574,7 +586,7 @@ function contentToJsonableTree(content: TreeContent): JsonableTree[] {
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
 	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, content.schema);
+	expectSchemaEqual(tree.storedSchema, intoStoredSchema(content.schema));
 }
 
 export function expectSchemaEqual(
@@ -639,7 +651,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	const view = createTreeCheckout(testIdCompressor, {
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(content.schema),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	return new CheckoutFlexTreeView(
 		view,
@@ -676,7 +688,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	const branch = createTreeCheckout(testIdCompressor, {
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(content.schema),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(
@@ -687,6 +699,10 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	);
 	return view.editableTree;
 }
+
+export const requiredBooleanRootSchema = new SchemaBuilder({
+	scope: "RequiredBool",
+}).intoSchema(SchemaBuilder.required(leaf.boolean));
 
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
@@ -788,17 +804,17 @@ export function expectJsonTree(
 export function initializeTestTree(
 	tree: ITreeCheckout,
 	state: JsonableTree | JsonableTree[] | undefined,
-	schema: TreeStoredSchema = wrongSchema,
+	schema: TreeStoredSchema = intoStoredSchema(wrongSchema),
 ): void {
 	if (state === undefined) {
-		tree.storedSchema.update(schema);
+		tree.updateSchema(schema);
 		return;
 	}
 
 	if (!Array.isArray(state)) {
 		initializeTestTree(tree, [state], schema);
 	} else {
-		tree.storedSchema.update(schema);
+		tree.updateSchema(schema);
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {

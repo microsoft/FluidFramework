@@ -16,149 +16,214 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "maxId": 0,
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
-                              {
-                                "count": 1,
-                                "effect": {
-                                  "insert": {
-                                    "id": 0
-                                  }
-                                },
-                                "cellId": {
-                                  "localId": 0
-                                }
-                              }
-                            ]
-                          }
-                        ],
-                        "builds": [
-                          [
-                            0,
-                            {
-                              "version": 1,
-                              "identifiers": [],
-                              "shapes": [
+                      "change": [
+                        {
+                          "schema": {
+                            "new": {
+                              "version": "1.0.0",
+                              "nodeSchema": [
                                 {
-                                  "c": {
-                                    "extraFields": 1,
-                                    "fields": []
-                                  }
+                                  "name": "com.fluidframework.leaf.boolean",
+                                  "objectNodeFields": [],
+                                  "leafValue": 2
                                 },
                                 {
-                                  "a": 0
+                                  "name": "com.fluidframework.leaf.handle",
+                                  "objectNodeFields": [],
+                                  "leafValue": 3
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.null",
+                                  "objectNodeFields": [],
+                                  "leafValue": 4
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.number",
+                                  "objectNodeFields": [],
+                                  "leafValue": 0
+                                },
+                                {
+                                  "name": "com.fluidframework.leaf.string",
+                                  "objectNodeFields": [],
+                                  "leafValue": 1
                                 }
                               ],
-                              "data": [
-                                1,
-                                [
-                                  "Node",
-                                  false,
-                                  [
-                                    "foo",
-                                    [
-                                      "Node",
-                                      true,
-                                      "a",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "b",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "c",
-                                      []
-                                    ],
-                                    "bar",
-                                    [
-                                      "Node",
-                                      true,
-                                      "d",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "e",
-                                      [],
-                                      "Node",
-                                      true,
-                                      "f",
-                                      []
-                                    ]
-                                  ]
-                                ]
-                              ]
+                              "rootFieldSchema": {
+                                "kind": "Sequence"
+                              }
+                            },
+                            "old": {
+                              "version": "1.0.0",
+                              "nodeSchema": [],
+                              "rootFieldSchema": {
+                                "kind": "Forbidden",
+                                "types": []
+                              }
                             }
-                          ]
-                        ]
-                      },
-                      "revision": 2,
+                          }
+                        }
+                      ],
+                      "revision": 1,
                       "sequenceNumber": 1,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
-                      "change": {
-                        "maxId": 0,
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "ModularEditBuilder.Generic",
-                            "change": [
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 0,
+                            "changes": [
                               {
-                                "index": 0,
-                                "nodeChange": {
-                                  "fieldChanges": [
-                                    {
-                                      "fieldKey": "foo",
-                                      "fieldKind": "Sequence",
-                                      "change": [
-                                        {
-                                          "count": 1
-                                        },
-                                        {
-                                          "count": 2,
-                                          "effect": {
-                                            "moveOut": {
-                                              "id": 0
-                                            }
-                                          }
-                                        }
-                                      ]
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "insert": {
+                                        "id": 0
+                                      }
                                     },
-                                    {
-                                      "fieldKey": "bar",
-                                      "fieldKind": "Sequence",
-                                      "change": [
+                                    "cellId": {
+                                      "localId": 0
+                                    }
+                                  }
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  0,
+                                  0
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1,
+                                      "fields": []
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "Node",
+                                      false,
+                                      [
+                                        "foo",
+                                        [
+                                          "Node",
+                                          true,
+                                          "a",
+                                          [],
+                                          "Node",
+                                          true,
+                                          "b",
+                                          [],
+                                          "Node",
+                                          true,
+                                          "c",
+                                          []
+                                        ],
+                                        "bar",
+                                        [
+                                          "Node",
+                                          true,
+                                          "d",
+                                          [],
+                                          "Node",
+                                          true,
+                                          "e",
+                                          [],
+                                          "Node",
+                                          true,
+                                          "f",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 3,
+                      "sequenceNumber": 2,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 0,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  {
+                                    "index": 0,
+                                    "nodeChange": {
+                                      "fieldChanges": [
                                         {
-                                          "count": 1
+                                          "fieldKey": "foo",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1
+                                            },
+                                            {
+                                              "count": 2,
+                                              "effect": {
+                                                "moveOut": {
+                                                  "id": 0
+                                                }
+                                              }
+                                            }
+                                          ]
                                         },
                                         {
-                                          "count": 2,
-                                          "effect": {
-                                            "moveIn": {
-                                              "id": 0
+                                          "fieldKey": "bar",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1
+                                            },
+                                            {
+                                              "count": 2,
+                                              "effect": {
+                                                "moveIn": {
+                                                  "id": 0
+                                                }
+                                              },
+                                              "cellId": {
+                                                "localId": 0
+                                              }
                                             }
-                                          },
-                                          "cellId": {
-                                            "localId": 0
-                                          }
+                                          ]
                                         }
                                       ]
                                     }
-                                  ]
-                                }
+                                  }
+                                ]
                               }
                             ]
                           }
-                        ]
-                      },
-                      "revision": 4,
-                      "sequenceNumber": 2,
+                        }
+                      ],
+                      "revision": 5,
+                      "sequenceNumber": 3,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],
@@ -224,66 +289,66 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "Node",
+                          false,
                           [
-                            "Node",
-                            false,
+                            "foo",
                             [
-                              "foo",
-                              [
-                                "Node",
-                                true,
-                                "a",
-                                []
-                              ],
-                              "bar",
-                              [
-                                "Node",
-                                true,
-                                "d",
-                                [],
-                                "Node",
-                                true,
-                                "b",
-                                [],
-                                "Node",
-                                true,
-                                "c",
-                                [],
-                                "Node",
-                                true,
-                                "e",
-                                [],
-                                "Node",
-                                true,
-                                "f",
-                                []
-                              ]
+                              "Node",
+                              true,
+                              "a",
+                              []
+                            ],
+                            "bar",
+                            [
+                              "Node",
+                              true,
+                              "d",
+                              [],
+                              "Node",
+                              true,
+                              "b",
+                              [],
+                              "Node",
+                              true,
+                              "c",
+                              [],
+                              "Node",
+                              true,
+                              "e",
+                              [],
+                              "Node",
+                              true,
+                              "f",
+                              []
                             ]
                           ]
                         ]
-                      }
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }

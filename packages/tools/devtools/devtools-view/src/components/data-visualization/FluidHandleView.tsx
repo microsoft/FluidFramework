@@ -14,7 +14,7 @@ import {
 	type HasContainerKey,
 	type HasFluidObjectId,
 	type FluidObjectNode,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 
 import { useMessageRelay } from "../../MessageRelayContext";
 import { type HasLabel } from "./CommonInterfaces";

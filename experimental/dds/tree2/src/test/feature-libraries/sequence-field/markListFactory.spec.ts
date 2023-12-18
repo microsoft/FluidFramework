@@ -66,16 +66,16 @@ describe("SequenceField - MarkListFactory", () => {
 	it("Can merge consecutive deletes", () => {
 		const factory = new SF.MarkListFactory();
 		const delete1 = Mark.delete(1, brand(0), {
-			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+			redetachId: { revision: detachedBy, localId: brand(10) },
 		});
 		const delete2 = Mark.delete(1, brand(1), {
-			detachIdOverride: { revision: detachedBy, localId: brand(11) },
+			redetachId: { revision: detachedBy, localId: brand(11) },
 		});
 		factory.pushContent(delete1);
 		factory.pushContent(delete2);
 		assert.deepStrictEqual(factory.list, [
 			Mark.delete(2, brand(0), {
-				detachIdOverride: { revision: detachedBy, localId: brand(10) },
+				redetachId: { revision: detachedBy, localId: brand(10) },
 			}),
 		]);
 	});
@@ -83,10 +83,10 @@ describe("SequenceField - MarkListFactory", () => {
 	it("Does not merge consecutive deletes with discontinuous detach overrides", () => {
 		const factory = new SF.MarkListFactory();
 		const delete1 = Mark.delete(1, brand(0), {
-			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+			redetachId: { revision: detachedBy, localId: brand(10) },
 		});
 		const delete2 = Mark.delete(1, brand(1), {
-			detachIdOverride: { revision: detachedBy, localId: brand(42) },
+			redetachId: { revision: detachedBy, localId: brand(42) },
 		});
 		factory.pushContent(delete1);
 		factory.pushContent(delete2);
@@ -176,15 +176,15 @@ describe("SequenceField - MarkListFactory", () => {
 	it("Can merge consecutive move-out", () => {
 		const factory = new SF.MarkListFactory();
 		const return1 = Mark.moveOut(1, brand(0), {
-			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+			redetachId: { revision: detachedBy, localId: brand(10) },
 		});
 		const return2 = Mark.moveOut(2, brand(1), {
-			detachIdOverride: { revision: detachedBy, localId: brand(11) },
+			redetachId: { revision: detachedBy, localId: brand(11) },
 		});
 		factory.pushContent(return1);
 		factory.pushContent(return2);
 		const expected = Mark.moveOut(3, brand(0), {
-			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+			redetachId: { revision: detachedBy, localId: brand(10) },
 		});
 		assert.deepStrictEqual(factory.list, [expected]);
 	});
@@ -192,10 +192,10 @@ describe("SequenceField - MarkListFactory", () => {
 	it("Does not merge consecutive move-out with discontinuous detach overrides", () => {
 		const factory = new SF.MarkListFactory();
 		const return1 = Mark.moveOut(1, brand(0), {
-			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+			redetachId: { revision: detachedBy, localId: brand(10) },
 		});
 		const return2 = Mark.moveOut(2, brand(1), {
-			detachIdOverride: { revision: detachedBy, localId: brand(42) },
+			redetachId: { revision: detachedBy, localId: brand(42) },
 		});
 		factory.pushContent(return1);
 		factory.pushContent(return2);

@@ -4,15 +4,32 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { ICodecFamily } from "../../codec";
+import { ICodecFamily, IJsonCodec } from "../../codec";
+// import { FullSchemaPolicy, TreeCompressionStrategy } from "../../feature-libraries";
 import { ChangeRebaser } from "../rebase";
+// import { StoredSchemaCollection } from "../schema-stored";
+import { JsonCompatibleReadOnly } from "../../util";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly codecs: ICodecFamily<TChange, SessionId>;
+	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;
 }
+
+export interface ChangeEncodingContext {
+	// readonly encodeType: TreeCompressionStrategy;
+	// readonly schema: StoredSchemaCollection;
+	// readonly policy: FullSchemaPolicy;
+	readonly originatorId: SessionId;
+}
+
+export type ChangeFamilyCodec<TChange> = IJsonCodec<
+	TChange,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+>;
 
 export interface ChangeFamilyEditor {
 	/**

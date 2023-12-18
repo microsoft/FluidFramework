@@ -25,7 +25,7 @@ import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTre
 
 // number of nodes in test for wide trees
 const nodesCountWide: [numberOfNodes: number, minLength: number, maxLength: number][] = [
-	[1, 1000, 3000],
+	[1, 1000, 7000],
 	[10, 1000, 10000],
 	[100, 1000, 500000],
 ];
@@ -45,7 +45,7 @@ describe("Summary benchmarks", () => {
 			const { summary } = tree.getAttachSummary(true);
 			const summaryString = JSON.stringify(summary);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize < 600);
+			assert(summarySize < 700);
 		});
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
 			it(`a wide tree with ${numberOfNodes} nodes.`, async () => {

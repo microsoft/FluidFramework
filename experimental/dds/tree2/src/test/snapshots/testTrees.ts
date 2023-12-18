@@ -21,6 +21,7 @@ import {
 	cursorForTypedTreeData,
 	TreeNodeSchema,
 	InsertableFlexNode,
+	intoStoredSchema,
 } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
@@ -170,7 +171,7 @@ export function generateTestTrees() {
 					},
 				};
 
-				tree1.storedSchema.update(wrongSchema);
+				tree1.updateSchema(intoStoredSchema(wrongSchema));
 
 				// Apply an edit to the tree which inserts a node with a value
 				runSynchronous(tree1, () => {

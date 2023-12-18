@@ -17,10 +17,10 @@ import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 
 const builder = new SchemaFactory("test");
 class SomeType extends builder.object("foo", {
-	handles: builder.list(builder.handle),
+	handles: builder.array(builder.handle),
 	nested: builder.optional(
 		builder.object("bar", {
-			nestedHandles: builder.list(builder.handle),
+			nestedHandles: builder.array(builder.handle),
 		}),
 	),
 	bump: builder.optional(builder.number),

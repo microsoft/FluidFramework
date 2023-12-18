@@ -28,7 +28,6 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
-	MovePlaceholder,
 } from "./types";
 import { Changeset as ChangesetSchema, Encoded } from "./format";
 import { isNoopMark } from "./utils";
@@ -80,13 +79,10 @@ function makeV0Codec<TNodeChange>(
 								effect.revision === undefined
 									? undefined
 									: revisionTagCodec.encode(effect.revision, originatorId),
-							detachIdOverride:
-								effect.detachIdOverride === undefined
+							redetachId:
+								effect.redetachId === undefined
 									? undefined
-									: changeAtomIdCodec.encode(
-											effect.detachIdOverride,
-											originatorId,
-									  ),
+									: cellIdCodec.encode(effect.redetachId, originatorId),
 							id: effect.id,
 						},
 					};
@@ -101,13 +97,10 @@ function makeV0Codec<TNodeChange>(
 								effect.finalEndpoint === undefined
 									? undefined
 									: changeAtomIdCodec.encode(effect.finalEndpoint, originatorId),
-							detachIdOverride:
-								effect.detachIdOverride === undefined
+							redetachId:
+								effect.redetachId === undefined
 									? undefined
-									: changeAtomIdCodec.encode(
-											effect.detachIdOverride,
-											originatorId,
-									  ),
+									: cellIdCodec.encode(effect.redetachId, originatorId),
 							id: effect.id,
 						},
 					};
@@ -122,16 +115,6 @@ function makeV0Codec<TNodeChange>(
 								effect.detach,
 								originatorId,
 							) as Encoded.Detach,
-						},
-					};
-				case "Placeholder":
-					return {
-						placeholder: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, originatorId),
-							id: effect.id,
 						},
 					};
 				case NoopMarkType:
@@ -176,7 +159,7 @@ function makeV0Codec<TNodeChange>(
 			return mark;
 		},
 		delete(encoded: Encoded.Delete, originatorId: SessionId): Delete {
-			const { id, revision, detachIdOverride } = encoded;
+			const { id, revision, redetachId } = encoded;
 			const mark: Delete = {
 				type: "Delete",
 				id,
@@ -184,13 +167,13 @@ function makeV0Codec<TNodeChange>(
 			if (revision !== undefined) {
 				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
-			if (detachIdOverride !== undefined) {
-				mark.detachIdOverride = changeAtomIdCodec.decode(detachIdOverride, originatorId);
+			if (redetachId !== undefined) {
+				mark.redetachId = cellIdCodec.decode(redetachId, originatorId);
 			}
 			return mark;
 		},
 		moveOut(encoded: Encoded.MoveOut, originatorId: SessionId): MoveOut {
-			const { id, finalEndpoint, detachIdOverride, revision } = encoded;
+			const { id, finalEndpoint, redetachId, revision } = encoded;
 			const mark: MoveOut = {
 				type: "MoveOut",
 				id,
@@ -201,19 +184,8 @@ function makeV0Codec<TNodeChange>(
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, originatorId);
 			}
-			if (detachIdOverride !== undefined) {
-				mark.detachIdOverride = changeAtomIdCodec.decode(detachIdOverride, originatorId);
-			}
-			return mark;
-		},
-		placeholder(encoded: Encoded.MovePlaceholder, originatorId: SessionId): MovePlaceholder {
-			const { id, revision } = encoded;
-			const mark: MovePlaceholder = {
-				type: "Placeholder",
-				id,
-			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, originatorId);
+			if (redetachId !== undefined) {
+				mark.redetachId = cellIdCodec.decode(redetachId, originatorId);
 			}
 			return mark;
 		},

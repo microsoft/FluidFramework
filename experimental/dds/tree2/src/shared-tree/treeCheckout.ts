@@ -6,33 +6,37 @@ import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/runtime-definitions";
 import {
 	AnchorLocator,
-	StoredSchemaRepository,
 	IForestSubscription,
 	AnchorSetRootEvents,
 	Anchor,
 	AnchorNode,
 	AnchorSet,
 	IEditableForest,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	combineVisitors,
 	visitDelta,
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
 	Revertible,
 	ChangeFamily,
+	tagChange,
+	TreeStoredSchema,
+	TreeStoredSchemaSubscription,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
-	IDefaultEditBuilder,
-	DefaultChangeset,
 	buildForest,
-	DefaultChangeFamily,
-	DefaultEditBuilder,
 	intoDelta,
+	makeFieldBatchCodec,
+	FieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
-import { TransactionResult } from "../util";
+import { TransactionResult, fail } from "../util";
 import { noopValidator } from "../codec";
+import { SharedTreeChange } from "./sharedTreeChangeTypes";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
+import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -85,7 +89,7 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * TODO:
 	 * Something should ensure the document contents are always in schema.
 	 */
-	readonly storedSchema: StoredSchemaRepository;
+	readonly storedSchema: TreeStoredSchemaSubscription;
 	/**
 	 * Current contents.
 	 * Updated by edits (local and remote).
@@ -97,7 +101,7 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
-	readonly editor: IDefaultEditBuilder;
+	readonly editor: ISharedTreeEditor;
 
 	/**
 	 * A collection of functions for managing transactions.
@@ -133,6 +137,12 @@ export interface ITreeCheckout extends AnchorLocator {
 	rebase(view: ITreeCheckoutFork): void;
 
 	/**
+	 * Replaces all schema with the provided schema.
+	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 */
+	updateSchema(newSchema: TreeStoredSchema): void;
+
+	/**
 	 * Events about this view.
 	 */
 	readonly events: ISubscribable<CheckoutEvents>;
@@ -153,21 +163,31 @@ export interface ITreeCheckout extends AnchorLocator {
 export function createTreeCheckout(
 	idCompressor: IIdCompressor,
 	args?: {
-		branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-		changeFamily?: ChangeFamily<DefaultEditBuilder, DefaultChangeset>;
-		schema?: StoredSchemaRepository;
+		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
+		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
+		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
+		fieldBatchCodec?: FieldBatchCodec;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
 	},
 ): TreeCheckout {
-	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
+	const schema = args?.schema ?? new TreeStoredSchemaRepository();
+	const defaultCodecOptions = { jsonValidator: noopValidator };
 	const changeFamily =
 		args?.changeFamily ??
-		new DefaultChangeFamily(idCompressor, { jsonValidator: noopValidator });
+		new SharedTreeChangeFamily(
+			idCompressor,
+			args?.fieldBatchCodec ??
+				makeFieldBatchCodec(defaultCodecOptions, {
+					// TODO: provide schema here to enable schema based compression.
+					encodeType: TreeCompressionStrategy.Compressed,
+				}),
+			{ jsonValidator: noopValidator },
+		);
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
@@ -209,11 +229,23 @@ export interface ITransaction {
 	 * Start a new transaction.
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
+	 *
+	 * @remarks - Asynchronous transactions are not supported on the root checkout,
+	 * since it is always kept up-to-date with the latest remote edits and the results of this rebasing (which might invalidate
+	 * the transaction) is not visible to the application author.
+	 * Instead,
+	 *
+	 * 1. fork the root checkout
+	 * 2. run the transaction on the fork
+	 * 3. merge the fork back into the root checkout
+	 *
+	 * @privateRemarks - There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
+	 * AB#6488 tracks adding some enforcement to make it more clear to application authors that this is not supported.
 	 */
 	start(): void;
 	/**
 	 * Close this transaction by squashing its edits and committing them as a single edit.
-	 * If this is the root view and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+	 * If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
 	 */
 	commit(): TransactionResult.Commit;
 	/**
@@ -228,7 +260,7 @@ export interface ITransaction {
 
 class Transaction implements ITransaction {
 	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	) {}
 
 	public start(): void {
@@ -270,9 +302,9 @@ export interface ITreeCheckoutFork extends ITreeCheckout {
 export class TreeCheckout implements ITreeCheckoutFork {
 	public constructor(
 		public readonly transaction: ITransaction,
-		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: ChangeFamily<DefaultEditBuilder, DefaultChangeset>,
-		public readonly storedSchema: StoredSchemaRepository,
+		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
@@ -285,14 +317,27 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const delta = intoDelta(event.change);
-				const anchorVisitor = this.forest.anchors.acquireVisitor();
-				const combinedVisitor = combineVisitors(
-					[this.forest.acquireVisitor(), anchorVisitor],
-					[anchorVisitor],
-				);
-				visitDelta(delta, combinedVisitor, this.removedRoots);
-				combinedVisitor.free();
+				// Conflicts due to schema will be empty and thus are not applied.
+				for (const change of event.change.change.changes) {
+					if (change.type === "data") {
+						const delta = intoDelta(
+							tagChange(change.innerChange, event.change.revision),
+						);
+						const anchorVisitor = this.forest.anchors.acquireVisitor();
+						const combinedVisitor = combineVisitors(
+							[this.forest.acquireVisitor(), anchorVisitor],
+							[anchorVisitor],
+						);
+						visitDelta(delta, combinedVisitor, this.removedRoots);
+						combinedVisitor.free();
+					} else if (change.type === "schema") {
+						if (change.innerChange.schema !== undefined) {
+							storedSchema.apply(change.innerChange.schema.new);
+						}
+					} else {
+						fail("Unknown Shared Tree change type.");
+					}
+				}
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
@@ -316,7 +361,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return this.forest.anchors;
 	}
 
-	public get editor(): IDefaultEditBuilder {
+	public get editor(): ISharedTreeEditor {
 		return this.branch.editor;
 	}
 
@@ -326,10 +371,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public fork(): TreeCheckout {
 		const anchors = new AnchorSet();
-		// TODO: ensure editing this clone of the schema does the right thing.
-		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
-		const forest = this.forest.clone(storedSchema, anchors);
 		const branch = this.branch.fork();
+		const storedSchema = this.storedSchema.clone();
+		const forest = this.forest.clone(storedSchema, anchors);
 		const transaction = new Transaction(branch);
 		return new TreeCheckout(
 			transaction,
@@ -364,6 +408,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		if (disposeView) {
 			view.dispose();
 		}
+	}
+
+	public updateSchema(newSchema: TreeStoredSchema): void {
+		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 
 	/**

@@ -4,16 +4,34 @@
  */
 
 import { strict as assert } from "assert";
+import { ChangeAtomId } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { splitMark, tryMergeMarks } from "../../../feature-libraries/sequence-field/utils";
+import {
+	areInputCellsEmpty,
+	splitMark,
+	tryMergeMarks,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/utils";
+import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
 import { populatedMarks } from "./populatedMarks";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+
+const idCompressor = createIdCompressor("ca239bfe-7ce4-49dc-93a5-5e72ce8f089c" as SessionId);
+const vestigialEndpoint: ChangeAtomId = {
+	revision: idCompressor.generateCompressedId(),
+	localId: brand(42),
+};
 
 describe("SequenceField - Utils", () => {
 	describe("round-trip splitMark and tryMergeMarks", () => {
-		populatedMarks.forEach((mark, index) => {
+		[
+			...populatedMarks,
+			populatedMarks
+				.filter((mark) => !areInputCellsEmpty(mark))
+				.map((mark) => ({ ...mark, vestigialEndpoint })),
+		].forEach((mark, index) => {
 			it(`${index}: ${"type" in mark ? mark.type : "NoOp"}`, () => {
 				const splitable: SF.Mark<TestChange> = { ...mark, count: 3 };
 				delete splitable.changes;

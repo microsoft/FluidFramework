@@ -5,7 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { ICodecFamily, ICodecOptions } from "../../codec";
+import {
+	ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	SessionAwareCodec,
+	makeCodecFamily,
+} from "../../codec";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -33,11 +39,10 @@ import {
 	DeltaDetachedNodeBuild,
 	DeltaRoot,
 	ITreeCursorSynchronous,
-	mapCursorField,
-	StoredSchemaCollection,
 	DeltaDetachedNodeId,
+	EncodedRevisionTag,
+	ChangeEncodingContext,
 } from "../../core";
-import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	forEachInNestedMap,
@@ -51,14 +56,7 @@ import {
 	Mutable,
 } from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import {
-	EncodedChunk,
-	chunkTree,
-	decode,
-	defaultChunkPolicy,
-	schemaCompressedEncode,
-	uncompressedEncode,
-} from "../chunked-forest";
+import { FieldBatchCodec, TreeChunk, chunkTree, defaultChunkPolicy } from "../chunked-forest";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -73,10 +71,9 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler";
-import { FieldKind, FieldKindWithEditor, FullSchemaPolicy, withEditor } from "./fieldKind";
+import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
-import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -85,6 +82,9 @@ import {
 	NodeChangeset,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
+import { makeV0Codec } from "./modularChangeCodecs";
+import { EncodedModularChangeset } from "./modularChangeFormat";
+import { RevisionTagCodec } from "../../shared-tree-core";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -95,18 +95,23 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly codecs: ICodecFamily<ModularChangeset, SessionId>;
+	public readonly latestCodec: ReturnType<typeof makeV0Codec>;
+
+	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		idCompressor: IIdCompressor,
+		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 	) {
-		this.codecs = makeModularChangeCodecFamily(
-			this.fieldKinds,
+		this.latestCodec = makeV0Codec(
+			fieldKinds,
 			new RevisionTagCodec(idCompressor),
+			fieldBatchCodec,
 			codecOptions,
 		);
+		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -215,7 +220,7 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdMap<EncodedChunk> = new Map();
+		const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
 		for (const taggedChange of changes) {
 			const revision = revisionFromTaggedChange(taggedChange);
 			const change = taggedChange.change;
@@ -848,7 +853,7 @@ export function intoDelta(
 	if (change.builds && change.builds.size > 0) {
 		const builds: DeltaDetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
-			const cursor = decode(tree).cursor();
+			const cursor = tree.cursor();
 			assert(
 				cursor.getFieldLength() === 1,
 				0x853 /* each encoded chunk should only contain 1 node. */,
@@ -1123,7 +1128,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
-	builds?: ChangeAtomIdMap<EncodedChunk>,
+	builds?: ChangeAtomIdMap<TreeChunk>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1168,42 +1173,24 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 	}
 
-	public apply(change: ModularChangeset): void {
-		this.applyChange(change);
-	}
-
 	public buildTrees(
 		firstId: ChangesetLocalId,
 		newContent: ITreeCursor | readonly ITreeCursor[],
-		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): GlobalEditDescription {
 		const content = isReadonlyArray(newContent) ? newContent : [newContent];
 		const length = content.length;
 		if (length === 0) {
 			return { type: "global" };
 		}
-		const builds: ChangeAtomIdMap<EncodedChunk> = new Map();
+		const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
 		let id = firstId;
 
-		const fieldCursors = content.map((cursor) =>
-			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
-		);
-		const nodeCursors = fieldCursors
-			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
-			.flat();
-		const encodedTrees =
-			shapeInfo !== undefined
-				? nodeCursors.map((cursor) =>
-						schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
-				  )
-				: nodeCursors.map(uncompressedEncode);
-
 		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const tree of encodedTrees) {
+		for (const cursor of content) {
 			assert(!innerMap.has(id), 0x854 /* Unexpected duplicate build ID */);
-			innerMap.set(id, tree);
+			innerMap.set(id, chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy));
 			id = brand((id as number) + 1);
 		}
 		return {
@@ -1313,7 +1300,7 @@ export interface FieldEditDescription {
  */
 export interface GlobalEditDescription {
 	type: "global";
-	builds?: ChangeAtomIdMap<EncodedChunk>;
+	builds?: ChangeAtomIdMap<TreeChunk>;
 }
 
 /**

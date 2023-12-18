@@ -15,8 +15,13 @@ import {
 	Revertible,
 	TreeNavigationResult,
 } from "../../../core";
-import { FieldKinds, TreeFieldSchema, FlexTreeObjectNodeTyped } from "../../../feature-libraries";
-import { SharedTree, ITreeCheckout, ISharedTree } from "../../../shared-tree";
+import {
+	FieldKinds,
+	TreeFieldSchema,
+	FlexTreeObjectNodeTyped,
+	intoStoredSchema,
+} from "../../../feature-libraries";
+import { SharedTree, ITreeCheckout } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
@@ -43,13 +48,8 @@ export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
 
 export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
 
-export function fuzzViewFromTree(tree: ISharedTree): ITreeCheckout {
-	assert(tree instanceof SharedTree);
-	return tree.view;
-}
-
 export const onCreate = (tree: SharedTree) => {
-	tree.storedSchema.update(fuzzSchema);
+	tree.view.updateSchema(intoStoredSchema(fuzzSchema));
 };
 
 /**

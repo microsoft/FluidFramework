@@ -16,25 +16,29 @@
                 "content": {
                   "trunk": [
                     {
-                      "change": {
-                        "changes": [
-                          {
-                            "fieldKey": "rootFieldKey",
-                            "fieldKind": "Sequence",
-                            "change": [
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
                               {
-                                "count": 1,
-                                "effect": {
-                                  "delete": {
-                                    "id": 1
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 1
+                                      }
+                                    }
                                   }
-                                }
+                                ]
                               }
                             ]
                           }
-                        ]
-                      },
-                      "revision": 2,
+                        }
+                      ],
+                      "revision": 4,
                       "sequenceNumber": 3,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
@@ -141,36 +145,36 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "repair-1",
+                  "keys": [
+                    "repair-1"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
                       {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.string",
-                            true,
-                            "42",
-                            []
-                          ]
-                        ]
+                        "c": {
+                          "extraFields": 1,
+                          "fields": []
+                        }
+                      },
+                      {
+                        "a": 0
                       }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "42",
+                          []
+                        ]
+                      ]
                     ]
-                  ]
+                  },
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -189,7 +193,7 @@
                   "version": 1,
                   "data": [
                     [
-                      2,
+                      4,
                       1,
                       1
                     ]

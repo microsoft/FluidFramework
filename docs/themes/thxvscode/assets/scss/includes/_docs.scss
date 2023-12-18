@@ -163,7 +163,8 @@
 }
 
 #docs-navbar .nav {
-	li a {
+	li a,
+	li div {
 		border-left: 1px solid $gray;
 		display: block;
 
@@ -179,6 +180,11 @@
 		}
 	}
 
+	/* Increased padding for API category/group items */
+	.api-item-kind {
+		padding: 5px 35px;
+	}
+
 	> li > a {
 		padding: 8px 15px;
 		font-size: 14px;
@@ -188,10 +194,6 @@
 		padding: 5px 25px;
 		position: relative;
 
-		/* Increased padding for API category/group items */
-		&.api-item-kind {
-			padding: 5px 35px;
-		}
 
 		/* Further increased padding for specific API endpoints */
 		&.leaf-node {
@@ -220,18 +222,32 @@
 			margin-right: 40px;
 		}
 
-		&.expanded a {
-			border-color: $link-color;
+		&.expanded, &.collapsed {
+			a, div {
+				&:hover {
+					background-size: 24px;
+					background-repeat: no-repeat;
+					background-position: 110px 5px;
+				}
+			}
 		}
-
-		&.expanded > a:hover {
-			background: url("/expand-up.svg") 110px 5px no-repeat;
-			background-size: 24px;
+	
+		&.expanded {
+			a, div {
+				border-color: $link-color;
+	
+				&:hover {
+					background-image: url("/expand-up.svg");
+				}
+			}
 		}
-
-		&.collapsed > a:hover {
-			background: url("/expand-down.svg") 110px 5px no-repeat;
-			background-size: 24px;
+	
+		&.collapsed {
+			a, div {
+				&:hover {
+					background-image: url("/expand-down.svg");
+				}
+			}
 		}
 	}
 
@@ -274,14 +290,19 @@
 
 /* Main Nav active */
 #docs-navbar > .nav > .active > a,
-#docs-navbar > .nav > .active .active > a {
-	color: $link-color !important;
+#docs-navbar > .nav > .active .active > a,
+#docs-navbar > .nav > .active > div,
+#docs-navbar > .nav > .active .active > div {
+    color: $link-color !important;
 }
 
 #docs-navbar > .nav > .active > a:not(.area),
-#docs-navbar > .nav > .active .active > a {
-	font-weight: bold;
+#docs-navbar > .nav > .active .active > a,
+#docs-navbar > .nav > .active > div:not(.area),
+#docs-navbar > .nav > .active .active > div{
+    font-weight: bold;
 }
+
 
 #docs-navbar > .nav .active:not(.active-leaf) > .packages:before {
 	content: "";

@@ -8,9 +8,11 @@ import { assert } from "@fluidframework/core-utils";
 import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangesetLocalId,
+	ChangeEncodingContext,
 	EncodedRevisionTag,
 	FieldKey,
 	FieldKindIdentifier,
+	ITreeCursorSynchronous,
 	RevisionInfo,
 	RevisionTag,
 } from "../../core";
@@ -23,24 +25,29 @@ import {
 	nestedMapToFlatList,
 } from "../../util";
 import {
-	ICodecFamily,
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
-	makeCodecFamily,
 	SchemaValidationFunction,
 	SessionAwareCodec,
 } from "../../codec";
+import {
+	FieldBatchCodec,
+	TreeChunk,
+	chunkFieldSingle,
+	defaultChunkPolicy,
+} from "../chunked-forest";
 import {
 	FieldChangeMap,
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
 } from "./modularChangeTypes";
-import { FieldKindWithEditor } from "./fieldKind";
+import { FieldKindWithEditor, FullSchemaPolicy } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 import {
 	EncodedBuilds,
+	EncodedBuildsArray,
 	EncodedFieldChange,
 	EncodedFieldChangeMap,
 	EncodedModularChangeset,
@@ -48,11 +55,17 @@ import {
 	EncodedRevisionInfo,
 } from "./modularChangeFormat";
 
-function makeV0Codec(
+export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+	fieldsCodec: FieldBatchCodec,
 	{ jsonValidator: validator }: ICodecOptions,
-): SessionAwareCodec<ModularChangeset> {
+): IJsonCodec<
+	ModularChangeset,
+	EncodedModularChangeset,
+	EncodedModularChangeset,
+	ChangeEncodingContext
+> {
 	const nodeChangesetCodec: SessionAwareCodec<NodeChangeset, EncodedNodeChangeset> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
@@ -187,31 +200,51 @@ function makeV0Codec(
 
 	function encodeBuilds(
 		builds: ModularChangeset["builds"],
-		originatorId: SessionId,
+		context: ChangeEncodingContext,
 	): EncodedBuilds | undefined {
 		if (builds === undefined) {
 			return undefined;
 		}
-		const encoded: EncodedBuilds = nestedMapToFlatList(builds).map(([r, i, t]) =>
+
+		const treesToEncode: ITreeCursorSynchronous[] = [];
+		const buildsArray: EncodedBuildsArray = nestedMapToFlatList(builds).map(([r, i, t]) => {
+			treesToEncode.push(t.cursor());
+			const treeIndexInBatch = treesToEncode.length - 1;
 			// `undefined` does not round-trip through JSON strings, so it needs special handling.
 			// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 			// We therefore optimize for the common case by omitting the revision when it is undefined.
-			r !== undefined ? [revisionTagCodec.encode(r, originatorId), i, t] : [i, t],
-		);
-		return encoded.length === 0 ? undefined : encoded;
+			return r !== undefined
+				? [revisionTagCodec.encode(r, context.originatorId), i, treeIndexInBatch]
+				: [i, treeIndexInBatch];
+		});
+		return buildsArray.length === 0
+			? undefined
+			: { builds: buildsArray, trees: fieldsCodec.encode(treesToEncode) };
 	}
 
 	function decodeBuilds(
 		encoded: EncodedBuilds | undefined,
-		originatorId: SessionId,
+		context: ChangeEncodingContext,
 	): ModularChangeset["builds"] {
-		if (encoded === undefined || encoded.length === 0) {
+		if (encoded === undefined || encoded.builds.length === 0) {
 			return undefined;
 		}
-		const list: [RevisionTag | undefined, ChangesetLocalId, any][] = encoded.map((tuple) =>
-			tuple.length === 3
-				? [revisionTagCodec.decode(tuple[0], originatorId), tuple[1], tuple[2]]
-				: [undefined, ...tuple],
+
+		const chunks = fieldsCodec.decode(encoded.trees);
+		const getChunk = (index: number): TreeChunk => {
+			assert(index < chunks.length, "out of bounds index for build chunk");
+			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
+		};
+
+		const list: [RevisionTag | undefined, ChangesetLocalId, TreeChunk][] = encoded.builds.map(
+			(tuple) =>
+				tuple.length === 3
+					? [
+							revisionTagCodec.decode(tuple[0], context.originatorId),
+							tuple[1],
+							getChunk(tuple[2]),
+					  ]
+					: [undefined, tuple[0], getChunk(tuple[1])],
 		);
 		return nestedMapFromFlatList(list);
 	}
@@ -262,31 +295,35 @@ function makeV0Codec(
 		return decodedRevisions;
 	}
 
+	// TODO: use withSchemaValidation here to validate data against format.
 	return {
-		encode: (change, originatorId) => {
+		encode: (change, context) => {
 			return {
 				maxId: change.maxId,
 				revisions:
 					change.revisions === undefined
 						? change.revisions
-						: (encodeRevisionInfos(
-								change.revisions,
-								originatorId,
-						  ) as unknown as readonly RevisionInfo[] & JsonCompatibleReadOnly),
-				changes: encodeFieldChangesForJson(change.fieldChanges, originatorId),
-				builds: encodeBuilds(change.builds, originatorId),
+						: encodeRevisionInfos(change.revisions, context.originatorId),
+				changes: encodeFieldChangesForJson(change.fieldChanges, context.originatorId),
+				builds: encodeBuilds(change.builds, context),
 			};
 		},
-		decode: (change, originatorId) => {
+		decode: (change, context) => {
 			const encodedChange = change as unknown as EncodedModularChangeset;
 			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, originatorId),
+				fieldChanges: decodeFieldChangesFromJson(
+					encodedChange.changes,
+					context.originatorId,
+				),
 			};
 			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeBuilds(encodedChange.builds, originatorId);
+				decoded.builds = decodeBuilds(encodedChange.builds, context);
 			}
 			if (encodedChange.revisions !== undefined) {
-				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, originatorId);
+				decoded.revisions = decodeRevisionInfos(
+					encodedChange.revisions,
+					context.originatorId,
+				);
 			}
 			if (encodedChange.maxId !== undefined) {
 				decoded.maxId = encodedChange.maxId;
@@ -295,12 +332,4 @@ function makeV0Codec(
 		},
 		encodedSchema: EncodedModularChangeset,
 	};
-}
-
-export function makeModularChangeCodecFamily(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
-	options: ICodecOptions,
-): ICodecFamily<ModularChangeset, SessionId> {
-	return makeCodecFamily([[0, makeV0Codec(fieldKinds, revisionTagCodec, options)]]);
 }

@@ -151,13 +151,7 @@ function rebaseMarkList<TNodeChange>(
 			nodeExistenceState,
 		);
 
-		// Inverse attaches do not contribute to lineage as they are effectively reinstating
-		// an older detach which cells should already have any necessary lineage for.
-		if (
-			(markEmptiesCells(baseMark) ||
-				isImpactfulCellRename(baseMark, baseRevision, metadata)) &&
-			!isInverseAttach(baseMark)
-		) {
+		if (markEmptiesCells(baseMark) || isImpactfulCellRename(baseMark, baseRevision, metadata)) {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
 			const detachId = getOutputCellId(baseMark, baseRevision, undefined);
@@ -185,7 +179,22 @@ function rebaseMarkList<TNodeChange>(
 				0x817 /* Mark should have empty input cells after rebasing over a cell-emptying mark */,
 			);
 
-			setMarkAdjacentCells(rebasedMark, detachBlock);
+			// A re-detach sports a cell ID with the adjacent cells from the original detach.
+			// Marks that are rebased over such a re-detach will adopt this cell ID as-is and do not need to have the
+			// adjacent cells be updated. Moreover, the base changeset may not have all the detaches from the original
+			// detach revision, so using such re-detach marks to compile the list of adjacent cells would run the risk
+			// of ending up with incomplete adjacent cell information in the rebased mark.
+			if (!isRedetach(baseMark)) {
+				// BUG#6604:
+				// We track blocks of adjacent cells for rollbacks separately from that of the original revision
+				// that they are a rollback of, but all rebased marks use the original revision in their `CellId`.
+				// This means we assign adjacent cells information for the rollback to a `CellId` that advertises
+				// itself as being about the original revision.
+				// This could lead to a situation where we try to compare two cells and fail to order them correctly
+				// because one sports adjacent cells information for the original revision and the other sports
+				// adjacent cells information for the rollback.
+				setMarkAdjacentCells(rebasedMark, detachBlock);
+			}
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
@@ -214,13 +223,13 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 	return factory.list;
 }
 
-function isInverseAttach(effect: MarkEffect): boolean {
+function isRedetach(effect: MarkEffect): boolean {
 	switch (effect.type) {
 		case "Delete":
 		case "MoveOut":
-			return effect.detachIdOverride !== undefined;
+			return effect.redetachId !== undefined;
 		case "AttachAndDetach":
-			return isInverseAttach(effect.detach);
+			return isRedetach(effect.detach);
 		default:
 			return false;
 	}
@@ -509,8 +518,6 @@ function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follo
 			}
 			return { remains, follows };
 		}
-		case "Placeholder":
-			fail("Placeholder marks should not be rebased");
 		default:
 			unreachableCase(type);
 	}
@@ -713,7 +720,12 @@ function updateLineageState(
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
 	for (const revision of detachBlocks.keys()) {
 		const revisionIndex = getRevisionIndex(metadata, revision);
-		if (attachRevisionIndex <= revisionIndex && revisionIndex < detachRevisionIndex) {
+		// revisionIndex can be -Infinity if it is from a re-detach
+		if (
+			revisionIndex > -Infinity &&
+			attachRevisionIndex <= revisionIndex &&
+			revisionIndex < detachRevisionIndex
+		) {
 			detachBlocks.delete(revision);
 		}
 	}
@@ -895,6 +907,13 @@ function shouldReceiveLineage(
 	const rollbackOf = metadata.tryGetInfo(detachRevision)?.rollbackOf;
 	const detachIntention = rollbackOf ?? detachRevision;
 	const detachRevisionIndex = getRevisionIndex(metadata, detachIntention);
+	if (detachRevisionIndex === undefined) {
+		// This case means that these cells are being "re-detached" through a `redetachId`.
+		// We could use the revision of the re-detach to determine whether or not this cell needs this lineage entry.
+		// But to be conservative we always add lineage here.
+		return true;
+	}
+
 	const isRollback = rollbackOf !== undefined;
 	return isRollback
 		? detachRevisionIndex < cellRevisionIndex

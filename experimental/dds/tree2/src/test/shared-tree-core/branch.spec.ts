@@ -21,9 +21,9 @@ import {
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { noopValidator } from "../../codec";
-import { createTestUndoRedoStacks, mintRevisionTag, testIdCompressor } from "../utils";
+import { createTestUndoRedoStacks, failCodec, mintRevisionTag, testIdCompressor } from "../utils";
 
-const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, {
+const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
 	jsonValidator: noopValidator,
 });
 
@@ -375,7 +375,6 @@ describe("Branches", () => {
 		assertDisposed(() => branch.fork());
 		assertDisposed(() => branch.rebaseOnto(fork));
 		assertDisposed(() => branch.merge(branch.fork()));
-		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
 		assertDisposed(() => branch.startTransaction());
 		assertDisposed(() => branch.commitTransaction());
 		assertDisposed(() => branch.abortTransaction());

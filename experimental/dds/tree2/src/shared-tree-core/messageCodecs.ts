@@ -6,23 +6,24 @@
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly } from "../util";
 import { ICodecOptions, IJsonCodec, SessionAwareCodec, withSchemaValidation } from "../codec";
-import { EncodedRevisionTag, RevisionTag } from "../core";
+import { ChangeFamilyCodec, EncodedRevisionTag, RevisionTag } from "../core";
 import { DecodedMessage } from "./messageTypes";
 import { Message } from "./messageFormat";
 
 export function makeMessageCodec<TChangeset>(
-	changesetCodec: SessionAwareCodec<TChangeset>,
+	changeCodec: ChangeFamilyCodec<TChangeset>,
 	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
 ): IJsonCodec<DecodedMessage<TChangeset>> {
+	// TODO: consider adding version and using makeVersionedValidatedCodec
 	return withSchemaValidation<DecodedMessage<TChangeset>, TAnySchema>(
-		Message(changesetCodec.encodedSchema ?? Type.Any()),
+		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
 			encode: ({ commit, sessionId: originatorId }: DecodedMessage<TChangeset>) => {
 				const message: Message = {
 					revision: revisionTagCodec.encode(commit.revision, originatorId),
 					originatorId,
-					changeset: changesetCodec.encode(commit.change, originatorId),
+					changeset: changeCodec.encode(commit.change, { originatorId }),
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
@@ -31,7 +32,7 @@ export function makeMessageCodec<TChangeset>(
 				return {
 					commit: {
 						revision: revisionTagCodec.decode(revision, originatorId),
-						change: changesetCodec.decode(changeset, originatorId),
+						change: changeCodec.decode(changeset, { originatorId }),
 					},
 					sessionId: originatorId,
 				};
