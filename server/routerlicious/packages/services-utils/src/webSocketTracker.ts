@@ -56,6 +56,10 @@ export class WebSocketTracker implements IWebSocketTracker {
 		return socketResult;
 	}
 
+	public addSocket(webSocket: IWebSocket) {
+		this.socketIdToSocketMap.set(webSocket.id, webSocket);
+	}
+
 	public removeSocket(socketId: string) {
 		const tokenIds = this.socketIdToTokenIdMap.get(socketId);
 
@@ -72,5 +76,9 @@ export class WebSocketTracker implements IWebSocketTracker {
 		}
 		this.socketIdToTokenIdMap.delete(socketId);
 		return this.socketIdToSocketMap.delete(socketId);
+	}
+
+	public getAllSockets(): IWebSocket[] {
+		return Array.from(this.socketIdToSocketMap.values());
 	}
 }

@@ -16,7 +16,12 @@ export interface IWebSocketTracker {
 	// Get socket objects from internal map
 	getSocketsForToken(compositeTokenId: string): IWebSocket[];
 
+	addSocket(webSocket: IWebSocket);
+
 	// Remove socket from tracking
 	// Return true if socket is removed, false if socket is not found
 	removeSocket(socketId: string): boolean;
+
+	// Get all tracked sockets
+	getAllSockets(): IWebSocket[];
 }

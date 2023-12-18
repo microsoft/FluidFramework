@@ -63,6 +63,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | Script | Description |
 |--------|-------------|
 | `build` | `npm run print-config` |
+| `clean` | `rimraf --glob nyc` |
 | `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
 | `format` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
@@ -74,6 +75,8 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
 | `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
 | `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
+| `test` | `mocha src/test` |
+| `test:mocha` | `mocha --ignore "dist/test/types/*" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup` |
 
 <!-- prettier-ignore-end -->
 

@@ -94,6 +94,9 @@
 			"InterfaceDeclaration_ICheckpointService": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IWebSocketTracker": {
+				"forwardCompat": false
 			}
 		}
 	}
