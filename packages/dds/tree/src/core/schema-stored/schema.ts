@@ -160,6 +160,8 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encode(): ErasedTreeNodeSchemaDataFormat {
+		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
+		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		return brandErased<BrandedTreeNodeSchemaDataFormat>({
 			object: [...this.objectNodeFields]
 				.map(([k, v]) => encodeNamedField(k, v))
