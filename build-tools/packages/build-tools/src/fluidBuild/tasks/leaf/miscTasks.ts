@@ -151,12 +151,6 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 
 				return path.join(dstPath, currRelPath);
 			});
-			// this._dstFiles = this._dstFiles.map((file) => {
-			// 	if (file.endsWith(".d.ts")) {
-			// 		return file.slice(0, file.length - 5) + ".d.mts";
-			// 	}
-			// 	return file;
-			// });
 		}
 
 		return this._dstFiles;
