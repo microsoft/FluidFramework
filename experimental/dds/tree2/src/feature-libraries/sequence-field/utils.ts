@@ -203,19 +203,19 @@ export function compareCellPositionsUsingTombstones(
 	if (areEqualChangeAtomIds(oldMarkCell, newMarkCell)) {
 		return CellOrder.SameCell;
 	}
-	const oldChangeKnowsOfNewMarkRevision = oldChangeKnowledge.has(newMarkCell.revision);
-	const newChangeKnowsOfBaseMarkRevision = newChangeKnowledge.has(oldMarkCell.revision);
-	if (oldChangeKnowsOfNewMarkRevision && newChangeKnowsOfBaseMarkRevision) {
+	const oldChangeKnowsOfNewMarkCellRevision = oldChangeKnowledge.has(newMarkCell.revision);
+	const newChangeKnowsOfOldMarkCellRevision = newChangeKnowledge.has(oldMarkCell.revision);
+	if (oldChangeKnowsOfNewMarkCellRevision && newChangeKnowsOfOldMarkCellRevision) {
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
 		assert(false, "Inconsistent cell ordering");
 	}
-	if (newChangeKnowsOfBaseMarkRevision) {
+	if (newChangeKnowsOfOldMarkCellRevision) {
 		// The changeset that contains `newMarkCell` has tombstones for the revision that created `oldMarkCell`,
 		// so a tombstone/mark matching `oldMarkCell` must occur later in the newer changeset.
 		return CellOrder.NewThenOld;
-	} else if (oldChangeKnowsOfNewMarkRevision) {
+	} else if (oldChangeKnowsOfNewMarkCellRevision) {
 		// The changeset that contains `oldMarkCell` has tombstones for revision that created `newMarkCell`,
 		// so a tombstone/mark matching `newMarkCell` must occur later in the older changeset.
 		return CellOrder.OldThenNew;
