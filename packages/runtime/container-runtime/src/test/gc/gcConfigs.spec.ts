@@ -28,6 +28,7 @@ import {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
 	defaultSessionExpiryDurationMs,
 	oneDayMs,
@@ -49,7 +50,6 @@ import { ContainerRuntimeGCMessage } from "../../messageTypes";
 import { IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 import { configProvider } from "./gcUnitTestHelpers";
-import { IGCMetadata_Deprecated } from "../../gc/gcDefinitions";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
