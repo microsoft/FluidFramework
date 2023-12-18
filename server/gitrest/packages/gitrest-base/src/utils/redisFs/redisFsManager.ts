@@ -20,7 +20,7 @@ import type {
 import { FileHandle } from "fs/promises";
 import { Stream } from "stream";
 import { Abortable } from "events";
-import * as IoRedis from "ioredis";
+import { Redis as IoRedis, RedisOptions as IoRedisOptions } from "ioredis";
 import sizeof from "object-sizeof";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -42,10 +42,16 @@ export class RedisFsManager implements IFileSystemManager {
 
 	constructor(
 		redisParam: RedisParams,
-		redisOptions: IoRedis.RedisOptions,
+		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
+		createRedisClient?: (options: IoRedisOptions) => IoRedis,
 	) {
-		this.promises = RedisFs.getInstance(redisParam, redisOptions, redisFsConfig);
+		this.promises = RedisFs.getInstance(
+			redisParam,
+			redisOptions,
+			redisFsConfig,
+			createRedisClient,
+		);
 	}
 }
 
@@ -55,20 +61,27 @@ export class RedisFs implements IFileSystemPromises {
 
 	constructor(
 		redisParams: RedisParams,
-		redisOptions: IoRedis.RedisOptions,
+		redisOptions: IoRedisOptions,
 		private readonly redisFsConfig: RedisFsConfig,
+		createRedisClient: (options: IoRedisOptions) => IoRedis = (opts) => new IoRedis(opts),
 	) {
-		const redisClient = new IoRedis.default(redisOptions);
+		const redisClient = createRedisClient(redisOptions);
 		this.redisFsClient = new Redis(redisClient, redisParams);
 	}
 
 	public static getInstance(
 		redisParams: RedisParams,
-		redisOptions: IoRedis.RedisOptions,
+		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
+		createRedisClient?: (options: IoRedisOptions) => IoRedis,
 	): RedisFs {
 		if (!RedisFs.instance) {
-			RedisFs.instance = new RedisFs(redisParams, redisOptions, redisFsConfig);
+			RedisFs.instance = new RedisFs(
+				redisParams,
+				redisOptions,
+				redisFsConfig,
+				createRedisClient,
+			);
 		}
 		return RedisFs.instance;
 	}
