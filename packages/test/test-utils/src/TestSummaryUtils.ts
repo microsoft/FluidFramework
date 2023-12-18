@@ -22,6 +22,7 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
@@ -152,7 +153,7 @@ export async function createSummarizer(
 export async function summarizeNow(
 	summarizer: ISummarizer,
 	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",
-) {
+): Promise<SummaryInfo> {
 	const options: IOnDemandSummarizeOptions =
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);
@@ -187,4 +188,23 @@ export async function summarizeNow(
 		summaryVersion: ackNackResult.data.summaryAckOp.contents.handle,
 		summaryRefSeq: submitResult.data.referenceSequenceNumber,
 	};
+}
+
+/**
+ * Summary information containing the summary tree, summary version, and summary sequence number.
+ * @internal
+ */
+export interface SummaryInfo {
+	/**
+	 * The summary tree generated
+	 */
+	summaryTree: ISummaryTree;
+	/**
+	 * Handle of the completed summary
+	 */
+	summaryVersion: string;
+	/**
+	 * Reference sequence number of the current summary generation
+	 */
+	summaryRefSeq: number;
 }

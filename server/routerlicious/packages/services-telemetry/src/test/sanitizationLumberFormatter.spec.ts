@@ -53,13 +53,17 @@ describe("SanitizationLumberFormatter", () => {
 		assert.strictEqual(lumberException.cookie, redactedStr);
 		assert.strictEqual(lumberException.token, redactedStr);
 		assert.strictEqual(lumberException.secret, redactedStr);
+		assert.strictEqual(lumberException.authorization, redactedStr);
+		assert.strictEqual(lumberException.someProperty.pass, redactedStr);
 
-		assert.strictEqual(sensitiveKeys.size, 6);
-		assert.strictEqual(sensitiveKeys.has("password"), true);
-		assert.strictEqual(sensitiveKeys.has("apiKey"), true);
-		assert.strictEqual(sensitiveKeys.has("sessionId"), true);
-		assert.strictEqual(sensitiveKeys.has("cookie"), true);
-		assert.strictEqual(sensitiveKeys.has("token"), true);
-		assert.strictEqual(sensitiveKeys.has("secret"), true);
+		assert.strictEqual(sensitiveKeys.size, 8);
+		assert.strictEqual(sensitiveKeys.has(".password"), true);
+		assert.strictEqual(sensitiveKeys.has(".apiKey"), true);
+		assert.strictEqual(sensitiveKeys.has(".sessionId"), true);
+		assert.strictEqual(sensitiveKeys.has(".cookie"), true);
+		assert.strictEqual(sensitiveKeys.has(".token"), true);
+		assert.strictEqual(sensitiveKeys.has(".secret"), true);
+		assert.strictEqual(sensitiveKeys.has(".authorization"), true);
+		assert.strictEqual(sensitiveKeys.has(".someProperty.pass"), true);
 	});
 });

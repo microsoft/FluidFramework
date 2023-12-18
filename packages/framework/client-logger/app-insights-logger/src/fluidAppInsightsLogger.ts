@@ -12,7 +12,7 @@ import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 
 /**
  * The configuration object for creating the logger via {@link createLogger}.
- * @internal
+ * @beta
  */
 export interface FluidAppInsightsLoggerConfig {
 	/**
@@ -45,7 +45,7 @@ export interface FluidAppInsightsLoggerConfig {
 
 /**
  * A filter used to match against the category of a telemetry event
- * @internal
+ * @beta
  */
 export interface CategoryFilter {
 	/**
@@ -56,7 +56,7 @@ export interface CategoryFilter {
 
 /**
  * A filter used to match against the namespaces of a telemetry event
- * @internal
+ * @beta
  */
 export interface NamespaceFilter {
 	/**
@@ -112,7 +112,7 @@ export interface NamespaceFilter {
  *			},
  *		});
  * ```
- * @internal
+ * @beta
  */
 export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
@@ -310,7 +310,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
  * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights(),
  * or else logging will not occur.
  *
- * @internal
+ * @beta
  */
 export function createLogger(
 	client: ApplicationInsights,

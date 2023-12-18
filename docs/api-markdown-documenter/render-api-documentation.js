@@ -21,7 +21,7 @@ const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
-async function renderApiDocumentation(inputDir, outputDir, version) {
+async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 	// Delete existing documentation output
 	console.log("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
@@ -51,7 +51,7 @@ async function renderApiDocumentation(inputDir, outputDir, version) {
 			ApiItemKind.Namespace,
 		],
 		newlineKind: "lf",
-		uriRoot: `/docs/apis/${version}`,
+		uriRoot: uriRootDir,
 		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
