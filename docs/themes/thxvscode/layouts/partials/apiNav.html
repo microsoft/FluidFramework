@@ -18,14 +18,11 @@
 {{ $area := $current.Params.area }}
 {{ $selectedApiVersion := $.Site.Data.versions.params.currentVersion}}
 
-{{ range $version, $allPackages := $.Site.Data.packages}}
-    {{ if eq $version $selectedApiVersion }}
-        {{ range $name, $packages := $allPackages }}
-            {{ range $packages }}
-                {{ if eq $package .}}
-                    {{ $area = $name}}
-                {{ end }}
-            {{ end }}
+{{ $allPackages := index $.Site.Data.packages $selectedApiVersion}}
+{{ range $name, $packages := $allPackages }}
+    {{ range $packages }}
+        {{ if eq $package .}}
+            {{ $area = $name}}
         {{ end }}
     {{ end }}
 {{ end }}
@@ -98,9 +95,11 @@
             {{ $selectedApiVersion = $.Site.Data.versions.params.currentVersion }}
         {{ end }}
         {{ $apiOverviewPage := printf "%s%s" $.Site.Data.versions.apiDocsDirectory $selectedApiVersion }}
-        <li> <a class="docs-home" href={{$apiOverviewPage}} {{ if $api_home_active }}
+        <li {{ if $in_api_section }} class="active" {{ end }}> 
+            <a class="docs-home" href={{$apiOverviewPage}} {{ if $api_home_active }}
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
         </li>
+        
         <li>
             <select name="API version" id="api-version" onchange="window.location.href = this.value;">
                 {{ range $name, $version := $.Site.Data.versions.apiVersionOptionName }}
@@ -113,8 +112,7 @@
             </select>
         </li>
 
-        {{ range $version, $allPackages := $.Site.Data.packages}}
-        {{ if eq $version $selectedApiVersion }}
+        {{ $allPackages = index $.Site.Data.packages $selectedApiVersion}}
         {{ range $grouping, $names := $allPackages }}
             {{ $isCurrentArea := (eq $grouping $area) }}
             <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
@@ -127,7 +125,7 @@
                         {{ $targetPage := $current }}
                         {{- range (where $packagePages "Params.package" .) -}}
                             {{ $currentApiVersion := index (split (trim .RelPermalink "/") "/") 2}}
-                            {{if eq $currentApiVersion $selectedApiVersion}}
+                            {{if eq $currentApiVersion $selectedApiVersion}} 
                                 {{ $targetPage = . }}
                                 {{ $versionData := index $.Site.Data $selectedApiVersion }}
                                 
@@ -156,36 +154,25 @@
                                        data-toggle="collapse" 
                                        data-target="#leaf-docs-nav-{{ $isCurrentPage }}" 
                                        {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }}"{{ end }}>
-                                       {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
+                                        {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
                                     </a>
                                     <ul id="leaf-docs-nav-{{ $isCurrentPage }}" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
                                         {{ $plurals := dict "Interface" "Interfaces" "Class" "Classes" "Enum" "Enums" }}
-
-                            <li class="panel {{ if $isCurrentPage }}active{{ end }} {{ if $hasActiveLeaf }}active-leaf{{ end }}">
-                                <a href="{{$targetPage.RelPermalink}}" 
-                                   class="packages" 
-                                   data-toggle="collapse" 
-                                   data-target="#leaf-docs-nav-{{ $isCurrentPage }}" 
-                                   {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }}"{{ end }}>
-                                    {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
-                                </a>
-                                <ul id="leaf-docs-nav-{{ $isCurrentPage }}" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
-                                    {{ $plurals := dict "Interface" "Interfaces" "Class" "Classes" "Enum" "Enums" }}
-
-                                    {{ range $category := slice "Interface" "Class" "Enum" }}
-                                        {{ if isset $apiDetails $category }}
-                                            {{ $currentTrimmedLink := trim $current.RelPermalink " " }}
-                                            {{ $categoryLower := lower $category }}
-                                            {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
-                                            {{ $categoryPlural := index $plurals $category }}
-
-                                            <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
-                                                <div href="#" class="api-item-kind {{ $categoryLower }}-link" 
-                                                    data-toggle="collapse" data-target="#{{ $categoryLower }}-{{ $isCurrentPage }}-content"
-                                                >
-                                                    {{ $categoryPlural }}
-                                                </div>
-                                                
+    
+                                        {{ range $category := slice "Interface" "Class" "Enum" }}
+                                            {{ if isset $apiDetails $category }}
+                                                {{ $currentTrimmedLink := trim $current.RelPermalink " " }}
+                                                {{ $categoryLower := lower $category }}
+                                                {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
+                                                {{ $categoryPlural := index $plurals $category }}
+    
+                                                <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
+                                                    <div href="#" class="api-item-kind {{ $categoryLower }}-link" 
+                                                        data-toggle="collapse" data-target="#{{ $categoryLower }}-{{ $isCurrentPage }}-content"
+                                                    >
+                                                        {{ $categoryPlural }}
+                                                    </div>
+                                                    
                                                     <ul id="{{ $categoryLower }}-{{ $isCurrentPage }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
                                                         {{ range $item := index $apiDetails $category }}
                                                             {{ $itemLink := print (relURL $.Site.Data.versions.apiDocsDirectory) $selectedApiVersion "/" $packageKey "/" (lower $item) "-" $categoryLower }}
@@ -208,8 +195,6 @@
                 </ul>
             </li>
         {{- end }}
-        {{ end }}
-        {{ end }}
     </ul>
 </nav>
 <nav id="small-nav" aria-label="Topics" class="docs-nav hidden-md hidden-lg">
