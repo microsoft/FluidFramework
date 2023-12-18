@@ -433,16 +433,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 			counter.increment(3);
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 			directory.set(testKey, "I will be erased");
-			const string = await d.getSharedObject<SharedString>(stringId);
-			// const collection = string.getIntervalCollection(collectionId);
-			// collection.change(id, testStart + 1, testEnd + 1);
 		});
 
 		map1.set(testKey, testValue);
 		cell1.set(testValue);
 		counter1.increment(testIncrementValue);
 		directory1.set(testKey, testValue);
-		// collection1.change(id, testStart + 2, testEnd + 1);
 		await provider.ensureSynchronized();
 
 		// load with pending ops, which it should not resend because they were already sent successfully
@@ -452,8 +448,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
-		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
-		// const collection2 = string2.getIntervalCollection(collectionId);
 
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
@@ -464,8 +458,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 		assert.strictEqual(counter2.value, testIncrementValue + 3);
 		assert.strictEqual(directory1.get(testKey), testValue);
 		assert.strictEqual(directory2.get(testKey), testValue);
-		// assertIntervals(string1, collection1, [{ start: testStart + 2, end: testEnd + 1 }]);
-		// assertIntervals(string2, collection2, [{ start: testStart + 2, end: testEnd + 1 }]);
 	});
 
 	it("resends delete op and can set after", async function () {

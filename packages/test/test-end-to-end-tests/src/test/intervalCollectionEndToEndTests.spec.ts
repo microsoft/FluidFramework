@@ -18,6 +18,7 @@ import { IContainerExperimental } from "@fluidframework/container-loader";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { IHostLoader } from "@fluidframework/container-definitions";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
@@ -82,20 +83,25 @@ const assertIntervals = (
 
 describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
+	let container1: IContainerExperimental;
 	let sharedString1: SharedString;
 	let sharedString2: SharedString;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let collection1: IIntervalCollection<SequenceInterval>;
 	let collection2: IIntervalCollection<SequenceInterval>;
+	let loader: IHostLoader;
+	let url;
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
-		const container1 = await provider.makeTestContainer(testContainerConfig);
+		container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 		sharedString1.insertText(0, "hello world");
 		collection1 = sharedString1.getIntervalCollection(collectionId);
+		loader = provider.makeTestLoader(testContainerConfig);
+		url = await container1.getAbsoluteUrl("");
 	});
 
 	it("doesn't resend successful op", async () => {
@@ -126,11 +132,25 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		provider.opProcessingController.resumeProcessing();
 		assert.ok(pendingState);
 
+		container1 = await provider.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container1);
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+		collection1 = sharedString1.getIntervalCollection(collectionId);
+		assertIntervals(sharedString1, collection1, [{ start: 4, end: 7 }]);
+
+		let container2 = await loader.resolve({ url }, pendingState);
+		await waitForContainerConnection(container1);
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+		collection2 = sharedString2.getIntervalCollection(collectionId);
+		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
+
 		collection1.change(id, 2, 9);
 		await provider.ensureSynchronized();
 
 		// reload the container and verify that the above change takes effect
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+		container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 		collection2 = sharedString2.getIntervalCollection(collectionId);
