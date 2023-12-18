@@ -40,7 +40,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/lib/utils.mjs";
+} from "@fluidframework/container-loader/test/utils";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;

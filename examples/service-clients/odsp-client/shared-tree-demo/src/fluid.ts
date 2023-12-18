@@ -4,7 +4,7 @@
  */
 import { OdspClient, OdspContainerServices } from "@fluid-experimental/odsp-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedTreeFactory } from "@fluid-experimental/tree2";
+import { SharedTreeFactory } from "@fluidframework/tree";
 import { clientProps } from "./clientProps";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class

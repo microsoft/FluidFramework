@@ -12,7 +12,7 @@ import {
 	type HasContainerKey,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
 import { ContainerHistoryLog } from "./ContainerHistoryLog";
 import { Waiting } from "./Waiting";

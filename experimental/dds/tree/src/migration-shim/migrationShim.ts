@@ -15,7 +15,7 @@ import {
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
 } from '@fluidframework/runtime-definitions';
-import { type TreeFactory, type ITree } from '@fluid-experimental/tree2';
+import { type TreeFactory, type ITree } from '@fluidframework/tree';
 import { assert } from '@fluidframework/core-utils';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';

@@ -24,26 +24,14 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConfigTypes": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ConfigTypes": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_ConfigTypes():
-    TypeOnly<old.ConfigTypes>;
-declare function use_current_TypeAliasDeclaration_ConfigTypes(
-    use: TypeOnly<current.ConfigTypes>): void;
-use_current_TypeAliasDeclaration_ConfigTypes(
-    get_old_TypeAliasDeclaration_ConfigTypes());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConfigTypes": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ConfigTypes": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ConfigTypes():
-    TypeOnly<current.ConfigTypes>;
-declare function use_old_TypeAliasDeclaration_ConfigTypes(
-    use: TypeOnly<old.ConfigTypes>): void;
-use_old_TypeAliasDeclaration_ConfigTypes(
-    get_current_TypeAliasDeclaration_ConfigTypes());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -168,26 +156,14 @@ use_old_InterfaceDeclaration_IConfigProvider(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConfigProviderBase": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IConfigProviderBase": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IConfigProviderBase():
-    TypeOnly<old.IConfigProviderBase>;
-declare function use_current_InterfaceDeclaration_IConfigProviderBase(
-    use: TypeOnly<current.IConfigProviderBase>): void;
-use_current_InterfaceDeclaration_IConfigProviderBase(
-    get_old_InterfaceDeclaration_IConfigProviderBase());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConfigProviderBase": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IConfigProviderBase": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IConfigProviderBase():
-    TypeOnly<current.IConfigProviderBase>;
-declare function use_old_InterfaceDeclaration_IConfigProviderBase(
-    use: TypeOnly<old.IConfigProviderBase>): void;
-use_old_InterfaceDeclaration_IConfigProviderBase(
-    get_current_InterfaceDeclaration_IConfigProviderBase());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -117,7 +117,7 @@ export const gcTombstoneBlobKey = "__tombstones";
 // @internal
 export const gcTreeKey = "gc";
 
-// @internal
+// @alpha
 export interface IAttachMessage {
     id: string;
     snapshot: ITree;
@@ -165,7 +165,7 @@ export { IdCompressor }
 
 export { IdCreationRange }
 
-// @internal
+// @alpha
 export interface IEnvelope {
     address: string;
     contents: any;
@@ -305,7 +305,7 @@ export interface IInboundSignalMessage extends ISignalMessage {
     type: string;
 }
 
-// @internal
+// @alpha
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };

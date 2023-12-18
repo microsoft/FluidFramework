@@ -26,7 +26,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
@@ -129,13 +129,13 @@ export class Loader implements IHostLoader {
 // @alpha
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @internal
+// @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @internal
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
-// @internal
+// @alpha
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 
 // (No @packageDocumentation comment for this package)

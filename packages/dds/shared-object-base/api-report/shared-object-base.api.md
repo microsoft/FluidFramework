@@ -77,10 +77,10 @@ export interface ISharedObjectEvents extends IErrorEvent {
 // @internal (undocumented)
 export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
-// @internal
+// @alpha
 export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
 
-// @internal
+// @alpha
 export function parseHandles(value: any, serializer: IFluidSerializer): any;
 
 // @internal

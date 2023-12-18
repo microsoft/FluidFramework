@@ -12,7 +12,7 @@ import {
 	FlexTreeTypedNode,
 	FlexTreeTypedField,
 	InsertableFlexNode,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 
 const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "bubble-bench" });
 
