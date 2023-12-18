@@ -39,6 +39,7 @@ import {
 	withOrderingMethod,
 	assertChangesetsEqual,
 	withoutTombstones,
+	skipOnLineageMethod,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -647,14 +648,14 @@ describe("SequenceField - State-based Rebaser Axioms", () => {
 				{
 					content: {
 						currentState: startingState,
-						config: { maxLength: 5, numNodes: [2], allocator },
+						config: { maxLength: 7, numNodes: [2], allocator },
 					},
 				},
 			],
 			generateChildStates,
 			fieldRebaser,
 			{
-				groupSubSuites: false,
+				groupSubSuites: true,
 				numberOfEditsToVerifyAssociativity: 3,
 				skipRebaseOverCompose: false,
 			},
@@ -672,14 +673,14 @@ describe("SequenceField - State-based Rebaser Axioms", () => {
 				{
 					content: {
 						currentState: startingState,
-						config: { maxLength: 5, numNodes: [2], allocator },
+						config: { maxLength: 7, numNodes: [2], allocator },
 					},
 				},
 			],
 			generateChildStates,
 			fieldRebaser,
 			{
-				groupSubSuites: false,
+				groupSubSuites: true,
 				numberOfEditsToVerifyAssociativity: 3,
 				skipRebaseOverCompose: false,
 			},
@@ -897,6 +898,32 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 
 			assertChangesetsEqual(AiTAB, expected);
 		}));
+
+	// TODO: make this pass with CellOrderingMethod.Lineage
+	skipOnLineageMethod(config, "[removeB, reviveB, reviveA] ↷ []", () =>
+		withConfig(() => {
+			// Note: this test presupposes the existence of a cell A, located before cell B, emptied by tag1
+			const removeB = tagChange([Mark.delete(1, brand(1))], tag2);
+			const reviveB = tagChange(
+				[Mark.revive(1, { revision: tag2, localId: brand(1) })],
+				tag3,
+			);
+			const reviveA = tagChange(
+				[Mark.revive(1, { revision: tag1, localId: brand(0) })],
+				tag4,
+			);
+			const inverseRemoveB = tagRollbackInverse(invert(removeB), tag5, removeB.revision);
+			const inverseReviveB = tagRollbackInverse(invert(reviveB), tag6, reviveB.revision);
+			const inverseReviveA = tagRollbackInverse(invert(reviveA), tag7, reviveA.revision);
+
+			// The composition computation is broken up is steps that force us down more challenging code paths.
+			// Specifically, the composition of reviveB with the composition of parts 3 to 6.
+			const sandwichParts3to6 = compose([inverseRemoveB, removeB, reviveB, reviveA]);
+			const sandwichParts2to6 = compose([inverseReviveB, makeAnonChange(sandwichParts3to6)]);
+			const sandwichParts1to6 = compose([inverseReviveA, makeAnonChange(sandwichParts2to6)]);
+			assertChangesetsEqual(sandwichParts1to6, []);
+		}),
+	);
 });
 
 describeForBothConfigs("SequenceField - Composed sandwich rebasing", (config) => {
