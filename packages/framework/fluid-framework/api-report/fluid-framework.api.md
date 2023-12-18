@@ -239,7 +239,7 @@ type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TVal
 // @internal
 export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
-// @alpha
+// @internal
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 export { AttachState }
@@ -552,7 +552,7 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 // @beta
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export function fail(message: string): never;
 
 // @internal
@@ -1414,15 +1414,15 @@ export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 // @internal
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
-// @alpha
+// @internal
 export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
 
-// @alpha
+// @internal
 export type JsonCompatibleObject = {
     [P in string]?: JsonCompatible;
 };
 
-// @alpha
+// @internal
 export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
     readonly [P in string]?: JsonCompatibleReadOnly;
 };
@@ -1540,7 +1540,7 @@ export enum Multiplicity {
     Single = 0
 }
 
-// @alpha
+// @internal
 export interface Named<TName> {
     // (undocumented)
     readonly name: TName;
@@ -1638,7 +1638,7 @@ export class ObjectNodeSchema<const out Name extends string = string, const out 
     protected _typeCheck2?: MakeNominal;
 }
 
-// @alpha
+// @internal
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
 
 // @internal
