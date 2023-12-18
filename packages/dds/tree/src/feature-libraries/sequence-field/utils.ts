@@ -148,6 +148,138 @@ export function getOutputCellId(
 	return getInputCellId(mark, revision, metadata);
 }
 
+export function cellSourcesFromMarks(
+	marks: readonly Mark<unknown>[],
+	revision: RevisionTag | undefined,
+	metadata: RevisionMetadataSource | undefined,
+	contextGetter: typeof getInputCellId | typeof getOutputCellId,
+): Set<RevisionTag | undefined> {
+	const set = new Set<RevisionTag | undefined>();
+	for (const mark of marks) {
+		const cell = contextGetter(mark, revision, metadata);
+		if (cell !== undefined) {
+			set.add(cell.revision);
+		}
+	}
+	return set;
+}
+
+export enum CellOrder {
+	SameCell,
+	OldThenNew,
+	NewThenOld,
+}
+
+/**
+ * Determines the order of two cells from two changesets.
+ *
+ * This function makes the following assumptions:
+ * 1. The cells represent the same context.
+ * 2. `oldMarkCell` is from a mark in a changeset that is older than the changeset that contains the mark that
+ * `newMarkCell` is from.
+ * 3. In terms of sequence index, all cells located before A are also located before B,
+ * and all cells located before B are also located before A.
+ * 4. If a changeset has a mark/tombstone that describes a cell named in some revision R,
+ * then that changeset must contain marks/tombstones for all cells named in R as well as all cells named in later
+ * revisions up to its own.
+ * 5. If a changeset foo is rebased over a changeset bar, then the rebased version of foo must contain tombstones or
+ * marks for all cells referenced or named in bar. It has yet to be determined whether this assumption is necessary
+ * for the logic below.
+ *
+ * @param oldMarkCell - The cell referenced or named by a mark or tombstone from the older changeset.
+ * @param newMarkCell - The cell referenced or named by a mark or tombstone from the newer changeset.
+ * @param oldChangeKnowledge - The set of revisions that the older changeset has cell representations for.
+ * @param newChangeKnowledge - The set of revisions that the newer changeset has cell representations for.
+ * @param metadata - Revision metadata for the operation being carried out.
+ * @returns a {@link CellOrder} which describes how the cells are ordered relative to one-another.
+ */
+export function compareCellPositionsUsingTombstones(
+	oldMarkCell: ChangeAtomId,
+	newMarkCell: ChangeAtomId,
+	oldChangeKnowledge: ReadonlySet<RevisionTag | undefined>,
+	newChangeKnowledge: ReadonlySet<RevisionTag | undefined>,
+	metadata: RevisionMetadataSource,
+): CellOrder {
+	if (areEqualChangeAtomIds(oldMarkCell, newMarkCell)) {
+		return CellOrder.SameCell;
+	}
+	const oldChangeKnowsOfNewMarkCellRevision = oldChangeKnowledge.has(newMarkCell.revision);
+	const newChangeKnowsOfOldMarkCellRevision = newChangeKnowledge.has(oldMarkCell.revision);
+	if (oldChangeKnowsOfNewMarkCellRevision && newChangeKnowsOfOldMarkCellRevision) {
+		// If both changesets know of both cells, but we've been asked to compare different cells,
+		// Then either the changesets they originate from do not represent the same context,
+		// or the ordering of their cells in inconsistent.
+		assert(false, "Inconsistent cell ordering");
+	}
+	if (newChangeKnowsOfOldMarkCellRevision) {
+		// The changeset that contains `newMarkCell` has tombstones for the revision that created `oldMarkCell`,
+		// so a tombstone/mark matching `oldMarkCell` must occur later in the newer changeset.
+		return CellOrder.NewThenOld;
+	} else if (oldChangeKnowsOfNewMarkCellRevision) {
+		// The changeset that contains `oldMarkCell` has tombstones for revision that created `newMarkCell`,
+		// so a tombstone/mark matching `newMarkCell` must occur later in the older changeset.
+		return CellOrder.OldThenNew;
+	} else {
+		// These cells are only ordered through tie-breaking.
+		// Since tie-breaking is hard-coded to "merge left", the younger cell comes first.
+
+		// In the context of rebase, an undefined revision means that the cell was created on the branch that
+		// is undergoing rebasing.
+		// In the context of compose, an undefined revision means we are composing anonymous changesets into
+		// a transaction.
+		// In both cases, it means the cell from the newer changeset is younger.
+		if (newMarkCell.revision === undefined) {
+			return CellOrder.NewThenOld;
+		}
+		// The only case where the old mark cell should have no revision is when composing anonymous changesets
+		// into a transaction, in which case the new mark cell should also have no revision, which is handled above.
+		// In all other cases, the old mark cell should have a revision.
+		assert(oldMarkCell.revision !== undefined, "Old mark cell should have a revision");
+
+		// Note that these indices are for ordering the revisions in which the cells were named, not the revisions
+		// of the changesets in which the marks targeting these cells appear.
+		const oldCellRevisionIndex = metadata.getIndex(oldMarkCell.revision);
+		const newCellRevisionIndex = metadata.getIndex(newMarkCell.revision);
+
+		// If the metadata defines an ordering for the revisions then the cell from the newer revision comes first.
+		if (newCellRevisionIndex !== undefined && oldCellRevisionIndex !== undefined) {
+			return newCellRevisionIndex > oldCellRevisionIndex
+				? CellOrder.NewThenOld
+				: CellOrder.OldThenNew;
+		}
+
+		if (newCellRevisionIndex === undefined && oldCellRevisionIndex === undefined) {
+			// While it is possible for both marks to refer to cells that were named in revisions that are outside
+			// the scope of the metadata, such a scenario should be handled above due to the fact that one of the two
+			// changesets should have tombstones or marks for both cells.
+			//
+			// To see this in the context of rebase, we must consider the lowest common ancestor (LCA) of each change's
+			// original (i.e., unrebased) edit with the head of the branch they will both reside on after the rebase.
+			// ...─(Ti)─...─(Tj)─...─(old')─(new') <- branch both change will reside on after rebase
+			//        |        └─...─(new)
+			//        └─...─(old)
+			// In the diagram above we can see that by the time `new` is being rebased over `old`, both changesets have
+			// been rebased over, and therefore have cell information for, changes `Tj` onwards. This means that one of
+			// The two changesets (the `old` one in the diagram above) will have tombstones or marks for any cells that
+			// `new` refers to so long as those cells were not created on `new`'s branch.
+			// Note that the change that contains the superset of cells (again, ignoring cells created on the other
+			// change's branch) is not always the older change. Consider the following scenario:
+			// ...─(Ti)─...─(Tj)─...─(old')─(new')
+			//        |        └─...─(old)
+			//        └─...─(new)
+			//
+			// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
+			// the examples above) with the same resolution.
+			assert(false, "Invalid cell ordering scenario");
+		}
+
+		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that
+		// predates the edits that are within the scope of the metadata. Such a cell is therefore older than the one
+		// for which we do have metadata.
+		return oldCellRevisionIndex === undefined ? CellOrder.NewThenOld : CellOrder.OldThenNew;
+	}
+}
+
 export function getDetachOutputId(
 	mark: Detach,
 	revision: RevisionTag | undefined,
@@ -402,6 +534,10 @@ export function isImpactful(
 		default:
 			unreachableCase(type);
 	}
+}
+
+export function isTombstone<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> & { cellId: CellId } {
+	return mark.type === NoopMarkType && mark.cellId !== undefined && mark.changes === undefined;
 }
 
 export function isNoopMark<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> {
