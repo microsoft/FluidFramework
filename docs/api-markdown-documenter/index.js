@@ -4,8 +4,8 @@
  */
 
 /**
- * This index script runs the renderApiDocumentation script using the version configurations described 
- * in data/versions.json. This script allows for an optional boolean parameter which determines whether 
+ * This index script runs the renderApiDocumentation script using the version configurations described
+ * in data/versions.json. This script allows for an optional boolean parameter which determines whether
  * renderApiDocumentation will be ran for all versions or only previous versions. (pass in true for all versions)
  * e.g. "node ./api-markdown-documenter/index.js true"
  */
@@ -24,33 +24,31 @@ docVersions = renderMultiVersion
 const apiDocRenders = [];
 
 docVersions.forEach((version) => {
-	const apiReportsDirectoryPath = path.resolve(
-		__dirname,
-		"..",
-		"_api-extractor-temp",
-		version,
-		"_build",
-	);
+	const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_api-extractor-temp", version);
 
 	// TODO: remove check for 2.0 and just set apiDocsDirectoryPath to include version.
 	// currently publishing to base apis directory until 2.0 release
-	const apiDocsDirectoryPath = (renderMultiVersion) ? 
-		path.resolve(__dirname, "..", "content", "docs", "apis", version) :
-		path.resolve(__dirname, "..", "content", "docs", "apis");
-	
+	const apiDocsDirectoryPath = renderMultiVersion
+		? path.resolve(__dirname, "..", "content", "docs", "apis", version)
+		: path.resolve(__dirname, "..", "content", "docs", "apis");
+
 	// TODO: remove check for 2.0 and just set uriDirectoryPath to include version.
 	// currently publishing to base apis directory until 2.0 release
-	const uriRootDirectoryPath = (renderMultiVersion) ? 
-		`/docs/apis/${version}` :
-		`/docs/apis`;
+	const uriRootDirectoryPath = renderMultiVersion ? `/docs/apis/${version}` : `/docs/apis`;
 
 	apiDocRenders.push(
-		renderApiDocumentation(apiReportsDirectoryPath, apiDocsDirectoryPath, uriRootDirectoryPath).then(
+		renderApiDocumentation(
+			apiReportsDirectoryPath,
+			apiDocsDirectoryPath,
+			uriRootDirectoryPath,
+		).then(
 			() => {
 				console.log(chalk.green(`${version} API docs written!`));
 			},
 			(error) => {
-				throw new Error(`${version} API docs could not be written due to an error:`, error);
+				throw new Error(
+					`${version} API docs could not be written due to an error: ${error}`,
+				);
 			},
 		),
 	);
@@ -66,4 +64,3 @@ Promise.all(apiDocRenders).then(
 		process.exit(1);
 	},
 );
-
