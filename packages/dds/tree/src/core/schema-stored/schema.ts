@@ -10,7 +10,7 @@ import { Brand, brand, brandedStringType } from "../../util";
  * Also known as "Definition"
  *
  * Stable identifier, used when persisting data.
- * @alpha
+ * @internal
  */
 export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
 	TName,
@@ -26,7 +26,7 @@ export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaId
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
  *
  * Stable identifier, used when persisting data.
- * @alpha
+ * @internal
  */
 export type FieldKey = Brand<string, "tree.FieldKey">;
 
@@ -40,14 +40,14 @@ export const FieldKeySchema = brandedStringType<FieldKey>();
  * Refers to an exact stable policy (ex: specific version of a policy),
  * for how to handle (ex: edit and merge edits to) fields marked with this kind.
  * Persisted in documents as part of stored schema.
- * @alpha
+ * @internal
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
- * @alpha
+ * @internal
  */
 export enum ValueSchema {
 	Number,
@@ -85,7 +85,7 @@ export enum ValueSchema {
  * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
  *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
- * @alpha
+ * @internal
  */
 export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
 
@@ -95,14 +95,14 @@ export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
  * @remarks
  * This is used instead of just the FieldKindIdentifier so that it can be subtyped into a more expressive type with additional information.
  *
- * @alpha
+ * @internal
  */
 export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 	identifier: T;
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface TreeFieldStoredSchema {
 	readonly kind: FieldKindSpecifier;
@@ -121,7 +121,7 @@ export interface TreeFieldStoredSchema {
  * 1. The root default field for documents.
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  *
- * @alpha
+ * @internal
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
@@ -137,7 +137,7 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 };
 
 /**
- * @alpha
+ * @internal
  */
 export interface TreeNodeStoredSchema {
 	/**
@@ -184,7 +184,7 @@ export interface TreeNodeStoredSchema {
  * @remarks
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
- * @alpha
+ * @internal
  */
 export interface TreeStoredSchema extends StoredSchemaCollection {
 	/**
@@ -199,7 +199,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
  * @remarks
  * Note: the owner of this may modify it over time:
  * thus if needing to hang onto a specific version, make a copy.
- * @alpha
+ * @internal
  */
 export interface StoredSchemaCollection {
 	/**

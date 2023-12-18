@@ -18,7 +18,7 @@ import { NodeFromSchema, type NodeKind as _dummy } from "./schemaTypes";
  * @remarks
  * This is commonly used in unions when the only information needed is which kind of node the value is.
  * Enums are a common example of this pattern.
- * @alpha
+ * @internal
  */
 export function singletonSchema<TScope extends string, TName extends string | number>(
 	factory: SchemaFactory<TScope, TName>,
@@ -58,7 +58,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * Extends this to support numeric enums.
  * Maybe require an explicit nested scope to group them under, or at least a warning about collisions.
  * Maybe just provide `SchemaFactory.nested` to east creating nested scopes?
- * @alpha
+ * @internal
  */
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(
 	factory: SchemaFactory<TScope>,
@@ -100,7 +100,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 
 /**
  * `Object.values`, but with more specific types.
- * @alpha
+ * @internal
  */
 export function typedObjectValues<TKey extends string, TValues>(
 	object: Record<TKey, TValues>,
@@ -125,7 +125,7 @@ export function typedObjectValues<TKey extends string, TValues>(
  *
  * class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
  * ```
- * @alpha
+ * @internal
  */
 export function enumFromStrings<TScope extends string, const Members extends string>(
 	factory: SchemaFactory<TScope>,

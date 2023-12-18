@@ -25,7 +25,7 @@ import { FlexTreeNode } from "./flex-tree";
 
 /**
  * Binder events reflecting atomic data operations
- * @alpha
+ * @internal
  */
 export interface OperationBinderEvents {
 	delete(context: DeleteBindingContext): void;
@@ -35,7 +35,7 @@ export interface OperationBinderEvents {
 
 /**
  * Binder events signaling state invalidation
- * @alpha
+ * @internal
  */
 export interface InvalidationBinderEvents {
 	invalidation(context: InvalidationBindingContext): void;
@@ -44,21 +44,21 @@ export interface InvalidationBinderEvents {
 /**
  * Compare function, generic.
  *
- * @alpha
+ * @internal
  */
 export type CompareFunction<T> = (a: T, b: T) => number;
 
 /**
  * Compare function for binder events.
  *
- * @alpha
+ * @internal
  */
 export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 
 /**
  * Compare function for anchors.
  *
- * @alpha
+ * @internal
  */
 export type AnchorsCompare = CompareFunction<UpPath>;
 
@@ -68,7 +68,7 @@ export type AnchorsCompare = CompareFunction<UpPath>;
  * TODO: add more options:
  * `filterFn?: (context: BindingContext) => boolean;`
  * `pathPolicy?: "relative" | "absolute";`
- * @alpha
+ * @internal
  */
 export interface BinderOptions {
 	sortFn?: BinderEventsCompare;
@@ -77,7 +77,7 @@ export interface BinderOptions {
 /**
  * Specialized binder options for flushable binders.
  *
- * @alpha
+ * @internal
  */
 export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
 	autoFlush: boolean;
@@ -96,14 +96,14 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
  * _exact_ semantics include interpreting an `undefined` _index_ field in the {@link PathStep} as a wildcard.
  *
  *
- * @alpha
+ * @internal
  */
 export type MatchPolicy = SubtreePolicy | "subtree" | "path";
 
 /**
  * Subtree match policy where max depth can be specified.
  *
- * @alpha
+ * @internal
  */
 export interface SubtreePolicy {
 	maxDepth: number;
@@ -112,7 +112,7 @@ export interface SubtreePolicy {
 /**
  * The data binder interface
  *
- * @alpha
+ * @internal
  */
 export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
 	/**
@@ -139,7 +139,7 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 /**
  * An interface describing the ability to flush.
  *
- * @alpha
+ * @internal
  */
 export interface Flushable<T> {
 	flush(): T;
@@ -148,7 +148,7 @@ export interface Flushable<T> {
 /**
  * An interface describing a flushable data binder.
  *
- * @alpha
+ * @internal
  */
 export interface FlushableDataBinder<B extends OperationBinderEvents | InvalidationBinderEvents>
 	extends DataBinder<B>,
@@ -157,7 +157,7 @@ export interface FlushableDataBinder<B extends OperationBinderEvents | Invalidat
 /**
  * A step in a bind path
  *
- * @alpha
+ * @internal
  */
 export interface PathStep {
 	/**
@@ -174,14 +174,14 @@ export interface PathStep {
 /**
  * The default type for a bind tree
  *
- * @alpha
+ * @internal
  */
 export type BindTreeDefault = BindTree;
 
 /**
  * A bind tree is a compact representation of related {@link BindPath}s.
  *
- * @alpha
+ * @internal
  */
 export interface BindTree<T = BindTreeDefault> extends PathStep {
 	readonly children: Map<FieldKey, T>;
@@ -190,7 +190,7 @@ export interface BindTree<T = BindTreeDefault> extends PathStep {
 /**
  * A bind policy is a combination of a {@link BindTree} and a {@link MatchPolicy}.
  *
- * @alpha
+ * @internal
  */
 export interface BindPolicy {
 	readonly bindTree: BindTree;
@@ -200,7 +200,7 @@ export interface BindPolicy {
 /**
  * Index symbol for syntax tree
  *
- * @alpha
+ * @internal
  */
 export const indexSymbol = Symbol("editable-tree-binder:index");
 
@@ -213,7 +213,7 @@ export const indexSymbol = Symbol("editable-tree-binder:index");
  * see {@link BindTree}
  * see {@link compileSyntaxTree}
  *
- * @alpha
+ * @internal
  */
 export interface BindSyntaxTree {
 	readonly [indexSymbol]?: number;
@@ -226,28 +226,28 @@ export interface BindSyntaxTree {
  * see {@link BindTree}
  * see {@link UpPath}
  *
- * @alpha
+ * @internal
  */
 export type DownPath = PathStep[];
 
 /**
  * A bind path is a top down path in a bind tree
  *
- * @alpha
+ * @internal
  */
 export type BindPath = DownPath;
 
 /**
  * A binding context specialized for {@link PathVisitor} triggered binding events.
  *
- * @alpha
+ * @internal
  */
 export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
 
 /**
  * Enumeration of binding categories
  *
- * @alpha
+ * @internal
  */
 export const BindingType = {
 	Delete: "delete",
@@ -259,14 +259,14 @@ export const BindingType = {
 /**
  * The type of a binding context
  *
- * @alpha
+ * @internal
  */
 export type BindingContextType = (typeof BindingType)[keyof typeof BindingType];
 
 /**
  * The binding context attribution common to all binding events
  *
- * @alpha
+ * @internal
  */
 export interface BindingContext {
 	readonly type: BindingContextType;
@@ -275,7 +275,7 @@ export interface BindingContext {
 /**
  * The binding context for a delete event
  *
- * @alpha
+ * @internal
  */
 export interface DeleteBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Delete;
@@ -286,7 +286,7 @@ export interface DeleteBindingContext extends BindingContext {
 /**
  * The binding context for an insert event
  *
- * @alpha
+ * @internal
  */
 export interface InsertBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Insert;
@@ -297,7 +297,7 @@ export interface InsertBindingContext extends BindingContext {
 /**
  * The binding context for an invalidation event
  *
- * @alpha
+ * @internal
  */
 export interface InvalidationBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Invalidation;
@@ -306,7 +306,7 @@ export interface InvalidationBindingContext extends BindingContext {
 /**
  * The binding context for a batch event
  *
- * @alpha
+ * @internal
  */
 export interface BatchBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Batch;
@@ -316,14 +316,14 @@ export interface BatchBindingContext extends BindingContext {
 /**
  * The listener interface. Internal.
  *
- * @alpha
+ * @internal
  */
 type Listener = (...args: unknown[]) => void;
 
 /**
  * A call tree is a {@link BindTree} augmented with listeners. Internal.
  *
- * @alpha
+ * @internal
  */
 type CallTree = BindTree<CallTree> & { listeners: Set<Listener>; matchPolicy?: MatchPolicy };
 
@@ -866,7 +866,7 @@ class InvalidateDataBinder<E extends Events<E>>
 /**
  * Compute a top-town {@link DownPath} from an {@link UpPath}.
  *
- * @alpha
+ * @internal
  */
 export function toDownPath(upPath: UpPath): DownPath {
 	const downPath: UpPath[] = topDownPath(upPath);
@@ -880,7 +880,7 @@ export function toDownPath(upPath: UpPath): DownPath {
 /**
  * Create a buffering data binder.
  *
- * @alpha
+ * @internal
  */
 export function createDataBinderBuffering<E extends Events<E>>(
 	view: ISubscribable<E>,
@@ -892,7 +892,7 @@ export function createDataBinderBuffering<E extends Events<E>>(
 /**
  * Create a direct data binder.
  *
- * @alpha
+ * @internal
  */
 export function createDataBinderDirect<E extends Events<E>>(
 	view: ISubscribable<E>,
@@ -904,7 +904,7 @@ export function createDataBinderDirect<E extends Events<E>>(
 /**
  * Create an invalidating data binder.
  *
- * @alpha
+ * @internal
  */
 export function createDataBinderInvalidating<E extends Events<E>>(
 	view: ISubscribable<E>,
@@ -917,7 +917,7 @@ export function createDataBinderInvalidating<E extends Events<E>>(
  * Create binder options. If not specified, the default values are:
  * - sortFn: no sorting
  *
- * @alpha
+ * @internal
  */
 export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }): BinderOptions {
 	return { sortFn };
@@ -929,7 +929,7 @@ export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }
  * - sortAnchorsFn: no sorting
  * - autoFlush: true
  *
- * @alpha
+ * @internal
  */
 export function createFlushableBinderOptions<E extends Events<E>>({
 	sortFn,
@@ -955,7 +955,7 @@ export function createFlushableBinderOptions<E extends Events<E>>({
  *
  * @param fns - a list of compare functions
  * @returns a compare function that can be used for sorting
- * @alpha
+ * @internal
  */
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T> {
 	return (a: T, b: T): number => {
@@ -985,7 +985,7 @@ function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
  * The syntax tree is a compact representation of related {@link BindPath}s.
  * The match policy can be specified. If not specified, the default value is "path".
  * @returns a {@link BindPolicy} object
- * @alpha
+ * @internal
  */
 export function compileSyntaxTree(
 	syntaxTree: BindSyntaxTree,

@@ -69,7 +69,7 @@ import {
 import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
 
 /**
- * @alpha
+ * @internal
  */
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 

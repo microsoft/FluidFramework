@@ -289,7 +289,7 @@ export { typeboxValidator } from "./external-utilities";
 import * as InternalTypes from "./internal";
 export { InternalTypes };
 
-// These would be in InternalTypes above but are `@alpha` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
+// TODO: When previously tagged '@alpha', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
 export {
 	Invariant,
 	Contravariant,
