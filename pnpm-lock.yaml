@@ -9852,7 +9852,8 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.2.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-223007
       '@fluidframework/sequence': workspace:~
@@ -9885,7 +9886,8 @@ importers:
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/eslint-config-fluid': 3.2.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/map': link:../../dds/map
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@fluidframework/protocol-definitions': 3.1.0-223007
       '@fluidframework/sequence': link:../../dds/sequence

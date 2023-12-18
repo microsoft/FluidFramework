@@ -17,7 +17,7 @@ import {
 
 import { MapFactory } from "../../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
-import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
+import { IDirectory, IDirectoryValueChanged, ISharedDirectory, ISharedMap } from "../../interfaces";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
 function createConnectedDirectory(
@@ -38,6 +38,14 @@ function createConnectedDirectory(
 function createLocalMap(id: string): ISharedMap {
 	const factory = new MapFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id);
+}
+
+function createLocalDirectory(
+	id: string,
+	runtime: MockFluidDataStoreRuntime = new MockFluidDataStoreRuntime(),
+): ISharedDirectory {
+	const factory = new DirectoryFactory();
+	return factory.create(runtime, id);
 }
 
 async function populate(directory: SharedDirectory, content: unknown): Promise<void> {
@@ -63,6 +71,21 @@ function serialize(directory1: SharedDirectory): string {
 }
 
 describe("Directory", () => {
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	describe.only("Handle encoding", () => {
+		it("should not prematurely serialize handles", async () => {
+			const runtime = new MockFluidDataStoreRuntime();
+			const directory = createLocalDirectory("directory", runtime);
+			const map = createLocalMap("map");
+			directory.set("map", map.handle);
+			assert(true, "ok"); //*
+		});
+	});
 	describe("Local state", () => {
 		let directory: SharedDirectory;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
