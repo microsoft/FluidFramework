@@ -635,6 +635,7 @@ export function mixinAttach<
 			};
 			clientA.channel.connect(services);
 
+			// TODO:KLUDGE: This is necessary to get al IdCreationRanges finalized before connecting further clients.
 			state.containerRuntimeFactory.processAllMessages();
 
 			const clients = await Promise.all(

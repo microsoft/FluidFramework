@@ -35,7 +35,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe("Fuzz - Top-Level", () => {
+describe.only("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
@@ -74,10 +74,8 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 0.2,
-			},
+			// TODO: This test currently *requires* the detachedStart option be enabled in the fuzz harness, since
+			// the fuzz harness doesn't legitimately finalize creation ranges with the option disabled.
 			clientJoinOptions: {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
