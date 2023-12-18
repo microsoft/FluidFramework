@@ -48,9 +48,10 @@ const executableToLeafTask: {
 	"fluid-type-test-generator": TypeValidationTask,
 	"depcruise": DepCruiseTask,
 
-  // Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
-  // pipeline then this mapping will have to be updated.
+	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
+	// pipeline then this mapping will have to be updated.
 	"renamer": RenameTypesTask,
+	"flub rename-types": RenameTypesTask,
 };
 
 export class TaskFactory {
