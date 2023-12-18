@@ -326,8 +326,8 @@ class RebaseQueue<T> {
 					);
 					const comparison = compareCellPositionsUsingTombstones(
 						baseId,
-						this.baseMarksCellSources,
 						newId,
+						this.baseMarksCellSources,
 						this.newMarksCellSources,
 						this.metadata,
 					);
