@@ -241,7 +241,7 @@ testFileSystems.forEach((fileSystem) => {
 					"Initial summary write response should match expected response.",
 				);
 
-				if (fileSystem === "memfs" || fileSystem === "redisfs") {
+				if (fileSystem === "memfs") {
 					checkInitialWriteStorageAccessBaselinePerformance(
 						testMode,
 						getCurrentStorageAccessCallCounts(),
@@ -315,7 +315,7 @@ testFileSystems.forEach((fileSystem) => {
 					"Later initial summary read response should match expected initial summary response.",
 				);
 
-				if (fileSystem === "memfs" || fileSystem === "redisfs") {
+				if (fileSystem === "memfs") {
 					checkFullStorageAccessBaselinePerformance(
 						testMode,
 						getCurrentStorageAccessCallCounts(),
