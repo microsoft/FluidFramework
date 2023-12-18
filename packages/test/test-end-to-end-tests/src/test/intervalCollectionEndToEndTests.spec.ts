@@ -137,6 +137,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 		collection1 = sharedString1.getIntervalCollection(collectionId);
+		await provider.ensureSynchronized();
 		assertIntervals(sharedString1, collection1, [{ start: 4, end: 7 }]);
 
 		let container2 = await loader.resolve({ url }, pendingState);
@@ -144,6 +145,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 		collection2 = sharedString2.getIntervalCollection(collectionId);
+		await provider.ensureSynchronized();
 		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
 
 		collection1.change(id, 2, 9);
