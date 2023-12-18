@@ -149,7 +149,7 @@ export interface ITreeCheckout extends AnchorLocator {
 
 	/**
 	 * Returns a JsonableTree for each tree that was removed from (and not restored to) the document.
-	 * This list is guaranteed to contain nodes that are recoverable through undo/redo on this checkout.
+	 * This list is guaranteed to contain all nodes that are recoverable through undo/redo on this checkout.
 	 * The list may also contain additional nodes.
 	 *
 	 * This is only intended for use in testing and exceptional code paths: it is not performant.
