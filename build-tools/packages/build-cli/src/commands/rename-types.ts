@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../base";

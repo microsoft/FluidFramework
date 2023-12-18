@@ -16,9 +16,6 @@ import { LeafWithFileStatDoneFileTask } from "./leafTask";
  * need to be updated for other reasons. In other words this shouldn't cause a lot of unnecessary cache invalidation.
  */
 export class RenameTypesTask extends LeafWithFileStatDoneFileTask {
-	// protected get useHashes() {
-	// 	return true;
-	// }
 	protected getInputFiles(): Promise<string[]> {
 		return globFn("dist/**/*.d.ts");
 	}
