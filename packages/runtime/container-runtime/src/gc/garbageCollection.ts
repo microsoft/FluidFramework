@@ -21,6 +21,7 @@ import {
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
+import { BlobManager } from "../blobManager";
 import {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
@@ -1116,9 +1117,25 @@ export class GarbageCollector implements IGarbageCollector {
 			deletedAttachmentBlobCount: 0,
 		};
 
+		// The runtime can't reliably identify the type of deleted nodes. So, get the type here. This should
+		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
+		const getDeletedNodeType = (nodeId: string): GCNodeType => {
+			const pathParts = nodeId.split("/");
+			if (pathParts[1] === BlobManager.basePath) {
+				return GCNodeType.Blob;
+			}
+			if (pathParts.length === 2) {
+				return GCNodeType.DataStore;
+			}
+			if (pathParts.length === 3) {
+				return GCNodeType.SubDataStore;
+			}
+			return GCNodeType.Other;
+		};
+
 		for (const nodeId of deletedNodes) {
 			sweepPhaseStats.deletedNodeCount++;
-			const nodeType = this.runtime.getNodeType(nodeId);
+			const nodeType = getDeletedNodeType(nodeId);
 			if (nodeType === GCNodeType.DataStore) {
 				sweepPhaseStats.deletedDataStoreCount++;
 			} else if (nodeType === GCNodeType.Blob) {
