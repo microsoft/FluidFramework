@@ -1,5 +1,55 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-runtime: Removed IPendingLocalState and IRuntime.notifyAttaching [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The deprecated `IPendingLocalState` and `IRuntime.notifyAttaching` APIs are removed. There is no replacement as they are
+    not longer used.
+
+-   container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request(...)` method and `IFluidRouter` property have been removed from the following places:
+
+    -   `ContainerRuntime`
+    -   `IRuntime`
+    -   `IContainerRuntimeBase`
+
+    Please use the `IRuntime.getEntryPoint()` method to get the runtime's entry point.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   container-runtime: Removed `ContainerRuntime.load(...)` [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The static method `ContainerRuntime.load(...)` has been removed. Please migrate all usage of this method to
+    `ContainerRuntime.loadRuntime(...)`.
+
+-   container-runtime-definitions: Removed getRootDataStore [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `getRootDataStore` method has been removed from `IContainerRuntime` and `ContainerRuntime`. Please migrate all usage to the new `getAliasedDataStoreEntryPoint` method. This method returns the data store's entry point which is its `IFluidHandle`.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   container-runtime: (GC) Tombstoned objects will fail to load by default ([#18651](https://github.com/microsoft/FluidFramework/issues/18651)) [2245c0578e](https://github.com/microsoft/FluidFramework/commits/2245c0578e756c944caa5c22311eaafbb73452bb)
+
+    Previously, Tombstoned objects would only trigger informational logs by default, with an option via config to also cause
+    errors to be thrown on load. Now, failure to load is the default with an option to disable it if necessary. This
+    reflects the purpose of the Tombstone stage which is to mimic the user experience of objects being deleted.
+
+-   container-runtime/runtime-definitions: `IdCompressor` and related types deprecated ([#18749](https://github.com/microsoft/FluidFramework/issues/18749)) [6f070179de](https://github.com/microsoft/FluidFramework/commits/6f070179ded7c2f4398252f75485e85b39725419)
+
+    `IdCompressor` and related types from the @fluidframework/container-runtime and @fluidframework/runtime-definitions
+    packages have been deprecated. They can now be found in a new package, @fluidframework/id-compressor.
+
+    The `IdCompressor` class is deprecated even in the new package. Consumers should use the interfaces, `IIdCompressor` and
+    `IIdCompressorCore`, in conjunction with the factory function `createIdCompressor` instead.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

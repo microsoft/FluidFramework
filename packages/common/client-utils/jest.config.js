@@ -15,6 +15,6 @@ module.exports = {
 			},
 		],
 	],
-	testMatch: ["**/dist/test/jest/?(*.)+(spec|test).js"],
+	testMatch: ["**/dist/test/jest/?(*.)+(spec|test).?js"],
 	testPathIgnorePatterns: ["/node_modules/"],
 };

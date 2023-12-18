@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,8 +11,74 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.cjs"
+		},
+		"./test/containerRuntime": {
+			"import": {
+				"types": "./lib/containerRuntime.d.mts",
+				"default": "./lib/containerRuntime.mjs"
+			},
+			"require": {
+				"types": "./dist/containerRuntime.d.ts",
+				"default": "./dist/containerRuntime.cjs"
+			}
+		},
+		"./test/deltaScheduler": {
+			"import": {
+				"types": "./lib/deltaScheduler.d.mts",
+				"default": "./lib/deltaScheduler.mjs"
+			},
+			"require": {
+				"types": "./dist/deltaScheduler.d.ts",
+				"default": "./dist/deltaScheduler.cjs"
+			}
+		},
+		"./test/scheduleManager": {
+			"import": {
+				"types": "./lib/scheduleManager.d.mts",
+				"default": "./lib/scheduleManager.mjs"
+			},
+			"require": {
+				"types": "./dist/scheduleManager.d.ts",
+				"default": "./dist/scheduleManager.cjs"
+			}
+		},
+		"./test/blobManager": {
+			"import": {
+				"types": "./lib/blobManager.d.mts",
+				"default": "./lib/blobManager.mjs"
+			},
+			"require": {
+				"types": "./dist/blobManager.d.ts",
+				"default": "./dist/blobManager.cjs"
+			}
+		},
+		"./test/summary": {
+			"import": {
+				"types": "./lib/summary/index.d.mts",
+				"default": "./lib/summary/index.mjs"
+			},
+			"require": {
+				"types": "./dist/summary/index.d.ts",
+				"default": "./dist/summary/index.cjs"
+			}
+		},
+		"./test/gc": {
+			"import": {
+				"types": "./lib/gc/index.d.mts",
+				"default": "./lib/gc/index.mjs"
+			},
+			"require": {
+				"types": "./gc/index.d.ts",
+				"default": "./gc/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -22,10 +88,11 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -37,11 +104,11 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:benchmark:report": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js \"./dist/**/*.perf.spec.js\"",
+		"test:benchmark:report": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js \"./dist/**/*.perf.spec.*js\"",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -50,13 +117,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -75,7 +142,8 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -89,9 +157,9 @@
 		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.28.0",
+		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
+		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.7.2.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
@@ -111,8 +179,10 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
+		"renamer": "^4.0.0",
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -130,6 +200,10 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_TEST_requestSummarizer": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IGCStats": {

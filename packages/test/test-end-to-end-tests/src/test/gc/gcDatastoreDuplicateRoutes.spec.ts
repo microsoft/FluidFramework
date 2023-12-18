@@ -21,7 +21,7 @@ import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions"
 import { SharedMap } from "@fluidframework/map";
 import { gcTreeKey, gcBlobPrefix } from "@fluidframework/runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { IGarbageCollectionState } from "@fluidframework/container-runtime/dist/gc/index.js";
+import { IGarbageCollectionState } from "@fluidframework/container-runtime/test/gc";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**

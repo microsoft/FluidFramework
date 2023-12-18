@@ -142,6 +142,21 @@ export class GCTelemetryTracker {
 
 		const nodeStateTracker = this.getNodeStateTracker(nodeUsageProps.id);
 		const nodeType = this.getNodeType(nodeUsageProps.id);
+		const timeout = (() => {
+			switch (nodeStateTracker?.state) {
+				case UnreferencedState.Inactive:
+					return this.configs.inactiveTimeoutMs;
+				case UnreferencedState.TombstoneReady:
+					return this.configs.sweepTimeoutMs;
+				case UnreferencedState.SweepReady:
+					return (
+						this.configs.sweepTimeoutMs &&
+						this.configs.sweepTimeoutMs + this.configs.sweepGracePeriodMs
+					);
+				default:
+					return undefined;
+			}
+		})();
 		const {
 			usageType,
 			currentReferenceTimestampMs,
@@ -159,10 +174,7 @@ export class GCTelemetryTracker {
 					? nodeUsageProps.currentReferenceTimestampMs -
 					  nodeStateTracker.unreferencedTimestampMs
 					: -1,
-			timeout:
-				nodeStateTracker?.state === UnreferencedState.Inactive
-					? this.configs.inactiveTimeoutMs
-					: this.configs.sweepTimeoutMs,
+			timeout,
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
 			...propsToLog,
 			...this.createContainerMetadata,
@@ -228,13 +240,9 @@ export class GCTelemetryTracker {
 					gcConfigs,
 				};
 
-				// Do not log the inactive object x events as error events as they are not the best signal for
-				// detecting something wrong with GC either from the partner or from the runtime itself.
-				if (state === UnreferencedState.Inactive) {
-					this.mc.logger.sendTelemetryEvent(event);
-				} else {
-					this.mc.logger.sendErrorEvent(event);
-				}
+				// These are logged as generic events and not errors because there can be false positives. The Tombstone
+				// and Delete errors are separately logged and are reliable.
+				this.mc.logger.sendTelemetryEvent(event);
 			}
 		}
 	}
@@ -381,12 +389,7 @@ export class GCTelemetryTracker {
 						fromPkg: fromPkg?.join("/"),
 					}),
 				};
-
-				if (state === UnreferencedState.Inactive) {
-					logger.sendTelemetryEvent(event);
-				} else {
-					logger.sendErrorEvent(event);
-				}
+				logger.sendTelemetryEvent(event);
 			}
 		}
 		this.pendingEventsQueue = [];

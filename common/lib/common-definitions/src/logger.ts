@@ -19,7 +19,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * General best practice is to explicitly log the fields you care about from objects.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
- * @internal
+ * @alpha
  */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
@@ -29,7 +29,7 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
- * @internal
+ * @alpha
  */
 export interface ITaggedTelemetryPropertyType {
 	value: TelemetryEventPropertyType;
@@ -40,7 +40,7 @@ export interface ITaggedTelemetryPropertyType {
  * JSON-serializable properties, which will be logged with telemetry.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
- * @internal
+ * @alpha
  */
 export interface ITelemetryProperties {
 	[index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;

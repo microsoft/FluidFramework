@@ -29,9 +29,3 @@ export function computeHierarchicalOrdinal(
 
 	return ordinal;
 }
-
-export function computeNumericOrdinal(index: number) {
-	const prefixLen = Math.floor(index / 0xffff);
-	const prefix = String.fromCharCode(0xffff).repeat(prefixLen);
-	return `${prefix}${String.fromCharCode(index - prefixLen * 0xffff)}`;
-}

@@ -1,4 +1,4 @@
-# @fluid-experimental/devtools-core Messaging
+# @fluidframework/devtools-core Messaging
 
 This library communicates information about the Fluid Runtime with consumers (like our browser extension view) via
 message-passing.

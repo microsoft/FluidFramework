@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory } from "@fluid-experimental/tree2";
+import { SchemaFactory } from "@fluidframework/tree";
 
 const builder = new SchemaFactory("tree-react-api");
 

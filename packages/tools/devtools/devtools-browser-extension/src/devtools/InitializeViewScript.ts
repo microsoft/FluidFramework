@@ -7,7 +7,7 @@
  * This script represents the root view for the Devtools extension.
  * It establishes communication with the Background Service as a relay for communication with the webpage (tab),
  * and passes that communication context (see {@link BackgroundConnection}) as the
- * {@link @fluid-experimental/devtools-core-view#MessageRelayContext} used by our internal React components.
+ * {@link @fluidframework/devtools-core-view#MessageRelayContext} used by our internal React components.
  */
 
 import { initializeDevtoolsView } from "./InitializeView";

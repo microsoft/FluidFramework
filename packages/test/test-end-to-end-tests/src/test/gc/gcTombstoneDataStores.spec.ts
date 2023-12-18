@@ -43,7 +43,7 @@ import { SharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
- * These tests validate that SweepReady data stores are correctly marked as tombstones. Tombstones should be added
+ * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
 describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider) => {
@@ -57,17 +57,17 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
-			gcOptions: { inactiveTimeoutMs: 0 },
+			gcOptions: { enableGCSweep: true, inactiveTimeoutMs: 0 },
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
-	const testContainerConfigWithFutureMinGcOption: ITestContainerConfig = {
+	const testContainerConfigWithFutureGCGenerationOption: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: testContainerConfig.runtimeOptions?.summaryOptions,
 			gcOptions: {
 				...testContainerConfig.runtimeOptions?.gcOptions,
 				// Different from undefined (the persisted value) so will disable GC enforcement
-				gcTombstoneGeneration: 2,
+				gcGeneration: 2,
 			},
 		},
 		loaderProps: testContainerConfig.loaderProps,
@@ -85,11 +85,11 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	async function loadContainer(
 		summaryVersion: string,
-		disableTombstoneFailureViaOption: boolean = false,
+		disableTombstoneFailureViaGCGenerationOption: boolean = false,
 		logger?: ITelemetryBaseLogger,
 	) {
-		const config = disableTombstoneFailureViaOption
-			? testContainerConfigWithFutureMinGcOption
+		const config = disableTombstoneFailureViaGCGenerationOption
+			? testContainerConfigWithFutureGCGenerationOption
 			: testContainerConfig;
 		const config2: ITestContainerConfig = {
 			...config,
@@ -564,7 +564,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		);
 
 		itExpects(
-			"Requesting tombstoned datastores succeeds for legacy document given gcTombstoneGeneration option is defined",
+			"Requesting tombstoned datastores succeeds for legacy document given gcGeneration option is defined",
 			[
 				// Interactive client's request that succeeds
 				{
@@ -584,11 +584,11 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const logger = new MockLogger();
 				const container = await loadContainer(
 					summaryVersion,
-					true /* disableTombstoneFailureViaOption */,
+					true /* disableTombstoneFailureViaGCGenerationOption */,
 					logger,
 				);
 
-				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcGeneration passed in
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const tombstoneSuccessResponse = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
@@ -598,7 +598,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				assert.equal(
 					tombstoneSuccessResponse.status,
 					200,
-					"Should be able to retrieve a tombstoned datastore given gcTombstoneGeneration",
+					"Should be able to retrieve a tombstoned datastore given gcGeneration",
 				);
 				assert.notEqual(
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
@@ -609,7 +609,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		);
 
 		itExpects(
-			"Requesting tombstoned datastores succeeds with when gcTombstoneGeneration differs from persisted value",
+			"Requesting tombstoned datastores succeeds with when gcGeneration differs from persisted value",
 			[
 				// Interactive client's request that succeeds
 				{
@@ -622,7 +622,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// This will become the persisted value in the container(s) created below (except the one with disableTombstoneFailureViaOption)
 				// NOTE: IT IS RESET AT THE END OF THE TEST
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				testContainerConfig.runtimeOptions!.gcOptions!.gcTombstoneGeneration = 1;
+				testContainerConfig.runtimeOptions!.gcOptions!.gcGeneration = 1;
 
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
@@ -633,10 +633,10 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const { summaryVersion } = await summarize(summarizer);
 				const container = await loadContainer(
 					summaryVersion,
-					true /* disableTombstoneFailureViaOption */,
+					true /* disableTombstoneFailureViaGCGenerationOption */,
 				);
 
-				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcGeneration passed in
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const tombstoneSuccessResponse = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
@@ -646,7 +646,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				assert.equal(
 					tombstoneSuccessResponse.status,
 					200,
-					"Should be able to retrieve a tombstoned datastore given gcTombstoneGeneration",
+					"Should be able to retrieve a tombstoned datastore given gcGeneration",
 				);
 				assert.notEqual(
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
@@ -655,7 +655,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				testContainerConfig.runtimeOptions!.gcOptions!.gcTombstoneGeneration = undefined;
+				testContainerConfig.runtimeOptions!.gcOptions!.gcGeneration = undefined;
 			},
 		);
 
@@ -764,10 +764,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
 					clientType: "noninteractive/summarizer",
 				},
 			],
@@ -1042,14 +1038,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived",
 					clientType: "noninteractive/summarizer",
 				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
-					clientType: "noninteractive/summarizer",
-				},
 			],
 			async () => {
 				const mainContainer = await provider.makeTestContainer(testContainerConfig);
@@ -1196,7 +1184,8 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			const summary2 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCStateFromSummary(summary2.summaryTree),
-				(e: Error) => validateAssertionError(e, "GC state is not a blob"),
+				(e: Error) =>
+					validateAssertionError(e, "getGCStateFromSummary: GC state is not a blob"),
 			);
 			const tombstoneState = getGCTombstoneStateFromSummary(summary2.summaryTree);
 			assert(
@@ -1208,7 +1197,11 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			const summary3 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCTombstoneStateFromSummary(summary3.summaryTree),
-				(e: Error) => validateAssertionError(e, "GC data should be a tree"),
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						"getGCTombstoneStateFromSummary: GC data should be a tree",
+					),
 			);
 		});
 
@@ -1388,14 +1381,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Changed",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
@@ -1522,14 +1507,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Changed",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {

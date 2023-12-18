@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import {
-	DocumentationNode,
+	type DocumentationNode,
 	DocumentationParentNodeBase,
-	SingleLineDocumentationNode,
+	type SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";
-import { TextFormatting } from "./TextFormatting";
+import { type TextFormatting } from "./TextFormatting";
 import { createNodesFromPlainText } from "./Utilities";
 
 /**

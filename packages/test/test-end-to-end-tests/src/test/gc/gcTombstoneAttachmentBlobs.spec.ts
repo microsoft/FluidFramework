@@ -262,10 +262,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
 					clientType: "interactive",
 				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
-					clientType: "noninteractive/summarizer",
-				},
 			],
 			async () => {
 				const { dataStore: mainDataStore, summarizer } =
@@ -315,7 +311,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				container2.close();
 
 				// Reference the blob in the main container where it's not a tombstone yet. This should un-tombstone the
-				// blob. It will result in a SweepReadyObject_Revived error log.
+				// blob.
 				mainDataStore._root.set("blob1", blobHandle1);
 
 				// Summarize so that the blob is not a tombstone in the summary.

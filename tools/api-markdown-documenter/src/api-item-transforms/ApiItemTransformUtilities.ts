@@ -6,8 +6,8 @@ import * as Path from "node:path";
 
 import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import { Heading } from "../Heading";
-import { Link } from "../Link";
+import { type Heading } from "../Heading";
+import { type Link } from "../Link";
 import { getQualifiedApiItemName, getReleaseTag } from "../utilities";
 import {
 	type ApiItemTransformationConfiguration,
@@ -463,7 +463,7 @@ function doesItemGenerateHierarchy(
 /**
  * Determines whether or not the specified API item should have documentation generated for it.
  * This is determined based on its release tag (or inherited release scope) compared to
- * {@link ApiItemTransformationConfiguration.minimumReleaseLevel}.
+ * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
  *
  * @remarks
  *
@@ -499,6 +499,8 @@ function doesItemGenerateHierarchy(
  * 	}
  * }
  * ```
+ *
+ * @public
  */
 export function shouldItemBeIncluded(
 	apiItem: ApiItem,
@@ -520,4 +522,35 @@ export function shouldItemBeIncluded(
 	}
 
 	return releaseTag >= (config.minimumReleaseLevel as ReleaseTag);
+}
+
+/**
+ * Filters and returns the provided list of `ApiItem`s to include only those desired by the user configuration.
+ * This is determined based on its release tag (or inherited release scope) compared to
+ * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ * @param apiItem - The API item being queried.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @public
+ */
+export function filterItems(
+	apiItems: readonly ApiItem[],
+	config: Required<ApiItemTransformationConfiguration>,
+): ApiItem[] {
+	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
+}
+
+/**
+ * Filters and returns the child members of the provided `apiItem` to include only those desired by the user configuration.
+ * This is determined based on its release tag (or inherited release scope) compared to
+ * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ * @remarks See {@link shouldItemBeIncluded} for more details.
+ * @param apiItem - The API item being queried.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ */
+export function filterChildMembers(
+	apiItem: ApiItem,
+	config: Required<ApiItemTransformationConfiguration>,
+): ApiItem[] {
+	return filterItems(apiItem.members, config);
 }

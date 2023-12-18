@@ -41,11 +41,6 @@ Unlike the JavaScript `Map`, a `SharedMap`'s keys must be strings. The value mus
 
 In collaborative scenarios, the value is settled with a policy of _last write wins_.
 
-#### `.wait()`
-
-`SharedMap` has a `wait` method in addition to the normal `get`, which returns a `Promise` that resolves to the value
-when the key becomes available.
-
 ### Eventing
 
 `SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications. You should register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted in response to a `set` or `delete`, and provide the key and previous value that was stored at that key. `clear` will be emitted in response to a `clear`.
