@@ -62,10 +62,6 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private readonly flat: boolean = false;
 	private readonly copyDstArg: string = "";
 
-	// protected get useHashes(): boolean {
-	// 	return this.copySrcArg.includes(".d.ts");
-	// }
-
 	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
 		super(node, command, taskName);
 
