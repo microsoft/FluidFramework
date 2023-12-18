@@ -510,8 +510,8 @@ export { DriverErrorType }
 
 // @alpha
 export interface EditableTreeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
+    afterChange(event: ITreeEvent): void;
+    beforeChange(event: ITreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
@@ -748,6 +748,7 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     [boxedIterator](): IterableIterator<FlexTreeField>;
     // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
+    [internalEmitterSymbol](): IEmitter<EditableTreeEvents>;
     [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
     is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
     // (undocumented)
@@ -1371,6 +1372,12 @@ export interface ITreeCursor {
 export interface ITreeCursorSynchronous extends ITreeCursor {
     // (undocumented)
     readonly pending: false;
+}
+
+// @alpha
+export interface ITreeEvent {
+    stopPropagation(): void;
+    readonly target: FlexTreeNode;
 }
 
 // @alpha
@@ -2190,11 +2197,6 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
     readonly schema: FlexTreeSchema;
-}
-
-// @alpha
-export interface TreeEvent {
-    readonly target: FlexTreeNode;
 }
 
 // @alpha
