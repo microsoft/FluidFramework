@@ -147,6 +147,9 @@ export class SharedMatrix<T = any>
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
+	// Tracks the next row number in the cellLastWriteTracker matrix to be cleared. If the cells is currently outside of the collab window
+	// then we don't need to track its edit and so we can discard it from the matrix.
+	private rowNumberToClearFromTrackerMatrix = 0;
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
 	private setCellLwwToFwwPolicySwitchOpSeqNumber: number;
 	private userSwitchedSetCellPolicy = false; // Set to true when the user calls switchPolicy.
@@ -529,6 +532,36 @@ export class SharedMatrix<T = any>
 
 		// Only need to store it in the snapshot if we have switched the policy already.
 		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1) {
+			const cellLastWriteTrackerToSummarize = new SparseArray2D<CellLastWriteTrackerItem>();
+			let count = 100000;
+			let r = this.rowNumberToClearFromTrackerMatrix;
+			// We only need to store edit info in tracker matrix for cells which are in collab window, we can discard
+			// rest of them. This can be expensive depending upon the size of matrix but we don't need to clear all
+			// of them at once. Just clear 100K cells at a time.
+			for (; r < this.rowCount && count > 0; r++) {
+				// Map the logical (row, col) to associated storage handles.
+				const rowHandle = this.rowHandles.getHandle(r);
+				if (isHandleValid(rowHandle)) {
+					for (let c = 0; c < this.colCount; c++) {
+						count--;
+						const colHandle = this.colHandles.getHandle(c);
+						if (isHandleValid(colHandle)) {
+							const item = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
+							if (
+								item !== undefined &&
+								(item.seqNum > this.rows.getCollabWindow().minSeq ||
+									item.seqNum > this.cols.getCollabWindow().minSeq)
+							) {
+								cellLastWriteTrackerToSummarize.setCell(rowHandle, colHandle, item);
+							}
+						}
+					}
+				} else {
+					count--;
+				}
+			}
+			this.rowNumberToClearFromTrackerMatrix = r >= this.rowCount ? 0 : r;
+			this.cellLastWriteTracker = cellLastWriteTrackerToSummarize;
 			artifactsToSummarize.push(this.cellLastWriteTracker.snapshot());
 		}
 		builder.addBlob(
