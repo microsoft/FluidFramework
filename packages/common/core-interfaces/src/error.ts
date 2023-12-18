@@ -7,7 +7,7 @@ import { ITelemetryBaseProperties } from "./index";
 
 /**
  * Error types the Fluid Framework may report.
- * @internal
+ * @alpha
  */
 export const FluidErrorTypes = {
 	/**
@@ -35,8 +35,9 @@ export const FluidErrorTypes = {
 	 */
 	usageError: "usageError",
 } as const;
+
 /**
- * @internal
+ * @alpha
  */
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
@@ -49,8 +50,7 @@ export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTy
  * those from container-definitions. Once fully migrated, this will be a base interface for all errors and
  * warnings emitted by the Fluid Framework. Currently only the container layer is using IErrorBase.
  * Runtime and others will follow soon.
- *
- * @alpha
+ * @public
  */
 export interface IErrorBase extends Partial<Error> {
 	/**
@@ -119,7 +119,7 @@ export interface IUsageError extends IErrorBase {
 
 /**
  * Warning emitted when requests to storage are being throttled
- * @internal
+ * @alpha
  */
 export interface IThrottlingWarning extends IErrorBase {
 	/**

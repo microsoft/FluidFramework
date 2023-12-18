@@ -47,7 +47,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 /**
  * A single summary which can be tracked as it goes through its life cycle.
  * The life cycle is: Local to Broadcast to Acked/Nacked.
- * @internal
+ * @alpha
  */
 export interface ISummary {
 	readonly clientId: string;
@@ -58,7 +58,7 @@ export interface ISummary {
 
 /**
  * A single summary which has already been acked by the server.
- * @internal
+ * @alpha
  */
 export interface IAckedSummary {
 	readonly summaryOp: ISummaryOpMessage;
@@ -145,7 +145,7 @@ class Summary implements ISummary {
 
 /**
  * Watches summaries created by a specific client.
- * @internal
+ * @alpha
  */
 export interface IClientSummaryWatcher extends IDisposable {
 	watchSummary(clientSequenceNumber: number): ISummary;
@@ -214,7 +214,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	}
 }
 /**
- * @internal
+ * @alpha
  */
 export type OpActionEventName =
 	| MessageType.Summarize
@@ -223,12 +223,12 @@ export type OpActionEventName =
 	| "default";
 
 /**
- * @internal
+ * @alpha
  */
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryCollectionOpEvents extends IEvent {
 	(event: OpActionEventName, listener: OpActionEventListener);
@@ -238,7 +238,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
- * @internal
+ * @alpha
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
 	// key: clientId

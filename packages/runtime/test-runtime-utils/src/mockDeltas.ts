@@ -23,7 +23,7 @@ import { assert } from "@fluidframework/core-utils";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
- * @internal
+ * @alpha
  */
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 	protected readonly queue: T[] = [];
@@ -98,7 +98,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
- * @internal
+ * @alpha
  */
 export class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
