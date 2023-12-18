@@ -239,6 +239,7 @@ export class SharedTree
 			changeFamily,
 			schema,
 			forest,
+			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
 		});

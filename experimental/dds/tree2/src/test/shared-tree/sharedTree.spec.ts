@@ -1314,6 +1314,9 @@ describe("SharedTree", () => {
 	});
 
 	describe("Stashed ops", () => {
+		// Fails because 'ranges finalized out of order' in deltaQueue.ts on the ensureSynchronized call.
+		// This doesn't bubble up b/c of issues using TestTreeProvider without proper listening to errors coming
+		// from containers.
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
 
