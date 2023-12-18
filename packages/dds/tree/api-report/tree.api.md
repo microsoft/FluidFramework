@@ -1823,6 +1823,8 @@ export const enum TreeNavigationResult {
 
 // @beta
 export class TreeNode {
+    static [Symbol.hasInstance]<TSchema extends typeof TreeNode & (new (...args: any[]) => TreeNode)>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
+    static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchema>(this: TSchema, value: unknown): value is NodeFromSchema<TSchema>;
 }
 
 // @beta

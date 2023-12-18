@@ -16,7 +16,9 @@ import { TreeNode } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode, tryGetFlexNode } from "../simple-tree/flexNode";
 // eslint-disable-next-line import/no-internal-modules
-import { getClassSchema, getOrCreateNodeProxy } from "../simple-tree/proxies";
+import { getOrCreateNodeProxy } from "../simple-tree/proxies";
+// eslint-disable-next-line import/no-internal-modules
+import { getClassSchema } from "../simple-tree/types";
 import { schemaFromValue } from "./schemaFactory";
 import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes";
 import { getFlexSchema } from "./toFlexSchema";

@@ -35,11 +35,18 @@ import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
-import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
-import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, Unhydrated, TreeNode } from "./types";
+import {
+	TreeField,
+	TypedNode,
+	TreeMapNode,
+	TreeObjectNode,
+	Unhydrated,
+	TreeNode,
+	getClassSchema,
+} from "./types";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
@@ -86,18 +93,6 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 		default:
 			fail("invalid field kind");
 	}
-}
-
-/**
- * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
- */
-export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
-
-export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | undefined {
-	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
-	}
-	return undefined;
 }
 
 export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(

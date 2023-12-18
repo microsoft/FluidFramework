@@ -20,15 +20,11 @@ import {
 } from "../feature-libraries";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList";
-import {
-	InsertableContent,
-	extractFactoryContent,
-	getClassSchema,
-	simpleSchemaSymbol,
-} from "../simple-tree/proxies";
+import { InsertableContent, extractFactoryContent } from "../simple-tree/proxies";
 import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree";
 import { cursorFromNodeData } from "../simple-tree/toMapTree";
+import { getClassSchema, simpleSchemaSymbol } from "../simple-tree/types";
 import {
 	FieldKind,
 	FieldSchema,

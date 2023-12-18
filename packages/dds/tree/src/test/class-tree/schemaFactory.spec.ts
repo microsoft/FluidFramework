@@ -97,8 +97,44 @@ describe("schemaFactory", () => {
 	it("instanceof", () => {
 		const schema = new SchemaFactory("com.example");
 
-		const config = new TreeConfiguration(schema.number, () => 5);
+		class A extends schema.object("A", {}) {}
+		class B extends schema.object("B", {}) {}
+		const C = schema.object("C", {});
+		const StructuralArray = schema.array(A);
+		const NominalArray = schema.array("D", A);
 
+		const a = new A({});
+		assert(a instanceof A);
+		assert(a instanceof TreeNode);
+		assert(!(a instanceof B));
+
+		const c = new C({});
+		assert(c instanceof C);
+		assert(c instanceof TreeNode);
+		assert(!(c instanceof B));
+
+		const n = new NominalArray([]);
+		assert(n instanceof NominalArray);
+		assert(n instanceof TreeNode);
+		assert(!(n instanceof B));
+
+		// TODO: this should be a compile error, but current API is structurally typed, and doesn't include the schema of nodes in that.
+		const b: A = new B({});
+
+		// TODO: make structural types easier to construct
+		const factory = new TreeFactory({});
+		const config = new TreeConfiguration(StructuralArray, () => []);
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+
+		const s = tree.schematize(config).root;
+		// TODO: maybe make this type check.
+		assert(s instanceof (StructuralArray as any));
+		assert(s instanceof TreeNode);
+		assert(!(s instanceof B));
+	});
+
+	it("instanceof structural", () => {
+		const schema = new SchemaFactory("com.example");
 		const factory = new TreeFactory({});
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 

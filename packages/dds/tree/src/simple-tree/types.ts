@@ -19,7 +19,9 @@ import {
 	TreeNodeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
+import { type NodeFromSchema, type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
+import { tryGetFlexNode } from "./flexNode";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -33,6 +35,18 @@ import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 export type Unhydrated<T> = T;
 
 /**
+ * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
+ */
+export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
+
+export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | undefined {
+	if (simpleSchemaSymbol in schema) {
+		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
+	}
+	return undefined;
+}
+
+/**
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
@@ -42,7 +56,58 @@ export type Unhydrated<T> = T;
  * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class TreeNode {}
+export class TreeNode {
+	/**
+	 * Provides `instancof` support for all tree nodes.
+	 * @remarks
+	 * This requires that the subclasses of TreeNode are all actually node types:
+	 * to avoid breaking this, do not extend TreeNode other than via class based schema.
+	 * @privateRemarks
+	 * This overrides `instancof` for all subclasses of TreeNode to use a schema based approach.
+	 * TypeScript 5.3 will impact how this does type narrowing, but it should continue to work correctly with that.
+	 *
+	 * TODO: once class-tree and simple-tree are merged, consider refactoring this to share logic with `Tree.is`.
+	 */
+	public static [Symbol.hasInstance]<
+		TSchema extends typeof TreeNode & (new (...args: any[]) => TreeNode),
+	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
+
+	/**
+	 * Provides `instancof` support for all class based schema.
+	 */
+	public static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchemaClass>(
+		this: TSchema,
+		value: unknown,
+	): value is NodeFromSchema<TSchema>;
+
+	public static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchemaClass>(
+		this: TSchema,
+		value: unknown,
+	): value is NodeFromSchema<TSchema> {
+		const flexNode = tryGetFlexNode(value);
+		if (flexNode === undefined) {
+			return false;
+		}
+
+		const flexSchema = flexNode.schema;
+		let schema: object | null | undefined = getClassSchema(flexSchema);
+
+		if (schema === undefined) {
+			// TODO: One legacy schema builder test ("objectRecursive") mixes simple tree APIs with objects with no class schema (made using flex schema only).
+			// For now we return false for this cases instead of failing to allow that test to function.
+			// fail("missing class schema for node");
+			return false;
+		}
+
+		while (schema !== null) {
+			if (this === schema) {
+				return true;
+			}
+			schema = Reflect.getPrototypeOf(schema);
+		}
+		return false;
+	}
+}
 
 /**
  * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.

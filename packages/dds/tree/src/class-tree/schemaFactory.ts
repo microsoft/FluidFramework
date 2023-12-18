@@ -21,13 +21,14 @@ import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
-	getClassSchema,
 	getSequenceField,
 	listPrototypeProperties,
 	mapStaticDispatchMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/proxies";
 import { TreeArrayNode, TreeNode } from "../simple-tree";
+// eslint-disable-next-line import/no-internal-modules
+import { getClassSchema } from "../simple-tree/types";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema";
 import {
 	AllowedTypes,
