@@ -165,15 +165,6 @@ function getTokenFromRequest(request: Request): string {
 
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
 
-// Used to sanitize Redis error object and remove sensitive information
-function sanitizeError(error: any) {
-	if (error?.command?.args) {
-		error.command.args = ["REDACTED"];
-	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return error;
-}
-
 /**
  * @internal
  */
@@ -219,11 +210,7 @@ export async function verifyToken(
 		// Check token cache first
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			const cachedToken = await options.tokenCache.get(token).catch((error) => {
-				Lumberjack.error(
-					"Unable to retrieve cached JWT",
-					logProperties,
-					sanitizeError(error),
-				);
+				Lumberjack.error("Unable to retrieve cached JWT", logProperties, error);
 				return false;
 			});
 
@@ -249,7 +236,7 @@ export async function verifyToken(
 					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
 				)
 				.catch((error) => {
-					Lumberjack.error("Unable to cache JWT", logProperties, sanitizeError(error));
+					Lumberjack.error("Unable to cache JWT", logProperties, error);
 				});
 		}
 	} catch (error) {

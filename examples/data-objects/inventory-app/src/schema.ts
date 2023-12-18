@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeConfiguration, SchemaFactory } from "@fluid-experimental/tree2";
+import { TreeConfiguration, SchemaFactory } from "@fluidframework/tree";
 
 const builder = new SchemaFactory("com.contoso.app.inventory");
 
@@ -12,7 +12,7 @@ export class Part extends builder.object("Part", {
 	quantity: builder.number,
 }) {}
 export class Inventory extends builder.object("Inventory", {
-	parts: builder.list(Part),
+	parts: builder.array(Part),
 }) {}
 
 export const treeConfiguration = new TreeConfiguration(

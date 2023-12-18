@@ -19,7 +19,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
+import { blobsTreeName } from "@fluidframework/container-runtime/test/summary";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,

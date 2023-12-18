@@ -18,7 +18,7 @@ export interface IFileLogger extends ITelemetryBaseLogger {
 
 /**
  * Desired output format for the telemetry
- * @internal
+ * @alpha
  */
 export enum OutputFormat {
 	JSON,
@@ -36,7 +36,12 @@ export interface ITelemetryOptions {
 
 	/**
 	 * Properties that should be added to every telemetry event
-	 * Example: { "prop1": "value1", "prop2": 10.0 }
+	 *
+	 * @example
+	 *
+	 * ```JSON
+	 * { "prop1": "value1", "prop2": 10.0 }
+	 * ```
 	 */
 	defaultProps?: Record<string, string | number>;
 

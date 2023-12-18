@@ -8,7 +8,7 @@
  *
  * @remarks
  * If any particular node is an {@link ISummaryTree}, it can contain additional `SummaryObject`s as its children.
- * @alpha
+ * @public
  */
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
@@ -20,7 +20,7 @@ export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 /**
  * Type tag used to distinguish different types of nodes in a {@link ISummaryTree}.
- * @alpha
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
@@ -43,7 +43,7 @@ export namespace SummaryType {
 
 	/**
 	 * Represents a sub-tree in the summary.
-	 * @alpha
+	 * @public
 	 */
 	export const Tree: Tree = 1 as const;
 
@@ -51,13 +51,13 @@ export namespace SummaryType {
 	 * Represents a blob of data that is added to the summary.
 	 * Such as the user data that is added to the DDS or metadata added by runtime
 	 * such as data store / channel attributes.
-	 * @alpha
+	 * @public
 	 */
 	export const Blob: Blob = 2 as const;
 
 	/**
 	 * Path to a summary tree object from the last successful summary.
-	 * @alpha
+	 * @public
 	 */
 	export const Handle: Handle = 3 as const;
 
@@ -65,14 +65,14 @@ export namespace SummaryType {
 	 * Unique identifier to larger blobs uploaded outside of the summary.
 	 * Ex. DDS has large images or video that will be uploaded by the BlobManager and
 	 * receive an Id that can be used in the summary.
-	 * @alpha
+	 * @public
 	 */
 	export const Attachment: Attachment = 4 as const;
 }
 
 /**
  * {@inheritDoc (SummaryType:namespace)}
- * @alpha
+ * @public
  */
 export type SummaryType =
 	| SummaryType.Attachment
@@ -86,7 +86,7 @@ export type SummaryType =
  * @remarks
  * Summary handles are often used to point to summary tree objects contained within older summaries, thus avoiding
  * the need to re-send the entire subtree if summary object has not changed.
- * @alpha
+ * @public
  */
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
@@ -98,7 +98,7 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
- * @alpha
+ * @public
  */
 export interface ISummaryHandle {
 	type: SummaryType.Handle;
@@ -124,7 +124,7 @@ export interface ISummaryHandle {
  * @example
  * "content": "\{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
  *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false \}"
- * @alpha
+ * @public
  */
 export interface ISummaryBlob {
 	type: SummaryType.Blob;
@@ -142,7 +142,7 @@ export interface ISummaryBlob {
  *
  * @example
  * "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
- * @alpha
+ * @public
  */
 export interface ISummaryAttachment {
 	type: SummaryType.Attachment;
@@ -152,7 +152,7 @@ export interface ISummaryAttachment {
 /**
  * Tree Node data structure with children that are nodes of SummaryObject type:
  * Blob, Handle, Attachment or another Tree.
- * @alpha
+ * @public
  */
 export interface ISummaryTree {
 	type: SummaryType.Tree;
