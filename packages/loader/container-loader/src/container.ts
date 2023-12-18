@@ -1830,9 +1830,9 @@ export class Container
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
+		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotBlobs);
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
 			recombineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
-		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTreeWithBlobContents);
 		const attributes = await this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,

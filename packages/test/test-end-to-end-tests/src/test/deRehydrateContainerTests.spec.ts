@@ -29,10 +29,12 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-// eslint-disable-next-line import/no-internal-modules
-import { ISerializableBlobContents } from "@fluidframework/container-loader/dist/containerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
+
+interface ISerializableBlobContents {
+	[id: string]: string;
+}
 
 describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjectProvider) => {
 	function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
@@ -192,15 +194,6 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 				protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
 				"Min Seq # <= seq #",
 			);
-
-			// Check blobs contents for protocolAttributes
-
-			// const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
-			// assert(
-			// 	snapshotTree.trees[".protocol"].blobsContents?[protocolAttributesBlobId] !==
-			// 		undefined,
-			// 	"Blobs should contain attributes blob",
-			// );
 
 			// Check for default dataStore
 			const { datastoreTree: snapshotDefaultDataStore } = assertDatastoreTree(
