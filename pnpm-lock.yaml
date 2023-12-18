@@ -9231,7 +9231,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0-222379
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
-      '@fluidframework/container-runtime-previous': npm:@fluidframework/container-runtime@2.0.0-internal.7.2.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
@@ -9296,7 +9295,6 @@ importers:
       '@fluid-tools/build-cli': 0.29.0-222379_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0-222379
-      '@fluidframework/container-runtime-previous': /@fluidframework/container-runtime/2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
@@ -16235,31 +16233,6 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.7.2.2
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.2.2
-    dev: true
-
-  /@fluidframework/container-runtime/2.0.0-internal.7.2.0:
-    resolution: {integrity: sha512-sKbsOzV4dhQulwlWq856acjQskdLQmmSxGpbhD1Q66tDu1mXLEbm7LgI0nDb1BpC6kVCLtCi8viKmNVXDSaNMQ==}
-    dependencies:
-      '@fluid-internal/client-utils': 2.0.0-internal.7.2.2
-      '@fluidframework/container-definitions': 2.0.0-internal.7.2.2
-      '@fluidframework/container-runtime-definitions': 2.0.0-internal.7.2.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.7.2.2
-      '@fluidframework/core-utils': 2.0.0-internal.7.2.2
-      '@fluidframework/datastore': 2.0.0-internal.7.2.2
-      '@fluidframework/driver-definitions': 2.0.0-internal.7.2.2
-      '@fluidframework/driver-utils': 2.0.0-internal.7.2.2
-      '@fluidframework/protocol-definitions': 3.0.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.7.2.2
-      '@fluidframework/runtime-utils': 2.0.0-internal.7.2.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.7.2.2
-      double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      lz4js: 0.2.0
-      sorted-btree: 1.8.1
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
     dev: true
 
   /@fluidframework/container-runtime/2.0.0-internal.7.2.2:

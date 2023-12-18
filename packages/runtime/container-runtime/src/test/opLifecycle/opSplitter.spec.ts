@@ -6,12 +6,12 @@
 
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
-import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { BatchMessage, IChunkedOp, OpSplitter, splitOp } from "../../opLifecycle";
 import { CompressionAlgorithms } from "../../containerRuntime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 
 describe("OpSplitter", () => {
 	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] = [];
