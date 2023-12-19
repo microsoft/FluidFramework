@@ -72,7 +72,7 @@
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.7.2.0",
+		"@fluidframework/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",

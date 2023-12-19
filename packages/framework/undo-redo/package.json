@@ -90,7 +90,7 @@
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.0.0-internal.7.2.0",
+		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
 		"@types/events": "^3.0.0",
@@ -123,11 +123,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_SharedSegmentSequenceRevertible": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
