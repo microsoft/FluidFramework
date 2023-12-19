@@ -38,7 +38,7 @@
                           }
                         }
                       ],
-                      "revision": 4,
+                      "revision": 3,
                       "sequenceNumber": 3,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
@@ -193,7 +193,7 @@
                   "version": 1,
                   "data": [
                     [
-                      4,
+                      3,
                       1,
                       1
                     ]

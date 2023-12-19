@@ -121,7 +121,7 @@ export class EditManager<
 		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		this.trunkBase = {
-			revision: mintRevisionTag(),
+			revision: "root",
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);

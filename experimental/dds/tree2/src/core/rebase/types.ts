@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Type } from "@sinclair/typebox";
 import {
 	OpSpaceCompressedId,
 	SessionId,
@@ -18,11 +19,14 @@ export const SessionIdSchema = brandedStringType<SessionId>();
 /**
  * A unique identifier for a commit. Commits that have been rebased, but are semantically
  * the same, will share the same revision tag.
+ * 
+ * The constant 'root' is reserved for the trunk base: minting a SessionSpaceCompressedId is not
+ * possible on readonly clients. These clients generally don't need ids, but  must be done at tree initialization time.
  * @alpha
  */
-export type RevisionTag = SessionSpaceCompressedId;
-export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag">;
-export const RevisionTagSchema = brandedNumberType<EncodedRevisionTag>();
+export type RevisionTag = SessionSpaceCompressedId | 'root';
+export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | 'root';
+export const RevisionTagSchema = Type.Union([Type.Literal('root'), brandedNumberType<Exclude<EncodedRevisionTag, string>>()]);
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.

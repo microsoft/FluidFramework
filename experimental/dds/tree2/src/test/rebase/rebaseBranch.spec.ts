@@ -25,7 +25,10 @@ function newCommit(
 	if (parent !== undefined) {
 		const path: GraphCommit<TestChange>[] = [];
 		const ancestor = findAncestor([parent, path]);
-		inputContext2.push(...[ancestor, ...path].map((c) => c.revision));
+		inputContext2.push(...[ancestor, ...path].map((c) => {
+			assert(typeof c.revision === 'number', 'root revision should not be present on test commit');
+			return c.revision
+		}));
 	}
 	return {
 		change: TestChange.mint(inputContext2, intention),

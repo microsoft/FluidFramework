@@ -41,7 +41,7 @@
                           }
                         }
                       ],
-                      "revision": 4,
+                      "revision": 3,
                       "sequenceNumber": 2,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
@@ -72,7 +72,7 @@
                                           1
                                         ]
                                       ],
-                                      "revision": 4
+                                      "revision": 3
                                     }
                                   }
                                 ]
@@ -81,7 +81,7 @@
                           }
                         }
                       ],
-                      "revision": 517,
+                      "revision": 515,
                       "sequenceNumber": 3,
                       "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                     },
@@ -112,7 +112,7 @@
                                           1
                                         ]
                                       ],
-                                      "revision": 517
+                                      "revision": 515
                                     }
                                   }
                                 ]
@@ -121,7 +121,7 @@
                           }
                         }
                       ],
-                      "revision": 1030,
+                      "revision": 1028,
                       "sequenceNumber": 4,
                       "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                     }
@@ -130,7 +130,7 @@
                     [
                       "a0693eac-892a-4396-86f7-ad20dc1cade2",
                       {
-                        "base": 0,
+                        "base": "root",
                         "commits": [
                           {
                             "change": [
@@ -158,7 +158,7 @@
                                 }
                               }
                             ],
-                            "revision": 517,
+                            "revision": 515,
                             "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                           }
                         ]
@@ -167,7 +167,7 @@
                     [
                       "5a126183-91e7-488a-b7e9-3342a05c25ae",
                       {
-                        "base": 0,
+                        "base": "root",
                         "commits": [
                           {
                             "change": [
@@ -195,7 +195,7 @@
                                 }
                               }
                             ],
-                            "revision": 1030,
+                            "revision": 1028,
                             "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                           }
                         ]
@@ -369,7 +369,7 @@
                   "version": 1,
                   "data": [
                     [
-                      1030,
+                      1028,
                       0,
                       6
                     ]
