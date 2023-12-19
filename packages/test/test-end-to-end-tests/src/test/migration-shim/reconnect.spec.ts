@@ -19,7 +19,7 @@ import {
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import {
 	type ISharedTree,
-	TreeFactory,
+	SharedTree,
 	disposeSymbol,
 	SchemaFactory,
 	TreeConfiguration,
@@ -56,14 +56,13 @@ function getQuantity(tree: LegacySharedTree): number {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const nodeId = rootNode.traits.get(legacyNodeId)![0];
 	const legacyNode = tree.currentView.getViewNode(nodeId);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return legacyNode.payload.quantity as number;
 }
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	private channel?: IChannel;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+
 	public get _root() {
 		return this.root;
 	}
@@ -119,7 +118,6 @@ class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function getNewTreeView(tree: ITree) {
 	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
@@ -153,7 +151,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new TreeFactory({});
+	const newSharedTreeFactory = SharedTree.getFactory();
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacySharedTreeFactory,

@@ -2021,7 +2021,7 @@ export { SharedStringFactory }
 
 export { SharedStringSegment }
 
-// @internal
+// @beta
 export class SharedTree implements ITree {
     // (undocumented)
     get attributes(): IChannelAttributes;
@@ -2030,7 +2030,7 @@ export class SharedTree implements ITree {
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
-    static getFactory(): TreeFactory;
+    static getFactory(): IChannelFactory;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
