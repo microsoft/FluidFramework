@@ -317,6 +317,7 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
 };
 
 const node1 = singleJsonCursor(1);
+const node1Chunk = treeChunkFromCursor(node1);
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -344,9 +345,7 @@ describe("ModularChangeFamily", () => {
 		it("prioritizes earlier build entries when faced with duplicates", () => {
 			const change1: ModularChangeset = {
 				fieldChanges: new Map(),
-				builds: new Map([
-					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(1))]])],
-				]),
+				builds: new Map([[undefined, new Map([[brand(0), node1Chunk]])]]),
 			};
 			const change2: ModularChangeset = {
 				fieldChanges: new Map(),
@@ -545,13 +544,87 @@ describe("ModularChangeFamily", () => {
 			assert.deepEqual(composed, expected);
 		});
 
-		it("builds", () => {
+		it("build ○ matching destroy = ε", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[undefined, new Map([[brand(0), node1Chunk]])],
+						[tag2, new Map([[brand(0), node1Chunk]])],
+					]),
+				},
+				tag1,
+			);
+
+			const change2: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					destroys: new Map([
+						[tag1, new Map([[brand(0), undefined]])],
+						[undefined, new Map([[brand(0), undefined]])],
+					]),
+				},
+				tag2,
+			);
+
+			deepFreeze(change1);
+			deepFreeze(change2);
+			const composed = family.compose([change1, change2]);
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map(),
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
+			};
+
+			assert.deepEqual(composed, expected);
+		});
+
+		it("destroy ○ matching build = ε", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					destroys: new Map([
+						[tag1, new Map([[brand(0), undefined]])],
+						[undefined, new Map([[brand(0), undefined]])],
+					]),
+				},
+				tag2,
+			);
+
+			const change2: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[undefined, new Map([[brand(0), node1Chunk]])],
+						[tag2, new Map([[brand(0), node1Chunk]])],
+					]),
+				},
+				tag1,
+			);
+
+			deepFreeze(change1);
+			deepFreeze(change2);
+			const composed = family.compose([change1, change2]);
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map(),
+				revisions: [{ revision: tag2 }, { revision: tag1 }],
+			};
+
+			assert.deepEqual(composed, expected);
+		});
+
+		it("non-matching builds and destroys", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChange(
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
 						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
+					destroys: new Map([
+						[undefined, new Map([[brand(1), undefined]])],
+						[tag3, new Map([[brand(1), undefined]])],
 					]),
 				},
 				tag1,
@@ -563,6 +636,10 @@ describe("ModularChangeFamily", () => {
 					builds: new Map([
 						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					]),
+					destroys: new Map([
+						[undefined, new Map([[brand(3), undefined]])],
+						[tag3, new Map([[brand(3), undefined]])],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -583,6 +660,17 @@ describe("ModularChangeFamily", () => {
 						new Map([
 							[brand(0), treeChunkFromCursor(node1)],
 							[brand(2), treeChunkFromCursor(node1)],
+						]),
+					],
+				]),
+				destroys: new Map([
+					[tag1, new Map([[brand(1), undefined]])],
+					[tag2, new Map([[brand(3), undefined]])],
+					[
+						tag3,
+						new Map([
+							[brand(1), undefined],
+							[brand(3), undefined],
 						]),
 					],
 				]),
@@ -640,6 +728,36 @@ describe("ModularChangeFamily", () => {
 				expectedInverse,
 			);
 		});
+
+		it("build => destroy but only for rollback", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[undefined, new Map([[brand(0), node1Chunk]])],
+						[tag2, new Map([[brand(1), node1Chunk]])],
+					]),
+				},
+				tag1,
+			);
+
+			const expectedRollback: ModularChangeset = {
+				fieldChanges: new Map([]),
+				destroys: new Map([
+					[tag1, new Map([[brand(0), undefined]])],
+					[tag2, new Map([[brand(1), undefined]])],
+				]),
+			};
+			const expectedUndo: ModularChangeset = {
+				fieldChanges: new Map([]),
+			};
+
+			deepFreeze(change1);
+			const actualRollback = family.invert(change1, true);
+			const actualUndo = family.invert(change1, false);
+			assert.deepEqual(actualRollback, expectedRollback);
+			assert.deepEqual(actualUndo, expectedUndo);
+		});
 	});
 
 	describe("rebase", () => {
@@ -686,9 +804,7 @@ describe("ModularChangeFamily", () => {
 				local: [
 					{
 						count: 1,
-						fields: new Map([
-							[fieldA, deltaForSet(singleJsonCursor(1), buildId, detachId)],
-						]),
+						fields: new Map([[fieldA, deltaForSet(node1, buildId, detachId)]]),
 					},
 				],
 			};
@@ -701,6 +817,52 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const actual = intoDelta(makeAnonChange(rootChange1a), family.fieldKinds);
+			assertDeltaEqual(actual, expectedDelta);
+		});
+
+		it("builds", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[undefined, new Map([[brand(1), node1Chunk]])],
+						[tag2, new Map([[brand(2), node1Chunk]])],
+					]),
+				},
+				tag1,
+			);
+
+			const expectedDelta: DeltaRoot = {
+				build: [
+					{ id: { major: tag1, minor: 1 }, trees: [node1] },
+					{ id: { major: tag2, minor: 2 }, trees: [node1] },
+				],
+			};
+
+			const actual = intoDelta(change1, family.fieldKinds);
+			assertDeltaEqual(actual, expectedDelta);
+		});
+
+		it("destroys", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					destroys: new Map([
+						[undefined, new Map([[brand(1), undefined]])],
+						[tag2, new Map([[brand(2), undefined]])],
+					]),
+				},
+				tag1,
+			);
+
+			const expectedDelta: DeltaRoot = {
+				destroy: [
+					{ id: { major: tag1, minor: 1 }, count: 1 },
+					{ id: { major: tag2, minor: 2 }, count: 1 },
+				],
+			};
+
+			const actual = intoDelta(change1, family.fieldKinds);
 			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
