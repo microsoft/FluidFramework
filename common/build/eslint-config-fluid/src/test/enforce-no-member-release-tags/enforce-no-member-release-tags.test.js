@@ -115,9 +115,51 @@ describe("ESLint No Release Tag Rule Tests", function () {
 		);
 	});
 
-	// Skipping as the ESLint plug-in is not recognizing `abstract class` to objects inside the `context` method.
-	// TODO: Need to support `abstract class` for the linter.
-	it.skip("Should report errors for including release tags inside the abstract class", async function () {
+	it("Should report an error for including release tags for class constructor", async function () {
+		const eslint = createESLintInstance({
+			rules: {
+				"no-member-release-tags": ["error"],
+			},
+			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "../tsconfig.json"),
+			},
+		});
+		const filesToLint = ["mockClassConstructor.ts"].map((file) =>
+			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+		);
+		const results = await eslint.lintFiles(filesToLint);
+		const result = results[0];
+		assert.strictEqual(result.errorCount, 1, "Should have 1 error");
+		assert.strictEqual(
+			result.messages[0].message,
+			"Including the release-tag for constructor at line 14 in MockClassConstructor is not allowed.",
+		);
+	});
+
+	it("Should report an error for including release tags for class accessor property", async function () {
+		const eslint = createESLintInstance({
+			rules: {
+				"no-member-release-tags": ["error"],
+			},
+			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "../tsconfig.json"),
+			},
+		});
+		const filesToLint = ["mockAccessorProperty.ts"].map((file) =>
+			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+		);
+		const results = await eslint.lintFiles(filesToLint);
+		const result = results[0];
+		assert.strictEqual(result.errorCount, 1, "Should have 1 error");
+		assert.strictEqual(
+			result.messages[0].message,
+			"Including the release-tag for value at line 16 in MockAccessorProperty is not allowed.",
+		);
+	});
+
+	it("Should report errors for including release tags inside the abstract class", async function () {
 		const eslint = createESLintInstance({
 			rules: {
 				"no-member-release-tags": ["error"],
@@ -132,10 +174,14 @@ describe("ESLint No Release Tag Rule Tests", function () {
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
-		assert.strictEqual(result.errorCount, 1, "Should have 1");
+		assert.strictEqual(result.errorCount, 2, "Should have 2 errors");
 		assert.strictEqual(
 			result.messages[0].message,
-			"Including the release-tag inside the mockClassExpression at line 9 is not allowed.",
+			"Including the release-tag for invalidMethodDefinition at line 14 in MockAbstractClass is not allowed.",
+		);
+		assert.strictEqual(
+			result.messages[1].message,
+			"Including the release-tag for invalidPropertySignature at line 21 in MockAbstractClass is not allowed.",
 		);
 	});
 
@@ -226,5 +272,23 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			result.messages[5].message,
 			"Including the release-tag for invalidMethod at line 43 in MockType is not allowed.",
 		);
+	});
+
+	it("Should NOT report errors for including release tags for function", async function () {
+		const eslint = createESLintInstance({
+			rules: {
+				"no-member-release-tags": ["error"],
+			},
+			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "../tsconfig.json"),
+			},
+		});
+		const filesToLint = ["mockFunction.ts"].map((file) =>
+			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+		);
+		const results = await eslint.lintFiles(filesToLint);
+		const result = results[0];
+		assert.strictEqual(result.errorCount, 0, "Should have 0 error");
 	});
 });

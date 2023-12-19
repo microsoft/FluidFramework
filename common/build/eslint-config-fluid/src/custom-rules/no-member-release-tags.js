@@ -79,6 +79,12 @@ module.exports = {
 			TSMethodSignature(node) {
 				errorLoggerHelper(node, context);
 			},
+			TSAbstractMethodDefinition(node) {
+				errorLoggerHelper(node, context);
+			},
+			TSAbstractPropertyDefinition(node) {
+				errorLoggerHelper(node, context);
+			},
 		};
 	},
 };

@@ -7,20 +7,13 @@
  * @public
  * Not used in the current test suite due to compatibility issue with the ESLint.
  */
-abstract class MockAbstractClass {
+class MockAccessorProperty {
+	private _value = 1;
+
 	/**
 	 * @public
 	 */
-	invalidMethodDefinition(): number {
-		return 1;
+	public get value(): number {
+		return this._value;
 	}
-
-	/**
-	 * @alpha
-	 */
-	abstract invalidPropertySignature: number;
-
-	abstract validMethodSignature(): boolean;
-
-	abstract validPropertySignature: string;
 }

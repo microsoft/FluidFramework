@@ -7,20 +7,9 @@
  * @public
  * Not used in the current test suite due to compatibility issue with the ESLint.
  */
-abstract class MockAbstractClass {
+abstract class MockClassConstructor {
 	/**
 	 * @public
 	 */
-	invalidMethodDefinition(): number {
-		return 1;
-	}
-
-	/**
-	 * @alpha
-	 */
-	abstract invalidPropertySignature: number;
-
-	abstract validMethodSignature(): boolean;
-
-	abstract validPropertySignature: string;
+	constructor() {}
 }
