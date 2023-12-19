@@ -7,7 +7,7 @@ const { TSDocParser } = require("@microsoft/tsdoc");
 
 /**
  *
- * @param comment: string - A TSDoc comment, including its opening and closing bits (`/**`, `*/`) in case of a block comment.
+ * @param comment: string - A TSDoc comment, including its opening and closing bits in case of a block comment.
  * @returns `true` if the comment contains any release tags; `false` otherwise.
  */
 function hasReleaseTag(comment) {
@@ -57,7 +57,7 @@ module.exports = {
 	meta: {
 		type: "problem",
 		docs: {
-			description: "This rule restricts any release tags on members of classes, interfaces, and types.",
+			description: "This rule restricts any release tags on member class and interface.",
 			category: "Best Practices",
 		},
 		schema: [],
