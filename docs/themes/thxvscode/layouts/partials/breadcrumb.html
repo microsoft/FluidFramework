@@ -60,12 +60,14 @@
     {{ end }}
   {{ end }}
   {{ if $packageDisplayName }}
-  <p>
-    <a href="/docs/api/v1" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
-    {{ if $leafNodeFound }}
-      {{ $itemLink := print "/docs/api/v1/" $packageName "/" $leafSegment }}
-      &gt; <a href="{{ $itemLink }}">{{ $leafNodeWithCapitalization }}</a>
-    {{ end }}
-  </p>
+    <p>
+      <a href="/docs/api/v1" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
+        {{ $packageLink := print "/docs/api/v1/" $packageName "/" }}
+        &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
+      {{ if $leafNodeFound }}
+        {{ $itemLink := print "/docs/api/v1/" $packageName "/" $leafSegment }}
+        &gt; <a href="{{ $itemLink }}">{{ $leafNodeWithCapitalization }}</a>
+      {{ end }}
+    </p>
   {{ end }}
 {{ end }}
