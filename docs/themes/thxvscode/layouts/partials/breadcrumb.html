@@ -61,17 +61,7 @@
   {{ end }}
   {{ if $packageDisplayName }}
   <p>
-<<<<<<< HEAD
-    <a href="/docs/apis/" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
-    
-      {{ $packageLink := print "/docs/apis/" $packageName "/" }}
-=======
     <a href="/docs/api/v1" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
-    {{ if $packageName }}
-      {{ $packageLink := print "/docs/api/v1/" $packageName "/" }}
->>>>>>> Api 2.0 build docs website - Let's test together!!!
-      &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
-    
     {{ if $leafNodeFound }}
       {{ $itemLink := print "/docs/api/v1/" $packageName "/" $leafSegment }}
       &gt; <a href="{{ $itemLink }}">{{ $leafNodeWithCapitalization }}</a>
