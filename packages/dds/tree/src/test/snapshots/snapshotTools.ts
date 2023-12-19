@@ -18,7 +18,7 @@ export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = 
 export function takeSnapshot(data: string, suffix: string): void {
 	assert(
 		currentTestName !== undefined,
-		"use `useTestDirectory` to configure the tests containing describe block to take snapshots",
+		"use `useSnapshotDirectory` to configure the tests containing describe block to take snapshots",
 	);
 	assert(currentTestFile !== undefined);
 
@@ -58,7 +58,7 @@ assert(existsSync(snapshotsFolder));
  *
  * @param dirPath - The path within the `snapshots` directory.
  */
-export function useTestDirectory(dirPath: string = "files"): void {
+export function useSnapshotDirectory(dirPath: string = "files"): void {
 	const normalizedDir = path.join(snapshotsFolder, dirPath);
 	// Basic sanity check to avoid bugs like accidentally recursively deleting everything under `/` if something went wrong (like dirPath navigated up directories a lot).
 	assert(normalizedDir.startsWith(snapshotsFolder));

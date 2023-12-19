@@ -6,10 +6,10 @@
 import { useAsyncDeterministicStableId } from "../../util";
 import { takeSummarySnapshot } from "./utils";
 import { generateTestTrees } from "./testTrees";
-import { useTestDirectory } from "./snapshotTools";
+import { useSnapshotDirectory } from "./snapshotTools";
 
 describe("snapshot tests", () => {
-	useTestDirectory();
+	useSnapshotDirectory();
 
 	const testTrees = generateTestTrees();
 
