@@ -13,7 +13,7 @@ import { TextSegment } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { SequenceInterval } from "../intervals";
 import { IIntervalCollection } from "../intervalCollection";
-import { assertEquivalentSharedStrings } from "./intervalUtils";
+import { assertEquivalentSharedStrings } from "./intervalTestUtils";
 
 describe("IntervalCollection detached", () => {
 	const factory = SharedString.getFactory();

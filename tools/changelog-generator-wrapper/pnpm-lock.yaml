@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@changesets/cli': ^2.26.1
       '@changesets/types': ^5.2.1
-      '@fluidframework/build-common': ^2.0.2
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^2.0.0
       changesets-format-with-issue-links: ^0.3.0
       concurrently: ^8.2.1
@@ -20,7 +20,7 @@ importers:
       changesets-format-with-issue-links: 0.3.0_@changesets+cli@2.26.1
       typescript: 4.5.5
     devDependencies:
-      '@fluidframework/build-common': 2.0.2
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       concurrently: 8.2.1
       eslint: 8.6.0
@@ -263,8 +263,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/build-common/2.0.2:
-    resolution: {integrity: sha512-lqAsi/EuncrcJVSP4mOlh+Aci9LAjHlvc2tkymidXXqMaJcATCyqUuaSXaZutgNkJ4wZZNZvWCQRJyqL4dtfWA==}
+  /@fluidframework/build-common/2.0.3:
+    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
     dev: true
 

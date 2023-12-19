@@ -65,6 +65,7 @@ export {
 	IProvideRuntimeFactory,
 	IRuntime,
 	IRuntimeFactory,
+	IGetPendingLocalStateProps,
 } from "./runtime";
 
 export {

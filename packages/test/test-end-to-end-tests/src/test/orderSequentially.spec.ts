@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
@@ -14,12 +13,13 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";
@@ -38,7 +38,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
+describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -51,7 +51,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 	let sharedDir: SharedDirectory;
 	let sharedCell: SharedCell;
 	let sharedMap: SharedMap;
-	let changedEventData: IValueChanged[];
+	let changedEventData: (IValueChanged | Serializable<unknown>)[];
 	let containerRuntime: ContainerRuntime;
 	let error: Error | undefined;
 
@@ -70,7 +70,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);
@@ -129,8 +129,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[0]}`,
 		);
 
-		assert.equal(changedEventData[1].key, "key1");
-		assert.equal(changedEventData[1].previousValue, undefined);
+		assert.deepEqual(changedEventData[1], { key: "key1", previousValue: undefined });
 
 		assert.equal(changedEventData[2], 2);
 
@@ -139,16 +138,14 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[3]}`,
 		);
 
-		assert.equal(changedEventData[4].key, "key1");
-		assert.equal(changedEventData[4].previousValue, 0);
+		assert.deepEqual(changedEventData[4], { key: "key1", previousValue: 0 });
 
 		assert.equal(changedEventData[5], undefined);
 
 		// rollback
 		assert.equal(changedEventData[6], 2);
 
-		assert.equal(changedEventData[7].key, "key1");
-		assert.equal(changedEventData[7].previousValue, undefined);
+		assert.deepEqual(changedEventData[7], { key: "key1", previousValue: undefined });
 
 		assert(
 			changedEventData[8] instanceof SequenceDeltaEvent,
@@ -198,8 +195,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[0]}`,
 		);
 
-		assert.equal(changedEventData[1].key, "key1");
-		assert.equal(changedEventData[1].previousValue, undefined);
+		assert.deepEqual(changedEventData[1], { key: "key1", previousValue: undefined });
 
 		assert(
 			changedEventData[2] instanceof SequenceDeltaEvent,
@@ -208,8 +204,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 
 		assert.equal(changedEventData[3], 2);
 
-		assert.equal(changedEventData[4].key, "key1");
-		assert.equal(changedEventData[4].previousValue, 0);
+		assert.deepEqual(changedEventData[4], { key: "key1", previousValue: 0 });
 
 		assert(
 			changedEventData[5] instanceof SequenceDeltaEvent,
@@ -253,8 +248,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[15]}`,
 		);
 
-		assert.equal(changedEventData[16].key, "key1");
-		assert.equal(changedEventData[16].previousValue, 3);
+		assert.deepEqual(changedEventData[16], { key: "key1", previousValue: 3 });
 	});
 
 	it("Should handle rollback on multiple instances of the same DDS type", () => {
@@ -289,16 +283,14 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[0]}`,
 		);
 
-		assert.equal(changedEventData[1].key, "key");
-		assert.equal(changedEventData[1].previousValue, undefined);
+		assert.deepEqual(changedEventData[1], { key: "key", previousValue: undefined });
 
 		assert(
 			changedEventData[2] instanceof SequenceDeltaEvent,
 			`Unexpected event type - ${typeof changedEventData[2]}`,
 		);
 
-		assert.equal(changedEventData[3].key, "key");
-		assert.equal(changedEventData[3].previousValue, 1);
+		assert.deepEqual(changedEventData[3], { key: "key", previousValue: 1 });
 
 		assert(
 			changedEventData[4] instanceof SequenceDeltaEvent,
@@ -321,8 +313,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[7]}`,
 		);
 
-		assert.equal(changedEventData[8].key, "key");
-		assert.equal(changedEventData[8].previousValue, undefined);
+		assert.deepEqual(changedEventData[8], { key: "key", previousValue: undefined });
 	});
 
 	it("Should handle nested calls to orderSequentially", () => {
@@ -362,11 +353,9 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[0]}`,
 		);
 
-		assert.equal(changedEventData[1].key, "key");
-		assert.equal(changedEventData[1].previousValue, undefined);
+		assert.deepEqual(changedEventData[1], { key: "key", previousValue: undefined });
 
-		assert.equal(changedEventData[2].key, "key");
-		assert.equal(changedEventData[2].previousValue, 1);
+		assert.deepEqual(changedEventData[2], { key: "key", previousValue: 1 });
 
 		assert(
 			changedEventData[3] instanceof SequenceDeltaEvent,
@@ -379,14 +368,11 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[4]}`,
 		);
 
-		assert.equal(changedEventData[5].key, "key");
-		assert.equal(changedEventData[5].previousValue, 0);
+		assert.deepEqual(changedEventData[5], { key: "key", previousValue: 0 });
 
 		// rollback - outer orderSequentially call
-		assert.equal(changedEventData[6].key, "key");
-		assert.equal(changedEventData[6].previousValue, undefined);
+		assert.deepEqual(changedEventData[6], { key: "key", previousValue: undefined });
 
-		assert.equal(changedEventData[7].key, "key");
-		assert.equal(changedEventData[7].previousValue, 0);
+		assert.deepEqual(changedEventData[7], { key: "key", previousValue: 0 });
 	});
 });

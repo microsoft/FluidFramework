@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore-definitions",
-	"version": "2.0.0-internal.8.0.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "Fluid data store definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,22 +11,33 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "commonjs",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp'",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -34,22 +45,40 @@
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.26.0-203096",
-		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-203096",
-		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-internal.7.1.0",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
-		"@microsoft/api-extractor": "^7.37.0",
+		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-internal.7.2.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@microsoft/api-extractor": "^7.38.3",
+		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs"
+				],
+				"script": false
+			}
+		}
+	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreRuntime": {
+				"backCompat": false
+			}
+		}
 	}
 }

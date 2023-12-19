@@ -30,7 +30,7 @@ const render = (model: IAppModel, showExternalServerView: boolean): void => {
 	if (showExternalServerView) {
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 		ReactDOM.unmountComponentAtNode(debugDiv);
-		ReactDOM.render(React.createElement(DebugView, { model }), debugDiv);
+		ReactDOM.render(React.createElement(DebugView), debugDiv);
 	}
 };
 

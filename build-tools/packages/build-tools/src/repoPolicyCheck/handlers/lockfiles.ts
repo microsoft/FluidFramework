@@ -48,7 +48,7 @@ export const handlers: Handler[] = [
 	{
 		name: "package-lockfiles-no-private-url",
 		match: lockFilePattern,
-		handler: (file) => {
+		handler: async (file) => {
 			const content = readFile(file);
 			const matches = content.match(urlPattern);
 			if (matches !== null) {
@@ -73,7 +73,7 @@ export const handlers: Handler[] = [
 	{
 		name: "package-lockfiles-npm-version",
 		match: lockFilePattern,
-		handler: (file) => {
+		handler: async (file) => {
 			const content = readFile(file);
 			const match = content.match(versionPattern);
 			if (match === null) {
@@ -85,7 +85,7 @@ export const handlers: Handler[] = [
 	{
 		name: "extraneous-lockfiles",
 		match: lockFilePattern,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			const manifest = getFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 
@@ -97,7 +97,7 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file, root): { resolved: boolean; message?: string } => {
+		resolver: (file, root) => {
 			const manifest = getFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 

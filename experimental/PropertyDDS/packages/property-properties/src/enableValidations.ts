@@ -12,6 +12,7 @@ export let validationsEnabled = {
  * the tree, etc...)
  *
  * @param enabled - Are the validations enabled?
+ * @internal
  */
 export function enableValidations(enabled: boolean) {
 	validationsEnabled.enabled = enabled;

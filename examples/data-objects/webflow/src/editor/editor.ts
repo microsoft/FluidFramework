@@ -12,6 +12,9 @@ import { Layout } from "../view/layout.js";
 import { Caret } from "./caret.js";
 import { debug } from "./debug.js";
 
+/**
+ * @internal
+ */
 export class Editor {
 	private readonly layout: Layout;
 	private readonly caret: Caret;

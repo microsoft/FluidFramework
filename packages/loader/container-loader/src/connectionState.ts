@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @alpha
+ */
 export enum ConnectionState {
 	/**
 	 * The container is not connected to the ordering service

@@ -39,6 +39,9 @@ const defaultCodeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
+/**
+ * @alpha
+ */
 export interface IOpProcessingController {
 	processIncoming(...containers: IContainer[]): Promise<void>;
 	processOutgoing(...containers: IContainer[]): Promise<void>;
@@ -46,16 +49,86 @@ export interface IOpProcessingController {
 	resumeProcessing(...containers: IContainer[]): void;
 }
 
+/**
+ * @internal
+ */
 export interface ITestObjectProvider {
+	/**
+	 * Indicates which type of test object provider is being used.
+	 */
+	type: "TestObjectProvider" | "TestObjectProviderWithVersionedLoad";
+
+	/**
+	 * The document id to retrieve or create containers
+	 */
+	documentId: string;
+
+	/**
+	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
+	 */
+	documentServiceFactory: IDocumentServiceFactory;
+
+	/**
+	 * Test driver used to create the IDocumentServiceFactory. Varies depending on the test type.
+	 */
+	driver: ITestDriver;
+
+	/**
+	 * Logger used to track expected and unexpected events.
+	 */
+	logger: EventAndErrorTrackingLogger | undefined;
+
+	/**
+	 * Used to create a url for the created container with any data store path given in the relative url.
+	 */
+	urlResolver: IUrlResolver;
+
+	/**
+	 * Default IFluidCodeDetails used to create containers.
+	 */
+	defaultCodeDetails: IFluidCodeDetails;
+
+	/**
+	 * Contains functions to pause/resume op processing.
+	 */
+	opProcessingController: IOpProcessingController;
+
+	/**
+	 * Represents the entry point for a Fluid container.
+	 */
 	createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
+
+	/**
+	 * Create a loader. Containers created/loaded through this loader will be added to the OpProcessingController.
+	 *
+	 * Only the version of the loader will vary based on compat config. The version of
+	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
+	 *
+	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	): IHostLoader;
+
+	/**
+	 * Create a container using a default document id and code details.
+	 * Container created is automatically added to the OpProcessingController to manage op flow
+	 *
+	 * Only the version of the loader will vary based on compat config. The version of
+	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
+	 *
+	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 */
+
 	createContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 	): Promise<IContainer>;
+
+	/**
+	 * Loads a container using the default document id
+	 */
 	loadContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
@@ -63,39 +136,62 @@ export interface ITestObjectProvider {
 	): Promise<IContainer>;
 
 	/**
-	 * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
-	 * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
+	 * Make a test loader. Containers created/loaded through this loader will be added to the OpProcessingController.
+	 * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
+	 * @param testContainerConfig - optional configuring the test Container
 	 */
 	makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
+
+	/**
+	 * Make a container using a default document id and code details
+	 * Container loaded is automatically added to the OpProcessingController to manage op flow
+	 * @param testContainerConfig - optional configuring the test Container
+	 */
 	makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+
+	/**
+	 * Load a container using a default document id and code details.
+	 * IContainer loaded is automatically added to the OpProcessingController to manage op flow
+	 * @param testContainerConfig - optional configuring the test Container
+	 * @param requestHeader - optional headers to be supplied to the loader
+	 */
 	loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer>;
+
 	/**
-	 *
-	 * @param url - Resolved container URL
+	 * Update the document ID from the resolved container's URL and reset the ID property
 	 */
 	updateDocumentId(url: IResolvedUrl | undefined): void;
 
-	logger: ITelemetryBaseLogger;
-	documentServiceFactory: IDocumentServiceFactory;
-	urlResolver: IUrlResolver;
-	defaultCodeDetails: IFluidCodeDetails;
-	opProcessingController: IOpProcessingController;
-
+	/**
+	 * Make sure all the tracked containers are synchronized.
+	 */
 	ensureSynchronized(timeoutDuration?: number): Promise<void>;
-	reset(): void;
 
-	documentId: string;
-	driver: ITestDriver;
+	/**
+	 * Reset the tracker, closing all containers and stop tracking them.
+	 */
+	resetLoaderContainerTracker(syncSummarizerClients?: boolean);
+
+	/**
+	 * Resets and closes all tracked containers and class states.
+	 */
+	reset(): void;
 }
 
+/**
+ * @internal
+ */
 export enum DataObjectFactoryType {
 	Primed, // default
 	Test,
 }
 
+/**
+ * @internal
+ */
 export interface ITestContainerConfig {
 	/** TestFluidDataObject instead of PrimedDataStore */
 	fluidDataObjectType?: DataObjectFactoryType;
@@ -113,11 +209,28 @@ export interface ITestContainerConfig {
 	loaderProps?: Partial<ILoaderProps>;
 }
 
+/**
+ * @internal
+ */
 export const createDocumentId = (): string => uuid();
 
-interface IDocumentIdStrategy {
+/**
+ * Used to retrieve, update, and reset document id based on the type of driver being used.
+ *
+ * @internal
+ */
+export interface IDocumentIdStrategy {
+	/**
+	 * Get document id
+	 */
 	get(): string;
+	/**
+	 * Update the document ID from the resolved container's URL and reset the ID property
+	 */
 	update(resolvedUrl?: IResolvedUrl): void;
+	/**
+	 * Reset document id to a new document id
+	 */
 	reset(): void;
 }
 
@@ -155,6 +268,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * It also tracks all unexpected errors.
  * At any point you call reportAndClearTrackedEvents which will provide all unexpected errors, and
  * any expected events that have not occurred.
+ * @internal
  */
 export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 	/**
@@ -243,8 +357,13 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
+ * @internal
  */
 export class TestObjectProvider implements ITestObjectProvider {
+	/**
+	 * {@inheritDoc ITestObjectProvider."type"}
+	 */
+	public readonly type = "TestObjectProvider";
 	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
@@ -259,8 +378,14 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * and factory for TestFluidObject
 	 */
 	constructor(
-		public readonly LoaderConstructor: typeof Loader,
+		private readonly LoaderConstructor: typeof Loader,
+		/**
+		 * {@inheritDoc ITestObjectProvider.driver}
+		 */
 		public readonly driver: ITestDriver,
+		/**
+		 * {@inheritDoc ITestObjectProvider.createFluidEntryPoint}
+		 */
 		public readonly createFluidEntryPoint: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
@@ -268,7 +393,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentIdStrategy = getDocumentIdStrategy(driver.type);
 	}
 
-	get logger(): EventAndErrorTrackingLogger {
+	/**
+	 * {@inheritDoc ITestObjectProvider.logger}
+	 */
+	public get logger(): EventAndErrorTrackingLogger {
 		if (this._logger === undefined) {
 			this._logger = new EventAndErrorTrackingLogger(
 				createChildLogger({
@@ -287,43 +415,53 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this._logger;
 	}
 
-	set logger(logger: EventAndErrorTrackingLogger) {
+	private set logger(logger: EventAndErrorTrackingLogger) {
 		this._logger = logger;
 	}
 
-	get documentServiceFactory() {
+	/**
+	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
+	 */
+	public get documentServiceFactory() {
 		if (!this._documentServiceFactory) {
 			this._documentServiceFactory = this.driver.createDocumentServiceFactory();
 		}
 		return this._documentServiceFactory;
 	}
 
-	get urlResolver() {
+	/**
+	 * {@inheritDoc ITestObjectProvider.urlResolver}
+	 */
+	public get urlResolver() {
 		if (!this._urlResolver) {
 			this._urlResolver = this.driver.createUrlResolver();
 		}
 		return this._urlResolver;
 	}
 
-	get documentId() {
+	/**
+	 * {@inheritDoc ITestObjectProvider.documentId}
+	 */
+	public get documentId() {
 		return this._documentIdStrategy.get();
 	}
 
-	get defaultCodeDetails() {
+	/**
+	 * {@inheritDoc ITestObjectProvider.defaultCodeDetails}
+	 */
+	public get defaultCodeDetails() {
 		return defaultCodeDetails;
 	}
 
-	get opProcessingController(): IOpProcessingController {
+	/**
+	 * {@inheritDoc ITestObjectProvider.opProcessingController}
+	 */
+	public get opProcessingController(): IOpProcessingController {
 		return this._loaderContainerTracker;
 	}
 
 	/**
-	 * Create a loader. Containers created/loaded through this loader will be added to the OpProcessingController.
-	 *
-	 * Only the version of the loader will vary based on compat config. The version of
-	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
-	 *
-	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 * {@inheritDoc ITestObjectProvider.createLoader}
 	 */
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -346,13 +484,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 
 	/**
-	 * Create a container using a default document id and code details.
-	 * Container created is automatically added to the OpProcessingController to manage op flow
-	 *
-	 * Only the version of the loader will vary based on compat config. The version of
-	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
-	 *
-	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
 	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
 		if (this._documentCreated) {
@@ -373,6 +505,9 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return container;
 	}
 
+	/**
+	 * {@inheritDoc ITestObjectProvider.loadContainer}
+	 */
 	public async loadContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
@@ -390,9 +525,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 
 	/**
-	 * Make a test loader. Containers created/loaded through this loader will be added to the OpProcessingController.
-	 * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
-	 * @param testContainerConfig - optional configuring the test Container
+	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
 	 */
 	public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
 		return this.createLoader(
@@ -402,9 +535,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 
 	/**
-	 * Make a container using a default document id and code details
-	 * Container loaded is automatically added to the OpProcessingController to manage op flow
-	 * @param testContainerConfig - optional configuring the test Container
+	 * {@inheritDoc ITestObjectProvider.makeTestContainer}
 	 */
 	public async makeTestContainer(
 		testContainerConfig?: ITestContainerConfig,
@@ -428,10 +559,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 
 	/**
-	 * Load a container using a default document id and code details.
-	 * IContainer loaded is automatically added to the OpProcessingController to manage op flow
-	 * @param testContainerConfig - optional configuring the test Container
-	 * @param requestHeader - optional headers to be supplied to the loader
+	 * {@inheritDoc ITestObjectProvider.loadTestContainer}
 	 */
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
@@ -445,6 +573,9 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return container;
 	}
 
+	/**
+	 * {@inheritDoc ITestObjectProvider.reset}
+	 */
 	public reset() {
 		this._loaderContainerTracker.reset();
 		this._documentServiceFactory = undefined;
@@ -458,11 +589,14 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
+	/**
+	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
+	 */
 	public async ensureSynchronized(): Promise<void> {
 		return this._loaderContainerTracker.ensureSynchronized();
 	}
 
-	public async waitContainerToCatchUp(container: IContainer) {
+	private async waitContainerToCatchUp(container: IContainer) {
 		// The original waitContainerToCatchUp() from container loader uses either Container.resume()
 		// or Container.connect() as part of its implementation. However, resume() was deprecated
 		// and eventually replaced with connect(). To avoid issues during LTS compatibility testing
@@ -474,16 +608,359 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return waitContainerToCatchUp_original(container);
 	}
 
-	updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
+	/**
+	 * {@inheritDoc ITestObjectProvider.updateDocumentId}
+	 */
+	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
 		this._documentIdStrategy.update(resolvedUrl);
 	}
 
+	/**
+	 * {@inheritDoc ITestObjectProvider.resetLoaderContainerTracker}
+	 */
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
 }
 
+/**
+ * Implements {@link ITestObjectProvider}, but uses different versions to create and load containers.
+ *
+ * @internal
+ */
+export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
+	/**
+	 * {@inheritDoc ITestObjectProvider."type"}
+	 */
+	public readonly type = "TestObjectProviderWithVersionedLoad";
+	private _loaderContainerTracker = new LoaderContainerTracker();
+	private _logger: EventAndErrorTrackingLogger | undefined;
+	private readonly _documentIdStrategy: IDocumentIdStrategy;
+	private _documentServiceFactory: IDocumentServiceFactory | undefined;
+	private _urlResolver: IUrlResolver | undefined;
+	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
+	private _documentCreated = false;
+
+	/**
+	 * `_loadCount` is used to alternate which version we load the next container with.
+	 * loadCount is even then we will load with the "create" version, and if odd we load with the "load" version.
+	 * After each test we will reset loadCount to 0 to ensure we always create the first container with the create version.
+	 *
+	 * Note: This will only affect tests that load a container more than two times.
+	 */
+
+	private _loadCount: number = 0;
+
+	constructor(
+		private readonly LoaderConstructorForCreating: typeof Loader,
+		private readonly LoaderConstructorForLoading: typeof Loader,
+		private readonly driverForCreating: ITestDriver,
+		private readonly driverForLoading: ITestDriver,
+		private readonly createFluidEntryPointForCreating: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+		private readonly createFluidEntryPointForLoading: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+	) {
+		this._documentIdStrategy = getDocumentIdStrategy(driverForCreating.type);
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.logger}
+	 */
+	public get logger(): EventAndErrorTrackingLogger {
+		if (this._logger === undefined) {
+			this._logger = new EventAndErrorTrackingLogger(
+				createChildLogger({
+					logger: getTestLogger?.(),
+				}),
+			);
+		}
+		return this._logger;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
+	 */
+	public get documentServiceFactory() {
+		if (!this._documentServiceFactory) {
+			this._documentServiceFactory = this.driverForCreating.createDocumentServiceFactory();
+		}
+		return this._documentServiceFactory;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.urlResolver}
+	 */
+	public get urlResolver() {
+		if (!this._urlResolver) {
+			this._urlResolver = this.driverForCreating.createUrlResolver();
+		}
+		return this._urlResolver;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.documentId}
+	 */
+	public get documentId() {
+		return this._documentIdStrategy.get();
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.defaultCodeDetails}
+	 */
+	public get defaultCodeDetails() {
+		return defaultCodeDetails;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.opProcessingController}
+	 */
+	public get opProcessingController(): IOpProcessingController {
+		return this._loaderContainerTracker;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.driver}
+	 */
+	public get driver(): ITestDriver {
+		return this.nextLoaderShouldCreate() ? this.driverForCreating : this.driverForLoading;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.createFluidEntryPoint}
+	 */
+	public get createFluidEntryPoint(): (
+		testContainerConfig?: ITestContainerConfig,
+	) => fluidEntryPoint {
+		return this.nextLoaderShouldCreate()
+			? this.createFluidEntryPointForCreating
+			: this.createFluidEntryPointForLoading;
+	}
+
+	private createLoaderForCreating(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
+
+		const loader = new this.LoaderConstructorForCreating({
+			...loaderProps,
+			logger,
+			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+			documentServiceFactory:
+				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
+		});
+
+		this._loaderContainerTracker.add(loader);
+		return loader;
+	}
+
+	private createLoaderForLoading(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
+
+		const loader = new this.LoaderConstructorForLoading({
+			...loaderProps,
+			logger,
+			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+			documentServiceFactory:
+				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
+		});
+
+		this._loaderContainerTracker.add(loader);
+		return loader;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.createLoader}
+	 */
+	public createLoader(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		return this.nextLoaderShouldCreate(/** increment */ true)
+			? this.createLoaderForCreating(packageEntries, loaderProps)
+			: this.createLoaderForLoading(packageEntries, loaderProps);
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.createContainer}
+	 */
+	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		const container = await createAndAttachContainer(
+			defaultCodeDetails,
+			loader,
+			this.driverForCreating.createCreateNewRequest(this.documentId),
+		);
+		this._documentCreated = true;
+		// r11s driver will generate a new ID for the new container.
+		// update the document ID with the actual ID of the attached container.
+		this._documentIdStrategy.update(container.resolvedUrl);
+		return container;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.loadContainer}
+	 */
+	public async loadContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+		requestHeader?: IRequestHeader,
+	): Promise<IContainer> {
+		const driver = this.nextLoaderShouldCreate()
+			? this.driverForCreating
+			: this.driverForLoading;
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return this.resolveContainer(loader, requestHeader, driver);
+	}
+
+	private async resolveContainer(
+		loader: ILoader,
+		headers?: IRequestHeader,
+		driver?: ITestDriver,
+	) {
+		return loader.resolve({
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			url: await driver!.createContainerUrl(this.documentId),
+			headers,
+		});
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
+	 */
+	public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
+		return this.createLoader(
+			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
+			testContainerConfig?.loaderProps,
+		);
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.makeTestContainer}
+	 */
+	public async makeTestContainer(
+		testContainerConfig?: ITestContainerConfig,
+	): Promise<IContainer> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadTestContainer",
+			);
+		}
+		const loader = this.createLoader(
+			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
+			testContainerConfig?.loaderProps,
+		);
+		const container = await createAndAttachContainer(
+			defaultCodeDetails,
+			loader,
+			this.driverForCreating.createCreateNewRequest(this.documentId),
+		);
+		this._documentCreated = true;
+		// r11s driver will generate a new ID for the new container.
+		// update the document ID with the actual ID of the attached container.
+		this._documentIdStrategy.update(container.resolvedUrl);
+		return container;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.loadTestContainer}
+	 */
+	public async loadTestContainer(
+		testContainerConfig?: ITestContainerConfig,
+		requestHeader?: IRequestHeader,
+	): Promise<IContainer> {
+		// Keep track of which Loader we are about to use so we can pass the correct driver through
+		const driver = this.nextLoaderShouldCreate()
+			? this.driverForCreating
+			: this.driverForLoading;
+		const loader = this.makeTestLoader(testContainerConfig);
+		const container = await this.resolveContainer(loader, requestHeader, driver);
+		await this.waitContainerToCatchUp(container);
+
+		return container;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.reset}
+	 */
+	public reset() {
+		this._loadCount = 0;
+		this._loaderContainerTracker.reset();
+		this._logger = undefined;
+		this._documentServiceFactory = undefined;
+		this._urlResolver = undefined;
+		this._documentIdStrategy.reset();
+		const logError = getUnexpectedLogErrorException(this._logger);
+		if (logError) {
+			throw logError;
+		}
+		this._documentCreated = false;
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
+	 */
+	public async ensureSynchronized(): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized();
+	}
+
+	private async waitContainerToCatchUp(container: IContainer) {
+		// The original waitContainerToCatchUp() from container loader uses either Container.resume()
+		// or Container.connect() as part of its implementation. However, resume() was deprecated
+		// and eventually replaced with connect(). To avoid issues during LTS compatibility testing
+		// with older container versions issues, we use resume() when connect() is unavailable.
+		if ((container as any).connect === undefined) {
+			(container as any).connect = (container as any).resume;
+		}
+
+		return waitContainerToCatchUp_original(container);
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.updateDocumentId}
+	 */
+	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
+		this._documentIdStrategy.update(resolvedUrl);
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.resetLoaderContainerTracker}
+	 */
+	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
+		this._loaderContainerTracker.reset();
+		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
+	}
+
+	private nextLoaderShouldCreate(increment: boolean = false): boolean {
+		const shouldCreate = this._loadCount % 2 === 0;
+		if (increment) {
+			this._loadCount++;
+		}
+		return shouldCreate;
+	}
+}
+
+/**
+ * @internal
+ */
 export function getUnexpectedLogErrorException(
 	logger: EventAndErrorTrackingLogger | undefined,
 	prefix?: string,

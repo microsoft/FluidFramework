@@ -6,6 +6,7 @@
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import { ISerializedInterval, IntervalOpType, SerializedIntervalDelta } from "./intervals";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -25,20 +26,20 @@ export interface IValueChanged {
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
  * @internal
+ * @deprecated - will be remove from public api as there is no public used of this type
  */
 export interface IValueOpEmitter {
 	/**
 	 * Called by the value type to emit a value type operation through the container type holding it.
 	 * @param opName - Name of the emitted operation
-	 * @param previousValue - JSONable previous value as defined by the value type
+	 * @param previousValue - JSONable previous value as defined by the value type @deprecated unused
 	 * @param params - JSONable params for the operation as defined by the value type
 	 * @param localOpMetadata - JSONable local metadata which should be submitted with the op
-	 * @internal
 	 */
 	emit(
-		opName: string,
-		previousValue: any,
-		params: any,
+		opName: IntervalOpType,
+		previousValue: undefined,
+		params: SerializedIntervalDelta,
 		localOpMetadata: IMapMessageLocalMetadata,
 	): void;
 }
@@ -52,7 +53,7 @@ export interface IMapMessageLocalMetadata {
 
 /**
  * Optional flags that configure options for sequence DDSs
- * @public
+ * @internal
  */
 export interface SequenceOptions {
 	/**
@@ -123,11 +124,11 @@ export interface IValueOperation<T> {
 	 */
 	process(
 		value: T,
-		params: any,
+		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
-	);
+	): void;
 
 	/**
 	 * Rebases an `op` on `value` from its original perspective (ref/local seq) to the current
@@ -141,7 +142,9 @@ export interface IValueOperation<T> {
 		value: T,
 		op: IValueTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
-	): { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata };
+	):
+		| { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata }
+		| undefined;
 }
 
 /**
@@ -164,14 +167,14 @@ export interface IValueType<T> {
 	 * Operations that can be applied to the value type.
 	 * @alpha
 	 */
-	ops: Map<string, IValueOperation<T>>;
+	ops: Map<IntervalOpType, IValueOperation<T>>;
 }
 
 export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
 	(
 		event: "valueChanged" | "create",
 		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 }
 
 /**
@@ -182,7 +185,7 @@ export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
  * JSON.stringify and comes out of JSON.parse. This format is used both for snapshots (loadCore/populate)
  * and ops (set).
  *
- * The DefaultMap impelmentation for sequence has been specialized to only support a single ValueType, which serializes
+ * The DefaultMap implementation for sequence has been specialized to only support a single ValueType, which serializes
  * and deserializes via .store() and .load().
  */
 export interface ISerializableValue {
@@ -222,10 +225,10 @@ export interface IValueTypeOperationValue {
 	/**
 	 * The name of the operation.
 	 */
-	opName: string;
+	opName: IntervalOpType;
 
 	/**
 	 * The payload that is submitted along with the operation.
 	 */
-	value: any;
+	value: SerializedIntervalDelta;
 }

@@ -30,7 +30,7 @@ const snapshotFileName = "header";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
  *
  * @sealed
- * @public
+ * @alpha
  */
 export class MapFactory implements IChannelFactory {
 	/**
@@ -89,7 +89,6 @@ export class MapFactory implements IChannelFactory {
 
 /**
  * {@inheritDoc ISharedMap}
- *
  * @public
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
@@ -250,7 +249,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 * @internal
 	 */
 	protected summarizeCore(
 		serializer: IFluidSerializer,
@@ -330,7 +328,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 * @internal
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const json = await readAndParse<object>(storage, snapshotFileName);
@@ -350,13 +347,11 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 * @internal
 	 */
 	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
-	 * @internal
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.trySubmitMessage(content as IMapOperation, localOpMetadata);
@@ -364,7 +359,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-	 * @internal
 	 */
 	protected applyStashedOp(content: unknown): unknown {
 		return this.kernel.tryApplyStashedOp(content as IMapOperation);
@@ -372,7 +366,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-	 * @internal
 	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,
@@ -390,7 +383,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
-	 * @internal
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.rollback(content, localOpMetadata);

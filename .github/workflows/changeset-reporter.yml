@@ -26,31 +26,32 @@ jobs:
           run_id: ${{ github.event.workflow_run.id }}
           name: changeset-metadata
 
-      - name: Load changeset metadata into env variable
-        run: echo "CHANGESET=$(cat changeset-metadata.json)" >> $GITHUB_ENV
+      - name: Load changeset metadata into output variable
+        id: changeset
+        run: echo "CHANGESET=$(cat changeset-metadata.json)" >> $GITHUB_OUTPUT
 
       - name: Required but missing
-        if: fromJson(env.CHANGESET).required == true && fromJson(env.CHANGESET).changesetFound == false
+        if: fromJson(steps.changeset.outputs.CHANGESET).required == true && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == false
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
-          number: ${{ fromJson(env.CHANGESET).pr }}
+          number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}
           path: ${{ github.workspace }}/.github/workflows/data/changeset-missing.md
 
       - name: Required and present
-        if: fromJson(env.CHANGESET).required == true && fromJson(env.CHANGESET).changesetFound == true
+        if: fromJson(steps.changeset.outputs.CHANGESET).required == true && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
-          number: ${{ fromJson(env.CHANGESET).pr }}
+          number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}
           recreate: true
           message: |
             This PR requires a changeset and it has one! Good job!
 
       - name: Changeset not required
-        if: fromJson(env.CHANGESET).required == false && fromJson(env.CHANGESET).changesetFound == true
+        if: fromJson(steps.changeset.outputs.CHANGESET).required == false && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
-          number: ${{ fromJson(env.CHANGESET).pr }}
+          number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}
           delete: true

@@ -51,7 +51,7 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
- * @public
+ * @alpha
  */
 export interface IOdspResponse<T> {
 	content: T;
@@ -303,6 +303,13 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 		0x1de /* "Not an ODSP resolved url" */,
 	);
 	return resolvedUrl as IOdspResolvedUrl;
+}
+
+/**
+ * @internal
+ */
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
+	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
 }
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>

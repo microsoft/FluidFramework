@@ -34,7 +34,7 @@ parameters:
 - name: executionTestPackages
   type: object
   default:
-    - "@fluid-experimental/tree2"
+    - "@fluidframework/tree"
     - "@fluid-experimental/tree"
     - "@fluidframework/merge-tree"
 
@@ -60,6 +60,9 @@ variables:
   - name: testWorkspace
     value: $(Pipeline.Workspace)/test
     readonly: true
+  - name: testFilesPath
+    value: $(Pipeline.Workspace)/test-files
+    readonly: true
   - name: artifactPipeline
     value: $(resources.pipeline.client.pipelineName)
     readonly: true
@@ -70,6 +73,7 @@ variables:
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: prague-key-vault
+  - group: ado-feeds
 
 lockBehavior: sequential
 stages:
@@ -85,149 +89,32 @@ stages:
     - job: perf_unit_tests_runtime
       displayName: Perf unit tests - runtime
       pool: ${{ parameters.poolBuild }}
-      variables:
-      - group: ado-feeds
-
       steps:
-      - template: templates/include-telemetry-setup.yml
+      - template: templates/include-test-perf-benchmarks.yml
         parameters:
+          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          artifactBuildId: $(artifactBuildId)
+          artifactPipeline: $(artifactPipeline)
           devFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
-
-      - task: Bash@3
-        displayName: Print parameter/variable values for troubleshooting
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "
-            Variables:
-              artifactPipeline=$(artifactPipeline)
-              artifactBuildId=$(artifactBuildId)
-              testWorkspace=$(testWorkspace)
-              absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-
-            Build Params
-              SourceBranch=$(Build.SourceBranch)
-            "
-
-      # Download artifact with test files
-      - task: DownloadPipelineArtifact@2
-        displayName: Download test files
-        inputs:
-          # It seems there's a bug and preferTriggeringPipeline is not respected.
-          # We force the behavior by explicitly specifying:
-          # - buildVersionToDownload: specific
-          # - buildId: <the id of the triggering build>
-          # preferTriggeringPipeline: true
-          source: specific
-          project: internal
-          pipeline: ${{ variables.artifactPipeline }}
-          buildVersionToDownload: specific
-          buildId: ${{ variables.artifactBuildId }}
-          artifact: test-files
-          path: $(Pipeline.Workspace)/test-files/
-          # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-          # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-
-      - task: Bash@3
-        displayName: Create test directory
-        inputs:
-          targetType: 'inline'
-          script: |
-            mkdir $(testWorkspace)
-
-      - task: Bash@3
-        displayName: Initialize npmrc
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(testWorkspace)
-          # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-          script: |
-            echo Initialize package
-            npm init --yes
-
-            echo Generating .npmrc
-            echo "registry=https://registry.npmjs.org" >> ./.npmrc
-            echo "always-auth=false" >> ./.npmrc
-
-            echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-            echo "always-auth=true" >> ./.npmrc
-            cat .npmrc
-
-      # Auth to internal feed
-      - task: npmAuthenticate@0
-        displayName: 'npm authenticate (internal feed)'
-        inputs:
-          workingFile: $(testWorkspace)/.npmrc
-
-      # Install aria-logger
-      - task: Npm@1
-        displayName: 'npm install aria logger'
-        inputs:
-          workingDir: $(testWorkspace)
-          command: 'custom'
-          customCommand: 'install @ff-internal/aria-logger'
-          customRegistry: 'useNpmrc'
+          testFilesPath: $(testFilesPath)
+          testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
 
-        # Download artifact for package to be tested
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            # It seems there's a bug and preferTriggeringPipeline is not respected.
-            # We force the behavior by explicitly specifying:
-            # - buildVersionToDownload: specific
-            # - buildId: <the id of the triggering build>
-            # preferTriggeringPipeline: true
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            buildVersionToDownload: specific
-            buildId: ${{ variables.artifactBuildId }}
-            artifact: pack
-            patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
-            path: $(Pipeline.Workspace)/client/pack
-            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+        # Download and install package with performance tests
+        - template: templates/include-test-perf-benchmarks-install-package.yml
+          parameters:
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            testPackageName: ${{ testPackage }}
+            installPath: $(testWorkspace)
 
-        # Install package to be tested
+        # The "npm pack"-ed package that we install doesn't have the test files.
+        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
         - task: Bash@3
-          displayName: Install test package
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}
-            script: |
-              echo "Install ${{ testPackage }}"
-              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz
-              TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
-
-              echo $TEST_PACKAGE_FILE_PATTERN
-              echo $TEST_PACKAGE_PATH_PATTERN
-
-              echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
-              echo `ls $TEST_PACKAGE_PATH_PATTERN`
-
-              if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-              else
-                ls -1 $TEST_PACKAGE_PATH_PATTERN
-                echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
-                exit -1
-              fi
-
-              npm install $TEST_PACKAGE_TGZ
-
-        # Unpack test files
-        - task: Bash@3
-          displayName: Unpack test files
+          displayName: Unpack test files - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             script: |
@@ -235,40 +122,35 @@ stages:
               TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+              tar -xvf $(testFilesPath)/$TAR_FILE.test-files.tar -C $(testFilesPath)
+              mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+              mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
+        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
+          inputs:
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+        - task: Npm@1
+          displayName: Install dependencies - ${{ testPackage }}
+          inputs:
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
 
         # Run tests
-        - task: Bash@3
-          displayName: Run execution-time tests
+        - task: Npm@1
+          displayName: Run execution-time tests - ${{ testPackage }}
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            script: |
-              echo "Run execution-time tests for ${{ testPackage }}"
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-
-              # Hacky workaround to prevent issues because nodegit fails to install in Node 18.
-                # good-fences is the one that transitively brings in the dependency on nodegit, so we remove it from
-                # the package whose tests we're going to run if it's there (we don't need it to run the tests).
-                # TODO: remove this once the packages for which we run perf tests don't depend on good-fences anymore
-                # or we have a better solution.
-                GOOD_FENCES_FOUND=$(cat package.json | grep "good-fences" | wc -l)
-                if [[ $GOOD_FENCES_FOUND == 1 ]]; then
-                  echo "good-fences found in package.json for '${{ testPackage }}'. Removing it to avoid nodegit install issues."
-                  npm uninstall good-fences;
-                  echo "Deleting fence.spec.js files that use good-fences."
-                  # 'rm **/fence.spec.js' works in zsh but not bash
-                  find . -type f -name 'fence.spec.js' -delete;
-                fi
-
-              npm i;
-              npm run test:benchmark:report;
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            customCommand: 'run test:benchmark:report'
 
         # Consolidate output files
         - task: CopyFiles@2
-          displayName: Consolidate output files
+          displayName: Consolidate output files - ${{ testPackage }}
           inputs:
             sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/node_modules/@fluid-tools/benchmark/dist/.output/
             contents: '**'
@@ -276,7 +158,7 @@ stages:
 
         # Cleanup package
         - task: Bash@3
-          displayName: Cleanup package
+          displayName: Cleanup package - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
@@ -326,149 +208,32 @@ stages:
     - job: perf_unit_tests_memory
       displayName: Perf unit tests - memory
       pool: ${{ parameters.poolBuild }}
-      variables:
-      - group: ado-feeds
-
       steps:
-      - template: templates/include-telemetry-setup.yml
+      - template: templates/include-test-perf-benchmarks.yml
         parameters:
+          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          artifactBuildId: $(artifactBuildId)
+          artifactPipeline: $(artifactPipeline)
           devFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
-
-      - task: Bash@3
-        displayName: Print parameter/variable values for troubleshooting
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "
-            Variables:
-              artifactPipeline=$(artifactPipeline)
-              artifactBuildId=$(artifactBuildId)
-              testWorkspace=$(testWorkspace)
-              absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-
-            Build Params
-              SourceBranch=$(Build.SourceBranch)
-            "
-
-      # Download Artifact - Test Files
-      - task: DownloadPipelineArtifact@2
-        displayName: Download test files
-        inputs:
-          # It seems there's a bug and preferTriggeringPipeline is not respected.
-          # We force the behavior by explicitly specifying:
-          # - buildVersionToDownload: specific
-          # - buildId: <the id of the triggering build>
-          # preferTriggeringPipeline: true
-          source: specific
-          project: internal
-          pipeline: ${{ variables.artifactPipeline }}
-          buildVersionToDownload: specific
-          buildId: ${{ variables.artifactBuildId }}
-          artifact: test-files
-          path: $(Pipeline.Workspace)/test-files/
-          # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-          # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-
-      - task: Bash@3
-        displayName: Create test directory
-        inputs:
-          targetType: 'inline'
-          script: |
-            mkdir $(testWorkspace)
-
-      - task: Bash@3
-        displayName: Initialize npmrc
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(testWorkspace)
-          # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-          script: |
-            echo Initialize package
-            npm init --yes
-
-            echo Generating .npmrc
-            echo "registry=https://registry.npmjs.org" >> ./.npmrc
-            echo "always-auth=false" >> ./.npmrc
-
-            echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-            echo "always-auth=true" >> ./.npmrc
-            cat .npmrc
-
-      # Auth to internal feed
-      - task: npmAuthenticate@0
-        displayName: 'npm authenticate (internal feed)'
-        inputs:
-          workingFile: $(testWorkspace)/.npmrc
-
-      # Install aria-logger
-      - task: Npm@1
-        displayName: 'npm install aria logger'
-        inputs:
-          workingDir: $(testWorkspace)
-          command: 'custom'
-          customCommand: 'install @ff-internal/aria-logger'
-          customRegistry: 'useNpmrc'
+          testFilesPath: $(testFilesPath)
+          testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
 
-        # Download package artifacts
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            # It seems there's a bug and preferTriggeringPipeline is not respected.
-            # We force the behavior by explicitly specifying:
-            # - buildVersionToDownload: specific
-            # - buildId: <the id of the triggering build>
-            # preferTriggeringPipeline: true
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            buildVersionToDownload: specific
-            buildId: ${{ variables.artifactBuildId }}
-            artifact: pack
-            patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
-            path: $(Pipeline.Workspace)/client/pack
-            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+        # Download and install package with performance tests
+        - template: templates/include-test-perf-benchmarks-install-package.yml
+          parameters:
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            testPackageName: ${{ testPackage }}
+            installPath: $(testWorkspace)
 
-        # Install test package
+        # The "npm pack"-ed package that we install doesn't have the test files.
+        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
         - task: Bash@3
-          displayName: Install test package
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}
-            script: |
-              echo "Install ${{ testPackage }}"
-              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz
-              TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
-
-              echo $TEST_PACKAGE_FILE_PATTERN
-              echo $TEST_PACKAGE_PATH_PATTERN
-
-              echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
-              echo `ls $TEST_PACKAGE_PATH_PATTERN`
-
-              if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-              else
-                ls -1 $TEST_PACKAGE_PATH_PATTERN
-                echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
-                exit -1
-              fi
-
-              npm install $TEST_PACKAGE_TGZ
-
-        # Unpack test files
-        - task: Bash@3
-          displayName: Unpack test files
+          displayName: Unpack test files - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             script: |
@@ -476,13 +241,14 @@ stages:
               TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
-              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+              tar -xvf $(testFilesPath)/$TAR_FILE.test-files.tar -C $(testFilesPath)
+              mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+              mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
 
-        # Run tests
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
+        # and run tests.
         - task: Bash@3
-          displayName: Run memory performance tests
+          displayName: Run memory performance tests - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -494,7 +260,7 @@ stages:
 
         # Consolidate output files
         - task: CopyFiles@2
-          displayName: Consolidate output files
+          displayName: Consolidate output files - ${{ testPackage }}
           inputs:
             sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
             contents: '**'
@@ -502,7 +268,7 @@ stages:
 
         # Cleanup package
         - task: Bash@3
-          displayName: 'Cleanup package'
+          displayName: Cleanup package - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
@@ -560,134 +326,32 @@ stages:
         - name: testPackage
           value: '@fluid-private/test-end-to-end-tests'
           readonly: true
-        - name: escapedTestPackage
-          value: ${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}
-          readonly: true
       jobs:
-      - job: perf_unit_tests_memory
-        displayName: Perf unit tests - memory
+      - job: perf_e2e_tests
+        displayName: Perf e2e tests
         pool: ${{ parameters.poolBuild }}
         timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
-        variables:
-        - group: ado-feeds
-
         steps:
-        - template: templates/include-telemetry-setup.yml
+        - template: templates/include-test-perf-benchmarks.yml
           parameters:
+            # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
             devFeedUrl: $(ado-feeds-dev)
             officeFeedUrl: $(ado-feeds-office)
+            testFilesPath: $(testFilesPath)
+            testWorkspace: $(testWorkspace)
+
+        # Download and install package with performance tests
+        - template: templates/include-test-perf-benchmarks-install-package.yml
+          parameters:
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            testPackageName: $(testPackage)
+            installPath: $(testWorkspace)
 
         - task: Bash@3
-          displayName: Print parameter/variable values for troubleshooting
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "
-              Variables:
-                artifactPipeline=$(artifactPipeline)
-                artifactBuildId=$(artifactBuildId)
-                testWorkspace=$(testWorkspace)
-                absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-
-              Build Params
-                SourceBranch=$(Build.SourceBranch)
-              "
-
-        # Download test package
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            # It seems there's a bug and preferTriggeringPipeline is not respected.
-            # We force the behavior by explicitly specifying:
-            # - buildVersionToDownload: specific
-            # - buildId: <the id of the triggering build>
-            # preferTriggeringPipeline: true
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            buildVersionToDownload: specific
-            buildId: ${{ variables.artifactBuildId }}
-            artifact: pack
-            patterns: "**/${{ variables.escapedTestPackage }}-?.?.?-*.tgz"
-            path: $(Pipeline.Workspace)/client/pack
-            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-
-        - task: Bash@3
-          displayName: Create test directory
-          inputs:
-            targetType: 'inline'
-            script: |
-              mkdir $(testWorkspace)
-
-        - task: Bash@3
-          displayName: Initialize npmrc
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(testWorkspace)
-            # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-            script: |
-              echo Initialize package
-              npm init --yes
-
-              echo Generating .npmrc
-              echo "registry=https://registry.npmjs.org" >> ./.npmrc
-              echo "always-auth=false" >> ./.npmrc
-
-              echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-              echo "always-auth=true" >> ./.npmrc
-              cat .npmrc
-
-        # Auth to internal feed
-        - task: npmAuthenticate@0
-          displayName: 'npm authenticate (internal feed)'
-          inputs:
-            workingFile: $(testWorkspace)/.npmrc
-
-        # Install aria-logger
-        - task: Npm@1
-          displayName: 'npm install aria logger'
-          inputs:
-            workingDir: $(testWorkspace)
-            command: 'custom'
-            customCommand: 'install @ff-internal/aria-logger'
-            customRegistry: 'useNpmrc'
-
-        # Install e2e test package
-        - task: Bash@3
-          displayName: Install Test Package
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}
-            script: |
-              echo "Install ${{ variables.testPackage }}"
-              TEST_PACKAGE_FILE_PATTERN=${{ variables.escapedTestPackage }}-?.?.?-*.tgz
-              TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
-
-              echo $TEST_PACKAGE_FILE_PATTERN
-              echo $TEST_PACKAGE_PATH_PATTERN
-
-              echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
-              echo `ls $TEST_PACKAGE_PATH_PATTERN`
-
-              if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-              else
-                ls -1 $TEST_PACKAGE_PATH_PATTERN
-                echo "##vso[task.logissue type=error]Test package '${{ variables.testPackage }}' not found, or there are more then one found"
-                exit -1
-              fi
-
-              npm install $TEST_PACKAGE_TGZ
-
-        - task: Bash@3
-          displayName: Prepare test package to run tests
+          displayName: Prepare test package to run tests ${{ endpointObject.endpointName }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
@@ -848,14 +512,13 @@ stages:
     - job: upload_run_telemetry
       displayName: Upload pipeline run telemetry to Kusto
       pool: Small
-      variables:
-      - group: ado-feeds
-
       steps:
       - template: templates/include-telemetry-setup.yml
         parameters:
+          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           devFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
+          isCheckoutNeeded: true
 
       - task: Bash@3
         displayName: Retrieve and Upload pipeline run stats to Kusto

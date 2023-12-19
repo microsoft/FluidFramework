@@ -1,4 +1,4 @@
-# @fluid-internal/app-insights-logger
+# @fluidframework/app-insights-logger
 
 ## Overview
 
@@ -21,7 +21,7 @@ In our case, we are sending custom metrics. [Learn more about Azure App Insights
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-internal/app-insights-logger
+npm i @fluidframework/app-insights-logger
 ```
 
 <!-- prettier-ignore-end -->
@@ -50,7 +50,7 @@ const appInsightsClient = new ApplicationInsights({
 // Initializes the App Insights client. Without this, logs will not be sent to Azure.
 appInsightsClient.loadAppInsights();
 
-const logger = new FluidAppInsightsLogger(appInsightsClient);
+const logger = new createLogger(appInsightsClient);
 
 // Example of sending an event to app insights using the FluidAppInsightsLogger directly
 logger.send({ category: "mockEvent", eventName: "mockEventName" });
@@ -146,8 +146,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

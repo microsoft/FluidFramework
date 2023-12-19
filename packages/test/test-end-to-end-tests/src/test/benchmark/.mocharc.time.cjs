@@ -6,7 +6,7 @@
 /**
  * Mocha configuration file for runtime profiling tests
  */
-const getFluidTestMochaConfig = require("@fluid-internal/test-version-utils/mocharc-common.cjs");
+const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common.cjs");
 const packageDir = `${__dirname}/../../..`;
 
 const config = getFluidTestMochaConfig(packageDir);
@@ -20,8 +20,8 @@ const newConfig = {
 	"reporterOptions": ["reportDir=.timeTestsOutput/"],
 	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
 	"spec": [
-		"dist/test/benchmark/**/*.time.spec.js",
-		"dist/test/benchmark/**/*.all.spec.js",
+		"dist/test/benchmark/**/*.time.spec.*js",
+		"dist/test/benchmark/**/*.all.spec.*js",
 		"--perfMode",
 	],
 	"timeout": "360000", // depending on the test and the size of the E2E document, the timeout might not be enough. To address it, let's first try to decrease the number of iterations (minSampleCount).

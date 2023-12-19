@@ -659,7 +659,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private async getDelayLoadedSummaryManager() {
 		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
 		const module = await import(
-			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager"
+			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager.js"
 		)
 			.then((m) => {
 				this.logger.sendTelemetryEvent({ eventName: "SummaryModuleLoaded" });

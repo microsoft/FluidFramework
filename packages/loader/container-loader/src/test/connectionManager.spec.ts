@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	MockDocumentDeltaConnection,
-	MockDocumentService,
-} from "@fluid-internal/test-loader-utils";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import {
 	DriverErrorType,

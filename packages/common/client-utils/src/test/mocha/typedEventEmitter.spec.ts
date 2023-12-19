@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
-import { TypedEventEmitter } from "../..";
+import { TypedEventEmitter } from "../../typedEventEmitter";
 
 describe("TypedEventEmitter", () => {
 	it("Validate Function proxies", () => {
@@ -30,7 +30,6 @@ describe("TypedEventEmitter", () => {
 		const tee = new TypedEventEmitter<IErrorEvent>();
 		let newListenerCalls = 0;
 		let removeListenerCalls = 0;
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const errListener = (): void => {};
 		tee.on("removeListener", (event, listener) => {
 			assert.equal(event, "error");

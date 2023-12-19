@@ -120,7 +120,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			shouldCommit: flags.commit && !flags.skipChecks,
 			shouldInstall: flags.install && !flags.skipChecks,
 			shouldCheckBranchUpdate: flags.updateCheck && !flags.skipChecks,
-			exitFunc: (code?: number): void => this.exit(code),
+			exitFunc: (code: number): void => this.exit(code),
 			command: this,
 		};
 	}

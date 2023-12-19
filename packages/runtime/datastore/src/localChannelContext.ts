@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
+import lodashPkg from "lodash";
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const { cloneDeep } = lodashPkg;
+
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -282,11 +284,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
 export class LocalChannelContext extends LocalChannelContextBase {
 	private readonly dirtyFn: () => void;
-	public readonly channel: IChannel;
 	constructor(
-		id: string,
-		registry: ISharedObjectRegistry,
-		type: string,
+		public readonly channel: IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
@@ -295,14 +294,8 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
-		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
-		const factory = registry.get(type);
-		if (factory === undefined) {
-			throw new Error(`Channel Factory ${type} not registered`);
-		}
-		const channel = factory.create(runtime, id);
 		super(
-			id,
+			channel.id,
 			runtime,
 			new Lazy(() => {
 				return createChannelServiceEndpoints(
@@ -320,7 +313,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		this.channel = channel;
 
 		this.dirtyFn = () => {
-			dirtyFn(id);
+			dirtyFn(channel.id);
 		};
 	}
 }

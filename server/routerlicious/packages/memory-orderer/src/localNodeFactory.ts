@@ -16,6 +16,9 @@ import { v4 as uuid } from "uuid";
 import { IConcreteNodeFactory } from "./interfaces";
 import { LocalNode } from "./localNode";
 
+/**
+ * @internal
+ */
 export class LocalNodeFactory implements IConcreteNodeFactory {
 	constructor(
 		private readonly hostname: string,

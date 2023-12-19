@@ -101,8 +101,8 @@ export class DeltaManagerProxyBase
 		super.dispose();
 	}
 
-	public submitSignal(content: any): void {
-		return this.deltaManager.submitSignal(content);
+	public submitSignal(content: any, targetClientId?: string): void {
+		return this.deltaManager.submitSignal(content, targetClientId);
 	}
 
 	public flush(): void {

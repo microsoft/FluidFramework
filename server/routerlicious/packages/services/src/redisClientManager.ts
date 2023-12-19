@@ -14,6 +14,9 @@ import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
+/**
+ * @internal
+ */
 export class ClientManager implements IClientManager {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "client";

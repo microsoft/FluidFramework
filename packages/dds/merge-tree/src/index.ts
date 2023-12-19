@@ -11,7 +11,7 @@ export {
 	SequenceOffsets,
 } from "./attributionCollection";
 export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
-export { Client } from "./client";
+export { Client, IClientEvents } from "./client";
 export {
 	ConflictAction,
 	Dictionary,
@@ -27,13 +27,7 @@ export {
 	RedBlackTree,
 	SortedDictionary,
 } from "./collections";
-export {
-	LocalClientId,
-	NonCollabClient,
-	TreeMaintenanceSequenceNumber,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "./constants";
+export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
@@ -52,22 +46,17 @@ export {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	IMergeTreeSegmentDelta,
-	MergeTreeDeltaCallback,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
-	MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 export {
 	BaseSegment,
 	CollaborationWindow,
-	compareNumbers,
-	compareStrings,
 	debugMarkerToString,
-	IConsensusInfo,
 	IJSONMarkerSegment,
-	IMarkerModifiedAction,
 	IMergeNodeCommon,
+	IMoveInfo,
 	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
@@ -75,7 +64,6 @@ export {
 	MergeNode,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentAccumulator,
 	SegmentGroup,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
@@ -86,15 +74,14 @@ export {
 	TrackingGroupCollection,
 } from "./mergeTreeTracking";
 export {
-	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
 	createGroupOp,
 	createInsertOp,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
+	createObliterateRangeOp,
 } from "./opBuilder";
 export {
-	ICombiningOp,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
@@ -107,15 +94,9 @@ export {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	IMergeTreeObliterateMsg,
 } from "./ops";
-export {
-	addProperties,
-	createMap,
-	IConsensusValue,
-	MapLike,
-	matchProperties,
-	PropertySet,
-} from "./properties";
+export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,

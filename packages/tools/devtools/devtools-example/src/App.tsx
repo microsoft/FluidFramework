@@ -16,11 +16,12 @@ import React from "react";
 
 import {
 	type ContainerKey,
-	DevtoolsLogger,
+	createDevtoolsLogger,
 	type HasContainerKey,
+	type IDevtoolsLogger,
 	type IFluidDevtools,
 	initializeDevtools,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { type SharedCounter } from "@fluidframework/counter";
 import { type SessionStorageModelLoader } from "@fluid-example/example-utils";
@@ -52,7 +53,7 @@ function getContainerIdFromLocation(location: Location): string {
  */
 function useContainerInfo(
 	devtools: IFluidDevtools,
-	logger: DevtoolsLogger,
+	logger: IDevtoolsLogger,
 	loader: SessionStorageModelLoader<IAppModel>,
 ): {
 	privateContainer: ContainerInfo | undefined;
@@ -183,7 +184,7 @@ const useStyles = makeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Devtools logger
-	const logger = React.useMemo(() => new DevtoolsLogger(), []);
+	const logger = React.useMemo(() => createDevtoolsLogger(), []);
 
 	// Initialize the Fluid Container loader
 	const loader = React.useMemo(() => createLoader(logger), [logger]);

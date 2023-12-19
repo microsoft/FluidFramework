@@ -93,5 +93,5 @@
 		"**/*.log": true,
 		"**/DS_Store": true,
 	},
-	"search.followSymlinks": false
+	"search.followSymlinks": false,
 }

@@ -361,7 +361,8 @@ export class FluidRepo {
 	 * @returns the relative path.
 	 */
 	public relativeToRepo(p: string): string {
-		return path.relative(this.resolvedRoot, p);
+		// Replace \ in result with / in case OS is Windows.
+		return path.relative(this.resolvedRoot, p).replace(/\\/g, "/");
 	}
 }
 

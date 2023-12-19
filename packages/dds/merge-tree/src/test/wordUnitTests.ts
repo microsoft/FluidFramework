@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Trace } from "@fluid-internal/client-utils";
 import { ReferenceType } from "../ops";
 import { createMap, extend, MapLike } from "../properties";
@@ -152,17 +152,10 @@ function measureFetch(startFile: string, withBookmarks = false) {
 		console.log(`inserting ${bookmarkCount} refs into text`);
 	}
 	const reps = 20;
-	let clockStart = clock();
+	const clockStart = clock();
 	let count = 0;
 	for (let i = 0; i < reps; i++) {
 		for (let pos = 0; pos < client.getLength(); ) {
-			// let prevPG = client.searchForMarker(pos, "pg", false);
-			// let caBegin: number;
-			// if (prevPG) {
-			// 	caBegin = client.localReferencePositionToPosition(prevPG);
-			// } else {
-			//     caBegin = 0;
-			// }
 			// curPG.pos is ca end
 			const curPG = client.searchForMarker(pos, "pg", true)!;
 			const properties = curPG.properties!;
@@ -174,19 +167,12 @@ function measureFetch(startFile: string, withBookmarks = false) {
 			count++;
 		}
 	}
-	let et = elapsedMicroseconds(clockStart);
+	const et = elapsedMicroseconds(clockStart);
 	console.log(
 		`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(
 			et / count
 		).toFixed(1)} microseconds per run`,
 	);
-	// Bonus: measure clone
-	clockStart = clock();
-	for (let i = 0; i < reps; i++) {
-		client.mergeTree.clone();
-	}
-	et = elapsedMicroseconds(clockStart);
-	console.log(`naive clone took ${(et / (1000 * reps)).toFixed(1)} milliseconds`);
 }
 
 const baseDir = "../../src/test/literature";

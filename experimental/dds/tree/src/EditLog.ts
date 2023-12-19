@@ -17,8 +17,8 @@ import type { ChangeCompressor } from './ChangeCompression';
 /**
  * An ordered set of Edits associated with a SharedTree.
  * Supports fast lookup of edits by ID and enforces idempotence.
- * @public
  * @sealed
+ * @alpha
  */
 export interface OrderedEditSet<TChange = unknown> {
 	/**
@@ -147,7 +147,7 @@ export interface EditChunk<TChange> {
  * EditHandles are used to load edit chunks stored outside of the EditLog.
  * This is typically implemented by a wrapper around an IFluidHandle<ArrayBufferLike>.
  * @deprecated Edit virtualization is no longer supported.
- * @public
+ * @internal
  */
 export interface EditHandle<TChange> {
 	readonly get: () => Promise<EditWithoutId<TChange>[]>;
@@ -200,7 +200,7 @@ export type EditEvictionHandler = (editsToEvict: number) => void;
 
 /**
  * Events which may be emitted by {@link EditLog}
- * @public
+ * @alpha
  */
 export interface IEditLogEvents extends IEvent {
 	(event: 'unexpectedHistoryChunk', listener: () => void);
@@ -212,6 +212,7 @@ export interface IEditLogEvents extends IEvent {
  * Ordered first by locality (acked or local), then by time of insertion.
  * May not contain more than one edit with the same ID.
  * @sealed
+ * @alpha
  */
 export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;

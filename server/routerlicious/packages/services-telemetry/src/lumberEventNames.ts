@@ -5,6 +5,9 @@
 
 // List of event names that should identify Lumber events throughout the code.
 // Values in the enum must be strings.
+/**
+ * @internal
+ */
 export enum LumberEventName {
 	// Lumberjack infrastructure and helpers
 	LumberjackError = "LumberjackError",
@@ -21,6 +24,7 @@ export enum LumberEventName {
 	ClientSummary = "ClientSummary",
 	DeliHandler = "DeliHandler",
 	KafkaRunner = "KafkaRunner",
+	NexusRunner = "NexusRunner",
 	RiddlerRunner = "RiddlerRunner",
 	ScribeHandler = "ScribeHandler",
 	ServiceSummary = "ServiceSummary",
@@ -47,6 +51,7 @@ export enum LumberEventName {
 	DisconnectDocumentRetry = "DisconnectDocumentRetry",
 	RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
 	HttpRequest = "HttpRequest",
+	SocketConnectionCount = "SocketConnectionCount",
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",

@@ -90,6 +90,8 @@ stages:
             flags: --compatVersion=-1
           - name: LTS
             flags: --compatVersion=LTS
+          - name: Cross-version
+            flags: --compatVersion=CROSS_VERSION
           # Assumes Non-compat and N-1 scenarios are covered
           - name: N-2ToLTS+1-back-compat
             flags: --compatVersion=FULL
@@ -121,6 +123,8 @@ stages:
             flags: --compatVersion=-1
           - name: LTS
             flags: --compatVersion=LTS
+          - name: Cross-Version
+            flags: --compatVersion=CROSS_VERSION
           # Assumes Non-compat and N-1 scenarios are covered
           - name: N-2ToLTS+1-back-compat
             flags: --compatVersion=FULL
@@ -152,6 +156,8 @@ stages:
             flags: --compatVersion=-1 --tenantIndex=1
           - name: LTS
             flags: --compatVersion=LTS --tenantIndex=2
+          - name: Cross-Version
+            flags: --compatVersion=CROSS_VERSION
           # Assumes Non-compat and N-1 scenarios are covered
           - name: N-2ToLTS+1-back-compat
             flags: --compatVersion=FULL --tenantIndex=3
@@ -183,6 +189,7 @@ stages:
         parameters:
           devFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
+          isCheckoutNeeded: true
       - task: Bash@3
         displayName: Retrieve buildId results
         env:

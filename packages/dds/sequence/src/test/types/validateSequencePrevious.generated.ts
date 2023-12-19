@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_DeserializeCallback():
     TypeOnly<old.DeserializeCallback>;
 declare function use_current_TypeAliasDeclaration_DeserializeCallback(
-    use: TypeOnly<current.DeserializeCallback>);
+    use: TypeOnly<current.DeserializeCallback>): void;
 use_current_TypeAliasDeclaration_DeserializeCallback(
     get_old_TypeAliasDeclaration_DeserializeCallback());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_DeserializeCallback(
 declare function get_current_TypeAliasDeclaration_DeserializeCallback():
     TypeOnly<current.DeserializeCallback>;
 declare function use_old_TypeAliasDeclaration_DeserializeCallback(
-    use: TypeOnly<old.DeserializeCallback>);
+    use: TypeOnly<old.DeserializeCallback>): void;
 use_old_TypeAliasDeclaration_DeserializeCallback(
     get_current_TypeAliasDeclaration_DeserializeCallback());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_DeserializeCallback(
 declare function get_old_InterfaceDeclaration_IEndpointInRangeIndex():
     TypeOnly<old.IEndpointInRangeIndex<any>>;
 declare function use_current_InterfaceDeclaration_IEndpointInRangeIndex(
-    use: TypeOnly<current.IEndpointInRangeIndex<any>>);
+    use: TypeOnly<current.IEndpointInRangeIndex<any>>): void;
 use_current_InterfaceDeclaration_IEndpointInRangeIndex(
     get_old_InterfaceDeclaration_IEndpointInRangeIndex());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IEndpointInRangeIndex(
 declare function get_current_InterfaceDeclaration_IEndpointInRangeIndex():
     TypeOnly<current.IEndpointInRangeIndex<any>>;
 declare function use_old_InterfaceDeclaration_IEndpointInRangeIndex(
-    use: TypeOnly<old.IEndpointInRangeIndex<any>>);
+    use: TypeOnly<old.IEndpointInRangeIndex<any>>): void;
 use_old_InterfaceDeclaration_IEndpointInRangeIndex(
     get_current_InterfaceDeclaration_IEndpointInRangeIndex());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IEndpointInRangeIndex(
 declare function get_old_InterfaceDeclaration_IEndpointIndex():
     TypeOnly<old.IEndpointIndex<any>>;
 declare function use_current_InterfaceDeclaration_IEndpointIndex(
-    use: TypeOnly<current.IEndpointIndex<any>>);
+    use: TypeOnly<current.IEndpointIndex<any>>): void;
 use_current_InterfaceDeclaration_IEndpointIndex(
     get_old_InterfaceDeclaration_IEndpointIndex());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IEndpointIndex(
 declare function get_current_InterfaceDeclaration_IEndpointIndex():
     TypeOnly<current.IEndpointIndex<any>>;
 declare function use_old_InterfaceDeclaration_IEndpointIndex(
-    use: TypeOnly<old.IEndpointIndex<any>>);
+    use: TypeOnly<old.IEndpointIndex<any>>): void;
 use_old_InterfaceDeclaration_IEndpointIndex(
     get_current_InterfaceDeclaration_IEndpointIndex());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IEndpointIndex(
 declare function get_old_InterfaceDeclaration_IIdIntervalIndex():
     TypeOnly<old.IIdIntervalIndex<any>>;
 declare function use_current_InterfaceDeclaration_IIdIntervalIndex(
-    use: TypeOnly<current.IIdIntervalIndex<any>>);
+    use: TypeOnly<current.IIdIntervalIndex<any>>): void;
 use_current_InterfaceDeclaration_IIdIntervalIndex(
     get_old_InterfaceDeclaration_IIdIntervalIndex());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IIdIntervalIndex(
 declare function get_current_InterfaceDeclaration_IIdIntervalIndex():
     TypeOnly<current.IIdIntervalIndex<any>>;
 declare function use_old_InterfaceDeclaration_IIdIntervalIndex(
-    use: TypeOnly<old.IIdIntervalIndex<any>>);
+    use: TypeOnly<old.IIdIntervalIndex<any>>): void;
 use_old_InterfaceDeclaration_IIdIntervalIndex(
     get_current_InterfaceDeclaration_IIdIntervalIndex());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IIdIntervalIndex(
 declare function get_old_InterfaceDeclaration_IInterval():
     TypeOnly<old.IInterval>;
 declare function use_current_InterfaceDeclaration_IInterval(
-    use: TypeOnly<current.IInterval>);
+    use: TypeOnly<current.IInterval>): void;
 use_current_InterfaceDeclaration_IInterval(
     get_old_InterfaceDeclaration_IInterval());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IInterval(
 declare function get_current_InterfaceDeclaration_IInterval():
     TypeOnly<current.IInterval>;
 declare function use_old_InterfaceDeclaration_IInterval(
-    use: TypeOnly<old.IInterval>);
+    use: TypeOnly<old.IInterval>): void;
 use_old_InterfaceDeclaration_IInterval(
     get_current_InterfaceDeclaration_IInterval());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IInterval(
 declare function get_old_InterfaceDeclaration_IIntervalCollection():
     TypeOnly<old.IIntervalCollection<any>>;
 declare function use_current_InterfaceDeclaration_IIntervalCollection(
-    use: TypeOnly<current.IIntervalCollection<any>>);
+    use: TypeOnly<current.IIntervalCollection<any>>): void;
 use_current_InterfaceDeclaration_IIntervalCollection(
     get_old_InterfaceDeclaration_IIntervalCollection());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IIntervalCollection(
 declare function get_current_InterfaceDeclaration_IIntervalCollection():
     TypeOnly<current.IIntervalCollection<any>>;
 declare function use_old_InterfaceDeclaration_IIntervalCollection(
-    use: TypeOnly<old.IIntervalCollection<any>>);
+    use: TypeOnly<old.IIntervalCollection<any>>): void;
 use_old_InterfaceDeclaration_IIntervalCollection(
     get_current_InterfaceDeclaration_IIntervalCollection());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IIntervalCollection(
 declare function get_old_InterfaceDeclaration_IIntervalCollectionEvent():
     TypeOnly<old.IIntervalCollectionEvent<any>>;
 declare function use_current_InterfaceDeclaration_IIntervalCollectionEvent(
-    use: TypeOnly<current.IIntervalCollectionEvent<any>>);
+    use: TypeOnly<current.IIntervalCollectionEvent<any>>): void;
 use_current_InterfaceDeclaration_IIntervalCollectionEvent(
     get_old_InterfaceDeclaration_IIntervalCollectionEvent());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_IIntervalCollectionEvent(
 declare function get_current_InterfaceDeclaration_IIntervalCollectionEvent():
     TypeOnly<current.IIntervalCollectionEvent<any>>;
 declare function use_old_InterfaceDeclaration_IIntervalCollectionEvent(
-    use: TypeOnly<old.IIntervalCollectionEvent<any>>);
+    use: TypeOnly<old.IIntervalCollectionEvent<any>>): void;
 use_old_InterfaceDeclaration_IIntervalCollectionEvent(
     get_current_InterfaceDeclaration_IIntervalCollectionEvent());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_IIntervalCollectionEvent(
 declare function get_old_InterfaceDeclaration_IIntervalHelpers():
     TypeOnly<old.IIntervalHelpers<any>>;
 declare function use_current_InterfaceDeclaration_IIntervalHelpers(
-    use: TypeOnly<current.IIntervalHelpers<any>>);
+    use: TypeOnly<current.IIntervalHelpers<any>>): void;
 use_current_InterfaceDeclaration_IIntervalHelpers(
     get_old_InterfaceDeclaration_IIntervalHelpers());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IIntervalHelpers(
 declare function get_current_InterfaceDeclaration_IIntervalHelpers():
     TypeOnly<current.IIntervalHelpers<any>>;
 declare function use_old_InterfaceDeclaration_IIntervalHelpers(
-    use: TypeOnly<old.IIntervalHelpers<any>>);
+    use: TypeOnly<old.IIntervalHelpers<any>>): void;
 use_old_InterfaceDeclaration_IIntervalHelpers(
     get_current_InterfaceDeclaration_IIntervalHelpers());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IIntervalHelpers(
 declare function get_old_InterfaceDeclaration_IJSONRunSegment():
     TypeOnly<old.IJSONRunSegment<any>>;
 declare function use_current_InterfaceDeclaration_IJSONRunSegment(
-    use: TypeOnly<current.IJSONRunSegment<any>>);
+    use: TypeOnly<current.IJSONRunSegment<any>>): void;
 use_current_InterfaceDeclaration_IJSONRunSegment(
     get_old_InterfaceDeclaration_IJSONRunSegment());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IJSONRunSegment(
 declare function get_current_InterfaceDeclaration_IJSONRunSegment():
     TypeOnly<current.IJSONRunSegment<any>>;
 declare function use_old_InterfaceDeclaration_IJSONRunSegment(
-    use: TypeOnly<old.IJSONRunSegment<any>>);
+    use: TypeOnly<old.IJSONRunSegment<any>>): void;
 use_old_InterfaceDeclaration_IJSONRunSegment(
     get_current_InterfaceDeclaration_IJSONRunSegment());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IJSONRunSegment(
 declare function get_old_InterfaceDeclaration_IMapMessageLocalMetadata():
     TypeOnly<old.IMapMessageLocalMetadata>;
 declare function use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
-    use: TypeOnly<current.IMapMessageLocalMetadata>);
+    use: TypeOnly<current.IMapMessageLocalMetadata>): void;
 use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
     get_old_InterfaceDeclaration_IMapMessageLocalMetadata());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
 declare function get_current_InterfaceDeclaration_IMapMessageLocalMetadata():
     TypeOnly<current.IMapMessageLocalMetadata>;
 declare function use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
-    use: TypeOnly<old.IMapMessageLocalMetadata>);
+    use: TypeOnly<old.IMapMessageLocalMetadata>): void;
 use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
     get_current_InterfaceDeclaration_IMapMessageLocalMetadata());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
 declare function get_old_InterfaceDeclaration_IOverlappingIntervalsIndex():
     TypeOnly<old.IOverlappingIntervalsIndex<any>>;
 declare function use_current_InterfaceDeclaration_IOverlappingIntervalsIndex(
-    use: TypeOnly<current.IOverlappingIntervalsIndex<any>>);
+    use: TypeOnly<current.IOverlappingIntervalsIndex<any>>): void;
 use_current_InterfaceDeclaration_IOverlappingIntervalsIndex(
     get_old_InterfaceDeclaration_IOverlappingIntervalsIndex());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_IOverlappingIntervalsIndex(
 declare function get_current_InterfaceDeclaration_IOverlappingIntervalsIndex():
     TypeOnly<current.IOverlappingIntervalsIndex<any>>;
 declare function use_old_InterfaceDeclaration_IOverlappingIntervalsIndex(
-    use: TypeOnly<old.IOverlappingIntervalsIndex<any>>);
+    use: TypeOnly<old.IOverlappingIntervalsIndex<any>>): void;
 use_old_InterfaceDeclaration_IOverlappingIntervalsIndex(
     get_current_InterfaceDeclaration_IOverlappingIntervalsIndex());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_IOverlappingIntervalsIndex(
 declare function get_old_InterfaceDeclaration_ISequenceDeltaRange():
     TypeOnly<old.ISequenceDeltaRange>;
 declare function use_current_InterfaceDeclaration_ISequenceDeltaRange(
-    use: TypeOnly<current.ISequenceDeltaRange>);
+    use: TypeOnly<current.ISequenceDeltaRange>): void;
 use_current_InterfaceDeclaration_ISequenceDeltaRange(
     get_old_InterfaceDeclaration_ISequenceDeltaRange());
 
@@ -305,7 +305,7 @@ use_current_InterfaceDeclaration_ISequenceDeltaRange(
 declare function get_current_InterfaceDeclaration_ISequenceDeltaRange():
     TypeOnly<current.ISequenceDeltaRange>;
 declare function use_old_InterfaceDeclaration_ISequenceDeltaRange(
-    use: TypeOnly<old.ISequenceDeltaRange>);
+    use: TypeOnly<old.ISequenceDeltaRange>): void;
 use_old_InterfaceDeclaration_ISequenceDeltaRange(
     get_current_InterfaceDeclaration_ISequenceDeltaRange());
 
@@ -317,7 +317,7 @@ use_old_InterfaceDeclaration_ISequenceDeltaRange(
 declare function get_old_InterfaceDeclaration_ISerializableInterval():
     TypeOnly<old.ISerializableInterval>;
 declare function use_current_InterfaceDeclaration_ISerializableInterval(
-    use: TypeOnly<current.ISerializableInterval>);
+    use: TypeOnly<current.ISerializableInterval>): void;
 use_current_InterfaceDeclaration_ISerializableInterval(
     get_old_InterfaceDeclaration_ISerializableInterval());
 
@@ -329,7 +329,7 @@ use_current_InterfaceDeclaration_ISerializableInterval(
 declare function get_current_InterfaceDeclaration_ISerializableInterval():
     TypeOnly<current.ISerializableInterval>;
 declare function use_old_InterfaceDeclaration_ISerializableInterval(
-    use: TypeOnly<old.ISerializableInterval>);
+    use: TypeOnly<old.ISerializableInterval>): void;
 use_old_InterfaceDeclaration_ISerializableInterval(
     get_current_InterfaceDeclaration_ISerializableInterval());
 
@@ -341,7 +341,7 @@ use_old_InterfaceDeclaration_ISerializableInterval(
 declare function get_old_InterfaceDeclaration_ISerializedInterval():
     TypeOnly<old.ISerializedInterval>;
 declare function use_current_InterfaceDeclaration_ISerializedInterval(
-    use: TypeOnly<current.ISerializedInterval>);
+    use: TypeOnly<current.ISerializedInterval>): void;
 use_current_InterfaceDeclaration_ISerializedInterval(
     get_old_InterfaceDeclaration_ISerializedInterval());
 
@@ -353,7 +353,7 @@ use_current_InterfaceDeclaration_ISerializedInterval(
 declare function get_current_InterfaceDeclaration_ISerializedInterval():
     TypeOnly<current.ISerializedInterval>;
 declare function use_old_InterfaceDeclaration_ISerializedInterval(
-    use: TypeOnly<old.ISerializedInterval>);
+    use: TypeOnly<old.ISerializedInterval>): void;
 use_old_InterfaceDeclaration_ISerializedInterval(
     get_current_InterfaceDeclaration_ISerializedInterval());
 
@@ -365,7 +365,7 @@ use_old_InterfaceDeclaration_ISerializedInterval(
 declare function get_old_InterfaceDeclaration_ISharedIntervalCollection():
     TypeOnly<old.ISharedIntervalCollection<any>>;
 declare function use_current_InterfaceDeclaration_ISharedIntervalCollection(
-    use: TypeOnly<current.ISharedIntervalCollection<any>>);
+    use: TypeOnly<current.ISharedIntervalCollection<any>>): void;
 use_current_InterfaceDeclaration_ISharedIntervalCollection(
     get_old_InterfaceDeclaration_ISharedIntervalCollection());
 
@@ -377,7 +377,7 @@ use_current_InterfaceDeclaration_ISharedIntervalCollection(
 declare function get_current_InterfaceDeclaration_ISharedIntervalCollection():
     TypeOnly<current.ISharedIntervalCollection<any>>;
 declare function use_old_InterfaceDeclaration_ISharedIntervalCollection(
-    use: TypeOnly<old.ISharedIntervalCollection<any>>);
+    use: TypeOnly<old.ISharedIntervalCollection<any>>): void;
 use_old_InterfaceDeclaration_ISharedIntervalCollection(
     get_current_InterfaceDeclaration_ISharedIntervalCollection());
 
@@ -389,7 +389,7 @@ use_old_InterfaceDeclaration_ISharedIntervalCollection(
 declare function get_old_InterfaceDeclaration_ISharedSegmentSequenceEvents():
     TypeOnly<old.ISharedSegmentSequenceEvents>;
 declare function use_current_InterfaceDeclaration_ISharedSegmentSequenceEvents(
-    use: TypeOnly<current.ISharedSegmentSequenceEvents>);
+    use: TypeOnly<current.ISharedSegmentSequenceEvents>): void;
 use_current_InterfaceDeclaration_ISharedSegmentSequenceEvents(
     get_old_InterfaceDeclaration_ISharedSegmentSequenceEvents());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_ISharedSegmentSequenceEvents(
 declare function get_current_InterfaceDeclaration_ISharedSegmentSequenceEvents():
     TypeOnly<current.ISharedSegmentSequenceEvents>;
 declare function use_old_InterfaceDeclaration_ISharedSegmentSequenceEvents(
-    use: TypeOnly<old.ISharedSegmentSequenceEvents>);
+    use: TypeOnly<old.ISharedSegmentSequenceEvents>): void;
 use_old_InterfaceDeclaration_ISharedSegmentSequenceEvents(
     get_current_InterfaceDeclaration_ISharedSegmentSequenceEvents());
 
@@ -413,8 +413,9 @@ use_old_InterfaceDeclaration_ISharedSegmentSequenceEvents(
 declare function get_old_InterfaceDeclaration_ISharedString():
     TypeOnly<old.ISharedString>;
 declare function use_current_InterfaceDeclaration_ISharedString(
-    use: TypeOnly<current.ISharedString>);
+    use: TypeOnly<current.ISharedString>): void;
 use_current_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedString());
 
 /*
@@ -425,7 +426,7 @@ use_current_InterfaceDeclaration_ISharedString(
 declare function get_current_InterfaceDeclaration_ISharedString():
     TypeOnly<current.ISharedString>;
 declare function use_old_InterfaceDeclaration_ISharedString(
-    use: TypeOnly<old.ISharedString>);
+    use: TypeOnly<old.ISharedString>): void;
 use_old_InterfaceDeclaration_ISharedString(
     // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
@@ -438,7 +439,7 @@ use_old_InterfaceDeclaration_ISharedString(
 declare function get_old_InterfaceDeclaration_IStartpointInRangeIndex():
     TypeOnly<old.IStartpointInRangeIndex<any>>;
 declare function use_current_InterfaceDeclaration_IStartpointInRangeIndex(
-    use: TypeOnly<current.IStartpointInRangeIndex<any>>);
+    use: TypeOnly<current.IStartpointInRangeIndex<any>>): void;
 use_current_InterfaceDeclaration_IStartpointInRangeIndex(
     get_old_InterfaceDeclaration_IStartpointInRangeIndex());
 
@@ -450,7 +451,7 @@ use_current_InterfaceDeclaration_IStartpointInRangeIndex(
 declare function get_current_InterfaceDeclaration_IStartpointInRangeIndex():
     TypeOnly<current.IStartpointInRangeIndex<any>>;
 declare function use_old_InterfaceDeclaration_IStartpointInRangeIndex(
-    use: TypeOnly<old.IStartpointInRangeIndex<any>>);
+    use: TypeOnly<old.IStartpointInRangeIndex<any>>): void;
 use_old_InterfaceDeclaration_IStartpointInRangeIndex(
     get_current_InterfaceDeclaration_IStartpointInRangeIndex());
 
@@ -462,7 +463,7 @@ use_old_InterfaceDeclaration_IStartpointInRangeIndex(
 declare function get_old_InterfaceDeclaration_IValueOpEmitter():
     TypeOnly<old.IValueOpEmitter>;
 declare function use_current_InterfaceDeclaration_IValueOpEmitter(
-    use: TypeOnly<current.IValueOpEmitter>);
+    use: TypeOnly<current.IValueOpEmitter>): void;
 use_current_InterfaceDeclaration_IValueOpEmitter(
     get_old_InterfaceDeclaration_IValueOpEmitter());
 
@@ -474,7 +475,7 @@ use_current_InterfaceDeclaration_IValueOpEmitter(
 declare function get_current_InterfaceDeclaration_IValueOpEmitter():
     TypeOnly<current.IValueOpEmitter>;
 declare function use_old_InterfaceDeclaration_IValueOpEmitter(
-    use: TypeOnly<old.IValueOpEmitter>);
+    use: TypeOnly<old.IValueOpEmitter>): void;
 use_old_InterfaceDeclaration_IValueOpEmitter(
     get_current_InterfaceDeclaration_IValueOpEmitter());
 
@@ -486,7 +487,7 @@ use_old_InterfaceDeclaration_IValueOpEmitter(
 declare function get_old_InterfaceDeclaration_InteriorSequencePlace():
     TypeOnly<old.InteriorSequencePlace>;
 declare function use_current_InterfaceDeclaration_InteriorSequencePlace(
-    use: TypeOnly<current.InteriorSequencePlace>);
+    use: TypeOnly<current.InteriorSequencePlace>): void;
 use_current_InterfaceDeclaration_InteriorSequencePlace(
     get_old_InterfaceDeclaration_InteriorSequencePlace());
 
@@ -498,7 +499,7 @@ use_current_InterfaceDeclaration_InteriorSequencePlace(
 declare function get_current_InterfaceDeclaration_InteriorSequencePlace():
     TypeOnly<current.InteriorSequencePlace>;
 declare function use_old_InterfaceDeclaration_InteriorSequencePlace(
-    use: TypeOnly<old.InteriorSequencePlace>);
+    use: TypeOnly<old.InteriorSequencePlace>): void;
 use_old_InterfaceDeclaration_InteriorSequencePlace(
     get_current_InterfaceDeclaration_InteriorSequencePlace());
 
@@ -510,7 +511,7 @@ use_old_InterfaceDeclaration_InteriorSequencePlace(
 declare function get_old_ClassDeclaration_Interval():
     TypeOnly<old.Interval>;
 declare function use_current_ClassDeclaration_Interval(
-    use: TypeOnly<current.Interval>);
+    use: TypeOnly<current.Interval>): void;
 use_current_ClassDeclaration_Interval(
     get_old_ClassDeclaration_Interval());
 
@@ -522,7 +523,7 @@ use_current_ClassDeclaration_Interval(
 declare function get_current_ClassDeclaration_Interval():
     TypeOnly<current.Interval>;
 declare function use_old_ClassDeclaration_Interval(
-    use: TypeOnly<old.Interval>);
+    use: TypeOnly<old.Interval>): void;
 use_old_ClassDeclaration_Interval(
     get_current_ClassDeclaration_Interval());
 
@@ -534,7 +535,7 @@ use_old_ClassDeclaration_Interval(
 declare function get_old_InterfaceDeclaration_IntervalIndex():
     TypeOnly<old.IntervalIndex<any>>;
 declare function use_current_InterfaceDeclaration_IntervalIndex(
-    use: TypeOnly<current.IntervalIndex<any>>);
+    use: TypeOnly<current.IntervalIndex<any>>): void;
 use_current_InterfaceDeclaration_IntervalIndex(
     get_old_InterfaceDeclaration_IntervalIndex());
 
@@ -546,7 +547,7 @@ use_current_InterfaceDeclaration_IntervalIndex(
 declare function get_current_InterfaceDeclaration_IntervalIndex():
     TypeOnly<current.IntervalIndex<any>>;
 declare function use_old_InterfaceDeclaration_IntervalIndex(
-    use: TypeOnly<old.IntervalIndex<any>>);
+    use: TypeOnly<old.IntervalIndex<any>>): void;
 use_old_InterfaceDeclaration_IntervalIndex(
     get_current_InterfaceDeclaration_IntervalIndex());
 
@@ -558,7 +559,7 @@ use_old_InterfaceDeclaration_IntervalIndex(
 declare function get_old_InterfaceDeclaration_IntervalLocator():
     TypeOnly<old.IntervalLocator>;
 declare function use_current_InterfaceDeclaration_IntervalLocator(
-    use: TypeOnly<current.IntervalLocator>);
+    use: TypeOnly<current.IntervalLocator>): void;
 use_current_InterfaceDeclaration_IntervalLocator(
     get_old_InterfaceDeclaration_IntervalLocator());
 
@@ -570,7 +571,7 @@ use_current_InterfaceDeclaration_IntervalLocator(
 declare function get_current_InterfaceDeclaration_IntervalLocator():
     TypeOnly<current.IntervalLocator>;
 declare function use_old_InterfaceDeclaration_IntervalLocator(
-    use: TypeOnly<old.IntervalLocator>);
+    use: TypeOnly<old.IntervalLocator>): void;
 use_old_InterfaceDeclaration_IntervalLocator(
     get_current_InterfaceDeclaration_IntervalLocator());
 
@@ -582,7 +583,7 @@ use_old_InterfaceDeclaration_IntervalLocator(
 declare function get_old_VariableDeclaration_IntervalOpType():
     TypeOnly<typeof old.IntervalOpType>;
 declare function use_current_VariableDeclaration_IntervalOpType(
-    use: TypeOnly<typeof current.IntervalOpType>);
+    use: TypeOnly<typeof current.IntervalOpType>): void;
 use_current_VariableDeclaration_IntervalOpType(
     get_old_VariableDeclaration_IntervalOpType());
 
@@ -594,7 +595,7 @@ use_current_VariableDeclaration_IntervalOpType(
 declare function get_current_VariableDeclaration_IntervalOpType():
     TypeOnly<typeof current.IntervalOpType>;
 declare function use_old_VariableDeclaration_IntervalOpType(
-    use: TypeOnly<typeof old.IntervalOpType>);
+    use: TypeOnly<typeof old.IntervalOpType>): void;
 use_old_VariableDeclaration_IntervalOpType(
     get_current_VariableDeclaration_IntervalOpType());
 
@@ -606,7 +607,7 @@ use_old_VariableDeclaration_IntervalOpType(
 declare function get_old_TypeAliasDeclaration_IntervalRevertible():
     TypeOnly<old.IntervalRevertible>;
 declare function use_current_TypeAliasDeclaration_IntervalRevertible(
-    use: TypeOnly<current.IntervalRevertible>);
+    use: TypeOnly<current.IntervalRevertible>): void;
 use_current_TypeAliasDeclaration_IntervalRevertible(
     get_old_TypeAliasDeclaration_IntervalRevertible());
 
@@ -618,7 +619,7 @@ use_current_TypeAliasDeclaration_IntervalRevertible(
 declare function get_current_TypeAliasDeclaration_IntervalRevertible():
     TypeOnly<current.IntervalRevertible>;
 declare function use_old_TypeAliasDeclaration_IntervalRevertible(
-    use: TypeOnly<old.IntervalRevertible>);
+    use: TypeOnly<old.IntervalRevertible>): void;
 use_old_TypeAliasDeclaration_IntervalRevertible(
     get_current_TypeAliasDeclaration_IntervalRevertible());
 
@@ -630,7 +631,7 @@ use_old_TypeAliasDeclaration_IntervalRevertible(
 declare function get_old_VariableDeclaration_IntervalStickiness():
     TypeOnly<typeof old.IntervalStickiness>;
 declare function use_current_VariableDeclaration_IntervalStickiness(
-    use: TypeOnly<typeof current.IntervalStickiness>);
+    use: TypeOnly<typeof current.IntervalStickiness>): void;
 use_current_VariableDeclaration_IntervalStickiness(
     get_old_VariableDeclaration_IntervalStickiness());
 
@@ -642,7 +643,7 @@ use_current_VariableDeclaration_IntervalStickiness(
 declare function get_current_VariableDeclaration_IntervalStickiness():
     TypeOnly<typeof current.IntervalStickiness>;
 declare function use_old_VariableDeclaration_IntervalStickiness(
-    use: TypeOnly<typeof old.IntervalStickiness>);
+    use: TypeOnly<typeof old.IntervalStickiness>): void;
 use_old_VariableDeclaration_IntervalStickiness(
     get_current_VariableDeclaration_IntervalStickiness());
 
@@ -654,7 +655,7 @@ use_old_VariableDeclaration_IntervalStickiness(
 declare function get_old_TypeAliasDeclaration_IntervalStickiness():
     TypeOnly<old.IntervalStickiness>;
 declare function use_current_TypeAliasDeclaration_IntervalStickiness(
-    use: TypeOnly<current.IntervalStickiness>);
+    use: TypeOnly<current.IntervalStickiness>): void;
 use_current_TypeAliasDeclaration_IntervalStickiness(
     get_old_TypeAliasDeclaration_IntervalStickiness());
 
@@ -666,7 +667,7 @@ use_current_TypeAliasDeclaration_IntervalStickiness(
 declare function get_current_TypeAliasDeclaration_IntervalStickiness():
     TypeOnly<current.IntervalStickiness>;
 declare function use_old_TypeAliasDeclaration_IntervalStickiness(
-    use: TypeOnly<old.IntervalStickiness>);
+    use: TypeOnly<old.IntervalStickiness>): void;
 use_old_TypeAliasDeclaration_IntervalStickiness(
     get_current_TypeAliasDeclaration_IntervalStickiness());
 
@@ -678,7 +679,7 @@ use_old_TypeAliasDeclaration_IntervalStickiness(
 declare function get_old_EnumDeclaration_IntervalType():
     TypeOnly<old.IntervalType>;
 declare function use_current_EnumDeclaration_IntervalType(
-    use: TypeOnly<current.IntervalType>);
+    use: TypeOnly<current.IntervalType>): void;
 use_current_EnumDeclaration_IntervalType(
     get_old_EnumDeclaration_IntervalType());
 
@@ -690,7 +691,7 @@ use_current_EnumDeclaration_IntervalType(
 declare function get_current_EnumDeclaration_IntervalType():
     TypeOnly<current.IntervalType>;
 declare function use_old_EnumDeclaration_IntervalType(
-    use: TypeOnly<old.IntervalType>);
+    use: TypeOnly<old.IntervalType>): void;
 use_old_EnumDeclaration_IntervalType(
     get_current_EnumDeclaration_IntervalType());
 
@@ -702,7 +703,7 @@ use_old_EnumDeclaration_IntervalType(
 declare function get_old_ClassDeclaration_SequenceDeltaEvent():
     TypeOnly<old.SequenceDeltaEvent>;
 declare function use_current_ClassDeclaration_SequenceDeltaEvent(
-    use: TypeOnly<current.SequenceDeltaEvent>);
+    use: TypeOnly<current.SequenceDeltaEvent>): void;
 use_current_ClassDeclaration_SequenceDeltaEvent(
     get_old_ClassDeclaration_SequenceDeltaEvent());
 
@@ -714,7 +715,7 @@ use_current_ClassDeclaration_SequenceDeltaEvent(
 declare function get_current_ClassDeclaration_SequenceDeltaEvent():
     TypeOnly<current.SequenceDeltaEvent>;
 declare function use_old_ClassDeclaration_SequenceDeltaEvent(
-    use: TypeOnly<old.SequenceDeltaEvent>);
+    use: TypeOnly<old.SequenceDeltaEvent>): void;
 use_old_ClassDeclaration_SequenceDeltaEvent(
     get_current_ClassDeclaration_SequenceDeltaEvent());
 
@@ -726,7 +727,7 @@ use_old_ClassDeclaration_SequenceDeltaEvent(
 declare function get_old_ClassDeclaration_SequenceEvent():
     TypeOnly<old.SequenceEvent>;
 declare function use_current_ClassDeclaration_SequenceEvent(
-    use: TypeOnly<current.SequenceEvent>);
+    use: TypeOnly<current.SequenceEvent>): void;
 use_current_ClassDeclaration_SequenceEvent(
     get_old_ClassDeclaration_SequenceEvent());
 
@@ -738,7 +739,7 @@ use_current_ClassDeclaration_SequenceEvent(
 declare function get_current_ClassDeclaration_SequenceEvent():
     TypeOnly<current.SequenceEvent>;
 declare function use_old_ClassDeclaration_SequenceEvent(
-    use: TypeOnly<old.SequenceEvent>);
+    use: TypeOnly<old.SequenceEvent>): void;
 use_old_ClassDeclaration_SequenceEvent(
     get_current_ClassDeclaration_SequenceEvent());
 
@@ -750,7 +751,7 @@ use_old_ClassDeclaration_SequenceEvent(
 declare function get_old_ClassDeclaration_SequenceInterval():
     TypeOnly<old.SequenceInterval>;
 declare function use_current_ClassDeclaration_SequenceInterval(
-    use: TypeOnly<current.SequenceInterval>);
+    use: TypeOnly<current.SequenceInterval>): void;
 use_current_ClassDeclaration_SequenceInterval(
     get_old_ClassDeclaration_SequenceInterval());
 
@@ -762,7 +763,7 @@ use_current_ClassDeclaration_SequenceInterval(
 declare function get_current_ClassDeclaration_SequenceInterval():
     TypeOnly<current.SequenceInterval>;
 declare function use_old_ClassDeclaration_SequenceInterval(
-    use: TypeOnly<old.SequenceInterval>);
+    use: TypeOnly<old.SequenceInterval>): void;
 use_old_ClassDeclaration_SequenceInterval(
     get_current_ClassDeclaration_SequenceInterval());
 
@@ -774,7 +775,7 @@ use_old_ClassDeclaration_SequenceInterval(
 declare function get_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping():
     TypeOnly<old.SequenceIntervalIndexes.Overlapping>;
 declare function use_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
-    use: TypeOnly<current.SequenceIntervalIndexes.Overlapping>);
+    use: TypeOnly<current.SequenceIntervalIndexes.Overlapping>): void;
 use_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
     get_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping());
 
@@ -786,7 +787,7 @@ use_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
 declare function get_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping():
     TypeOnly<current.SequenceIntervalIndexes.Overlapping>;
 declare function use_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
-    use: TypeOnly<old.SequenceIntervalIndexes.Overlapping>);
+    use: TypeOnly<old.SequenceIntervalIndexes.Overlapping>): void;
 use_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
     get_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping());
 
@@ -798,7 +799,7 @@ use_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
 declare function get_old_ClassDeclaration_SequenceMaintenanceEvent():
     TypeOnly<old.SequenceMaintenanceEvent>;
 declare function use_current_ClassDeclaration_SequenceMaintenanceEvent(
-    use: TypeOnly<current.SequenceMaintenanceEvent>);
+    use: TypeOnly<current.SequenceMaintenanceEvent>): void;
 use_current_ClassDeclaration_SequenceMaintenanceEvent(
     get_old_ClassDeclaration_SequenceMaintenanceEvent());
 
@@ -810,7 +811,7 @@ use_current_ClassDeclaration_SequenceMaintenanceEvent(
 declare function get_current_ClassDeclaration_SequenceMaintenanceEvent():
     TypeOnly<current.SequenceMaintenanceEvent>;
 declare function use_old_ClassDeclaration_SequenceMaintenanceEvent(
-    use: TypeOnly<old.SequenceMaintenanceEvent>);
+    use: TypeOnly<old.SequenceMaintenanceEvent>): void;
 use_old_ClassDeclaration_SequenceMaintenanceEvent(
     get_current_ClassDeclaration_SequenceMaintenanceEvent());
 
@@ -822,7 +823,7 @@ use_old_ClassDeclaration_SequenceMaintenanceEvent(
 declare function get_old_InterfaceDeclaration_SequenceOptions():
     TypeOnly<old.SequenceOptions>;
 declare function use_current_InterfaceDeclaration_SequenceOptions(
-    use: TypeOnly<current.SequenceOptions>);
+    use: TypeOnly<current.SequenceOptions>): void;
 use_current_InterfaceDeclaration_SequenceOptions(
     get_old_InterfaceDeclaration_SequenceOptions());
 
@@ -834,7 +835,7 @@ use_current_InterfaceDeclaration_SequenceOptions(
 declare function get_current_InterfaceDeclaration_SequenceOptions():
     TypeOnly<current.SequenceOptions>;
 declare function use_old_InterfaceDeclaration_SequenceOptions(
-    use: TypeOnly<old.SequenceOptions>);
+    use: TypeOnly<old.SequenceOptions>): void;
 use_old_InterfaceDeclaration_SequenceOptions(
     get_current_InterfaceDeclaration_SequenceOptions());
 
@@ -846,7 +847,7 @@ use_old_InterfaceDeclaration_SequenceOptions(
 declare function get_old_TypeAliasDeclaration_SequencePlace():
     TypeOnly<old.SequencePlace>;
 declare function use_current_TypeAliasDeclaration_SequencePlace(
-    use: TypeOnly<current.SequencePlace>);
+    use: TypeOnly<current.SequencePlace>): void;
 use_current_TypeAliasDeclaration_SequencePlace(
     get_old_TypeAliasDeclaration_SequencePlace());
 
@@ -858,7 +859,7 @@ use_current_TypeAliasDeclaration_SequencePlace(
 declare function get_current_TypeAliasDeclaration_SequencePlace():
     TypeOnly<current.SequencePlace>;
 declare function use_old_TypeAliasDeclaration_SequencePlace(
-    use: TypeOnly<old.SequencePlace>);
+    use: TypeOnly<old.SequencePlace>): void;
 use_old_TypeAliasDeclaration_SequencePlace(
     get_current_TypeAliasDeclaration_SequencePlace());
 
@@ -870,7 +871,7 @@ use_old_TypeAliasDeclaration_SequencePlace(
 declare function get_old_TypeAliasDeclaration_SerializedIntervalDelta():
     TypeOnly<old.SerializedIntervalDelta>;
 declare function use_current_TypeAliasDeclaration_SerializedIntervalDelta(
-    use: TypeOnly<current.SerializedIntervalDelta>);
+    use: TypeOnly<current.SerializedIntervalDelta>): void;
 use_current_TypeAliasDeclaration_SerializedIntervalDelta(
     get_old_TypeAliasDeclaration_SerializedIntervalDelta());
 
@@ -882,7 +883,7 @@ use_current_TypeAliasDeclaration_SerializedIntervalDelta(
 declare function get_current_TypeAliasDeclaration_SerializedIntervalDelta():
     TypeOnly<current.SerializedIntervalDelta>;
 declare function use_old_TypeAliasDeclaration_SerializedIntervalDelta(
-    use: TypeOnly<old.SerializedIntervalDelta>);
+    use: TypeOnly<old.SerializedIntervalDelta>): void;
 use_old_TypeAliasDeclaration_SerializedIntervalDelta(
     get_current_TypeAliasDeclaration_SerializedIntervalDelta());
 
@@ -894,7 +895,7 @@ use_old_TypeAliasDeclaration_SerializedIntervalDelta(
 declare function get_old_ClassDeclaration_SharedIntervalCollection():
     TypeOnly<old.SharedIntervalCollection>;
 declare function use_current_ClassDeclaration_SharedIntervalCollection(
-    use: TypeOnly<current.SharedIntervalCollection>);
+    use: TypeOnly<current.SharedIntervalCollection>): void;
 use_current_ClassDeclaration_SharedIntervalCollection(
     get_old_ClassDeclaration_SharedIntervalCollection());
 
@@ -906,7 +907,7 @@ use_current_ClassDeclaration_SharedIntervalCollection(
 declare function get_current_ClassDeclaration_SharedIntervalCollection():
     TypeOnly<current.SharedIntervalCollection>;
 declare function use_old_ClassDeclaration_SharedIntervalCollection(
-    use: TypeOnly<old.SharedIntervalCollection>);
+    use: TypeOnly<old.SharedIntervalCollection>): void;
 use_old_ClassDeclaration_SharedIntervalCollection(
     get_current_ClassDeclaration_SharedIntervalCollection());
 
@@ -918,7 +919,7 @@ use_old_ClassDeclaration_SharedIntervalCollection(
 declare function get_old_ClassDeclaration_SharedIntervalCollectionFactory():
     TypeOnly<old.SharedIntervalCollectionFactory>;
 declare function use_current_ClassDeclaration_SharedIntervalCollectionFactory(
-    use: TypeOnly<current.SharedIntervalCollectionFactory>);
+    use: TypeOnly<current.SharedIntervalCollectionFactory>): void;
 use_current_ClassDeclaration_SharedIntervalCollectionFactory(
     get_old_ClassDeclaration_SharedIntervalCollectionFactory());
 
@@ -930,7 +931,7 @@ use_current_ClassDeclaration_SharedIntervalCollectionFactory(
 declare function get_current_ClassDeclaration_SharedIntervalCollectionFactory():
     TypeOnly<current.SharedIntervalCollectionFactory>;
 declare function use_old_ClassDeclaration_SharedIntervalCollectionFactory(
-    use: TypeOnly<old.SharedIntervalCollectionFactory>);
+    use: TypeOnly<old.SharedIntervalCollectionFactory>): void;
 use_old_ClassDeclaration_SharedIntervalCollectionFactory(
     get_current_ClassDeclaration_SharedIntervalCollectionFactory());
 
@@ -942,8 +943,9 @@ use_old_ClassDeclaration_SharedIntervalCollectionFactory(
 declare function get_old_ClassDeclaration_SharedSegmentSequence():
     TypeOnly<old.SharedSegmentSequence<any>>;
 declare function use_current_ClassDeclaration_SharedSegmentSequence(
-    use: TypeOnly<current.SharedSegmentSequence<any>>);
+    use: TypeOnly<current.SharedSegmentSequence<any>>): void;
 use_current_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -954,7 +956,7 @@ use_current_ClassDeclaration_SharedSegmentSequence(
 declare function get_current_ClassDeclaration_SharedSegmentSequence():
     TypeOnly<current.SharedSegmentSequence<any>>;
 declare function use_old_ClassDeclaration_SharedSegmentSequence(
-    use: TypeOnly<old.SharedSegmentSequence<any>>);
+    use: TypeOnly<old.SharedSegmentSequence<any>>): void;
 use_old_ClassDeclaration_SharedSegmentSequence(
     // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSegmentSequence());
@@ -967,8 +969,9 @@ use_old_ClassDeclaration_SharedSegmentSequence(
 declare function get_old_ClassDeclaration_SharedSequence():
     TypeOnly<old.SharedSequence<any>>;
 declare function use_current_ClassDeclaration_SharedSequence(
-    use: TypeOnly<current.SharedSequence<any>>);
+    use: TypeOnly<current.SharedSequence<any>>): void;
 use_current_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSequence());
 
 /*
@@ -979,7 +982,7 @@ use_current_ClassDeclaration_SharedSequence(
 declare function get_current_ClassDeclaration_SharedSequence():
     TypeOnly<current.SharedSequence<any>>;
 declare function use_old_ClassDeclaration_SharedSequence(
-    use: TypeOnly<old.SharedSequence<any>>);
+    use: TypeOnly<old.SharedSequence<any>>): void;
 use_old_ClassDeclaration_SharedSequence(
     // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSequence());
@@ -992,7 +995,7 @@ use_old_ClassDeclaration_SharedSequence(
 declare function get_old_ClassDeclaration_SharedString():
     TypeOnly<old.SharedString>;
 declare function use_current_ClassDeclaration_SharedString(
-    use: TypeOnly<current.SharedString>);
+    use: TypeOnly<current.SharedString>): void;
 use_current_ClassDeclaration_SharedString(
     // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedString());
@@ -1005,7 +1008,7 @@ use_current_ClassDeclaration_SharedString(
 declare function get_current_ClassDeclaration_SharedString():
     TypeOnly<current.SharedString>;
 declare function use_old_ClassDeclaration_SharedString(
-    use: TypeOnly<old.SharedString>);
+    use: TypeOnly<old.SharedString>): void;
 use_old_ClassDeclaration_SharedString(
     // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedString());
@@ -1018,7 +1021,7 @@ use_old_ClassDeclaration_SharedString(
 declare function get_old_ClassDeclaration_SharedStringFactory():
     TypeOnly<old.SharedStringFactory>;
 declare function use_current_ClassDeclaration_SharedStringFactory(
-    use: TypeOnly<current.SharedStringFactory>);
+    use: TypeOnly<current.SharedStringFactory>): void;
 use_current_ClassDeclaration_SharedStringFactory(
     get_old_ClassDeclaration_SharedStringFactory());
 
@@ -1030,7 +1033,7 @@ use_current_ClassDeclaration_SharedStringFactory(
 declare function get_current_ClassDeclaration_SharedStringFactory():
     TypeOnly<current.SharedStringFactory>;
 declare function use_old_ClassDeclaration_SharedStringFactory(
-    use: TypeOnly<old.SharedStringFactory>);
+    use: TypeOnly<old.SharedStringFactory>): void;
 use_old_ClassDeclaration_SharedStringFactory(
     get_current_ClassDeclaration_SharedStringFactory());
 
@@ -1042,7 +1045,7 @@ use_old_ClassDeclaration_SharedStringFactory(
 declare function get_old_TypeAliasDeclaration_SharedStringRevertible():
     TypeOnly<old.SharedStringRevertible>;
 declare function use_current_TypeAliasDeclaration_SharedStringRevertible(
-    use: TypeOnly<current.SharedStringRevertible>);
+    use: TypeOnly<current.SharedStringRevertible>): void;
 use_current_TypeAliasDeclaration_SharedStringRevertible(
     get_old_TypeAliasDeclaration_SharedStringRevertible());
 
@@ -1054,7 +1057,7 @@ use_current_TypeAliasDeclaration_SharedStringRevertible(
 declare function get_current_TypeAliasDeclaration_SharedStringRevertible():
     TypeOnly<current.SharedStringRevertible>;
 declare function use_old_TypeAliasDeclaration_SharedStringRevertible(
-    use: TypeOnly<old.SharedStringRevertible>);
+    use: TypeOnly<old.SharedStringRevertible>): void;
 use_old_TypeAliasDeclaration_SharedStringRevertible(
     get_current_TypeAliasDeclaration_SharedStringRevertible());
 
@@ -1066,7 +1069,7 @@ use_old_TypeAliasDeclaration_SharedStringRevertible(
 declare function get_old_TypeAliasDeclaration_SharedStringSegment():
     TypeOnly<old.SharedStringSegment>;
 declare function use_current_TypeAliasDeclaration_SharedStringSegment(
-    use: TypeOnly<current.SharedStringSegment>);
+    use: TypeOnly<current.SharedStringSegment>): void;
 use_current_TypeAliasDeclaration_SharedStringSegment(
     get_old_TypeAliasDeclaration_SharedStringSegment());
 
@@ -1078,8 +1081,9 @@ use_current_TypeAliasDeclaration_SharedStringSegment(
 declare function get_current_TypeAliasDeclaration_SharedStringSegment():
     TypeOnly<current.SharedStringSegment>;
 declare function use_old_TypeAliasDeclaration_SharedStringSegment(
-    use: TypeOnly<old.SharedStringSegment>);
+    use: TypeOnly<old.SharedStringSegment>): void;
 use_old_TypeAliasDeclaration_SharedStringSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedStringSegment());
 
 /*
@@ -1090,7 +1094,7 @@ use_old_TypeAliasDeclaration_SharedStringSegment(
 declare function get_old_EnumDeclaration_Side():
     TypeOnly<old.Side>;
 declare function use_current_EnumDeclaration_Side(
-    use: TypeOnly<current.Side>);
+    use: TypeOnly<current.Side>): void;
 use_current_EnumDeclaration_Side(
     get_old_EnumDeclaration_Side());
 
@@ -1102,7 +1106,7 @@ use_current_EnumDeclaration_Side(
 declare function get_current_EnumDeclaration_Side():
     TypeOnly<current.Side>;
 declare function use_old_EnumDeclaration_Side(
-    use: TypeOnly<old.Side>);
+    use: TypeOnly<old.Side>): void;
 use_old_EnumDeclaration_Side(
     get_current_EnumDeclaration_Side());
 
@@ -1114,7 +1118,7 @@ use_old_EnumDeclaration_Side(
 declare function get_old_ClassDeclaration_SubSequence():
     TypeOnly<old.SubSequence<any>>;
 declare function use_current_ClassDeclaration_SubSequence(
-    use: TypeOnly<current.SubSequence<any>>);
+    use: TypeOnly<current.SubSequence<any>>): void;
 use_current_ClassDeclaration_SubSequence(
     get_old_ClassDeclaration_SubSequence());
 
@@ -1126,7 +1130,7 @@ use_current_ClassDeclaration_SubSequence(
 declare function get_current_ClassDeclaration_SubSequence():
     TypeOnly<current.SubSequence<any>>;
 declare function use_old_ClassDeclaration_SubSequence(
-    use: TypeOnly<old.SubSequence<any>>);
+    use: TypeOnly<old.SubSequence<any>>): void;
 use_old_ClassDeclaration_SubSequence(
     get_current_ClassDeclaration_SubSequence());
 
@@ -1138,7 +1142,7 @@ use_old_ClassDeclaration_SubSequence(
 declare function get_old_FunctionDeclaration_appendAddIntervalToRevertibles():
     TypeOnly<typeof old.appendAddIntervalToRevertibles>;
 declare function use_current_FunctionDeclaration_appendAddIntervalToRevertibles(
-    use: TypeOnly<typeof current.appendAddIntervalToRevertibles>);
+    use: TypeOnly<typeof current.appendAddIntervalToRevertibles>): void;
 use_current_FunctionDeclaration_appendAddIntervalToRevertibles(
     get_old_FunctionDeclaration_appendAddIntervalToRevertibles());
 
@@ -1150,7 +1154,7 @@ use_current_FunctionDeclaration_appendAddIntervalToRevertibles(
 declare function get_current_FunctionDeclaration_appendAddIntervalToRevertibles():
     TypeOnly<typeof current.appendAddIntervalToRevertibles>;
 declare function use_old_FunctionDeclaration_appendAddIntervalToRevertibles(
-    use: TypeOnly<typeof old.appendAddIntervalToRevertibles>);
+    use: TypeOnly<typeof old.appendAddIntervalToRevertibles>): void;
 use_old_FunctionDeclaration_appendAddIntervalToRevertibles(
     get_current_FunctionDeclaration_appendAddIntervalToRevertibles());
 
@@ -1162,7 +1166,7 @@ use_old_FunctionDeclaration_appendAddIntervalToRevertibles(
 declare function get_old_FunctionDeclaration_appendChangeIntervalToRevertibles():
     TypeOnly<typeof old.appendChangeIntervalToRevertibles>;
 declare function use_current_FunctionDeclaration_appendChangeIntervalToRevertibles(
-    use: TypeOnly<typeof current.appendChangeIntervalToRevertibles>);
+    use: TypeOnly<typeof current.appendChangeIntervalToRevertibles>): void;
 use_current_FunctionDeclaration_appendChangeIntervalToRevertibles(
     get_old_FunctionDeclaration_appendChangeIntervalToRevertibles());
 
@@ -1174,7 +1178,7 @@ use_current_FunctionDeclaration_appendChangeIntervalToRevertibles(
 declare function get_current_FunctionDeclaration_appendChangeIntervalToRevertibles():
     TypeOnly<typeof current.appendChangeIntervalToRevertibles>;
 declare function use_old_FunctionDeclaration_appendChangeIntervalToRevertibles(
-    use: TypeOnly<typeof old.appendChangeIntervalToRevertibles>);
+    use: TypeOnly<typeof old.appendChangeIntervalToRevertibles>): void;
 use_old_FunctionDeclaration_appendChangeIntervalToRevertibles(
     get_current_FunctionDeclaration_appendChangeIntervalToRevertibles());
 
@@ -1186,7 +1190,7 @@ use_old_FunctionDeclaration_appendChangeIntervalToRevertibles(
 declare function get_old_FunctionDeclaration_appendDeleteIntervalToRevertibles():
     TypeOnly<typeof old.appendDeleteIntervalToRevertibles>;
 declare function use_current_FunctionDeclaration_appendDeleteIntervalToRevertibles(
-    use: TypeOnly<typeof current.appendDeleteIntervalToRevertibles>);
+    use: TypeOnly<typeof current.appendDeleteIntervalToRevertibles>): void;
 use_current_FunctionDeclaration_appendDeleteIntervalToRevertibles(
     get_old_FunctionDeclaration_appendDeleteIntervalToRevertibles());
 
@@ -1198,7 +1202,7 @@ use_current_FunctionDeclaration_appendDeleteIntervalToRevertibles(
 declare function get_current_FunctionDeclaration_appendDeleteIntervalToRevertibles():
     TypeOnly<typeof current.appendDeleteIntervalToRevertibles>;
 declare function use_old_FunctionDeclaration_appendDeleteIntervalToRevertibles(
-    use: TypeOnly<typeof old.appendDeleteIntervalToRevertibles>);
+    use: TypeOnly<typeof old.appendDeleteIntervalToRevertibles>): void;
 use_old_FunctionDeclaration_appendDeleteIntervalToRevertibles(
     get_current_FunctionDeclaration_appendDeleteIntervalToRevertibles());
 
@@ -1210,7 +1214,7 @@ use_old_FunctionDeclaration_appendDeleteIntervalToRevertibles(
 declare function get_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles():
     TypeOnly<typeof old.appendIntervalPropertyChangedToRevertibles>;
 declare function use_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
-    use: TypeOnly<typeof current.appendIntervalPropertyChangedToRevertibles>);
+    use: TypeOnly<typeof current.appendIntervalPropertyChangedToRevertibles>): void;
 use_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
     get_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles());
 
@@ -1222,7 +1226,7 @@ use_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
 declare function get_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles():
     TypeOnly<typeof current.appendIntervalPropertyChangedToRevertibles>;
 declare function use_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
-    use: TypeOnly<typeof old.appendIntervalPropertyChangedToRevertibles>);
+    use: TypeOnly<typeof old.appendIntervalPropertyChangedToRevertibles>): void;
 use_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
     get_current_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles());
 
@@ -1234,7 +1238,7 @@ use_old_FunctionDeclaration_appendIntervalPropertyChangedToRevertibles(
 declare function get_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles():
     TypeOnly<typeof old.appendSharedStringDeltaToRevertibles>;
 declare function use_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
-    use: TypeOnly<typeof current.appendSharedStringDeltaToRevertibles>);
+    use: TypeOnly<typeof current.appendSharedStringDeltaToRevertibles>): void;
 use_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
     get_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles());
 
@@ -1246,7 +1250,7 @@ use_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
 declare function get_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles():
     TypeOnly<typeof current.appendSharedStringDeltaToRevertibles>;
 declare function use_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
-    use: TypeOnly<typeof old.appendSharedStringDeltaToRevertibles>);
+    use: TypeOnly<typeof old.appendSharedStringDeltaToRevertibles>): void;
 use_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
     get_current_FunctionDeclaration_appendSharedStringDeltaToRevertibles());
 
@@ -1258,7 +1262,7 @@ use_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
 declare function get_old_FunctionDeclaration_createEndpointInRangeIndex():
     TypeOnly<typeof old.createEndpointInRangeIndex>;
 declare function use_current_FunctionDeclaration_createEndpointInRangeIndex(
-    use: TypeOnly<typeof current.createEndpointInRangeIndex>);
+    use: TypeOnly<typeof current.createEndpointInRangeIndex>): void;
 use_current_FunctionDeclaration_createEndpointInRangeIndex(
     get_old_FunctionDeclaration_createEndpointInRangeIndex());
 
@@ -1270,7 +1274,7 @@ use_current_FunctionDeclaration_createEndpointInRangeIndex(
 declare function get_current_FunctionDeclaration_createEndpointInRangeIndex():
     TypeOnly<typeof current.createEndpointInRangeIndex>;
 declare function use_old_FunctionDeclaration_createEndpointInRangeIndex(
-    use: TypeOnly<typeof old.createEndpointInRangeIndex>);
+    use: TypeOnly<typeof old.createEndpointInRangeIndex>): void;
 use_old_FunctionDeclaration_createEndpointInRangeIndex(
     get_current_FunctionDeclaration_createEndpointInRangeIndex());
 
@@ -1282,7 +1286,7 @@ use_old_FunctionDeclaration_createEndpointInRangeIndex(
 declare function get_old_FunctionDeclaration_createEndpointIndex():
     TypeOnly<typeof old.createEndpointIndex>;
 declare function use_current_FunctionDeclaration_createEndpointIndex(
-    use: TypeOnly<typeof current.createEndpointIndex>);
+    use: TypeOnly<typeof current.createEndpointIndex>): void;
 use_current_FunctionDeclaration_createEndpointIndex(
     get_old_FunctionDeclaration_createEndpointIndex());
 
@@ -1294,7 +1298,7 @@ use_current_FunctionDeclaration_createEndpointIndex(
 declare function get_current_FunctionDeclaration_createEndpointIndex():
     TypeOnly<typeof current.createEndpointIndex>;
 declare function use_old_FunctionDeclaration_createEndpointIndex(
-    use: TypeOnly<typeof old.createEndpointIndex>);
+    use: TypeOnly<typeof old.createEndpointIndex>): void;
 use_old_FunctionDeclaration_createEndpointIndex(
     get_current_FunctionDeclaration_createEndpointIndex());
 
@@ -1306,7 +1310,7 @@ use_old_FunctionDeclaration_createEndpointIndex(
 declare function get_old_FunctionDeclaration_createIdIntervalIndex():
     TypeOnly<typeof old.createIdIntervalIndex>;
 declare function use_current_FunctionDeclaration_createIdIntervalIndex(
-    use: TypeOnly<typeof current.createIdIntervalIndex>);
+    use: TypeOnly<typeof current.createIdIntervalIndex>): void;
 use_current_FunctionDeclaration_createIdIntervalIndex(
     get_old_FunctionDeclaration_createIdIntervalIndex());
 
@@ -1318,7 +1322,7 @@ use_current_FunctionDeclaration_createIdIntervalIndex(
 declare function get_current_FunctionDeclaration_createIdIntervalIndex():
     TypeOnly<typeof current.createIdIntervalIndex>;
 declare function use_old_FunctionDeclaration_createIdIntervalIndex(
-    use: TypeOnly<typeof old.createIdIntervalIndex>);
+    use: TypeOnly<typeof old.createIdIntervalIndex>): void;
 use_old_FunctionDeclaration_createIdIntervalIndex(
     get_current_FunctionDeclaration_createIdIntervalIndex());
 
@@ -1330,7 +1334,7 @@ use_old_FunctionDeclaration_createIdIntervalIndex(
 declare function get_old_FunctionDeclaration_createOverlappingIntervalsIndex():
     TypeOnly<typeof old.createOverlappingIntervalsIndex>;
 declare function use_current_FunctionDeclaration_createOverlappingIntervalsIndex(
-    use: TypeOnly<typeof current.createOverlappingIntervalsIndex>);
+    use: TypeOnly<typeof current.createOverlappingIntervalsIndex>): void;
 use_current_FunctionDeclaration_createOverlappingIntervalsIndex(
     get_old_FunctionDeclaration_createOverlappingIntervalsIndex());
 
@@ -1342,7 +1346,7 @@ use_current_FunctionDeclaration_createOverlappingIntervalsIndex(
 declare function get_current_FunctionDeclaration_createOverlappingIntervalsIndex():
     TypeOnly<typeof current.createOverlappingIntervalsIndex>;
 declare function use_old_FunctionDeclaration_createOverlappingIntervalsIndex(
-    use: TypeOnly<typeof old.createOverlappingIntervalsIndex>);
+    use: TypeOnly<typeof old.createOverlappingIntervalsIndex>): void;
 use_old_FunctionDeclaration_createOverlappingIntervalsIndex(
     get_current_FunctionDeclaration_createOverlappingIntervalsIndex());
 
@@ -1354,7 +1358,7 @@ use_old_FunctionDeclaration_createOverlappingIntervalsIndex(
 declare function get_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex():
     TypeOnly<typeof old.createOverlappingSequenceIntervalsIndex>;
 declare function use_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
-    use: TypeOnly<typeof current.createOverlappingSequenceIntervalsIndex>);
+    use: TypeOnly<typeof current.createOverlappingSequenceIntervalsIndex>): void;
 use_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
     get_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex());
 
@@ -1366,7 +1370,7 @@ use_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
 declare function get_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex():
     TypeOnly<typeof current.createOverlappingSequenceIntervalsIndex>;
 declare function use_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
-    use: TypeOnly<typeof old.createOverlappingSequenceIntervalsIndex>);
+    use: TypeOnly<typeof old.createOverlappingSequenceIntervalsIndex>): void;
 use_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
     get_current_FunctionDeclaration_createOverlappingSequenceIntervalsIndex());
 
@@ -1378,7 +1382,7 @@ use_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
 declare function get_old_FunctionDeclaration_createStartpointInRangeIndex():
     TypeOnly<typeof old.createStartpointInRangeIndex>;
 declare function use_current_FunctionDeclaration_createStartpointInRangeIndex(
-    use: TypeOnly<typeof current.createStartpointInRangeIndex>);
+    use: TypeOnly<typeof current.createStartpointInRangeIndex>): void;
 use_current_FunctionDeclaration_createStartpointInRangeIndex(
     get_old_FunctionDeclaration_createStartpointInRangeIndex());
 
@@ -1390,7 +1394,7 @@ use_current_FunctionDeclaration_createStartpointInRangeIndex(
 declare function get_current_FunctionDeclaration_createStartpointInRangeIndex():
     TypeOnly<typeof current.createStartpointInRangeIndex>;
 declare function use_old_FunctionDeclaration_createStartpointInRangeIndex(
-    use: TypeOnly<typeof old.createStartpointInRangeIndex>);
+    use: TypeOnly<typeof old.createStartpointInRangeIndex>): void;
 use_old_FunctionDeclaration_createStartpointInRangeIndex(
     get_current_FunctionDeclaration_createStartpointInRangeIndex());
 
@@ -1402,7 +1406,7 @@ use_old_FunctionDeclaration_createStartpointInRangeIndex(
 declare function get_old_FunctionDeclaration_discardSharedStringRevertibles():
     TypeOnly<typeof old.discardSharedStringRevertibles>;
 declare function use_current_FunctionDeclaration_discardSharedStringRevertibles(
-    use: TypeOnly<typeof current.discardSharedStringRevertibles>);
+    use: TypeOnly<typeof current.discardSharedStringRevertibles>): void;
 use_current_FunctionDeclaration_discardSharedStringRevertibles(
     get_old_FunctionDeclaration_discardSharedStringRevertibles());
 
@@ -1414,7 +1418,7 @@ use_current_FunctionDeclaration_discardSharedStringRevertibles(
 declare function get_current_FunctionDeclaration_discardSharedStringRevertibles():
     TypeOnly<typeof current.discardSharedStringRevertibles>;
 declare function use_old_FunctionDeclaration_discardSharedStringRevertibles(
-    use: TypeOnly<typeof old.discardSharedStringRevertibles>);
+    use: TypeOnly<typeof old.discardSharedStringRevertibles>): void;
 use_old_FunctionDeclaration_discardSharedStringRevertibles(
     get_current_FunctionDeclaration_discardSharedStringRevertibles());
 
@@ -1426,7 +1430,7 @@ use_old_FunctionDeclaration_discardSharedStringRevertibles(
 declare function get_old_FunctionDeclaration_getTextAndMarkers():
     TypeOnly<typeof old.getTextAndMarkers>;
 declare function use_current_FunctionDeclaration_getTextAndMarkers(
-    use: TypeOnly<typeof current.getTextAndMarkers>);
+    use: TypeOnly<typeof current.getTextAndMarkers>): void;
 use_current_FunctionDeclaration_getTextAndMarkers(
     get_old_FunctionDeclaration_getTextAndMarkers());
 
@@ -1438,7 +1442,7 @@ use_current_FunctionDeclaration_getTextAndMarkers(
 declare function get_current_FunctionDeclaration_getTextAndMarkers():
     TypeOnly<typeof current.getTextAndMarkers>;
 declare function use_old_FunctionDeclaration_getTextAndMarkers(
-    use: TypeOnly<typeof old.getTextAndMarkers>);
+    use: TypeOnly<typeof old.getTextAndMarkers>): void;
 use_old_FunctionDeclaration_getTextAndMarkers(
     get_current_FunctionDeclaration_getTextAndMarkers());
 
@@ -1450,7 +1454,7 @@ use_old_FunctionDeclaration_getTextAndMarkers(
 declare function get_old_FunctionDeclaration_intervalLocatorFromEndpoint():
     TypeOnly<typeof old.intervalLocatorFromEndpoint>;
 declare function use_current_FunctionDeclaration_intervalLocatorFromEndpoint(
-    use: TypeOnly<typeof current.intervalLocatorFromEndpoint>);
+    use: TypeOnly<typeof current.intervalLocatorFromEndpoint>): void;
 use_current_FunctionDeclaration_intervalLocatorFromEndpoint(
     get_old_FunctionDeclaration_intervalLocatorFromEndpoint());
 
@@ -1462,7 +1466,7 @@ use_current_FunctionDeclaration_intervalLocatorFromEndpoint(
 declare function get_current_FunctionDeclaration_intervalLocatorFromEndpoint():
     TypeOnly<typeof current.intervalLocatorFromEndpoint>;
 declare function use_old_FunctionDeclaration_intervalLocatorFromEndpoint(
-    use: TypeOnly<typeof old.intervalLocatorFromEndpoint>);
+    use: TypeOnly<typeof old.intervalLocatorFromEndpoint>): void;
 use_old_FunctionDeclaration_intervalLocatorFromEndpoint(
     get_current_FunctionDeclaration_intervalLocatorFromEndpoint());
 
@@ -1474,7 +1478,7 @@ use_old_FunctionDeclaration_intervalLocatorFromEndpoint(
 declare function get_old_FunctionDeclaration_revertSharedStringRevertibles():
     TypeOnly<typeof old.revertSharedStringRevertibles>;
 declare function use_current_FunctionDeclaration_revertSharedStringRevertibles(
-    use: TypeOnly<typeof current.revertSharedStringRevertibles>);
+    use: TypeOnly<typeof current.revertSharedStringRevertibles>): void;
 use_current_FunctionDeclaration_revertSharedStringRevertibles(
     get_old_FunctionDeclaration_revertSharedStringRevertibles());
 
@@ -1486,7 +1490,7 @@ use_current_FunctionDeclaration_revertSharedStringRevertibles(
 declare function get_current_FunctionDeclaration_revertSharedStringRevertibles():
     TypeOnly<typeof current.revertSharedStringRevertibles>;
 declare function use_old_FunctionDeclaration_revertSharedStringRevertibles(
-    use: TypeOnly<typeof old.revertSharedStringRevertibles>);
+    use: TypeOnly<typeof old.revertSharedStringRevertibles>): void;
 use_old_FunctionDeclaration_revertSharedStringRevertibles(
     get_current_FunctionDeclaration_revertSharedStringRevertibles());
 
@@ -1498,7 +1502,7 @@ use_old_FunctionDeclaration_revertSharedStringRevertibles(
 declare function get_old_VariableDeclaration_sequenceIntervalHelpers():
     TypeOnly<typeof old.sequenceIntervalHelpers>;
 declare function use_current_VariableDeclaration_sequenceIntervalHelpers(
-    use: TypeOnly<typeof current.sequenceIntervalHelpers>);
+    use: TypeOnly<typeof current.sequenceIntervalHelpers>): void;
 use_current_VariableDeclaration_sequenceIntervalHelpers(
     get_old_VariableDeclaration_sequenceIntervalHelpers());
 
@@ -1510,6 +1514,6 @@ use_current_VariableDeclaration_sequenceIntervalHelpers(
 declare function get_current_VariableDeclaration_sequenceIntervalHelpers():
     TypeOnly<typeof current.sequenceIntervalHelpers>;
 declare function use_old_VariableDeclaration_sequenceIntervalHelpers(
-    use: TypeOnly<typeof old.sequenceIntervalHelpers>);
+    use: TypeOnly<typeof old.sequenceIntervalHelpers>): void;
 use_old_VariableDeclaration_sequenceIntervalHelpers(
     get_current_VariableDeclaration_sequenceIntervalHelpers());

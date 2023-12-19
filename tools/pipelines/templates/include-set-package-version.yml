@@ -118,6 +118,7 @@ steps:
 - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
   - task: Bash@3
     displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
+    continueOnError: false
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}

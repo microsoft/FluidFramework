@@ -178,7 +178,12 @@ export abstract class LeafTask extends Task {
 			console.error(this.getExecErrors(ret));
 			return this.execDone(startTime, BuildResult.Failed);
 		}
-		if (ret.stderr) {
+		if (
+			ret.stderr &&
+			// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
+			// Otherwise fluid-build spams warnings for all tsc-multi tasks.
+			!ret.stderr.includes("Found 0 errors")
+		) {
 			// no error code but still error messages, treat them is non fatal warnings
 			console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
 			console.warn(this.getExecErrors(ret));
@@ -364,6 +369,9 @@ export abstract class LeafTask extends Task {
 	}
 
 	protected getPackageFileFullPath(filePath: string): string {
+		if (path.isAbsolute(filePath)) {
+			return filePath;
+		}
 		return path.join(this.node.pkg.directory, filePath);
 	}
 
@@ -534,8 +542,15 @@ export class UnknownLeafTask extends LeafTask {
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	protected abstract getInputFiles(): Promise<string[]>;
 	protected abstract getOutputFiles(): Promise<string[]>;
+	protected get useHashes(): boolean {
+		return false;
+	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
+		if (this.useHashes) {
+			return this.getHashDoneFileContent();
+		}
+
 		// Gather the file information
 		try {
 			const srcFiles = await this.getInputFiles();
@@ -554,6 +569,33 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
+			return undefined;
+		}
+	}
+
+	private async getHashDoneFileContent(): Promise<string | undefined> {
+		const mapHash = async (name: string) => {
+			const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				this.getPackageFileFullPath(name),
+			);
+			return { name, hash };
+		};
+
+		try {
+			const srcFiles = await this.getInputFiles();
+			const dstFiles = await this.getOutputFiles();
+			const srcHashesP = Promise.all(srcFiles.map(mapHash));
+			const dstHashesP = Promise.all(dstFiles.map(mapHash));
+
+			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+			const output = JSON.stringify({
+				srcHashes,
+				dstHashes,
+			});
+			return output;
+		} catch (e: any) {
+			this.traceError(`error calculating file hashes: ${e.message}`);
+			this.traceTrigger("failed to get file hash");
 			return undefined;
 		}
 	}

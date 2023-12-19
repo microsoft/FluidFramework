@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { InventoryListAppModel } from "./appModel";
@@ -17,6 +15,9 @@ import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
 export const newTreeInventoryListId = "new-tree-inventory-list";
 
+/**
+ * @internal
+ */
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(
@@ -45,15 +46,13 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		// eslint-disable-next-line import/no-deprecated
-		const legacyTreeInventoryList = await requestFluidObject<IInventoryList>(
-			await runtime.getRootDataStore(legacyTreeInventoryListId),
-			"",
+		const legacyTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
+			runtime,
+			legacyTreeInventoryListId,
 		);
-		// eslint-disable-next-line import/no-deprecated
-		const newTreeInventoryList = await requestFluidObject<IInventoryList>(
-			await runtime.getRootDataStore(newTreeInventoryListId),
-			"",
+		const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
+			runtime,
+			newTreeInventoryListId,
 		);
 		return new InventoryListAppModel(legacyTreeInventoryList, newTreeInventoryList);
 	}

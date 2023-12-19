@@ -22,7 +22,7 @@ import {
 	AsyncReducer as Reducer,
 	SaveInfo,
 	saveOpsToFile,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -35,12 +35,18 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
 
+/**
+ * @internal
+ */
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
 	containerRuntime: MockContainerRuntimeForReconnection;
 }
 
+/**
+ * @internal
+ */
 export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
@@ -59,37 +65,61 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	isDetached: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface ClientSpec {
 	clientId: string;
 }
 
+/**
+ * @internal
+ */
 export interface BaseOperation {
 	type: number | string;
 }
 
+/**
+ * @internal
+ */
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface Attach {
 	type: "attach";
 }
 
+/**
+ * @internal
+ */
 export interface TriggerRebase {
 	type: "rebase";
 }
 
+/**
+ * @internal
+ */
 export interface AddClient {
 	type: "addClient";
 	addedClientId: string;
 }
 
+/**
+ * @internal
+ */
 export interface Synchronize {
 	type: "synchronize";
 	clients?: string[];
 }
 
+/**
+ * @internal
+ */
 interface HasWorkloadName {
 	workloadName: string;
 }
@@ -135,11 +165,11 @@ function getSaveInfo(
  * type Operation = InsertOperation | RemoveOperation;
  * ```
  *
- * It would then typically use utilities from \@fluid-internal/stochastic-test-utils to write a generator
+ * It would then typically use utilities from \@fluid-private/stochastic-test-utils to write a generator
  * for inserting/removing content, and a reducer for interpreting the serializable operations in terms of
  * SimpleSharedString's public API.
  *
- * See \@fluid-internal/stochastic-test-utils's README for more details on this step.
+ * See \@fluid-private/stochastic-test-utils's README for more details on this step.
  *
  * Then, it could define a model like so:
  * ```typescript
@@ -153,7 +183,9 @@ function getSaveInfo(
  *     validateConsistency: (a, b) => { assert.equal(a.getText(), b.getText()); }
  * }
  * ```
- * This model can be used directly to create a suite of fuzz tests with {@link createDDSFuzzSuite}
+ * This model can be used directly to create a suite of fuzz tests with {@link (createDDSFuzzSuite:function)}
+ *
+ * @internal
  */
 export interface DDSFuzzModel<
 	TChannelFactory extends IChannelFactory,
@@ -166,7 +198,7 @@ export interface DDSFuzzModel<
 	 * For example, SharedString might fuzz test several different workloads--some involving intervals,
 	 * some without, some that never delete text, etc.
 	 * This name should also be relatively friendly for file system; if the "save to disk" option of
-	 * {@link createDDSFuzzSuite} is enabled, it will be kebab cased for failure files.
+	 * {@link (createDDSFuzzSuite:function)} is enabled, it will be kebab cased for failure files.
 	 */
 	workloadName: string;
 
@@ -208,6 +240,9 @@ export interface DDSFuzzModel<
 	minimizationTransforms?: MinimizationTransform<TOperation>[];
 }
 
+/**
+ * @internal
+ */
 export interface DDSFuzzHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
@@ -225,6 +260,9 @@ export interface DDSFuzzHarnessEvents {
 	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
 }
 
+/**
+ * @internal
+ */
 export interface DDSFuzzSuiteOptions {
 	/**
 	 * Number of tests to generate for correctness modes (which are run in the PR gate).
@@ -357,7 +395,7 @@ export interface DDSFuzzSuiteOptions {
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.only` syntax works. See {@link createDDSFuzzSuite.only}.
+	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createDDSFuzzSuite:namespace).only}.
 	 */
 	only: Iterable<number>;
 
@@ -372,7 +410,7 @@ export interface DDSFuzzSuiteOptions {
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link createDDSFuzzSuite.skip}.
+	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link (createDDSFuzzSuite:namespace).skip}.
 	 */
 	skip: Iterable<number>;
 
@@ -385,7 +423,7 @@ export interface DDSFuzzSuiteOptions {
 	saveFailures: false | { directory: string };
 
 	/**
-	 * Options to be provided to the underlying container runtimes {@link IMockContainerRuntimeOptions}.
+	 * Options to be provided to the underlying container runtimes {@link @fluidframework/test-runtime-utils#IMockContainerRuntimeOptions}.
 	 * By default nothing will be provided, which means that the runtimes will:
 	 * - use FlushMode.Immediate, which means that all ops will be sent as soon as they are produced,
 	 * therefore all batches have a single op.
@@ -407,6 +445,9 @@ export interface DDSFuzzSuiteOptions {
 	skipMinimization?: boolean;
 }
 
+/**
+ * @internal
+ */
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
@@ -811,7 +852,7 @@ const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clien
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
- * and {@link DDSFuzzTestState.channel}.
+ * and {@link  @fluid-private/test-dds-utils#DDSFuzzTestState.channel}.
  *
  * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -834,10 +875,9 @@ export function mixinClientSelection<
 			// 2. Make it available to the subsequent reducer logic we're going to inject
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
-			const baseOp = await baseGenerator({
-				...state,
-				client,
-			});
+			const baseOp = await runInStateWithClient(state, client, async () =>
+				baseGenerator(state),
+			);
 			return baseOp === done
 				? done
 				: {
@@ -851,13 +891,37 @@ export function mixinClientSelection<
 		assert(isClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.channel.id === operation.clientId);
 		assert(client !== undefined);
-		return model.reducer({ ...state, client }, operation as TOperation);
+		await runInStateWithClient(state, client, async () =>
+			model.reducer(state, operation as TOperation),
+		);
 	};
 	return {
 		...model,
 		generatorFactory,
 		reducer,
 	};
+}
+
+/**
+ * This modifies the value of "client" while callback is running, then restores it.
+ * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
+ *
+ * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
+ */
+async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFactory>, Result>(
+	state: TState,
+	client: TState["client"],
+	callback: (state: TState) => Promise<Result>,
+): Promise<Result> {
+	const oldClient = state.client;
+	state.client = client;
+	try {
+		return await callback(state);
+	} finally {
+		// This code is explicitly trying to "update" to the old value.
+		// eslint-disable-next-line require-atomic-updates
+		state.client = oldClient;
+	}
 }
 
 function makeUnreachableCodePathProxy<T extends object>(name: string): T {
@@ -1035,10 +1099,16 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			if (!shouldMinimize) {
 				throw error;
 			}
-
-			const operations = JSON.parse(
-				readFileSync(saveInfo.filepath).toString(),
-			) as TOperation[];
+			let file: Buffer;
+			try {
+				file = readFileSync(saveInfo.filepath);
+			} catch {
+				// File could not be read and likely does not exist.
+				// Test may have failed outside of the fuzz test portion (on setup or teardown).
+				// Throw original error that made test fail.
+				throw error;
+			}
+			const operations = JSON.parse(file.toString()) as TOperation[];
 			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
 
 			const minimized = await minimizer.minimize();
@@ -1059,6 +1129,11 @@ function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOpt
 	return options.only instanceof Set && options.skip instanceof Set;
 }
 
+/**
+ * Performs the test again to verify if the DDS still fails with the same error message.
+ *
+ * @internal
+ */
 export async function replayTest<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
@@ -1089,6 +1164,7 @@ export async function replayTest<
 
 /**
  * Creates a suite of eventual consistency tests for a particular DDS model.
+ * @internal
  */
 export function createDDSFuzzSuite<
 	TChannelFactory extends IChannelFactory,
@@ -1168,43 +1244,53 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	);
 
 /**
- * Runs only the provided seeds.
- *
- * @example
- *
- * ```typescript
- * // Runs only seed 42 for the given model.
- * createDDSFuzzSuite.only(42)(model);
- * ```
+ * {@inheritDoc (createDDSFuzzSuite:function)}
+ * @internal
  */
-createDDSFuzzSuite.only =
-	(...seeds: number[]) =>
-	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
-		providedOptions?: Partial<DDSFuzzSuiteOptions>,
-	): void =>
-		createDDSFuzzSuite(ddsModel, {
-			...providedOptions,
-			only: [...seeds, ...(providedOptions?.only ?? [])],
-		});
+// Explicit usage of namespace needed for api-extractor.
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace createDDSFuzzSuite {
+	/**
+	 * Runs only the provided seeds.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * // Runs only seed 42 for the given model.
+	 * createDDSFuzzSuite.only(42)(model);
+	 * ```
+	 * @internal
+	 */
+	export const only =
+		(...seeds: number[]) =>
+		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+			providedOptions?: Partial<DDSFuzzSuiteOptions>,
+		): void =>
+			createDDSFuzzSuite(ddsModel, {
+				...providedOptions,
+				only: [...seeds, ...(providedOptions?.only ?? [])],
+			});
 
-/**
- * Skips the provided seeds.
- *
- * @example
- *
- * ```typescript
- * // Skips seed 42 for the given model.
- * createDDSFuzzSuite.skip(42)(model);
- * ```
- */
-createDDSFuzzSuite.skip =
-	(...seeds: number[]) =>
-	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
-		providedOptions?: Partial<DDSFuzzSuiteOptions>,
-	): void =>
-		createDDSFuzzSuite(ddsModel, {
-			...providedOptions,
-			skip: [...seeds, ...(providedOptions?.skip ?? [])],
-		});
+	/**
+	 * Skips the provided seeds.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * // Skips seed 42 for the given model.
+	 * createDDSFuzzSuite.skip(42)(model);
+	 * ```
+	 * @internal
+	 */
+	export const skip =
+		(...seeds: number[]) =>
+		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+			providedOptions?: Partial<DDSFuzzSuiteOptions>,
+		): void =>
+			createDDSFuzzSuite(ddsModel, {
+				...providedOptions,
+				skip: [...seeds, ...(providedOptions?.skip ?? [])],
+			});
+}

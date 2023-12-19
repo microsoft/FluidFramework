@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { describeLoaderCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
-describeLoaderCompat("FlowDocument", (getTestObjectProvider) => {
+describeCompat("FlowDocument", "LoaderCompat", (getTestObjectProvider) => {
 	beforeEach(async () => {});
 });

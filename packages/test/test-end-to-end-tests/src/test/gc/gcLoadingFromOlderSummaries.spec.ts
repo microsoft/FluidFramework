@@ -8,7 +8,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
 	ITestContainerConfig,
@@ -18,10 +17,10 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -30,7 +29,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * summary or an older summary. When a summarizer loads from an older summary, it gets the ack for newer summaries and
  * refreshes its state from the newer summary. These tests validates that the GC state is correctly refreshed.
  */
-describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
+describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;
@@ -81,10 +80,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(testConfig);
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(
-			mainContainer,
-			"default",
-		);
+		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		containerRuntime = defaultDataStore._context.containerRuntime as IContainerRuntime;
 
 		// Create data store B and mark it referenced. This will be used to manage reference of another data store.

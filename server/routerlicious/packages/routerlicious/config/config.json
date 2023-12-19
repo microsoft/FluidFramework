@@ -7,6 +7,17 @@
 		"timestamp": true,
 		"label": "winston"
 	},
+	"config": {
+		"configDumpEnabled": false,
+		"secretNamesToRedactInConfigDump": [
+			"mongo.globalDbEndpoint",
+			"mongo.operationsDbEndpoint",
+			"redis.pass",
+			"redisForTenantCache.pass",
+			"redis2.pass",
+			"redisForThrottling.pass"
+		]
+	},
 	"lumberjack": {
 		"options": {
 			"enableGlobalTelemetryContext": true,
@@ -60,7 +71,7 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"checkpointsTTLInSeconds": 864000,
+		"checkpointsTTLInSeconds": -1,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
 	},
@@ -124,10 +135,56 @@
 			"enable": true
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
-		"useNodeCluster": false
+		"useNodeCluster": false,
+		"enableLatencyMetric": false
 	},
 	"riddler": {
 		"useNodeCluster": false
+	},
+	"nexus": {
+		"kafkaClientId": "nexus",
+		"maxMessageSize": "16KB",
+		"verifyMaxMessageSize": false,
+		"maxNumberOfClientsPerDocument": 1000000,
+		"numberOfMessagesPerTrace": 100,
+		"sessionStickinessDurationMs": 3600000,
+		"enableConnectionCountLogging": false,
+		"throttling": {
+			"socketConnectionsPerTenant": "disabled",
+			"socketConnectionsPerCluster": "disabled",
+			"submitOps": "disabled",
+			"submitSignal": "disabled"
+		},
+		"topic": "rawdeltas",
+		"bucket": "snapshots",
+		"restJsonSize": "50mb",
+		"key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+		"tenants": [
+			{
+				"id": "fluid",
+				"key": "create-new-tenants-if-going-to-production"
+			},
+			{
+				"id": "github",
+				"key": "create-new-tenants-if-going-to-production"
+			},
+			{
+				"id": "local",
+				"key": "create-new-tenants-if-going-to-production"
+			}
+		],
+		"socketIoAdapter": {
+			"enableCustomSocketIoAdapter": true,
+			"shouldDisableDefaultNamespace": false
+		},
+		"enforceServerGeneratedDocumentId": false,
+		"socketIo": {
+			"perMessageDeflate": true
+		},
+		"jwtTokenCache": {
+			"enable": true
+		},
+		"getDeltasRequestMaxOpsRange": 2000
 	},
 	"client": {
 		"type": "browser",
@@ -267,7 +324,7 @@
 	},
 	"worker": {
 		"alfredUrl": "http://alfred:3000",
-		"deltaStreamUrl": "http://localhost:3003",
+		"deltaStreamUrl": "http://localhost:3002",
 		"serverUrl": "http://localhost:3003",
 		"blobStorageUrl": "http://localhost:3001",
 		"internalBlobStorageUrl": "http://historian:3000",

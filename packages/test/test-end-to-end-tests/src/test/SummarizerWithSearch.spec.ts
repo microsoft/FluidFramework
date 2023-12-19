@@ -21,7 +21,7 @@ import {
 	neverCancelledSummaryToken,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
@@ -31,8 +31,7 @@ import {
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
 	wrapDocumentServiceFactory,
@@ -40,7 +39,7 @@ import {
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 interface ProvideSearchContent {
@@ -116,12 +115,17 @@ async function loadSummarizer(
 		);
 	});
 
-	const defaultDataStore = await requestFluidObject<TestDataObject1>(
-		summarizerContainer,
-		"default",
-	);
+	// entryPoint of a summarizer container is the Summarizer object
+	const summarizer = await summarizerContainer.getEntryPoint();
+	// The runtime prop is private to the Summarizer class
+	const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint("default");
+	if (entryPoint === undefined) {
+		throw new Error("default dataStore must exist");
+	}
 	return {
-		containerRuntime: defaultDataStore._context.containerRuntime as ContainerRuntime,
+		containerRuntime,
+		entryPoint: entryPoint.get(),
 		summaryCollection,
 	};
 }
@@ -198,10 +202,8 @@ class TestDataObject1 extends DataObject implements SearchContent {
 		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 		this.root.set(this.matrixKey, sharedMatrix.handle);
 
-		const dsFactory2 = await requestFluidObject<TestDataObject2>(
-			await this._context.containerRuntime.createDataStore(TestDataObjectType2),
-			"",
-		);
+		const dataStore = await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+		const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
 		this.root.set("dsFactory2", dsFactory2.handle);
 
 		const counter = SharedCounter.create(this.runtime, this.counterKey);
@@ -227,7 +229,7 @@ class TestDataObject1 extends DataObject implements SearchContent {
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider) => {
+describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataStoreFactory1 = new DataObjectFactory(
 		TestDataObjectType1,
@@ -246,13 +248,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		createDataStoreRuntime(),
 	);
 	const runtimeOptions: IContainerRuntimeOptions = {
-		summaryOptions: {
-			summaryConfigOverrides: { state: "disabled" },
-		},
 		gcOptions: { gcAllowed: true },
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
@@ -260,7 +257,6 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory1,
 		registryEntries: registryStoreEntries,
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});
 	const logger = createChildLogger();
@@ -356,7 +352,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			mainContainer = await createContainer();
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.
-			mainDataStore = await requestFluidObject<TestDataObject1>(mainContainer, "default");
+			mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject1;
 			mainDataStore._root.set("anytest", "anyvalue");
 			mainContainerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 			await waitForContainerConnection(mainContainer);
@@ -377,10 +373,9 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			});
 			assert(result.stage === "submit", "The summary was not submitted");
 			await waitForSummaryOp(summarizerClient.containerRuntime);
-			await requestFluidObject<TestDataObject2>(
-				await summarizerClient.containerRuntime.createDataStore(TestDataObjectType2),
-				"",
-			);
+			const dataStore =
+				await summarizerClient.containerRuntime.createDataStore(TestDataObjectType2);
+			await dataStore.entryPoint.get();
 			// Wait for the above summary to be ack'd.
 			const ackedSummary =
 				await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
@@ -421,10 +416,9 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 
 			await waitForSummaryOp(summarizerClient2.containerRuntime);
 
-			await requestFluidObject<TestDataObject2>(
-				await summarizerClient2.containerRuntime.createDataStore(TestDataObjectType2),
-				"",
-			);
+			const dataStore =
+				await summarizerClient2.containerRuntime.createDataStore(TestDataObjectType2);
+			await dataStore.entryPoint.get();
 
 			// Wait for the above summary to be ack'd.
 			const ackedSummary =
@@ -451,11 +445,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			);
 
 			// Create a second data store.
-			const ds2 = await requestFluidObject<TestDataObject2>(
-				await mainContainerRuntime.createDataStore(TestDataObjectType2),
-				"",
-			);
-			mainDataStore._root.set("dataStore2", ds2.handle);
+			const ds2 = await mainContainerRuntime.createDataStore(TestDataObjectType2);
+			mainDataStore._root.set("dataStore2", ds2.entryPoint);
 
 			await provider.ensureSynchronized();
 
@@ -481,10 +472,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			// Before refresh is called, request the second data store in the summarizer. This will create summarizer
 			// nodes for its child DDSes. The data store's summarizer node should update the pending used routes
 			// of the child's summarizer node.
-			const ds2MainDataStore = await requestFluidObject<TestDataObject1>(
-				summarizer2.containerRuntime,
-				"default",
-			);
+			const ds2MainDataStore = (await summarizer2.entryPoint) as TestDataObject1;
 			const ds2MainDataStoreHandle =
 				ds2MainDataStore._root.get<IFluidHandle<TestDataObject2>>("dataStore2");
 			assert(

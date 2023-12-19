@@ -123,9 +123,9 @@ USAGE
     | -f | ]
 
 FLAGS
-  -D, --excludeHandler=<value>...  Exclude handler by name. Can be specified multiple times to exclude multiple
+  -D, --excludeHandler=<value>...  Exclude policy handler by name. Can be specified multiple times to exclude multiple
                                    handlers.
-  -d, --handler=<value>            Filter handler names by <regex>.
+  -d, --handler=<value>            Filter policy handler names by <regex>.
   -e, --exclusions=<value>         Path to the exclusions.json file.
   -f, --fix                        Fix errors if possible.
   -p, --path=<value>               Filter file paths by <regex>.

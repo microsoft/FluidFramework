@@ -56,14 +56,9 @@ describe("client.applyMsg", () => {
 				case 2:
 				case 3: {
 					const pos2 = Math.max(Math.floor((len - pos1) / 3) - imod6 + pos1, pos1 + 1);
-					const op = client.annotateRangeLocal(
-						pos1,
-						pos2,
-						{
-							foo: `${i}`,
-						},
-						undefined,
-					);
+					const op = client.annotateRangeLocal(pos1, pos2, {
+						foo: `${i}`,
+					});
 					const msg = client.makeOpMessage(op, i + 1);
 					changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
 					break;
@@ -148,7 +143,7 @@ describe("client.applyMsg", () => {
 		const props = {
 			foo: "bar",
 		};
-		const op = client.annotateRangeLocal(0, 1, props, undefined);
+		const op = client.annotateRangeLocal(0, 1, props);
 
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
@@ -167,7 +162,7 @@ describe("client.applyMsg", () => {
 			foo: "bar",
 		};
 
-		const annotateOp = client.annotateRangeLocal(start, end, props, undefined);
+		const annotateOp = client.annotateRangeLocal(start, end, props);
 
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
@@ -196,7 +191,7 @@ describe("client.applyMsg", () => {
 				end: annotateEnd,
 				foo: "bar",
 			};
-			const annotateOp = client.annotateRangeLocal(0, annotateEnd, props, undefined);
+			const annotateOp = client.annotateRangeLocal(0, annotateEnd, props);
 
 			messages.push(client.makeOpMessage(annotateOp, ++sequenceNumber));
 
@@ -492,12 +487,7 @@ describe("client.applyMsg", () => {
 		const insertOp = clientA.makeOpMessage(clientA.insertTextLocal(0, "AAA"), ++seq);
 		[clientA, clientB].map((c) => c.applyMsg(insertOp));
 
-		const annotateOp = clientA.annotateRangeLocal(
-			0,
-			clientA.getLength(),
-			{ client: "A" },
-			undefined,
-		)!;
+		const annotateOp = clientA.annotateRangeLocal(0, clientA.getLength(), { client: "A" })!;
 		const seg = clientA.peekPendingSegmentGroups()!;
 
 		const removeOp = clientB.makeOpMessage(

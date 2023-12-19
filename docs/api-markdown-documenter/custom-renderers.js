@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const {
-	renderNodeAsHtml,
-	renderNodesAsHtml,
-	renderNodesAsMarkdown,
-} = require("@fluid-tools/api-markdown-documenter");
+const { HtmlRenderer, MarkdownRenderer } = require("@fluid-tools/api-markdown-documenter");
 
 /**
  * Renders an {@link @fluid-tools/api-markdown-documenter#AlertNode} using Hugo syntax.
@@ -25,7 +21,7 @@ function renderAlertNode(alertNode, writer, context) {
 		} %}}`,
 	);
 
-	renderNodesAsMarkdown(alertNode.children, writer, context);
+	MarkdownRenderer.renderNodes(alertNode.children, writer, context);
 	writer.ensureNewLine();
 
 	writer.writeLine("{{% /callout %}}");
@@ -44,7 +40,7 @@ function renderBlockQuoteNode(blockQuoteNode, writer, context) {
 
 	writer.writeLine("{{% callout note %}}");
 
-	renderNodesAsMarkdown(blockQuoteNode.children, writer, context);
+	MarkdownRenderer.renderNodes(blockQuoteNode.children, writer, context);
 	writer.ensureNewLine();
 
 	writer.writeLine("{{% /callout %}}");
@@ -71,7 +67,7 @@ function renderTableNode(tableNode, writer, context) {
 		writer.writeLine("<thead>");
 		writer.increaseIndent();
 		// Render header row as HTML, since we have opted to render the entire table as HTML
-		renderNodeAsHtml(tableNode.headerRow, writer, childContext);
+		HtmlRenderer.renderNode(tableNode.headerRow, writer, childContext);
 		writer.ensureNewLine(); // Ensure line break header row contents
 		writer.decreaseIndent();
 		writer.writeLine("</thead>");
@@ -82,7 +78,7 @@ function renderTableNode(tableNode, writer, context) {
 		writer.writeLine("<tbody>");
 		writer.increaseIndent();
 		// Render body rows as HTML, since we have opted to render the entire table as HTML
-		renderNodesAsHtml(tableNode.children, writer, childContext);
+		HtmlRenderer.renderNodes(tableNode.children, writer, childContext);
 		writer.decreaseIndent();
 		writer.writeLine("</tbody>");
 	}

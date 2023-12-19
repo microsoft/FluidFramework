@@ -10,27 +10,32 @@ import {
 } from "@fluidframework/driver-definitions";
 
 /**
- * @public
+ * Types of test drivers.
+ * @internal
  */
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 /**
- * @public
+ * Types of Routerlicious endpoints.
+ * @internal
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 /**
- * @public
+ * Types of Odsp endpoints.
+ * @internal
  */
 export type OdspEndpoint = "odsp" | "odsp-df";
 
 /**
- * @public
+ * Types of Driver endpoints.
+ * @internal
  */
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
 
 /**
- * @public
+ * Base interface for test drivers.
+ * @internal
  */
 export interface ITestDriver {
 	/**
@@ -107,8 +112,7 @@ export interface ITestDriver {
 /**
  * Extension of ITelemetryBaseLogger with support for flushing
  * all buffered logs that have not yet been fully processed (e.g. uploaded)
- *
- * @public
+ * @internal
  */
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
 	/**

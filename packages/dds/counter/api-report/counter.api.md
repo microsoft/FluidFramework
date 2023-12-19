@@ -15,33 +15,30 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @alpha
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     increment(incrementAmount: number): void;
     value: number;
 }
 
-// @public
+// @alpha
 export interface ISharedCounterEvents extends ISharedObjectEvents {
     // @eventProperty
     (event: "incremented", listener: (incrementAmount: number, newValue: number) => void): any;
 }
 
-// @public
+// @alpha
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // @internal (undocumented)
+    // (undocumented)
     protected applyStashedOp(op: unknown): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter;
     static getFactory(): IChannelFactory;
     increment(incrementAmount: number): void;
-    // @internal (undocumented)
+    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // @internal
     protected onDisconnect(): void;
-    // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     get value(): number;
 }

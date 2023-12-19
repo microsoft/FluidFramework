@@ -151,8 +151,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
  * @param setInterceptionCallback - The interception callback to be called
  *
  * @returns A new IDirectory object that intercepts the set method and calls the setInterceptionCallback.
- *
- * @public
+ * @internal
  */
 export function createDirectoryWithInterception<T extends IDirectory>(
 	baseDirectory: T,

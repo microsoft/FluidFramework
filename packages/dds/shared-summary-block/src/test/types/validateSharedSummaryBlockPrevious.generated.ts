@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ISharedSummaryBlock():
     TypeOnly<old.ISharedSummaryBlock>;
 declare function use_current_InterfaceDeclaration_ISharedSummaryBlock(
-    use: TypeOnly<current.ISharedSummaryBlock>);
+    use: TypeOnly<current.ISharedSummaryBlock>): void;
 use_current_InterfaceDeclaration_ISharedSummaryBlock(
     get_old_InterfaceDeclaration_ISharedSummaryBlock());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ISharedSummaryBlock(
 declare function get_current_InterfaceDeclaration_ISharedSummaryBlock():
     TypeOnly<current.ISharedSummaryBlock>;
 declare function use_old_InterfaceDeclaration_ISharedSummaryBlock(
-    use: TypeOnly<old.ISharedSummaryBlock>);
+    use: TypeOnly<old.ISharedSummaryBlock>): void;
 use_old_InterfaceDeclaration_ISharedSummaryBlock(
     get_current_InterfaceDeclaration_ISharedSummaryBlock());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ISharedSummaryBlock(
 declare function get_old_ClassDeclaration_SharedSummaryBlock():
     TypeOnly<old.SharedSummaryBlock>;
 declare function use_current_ClassDeclaration_SharedSummaryBlock(
-    use: TypeOnly<current.SharedSummaryBlock>);
+    use: TypeOnly<current.SharedSummaryBlock>): void;
 use_current_ClassDeclaration_SharedSummaryBlock(
     get_old_ClassDeclaration_SharedSummaryBlock());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_SharedSummaryBlock(
 declare function get_current_ClassDeclaration_SharedSummaryBlock():
     TypeOnly<current.SharedSummaryBlock>;
 declare function use_old_ClassDeclaration_SharedSummaryBlock(
-    use: TypeOnly<old.SharedSummaryBlock>);
+    use: TypeOnly<old.SharedSummaryBlock>): void;
 use_old_ClassDeclaration_SharedSummaryBlock(
     get_current_ClassDeclaration_SharedSummaryBlock());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_SharedSummaryBlock(
 declare function get_old_ClassDeclaration_SharedSummaryBlockFactory():
     TypeOnly<old.SharedSummaryBlockFactory>;
 declare function use_current_ClassDeclaration_SharedSummaryBlockFactory(
-    use: TypeOnly<current.SharedSummaryBlockFactory>);
+    use: TypeOnly<current.SharedSummaryBlockFactory>): void;
 use_current_ClassDeclaration_SharedSummaryBlockFactory(
     get_old_ClassDeclaration_SharedSummaryBlockFactory());
 
@@ -89,6 +89,6 @@ use_current_ClassDeclaration_SharedSummaryBlockFactory(
 declare function get_current_ClassDeclaration_SharedSummaryBlockFactory():
     TypeOnly<current.SharedSummaryBlockFactory>;
 declare function use_old_ClassDeclaration_SharedSummaryBlockFactory(
-    use: TypeOnly<old.SharedSummaryBlockFactory>);
+    use: TypeOnly<old.SharedSummaryBlockFactory>): void;
 use_old_ClassDeclaration_SharedSummaryBlockFactory(
     get_current_ClassDeclaration_SharedSummaryBlockFactory());

@@ -6,8 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IContainer } from "@fluidframework/container-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppData } from "./FluidObject";
 
 /**
@@ -52,11 +51,14 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 		runtime: IContainerRuntime,
 		container: IContainer,
 	): Promise<IAppModel> {
-		// eslint-disable-next-line import/no-deprecated
-		const collaborativeObj = await requestFluidObject<AppData>(
-			await runtime.getRootDataStore(collaborativeObjId),
-			"",
-		);
-		return new AppModel(collaborativeObj, container);
+		const entryPointHandle = (await runtime.getAliasedDataStoreEntryPoint(
+			collaborativeObjId,
+		)) as IFluidHandle<AppData> | undefined;
+
+		if (entryPointHandle === undefined) {
+			throw new Error(`Default dataStore [${collaborativeObjId}] must exist`);
+		}
+
+		return new AppModel(await entryPointHandle.get(), container);
 	}
 }

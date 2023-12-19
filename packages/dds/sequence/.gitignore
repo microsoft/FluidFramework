@@ -56,3 +56,4 @@ temp_modules/
 
 # Output folder for fuzz tests
 src/test/results
+src/test/fuzz/results

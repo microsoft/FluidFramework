@@ -50,7 +50,7 @@ import {
  *
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
- * @public
+ * @alpha
  */
 export class OdspDocumentServiceFactoryCore
 	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
@@ -170,7 +170,7 @@ export class OdspDocumentServiceFactoryCore
 				// while only happens once in lifetime of a document happens in the background after creation of
 				// detached container.
 				const module = await import(
-					/* webpackChunkName: "createNewModule" */ "./createNewModule"
+					/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
 				)
 					.then((m) => {
 						odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });

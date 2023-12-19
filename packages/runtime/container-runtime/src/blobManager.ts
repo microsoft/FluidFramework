@@ -39,13 +39,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
-import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
-import {
-	sendGCUnexpectedUsageEvent,
-	disableAttachmentBlobSweepKey,
-	throwOnTombstoneLoadKey,
-} from "./gc";
-import { summarizerClientType } from "./summary";
+import { disableAttachmentBlobSweepKey } from "./gc";
 import { IBlobMetadata } from "./metadata";
 
 /**
@@ -91,7 +85,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 /**
  * Information from a snapshot needed to load BlobManager
- * @public
+ * @alpha
  */
 export interface IBlobManagerLoadInfo {
 	ids?: string[];
@@ -104,7 +98,6 @@ export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
 	"attachState" | "connected" | "logger" | "clientDetails"
 > &
-	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
 type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
@@ -165,8 +158,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private readonly opsInFlight: Map<string, string[]> = new Map();
 
-	/** If true, throw an error when a tombstone attachment blob is retrieved. */
-	private readonly throwOnTombstoneLoad: boolean;
 	/**
 	 * This stores IDs of tombstoned blobs.
 	 * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
@@ -174,6 +165,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private stopAttaching: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -205,11 +197,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			logger: this.runtime.logger,
 			namespace: "BlobManager",
 		});
-		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
-		this.throwOnTombstoneLoad =
-			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
-			this.runtime.gcTombstoneEnforcementAllowed &&
-			this.runtime.clientDetails.type !== summarizerClientType;
 
 		this.redirectTable = this.load(snapshot);
 
@@ -351,14 +338,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
-		// Verify that the blob is valid, i.e., it has not been garbage collected. If it is, this will throw an error,
-		// failing the call.
-		this.verifyBlobValidity(blobId);
+		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
+		// an error, failing the call.
+		this.verifyBlobNotDeleted(blobId);
+		// Let runtime know that the corresponding GC node was requested.
+		// Note that this will throw if the blob is inactive or tombstoned and throwing on incorrect usage
+		// is configured.
+		this.blobRequested(getGCNodePathFromBlobId(blobId));
 
 		const pending = this.pendingBlobs.get(blobId);
 		if (pending) {
 			return pending.blob;
 		}
+
 		let storageId: string;
 		if (this.runtime.attachState === AttachState.Detached) {
 			assert(this.redirectTable.has(blobId), 0x383 /* requesting unknown blobs */);
@@ -371,9 +363,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			assert(!!attachedStorageId, 0x11f /* "requesting unknown blobs" */);
 			storageId = attachedStorageId;
 		}
-
-		// Let runtime know that the corresponding GC node was requested.
-		this.blobRequested(getGCNodePathFromBlobId(blobId));
 
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -530,7 +519,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if (entry.abortSignal?.aborted === true && !entry.opsent) {
+		if ((entry.abortSignal?.aborted === true && !entry.opsent) || this.stopAttaching) {
 			this.deletePendingBlob(localId);
 			return;
 		}
@@ -740,7 +729,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
 	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
 	 */
-	public updateUnusedRoutes(unusedRoutes: string[]): void {
+	public updateUnusedRoutes(unusedRoutes: readonly string[]): void {
 		this.deleteBlobsFromRedirectTable(unusedRoutes);
 	}
 
@@ -750,7 +739,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * be based off of local ids.
 	 * @returns The routes of blobs that were deleted.
 	 */
-	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
 		if (this.mc.config.getBoolean(disableAttachmentBlobSweepKey) === true) {
 			return [];
@@ -771,7 +760,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
 	 * will remove them the next summary. The service would them delete them some time in the future.
 	 */
-	private deleteBlobsFromRedirectTable(blobRoutes: string[]) {
+	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]) {
 		if (blobRoutes.length === 0) {
 			return;
 		}
@@ -816,7 +805,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * accessing deleted content without actually deleting content from summaries.
 	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
 		const tombstonedBlobsSet: Set<string> = new Set();
 		// The routes or blob node paths are in the same format as returned in getGCData -
 		// `/<BlobManager.basePath>/<blobId>`.
@@ -839,56 +828,28 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * Verifies that the blob with given id is valid, i.e., it has not been garbage collected. If the blob is GC'd,
+	 * Verifies that the blob with given id is not deleted, i.e., it has not been garbage collected. If the blob is GC'd,
 	 * log an error and throw if necessary.
 	 */
-	private verifyBlobValidity(blobId: string) {
-		/**
-		 * A blob can be in one of the following states:
-		 * 1. "deleted" - It has been deleted by garbage collection sweep phase.
-		 * 2. "tombstoned" - It is ready for deletion but sweep phase isn't enabled and tombstone feature is enabled.
-		 * 3. "valid" - It has not been deleted or tombstoned.
-		 */
-		let state: "valid" | "tombstoned" | "deleted" = "valid";
-		if (this.isBlobDeleted(getGCNodePathFromBlobId(blobId))) {
-			state = "deleted";
-		} else if (this.tombstonedBlobs.has(blobId)) {
-			state = "tombstoned";
-		}
-
-		if (state === "valid") {
+	private verifyBlobNotDeleted(blobId: string) {
+		if (!this.isBlobDeleted(getGCNodePathFromBlobId(blobId))) {
 			return;
 		}
 
-		// If the blob is deleted or throw on tombstone load is enabled, throw an error which will fail any attempt
-		// to load the blob.
-		const shouldFail = state === "deleted" || this.throwOnTombstoneLoad;
 		const request = { url: blobId };
 		const error = responseToException(
-			createResponseError(
-				404,
-				"Blob was deleted",
-				request,
-				state === "tombstoned" ? { [TombstoneResponseHeaderKey]: true } : undefined,
-			),
+			createResponseError(404, `Blob was deleted`, request),
 			request,
 		);
-		sendGCUnexpectedUsageEvent(
-			this.mc,
+		// Only log deleted events. Tombstone events are logged by garbage collector.
+		this.mc.logger.sendErrorEvent(
 			{
-				eventName:
-					state === "tombstoned"
-						? "GC_Tombstone_Blob_Requested"
-						: "GC_Deleted_Blob_Requested",
-				category: shouldFail ? "error" : "generic",
-				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
+				eventName: "GC_Deleted_Blob_Requested",
+				pkg: BlobManager.basePath,
 			},
-			[BlobManager.basePath],
 			error,
 		);
-		if (shouldFail) {
-			throw error;
-		}
+		throw error;
 	}
 
 	public setRedirectTable(table: Map<string, string>) {
@@ -911,7 +872,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async attachAndGetPendingBlobs(): Promise<IPendingBlobs | undefined> {
+	public async attachAndGetPendingBlobs(
+		stopBlobAttachingSignal?: AbortSignal,
+	): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "GetPendingBlobs" },
@@ -926,12 +889,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
-							if (!entry.opsent) {
-								this.sendBlobAttachOp(id, entry.storageId);
-							}
 							entry.handleP.resolve(this.getBlobHandle(id));
 							attachBlobsP.push(
-								new Promise<void>((resolve) => {
+								new Promise<void>((resolve, reject) => {
+									stopBlobAttachingSignal?.addEventListener(
+										"abort",
+										() => {
+											this.stopAttaching = true;
+											reject(new Error("Operation aborted"));
+										},
+										{ once: true },
+									);
 									const onBlobAttached = (attachedEntry) => {
 										if (attachedEntry === entry) {
 											this.off("blobAttached", onBlobAttached);
@@ -947,11 +915,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							);
 						}
 					}
-					await Promise.all(attachBlobsP);
+					await Promise.allSettled(attachBlobsP).catch(() => {});
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
+					if (stopBlobAttachingSignal?.aborted && !entry.attached) {
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "UnableToStashBlob",
+							id,
+						});
+						continue;
+					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
+					if (!entry.opsent) {
+						this.sendBlobAttachOp(id, entry.storageId);
+					}
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,

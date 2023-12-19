@@ -9,7 +9,6 @@ import { ExtractorConfig } from "@microsoft/api-extractor";
 import { CommandLogger } from "../../logging";
 import path from "node:path";
 import { strict as assert } from "node:assert";
-import * as fs from "node:fs";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -97,7 +96,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			 */
 			const extractorConfig = ExtractorConfig.prepare({
 				...configOptions,
-				ignoreMissingEntryPoint: this.flags.checkFileExists,
+				ignoreMissingEntryPoint: !this.flags.checkFileExists,
 			});
 			assert(this.flags.types !== undefined, "--types flag must be provided.");
 
@@ -105,7 +104,6 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				pkg.directory,
 				extractorConfig,
 				this.flags.types,
-				this.flags.checkFileExists,
 				json,
 				this.logger,
 			);
@@ -123,7 +121,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 
 		if (this.packageList.packagesUpdated.length === 0) {
 			this.errorLog(`No updates in package.json for ${this.flags.types} release tag`);
-			this.exit();
+			this.exit(1);
 		}
 
 		return this.packageList;
@@ -134,12 +132,10 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
  * Updates the types/typing field in package.json.
  * @returns true if the update was successful, false otherwise.
  */
-// eslint-disable-next-line max-params
 function updatePackageJsonTypes(
 	directory: string,
 	extractorConfig: ExtractorConfig,
 	dTsType: DtsKind,
-	checkFileExists: boolean,
 	json: PackageJson,
 	log: CommandLogger,
 ): boolean {
@@ -171,9 +167,6 @@ function updatePackageJsonTypes(
 			}
 
 			if (filePath) {
-				if (checkFileExists && !fs.existsSync(filePath)) {
-					throw new Error(`${filePath} path does not exists`);
-				}
 				delete json.typings;
 				json.types = path.relative(directory, filePath);
 				return true;
