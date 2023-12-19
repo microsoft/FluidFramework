@@ -922,7 +922,7 @@ export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): bool
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
@@ -934,7 +934,7 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const srcQueries: CrossFieldQuerySet = new Map();
@@ -995,7 +995,7 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function newMoveEffectTable<T>(): MoveEffectTable<T> {
 	return newCrossFieldTable();

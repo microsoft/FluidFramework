@@ -27,7 +27,7 @@ import {
 
 /**
  * Configuration to specialize a Tree DDS for a particular use.
- * @alpha
+ * @internal
  */
 export interface TreeOptions extends SharedTreeOptions {
 	/**
@@ -41,7 +41,7 @@ export interface TreeOptions extends SharedTreeOptions {
 
 /**
  * A channel factory that creates an {@link ITree}.
- * @alpha
+ * @internal
  */
 export class TreeFactory implements IChannelFactory {
 	public readonly type: string;

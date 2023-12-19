@@ -8,7 +8,7 @@ import { fieldKinds } from "./defaultFieldKinds";
 
 /**
  * FullSchemaPolicy with the default field kinds.
- * @alpha
+ * @internal
  */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
 	fieldKinds,
