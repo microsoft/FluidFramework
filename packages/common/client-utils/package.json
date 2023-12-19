@@ -14,8 +14,8 @@
 	"exports": {
 		".": {
 			"import": {
-				"default": "./lib/indexNode.mjs",
-				"types": "./lib/indexNode.d.ts"
+				"types": "./lib/indexNode.d.mts",
+				"default": "./lib/indexNode.mjs"
 			},
 			"require": {
 				"types": "./dist/indexNode.d.ts",
@@ -28,7 +28,8 @@
 	"browser": {
 		"./dist/indexNode.cjs": "./dist/indexBrowser.cjs",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
-		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs"
+		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs",
+		"./lib/indexNode.d.mts": "./lib/indexBrowser.d.mts"
 	},
 	"types": "dist/indexNode.d.ts",
 	"scripts": {
