@@ -23,7 +23,7 @@ import {
 	createRawNodeProxy,
 	getClassSchema,
 	getSequenceField,
-	arrayNodePrototypeProperties as arrayNodePrototypeProperties,
+	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/proxies";
