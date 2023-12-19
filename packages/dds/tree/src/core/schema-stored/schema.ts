@@ -4,22 +4,11 @@
  */
 
 import { DiscriminatedUnionDispatcher } from "../../codec";
-import {
-	Brand,
-	Erased,
-	MakeNominal,
-	Named,
-	brand,
-	brandErased,
-	compareNamed,
-	fail,
-	invertMap,
-} from "../../util";
+import { Brand, Erased, MakeNominal, brand, brandErased, fail, invertMap } from "../../util";
 import {
 	FieldKey,
 	FieldKindIdentifier,
 	FieldSchemaFormat,
-	NamedFieldSchemaFormat,
 	PersistedValueSchema,
 	TreeNodeSchemaDataFormat,
 	TreeNodeSchemaIdentifier,
@@ -160,12 +149,19 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encode(): ErasedTreeNodeSchemaDataFormat {
+		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
+		for (const key of [...this.objectNodeFields.keys()].sort()) {
+			Object.defineProperty(fieldsObject, key, {
+				enumerable: true,
+				configurable: true,
+				writable: true,
+				value: encodeFieldSchema(this.objectNodeFields.get(key) ?? fail("missing field")),
+			});
+		}
 		return brandErased<BrandedTreeNodeSchemaDataFormat>({
-			object: [...this.objectNodeFields]
-				.map(([k, v]) => encodeNamedField(k, v))
-				.sort(compareNamed),
+			object: fieldsObject,
 		});
 	}
 }
@@ -226,15 +222,13 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (data: NamedFieldSchemaFormat[]) =>
-		new ObjectNodeStoredSchema(
-			new Map(
-				data.map((field): [FieldKey, TreeFieldStoredSchema] => [
-					brand(field.name),
-					decodeFieldSchema(field),
-				]),
-			),
-		),
+	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>) => {
+		const map = new Map();
+		for (const [key, value] of Object.entries(data)) {
+			map.set(key, decodeFieldSchema(value));
+		}
+		return new ObjectNodeStoredSchema(map);
+	},
 	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
 });
 
@@ -264,13 +258,6 @@ export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFor
 		out.types = [...schema.types];
 	}
 	return out;
-}
-
-function encodeNamedField<T>(name: T, schema: TreeFieldStoredSchema): FieldSchemaFormat & Named<T> {
-	return {
-		...encodeFieldSchema(schema),
-		name,
-	};
 }
 
 export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSchema {
