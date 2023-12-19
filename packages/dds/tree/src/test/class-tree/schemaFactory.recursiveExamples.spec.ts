@@ -24,7 +24,7 @@ describe("Recursive Class based end to end example", () => {
 		const BoxRef = () => Box;
 		schema.fixRecursiveReference(BoxRef);
 
-		class Box extends schema.object("Box", {
+		class Box extends schema.objectRecursive("Box", {
 			/**
 			 * Doc comment on a schema based field. Intellisense should work when referencing the field.
 			 */

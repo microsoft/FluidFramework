@@ -253,6 +253,8 @@ export function makeV0Codec(
 	// TODO: use withSchemaValidation here to validate data against format.
 	return {
 		encode: (change) => {
+			// Destroys only exist in rollback changesets, which are never sent.
+			assert(change.destroys === undefined, "Unexpected changeset with destroys");
 			return {
 				maxId: change.maxId,
 				revisions:
