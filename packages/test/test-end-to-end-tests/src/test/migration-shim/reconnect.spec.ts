@@ -18,7 +18,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import {
-	type ISharedTree,
 	SharedTree,
 	disposeSymbol,
 	SchemaFactory,
@@ -238,11 +237,11 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		assert(getQuantity(legacyTree1) === 123, "expected quantity updates to have been dropped");
 
-		const newTree1 = shim1.currentTree as ISharedTree;
+		const newTree1 = shim1.currentTree as ITree;
 		const view1 = getNewTreeView(newTree1);
 		const node1 = view1.root;
 
-		const newTree2 = shim2.currentTree as ISharedTree;
+		const newTree2 = shim2.currentTree as ITree;
 		const view2 = getNewTreeView(newTree2);
 		const node2 = view2.root;
 
