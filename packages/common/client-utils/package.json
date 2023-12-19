@@ -14,8 +14,8 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/indexNode.d.ts",
-				"default": "./lib/indexNode.mjs"
+				"default": "./lib/indexNode.mjs",
+				"types": "./lib/indexNode.d.ts"
 			},
 			"require": {
 				"types": "./dist/indexNode.d.ts",
