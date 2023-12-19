@@ -26,13 +26,13 @@ export class SchemaFactoryRecursive<
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
 	/**
-	 * For unknown reasons, recursive lists work better (compile in more cases)
+	 * For unknown reasons, recursive arrays work better (compile in more cases)
 	 * if their constructor takes in an object with a member containing the iterable,
 	 * rather than taking the iterable as a parameter directly.
 	 *
-	 * This version of `list` leverages this fact, and has a constructor that requires its data be passed in like:
+	 * This version of `array` leverages this fact, and has a constructor that requires its data be passed in like:
 	 * ```typescript
-	 * new MyRecursiveList({x: theData});
+	 * new MyRecursiveArray({x: theData});
 	 * ```
 	 */
 	public arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypes>(
