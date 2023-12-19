@@ -628,11 +628,7 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer incorrect");
-			assert.equal(
-				gc.configs.tombstoneTimeoutMs,
-				789 + 6 * oneDayMs,
-				"tombstoneTimeoutMs incorrect",
-			);
+			assert.equal(gc.configs.tombstoneTimeoutMs, 789, "tombstoneTimeoutMs incorrect");
 		});
 		it("RunSessionExpiry setting turned off", () => {
 			injectedSettings[runSessionExpiryKey] = false;
