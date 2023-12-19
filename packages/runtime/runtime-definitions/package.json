@@ -16,6 +16,46 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/runtime-definitions-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/runtime-definitions-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/runtime-definitions-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/runtime-definitions-beta.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/runtime-definitions-untrimmed.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/runtime-definitions-untrimmed.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/runtime-definitions-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/runtime-definitions-public.d.ts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"main": "dist/index.js",
@@ -27,7 +67,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
