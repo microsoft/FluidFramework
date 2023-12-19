@@ -22,9 +22,10 @@ import {
 	tagChange,
 	TreeStoredSchema,
 	TreeStoredSchemaSubscription,
+	JsonableTree,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { buildForest, intoDelta } from "../feature-libraries";
+import { buildForest, intoDelta, jsonableTreeFromCursor } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, fail } from "../util";
 import { noopValidator } from "../codec";
@@ -145,6 +146,15 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	/**
+	 * Returns a JsonableTree for each tree that was removed from (and not restored to) the document.
+	 * This list is guaranteed to contain all nodes that are recoverable through undo/redo on this checkout.
+	 * The list may also contain additional nodes.
+	 *
+	 * This is only intended for use in testing and exceptional code paths: it is not performant.
+	 */
+	getRemovedRoots(): [string | number | undefined, number, JsonableTree][];
 }
 
 /**
@@ -399,6 +409,24 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	public dispose(): void {
 		this.branch.dispose();
+	}
+
+	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		const trees: [string | number | undefined, number, JsonableTree][] = [];
+		const cursor = this.forest.allocateCursor();
+		for (const { id, root } of this.removedRoots.entries()) {
+			const parentField = this.removedRoots.toFieldKey(root);
+			this.forest.moveCursorToPath(
+				{ parent: undefined, parentField, parentIndex: 0 },
+				cursor,
+			);
+			const tree = jsonableTreeFromCursor(cursor);
+			if (tree !== undefined) {
+				trees.push([id.major, id.minor, tree]);
+			}
+		}
+		cursor.free();
+		return trees;
 	}
 }
 
