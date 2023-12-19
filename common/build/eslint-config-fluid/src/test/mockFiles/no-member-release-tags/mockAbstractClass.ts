@@ -5,7 +5,7 @@
 
 /**
  * @public
- * Not used in the current test suite due to compatibility issue with the ESLint.
+ * 
  */
 abstract class MockAbstractClass {
 	/**
