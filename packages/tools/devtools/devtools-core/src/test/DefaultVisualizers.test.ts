@@ -478,7 +478,7 @@ describe("DefaultVisualizers unit tests", () => {
 												"0": {
 													children: {
 														type: {
-															value: 'DefaultVisualizer_SharedTree_Test.List<["DefaultVisualizer_SharedTree_Test.child-item"]>',
+															value: 'DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.child-item"]>',
 															typeMetadata: "string",
 															nodeKind: VisualNodeKind.ValueNode,
 														},
@@ -691,7 +691,7 @@ describe("DefaultVisualizers unit tests", () => {
 								"0": {
 									children: {
 										name: {
-											value: 'DefaultVisualizer_SharedTree_Test.List<["DefaultVisualizer_SharedTree_Test.child-item"]>',
+											value: 'DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.child-item"]>',
 											typeMetadata: "string",
 											nodeKind: VisualNodeKind.ValueNode,
 										},
@@ -867,7 +867,7 @@ describe("DefaultVisualizers unit tests", () => {
 																types: {
 																	children: {
 																		"0": {
-																			value: 'DefaultVisualizer_SharedTree_Test.List<["DefaultVisualizer_SharedTree_Test.child-item"]>',
+																			value: 'DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.child-item"]>',
 																			typeMetadata: "string",
 																			nodeKind:
 																				VisualNodeKind.ValueNode,
