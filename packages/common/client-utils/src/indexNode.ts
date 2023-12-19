@@ -4,7 +4,7 @@
  */
 
 export {
-	Buffer,
+	// Buffer,
 	bufferToString,
 	IsoBuffer,
 	stringToBuffer,
@@ -12,3 +12,10 @@ export {
 } from "./bufferNode";
 export { gitHashFile, hashFile } from "./hashFileNode";
 export { performance } from "./performanceIsomorphic";
+
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
+export { Uint8ArrayToArrayBuffer } from "./bufferShared";
+export { EventForwarder } from "./eventForwarder";
+export { IsomorphicPerformance } from "./performanceIsomorphic";
+export { ITraceEvent, Trace } from "./trace";
+export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";
