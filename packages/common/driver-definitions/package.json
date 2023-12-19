@@ -29,7 +29,7 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
@@ -63,7 +63,7 @@
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-internal.7.2.0",
+		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"copyfiles": "^2.4.1",
