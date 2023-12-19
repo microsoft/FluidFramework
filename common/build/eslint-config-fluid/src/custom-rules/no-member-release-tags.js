@@ -57,7 +57,7 @@ module.exports = {
 	meta: {
 		type: "problem",
 		docs: {
-			description: "This rule restricts any release tags on member class and interface.",
+			description: "This rule restricts any release tags on members of classes, interfaces, and types.",
 			category: "Best Practices",
 		},
 		schema: [],
