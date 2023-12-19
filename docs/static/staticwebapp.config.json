@@ -1,14 +1,18 @@
 {
-<<<<<<< HEAD
 	"routes": [
 		{
-			"route": "/docs/fcdocstest",
-			"redirect": "/docs/apis",
+			"route": "/docs/apis/",
+			"redirect": "/docs/api/v2",
 			"statusCode": 301
 		},
 		{
-			"route": "/docs/apis/azure-client/{*}",
-			"redirect": "/docs/apis/azure-client/{*}",
+			"route": "/docs/api/current",
+			"redirect": "/docs/api/v2",
+			"statusCode": 301
+		},
+		{
+			"route": "/docs/api/lts",
+			"redirect": "/docs/api/v1",
 			"statusCode": 301
 		}
 	],
@@ -16,26 +20,3 @@
 		"cache-control": "must-revalidate, max-age=3600"
 	}
 }
-=======
-  "routes": [
-    {
-      "route": "/docs/apis/",
-      "redirect": "/docs/api/v2",
-      "statusCode": 301
-    },
-    {
-      "route": "/docs/api/current",
-      "redirect": "/docs/api/v2",
-      "statusCode": 301
-    },
-    {
-      "route": "/docs/api/lts",
-      "redirect": "/docs/api/v1",
-      "statusCode": 301
-    }
-  ],
-  "globalHeaders": {
-    "cache-control": "must-revalidate, max-age=3600"
-  }
-}
->>>>>>> Update path for staticwebapp.config.json
