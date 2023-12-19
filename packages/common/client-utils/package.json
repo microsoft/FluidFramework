@@ -56,7 +56,6 @@
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
-		"tsc2": "tsc",
 		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"typetests:gen": "",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
