@@ -4,9 +4,8 @@
  */
 
 export {
-	// Buffer,
-	bufferToString,
 	Buffer,
+	bufferToString,
 	IsoBuffer,
 	stringToBuffer,
 	Uint8ArrayToString,
