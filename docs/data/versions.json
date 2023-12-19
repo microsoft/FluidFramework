@@ -2,6 +2,8 @@
 	"params": {
 		"currentVersion": "2.0",
 		"ltsVersion": "1.0",
-		"previousVersions": ["1.0"]
+		"previousVersions": [
+			"1.0"
+		]
 	}
 }
