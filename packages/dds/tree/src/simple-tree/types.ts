@@ -39,14 +39,19 @@ export type Unhydrated<T> = T;
  * Base type which all nodes implement.
  *
  * This can be used as a type to indicate/document values which should be tree nodes,
- * but currently does not provide strong type checking,
- * nor consistent runtime behavior (for example when used with `instanceof` or subclassed).
- * Runtime use of this class object should be avoided, and it may be replaced with an interface in the future.
+ * but currently does not provide strong type checking for this.
+ * Additionally runtime use of this class object (for example when used with `instanceof` or subclassed), is not supported:
+ * it may be replaced with an interface or union in the future.
  * @privateRemarks
  * Adding a member which all nodes have, like a type symbol, would produce much stronger typing for this.
- * Currently not all node implications will include this in their prototype chain, and thus cause instance of to fail.
  * This is only a class to enable stronger typing in a future change,
  * but other future changes may want to replace it with a branded interface if the runtime oddities related to this are not cleaned up.
+ *
+ * Currently not all node implications include this in their prototype chain (some hide it with a proxy), and thus cause `instanceof` to fail.
+ * This results in the runtime and compile time behavior of `instanceof` differing.
+ * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
+ * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
+ * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
  * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
