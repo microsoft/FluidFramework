@@ -55,7 +55,7 @@ export interface IUrlResolver {
 /**
  * Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
  * for driver compatibility and preload information.
- * @internal
+ * @alpha
  */
 export interface DriverPreCheckInfo {
 	/**
@@ -72,7 +72,7 @@ export interface DriverPreCheckInfo {
 
 /**
  * Additional key in the loader request header
- * @internal
+ * @alpha
  */
 export enum DriverHeader {
 	// Key to indicate whether the request for summarizer

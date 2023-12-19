@@ -1,19 +1,10 @@
-# @fluid-experimental/devtools
+# @fluidframework/devtools
 
 This library contains developer tools for use alongside the Fluid Framework.
 It is used to power our associated [browser extension][browser-extension].
 
 -   Chrome: <https://aka.ms/fluid/devtool/chrome>
 -   Edge: <https://aka.ms/fluid/devtool/edge>
-
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
-
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
-
-<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
@@ -25,7 +16,7 @@ It is used to power our associated [browser extension][browser-extension].
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-experimental/devtools -D
+npm i @fluidframework/devtools -D
 ```
 
 <!-- prettier-ignore-end -->
@@ -57,10 +48,10 @@ For example, when using the `AzureClient` API you would do something like this (
 to `initializeDevtools()` _and_ to `new AzureClient()`):
 
 ```typescript
-import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
 
 // Instantiate the logger
-const devtoolsLogger = new DevtoolsLogger();
+const devtoolsLogger = createDevtoolsLogger();
 
 // Pass the logger when instantiating the AzureClient
 const clientProps = {
@@ -88,7 +79,7 @@ const devtools = initializeDevtools({
 
 If you're not working with `AzureClient` but with lower-level APIs (e.g. you manually instantiate a `Loader` from the
 [@fluidframework/container-loader package][container-loader-package] package, you probably want to refer to
-the [@fluid-experimental/devtools-core package][devtools-core-package] instead of this one).
+the [@fluidframework/devtools-core package][devtools-core-package] instead of this one).
 
 During local development the recommendation is that your application should receive the `DevtoolsLogger` instance _instead_
 of any logger it would normally receive when deployed to a real environment, to avoid local development activity from
@@ -98,12 +89,12 @@ at the same time, you can pass an existing logger to the `DevtoolsLogger` constr
 it receives to that logger as well:
 
 ```typescript
-import { DevtoolsLogger } from "@fluid-experimental/devtools";
+import { createDevtoolsLogger } from "@fluidframework/devtools";
 
 // Your application's logger
 const yourApplicationLogger = getInstanceOfYourApplicationLogger();
 
-const devtoolsLogger = new DevtoolsLogger(yourApplicationLogger);
+const devtoolsLogger = createDevtoolsLogger(yourApplicationLogger);
 
 // Pass devtoolsLogger to initializeDevtools() and to your application as described above
 ```
@@ -201,5 +192,5 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 [initialize-devtools-docs]: https://fluidframework.com/docs/apis/devtools#initializedevtools-function
 [devtools-logger-docs]: https://fluidframework.com/docs/apis/devtools-core/devtoolslogger-class
 [container-loader-package]: https://www.npmjs.com/package/@fluidframework/container-loader
-[devtools-core-package]: https://www.npmjs.com/package/@fluid-experimental/devtools-core
+[devtools-core-package]: https://www.npmjs.com/package/@fluidframework/devtools-core
 [browser-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-browser-extension

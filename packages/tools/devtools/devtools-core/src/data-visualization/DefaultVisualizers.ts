@@ -13,7 +13,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { type IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedTreeFactory, type ISharedTree, encodeTreeSchema } from "@fluid-experimental/tree2";
+import { SharedTreeFactory, type ISharedTree, encodeTreeSchema } from "@fluidframework/tree";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces";
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization";

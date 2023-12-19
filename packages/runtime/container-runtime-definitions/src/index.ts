@@ -8,4 +8,4 @@ export {
 	IContainerRuntimeBaseWithCombinedEvents,
 	IContainerRuntimeEvents,
 	IContainerRuntimeWithResolveHandle_Deprecated,
-} from "./containerRuntime";
+} from "./containerRuntime.js";

@@ -39,6 +39,7 @@ export class LocalResolver implements IUrlResolver {
 	 * token from constant test strings. The root of the URL is fake, but the
 	 * remaining relative URL can still be parsed.
 	 * @param request - request to handle
+	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const parsedUrl = new URL(request.url);

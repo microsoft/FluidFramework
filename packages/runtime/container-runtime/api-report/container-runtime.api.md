@@ -59,7 +59,7 @@ export const agentSchedulerId = "_scheduler";
 // @internal
 export const AllowInactiveRequestHeaderKey = "allowInactive";
 
-// @internal
+// @alpha
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 export { assertIsStableId }
@@ -77,7 +77,7 @@ export enum CompressionAlgorithms {
     lz4 = "lz4"
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
     Alias = "alias",
@@ -229,7 +229,7 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
 // @alpha (undocumented)
@@ -276,7 +276,7 @@ export type GCVersion = number;
 
 export { generateStableId }
 
-// @internal
+// @alpha
 export interface IAckedSummary {
     // (undocumented)
     readonly summaryAck: ISummaryAckMessage;
@@ -318,7 +318,7 @@ export interface IBroadcastSummaryResult {
     readonly summarizeOp: ISummaryOpMessage;
 }
 
-// @internal
+// @alpha
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
@@ -346,7 +346,7 @@ export interface IChunkedOp {
     totalChunks: number;
 }
 
-// @internal
+// @alpha
 export interface IClientSummaryWatcher extends IDisposable {
     // (undocumented)
     waitFlushed(): Promise<IAckedSummary | undefined>;
@@ -416,14 +416,14 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly override?: boolean;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IGCMetadata {
     readonly gcFeature?: GCVersion;
     readonly gcFeatureMatrix?: GCFeatureMatrix;
     readonly sessionExpiryTimeoutMs?: number;
     // @deprecated
     readonly sweepEnabled?: boolean;
-    readonly sweepTimeoutMs?: number;
+    readonly tombstoneTimeoutMs?: number;
 }
 
 // @alpha (undocumented)
@@ -482,7 +482,7 @@ export interface INackSummaryResult extends IRetriableFailureResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
-// @internal
+// @alpha
 export const InactiveResponseHeaderKey = "isInactive";
 
 // @alpha (undocumented)
@@ -550,7 +550,7 @@ export interface ISummarizeOptions {
     readonly refreshLatestAck?: boolean;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
@@ -607,7 +607,7 @@ export interface ISummarizingWarning extends ContainerWarning {
     readonly logged: boolean;
 }
 
-// @internal
+// @alpha
 export interface ISummary {
     // (undocumented)
     readonly clientId: string;
@@ -637,7 +637,7 @@ export interface ISummaryBaseConfiguration {
 // @alpha
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
     // (undocumented)
     (event: OpActionEventName, listener: OpActionEventListener): any;
@@ -719,10 +719,10 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 // @internal
 export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
 
 // @internal
@@ -763,7 +763,7 @@ export interface SubmitSummaryFailureData extends IRetriableFailureResult {
 // @alpha
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
-// @internal
+// @alpha
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
@@ -825,7 +825,7 @@ export type SummarizerStopReason =
 */
 | "latestSummaryStateStale";
 
-// @internal
+// @alpha
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLoggerExt);
     // (undocumented)
@@ -852,7 +852,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 // @alpha
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
-// @internal
+// @alpha
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // @internal

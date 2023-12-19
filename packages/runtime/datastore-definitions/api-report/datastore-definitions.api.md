@@ -26,7 +26,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/core-interfaces';
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -38,14 +38,14 @@ export interface IChannel extends IFluidLoadable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
-// @alpha
+// @public
 export interface IChannelAttributes {
     readonly packageVersion?: string;
     readonly snapshotFormatVersion: string;
     readonly type: string;
 }
 
-// @alpha
+// @public
 export interface IChannelFactory {
     readonly attributes: IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
@@ -53,7 +53,7 @@ export interface IChannelFactory {
     readonly type: string;
 }
 
-// @alpha
+// @public
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
@@ -61,14 +61,14 @@ export interface IChannelServices {
     objectStorage: IChannelStorageService;
 }
 
-// @alpha
+// @public
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @alpha
+// @public
 export interface IDeltaConnection {
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     attach(handler: IDeltaHandler): void;
@@ -78,7 +78,7 @@ export interface IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): void;
 }
 
-// @alpha
+// @public
 export interface IDeltaHandler {
     applyStashedOp(message: any): unknown;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
@@ -87,7 +87,7 @@ export interface IDeltaHandler {
     setConnectionState(connected: boolean): void;
 }
 
-// @alpha
+// @public
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
@@ -124,7 +124,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     waitAttached(): Promise<void>;
 }
 
-// @alpha
+// @public
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
     (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;

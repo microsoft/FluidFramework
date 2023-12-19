@@ -34,7 +34,7 @@ import {
 	type ITimestampedTelemetryEvent,
 	TelemetryHistory,
 	TelemetryEvent,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 
 import { useMessageRelay } from "../MessageRelayContext";
 import { useLogger } from "../TelemetryUtils";
