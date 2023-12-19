@@ -34,7 +34,7 @@ import { AnnouncedVisitor } from "./visitorUtils";
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
  * Associated with a ref count on the underlying {@link AnchorNode}.
- * @alpha
+ * @internal
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -45,7 +45,7 @@ const NeverAnchor: Anchor = brand(0);
 
 /**
  * Maps anchors (which must be ones this locator knows about) to paths.
- * @alpha
+ * @internal
  */
 export interface AnchorLocator {
 	/**
@@ -63,7 +63,7 @@ export interface AnchorLocator {
  * Stores arbitrary, user-defined data on an {@link Anchor}.
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
- * @alpha
+ * @internal
  */
 export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
@@ -76,7 +76,7 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
  * - Include sub-deltas in events.
  * - Add more events.
  *
- * @alpha
+ * @internal
  */
 export interface AnchorEvents {
 	/**
@@ -145,7 +145,7 @@ export interface AnchorEvents {
  * - Include sub-deltas in events.
  * - Add more events.
  *
- * @alpha
+ * @internal
  */
 export interface AnchorSetRootEvents {
 	/**
@@ -161,7 +161,7 @@ export interface AnchorSetRootEvents {
 
 /**
  * Node in a tree of anchors.
- * @alpha
+ * @internal
  */
 export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
 	/**
@@ -204,7 +204,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
  * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
  * }
  * ```
- * @alpha
+ * @internal
  */
 export function anchorSlot<TContent>(): AnchorSlot<TContent> {
 	return brandedSlot<AnchorSlot<TContent>>();
@@ -220,7 +220,7 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * API surface to a small subset.
  *
  * @sealed
- * @alpha
+ * @internal
  */
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
 	private readonly events = createEmitter<AnchorSetRootEvents>();

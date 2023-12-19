@@ -54,7 +54,7 @@ import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./tree
  * Do not confuse this with {@link JsonableTree} with the JSON domain:
  * this takes in data in a specific format that is json compatible (except for FluidHandle values).
  * That is distinct from treating arbitrary JSON data as a tree in the JSON domain.
- * @alpha
+ * @internal
  */
 export function cursorForJsonableTreeNode(root: JsonableTree): ITreeCursorSynchronous {
 	return stackTreeNodeCursor(adapter, root);
@@ -84,7 +84,7 @@ export const adapter: CursorAdapter<JsonableTree> = {
 
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
- * @alpha
+ * @internal
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);

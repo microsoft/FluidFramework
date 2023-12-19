@@ -243,7 +243,7 @@ describe("Editing", () => {
 
 				const expected = [...startingState];
 				expected.splice(index, 1);
-				expectJsonTree([tree, tree1, tree2, tree3], expected);
+				expectJsonTree([tree, tree1, tree2, tree3], expected, true);
 			}
 		});
 

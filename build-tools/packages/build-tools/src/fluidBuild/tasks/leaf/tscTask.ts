@@ -443,16 +443,18 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles.push(tsBuildInfo);
 			}
 
-			const configFile = this.configFileFullPath;
-			let config = "";
-			if (existsSync(configFile)) {
-				// Include the config file if it exists so that we can detect changes
-				config = await readFileAsync(this.configFileFullPath, "utf8");
+			const configs: string[] = [];
+			const configFiles = this.configFileFullPaths;
+			for (const configFile of configFiles) {
+				if (existsSync(configFile)) {
+					// Include the config file if it exists so that we can detect changes
+					configs.push(await readFileAsync(configFile, "utf8"));
+				}
 			}
 
 			return JSON.stringify({
 				version: await this.getToolVersion(),
-				config,
+				configs,
 				tsBuildInfoFiles,
 			});
 		} catch (e) {
@@ -460,7 +462,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 	}
-	protected abstract get configFileFullPath(): string;
+	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
 }
 
