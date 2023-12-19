@@ -1841,7 +1841,7 @@ export interface SchemaEvents {
 // @beta @sealed
 export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
     constructor(scope: TScope);
-    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.List<${string}>`, NodeKind.Array, TreeArrayNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Array<${string}>`, NodeKind.Array, TreeArrayNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
     array<const Name extends TName, const T extends ImplicitAllowedTypes_2>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     fixRecursiveReference<T extends AllowedTypes_2>(...types: T): void;
