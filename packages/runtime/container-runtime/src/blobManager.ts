@@ -160,7 +160,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	/**
 	 * This stores IDs of tombstoned blobs.
-	 * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
+	 * GC knows these blobs won't be referenced again, and it will soon delete them.
 	 */
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
@@ -801,8 +801,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * This is called to update blobs whose routes are tombstones. Tombstoned blobs enable testing scenarios with
-	 * accessing deleted content without actually deleting content from summaries.
+	 * This is called to update blobs whose routes are tombstones.
+	 * GC knows these blobs won't be referenced again, and it will soon delete them.
 	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {

@@ -2860,6 +2860,7 @@ export class ContainerRuntime
 
 	/**
 	 * This is called to update objects that are tombstones.
+	 * GC knows these objects won't be referenced again, and it will soon delete them.
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {

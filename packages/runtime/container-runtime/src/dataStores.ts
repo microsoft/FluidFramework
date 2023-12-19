@@ -851,8 +851,8 @@ export class DataStores implements IDisposable {
 	}
 
 	/**
-	 * This is called to update objects whose routes are tombstones. Tombstoned datastore contexts enable testing
-	 * scenarios with accessing deleted content without actually deleting content from summaries.
+	 * This is called to update objects whose routes are tombstones.
+	 * GC knows these objects won't be referenced again, and it will soon delete them.
 	 * @param tombstonedRoutes - The routes that are tombstones in all data stores in this Container.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
