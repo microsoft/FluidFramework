@@ -81,7 +81,7 @@ export interface IClient {
 	/**
 	 * The user information associated with this client connection.
 	 */
-	user: IUser;
+	user: IUser | undefined;
 
 	/**
 	 * Enumerates actions allowed for the client connection.

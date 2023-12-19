@@ -165,7 +165,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 				...member[1],
 				client: {
 					...member[1].client,
-					user: null,
+					user: undefined,
 				},
 			};
 		});
