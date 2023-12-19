@@ -49,4 +49,18 @@ const mockClassExpression = class {
 	validNoComment(): void {}
 
 	validSignature: boolean;
+
+	/**
+	 * @public
+	 */
+	constructor() {}
+
+	_value = 1;
+
+	/**
+	 * @public
+	 */
+	public get value(): number {
+		return this._value;
+	}
 };

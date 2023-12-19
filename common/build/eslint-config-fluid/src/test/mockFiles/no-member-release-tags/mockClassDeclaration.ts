@@ -41,6 +41,20 @@ class MockClass {
 	validNoComment(): void {}
 
 	signature: string;
+
+	private _value = 1;
+
+	/**
+	 * @public
+	 */
+	public get value(): number {
+		return this._value;
+	}
+
+	/**
+	 * @public
+	 */
+	constructor() {}
 }
 
 /**

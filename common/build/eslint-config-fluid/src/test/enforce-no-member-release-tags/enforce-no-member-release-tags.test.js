@@ -35,7 +35,7 @@ describe("Do not allow release tags on members", function () {
 
 		const result = results[0];
 
-		assert.strictEqual(result.errorCount, 9, "Should have 9 errors");
+		assert.strictEqual(result.errorCount, 11, "Should have 11 errors");
 		assert.strictEqual(
 			result.messages[0].message,
 			"Including the release-tag for invalidInternal at line 13 in MockClass is not allowed.",
@@ -58,19 +58,27 @@ describe("Do not allow release tags on members", function () {
 		);
 		assert.strictEqual(
 			result.messages[5].message,
-			"Including the release-tag for invalidInternal at line 53 in MockClassTwo is not allowed.",
+			"Including the release-tag for value at line 50 in MockClass is not allowed.",
 		);
 		assert.strictEqual(
 			result.messages[6].message,
-			"Including the release-tag for invalidAlpha at line 58 in MockClassTwo is not allowed.",
+			"Including the release-tag for constructor at line 57 in MockClass is not allowed.",
 		);
 		assert.strictEqual(
 			result.messages[7].message,
-			"Including the release-tag for inValidPublic at line 63 in MockClassTwo is not allowed.",
+			"Including the release-tag for invalidInternal at line 67 in MockClassTwo is not allowed.",
 		);
 		assert.strictEqual(
 			result.messages[8].message,
-			"Including the release-tag for invalidSignature at line 68 in MockClassTwo is not allowed.",
+			"Including the release-tag for invalidAlpha at line 72 in MockClassTwo is not allowed.",
+		);
+		assert.strictEqual(
+			result.messages[9].message,
+			"Including the release-tag for inValidPublic at line 77 in MockClassTwo is not allowed.",
+		);
+		assert.strictEqual(
+			result.messages[10].message,
+			"Including the release-tag for invalidSignature at line 82 in MockClassTwo is not allowed.",
 		);
 	});
 
@@ -82,7 +90,7 @@ describe("Do not allow release tags on members", function () {
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
-		assert.strictEqual(result.errorCount, 7, "Should have 7 errors");
+		assert.strictEqual(result.errorCount, 9, "Should have 9 errors");
 		assert.strictEqual(
 			result.messages[0].message,
 			"Including the release-tag for invalidInternal at line 13 in mockClassExpression is not allowed.",
@@ -111,35 +119,13 @@ describe("Do not allow release tags on members", function () {
 			result.messages[6].message,
 			"Including the release-tag for inValidSingature at line 39 in mockClassExpression is not allowed.",
 		);
-	});
-
-	it("Should report an error for including release tags for class constructor", async function () {
-		const eslint = createESLintInstance();
-
-		const filesToLint = ["mockClassConstructor.ts"].map((file) =>
-			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
-		);
-		const results = await eslint.lintFiles(filesToLint);
-		const result = results[0];
-		assert.strictEqual(result.errorCount, 1, "Should have 1 error");
 		assert.strictEqual(
-			result.messages[0].message,
-			"Including the release-tag for constructor at line 14 in MockClassConstructor is not allowed.",
+			result.messages[7].message,
+			"Including the release-tag for constructor at line 56 in mockClassExpression is not allowed.",
 		);
-	});
-
-	it("Should report an error for including release tags for class accessor property", async function () {
-		const eslint = createESLintInstance();
-
-		const filesToLint = ["mockAccessorProperty.ts"].map((file) =>
-			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
-		);
-		const results = await eslint.lintFiles(filesToLint);
-		const result = results[0];
-		assert.strictEqual(result.errorCount, 1, "Should have 1 error");
 		assert.strictEqual(
-			result.messages[0].message,
-			"Including the release-tag for value at line 16 in MockAccessorProperty is not allowed.",
+			result.messages[8].message,
+			"Including the release-tag for value at line 63 in mockClassExpression is not allowed.",
 		);
 	});
 
