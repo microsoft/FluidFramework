@@ -34,13 +34,13 @@ import {
 	isNewAttach,
 	getInputCellId,
 	isAttachAndDetachEffect,
-	getOutputCellId,
 	getEndpoint,
 	splitMark,
 	isAttach,
 	getDetachOutputId,
 	isImpactfulCellRename,
 	compareCellsFromSameRevision,
+	getDetachIdForLineage,
 } from "./utils";
 import {
 	Changeset,
@@ -57,6 +57,7 @@ import {
 	MoveOut,
 	MoveIn,
 	LineageEvent,
+	DetachIdOverrideType,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -154,8 +155,8 @@ function rebaseMarkList<TNodeChange>(
 
 		if (markEmptiesCells(baseMark) || isImpactfulCellRename(baseMark, baseRevision, metadata)) {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
-			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
-			const detachId = getOutputCellId(baseMark, baseRevision, undefined);
+			// TODO: re-examine why this case needs the two kinds of overrides to be treated differently.
+			const detachId = getDetachIdForLineage(baseMark, baseRevision);
 			assert(
 				detachId !== undefined,
 				0x816 /* Mark which empties cells should have a detach ID */,
@@ -228,7 +229,7 @@ function isRedetach(effect: MarkEffect): boolean {
 	switch (effect.type) {
 		case "Delete":
 		case "MoveOut":
-			return effect.redetachId !== undefined;
+			return effect.idOverride?.type === DetachIdOverrideType.Redetach;
 		case "AttachAndDetach":
 			return isRedetach(effect.detach);
 		default:
