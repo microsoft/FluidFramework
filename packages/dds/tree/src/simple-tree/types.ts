@@ -36,9 +36,17 @@ export type Unhydrated<T> = T;
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
- * Base type which all nodes extend.
+ * Base type which all nodes implement.
+ *
+ * This can be used as a type to indicate/document values which should be tree nodes,
+ * but currently does not provide strong type checking,
+ * nor consistent runtime behavior (for example when used with `instanceof` or subclassed).
+ * Runtime use of this class object should be avoided, and it may be replaced with an interface in the future.
  * @privateRemarks
- * Adding a member which all nodes have, like a type symbol, would produce much strong typing for this.
+ * Adding a member which all nodes have, like a type symbol, would produce much stronger typing for this.
+ * Currently not all node implications will include this in their prototype chain, and thus cause instance of to fail.
+ * This is only a class to enable stronger typing in a future change,
+ * but other future changes may want to replace it with a branded interface if the runtime oddities related to this are not cleaned up.
  * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
