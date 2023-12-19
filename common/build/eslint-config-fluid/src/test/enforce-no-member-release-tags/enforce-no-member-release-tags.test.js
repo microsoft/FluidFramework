@@ -26,7 +26,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockClassDeclaration.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -80,7 +80,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockClassExpression.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -126,7 +126,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockClassConstructor.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -148,7 +148,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockAccessorProperty.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -170,7 +170,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockAbstractClass.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -196,7 +196,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockInterface.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -242,7 +242,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockType.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -285,7 +285,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["mockFunction.ts"].map((file) =>
-			path.join(__dirname, ".././mockFiles/no-member-release-tags", file),
+			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];

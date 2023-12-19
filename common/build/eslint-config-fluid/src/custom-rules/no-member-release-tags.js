@@ -38,9 +38,12 @@ function errorLoggerHelper(node, context) {
 		// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block.
 		const formattedComment = `/** ${comment.value} */`;
 		if (hasReleaseTag(formattedComment)) {
+			/**
+			 * `node` object has different strucutre based on the AST scope type.
+			 * Class Expression needs extra traversal of the `parent` object in order to access the `name` of its parent
+			 */
 			context.report({
 				node: node,
-				// `node` object has different strucutre based on the AST scope type.
 				message: `Including the release-tag for ${node.key.name} at line ${
 					node.key.loc.start.line
 				} in ${
@@ -66,6 +69,11 @@ module.exports = {
 		},
 	},
 	create(context) {
+		/**
+		 * Available AST node types
+		 *
+		 * https://github.com/typescript-eslint/typescript-eslint/blob/6128a02cb15d500fe22fe265c83e4d7a73ae52c3/packages/eslint-plugin/src/rules/member-ordering.ts#L381-L408
+		 */
 		return {
 			TSPropertySignature(node) {
 				errorLoggerHelper(node, context);
