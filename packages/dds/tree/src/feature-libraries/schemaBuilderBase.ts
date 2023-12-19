@@ -30,7 +30,7 @@ import { defaultSchemaPolicy } from "./default-schema";
 
 /**
  * Configuration for a SchemaBuilder.
- * @alpha
+ * @internal
  */
 export interface SchemaBuilderOptions<TScope extends string = string> {
 	/**
@@ -68,7 +68,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 
 /**
  * Builds schema libraries, and the schema within them.
- * @alpha
+ * @internal
  *
  * @privateRemarks
  * This class does not directly depend on any specific field kinds,
@@ -348,7 +348,7 @@ export class SchemaBuilderBase<
 /**
  * Schema information collected by a SchemaBuilder, including referenced libraries.
  * Can be aggregated into other libraries by adding to their builders.
- * @alpha
+ * @internal
  */
 export interface SchemaLibrary extends SchemaCollection {
 	/**
@@ -359,13 +359,13 @@ export interface SchemaLibrary extends SchemaCollection {
 
 /**
  * Generalized version of AllowedTypes allowing for more concise expressions in some cases.
- * @alpha
+ * @internal
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema | Any;
 
 /**
  * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
- * @alpha
+ * @internal
  */
 export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> =
 	TSchema extends TreeNodeSchema
@@ -392,7 +392,7 @@ export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
 
 /**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
- * @alpha
+ * @internal
  */
 export type NormalizeField<
 	TSchema extends ImplicitFieldSchema,
@@ -420,6 +420,6 @@ export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault ext
 
 /**
  * Type that when combined with a default {@link FieldKind} can be normalized into a {@link TreeFieldSchema}.
- * @alpha
+ * @internal
  */
 export type ImplicitFieldSchema = TreeFieldSchema | ImplicitAllowedTypes;

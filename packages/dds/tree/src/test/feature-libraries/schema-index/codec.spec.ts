@@ -48,7 +48,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: "1.0.0" as const,
+				version: 1 as const,
 				nodeSchema: [],
 				rootFieldSchema: { kind: "x" as FieldKindIdentifier },
 			},
@@ -65,11 +65,13 @@ describe("SchemaIndex", () => {
 			undefined,
 			null,
 			{},
-			{ version: "2.0.0" },
 			{ version: "1.0.0" },
+			{ version: "1" },
 			{ version: "2.0.0" },
-			{ version: "1.0.0", nodeSchema: [], globalFieldSchema: [] },
-			{ version: "1.0.0", nodeSchema: [], extraField: 0 },
+			{ version: 1 },
+			{ version: 2 },
+			{ version: 1, nodeSchema: [], globalFieldSchema: [] },
+			{ version: 1, nodeSchema: [], extraField: 0 },
 		];
 		for (const data of badCases) {
 			assert.throws(() => codec.decode(data as unknown as Format));
