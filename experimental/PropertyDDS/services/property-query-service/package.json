@@ -37,8 +37,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test": "npm run test:mocha",
-		"build:rename-types": "node ../../../scripts/rename-types.cjs"
+		"test": "npm run test:mocha"
 	},
 	"c8": {
 		"report-dir": "nyc/report",

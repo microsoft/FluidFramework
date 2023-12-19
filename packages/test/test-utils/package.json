@@ -21,7 +21,6 @@
 		"build:compile:min": "npm run build:compile",
 		"build:docs": "fluid-build . --task api",
 		"build:genver": "gen-version",
-		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",

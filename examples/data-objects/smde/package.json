@@ -18,7 +18,6 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
