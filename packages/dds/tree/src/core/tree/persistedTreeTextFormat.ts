@@ -4,7 +4,7 @@
  */
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
-import { TreeSchemaIdentifierSchema } from "../schema-stored";
+import { schemaFormat } from "../schema-stored";
 
 /**
  * This module contains persisted types for a simple, human-readable tree format.
@@ -54,7 +54,7 @@ const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
 type EncodedNodeData = Static<typeof EncodedNodeData>;
 const EncodedNodeData = Type.Object({
 	value: Type.Optional(Type.Any()),
-	type: Type.Readonly(TreeSchemaIdentifierSchema),
+	type: Type.Readonly(schemaFormat.TreeNodeSchemaIdentifierSchema),
 });
 
 /**

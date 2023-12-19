@@ -10,13 +10,13 @@
 /**
  * Return a type thats equivalent to the input, but with different IntelliSense.
  * This tends to convert unions and intersections into objects.
- * @alpha
+ * @internal
  */
 export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTrick];
 
 /**
  * Remove all fields which permit undefined from `T`.
- * @alpha
+ * @internal
  */
 export type RequiredFields<T> = [
 	{
@@ -26,7 +26,7 @@ export type RequiredFields<T> = [
 
 /**
  * Extract fields which permit undefined but can also hold other types.
- * @alpha
+ * @internal
  */
 export type OptionalFields<T> = [
 	{
@@ -48,7 +48,7 @@ export type OptionalFields<T> = [
  * flattening since it causes complication issues.
  *
  * See also `AllowOptional`.
- * @alpha
+ * @internal
  */
 // export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
 export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
@@ -56,7 +56,7 @@ export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T
 /**
  * Converts properties of an object which permit undefined into optional properties.
  * Removes fields which only allow undefined.
- * @alpha
+ * @internal
  */
 export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_InlineTrick];
 
@@ -81,7 +81,7 @@ export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @alpha
+ * @internal
  */
 export type _InlineTrick = 0;
 
@@ -122,7 +122,7 @@ export type _InlineTrick = 0;
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @alpha
+ * @internal
  */
 export type _RecursiveTrick = never;
 

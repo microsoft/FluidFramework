@@ -31,7 +31,7 @@ export type NodeChangeType = NodeChangeset;
  * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
  * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
  * same detach.
- * @alpha
+ * @internal
  */
 export interface LineageEvent {
 	readonly revision: RevisionTag;
@@ -45,7 +45,7 @@ export interface LineageEvent {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface HasLineage {
 	/**
@@ -60,7 +60,7 @@ export interface IdRange {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface CellId extends ChangeAtomId, HasLineage {
 	/**

@@ -98,7 +98,7 @@ export interface ISubscribable<E extends Events<E>> {
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @alpha
+ * @internal
  */
 export interface IEmitter<E extends Events<E>> {
 	/**
@@ -129,7 +129,7 @@ export interface IEmitter<E extends Events<E>> {
  *
  * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
- * @alpha
+ * @internal
  */
 export function createEmitter<E extends Events<E>>(
 	noListeners?: NoListenersCallback<E>,
@@ -140,12 +140,12 @@ export function createEmitter<E extends Events<E>>(
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @alpha
+ * @internal
  */
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
 /**
- * @alpha
+ * @internal
  */
 export interface HasListeners<E extends Events<E>> {
 	/**

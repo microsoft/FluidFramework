@@ -164,17 +164,17 @@ export interface FieldEditor<TChangeset> {
 /**
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
- * @alpha
+ * @internal
  */
 export type ToDelta = (child: NodeChangeset) => DeltaFieldMap;
 
 /**
- * @alpha
+ * @internal
  */
 export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 /**
- * @alpha
+ * @internal
  */
 export enum NodeExistenceState {
 	Alive,
@@ -182,7 +182,7 @@ export enum NodeExistenceState {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
@@ -195,19 +195,19 @@ export type NodeChangeRebaser = (
 ) => NodeChangeset | undefined;
 
 /**
- * @alpha
+ * @internal
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 /**
- * @alpha
+ * @internal
  */
 export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
 
 /**
  * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
  *
- * @alpha
+ * @internal
  */
 export type RelevantRemovedRootsFromChild = (child: NodeChangeset) => Iterable<DeltaDetachedNodeId>;
 
@@ -216,7 +216,7 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function getIntention(
 	rev: RevisionTag | undefined,
