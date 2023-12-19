@@ -26,7 +26,7 @@ describe("schemaSummarizer", () => {
 					types: [],
 				},
 				nodeSchema: [],
-				version: "1.0.0",
+				version: 1,
 			};
 			assert.deepEqual(encoded, snapshot);
 		});
@@ -34,6 +34,74 @@ describe("schemaSummarizer", () => {
 		it("simple", () => {
 			const encoded = encodeTreeSchema(intoStoredSchema(jsonSequenceRootSchema));
 			const snapshot = {
+				version: 1,
+				nodeSchema: [
+					{
+						name: "com.fluidframework.json.array",
+						data: {
+							object: [
+								{
+									kind: "Sequence",
+									types: [
+										"com.fluidframework.json.object",
+										"com.fluidframework.json.array",
+										"com.fluidframework.leaf.number",
+										"com.fluidframework.leaf.boolean",
+										"com.fluidframework.leaf.string",
+										"com.fluidframework.leaf.null",
+									],
+									name: "",
+								},
+							],
+						},
+					},
+					{
+						name: "com.fluidframework.json.object",
+						data: {
+							map: {
+								kind: "Optional",
+								types: [
+									"com.fluidframework.json.object",
+									"com.fluidframework.json.array",
+									"com.fluidframework.leaf.number",
+									"com.fluidframework.leaf.boolean",
+									"com.fluidframework.leaf.string",
+									"com.fluidframework.leaf.null",
+								],
+							},
+						},
+					},
+					{
+						name: "com.fluidframework.leaf.boolean",
+						data: {
+							leaf: 2,
+						},
+					},
+					{
+						name: "com.fluidframework.leaf.handle",
+						data: {
+							leaf: 3,
+						},
+					},
+					{
+						name: "com.fluidframework.leaf.null",
+						data: {
+							leaf: 4,
+						},
+					},
+					{
+						name: "com.fluidframework.leaf.number",
+						data: {
+							leaf: 0,
+						},
+					},
+					{
+						name: "com.fluidframework.leaf.string",
+						data: {
+							leaf: 1,
+						},
+					},
+				],
 				rootFieldSchema: {
 					kind: "Sequence",
 					types: [
@@ -45,72 +113,6 @@ describe("schemaSummarizer", () => {
 						"com.fluidframework.leaf.null",
 					],
 				},
-				nodeSchema: [
-					{
-						mapFields: undefined,
-						name: "com.fluidframework.json.array",
-						objectNodeFields: [
-							{
-								kind: "Sequence",
-								name: "",
-								types: [
-									"com.fluidframework.json.object",
-									"com.fluidframework.json.array",
-									"com.fluidframework.leaf.number",
-									"com.fluidframework.leaf.boolean",
-									"com.fluidframework.leaf.string",
-									"com.fluidframework.leaf.null",
-								],
-							},
-						],
-					},
-					{
-						mapFields: {
-							kind: "Optional",
-							types: [
-								"com.fluidframework.json.object",
-								"com.fluidframework.json.array",
-								"com.fluidframework.leaf.number",
-								"com.fluidframework.leaf.boolean",
-								"com.fluidframework.leaf.string",
-								"com.fluidframework.leaf.null",
-							],
-						},
-						name: "com.fluidframework.json.object",
-						objectNodeFields: [],
-					},
-					{
-						leafValue: 2,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.boolean",
-						objectNodeFields: [],
-					},
-					{
-						leafValue: 3,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.handle",
-						objectNodeFields: [],
-					},
-					{
-						leafValue: 4,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.null",
-						objectNodeFields: [],
-					},
-					{
-						leafValue: 0,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.number",
-						objectNodeFields: [],
-					},
-					{
-						leafValue: 1,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.string",
-						objectNodeFields: [],
-					},
-				],
-				version: "1.0.0",
 			};
 
 			assert.deepEqual(encoded, snapshot);

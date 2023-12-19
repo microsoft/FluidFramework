@@ -4,7 +4,7 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { FieldKeySchema } from "../../core";
+import { schemaFormat } from "../../core";
 import { Versioned } from "../versioned";
 
 export const version = 1.0;
@@ -12,7 +12,7 @@ export const version = 1.0;
 export const Format = Type.Object(
 	{
 		version: Type.Literal(version),
-		keys: Type.Array(FieldKeySchema),
+		keys: Type.Array(schemaFormat.FieldKeySchema),
 		fields: Versioned,
 	},
 	{ additionalProperties: false },
