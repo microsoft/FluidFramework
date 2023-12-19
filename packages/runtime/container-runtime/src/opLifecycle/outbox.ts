@@ -466,7 +466,7 @@ export class Outbox {
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
-			mainBatch, // as IBatchCheckpoint,
+			mainBatch,
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
