@@ -21,50 +21,32 @@
                           "schema": {
                             "new": {
                               "version": 1,
-                              "nodeSchema": [
-                                {
-                                  "name": "com.fluidframework.leaf.boolean",
-                                  "data": {
-                                    "leaf": 2
-                                  }
+                              "nodes": {
+                                "com.fluidframework.leaf.boolean": {
+                                  "leaf": 2
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.handle",
-                                  "data": {
-                                    "leaf": 3
-                                  }
+                                "com.fluidframework.leaf.handle": {
+                                  "leaf": 3
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.null",
-                                  "data": {
-                                    "leaf": 4
-                                  }
+                                "com.fluidframework.leaf.null": {
+                                  "leaf": 4
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.number",
-                                  "data": {
-                                    "leaf": 0
-                                  }
+                                "com.fluidframework.leaf.number": {
+                                  "leaf": 0
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.string",
-                                  "data": {
-                                    "leaf": 1
-                                  }
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
                                 },
-                                {
-                                  "name": "has-sequence-map.SeqMap",
-                                  "data": {
-                                    "map": {
-                                      "kind": "Sequence",
-                                      "types": [
-                                        "has-sequence-map.SeqMap"
-                                      ]
-                                    }
+                                "has-sequence-map.SeqMap": {
+                                  "map": {
+                                    "kind": "Sequence",
+                                    "types": [
+                                      "has-sequence-map.SeqMap"
+                                    ]
                                   }
                                 }
-                              ],
-                              "rootFieldSchema": {
+                              },
+                              "root": {
                                 "kind": "Sequence",
                                 "types": [
                                   "has-sequence-map.SeqMap"
@@ -73,8 +55,8 @@
                             },
                             "old": {
                               "version": 1,
-                              "nodeSchema": [],
-                              "rootFieldSchema": {
+                              "nodes": {},
+                              "root": {
                                 "kind": "Forbidden",
                                 "types": []
                               }
@@ -201,50 +183,32 @@
                 "type": "blob",
                 "content": {
                   "version": 1,
-                  "nodeSchema": [
-                    {
-                      "name": "com.fluidframework.leaf.boolean",
-                      "data": {
-                        "leaf": 2
-                      }
+                  "nodes": {
+                    "com.fluidframework.leaf.boolean": {
+                      "leaf": 2
                     },
-                    {
-                      "name": "com.fluidframework.leaf.handle",
-                      "data": {
-                        "leaf": 3
-                      }
+                    "com.fluidframework.leaf.handle": {
+                      "leaf": 3
                     },
-                    {
-                      "name": "com.fluidframework.leaf.null",
-                      "data": {
-                        "leaf": 4
-                      }
+                    "com.fluidframework.leaf.null": {
+                      "leaf": 4
                     },
-                    {
-                      "name": "com.fluidframework.leaf.number",
-                      "data": {
-                        "leaf": 0
-                      }
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
                     },
-                    {
-                      "name": "com.fluidframework.leaf.string",
-                      "data": {
-                        "leaf": 1
-                      }
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
                     },
-                    {
-                      "name": "has-sequence-map.SeqMap",
-                      "data": {
-                        "map": {
-                          "kind": "Sequence",
-                          "types": [
-                            "has-sequence-map.SeqMap"
-                          ]
-                        }
+                    "has-sequence-map.SeqMap": {
+                      "map": {
+                        "kind": "Sequence",
+                        "types": [
+                          "has-sequence-map.SeqMap"
+                        ]
                       }
                     }
-                  ],
-                  "rootFieldSchema": {
+                  },
+                  "root": {
                     "kind": "Sequence",
                     "types": [
                       "has-sequence-map.SeqMap"

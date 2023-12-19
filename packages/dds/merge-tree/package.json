@@ -113,14 +113,14 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.7.2.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.8.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
@@ -149,143 +149,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedInterfaceDeclaration_IIntegerRange": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_internedSpaces": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_refGetRangeLabels": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_refHasRangeLabel": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_refHasRangeLabels": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"ClassDeclaration_Client": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedTypeAliasDeclaration_RangeStackMap": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_Stack": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"FunctionDeclaration_extendIfUndefined": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_clone": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_combine": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_extend": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_extendIfUndefined": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_SegmentGroup": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_Dictionary": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IConsensusInfo": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IConsensusValue": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IMarkerModifiedAction": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_LocalClientId": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedTypeAliasDeclaration_MergeTreeDeltaCallback": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedTypeAliasDeclaration_MergeTreeMaintenanceCallback": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_NonCollabClient": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_SegmentAccumulator": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_SortedDictionary": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_TreeMaintenanceSequenceNumber": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_compareNumbers": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_compareStrings": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedEnumDeclaration_PropertiesRollback": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_LocalReferenceCollection": {
-				"backCompat": false
-			},
-			"ClassDeclaration_BaseSegment": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IConsensusInfo": {
-				"backCompat": false
-			},
-			"ClassDeclaration_Marker": {
-				"backCompat": false
-			},
-			"ClassDeclaration_TextSegment": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ICombiningOp": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_createAnnotateMarkerOp": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"VariableDeclaration_MergeTreeDeltaType": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

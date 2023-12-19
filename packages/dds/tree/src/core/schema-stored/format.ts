@@ -58,19 +58,8 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
 
-const NamedFieldSchemaFormat = Type.Composite(
-	[
-		FieldSchemaFormatBase,
-		Type.Object({
-			name: FieldKeySchema,
-		}),
-	],
-	noAdditionalProps,
-);
-
 /**
  * Persisted version of {@link ValueSchema}.
- * @internal
  */
 export enum PersistedValueSchema {
 	Number,
@@ -84,14 +73,13 @@ export enum PersistedValueSchema {
  * Discriminated union content of tree node schema.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
- * @internal
  */
 export const TreeNodeSchemaDataFormat = Type.Object(
 	{
 		/**
 		 * Object node union member.
 		 */
-		object: Type.Optional(Type.Array(NamedFieldSchemaFormat)),
+		object: Type.Optional(Type.Record(Type.String(), FieldSchemaFormat)),
 		/**
 		 * Map node union member.
 		 */
@@ -105,11 +93,5 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 );
 
 export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
-/**
- * @internal
- */
+
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-/**
- * @internal
- */
-export type NamedFieldSchemaFormat = Static<typeof NamedFieldSchemaFormat>;

@@ -80,7 +80,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-internal.7.3.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-internal.8.0.0",
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
@@ -96,7 +96,7 @@
 		"@types/rewire": "^2.5.28",
 		"@types/sha.js": "^2.4.4",
 		"@types/sinon": "^7.0.13",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

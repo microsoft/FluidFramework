@@ -21,11 +21,11 @@ describe("schemaSummarizer", () => {
 				nodeSchema: new Map(),
 			});
 			const snapshot = {
-				rootFieldSchema: {
+				root: {
 					kind: "Forbidden",
 					types: [],
 				},
-				nodeSchema: [],
+				nodes: Object.create(null),
 				version: 1,
 			};
 			assert.deepEqual(encoded, snapshot);
@@ -35,31 +35,11 @@ describe("schemaSummarizer", () => {
 			const encoded = encodeTreeSchema(intoStoredSchema(jsonSequenceRootSchema));
 			const snapshot = {
 				version: 1,
-				nodeSchema: [
-					{
-						name: "com.fluidframework.json.array",
-						data: {
-							object: [
-								{
-									kind: "Sequence",
-									types: [
-										"com.fluidframework.json.object",
-										"com.fluidframework.json.array",
-										"com.fluidframework.leaf.number",
-										"com.fluidframework.leaf.boolean",
-										"com.fluidframework.leaf.string",
-										"com.fluidframework.leaf.null",
-									],
-									name: "",
-								},
-							],
-						},
-					},
-					{
-						name: "com.fluidframework.json.object",
-						data: {
-							map: {
-								kind: "Optional",
+				nodes: Object.assign(Object.create(null), {
+					"com.fluidframework.json.array": {
+						object: Object.assign(Object.create(null), {
+							"": {
+								kind: "Sequence",
 								types: [
 									"com.fluidframework.json.object",
 									"com.fluidframework.json.array",
@@ -69,40 +49,38 @@ describe("schemaSummarizer", () => {
 									"com.fluidframework.leaf.null",
 								],
 							},
+						}),
+					},
+					"com.fluidframework.json.object": {
+						map: {
+							kind: "Optional",
+							types: [
+								"com.fluidframework.json.object",
+								"com.fluidframework.json.array",
+								"com.fluidframework.leaf.number",
+								"com.fluidframework.leaf.boolean",
+								"com.fluidframework.leaf.string",
+								"com.fluidframework.leaf.null",
+							],
 						},
 					},
-					{
-						name: "com.fluidframework.leaf.boolean",
-						data: {
-							leaf: 2,
-						},
+					"com.fluidframework.leaf.boolean": {
+						leaf: 2,
 					},
-					{
-						name: "com.fluidframework.leaf.handle",
-						data: {
-							leaf: 3,
-						},
+					"com.fluidframework.leaf.handle": {
+						leaf: 3,
 					},
-					{
-						name: "com.fluidframework.leaf.null",
-						data: {
-							leaf: 4,
-						},
+					"com.fluidframework.leaf.null": {
+						leaf: 4,
 					},
-					{
-						name: "com.fluidframework.leaf.number",
-						data: {
-							leaf: 0,
-						},
+					"com.fluidframework.leaf.number": {
+						leaf: 0,
 					},
-					{
-						name: "com.fluidframework.leaf.string",
-						data: {
-							leaf: 1,
-						},
+					"com.fluidframework.leaf.string": {
+						leaf: 1,
 					},
-				],
-				rootFieldSchema: {
+				}),
+				root: {
 					kind: "Sequence",
 					types: [
 						"com.fluidframework.json.object",
