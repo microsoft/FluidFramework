@@ -149,9 +149,10 @@ const getFsManagerFactory = (
 				const keys = await redisClient.keysByPrefix("");
 				const deletePs: Promise<boolean>[] = [];
 				for (const key of keys) {
-					deletePs.push(redisClient.delete(key));
+					deletePs.push(redisClient.del(key));
 				}
 				await Promise.all(deletePs);
+				await redisClient.delAll("");
 			},
 		};
 	}

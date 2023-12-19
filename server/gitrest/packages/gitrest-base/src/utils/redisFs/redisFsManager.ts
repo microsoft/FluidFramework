@@ -24,9 +24,9 @@ import { Redis as IoRedis, RedisOptions as IoRedisOptions } from "ioredis";
 import sizeof from "object-sizeof";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IFileSystemManager, IFileSystemPromises } from "../definitions";
+import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
 import { getStats, ISystemError, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
-import { Redis, RedisParams } from "./redis";
+import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
 
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
@@ -44,12 +44,14 @@ export class RedisFsManager implements IFileSystemManager {
 		redisParam: RedisParams,
 		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
+		fsManagerParams?: IFileSystemManagerParams,
 		createRedisClient?: (options: IoRedisOptions) => IoRedis,
 	) {
 		this.promises = RedisFs.getInstance(
 			redisParam,
 			redisOptions,
 			redisFsConfig,
+			fsManagerParams,
 			createRedisClient,
 		);
 	}
@@ -57,22 +59,26 @@ export class RedisFsManager implements IFileSystemManager {
 
 export class RedisFs implements IFileSystemPromises {
 	private static instance: RedisFs;
-	public readonly redisFsClient: Redis;
+	public readonly redisFsClient: IRedis;
 
 	constructor(
 		redisParams: RedisParams,
 		redisOptions: IoRedisOptions,
 		private readonly redisFsConfig: RedisFsConfig,
+		fsManagerParams?: IFileSystemManagerParams,
 		createRedisClient: (options: IoRedisOptions) => IoRedis = (opts) => new IoRedis(opts),
 	) {
 		const redisClient = createRedisClient(redisOptions);
-		this.redisFsClient = new Redis(redisClient, redisParams);
+		this.redisFsClient = fsManagerParams?.rootDir
+			? new HashMapRedis(fsManagerParams.rootDir, redisClient, redisParams)
+			: new Redis(redisClient, redisParams);
 	}
 
 	public static getInstance(
 		redisParams: RedisParams,
 		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
+		fsManagerParams?: IFileSystemManagerParams,
 		createRedisClient?: (options: IoRedisOptions) => IoRedis,
 	): RedisFs {
 		if (!RedisFs.instance) {
@@ -80,6 +86,7 @@ export class RedisFs implements IFileSystemPromises {
 				redisParams,
 				redisOptions,
 				redisFsConfig,
+				fsManagerParams,
 				createRedisClient,
 			);
 		}
@@ -183,7 +190,7 @@ export class RedisFs implements IFileSystemPromises {
 		const filepathString = filepath.toString();
 
 		await executeRedisFsApi(
-			async () => this.redisFsClient.delete(filepathString),
+			async () => this.redisFsClient.del(filepathString),
 			RedisFsApis.Unlink,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -288,7 +295,7 @@ export class RedisFs implements IFileSystemPromises {
 
 		async function setDirPath(
 			path: string,
-			redisFsClient: Redis,
+			redisFsClient: IRedis,
 			redisFsConfig: RedisFsConfig,
 		): Promise<void> {
 			await executeRedisFsApi(
@@ -311,33 +318,20 @@ export class RedisFs implements IFileSystemPromises {
 	public async rmdir(folderpath: PathLike, options?: RmDirOptions): Promise<void> {
 		const folderpathString = folderpath.toString();
 
-		const keysToRemove = await executeRedisFsApi(
-			async () => this.redisFsClient.keysByPrefix(folderpathString),
-			RedisFsApis.KeysByPrefix,
+		// Technically this should only be done for `options.recursive === true`, but
+		// this method is used by `rm(..., {recursive: true}).
+		// If implementing this as an actual FS, this should fail if directory is not empty, and
+		// `delAll` usage should be moved to `rm` instead.
+		await executeRedisFsApi(
+			async () => this.redisFsClient.delAll(folderpathString),
+			RedisFsApis.Rmdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
 				folderpathString,
 			},
-		);
-
-		const deleteP = keysToRemove.map(async (key) => {
-			return executeRedisFsApi(
-				async () => this.redisFsClient.delete(key, false),
-				RedisFsApis.Rmdir,
-				RedisFSConstants.RedisFsApi,
-				this.redisFsConfig.enableRedisFsMetrics,
-				this.redisFsConfig.redisApiMetricsSamplingPeriod,
-				{
-					key,
-				},
-			);
-		});
-
-		await Promise.all(deleteP).catch((error) => {
-			Lumberjack.error("An error occurred while deleting keys", null, error);
-		});
+		).catch((error) => Lumberjack.error("An error occurred while deleting keys", null, error));
 	}
 
 	/**
@@ -403,7 +397,7 @@ export class RedisFs implements IFileSystemPromises {
 		}
 
 		await executeRedisFsApi(
-			async () => this.redisFsClient.delete(filepathString),
+			async () => this.redisFsClient.del(filepathString),
 			RedisFsApis.Removefile,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,

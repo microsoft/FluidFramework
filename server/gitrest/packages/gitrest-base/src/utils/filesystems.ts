@@ -71,11 +71,12 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 		};
 	}
 
-	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+	public create(fsManagerParams?: IFileSystemManagerParams): IFileSystemManager {
 		return new RedisFsManager(
 			this.redisParams,
 			this.redisOptions,
 			this.redisFsConfig,
+			fsManagerParams,
 			this.createRedisClient,
 		);
 	}
