@@ -55,16 +55,17 @@
       {{ end }}
     {{ end }}
   {{ end }}
-
+  {{ if $packageDisplayName }}
   <p>
     <a href="/docs/apis/" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
-    {{ if $packageName }}
+    
       {{ $packageLink := print "/docs/apis/" $packageName "/" }}
       &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
-    {{ end }}
+    
     {{ if $leafNodeFound }}
       {{ $itemLink := print "/docs/apis/" $packageName "/" $leafSegment }}
       &gt; <a href="{{ $itemLink }}">{{ $leafNodeWithCapitalization }}</a>
     {{ end }}
   </p>
+  {{ end }}
 {{ end }}

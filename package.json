@@ -96,7 +96,7 @@
 		"test:benchmark:report": "pnpm run -r --no-sort --stream --no-bail test:benchmark:report --reporterOptions reportDir=./benchmarkOutput",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
 		"test:coverage": "c8 npm test",
-		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
+		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
 		"test:jest": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --color",
 		"test:jest:bail": "assign-test-ports && pnpm run -r --no-sort --stream test:jest",
 		"test:jest:report": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --ci",
@@ -121,9 +121,9 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"**/*.d.ts",
-			"**/src/test/**/*.ts",
-			"**/dist/test/**/*.js",
+			"**/*.d.*ts",
+			"**/src/test/**/*.*ts",
+			"**/dist/test/**/*.*js",
 			"experimental/examples/**",
 			"experimental/PropertyDDS/examples/**",
 			"**/*.bundle.js",
@@ -138,11 +138,12 @@
 			".jsx"
 		],
 		"include": [
-			"packages/**/src/**/*.ts",
-			"packages/**/dist/**/*.js",
-			"experimental/**/src/**/*.ts",
-			"experimental/**/dist/**/*.js"
+			"packages/**/src/**/*.*ts",
+			"packages/**/dist/**/*.*js",
+			"experimental/**/src/**/*.*ts",
+			"experimental/**/dist/**/*.*js"
 		],
+		"merge-async": true,
 		"report-dir": "nyc/report",
 		"reporter": [
 			"cobertura",
@@ -164,7 +165,7 @@
 		"@microsoft/api-extractor": "^7.38.3",
 		"@octokit/core": "^4.0.5",
 		"auto-changelog": "^2.4.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

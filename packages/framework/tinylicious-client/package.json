@@ -21,6 +21,46 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/tinylicious-client-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/tinylicious-client-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/tinylicious-client-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/tinylicious-client-beta.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/tinylicious-client-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/tinylicious-client-public.d.ts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"main": "dist/index.cjs",
@@ -29,15 +69,14 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
-		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
 		"build:test": "tsc-multi --config ./tsc-multi.test.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -82,7 +121,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.0.0-internal.7.2.0",
+		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -90,7 +129,6 @@
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
-		"renamer": "^4.0.0",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "^2.0.2",
@@ -110,11 +148,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_TinyliciousAudience": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

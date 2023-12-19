@@ -450,9 +450,8 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles.push(tsBuildInfo);
 			}
 
-			const configFiles = this.configFileFullPath;
 			const configs: string[] = [];
-
+			const configFiles = this.configFileFullPaths;
 			for (const configFile of configFiles) {
 				if (existsSync(configFile)) {
 					// Include the config file if it exists so that we can detect changes
@@ -470,7 +469,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 	}
-	protected abstract get configFileFullPath(): string[];
+	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
 }
 

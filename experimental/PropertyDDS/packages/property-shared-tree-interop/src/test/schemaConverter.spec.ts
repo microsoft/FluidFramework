@@ -20,7 +20,7 @@ import {
 	MapNodeSchema,
 	LeafNodeSchema,
 	FieldNodeSchema,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	convertPropertyToSharedTreeSchema as convertSchema,

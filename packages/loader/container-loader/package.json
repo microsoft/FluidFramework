@@ -11,21 +11,123 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./test/container": {
+			"import": {
+				"types": "./lib/container.d.mts",
+				"default": "./lib/container.mjs"
+			},
+			"require": {
+				"types": "./dist/container.d.ts",
+				"default": "./dist/container.cjs"
+			}
+		},
+		"./test/contracts": {
+			"import": {
+				"types": "./lib/contracts.d.mts",
+				"default": "./lib/contracts.mjs"
+			},
+			"require": {
+				"types": "./dist/contracts.d.ts",
+				"default": "./dist/contracts.cjs"
+			}
+		},
+		"./test/connectionManager": {
+			"import": {
+				"types": "./lib/connectionManager.d.mts",
+				"default": "./lib/connectionManager.mjs"
+			},
+			"require": {
+				"types": "./dist/connectionManager.d.ts",
+				"default": "./dist/connectionManager.cjs"
+			}
+		},
+		"./test/deltaManager": {
+			"import": {
+				"types": "./lib/deltaManager.d.mts",
+				"default": "./lib/deltaManager.mjs"
+			},
+			"require": {
+				"types": "./dist/deltaManager.d.ts",
+				"default": "./dist/deltaManager.cjs"
+			}
+		},
+		"./test/utils": {
+			"import": {
+				"types": "./lib/utils.d.mts",
+				"default": "./lib/utils.mjs"
+			},
+			"require": {
+				"types": "./dist/utils.d.ts",
+				"default": "./dist/utils.cjs"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/container-loader-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-loader-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/container-loader-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-loader-beta.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/container-loader-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-loader-public.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc-multi --config tsc-multi.test.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -49,13 +151,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -87,7 +189,7 @@
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.7.2.0",
+		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
@@ -97,7 +199,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^7.0.13",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
@@ -124,17 +226,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IContainerExperimental": {
-				"backCompat": false
-			},
-			"ClassDeclaration_Loader": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

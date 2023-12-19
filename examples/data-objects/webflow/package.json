@@ -51,9 +51,9 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"**/*.d.ts",
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"**/*.d.*ts",
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"extension": [
@@ -63,8 +63,8 @@
 			".jsx"
 		],
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"require": [
@@ -103,7 +103,7 @@
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
