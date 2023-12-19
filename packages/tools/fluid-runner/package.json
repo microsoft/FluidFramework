@@ -87,7 +87,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/fluid-runner-previous": "npm:@fluidframework/fluid-runner@2.0.0-internal.7.2.0",
+		"@fluidframework/fluid-runner-previous": "npm:@fluidframework/fluid-runner@2.0.0-internal.8.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
