@@ -82,7 +82,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.0.0-internal.7.2.0",
+		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -110,11 +110,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_TinyliciousAudience": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
