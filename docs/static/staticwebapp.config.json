@@ -1,7 +1,7 @@
 {
 	"routes": [
 		{
-			"route": "/docs/fcdocstest/",
+			"route": "/docs/fcdocstest",
 			"redirect": "/docs/apis",
 			"statusCode": 301
 		},
