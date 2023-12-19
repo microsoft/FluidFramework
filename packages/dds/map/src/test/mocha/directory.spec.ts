@@ -14,6 +14,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 	MockDeltaConnection,
+	MockHandle,
 } from "@fluidframework/test-runtime-utils";
 
 import { MapFactory } from "../../map";
@@ -83,42 +84,41 @@ function serialize(directory1: SharedDirectory): string {
 }
 
 describe("Directory", () => {
-	/**
-	 * The purpose of the tests using this helper is to ensure that the message contents submitted
-	 * by the DDS contains handles that are detectable via JSON.stringify replacers, since this
-	 * is the technique used in the ContainerRuntime to detect handles in incoming ops.
-	 * @returns true if the contents object contains at least one encoded handle anywhere
-	 */
-	function detectHandleViaJsonStingify(contents: unknown) {
-		try {
-			// use JSON.stringify as a hack to traverse the object structure
-			JSON.stringify(contents, (key, value) => {
-				if (key === "type" && value === "__fluid_handle__") {
-					// Found a handle. We can abort object traversal
-					throw new Error("Found a handle");
-				}
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				return value;
-			});
-			return false;
-		} catch (e: any) {
-			if (e.message === "Found a handle") {
-				return true;
-			}
-			// Re-throw unexpected errors
-			throw e;
-		}
-	}
-
 	describe("Handle encoding", () => {
-		it("should not prematurely serialize handles", async () => {
+		/**
+		 * The purpose of the tests using this helper is to ensure that the message contents submitted
+		 * by the DDS contains handles that are detectable via JSON.stringify replacers, since this
+		 * is the technique used in the ContainerRuntime to detect handles in incoming ops.
+		 * @returns true if the contents object contains at least one encoded handle anywhere
+		 */
+		function detectHandleViaJsonStingify(contents: unknown) {
+			try {
+				// use JSON.stringify as a hack to traverse the object structure
+				JSON.stringify(contents, (key, value) => {
+					if (key === "type" && value === "__fluid_handle__") {
+						// Found a handle. We can abort object traversal
+						throw new Error("Found a handle");
+					}
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					return value;
+				});
+				return false;
+			} catch (e: any) {
+				if (e.message === "Found a handle") {
+					return true;
+				}
+				// Re-throw unexpected errors
+				throw e;
+			}
+		}
+		it("should not obscure handles in message contents", async () => {
 			const messages: any[] = [];
 			const directory = createDirectoryWithSubmitCallback("directory", (message) => {
 				messages.push(message);
 				return 0; // unused
 			});
-			const map = createLocalMap("map");
-			directory.set("map", map.handle);
+			const handle = new MockHandle("whatever");
+			directory.set("map", handle);
 
 			assert.equal(messages.length, 1, "Expected a single message to be submitted");
 			assert(detectHandleViaJsonStingify(messages[0]), "The handle should be detected");
