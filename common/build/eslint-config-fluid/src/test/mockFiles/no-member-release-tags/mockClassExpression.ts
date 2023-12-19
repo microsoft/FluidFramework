@@ -64,3 +64,15 @@ const mockClassExpression = class {
 		return this._value;
 	}
 };
+
+/**
+ * @public
+ *
+ * Second class expression added to verify that the linter is able to parse multiple class expressions in a single file.
+ */
+const mockClassExpressionTwo = class {
+	/**
+	 * @internal
+	 */
+	invalidInternalTwo(): void {}
+};

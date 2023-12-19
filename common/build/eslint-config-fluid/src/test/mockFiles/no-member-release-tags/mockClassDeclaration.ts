@@ -59,27 +59,14 @@ class MockClass {
 
 /**
  * @public
+ *
+ * Second class added to verify that the linter is able to parse multiple classes in a single file.
  */
 class MockClassTwo {
 	/**
 	 * @internal
 	 */
-	invalidInternal(): void {}
-
-	/**
-	 * @alpha
-	 */
-	invalidAlpha(): void {}
-
-	/**
-	 * @public
-	 */
-	inValidPublic(): void {}
-
-	/**
-	 * @beta
-	 */
-	invalidSignature: boolean;
+	invalidInternalTwo(): void {}
 
 	// Valid property signature.
 	validSignature: void;

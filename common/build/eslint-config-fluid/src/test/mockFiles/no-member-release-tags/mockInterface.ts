@@ -45,12 +45,14 @@ interface MockInteface {
 
 /**
  * @public
+ *
+ * Second interface added to verify that the linter is able to parse multiple interfaces in a single file.
  */
 interface MockIntefaceTwo {
 	/**
 	 * @alpha
 	 */
-	invalidAlpha: string;
+	invalidAlphaTwo: string;
 
-	valid: number;
+	validSignature: number;
 }

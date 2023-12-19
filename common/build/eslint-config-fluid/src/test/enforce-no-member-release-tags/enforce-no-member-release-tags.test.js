@@ -35,7 +35,7 @@ describe("Do not allow release tags on members", function () {
 
 		const result = results[0];
 
-		assert.strictEqual(result.errorCount, 11, "Should have 11 errors");
+		assert.strictEqual(result.errorCount, 8, "Should have 8 errors");
 		assert.strictEqual(
 			result.messages[0].message,
 			"Including the release-tag for invalidInternal at line 13 in MockClass is not allowed.",
@@ -66,19 +66,7 @@ describe("Do not allow release tags on members", function () {
 		);
 		assert.strictEqual(
 			result.messages[7].message,
-			"Including the release-tag for invalidInternal at line 67 in MockClassTwo is not allowed.",
-		);
-		assert.strictEqual(
-			result.messages[8].message,
-			"Including the release-tag for invalidAlpha at line 72 in MockClassTwo is not allowed.",
-		);
-		assert.strictEqual(
-			result.messages[9].message,
-			"Including the release-tag for inValidPublic at line 77 in MockClassTwo is not allowed.",
-		);
-		assert.strictEqual(
-			result.messages[10].message,
-			"Including the release-tag for invalidSignature at line 82 in MockClassTwo is not allowed.",
+			"Including the release-tag for invalidInternalTwo at line 69 in MockClassTwo is not allowed.",
 		);
 	});
 
@@ -90,7 +78,7 @@ describe("Do not allow release tags on members", function () {
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
-		assert.strictEqual(result.errorCount, 9, "Should have 9 errors");
+		assert.strictEqual(result.errorCount, 10, "Should have 10 errors");
 		assert.strictEqual(
 			result.messages[0].message,
 			"Including the release-tag for invalidInternal at line 13 in mockClassExpression is not allowed.",
@@ -126,6 +114,10 @@ describe("Do not allow release tags on members", function () {
 		assert.strictEqual(
 			result.messages[8].message,
 			"Including the release-tag for value at line 63 in mockClassExpression is not allowed.",
+		);
+		assert.strictEqual(
+			result.messages[9].message,
+			"Including the release-tag for invalidInternalTwo at line 77 in mockClassExpressionTwo is not allowed.",
 		);
 	});
 
@@ -183,7 +175,7 @@ describe("Do not allow release tags on members", function () {
 		);
 		assert.strictEqual(
 			result.messages[6].message,
-			"Including the release-tag for invalidAlpha at line 53 in MockIntefaceTwo is not allowed.",
+			"Including the release-tag for invalidAlphaTwo at line 55 in MockIntefaceTwo is not allowed.",
 		);
 	});
 
