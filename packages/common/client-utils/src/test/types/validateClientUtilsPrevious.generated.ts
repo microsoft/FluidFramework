@@ -24,26 +24,26 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Buffer": {"forwardCompat": false}
+* "ClassDeclaration_Buffer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Buffer():
     TypeOnly<old.Buffer>;
-declare function use_current_RemovedClassDeclaration_Buffer(
+declare function use_current_ClassDeclaration_Buffer(
     use: TypeOnly<current.Buffer>): void;
-use_current_RemovedClassDeclaration_Buffer(
+use_current_ClassDeclaration_Buffer(
     get_old_ClassDeclaration_Buffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Buffer": {"backCompat": false}
+* "ClassDeclaration_Buffer": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_Buffer():
+declare function get_current_ClassDeclaration_Buffer():
     TypeOnly<current.Buffer>;
 declare function use_old_ClassDeclaration_Buffer(
     use: TypeOnly<old.Buffer>): void;
 use_old_ClassDeclaration_Buffer(
-    get_current_RemovedClassDeclaration_Buffer());
+    get_current_ClassDeclaration_Buffer());
 
 /*
 * Validate forward compat by using old type in place of current type
