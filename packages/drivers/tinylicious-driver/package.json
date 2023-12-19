@@ -43,11 +43,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/tinylicious-driver-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/tinylicious-driver-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},

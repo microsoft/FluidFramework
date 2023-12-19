@@ -43,11 +43,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/stochastic-test-utils-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/stochastic-test-utils-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},
