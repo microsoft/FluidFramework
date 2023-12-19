@@ -1901,6 +1901,7 @@ export class Container
 		if (!Array.isArray(quorumSnapshot.members)) {
 			this.mc.logger.sendErrorEvent({
 				eventName: "quorumMembersNotArray",
+				details: typeof quorumSnapshot.members,
 			});
 		}
 
