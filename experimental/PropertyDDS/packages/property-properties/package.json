@@ -23,6 +23,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",

@@ -20,7 +20,7 @@ import {
 	estimateSocketSize,
 	sequenceNumbersMatch,
 } from "./batchManager";
-import { BatchMessage, IBatch } from "./definitions";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 import { OpCompressor } from "./opCompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -463,7 +463,10 @@ export class Outbox {
 
 	public checkpoint() {
 		return {
-			mainBatch: this.mainBatch.checkpoint(),
+      // This type-assertion is not necessary, but without it, the generated .d.ts uses a dynamic import which doesn't
+      // resolve.
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+			mainBatch: this.mainBatch.checkpoint() as IBatchCheckpoint,
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};

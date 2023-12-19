@@ -17,6 +17,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" lib nyc",
 		"eslint": "eslint --format stylish src",

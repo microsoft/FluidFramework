@@ -29,7 +29,7 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
 		"bench:profile": "cd bench && tsc && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
 		"build": "fluid-build . --task build",
@@ -38,7 +38,7 @@
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
+		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"build:test": "tsc-multi --config ./tsc-multi.test.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",

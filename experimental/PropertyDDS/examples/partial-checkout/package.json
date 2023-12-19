@@ -14,6 +14,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",

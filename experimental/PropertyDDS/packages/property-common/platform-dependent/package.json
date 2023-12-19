@@ -13,6 +13,9 @@
 	"author": "Microsoft and contributors",
 	"main": "server.js",
 	"browser": "browser.js",
+	"scripts": {
+		"build:rename-types": "node ../../../scripts/rename-types.cjs"
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}

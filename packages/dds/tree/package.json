@@ -22,6 +22,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",

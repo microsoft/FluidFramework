@@ -15,6 +15,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",

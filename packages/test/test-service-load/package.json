@@ -20,6 +20,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
+		"build:rename-types": "node ../../../scripts/rename-types.cjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",

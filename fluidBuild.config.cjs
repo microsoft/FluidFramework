@@ -65,8 +65,15 @@ module.exports = {
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
-		"api-extractor:esnext": ["api-extractor:commonjs", "build:esnext"],
-		"build:rename-types": ["build:esnext", "api-extractor:esnext"],
+		"api-extractor:esnext": {
+			dependsOn: ["api-extractor:commonjs", "build:esnext", "build:rename-types"],
+			script: true,
+		},
+
+		"build:rename-types": {
+			dependsOn: ["build:esnext"],
+			script: true,
+		},
 		"build:docs": ["tsc"],
 		"ci:build:docs": ["tsc"],
 		"build:readme": {
