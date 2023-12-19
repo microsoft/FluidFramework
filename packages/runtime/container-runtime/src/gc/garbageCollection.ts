@@ -288,7 +288,7 @@ export class GarbageCollector implements IGarbageCollector {
 							nodeData.unreferencedTimestampMs,
 							this.configs.inactiveTimeoutMs,
 							currentReferenceTimestampMs,
-							this.configs.sweepTimeoutMs,
+							this.configs.tombstoneTimeoutMs,
 							this.configs.sweepGracePeriodMs,
 						),
 					);
@@ -607,7 +607,7 @@ export class GarbageCollector implements IGarbageCollector {
 						currentReferenceTimestampMs,
 						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
-						this.configs.sweepTimeoutMs,
+						this.configs.tombstoneTimeoutMs,
 						this.configs.sweepGracePeriodMs,
 					),
 				);
@@ -833,7 +833,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
-			sweepTimeoutMs: this.configs.sweepTimeoutMs,
+			tombstoneTimeoutMs: this.configs.tombstoneTimeoutMs,
 		};
 	}
 

@@ -31,6 +31,7 @@ import {
 	gcDisableThrowOnTombstoneLoadOptionName,
 	defaultSweepGracePeriodMs,
 	gcGenerationOptionName,
+	IGCMetadata_Deprecated,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
 
@@ -54,7 +55,7 @@ export function generateGCConfigs(
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean;
 	let sessionExpiryTimeoutMs: number | undefined;
-	let sweepTimeoutMs: number | undefined;
+	let tombstoneTimeoutMs: number | undefined;
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 	let gcVersionInBaseSnapshot: GCVersion | undefined;
 
@@ -63,21 +64,25 @@ export function generateGCConfigs(
 	 * 1. Whether running GC mark phase is allowed or not.
 	 * 2. Whether running GC sweep phase is allowed or not.
 	 * 3. Whether GC session expiry is enabled or not.
-	 * For existing containers, we get this information from the createParams.metadata blob of its summary.
+	 * For existing containers, we get this information from the metadata blob of its summary.
 	 */
 	if (createParams.existing) {
-		gcVersionInBaseSnapshot = getGCVersion(createParams.metadata);
-		// Existing documents which did not have createParams.metadata blob or had GC disabled have version as 0. For all
+		const metadata = createParams.metadata;
+		gcVersionInBaseSnapshot = getGCVersion(metadata);
+		// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
 		// other existing documents, GC is enabled.
 		gcEnabled = gcVersionInBaseSnapshot > 0;
-		sessionExpiryTimeoutMs = createParams.metadata?.sessionExpiryTimeoutMs;
-		sweepTimeoutMs =
-			createParams.metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
-		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
+		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
+		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
+		tombstoneTimeoutMs =
+			metadata?.tombstoneTimeoutMs ??
+			legacyPersistedSweepTimeoutMs ?? // Backfill old documents that have sweepTimeoutMs instead of tombstoneTimeoutMs
+			computeTombstoneTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist either value
+		persistedGcFeatureMatrix = metadata?.gcFeatureMatrix;
 	} else {
 		// This Test Override only applies for new containers
-		const testOverrideSweepTimeoutMs = mc.config.getNumber(
-			"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs",
+		const testOverrideTombstoneTimeoutMs = mc.config.getNumber(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
 		);
 
 		// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
@@ -89,7 +94,8 @@ export function generateGCConfigs(
 			sessionExpiryTimeoutMs =
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
-		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
+		tombstoneTimeoutMs =
+			testOverrideTombstoneTimeoutMs ?? computeTombstoneTimeout(sessionExpiryTimeoutMs);
 
 		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
 		if (gcGeneration !== undefined) {
@@ -131,7 +137,7 @@ export function generateGCConfigs(
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and sweepTimeout is provided, the following conditions have to be met to run sweep:
+	 * Assuming overall GC is enabled and Tombstone timeout is present, the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be enabled for this container.
 	 * 2. Sweep should be enabled for this session.
@@ -139,7 +145,7 @@ export function generateGCConfigs(
 	 * These conditions can be overridden via the RunSweep feature flag.
 	 */
 	const shouldRunSweep =
-		!shouldRunGC || sweepTimeoutMs === undefined
+		!shouldRunGC || tombstoneTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
@@ -150,9 +156,9 @@ export function generateGCConfigs(
 		createParams.gcOptions.inactiveTimeoutMs ??
 		defaultInactiveTimeoutMs;
 
-	// Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
-	if (sweepTimeoutMs !== undefined && inactiveTimeoutMs > sweepTimeoutMs) {
-		throw new UsageError("inactive timeout should not be greater than the sweep timeout");
+	// Inactive timeout must be greater than tombstone timeout since a node goes from active -> inactive -> sweep ready.
+	if (tombstoneTimeoutMs !== undefined && inactiveTimeoutMs > tombstoneTimeoutMs) {
+		throw new UsageError("inactive timeout should not be greater than the tombstone timeout");
 	}
 
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
@@ -190,7 +196,7 @@ export function generateGCConfigs(
 		testMode,
 		tombstoneMode,
 		sessionExpiryTimeoutMs,
-		sweepTimeoutMs,
+		tombstoneTimeoutMs,
 		sweepGracePeriodMs,
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
@@ -203,14 +209,14 @@ export function generateGCConfigs(
 }
 
 /**
- * Sweep timeout is the time after which unreferenced content can be swept.
- * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
+ * Tombstone timeout is the time after which unreferenced content can be swept.
+ * Tombstone timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
  *
  * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days.
  * The buffer is added to account for any clock skew or other edge cases.
  * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
  */
-function computeSweepTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
+function computeTombstoneTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
 	const bufferMs = oneDayMs;
 	return sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
 }
