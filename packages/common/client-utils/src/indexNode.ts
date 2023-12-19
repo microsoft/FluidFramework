@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	Buffer,
-	bufferToString,
-	IsoBuffer,
-	stringToBuffer,
-	Uint8ArrayToString,
-} from "./bufferNode";
+export { bufferToString, IsoBuffer, stringToBuffer, Uint8ArrayToString } from "./bufferNode";
 export { gitHashFile, hashFile } from "./hashFileNode";
 export { performance } from "./performanceIsomorphic";
 
