@@ -71,6 +71,46 @@
 				"types": "./dist/utils.d.ts",
 				"default": "./dist/utils.cjs"
 			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/container-loader-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-loader-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/container-loader-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-loader-beta.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/container-loader-untrimmed.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-loader-untrimmed.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/container-loader-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-loader-public.d.ts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"main": "dist/index.cjs",
@@ -150,7 +190,7 @@
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.7.2.0",
+		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
@@ -160,7 +200,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^7.0.13",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
@@ -188,17 +228,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IContainerExperimental": {
-				"backCompat": false
-			},
-			"ClassDeclaration_Loader": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

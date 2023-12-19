@@ -31,6 +31,46 @@
 				"types": "./dist/intervalCollection.d.ts",
 				"default": "./dist/intervalCollection.cjs"
 			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/sequence-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/sequence-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/sequence-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/sequence-beta.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/sequence-untrimmed.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/sequence-untrimmed.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/sequence-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/sequence-public.d.ts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"main": "dist/index.cjs",
@@ -118,14 +158,14 @@
 		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.7.2.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.8.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
@@ -159,26 +199,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ISharedString": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"ClassDeclaration_SharedSegmentSequence": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"ClassDeclaration_SharedSequence": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"ClassDeclaration_SharedString": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_SharedStringSegment": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

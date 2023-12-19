@@ -33,6 +33,8 @@ export interface ModularChangeset extends HasFieldChanges {
 	constraintViolationCount?: number;
 	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
+	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+	readonly destroys?: ChangeAtomIdMap<undefined>;
 }
 
 /**
