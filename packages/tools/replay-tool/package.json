@@ -20,7 +20,6 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
@@ -84,8 +83,7 @@
 			"build:docs": {
 				"dependsOn": [
 					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
+					"api-extractor:commonjs"
 				],
 				"script": false
 			}
