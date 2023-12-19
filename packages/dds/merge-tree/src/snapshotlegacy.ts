@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";

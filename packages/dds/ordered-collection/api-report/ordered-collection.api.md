@@ -19,10 +19,10 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 // @internal
 export function acquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T | undefined>;
 
-// @internal
+// @alpha
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
-// @internal
+// @alpha
 export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     protected constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, data: IOrderedCollection<T>);
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
@@ -50,14 +50,14 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @internal
+// @alpha
 export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusQueue<T>;
     static getFactory(): IChannelFactory;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum ConsensusResult {
     // (undocumented)
     Complete = 1,
@@ -65,14 +65,14 @@ export enum ConsensusResult {
     Release = 0
 }
 
-// @internal
+// @alpha
 export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
     add(value: T): Promise<void>;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @internal
+// @alpha
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
     (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
     (event: "acquire", listener: (value: T, clientId?: string) => void): this;
@@ -88,14 +88,14 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
     load(document: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 }
 
-// @internal
+// @alpha
 export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
     add(value: T): any;
     remove(): T;
     size(): number;
 }
 
-// @internal
+// @alpha
 export interface ISnapshotable<T> {
     // (undocumented)
     asArray(): T[];

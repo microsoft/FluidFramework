@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-base-to-string */
-
 import { assert } from "@fluidframework/core-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import {
@@ -13,7 +11,7 @@ import {
 	PropertySet,
 } from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@fluidframework/merge-tree/dist/test/testClient";
+import { TestClient } from "@fluidframework/merge-tree/dist/test";
 import { SubSequence } from "../sharedSequence";
 
 const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
@@ -73,15 +71,18 @@ describe("SubSequence", () => {
 		cli.insertItemsRemote(0, [2, 11], undefined, 1, 0, "1");
 
 		if (verbose) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			console.log(cli.mergeTree.toString());
 		}
 		cli.insertItemsRemote(0, [4, 5, 6], undefined, 2, 0, "2");
 		if (verbose) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			console.log(cli.mergeTree.toString());
 		}
 		const segment = new SubSequence<number>([3, 4, 1, 1]);
 		const insert = cli.insertSegmentLocal(4, segment);
 		if (verbose) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			console.log(cli.mergeTree.toString());
 		}
 		if (verbose) {
@@ -95,6 +96,7 @@ describe("SubSequence", () => {
 		cli.insertItemsRemote(5, [1, 5, 6, 2, 3], undefined, 4, 2, "2");
 		cli.insertItemsRemote(0, [9], undefined, 5, 0, "2");
 		if (verbose) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			console.log(cli.mergeTree.toString());
 			for (let clientId = 0; clientId < 4; clientId++) {
 				for (let refSeq = 0; refSeq < 6; refSeq++) {
@@ -104,6 +106,7 @@ describe("SubSequence", () => {
 		}
 		cli.applyMsg(cli.makeOpMessage(createRemoveRangeOp(3, 6), 6, 5, "3"));
 		if (verbose) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			console.log(cli.mergeTree.toString());
 			for (let clientId = 0; clientId < 4; clientId++) {
 				for (let refSeq = 0; refSeq < 7; refSeq++) {

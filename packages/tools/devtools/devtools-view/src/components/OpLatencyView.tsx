@@ -10,7 +10,7 @@ import {
 	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 	TelemetryEvent,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
 import { DynamicComposedChart, type GraphDataSet } from "./graphs";
 

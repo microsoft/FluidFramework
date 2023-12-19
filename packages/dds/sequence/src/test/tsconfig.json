@@ -13,6 +13,9 @@
 		"rootDir": "./",
 		"outDir": "../../dist/test",
 		"types": ["mocha"],
+		"noImplicitAny": false,
 		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory,
+		"module": "Node16",
+		"moduleResolution": "Node16",
 	},
 }

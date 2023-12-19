@@ -4,7 +4,7 @@
  */
 import React from "react";
 
-import { type ValueNodeBase } from "@fluid-experimental/devtools-core";
+import { type ValueNodeBase } from "@fluidframework/devtools-core";
 
 import { type DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";

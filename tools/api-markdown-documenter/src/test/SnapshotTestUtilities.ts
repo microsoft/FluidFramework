@@ -7,7 +7,7 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 
-import { FileSystemConfiguration } from "../FileSystemConfiguration";
+import { type FileSystemConfiguration } from "../FileSystemConfiguration";
 
 /**
  * Compares "expected" to "actual" documentation test suite output.

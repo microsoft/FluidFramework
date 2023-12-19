@@ -12,7 +12,7 @@ import {
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedStringFactory, SharedString } from "..";
+import { SharedStringFactory, SharedString } from "../index";
 
 function applyOperations(
 	sharedString: SharedString,

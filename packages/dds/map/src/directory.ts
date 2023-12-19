@@ -18,7 +18,7 @@ import {
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import * as path from "path-browserify";
+import path from "path-browserify";
 import { RedBlackTree } from "@fluidframework/merge-tree";
 import {
 	IDirectory,
@@ -1508,7 +1508,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		assert(
 			subdirNames.length === this._subdirectories.size,
-			"The count of keys for iteration should be consistent with the size of actual data",
+			0x85c /* The count of keys for iteration should be consistent with the size of actual data */,
 		);
 
 		const entriesIterator = {

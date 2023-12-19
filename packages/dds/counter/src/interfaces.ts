@@ -7,7 +7,7 @@ import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/sh
 
 /**
  * Events sent by {@link SharedCounter}.
- * @internal
+ * @alpha
  */
 export interface ISharedCounterEvents extends ISharedObjectEvents {
 	/**
@@ -58,7 +58,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
  *     console.log(`The counter incremented by ${incrementAmount} and now has a value of ${newValue}`);
  * });
  * ```
- * @internal
+ * @alpha
  */
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
 	/**

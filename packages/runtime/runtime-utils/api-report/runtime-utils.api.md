@@ -4,14 +4,12 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -20,6 +18,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions';
 import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
@@ -44,7 +43,7 @@ export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, su
 export function calculateStats(summary: SummaryObject): ISummaryStats;
 
 // @internal
-export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats;
+export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTreeWithBlobContents): ISummaryTreeWithStats;
 
 // @internal
 export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree;
@@ -52,7 +51,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree;
 // @internal
 export function convertToSummaryTree(snapshot: ITree, fullTree?: boolean): ISummarizeResult;
 
-// @internal
+// @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
 // @internal (undocumented)
@@ -121,9 +120,6 @@ export class ObjectStoragePartition implements IChannelStorageService {
 // @internal
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
-// @internal @deprecated (undocumented)
-export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
-
 // @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
@@ -163,7 +159,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 // @internal
 export function seqFromTree(tree: ISnapshotTree, readAndParseBlob: ReadAndParseBlob): Promise<number>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor();
     // (undocumented)
@@ -195,7 +191,7 @@ export class TelemetryContext implements ITelemetryContext {
 }
 
 // @internal
-export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
+export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]): Map<string, string[]>;
 
 // @internal (undocumented)
 export function utf8ByteLength(str: string): number;

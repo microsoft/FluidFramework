@@ -46,7 +46,7 @@ export function createLoader(
  * @param source - The code details used to create the Container.
  * @param loader - The loader to use to initialize the container.
  * @param attachRequest - The request to create new from.
- * @internal
+ * @alpha
  */
 
 export async function createAndAttachContainer(

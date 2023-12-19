@@ -4,9 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { SinonFakeTimers, useFakeTimers, spy } from "sinon";
+import {
+	ContainerErrorTypes,
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions";
+import { IErrorBase, ITelemetryBaseEvent, ConfigTypes } from "@fluidframework/core-interfaces";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
@@ -20,7 +23,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
 	tagCodeArtifacts,
@@ -46,12 +48,12 @@ import {
 	GCVersion,
 	stableGCVersion,
 	IGarbageCollectionSnapshotData,
-	IGCStats,
-	IGCRuntimeOptions,
 	UnreferencedStateTracker,
 	UnreferencedState,
 	defaultSweepGracePeriodMs,
+	GarbageCollectionMessage,
 } from "../../gc";
+import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes";
 import {
 	dataStoreAttributesBlobName,
 	IContainerRuntimeMetadata,
@@ -61,6 +63,7 @@ import { pkgVersion } from "../../packageVersion";
 import { configProvider } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
+	readonly runtime: IGarbageCollectionRuntime;
 	readonly configs: IGarbageCollectorConfigs;
 	readonly summaryStateTracker: Omit<
 		GCSummaryStateTracker,
@@ -74,6 +77,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly tombstones: string[];
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
+	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 };
 
 describe("Garbage Collection Tests", () => {
@@ -121,7 +125,7 @@ describe("Garbage Collection Tests", () => {
 		gcMetadata: IGCMetadata = {},
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
 		isSummarizerClient: boolean = true,
-	) {
+	): GcWithPrivates {
 		const getNodeType = (nodePath: string) => {
 			if (nodePath.split("/").length !== 2) {
 				return GCNodeType.Other;
@@ -173,8 +177,8 @@ describe("Garbage Collection Tests", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
-			activeConnection: () => true,
-		});
+			submitMessage: (message: ContainerRuntimeGCMessage) => {},
+		}) as GcWithPrivates;
 	}
 	let gc: GcWithPrivates | undefined;
 
@@ -218,11 +222,110 @@ describe("Garbage Collection Tests", () => {
 			() => {
 				closeCalled = true;
 			},
-		) as GcWithPrivates;
+		);
 		assert(
 			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
 			"Close should have been called at exactly defaultSessionExpiryDurationMs",
 		);
+	});
+
+	describe("runSweepPhase", () => {
+		it("Tombstone then Delete", async () => {
+			// Simple starting reference graph - root and two nodes
+			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
+			defaultGCData.gcNodes[nodes[0]] = [];
+			defaultGCData.gcNodes[nodes[1]] = [];
+
+			// Sweep enabled
+			gc = createGarbageCollector({ gcOptions: { enableGCSweep: true } });
+			// These spies will let us monitor how each of these functions are called (or not) during runSweepPhase.
+			// The original behavior of the function is preserved, but we can check how it was called.
+			const spies = {
+				updateTombstonedRoutes: spy(gc.runtime, "updateTombstonedRoutes"),
+				submitMessage: spy(gc, "submitMessage"),
+			};
+
+			// Nodes 0 and 1 are referenced
+			await gc.collectGarbage({});
+
+			// Unreference 0
+			defaultGCData.gcNodes["/"] = [nodes[1]];
+			clock.tick(10);
+			await gc.collectGarbage({});
+
+			// Erase the spy's tracking of calls up to this point - I just want to observe what happens next.
+			spies.updateTombstonedRoutes.resetHistory();
+
+			// Skip to TombstoneReady state
+			clock.tick(defaultSweepTimeoutMs);
+			await gc.collectGarbage({});
+
+			assert(
+				spies.updateTombstonedRoutes.calledWith([nodes[0]]),
+				"updateTombstonedRoutes should be called with node 0",
+			);
+			assert.equal(
+				spies.submitMessage.callCount,
+				0,
+				"submitMessage should not be called yet, didn't pass Grace Period yet",
+			);
+			spies.updateTombstonedRoutes.resetHistory();
+
+			// Skip past Sweep Grace Period. GC Sweep op should be submitted
+			clock.tick(defaultSweepGracePeriodMs);
+			await gc.collectGarbage({});
+
+			assert.equal(
+				spies.submitMessage.callCount,
+				1,
+				"submitMessage should be called since Sweep is enabled",
+			);
+			assert(
+				spies.updateTombstonedRoutes.alwaysCalledWith([]),
+				"No additional nodes should be Tombstoned",
+			);
+		});
+
+		it("Sweep Disabled - Should Tombstone SweepReady nodes", async () => {
+			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
+			defaultGCData.gcNodes[nodes[0]] = [];
+			defaultGCData.gcNodes[nodes[1]] = [];
+
+			gc = createGarbageCollector();
+			const spies = {
+				updateTombstonedRoutes: spy(gc.runtime, "updateTombstonedRoutes"),
+				submitMessage: spy(gc, "submitMessage"),
+			};
+
+			// Nodes 0 and 1 are referenced
+			await gc.collectGarbage({});
+
+			// Unreference 0
+			defaultGCData.gcNodes["/"] = [nodes[1]];
+			clock.tick(10);
+			await gc.collectGarbage({});
+
+			// Skip all the way past Sweep Grace Period.  But Sweep is disabled, so Tombstone should happen
+			clock.tick(defaultSweepTimeoutMs + defaultSweepGracePeriodMs);
+			assert.equal(
+				gc.unreferencedNodesState.get(nodes[0])?.state,
+				"SweepReady",
+				"Node 0 should be SweepReady (not TombstoneReady)",
+			);
+
+			spies.updateTombstonedRoutes.resetHistory();
+			await gc.collectGarbage({});
+
+			assert(
+				spies.updateTombstonedRoutes.calledWith([nodes[0]]),
+				"updateTombstonedRoutes should be called with node 0",
+			);
+			assert.equal(
+				spies.submitMessage.callCount,
+				0,
+				"submitMessage should not be called since Sweep is disabled",
+			);
+		});
 	});
 
 	describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
@@ -807,7 +910,7 @@ describe("Garbage Collection Tests", () => {
 					{ baseSnapshot: snapshotTree },
 					gcBlobsMap,
 					gcMetadata,
-				) as GcWithPrivates;
+				);
 			}
 
 			it("reads all GC data from base snapshot when GC version does not change", async () => {
@@ -890,7 +993,7 @@ describe("Garbage Collection Tests", () => {
 			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 				inactiveTimeoutMs;
 
-			const garbageCollector = createGarbageCollector({}) as GcWithPrivates;
+			const garbageCollector = createGarbageCollector({});
 
 			function validateUnreferencedStates(
 				expectedUnreferencedStates: Record<number, UnreferencedState>,
@@ -1657,7 +1760,7 @@ describe("Garbage Collection Tests", () => {
 		]);
 		const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap, {
 			sweepTimeoutMs: defaultSweepTimeoutMs,
-		}) as GcWithPrivates;
+		});
 
 		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 		const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
@@ -1673,267 +1776,72 @@ describe("Garbage Collection Tests", () => {
 		assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting 0 deleted nodes");
 	});
 
-	describe("GC stats", () => {
-		let garbageCollector: IGarbageCollector;
-		let initialStats: IGCStats;
-
-		const tests = (sweepEnabled: boolean) => {
-			beforeEach(() => {
-				// Set up initial GC graph with 5 nodes and 2 are unreferenced.
-				defaultGCData.gcNodes["/"] = [nodes[0]];
-				defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
-				defaultGCData.gcNodes[nodes[1]] = [];
-				defaultGCData.gcNodes[nodes[2]] = [];
-				defaultGCData.gcNodes[nodes[3]] = [];
-
-				// Set up the initial GC stats based on the initial GC graph.
-				initialStats = {
-					nodeCount: 5,
-					unrefNodeCount: 2,
-					updatedNodeCount: 5,
-					dataStoreCount: 5,
-					unrefDataStoreCount: 2,
-					updatedDataStoreCount: 5,
-					attachmentBlobCount: 0,
-					unrefAttachmentBlobCount: 0,
-					updatedAttachmentBlobCount: 0,
-					lifetimeNodeCount: 5,
-					lifetimeDataStoreCount: 5,
-					lifetimeAttachmentBlobCount: 0,
-					deletedNodeCount: 0,
-					deletedDataStoreCount: 0,
-					deletedAttachmentBlobCount: 0,
-				};
-
-				const sweepGracePeriodMs = 0; // Skip TombstoneReady for these tests and go straight to SweepReady
-				const gcOptions: IGCRuntimeOptions = sweepEnabled
-					? { gcSweepGeneration: 1, sweepGracePeriodMs }
-					: { sweepGracePeriodMs };
-				garbageCollector = createGarbageCollector({ gcOptions });
-			});
-
-			it("can generate initial stats", async () => {
-				const gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(
-					gcStats,
-					initialStats,
-					"The stats for first GC run should be same as initial stats",
-				);
-			});
-
-			it("can generate stats with unreferenced nodes", async () => {
-				const expectedStats = initialStats;
-				let gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(
-					gcStats,
-					expectedStats,
-					"The stats for first GC run should be same as initial stats",
-				);
-
-				// Unreference another data store node.
-				defaultGCData.gcNodes[nodes[0]] = [];
-
-				// There should be 1 more unreferenced node / data store.
-				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount++;
-				expectedStats.unrefDataStoreCount++;
-				expectedStats.updatedNodeCount = 1;
-				expectedStats.updatedDataStoreCount = 1;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 1");
-
-				// Unreference another data store node
-				defaultGCData.gcNodes["/"] = [];
-
-				// There should be 1 more unreferenced node / data store.
-				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount++;
-				expectedStats.unrefDataStoreCount++;
-				expectedStats.updatedNodeCount = 1;
-				expectedStats.updatedDataStoreCount = 1;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 2");
-			});
-
-			it("can generate stats with re-referenced nodes", async () => {
-				const expectedStats = initialStats;
-				let gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(
-					gcStats,
-					expectedStats,
-					"The stats for first GC run should be same as initial stats",
-				);
-
-				// Unreference another data store node.
-				defaultGCData.gcNodes[nodes[0]] = [];
-
-				// There should be 1 more unreferenced node / data store.
-				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount++;
-				expectedStats.unrefDataStoreCount++;
-				expectedStats.updatedNodeCount = 1;
-				expectedStats.updatedDataStoreCount = 1;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 1");
-
-				// Add a new reference.
-				defaultGCData.gcNodes[nodes[0]] = [nodes[2]];
-
-				// There should be 1 less unreferenced node / data store.
-				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount--;
-				expectedStats.unrefDataStoreCount--;
-				expectedStats.updatedNodeCount = 1;
-				expectedStats.updatedDataStoreCount = 1;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 2");
-			});
-
-			/**
-			 * The deleted stats work with sweep disabled as well because we use sweep ready nodes to
-			 * generate them.
-			 */
-			it("can generate stats with deleted nodes", async () => {
-				const expectedStats = initialStats;
-				let gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(
-					gcStats,
-					expectedStats,
-					"The stats for first GC run should be same as initial stats",
-				);
-
-				// Advance the clock past sweep timeout so that unreferenced nodes are deleted.
-				clock.tick(defaultSweepTimeoutMs + 1);
-
-				// There should be 2 deleted nodes and data stores. There shouldn't be any nodes whose
-				// reference state updated.
-				expectedStats.deletedNodeCount = 2;
-				expectedStats.deletedDataStoreCount = 2;
-				expectedStats.updatedNodeCount = 0;
-				expectedStats.updatedDataStoreCount = 0;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats");
-			});
-
-			/**
-			 * The deleted stats work with sweep disabled as well because we use sweep ready nodes to
-			 * generate them.
-			 */
-			it("can generate stats with deleted nodes after multiple sweep runs", async () => {
-				const expectedStats = initialStats;
-				let gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(
-					gcStats,
-					expectedStats,
-					"The stats for first GC run should be same as initial stats",
-				);
-
-				// Advance the clock past sweep timeout so that unreferenced nodes are deleted.
-				clock.tick(defaultSweepTimeoutMs + 1);
-
-				// There should be 2 deleted nodes and data stores. There shouldn't be any nodes whose
-				// reference state updated.
-				expectedStats.deletedNodeCount = 2;
-				expectedStats.deletedDataStoreCount = 2;
-				expectedStats.updatedNodeCount = 0;
-				expectedStats.updatedDataStoreCount = 0;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 1");
-
-				// Unreference another data store node.
-				defaultGCData.gcNodes[nodes[0]] = [];
-
-				if (sweepEnabled) {
-					// If sweep is enabled, there should be 2 less nodes / data stores since they got deleted.
-					// There should be 1 new unreferenced node / data store.
-					expectedStats.nodeCount -= 2;
-					expectedStats.dataStoreCount -= 2;
-					expectedStats.unrefNodeCount = 1;
-					expectedStats.unrefDataStoreCount = 1;
-				} else {
-					// If sweep is disabled, there should be 1 more unreferenced node / data store.
-					expectedStats.unrefNodeCount++;
-					expectedStats.unrefDataStoreCount++;
-				}
-				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.updatedNodeCount = 1;
-				expectedStats.updatedDataStoreCount = 1;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 2");
-
-				// Advance the clock past sweep timeout again so that unreferenced node is deleted.
-				clock.tick(defaultSweepTimeoutMs + 1);
-
-				// No nodes are updated since the last run.
-				// There should be 1 more deleted node / data store.
-				expectedStats.updatedNodeCount = 0;
-				expectedStats.updatedDataStoreCount = 0;
-				expectedStats.deletedNodeCount++;
-				expectedStats.deletedDataStoreCount++;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 3");
-
-				if (sweepEnabled) {
-					// If sweep is enabled, there should be 1 less node / data store since it got deleted.
-					// There shouldn't be any unreferenced node / data store.
-					expectedStats.nodeCount--;
-					expectedStats.dataStoreCount--;
-					expectedStats.unrefNodeCount = 0;
-					expectedStats.unrefDataStoreCount = 0;
-				}
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 4");
-			});
-
-			it("can generate stats with new nodes", async () => {
-				const expectedStats = initialStats;
-				let gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(
-					gcStats,
-					expectedStats,
-					"The stats for first GC run should be same as initial stats",
-				);
-
-				// Add 2 new nodes and make one of them unreferenced.
-				defaultGCData.gcNodes["/"].push(nodes[4]);
-				defaultGCData.gcNodes[nodes[4]] = [];
-				defaultGCData.gcNodes[nodes[5]] = [];
-
-				// There should be 2 more nodes / data stores.
-				// There should be 1 more unreferenced node / data store.
-				// There should be 1 node / data store whose referenced state got updated.
-				expectedStats.nodeCount += 2;
-				expectedStats.dataStoreCount += 2;
-				expectedStats.lifetimeNodeCount += 2;
-				expectedStats.lifetimeDataStoreCount += 2;
-				expectedStats.unrefNodeCount++;
-				expectedStats.unrefDataStoreCount++;
-				expectedStats.updatedNodeCount = 1;
-				expectedStats.updatedDataStoreCount = 1;
-
-				gcStats = await garbageCollector.collectGarbage({});
-				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats");
-			});
+	describe("Future GC op type compatibility", () => {
+		const gcMessageFromFuture: Record<string, unknown> = {
+			type: "FUTURE_MESSAGE",
+			hello: "HELLO",
 		};
 
-		/**
-		 * Note that the life time and deleted stats do not change across these 2 test variants.
-		 */
-		describe("sweep enabled", () => {
-			tests(true /* sweepEnabled */);
+		let garbageCollector: IGarbageCollector;
+		beforeEach(async () => {
+			garbageCollector = createGarbageCollector({ gcOptions: { enableGCSweep: true } });
 		});
 
-		describe("sweep disabled", () => {
-			tests(false /* sweepEnabled */);
+		it("can submit GC op compat behavior", async () => {
+			const gcWithPrivates = garbageCollector as GcWithPrivates;
+			const containerRuntimeGCMessage: Omit<
+				ContainerRuntimeGCMessage,
+				"type" | "contents"
+			> & {
+				type: string;
+				contents: any;
+			} = {
+				type: ContainerMessageType.GC,
+				contents: gcMessageFromFuture,
+				compatDetails: { behavior: "Ignore" },
+			};
+
+			assert.doesNotThrow(
+				() =>
+					gcWithPrivates.submitMessage(
+						containerRuntimeGCMessage as ContainerRuntimeGCMessage,
+					),
+				"Cannot submit GC message with compatDetails",
+			);
+		});
+
+		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
+			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
+				type: ContainerMessageType.GC,
+				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
+				compatDetails: { behavior: "Ignore" },
+			};
+			garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */);
+		});
+
+		it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
+			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
+				type: ContainerMessageType.GC,
+				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
+				compatDetails: { behavior: "FailToProcess" },
+			};
+			assert.throws(
+				() => garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */),
+				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+				"Garbage collection message of unknown type FROM_THE_FUTURE",
+			);
+		});
+
+		it("process remote op with unrecognized type and no compat behavior", async () => {
+			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
+				type: ContainerMessageType.GC,
+				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
+			};
+			assert.throws(
+				() => garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */),
+				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+				"Garbage collection message of unknown type FROM_THE_FUTURE",
+			);
 		});
 	});
 });
