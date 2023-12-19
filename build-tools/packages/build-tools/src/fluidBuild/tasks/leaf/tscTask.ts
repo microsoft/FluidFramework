@@ -497,7 +497,7 @@ export class TscMultiTask extends TscDependentTask {
 		"tsc-multi.test.json",
 	];
 
-	protected get configFileFullPath() {
+	protected get configFileFullPaths() {
 		return this.commonFiles.map((file) => this.getPackageFileFullPath(file));
 	}
 
