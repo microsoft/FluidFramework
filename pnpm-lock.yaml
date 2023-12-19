@@ -364,7 +364,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -412,7 +412,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       nock: 13.4.0
       rimraf: 4.4.1
@@ -445,7 +445,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       commander: ^5.1.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -494,7 +494,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       nock: 13.4.0
       prettier: 3.0.3
@@ -1255,7 +1255,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -1291,7 +1291,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -1556,7 +1556,7 @@ importers:
       '@types/fs-extra': ^9.0.11
       '@types/node': ^18.19.0
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       css-loader: ^1.0.0
       eslint: ~8.50.0
       express: ^4.16.3
@@ -1594,7 +1594,7 @@ importers:
       '@types/fs-extra': 9.0.13
       '@types/node': 18.19.1
       buffer: 6.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.50.0
       fs-extra: 9.1.0
@@ -2897,7 +2897,7 @@ importers:
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
@@ -2932,7 +2932,7 @@ importers:
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -3129,7 +3129,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       assert: ^2.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -3190,7 +3190,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.89.0
@@ -4596,7 +4596,7 @@ importers:
       babel-plugin-polyfill-regenerator: ^0.1.6
       babel-plugin-transform-jsx: ^2.0.0
       body-parser: ^1.18.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       eslint: ~8.50.0
       jest: ^29.6.2
@@ -4642,7 +4642,7 @@ importers:
       babel-plugin-polyfill-regenerator: 0.1.6_@babel+core@7.23.3
       babel-plugin-transform-jsx: 2.0.0
       body-parser: 1.20.2
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       eslint: 8.50.0
       jest: 29.7.0_@types+node@18.19.1
@@ -4668,7 +4668,7 @@ importers:
       ajv: ^8.12.0
       ajv-keywords: ^5.1.0
       async: ^3.2.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -4701,7 +4701,7 @@ importers:
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -4731,7 +4731,7 @@ importers:
       ajv: ^8.12.0
       async: ^3.2.2
       base64-js: ^1.5.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -4772,7 +4772,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/semver': 7.5.6
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -5042,7 +5042,7 @@ importers:
       '@types/node': ^18.19.0
       ajv: ^8.12.0
       async: ^3.2.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -5076,7 +5076,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -5247,7 +5247,7 @@ importers:
       aws-sdk: 2.547.0
       basicauth-middleware: 2.0.0
       body-parser: ^1.18.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       chai-as-promised: 7.1.1
       chalk: ^2.4.2
@@ -5329,7 +5329,7 @@ importers:
       '@fluidframework/server-local-server': 3.0.0-223236
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       aws-sdk: 2.547.0
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       chai-as-promised: 7.1.1_chai@4.3.10
       cross-env: 7.0.3
@@ -5385,7 +5385,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/path-browserify': ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -5422,7 +5422,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -5452,7 +5452,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -5482,7 +5482,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -5511,7 +5511,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       concurrently: ^8.2.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -5541,7 +5541,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       concurrently: 8.2.2
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -5572,7 +5572,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -5602,7 +5602,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -5646,7 +5646,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/uuid': ^9.0.2
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       denque: ^1.5.1
@@ -5700,7 +5700,7 @@ importers:
       '@types/lru-cache': 5.1.1
       '@types/mocha': 9.1.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       easy-table: 1.2.0
@@ -5854,7 +5854,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/sinon': ^7.0.13
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -5881,7 +5881,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -5915,7 +5915,7 @@ importers:
       '@types/sinon': ^7.0.13
       base64-js: ^1.5.1
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -5968,7 +5968,7 @@ importers:
       '@types/rewire': 2.5.30
       '@types/sha.js': 2.4.4
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       concurrently: 8.2.2
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -6076,7 +6076,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6101,7 +6101,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6169,7 +6169,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6204,7 +6204,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6239,7 +6239,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6273,7 +6273,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6306,7 +6306,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6340,7 +6340,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@types/mocha': 9.1.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6383,7 +6383,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/path-browserify': ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6427,7 +6427,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6471,7 +6471,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6521,7 +6521,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6566,7 +6566,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -6608,7 +6608,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -6646,7 +6646,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6684,7 +6684,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6719,7 +6719,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6756,7 +6756,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6794,7 +6794,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6830,7 +6830,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6873,7 +6873,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -6919,7 +6919,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -6962,7 +6962,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       benchmark: ^2.1.4
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7005,7 +7005,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       benchmark: 2.1.4
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7042,7 +7042,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       benchmark: ^2.1.4
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7077,7 +7077,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       benchmark: 2.1.4
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7116,7 +7116,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7157,7 +7157,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7191,7 +7191,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7223,7 +7223,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7273,7 +7273,7 @@ importers:
       '@ungap/structured-clone': ^1.2.0
       ajv: ^8.12.0
       ajv-formats: ^2.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       dependency-cruiser: ^14.1.0
       diff: ^3.5.0
@@ -7328,7 +7328,7 @@ importers:
       '@types/uuid': 9.0.7
       ajv: 8.12.0
       ajv-formats: 2.1.1_ajv@8.12.0
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       dependency-cruiser: 14.1.2
       diff: 3.5.0
@@ -7409,7 +7409,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7442,7 +7442,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7642,7 +7642,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7692,7 +7692,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7732,7 +7732,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
       '@types/sinon': ^7.0.13
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7777,7 +7777,7 @@ importers:
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7969,7 +7969,7 @@ importers:
       '@types/url-parse': 1.4.4
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       cross-fetch: ^3.1.5
@@ -8022,7 +8022,7 @@ importers:
       '@types/url-parse': 1.4.4
       '@types/uuid': 9.0.7
       axios: 1.6.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8252,7 +8252,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8294,7 +8294,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8335,7 +8335,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8377,7 +8377,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8526,7 +8526,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -8559,7 +8559,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -8647,7 +8647,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8686,7 +8686,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8768,7 +8768,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -8801,7 +8801,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -8831,7 +8831,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8859,7 +8859,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8969,7 +8969,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -9004,7 +9004,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -9129,7 +9129,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -9179,7 +9179,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9216,7 +9216,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
       axios: ^1.6.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9258,7 +9258,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9341,7 +9341,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/sinon': ^7.0.13
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
@@ -9396,7 +9396,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/sinon': 7.5.2
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9476,7 +9476,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9519,7 +9519,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9589,7 +9589,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9623,7 +9623,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@types/mocha': 9.1.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9700,7 +9700,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9737,7 +9737,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9779,7 +9779,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9822,7 +9822,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9859,7 +9859,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -9905,7 +9905,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       nock: 13.4.0
       rimraf: 4.4.1
@@ -9935,7 +9935,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9971,7 +9971,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9999,7 +9999,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -10033,7 +10033,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -10096,7 +10096,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -10157,7 +10157,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -10245,7 +10245,7 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -10287,7 +10287,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
@@ -10310,7 +10310,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10335,7 +10335,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -10444,7 +10444,7 @@ importers:
       '@types/node': ^18.19.0
       agentkeepalive: ^4.5.0
       axios: ^1.6.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
@@ -10482,7 +10482,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -10542,7 +10542,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -10620,7 +10620,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -10641,7 +10641,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10662,7 +10662,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -10703,7 +10703,7 @@ importers:
       '@fluidframework/tool-utils': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       commander: ^5.1.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10750,7 +10750,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -10795,7 +10795,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -10848,7 +10848,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -10901,7 +10901,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/semver': ^7.5.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10963,7 +10963,7 @@ importers:
       '@types/node': 18.19.1
       '@types/semver': 7.5.6
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -10996,7 +10996,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/chai': ^4.0.0
       '@types/mocha': ^9.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -11026,7 +11026,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -11080,7 +11080,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/sinon': ^7.0.13
       '@types/sinon-chrome': ^2.2.11
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       concurrently: ^8.2.1
       copy-webpack-plugin: ^11.0.0
@@ -11156,7 +11156,7 @@ importers:
       '@types/react-dom': 17.0.25
       '@types/sinon': 7.5.2
       '@types/sinon-chrome': 2.2.15
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       concurrently: 8.2.2
       copy-webpack-plugin: 11.0.0_webpack@5.89.0
@@ -11216,7 +11216,7 @@ importers:
       '@types/chai': ^4.0.0
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -11259,7 +11259,7 @@ importers:
       '@types/chai': 4.3.11
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -11629,7 +11629,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/yargs': ^13
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       json2csv: ^5.0.7
@@ -11664,7 +11664,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/yargs': 13.0.12
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -11794,7 +11794,7 @@ importers:
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       express: ^4.16.3
@@ -11855,7 +11855,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       fs-extra: 9.1.0
@@ -11891,7 +11891,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -11924,7 +11924,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -11955,7 +11955,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -11992,7 +11992,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -12023,7 +12023,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       async-mutex: ^0.3.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -12058,7 +12058,7 @@ importers:
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
