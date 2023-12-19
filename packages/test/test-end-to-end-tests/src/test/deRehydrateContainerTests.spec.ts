@@ -553,8 +553,8 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 				id1 = interval1.getIntervalId();
 				assert.strictEqual(typeof id0, "string");
 				assert.strictEqual(typeof id1, "string");
-				intervalsBefore.change(id0, 2, 3);
-				intervalsBefore.change(id1, 0, 3);
+				intervalsBefore.change(id0, { start: 2, end: 3 });
+				intervalsBefore.change(id1, { start: 0, end: 3 });
 			}
 
 			const snapshotTree = container.serialize();

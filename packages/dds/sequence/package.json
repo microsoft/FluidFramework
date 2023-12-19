@@ -199,6 +199,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IIntervalCollection": {
+				"backCompat": false
+			}
+		}
 	}
 }
