@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy";
-import { ICompressionStorageConfig } from "..";
+import { ICompressionStorageConfig } from "./compressionTypes";
 import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob";
 import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter";
 

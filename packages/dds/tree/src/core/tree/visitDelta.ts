@@ -197,7 +197,7 @@ function transferRoots(
 /**
  * Visitor for changes in a delta.
  * Must be freed after use.
- * @alpha
+ * @internal
  */
 export interface DeltaVisitor {
 	/**

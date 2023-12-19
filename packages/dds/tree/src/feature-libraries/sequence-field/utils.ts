@@ -12,7 +12,7 @@ import {
 	TaggedChange,
 	areEqualChangeAtomIds,
 } from "../../core";
-import { brand, fail, getFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
+import { brand, fail, getFromRangeMap, getOrAddEmptyToMap, Mutable, RangeMap } from "../../util";
 import {
 	addCrossFieldQuery,
 	CrossFieldManager,
@@ -40,8 +40,9 @@ import {
 	CellMark,
 	AttachAndDetach,
 	MarkEffect,
-	RedetachFields,
+	DetachFields,
 	IdRange,
+	DetachIdOverrideType,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -154,7 +155,7 @@ export function getDetachOutputId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		mark.redetachId ?? {
+		mark.idOverride?.id ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -312,6 +313,25 @@ export function isDetachOfRemovedNodes(
 	mark: Mark<unknown>,
 ): mark is CellMark<DetachOfRemovedNodes, unknown> {
 	return isDetach(mark) && mark.cellId !== undefined;
+}
+
+export function getDetachIdForLineage(
+	mark: MarkEffect,
+	fallbackRevision: RevisionTag | undefined,
+): ChangeAtomId | undefined {
+	if (isDetach(mark)) {
+		if (mark.idOverride?.type === DetachIdOverrideType.Redetach) {
+			return {
+				revision: mark.idOverride.id.revision ?? fallbackRevision,
+				localId: mark.idOverride.id.localId,
+			};
+		}
+		return { revision: mark.revision ?? fallbackRevision, localId: mark.id };
+	}
+	if (isAttachAndDetachEffect(mark)) {
+		return getDetachIdForLineage(mark.detach, fallbackRevision);
+	}
+	return undefined;
 }
 
 export function isImpactfulCellRename(
@@ -511,12 +531,14 @@ function areAdjacentIdRanges(
 	return (firstStart as number) + firstLength === secondStart;
 }
 
-function haveMergeableIdOverrides(
-	lhs: RedetachFields,
-	lhsCount: number,
-	rhs: RedetachFields,
-): boolean {
-	return areMergeableChangeAtoms(lhs.redetachId, lhsCount, rhs.redetachId);
+function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
+	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
+		return (
+			lhs.idOverride.type === rhs.idOverride.type &&
+			areMergeableCellIds(lhs.idOverride.id, lhsCount, rhs.idOverride.id)
+		);
+	}
+	return (lhs.idOverride === undefined) === (rhs.idOverride === undefined);
 }
 
 function areMergeableCellIds(
@@ -604,11 +626,7 @@ function tryMergeEffects(
 		return undefined;
 	}
 
-	if (
-		isDetach(lhs) &&
-		isDetach(rhs) &&
-		!areMergeableCellIds(lhs.redetachId, lhsCount, rhs.redetachId)
-	) {
+	if (isDetach(lhs) && isDetach(rhs) && !haveMergeableIdOverrides(lhs, lhsCount, rhs)) {
 		return undefined;
 	}
 
@@ -922,7 +940,7 @@ export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): bool
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
@@ -934,7 +952,7 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const srcQueries: CrossFieldQuerySet = new Map();
@@ -995,7 +1013,7 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function newMoveEffectTable<T>(): MoveEffectTable<T> {
 	return newCrossFieldTable();
@@ -1066,9 +1084,12 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect1 = { ...effect };
 			const id2: ChangesetLocalId = brand((effect.id as number) + length);
 			const effect2 = { ...effect, id: id2 };
-			const effect2Delete = effect2 as Delete;
-			if (effect2Delete.redetachId !== undefined) {
-				effect2Delete.redetachId = splitDetachEvent(effect2Delete.redetachId, length);
+			const effect2Delete = effect2 as Mutable<Delete>;
+			if (effect2Delete.idOverride !== undefined) {
+				effect2Delete.idOverride = {
+					...effect2Delete.idOverride,
+					id: splitDetachEvent(effect2Delete.idOverride.id, length),
+				};
 			}
 			return [effect1, effect2];
 		}
@@ -1078,10 +1099,13 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 				id: (effect.id as number) + length,
 			};
 
-			const return2 = effect2 as MoveOut;
+			const return2 = effect2 as Mutable<MoveOut>;
 
-			if (return2.redetachId !== undefined) {
-				return2.redetachId = splitDetachEvent(return2.redetachId, length);
+			if (return2.idOverride !== undefined) {
+				return2.idOverride = {
+					...return2.idOverride,
+					id: splitDetachEvent(return2.idOverride.id, length),
+				};
 			}
 
 			if (return2.finalEndpoint !== undefined) {

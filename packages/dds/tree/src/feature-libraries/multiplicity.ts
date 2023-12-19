@@ -6,7 +6,7 @@
  * Describes how a particular field functions.
  *
  * This determine its reading and editing APIs, multiplicity, and what merge resolution policies it will use.
- * @alpha
+ * @internal
  */
 export enum Multiplicity {
 	/**
