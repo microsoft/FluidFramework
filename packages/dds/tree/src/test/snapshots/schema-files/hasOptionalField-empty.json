@@ -1,169 +1,91 @@
 {
   "version": 1,
-  "nodeSchema": [
-    {
-      "name": "com.fluidframework.leaf.boolean",
-      "data": {
-        "leaf": 2
-      }
+  "nodes": {
+    "com.fluidframework.leaf.boolean": {
+      "leaf": 2
     },
-    {
-      "name": "com.fluidframework.leaf.handle",
-      "data": {
-        "leaf": 3
-      }
+    "com.fluidframework.leaf.handle": {
+      "leaf": 3
     },
-    {
-      "name": "com.fluidframework.leaf.null",
-      "data": {
-        "leaf": 4
-      }
+    "com.fluidframework.leaf.null": {
+      "leaf": 4
     },
-    {
-      "name": "com.fluidframework.leaf.number",
-      "data": {
-        "leaf": 0
-      }
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
     },
-    {
-      "name": "com.fluidframework.leaf.string",
-      "data": {
-        "leaf": 1
-      }
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
     },
-    {
-      "name": "test.allTheFields",
-      "data": {
-        "object": [
-          {
-            "kind": "Optional",
-            "types": [
-              "com.fluidframework.leaf.number"
-            ],
-            "name": "optional"
-          },
-          {
-            "kind": "Sequence",
-            "types": [
-              "com.fluidframework.leaf.number"
-            ],
-            "name": "sequence"
-          },
-          {
-            "kind": "Value",
-            "types": [
-              "com.fluidframework.leaf.number"
-            ],
-            "name": "valueField"
-          }
-        ]
-      }
-    },
-    {
-      "name": "test.anyFields",
-      "data": {
-        "object": [
-          {
-            "kind": "Optional",
-            "name": "optional"
-          },
-          {
-            "kind": "Sequence",
-            "name": "sequence"
-          },
-          {
-            "kind": "Value",
-            "name": "valueField"
-          }
-        ]
-      }
-    },
-    {
-      "name": "test.anyMap",
-      "data": {
-        "map": {
-          "kind": "Sequence"
+    "test.allTheFields": {
+      "object": {
+        "optional": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "sequence": {
+          "kind": "Sequence",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "valueField": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
         }
       }
     },
-    {
-      "name": "test.hasAnyValueField",
-      "data": {
-        "object": [
-          {
-            "kind": "Value",
-            "name": "field"
-          }
-        ]
+    "test.anyFields": {
+      "object": {
+        "optional": {
+          "kind": "Optional"
+        },
+        "sequence": {
+          "kind": "Sequence"
+        },
+        "valueField": {
+          "kind": "Value"
+        }
       }
     },
-    {
-      "name": "test.hasMinimalValueField",
-      "data": {
-        "object": [
-          {
-            "kind": "Value",
-            "types": [
-              "test.minimal"
-            ],
-            "name": "field"
-          }
-        ]
+    "test.anyMap": {
+      "map": {
+        "kind": "Sequence"
       }
     },
-    {
-      "name": "test.hasNumericValueField",
-      "data": {
-        "object": [
-          {
-            "kind": "Value",
-            "types": [
-              "com.fluidframework.leaf.number"
-            ],
-            "name": "field"
-          }
-        ]
+    "test.hasAnyValueField": {
+      "object": {
+        "field": {
+          "kind": "Value"
+        }
       }
     },
-    {
-      "name": "test.hasOptionalField",
-      "data": {
-        "object": [
-          {
-            "kind": "Optional",
-            "types": [
-              "com.fluidframework.leaf.number"
-            ],
-            "name": "field"
-          }
-        ]
+    "test.hasMinimalValueField": {
+      "object": {
+        "field": {
+          "kind": "Value",
+          "types": [
+            "test.minimal"
+          ]
+        }
       }
     },
-    {
-      "name": "test.hasPolymorphicValueField",
-      "data": {
-        "object": [
-          {
-            "kind": "Value",
-            "types": [
-              "com.fluidframework.leaf.number",
-              "test.minimal"
-            ],
-            "name": "field"
-          }
-        ]
+    "test.hasNumericValueField": {
+      "object": {
+        "field": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        }
       }
     },
-    {
-      "name": "test.minimal",
-      "data": {
-        "object": []
-      }
-    },
-    {
-      "name": "test.numericMap",
-      "data": {
-        "map": {
+    "test.hasOptionalField": {
+      "object": {
+        "field": {
           "kind": "Optional",
           "types": [
             "com.fluidframework.leaf.number"
@@ -171,22 +93,40 @@
         }
       }
     },
-    {
-      "name": "test.recursiveType",
-      "data": {
-        "object": [
-          {
-            "kind": "Optional",
-            "types": [
-              "test.recursiveType"
-            ],
-            "name": "field"
-          }
+    "test.hasPolymorphicValueField": {
+      "object": {
+        "field": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number",
+            "test.minimal"
+          ]
+        }
+      }
+    },
+    "test.minimal": {
+      "object": {}
+    },
+    "test.numericMap": {
+      "map": {
+        "kind": "Optional",
+        "types": [
+          "com.fluidframework.leaf.number"
         ]
       }
+    },
+    "test.recursiveType": {
+      "object": {
+        "field": {
+          "kind": "Optional",
+          "types": [
+            "test.recursiveType"
+          ]
+        }
+      }
     }
-  ],
-  "rootFieldSchema": {
+  },
+  "root": {
     "kind": "Value",
     "types": [
       "test.hasOptionalField"
