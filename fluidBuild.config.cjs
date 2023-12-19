@@ -232,7 +232,6 @@ module.exports = {
 				// case.
 				"packages/dds/migration-shim/package.json",
 				"packages/test/functional-tests/package.json",
-				"packages/common/client-utils/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
