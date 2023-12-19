@@ -7,7 +7,7 @@ const { TSDocParser } = require("@microsoft/tsdoc");
 
 /**
  *
- * @param comment: String - The comment included inside the class / interface / type.
+ * @param comment: string - A TSDoc comment, including its opening and closing bits (`/**`, `*/`) in case of a block comment.
  * @returns `true` if the comment contains any release tags; `false` otherwise.
  */
 function hasReleaseTag(comment) {
