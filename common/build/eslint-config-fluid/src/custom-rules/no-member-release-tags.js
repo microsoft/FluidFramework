@@ -40,7 +40,7 @@ function errorLoggerHelper(node, context) {
 		if (hasReleaseTag(formattedComment)) {
 			/**
 			 * `node` object has different strucutre based on the AST scope type.
-			 * Class Expression needs extra traversal of the `parent` object in order to access the `name` of its parent
+			 * Class Expression needs an extra traversal of the `parent` object in order to access the `name` of its parent
 			 */
 			context.report({
 				node: node,
