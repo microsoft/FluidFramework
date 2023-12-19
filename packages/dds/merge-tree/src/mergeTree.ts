@@ -136,7 +136,7 @@ const LRUSegmentComparer: IComparer<LRUSegment> = {
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
-function addTile(tile: ReferencePosition, tiles: object) {
+function addTile(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
 	const tileLabels = refGetTileLabels(tile);
 	if (tileLabels) {
 		for (const tileLabel of tileLabels) {
