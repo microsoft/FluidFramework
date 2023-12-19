@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TreeStoredSchema, TreeNodeSchemaIdentifier, TreeFieldStoredSchema } from "../core";
+import { assert } from "@fluidframework/core-utils";
+import {
+	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeFieldStoredSchema,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+} from "../core";
 import { fail } from "../util";
 import { defaultSchemaPolicy } from "./default-schema";
 import {
@@ -30,7 +38,7 @@ import {
 export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema {
 	const map: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
 	for (const [identifier, innerSchema] of schema.nodeSchema) {
-		if (innerSchema.leafValue !== undefined) {
+		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
 				identifier,
 				LeafNodeSchema.create(
@@ -39,7 +47,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 					innerSchema.leafValue,
 				),
 			);
-		} else if (innerSchema.mapFields !== undefined) {
+		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(
 				identifier,
 				MapNodeSchema.create(
@@ -49,6 +57,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 				),
 			);
 		} else {
+			assert(innerSchema instanceof ObjectNodeStoredSchema, "unsupported node kind");
 			const fields = new Map<string, TreeFieldSchema>();
 			for (const [key, field] of innerSchema.objectNodeFields) {
 				fields.set(key, fieldSchemaFromStoredSchema(field, map));

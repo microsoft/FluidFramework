@@ -4,12 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import {
-	FieldKindIdentifierSchema,
-	FieldKeySchema,
-	RevisionTagSchema,
-	ChangesetLocalId,
-} from "../../core";
+import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
@@ -55,8 +50,8 @@ type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
 
 const EncodedFieldChange = Type.Object(
 	{
-		fieldKey: FieldKeySchema,
-		fieldKind: FieldKindIdentifierSchema,
+		fieldKey: schemaFormat.FieldKeySchema,
+		fieldKind: schemaFormat.FieldKindIdentifierSchema,
 		// Implementation note: node and field change encoding is mutually recursive.
 		// This field marks a boundary in that recursion to avoid constructing excessively complex
 		// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.

@@ -173,7 +173,7 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 // @internal
-export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
 
 // @internal
 export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
@@ -437,6 +437,18 @@ export function enumFromStrings<TScope extends string, const Members extends str
     readonly info: unknown;
     readonly implicitlyConstructable: true;
 }>;
+
+// @internal
+export type Erased<Name extends string> = ErasedType<Name>;
+
+// @internal
+export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDataFormat"> {
+}
+
+// @internal @sealed
+export abstract class ErasedType<out Name extends string> {
+    protected abstract brand(dummy: never): Name;
+}
 
 // @beta
 export type Events<E> = {
@@ -1032,6 +1044,7 @@ export interface ITreeCheckout extends AnchorLocator {
     readonly events: ISubscribable<CheckoutEvents>;
     readonly forest: IForestSubscription;
     fork(): ITreeCheckoutFork;
+    getRemovedRoots(): [string | number | undefined, number, JsonableTree][];
     merge(view: ITreeCheckoutFork): void;
     merge(view: ITreeCheckoutFork, disposeView: boolean): void;
     rebase(view: ITreeCheckoutFork): void;
@@ -1306,7 +1319,7 @@ export class ObjectNodeSchema<const out Name extends string = string, const out 
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
 
 // @internal
-export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+export type Opaque<T extends Brand<any, string>> = T extends BrandedType<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @internal (undocumented)
 export interface Optional extends FieldKind<"Optional", Multiplicity.Optional> {
@@ -1592,6 +1605,7 @@ export class SharedTree implements ITree {
 
 // @internal
 export interface SharedTreeContentSnapshot {
+    readonly removed: [string | number | undefined, number, JsonableTree][];
     readonly schema: TreeStoredSchema;
     readonly tree: JsonableTree[];
 }
@@ -1786,7 +1800,7 @@ export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out 
     get types(): TreeTypeSet;
 }
 
-// @internal (undocumented)
+// @internal
 export interface TreeFieldStoredSchema {
     // (undocumented)
     readonly kind: FieldKindSpecifier;
@@ -1880,10 +1894,11 @@ interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind exte
 }
 
 // @internal (undocumented)
-export interface TreeNodeStoredSchema {
-    readonly leafValue?: ValueSchema;
-    readonly mapFields?: TreeFieldStoredSchema;
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+export abstract class TreeNodeStoredSchema {
+    // (undocumented)
+    abstract encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @internal

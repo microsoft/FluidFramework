@@ -89,6 +89,10 @@ export interface SharedTreeContentSnapshot {
 	 * All {@link TreeStatus#InDocument} content.
 	 */
 	readonly tree: JsonableTree[];
+	/**
+	 * All {@link TreeStatus#Removed} content.
+	 */
+	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
 
 /**
@@ -290,6 +294,7 @@ export class SharedTree
 			return {
 				schema: this.storedSchema.clone(),
 				tree: jsonableTreeFromFieldCursor(cursor),
+				removed: this.view.getRemovedRoots(),
 			};
 		} finally {
 			cursor.free();
