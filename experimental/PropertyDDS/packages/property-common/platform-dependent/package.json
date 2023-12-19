@@ -13,7 +13,6 @@
 	"author": "Microsoft and contributors",
 	"main": "server.js",
 	"browser": "browser.js",
-	"scripts": {},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
