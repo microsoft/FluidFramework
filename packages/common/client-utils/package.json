@@ -13,23 +13,24 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"browser": {
-				"types": "./dist/indexBrowser.d.ts",
-				"default": "./dist/indexBrowser.cjs"
+			"import": {
+				"types": "./lib/indexNode.d.ts",
+				"default": "./lib/indexNode.mjs"
 			},
-			"node": {
+			"require": {
 				"types": "./dist/indexNode.d.ts",
 				"default": "./dist/indexNode.cjs"
 			}
 		}
 	},
-	"main": "dist/indexBrowser.cjs",
-	"module": "lib/indexBrowser.mjs",
+	"main": "dist/indexNode.cjs",
+	"module": "lib/indexNode.mjs",
 	"browser": {
 		"./dist/indexNode.cjs": "./dist/indexBrowser.cjs",
+		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
 		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs"
 	},
-	"types": "dist/indexBrowser.d.ts",
+	"types": "dist/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
