@@ -462,11 +462,11 @@ export class Outbox {
 	}
 
 	public checkpoint() {
+		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
+		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
+		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
-			// This type-assertion is not necessary, but without it, the generated .d.ts uses a dynamic import which doesn't
-			// resolve.
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-			mainBatch: this.mainBatch.checkpoint() as IBatchCheckpoint,
+			mainBatch, // as IBatchCheckpoint,
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};

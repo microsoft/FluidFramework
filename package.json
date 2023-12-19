@@ -10,9 +10,6 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"bin": {
-		"rename-types": "./scripts/rename-types.cjs"
-	},
 	"scripts": {
 		"build": "fluid-build --task build",
 		"build:api": "fluid-build --task build:api",
