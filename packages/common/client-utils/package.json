@@ -57,7 +57,7 @@
 		"test:jest": "jest",
 		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
 		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
-		"typetests:gen": "",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
