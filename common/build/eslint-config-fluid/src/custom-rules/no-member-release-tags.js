@@ -8,7 +8,7 @@ const { TSDocParser } = require("@microsoft/tsdoc");
 /**
  *
  * @param comment: String - The comment included inside the class / interface / type.
- * @returns hasReleaseTag: Boolean - True; if the comment contains any release tags.
+ * @returns `true` if the comment contains any release tags; `false` otherwise.
  */
 function hasReleaseTag(comment) {
 	const parser = new TSDocParser();
