@@ -463,8 +463,8 @@ export class Outbox {
 
 	public checkpoint() {
 		return {
-      // This type-assertion is not necessary, but without it, the generated .d.ts uses a dynamic import which doesn't
-      // resolve.
+			// This type-assertion is not necessary, but without it, the generated .d.ts uses a dynamic import which doesn't
+			// resolve.
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			mainBatch: this.mainBatch.checkpoint() as IBatchCheckpoint,
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
