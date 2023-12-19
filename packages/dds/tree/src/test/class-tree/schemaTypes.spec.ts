@@ -98,6 +98,11 @@ describe("schemaTypes", () => {
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
+
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a2: NodeFromSchema<typeof A> = 0;
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a3: InsertableTypedNode<typeof A> = 0;
 		});
 
 		it("Customized Objects", () => {

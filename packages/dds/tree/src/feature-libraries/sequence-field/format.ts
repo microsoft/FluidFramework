@@ -7,6 +7,7 @@ import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
 import { RevisionTagSchema } from "../../core";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema";
 import { unionOptions } from "../../codec";
+import { DetachIdOverrideType } from "./types";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -47,8 +48,16 @@ const HasMoveFields = Type.Composite([
 
 const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
 
-const RedetachFields = Type.Object({
-	redetachId: Type.Optional(CellId),
+const DetachIdOverride = Type.Object(
+	{
+		type: Type.Enum(DetachIdOverrideType),
+		id: CellId,
+	},
+	noAdditionalProps,
+);
+
+const DetachFields = Type.Object({
+	idOverride: Type.Optional(DetachIdOverride),
 });
 
 const Delete = Type.Composite(
@@ -57,12 +66,12 @@ const Delete = Type.Composite(
 			id: ChangesetLocalIdSchema,
 		}),
 		HasRevisionTag,
-		RedetachFields,
+		DetachFields,
 	],
 	noAdditionalProps,
 );
 
-const MoveOut = Type.Composite([HasMoveFields, RedetachFields], noAdditionalProps);
+const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
 
 const Attach = Type.Object(
 	{

@@ -36,19 +36,34 @@ export type Unhydrated<T> = T;
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
- * Base type which all nodes extend.
+ * Base type which all nodes implement.
+ *
+ * This can be used as a type to indicate/document values which should be tree nodes,
+ * but currently does not provide strong type checking for this.
+ * Additionally runtime use of this class object (for example when used with `instanceof` or subclassed), is not supported:
+ * it may be replaced with an interface or union in the future.
  * @privateRemarks
- * Adding a member which all nodes have, like a type symbol, would produce much strong typing for this.
+ * Adding a member which all nodes have, like a type symbol, would produce much stronger typing for this.
+ * This is only a class to enable stronger typing in a future change,
+ * but other future changes may want to replace it with a branded interface if the runtime oddities related to this are not cleaned up.
+ *
+ * Currently not all node implications include this in their prototype chain (some hide it with a proxy), and thus cause `instanceof` to fail.
+ * This results in the runtime and compile time behavior of `instanceof` differing.
+ * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
+ * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
+ * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
  * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class TreeNode {}
+export abstract class TreeNode {}
 
 /**
  * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
  * @beta
  */
-export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
+export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
+	extends ReadonlyArray<T>,
+		TreeNode {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -261,7 +276,7 @@ export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
  *
  * @beta
  */
-export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut> {
+export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
