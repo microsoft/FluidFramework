@@ -54,11 +54,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/merge-tree-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/merge-tree-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},

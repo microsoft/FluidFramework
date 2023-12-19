@@ -44,11 +44,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/runtime-utils-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/runtime-utils-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},

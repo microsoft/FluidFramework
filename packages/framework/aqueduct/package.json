@@ -44,11 +44,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/aqueduct-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/aqueduct-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},

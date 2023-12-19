@@ -94,11 +94,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/container-loader-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/container-loader-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},
