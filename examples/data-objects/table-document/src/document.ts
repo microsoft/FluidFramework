@@ -5,11 +5,12 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IntervalType,
 	SequenceDeltaEvent,
+	ReferencePosition,
+	PropertySet,
 	SharedString,
 	createEndpointIndex,
 } from "@fluidframework/sequence";
@@ -26,6 +27,11 @@ import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
 
+/**
+ * @deprecated `TableDocument` is an abandoned prototype.
+ * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @alpha
+ */
 export interface ITableDocumentEvents extends IEvent {
 	(
 		event: "op",
@@ -44,7 +50,7 @@ export interface ITableDocumentEvents extends IEvent {
 /**
  * @deprecated `TableDocument` is an abandoned prototype.
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
- * @internal
+ * @alpha
  */
 export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
 	public static getFactory() {
@@ -112,26 +118,16 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		return component;
 	}
 
-	public annotateRows(
-		startRow: number,
-		endRow: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.rows.annotateRange(startRow, endRow, properties, op);
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
+		this.rows.annotateRange(startRow, endRow, properties);
 	}
 
 	public getRowProperties(row: number): PropertySet {
 		return this.rows.getPropertiesAtPosition(row);
 	}
 
-	public annotateCols(
-		startCol: number,
-		endCol: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.cols.annotateRange(startCol, endCol, properties, op);
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
+		this.cols.annotateRange(startCol, endCol, properties);
 	}
 
 	public getColProperties(col: number): PropertySet {

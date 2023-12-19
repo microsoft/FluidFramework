@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type MessageLoggingOptions } from "@fluid-experimental/devtools-core";
+import { type MessageLoggingOptions } from "@fluidframework/devtools-core";
 
 /**
  * Background Script context label for logging.

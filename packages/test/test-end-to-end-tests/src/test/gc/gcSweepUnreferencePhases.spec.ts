@@ -34,13 +34,13 @@ import {
 describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
-	const sweepTimeoutMs = 200; // Tombstone at 200ms
+	const tombstoneTimeoutMs = 200; // Tombstone at 200ms
 	const sweepGracePeriodMs = 100; // Sweep at 300ms
 
 	const settings = {};
 	const gcOptions: IGCRuntimeOptions = {
-		inactiveTimeoutMs: sweepTimeoutMs / 2, // Required to avoid an error
-		gcSweepGeneration: 1,
+		inactiveTimeoutMs: tombstoneTimeoutMs / 2, // Required to avoid an error
+		enableGCSweep: true,
 		sweepGracePeriodMs,
 	};
 	const testContainerConfig: ITestContainerConfig = {
@@ -87,7 +87,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 
 		settings["Fluid.GarbageCollection.DisableAttachmentBlobSweep"] = true; // Only sweep DataStores
 		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	it("Unreferenced objects follow the sequence [unreferenced, tombstoned, deleted]", async () => {
@@ -138,7 +138,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		);
 
 		// Wait half the time to Tombstone state. Nothing should change
-		await delay(sweepTimeoutMs / 2);
+		await delay(tombstoneTimeoutMs / 2);
 		// Summarize and verify datastore is unreferenced but not tombstoned
 		mainDataStore._root.set("send", "op");
 		await provider.ensureSynchronized();
@@ -152,8 +152,8 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 
 		// Stage 2 - Unreferenced -> Tombstone //
 
-		// Wait the other half of sweepTimeoutMs, triggering Tombstone
-		await delay(sweepTimeoutMs / 2);
+		// Wait the other half of tombstoneTimeoutMs, triggering Tombstone
+		await delay(tombstoneTimeoutMs / 2);
 		mainDataStore._root.set("send", "op2");
 
 		await provider.ensureSynchronized();
@@ -162,7 +162,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		const rootGCTree = summaryTree.tree[gcTreeKey];
 		assert.equal(rootGCTree?.type, SummaryType.Tree, "GC data should be a tree");
 		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
-		// After sweepTimeoutMs the object should be tombstoned.
+		// After tombstoneTimeoutMs the object should be tombstoned.
 		assert(tombstoneState !== undefined, "Should have tombstone state");
 		assert(
 			tombstoneState.includes(dataStoreHandle.absolutePath),

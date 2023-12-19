@@ -39,7 +39,7 @@ import {
 	type IMessageRelay,
 	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 

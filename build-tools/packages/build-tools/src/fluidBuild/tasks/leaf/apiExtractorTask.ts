@@ -6,8 +6,12 @@ import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class ApiExtractorTask extends TscDependentTask {
-	protected get configFileFullPath() {
-		return this.getPackageFileFullPath("api-extractor.json");
+	protected get configFileFullPaths() {
+		return [
+			this.getPackageFileFullPath("api-extractor.json"),
+			this.getPackageFileFullPath("api-extractor-esm.json"),
+			this.getPackageFileFullPath("api-extractor-lint.json"),
+		];
 	}
 
 	protected async getToolVersion() {

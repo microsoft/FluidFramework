@@ -43,6 +43,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
+      echo "Artifact path: ${{ parameters.artifactPath }}"
       tag="--tag canary"
       if [[ "$(release)" == "release" ]]; then
         if [ "$(isLatest)" = "true" ]; then
@@ -108,13 +109,14 @@ steps:
                   exit 1
                 fi
             else
-              feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+              feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+              echo "Feed Name: $feedName"
 
-              if [[ $release == "release" && $feedId == "build" ]]; then
+              if [[ "$(release)" == "release" && $feedName == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
 
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
-                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
                   for scope in "${scopes[@]}"; do
                       if [[ "$packageName" == "$scope"* ]]; then
                           packageName="@${packageName/$scope-/$scope/}"
@@ -122,9 +124,9 @@ steps:
                   done
                 fi
 
-                baseURL="${${{ parameters.feedUrl }}%/registry/}"
-                feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+                feedPromotionUrl="$(ado-feeds-api-base)/packaging/feeds/${feedName}/npm/${packageName}/versions/${packageVersion}?api-version=7.1-preview.1"
 
+                echo "Promoting ${packageName} to release view using: ${feedPromotionUrl}"
                 response=$(curl -f -s -X PATCH \
                   -H "Content-Type: application/json" \
                   -H "Accept: application/json" \

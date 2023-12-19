@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentationNode } from "../../documentation-domain";
-import { DocumentWriter } from "../DocumentWriter";
+import { type DocumentationNode } from "../../documentation-domain";
+import { type DocumentWriter } from "../DocumentWriter";
 import { renderNode, renderNodes } from "./Render";
-import { RenderContext } from "./RenderContext";
+import { type RenderContext } from "./RenderContext";
 
 /**
  * Renders the provided contents within a tag block of the specified `tagName`.

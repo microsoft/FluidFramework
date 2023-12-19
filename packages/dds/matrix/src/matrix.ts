@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -20,7 +18,6 @@ import {
 	makeHandlesSerializable,
 	parseHandles,
 	SharedObject,
-	SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -29,6 +26,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
@@ -98,7 +96,7 @@ export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 			conflictingValue: MatrixItem<T>,
 			target: IEventThisPlaceHolder,
 		) => void,
-	);
+	): void;
 }
 
 /**
@@ -392,11 +390,11 @@ export class SharedMatrix<T = any>
 	 * @param callback - code that needs to protected against reentrancy.
 	 */
 	private protectAgainstReentrancy(callback: () => void) {
-		assert(this.reentrantCount === 0, "reentrant code");
+		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
 		this.reentrantCount++;
 		callback();
 		this.reentrantCount--;
-		assert(this.reentrantCount === 0, "reentrant code on exit");
+		assert(this.reentrantCount === 0, 0x85e /* reentrant code on exit */);
 	}
 
 	private submitVectorMessage(
@@ -544,7 +542,7 @@ export class SharedMatrix<T = any>
 	 * Runs serializer on the GC data for this SharedMatrix.
 	 * All the IFluidHandle's stored in the cells represent routes to other objects.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		for (let row = 0; row < this.rowCount; row++) {
 			for (let col = 0; col < this.colCount; col++) {
 				serializer.stringify(this.getCell(row, col), this.handle);
@@ -609,6 +607,7 @@ export class SharedMatrix<T = any>
 	}
 
 	private rebasePosition(
+		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 		pos: number,
 		referenceSequenceNumber: number,
@@ -746,9 +745,9 @@ export class SharedMatrix<T = any>
 	) {
 		assert(
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1,
-			"should be in Fww mode when calling this method",
+			0x85f /* should be in Fww mode when calling this method */,
 		);
-		assert(message.clientId !== null, "clientId should not be null");
+		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
 		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
@@ -789,7 +788,7 @@ export class SharedMatrix<T = any>
 					this.setCellLwwToFwwPolicySwitchOpSeqNumber = rawMessage.sequenceNumber;
 				}
 
-				assert(rawMessage.clientId !== null, "clientId should not be null!!");
+				assert(rawMessage.clientId !== null, 0x861 /* clientId should not be null!! */);
 				if (local) {
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;

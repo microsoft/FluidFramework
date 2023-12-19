@@ -16,15 +16,15 @@
 
 export { BlockQuoteNode } from "./BlockQuoteNode";
 export { CodeSpanNode } from "./CodeSpanNode";
-export { DocumentNode, DocumentNodeProperties as DocumentNodeProps } from "./DocumentNode";
+export { DocumentNode, type DocumentNodeProperties as DocumentNodeProps } from "./DocumentNode";
 export {
-	DocumentationNode,
-	DocumentationLiteralNode,
+	type DocumentationNode,
+	type DocumentationLiteralNode,
 	DocumentationLiteralNodeBase,
-	DocumentationParentNode,
+	type DocumentationParentNode,
 	DocumentationParentNodeBase,
-	MultiLineDocumentationNode,
-	SingleLineDocumentationNode,
+	type MultiLineDocumentationNode,
+	type SingleLineDocumentationNode,
 } from "./DocumentationNode";
 export { DocumentationNodeType } from "./DocumentationNodeType";
 export { FencedCodeBlockNode } from "./FencedCodeBlockNode";
@@ -45,5 +45,5 @@ export {
 } from "./TableCellNode";
 export { TableRowNode, TableBodyRowNode, TableHeaderRowNode, TableRowKind } from "./TableRowNode";
 export { TableNode } from "./TableNode";
-export { TextFormatting } from "./TextFormatting";
+export type { TextFormatting } from "./TextFormatting";
 export { UnorderedListNode } from "./UnorderedListNode";

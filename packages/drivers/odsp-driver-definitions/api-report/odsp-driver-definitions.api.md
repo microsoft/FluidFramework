@@ -49,7 +49,7 @@ export interface ICollabSessionOptions {
     unauthenticatedUserDisplayName?: string;
 }
 
-// @internal
+// @alpha
 export type IdentityType = "Consumer" | "Enterprise";
 
 // @alpha
@@ -67,13 +67,13 @@ export interface IFileEntry {
 // @internal (undocumented)
 export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
-// @internal
+// @alpha
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorType;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IOdspErrorAugmentations {
     facetCodes?: string[];
     redirectLocation?: string;
@@ -200,10 +200,10 @@ export interface ISocketStorageDiscovery {
 // @internal
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @internal @deprecated
+// @alpha @deprecated
 export enum OdspErrorType {
     blockedIPAddress = "blockedIPAddress",
     cannotCatchUp = "cannotCatchUp",
@@ -217,7 +217,7 @@ export enum OdspErrorType {
     snapshotTooBig = "snapshotTooBig"
 }
 
-// @internal
+// @alpha
 export const OdspErrorTypes: {
     readonly invalidFileNameError: "invalidFileNameError";
     readonly snapshotTooBig: "snapshotTooBig";
@@ -246,7 +246,7 @@ export const OdspErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 // @alpha
@@ -309,7 +309,7 @@ export interface TokenFetchOptions {
 // @internal
 export const tokenFromResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
 
-// @alpha
+// @beta
 export interface TokenResponse {
     fromCache?: boolean;
     token: string;
