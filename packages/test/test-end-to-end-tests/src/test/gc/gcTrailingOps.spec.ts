@@ -42,6 +42,9 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		transition: "ref -> unref" | "unref -> ref",
 		when: "beforeSweepTimeout" | "afterSweepTimeout",
 	) => {
+		// Skip Tombstone stage, these tests focus on Sweep
+		const sweepGracePeriodMs = 0;
+
 		let provider: ITestObjectProvider;
 		let settings = {};
 		let testContainerConfig: ITestContainerConfig;
@@ -51,7 +54,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		const gcOptions: IGCRuntimeOptions = {
 			inactiveTimeoutMs: 0,
 			enableGCSweep: true,
-			sweepGracePeriodMs: 0, // Skip Tombstone, these tests focus on Sweep
+			sweepGracePeriodMs,
 		};
 
 		function updateDataStoreReferenceState(
@@ -124,7 +127,8 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
-			settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+			settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] =
+				sweepTimeoutMs + sweepGracePeriodMs;
 
 			const configProvider = mockConfigProvider(settings);
 			testContainerConfig = {
