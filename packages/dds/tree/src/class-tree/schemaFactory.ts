@@ -23,7 +23,7 @@ import {
 	createRawNodeProxy,
 	getClassSchema,
 	getSequenceField,
-	listPrototypeProperties,
+	arrayNodePrototypeProperties as arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/proxies";
@@ -312,7 +312,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * factory.object("Foo", {myMap: factory.map(factory.number)});
 	 * ```
 	 * @privateRemarks
-	 * See note on list.
+	 * See note on array.
 	 */
 	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
@@ -446,26 +446,26 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @remarks
-	 * The identifier for this List is defined as a function of the provided types.
+	 * The identifier for this Array is defined as a function of the provided types.
 	 * It is still scoped to this SchemaFactory, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
 	 * This does not support recursive types.
 	 *
-	 * If using these structurally named lists, other types in this schema builder should avoid names of the form `List<${string}>`.
+	 * If using these structurally named arrays, other types in this schema builder should avoid names of the form `Array<${string}>`.
 	 *
 	 * @example
 	 * The returned schema should be used as a schema directly:
 	 * ```typescript
-	 * const MyList = factory.list(factory.number);
-	 * type MyList = NodeFromSchema<typeof MyList>;
+	 * const MyArray = factory.array(factory.number);
+	 * type MyArray = NodeFromSchema<typeof MyArray>;
 	 * ```
 	 * Or inline:
 	 * ```typescript
-	 * factory.object("Foo", {myList: factory.list(factory.number)});
+	 * factory.object("Foo", {myArray: factory.array(factory.number)});
 	 * ```
 	 * @privateRemarks
 	 * The name produced at the type level here is not as specific as it could be, however doing type level sorting and escaping is a real mess.
 	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
-	 * For example attempts to narrow unions of structural lists by name won't work.
+	 * For example attempts to narrow unions of structural arrays by name won't work.
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
 	 *
@@ -476,7 +476,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
 	): TreeNodeSchema<
-		`${TScope}.List<${string}>`,
+		`${TScope}.Array<${string}>`,
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
@@ -490,7 +490,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 *
 	 * @example
 	 * ```typescript
-	 * class NamedList extends factory.list("name", factory.number) {}
+	 * class NamedArray extends factory.array("name", factory.number) {}
 	 * ```
 	 */
 	public array<const Name extends TName, const T extends ImplicitAllowedTypes>(
@@ -516,7 +516,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
-			const fullName = structuralName("List", types);
+			const fullName = structuralName("Array", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
@@ -536,13 +536,13 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
 	 * @remarks
-	 * This is not intended to be used directly, use the overload of `list` which takes a name instead.
+	 * This is not intended to be used directly, use the overload of `array` which takes a name instead.
 	 * This is only public to work around a compiler limitation.
 	 *
 	 * @privateRemarks
 	 * TODO: this should be made private or protected.
 	 * Doing so breaks due to:
-	 * `src/class-tree/schemaFactoryRecursive.ts:42:9 - error TS2310: Type 'List' recursively references itself as a base type.`
+	 * `src/class-tree/schemaFactoryRecursive.ts:42:9 - error TS2310: Type 'Array' recursively references itself as a base type.`
 	 * Once recursive APIs are better sorted out and integrated into this class, switch this back to private.
 	 */
 	public namedArray<
@@ -593,8 +593,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			}
 		}
 
-		// Setup list functionality
-		Object.defineProperties(schema.prototype, listPrototypeProperties);
+		// Setup array functionality
+		Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
 		return schema as unknown as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
