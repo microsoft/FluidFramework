@@ -136,7 +136,7 @@ export const EncodedTreeShape = Type.Object(
 /**
  * Discriminated union of chunk shapes.
  *
- * See DiscriminatedUnionDispatcher for more information on this pattern.
+ * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
 export const EncodedChunkShape = Type.Object(
 	{

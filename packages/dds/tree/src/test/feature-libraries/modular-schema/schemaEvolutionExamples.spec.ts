@@ -218,11 +218,13 @@ describe("Schema Evolution Examples", () => {
 			// Lets assume its time to update the schema in the document
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
-			assert(stored.tryUpdateTreeSchema(canvas.name, canvas));
+			assert(stored.tryUpdateTreeSchema(canvas.name, canvas.stored));
 			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
-			assert(stored.tryUpdateTreeSchema(point.name, point));
-			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem));
-			assert(stored.tryUpdateTreeSchema(text.name, text));
+			assert(stored.tryUpdateTreeSchema(point.name, point.stored));
+			assert(
+				stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem.stored),
+			);
+			assert(stored.tryUpdateTreeSchema(text.name, text.stored));
 			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint.stored));
 			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
 			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
@@ -275,8 +277,10 @@ describe("Schema Evolution Examples", () => {
 			);
 
 			// This is the same case as above where we can choose to do a schema update if we want:
-			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem2));
-			assert(stored.tryUpdateTreeSchema(counter.name, counter));
+			assert(
+				stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem2.stored),
+			);
+			assert(stored.tryUpdateTreeSchema(counter.name, counter.stored));
 
 			// And recheck compat:
 			const compat3 = view3.checkCompatibility(stored);
