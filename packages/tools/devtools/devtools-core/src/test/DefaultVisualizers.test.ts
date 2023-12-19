@@ -660,8 +660,8 @@ describe("DefaultVisualizers unit tests", () => {
 				schema: {
 					children: {
 						version: {
-							value: "1.0.0",
-							typeMetadata: "string",
+							value: 1,
+							typeMetadata: "number",
 							nodeKind: VisualNodeKind.ValueNode,
 						},
 						rootFieldSchema: {
