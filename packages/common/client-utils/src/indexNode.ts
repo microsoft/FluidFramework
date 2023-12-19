@@ -6,6 +6,7 @@
 export {
 	// Buffer,
 	bufferToString,
+	Buffer,
 	IsoBuffer,
 	stringToBuffer,
 	Uint8ArrayToString,
