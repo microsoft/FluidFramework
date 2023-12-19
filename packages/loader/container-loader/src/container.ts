@@ -113,7 +113,7 @@ import {
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	isPendingDetachedContainerState,
 	recombineSnapshotTreeAndSnapshotBlobs,
-	// getSnapshotTreeFromSerializedContainer,
+	getSnapshotTreeFromSerializedContainer,
 } from "./utils";
 import { initQuorumValuesFromCodeDetails } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
@@ -133,6 +133,7 @@ const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
+const hasBlobsSummaryTree = ".hasAttachmentBlobs";
 /**
  * @internal
  */
@@ -481,10 +482,14 @@ export class Container
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
 				const detachedContainerState = JSON.parse(snapshot);
-				if (!isPendingDetachedContainerState(detachedContainerState)) {
+				if (isPendingDetachedContainerState(detachedContainerState)) {
+					await container.rehydrateDetachedFromSnapshot(detachedContainerState);
+				} else if (isCombinedAppAndProtocolSummary(detachedContainerState)) {
+					await container.rehydrateDetachedFromSnapshotOld(detachedContainerState);
+				} else {
 					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 				}
-				await container.rehydrateDetachedFromSnapshot(detachedContainerState);
+
 				return container;
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -1818,6 +1823,20 @@ export class Container
 		this.setLoaded();
 	}
 
+	private async rehydrateDetachedFromSnapshotOld(detachedContainerSnapshot: ISummaryTree) {
+		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
+			assert(
+				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
+				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
+			);
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
+		}
+
+		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+		return this.rehydrateDetachedFromSnapshotWithBlobs(snapshotTree);
+	}
+
 	private async rehydrateDetachedFromSnapshot({
 		attached,
 		baseSnapshot,
@@ -1830,9 +1849,15 @@ export class Container
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
-		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotBlobs);
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
 			recombineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
+		return this.rehydrateDetachedFromSnapshotWithBlobs(snapshotTreeWithBlobContents);
+	}
+
+	private async rehydrateDetachedFromSnapshotWithBlobs(
+		snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents,
+	) {
+		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTreeWithBlobContents);
 		const attributes = await this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,

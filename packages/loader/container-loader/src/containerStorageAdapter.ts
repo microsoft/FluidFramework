@@ -101,9 +101,16 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		}
 	}
 
-	public loadSnapshotForRehydratingContainer(snapshotBlobs: ISerializableBlobContents) {
-		for (const [id, value] of Object.entries(snapshotBlobs)) {
+	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
+		this.getBlobContents(snapshotTree);
+	}
+
+	private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
+		for (const [id, value] of Object.entries(snapshotTree.blobsContents ?? {})) {
 			this.blobContents[id] = value;
+		}
+		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
+			this.getBlobContents(tree);
 		}
 	}
 
