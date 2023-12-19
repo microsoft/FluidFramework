@@ -44,11 +44,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/oldest-client-observer-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/oldest-client-observer-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},

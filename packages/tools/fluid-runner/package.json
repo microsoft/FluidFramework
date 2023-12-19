@@ -38,11 +38,11 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/fluid-runner-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/fluid-runner-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
 		},
