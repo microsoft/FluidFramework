@@ -38,11 +38,11 @@ import {
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field";
 import { RevisionTagCodec } from "../../shared-tree-core";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
-import { merge } from "../objMerge";
-import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/types";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
