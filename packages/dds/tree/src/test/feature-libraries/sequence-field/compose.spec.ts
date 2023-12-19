@@ -1108,7 +1108,10 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 				{ count: 1 },
 				Mark.moveOut(1, brand(0), {
-					redetachId: { revision: tag1, localId: brand(0) },
+					idOverride: {
+						type: SF.DetachIdOverrideType.Redetach,
+						id: { revision: tag1, localId: brand(0) },
+					},
 				}),
 			],
 			tag3,

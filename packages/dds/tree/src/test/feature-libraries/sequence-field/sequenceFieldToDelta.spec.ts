@@ -146,9 +146,11 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("delete with override", () => {
-		const changeset = [
-			Mark.delete(10, brand(42), { redetachId: { revision: tag2, localId: brand(1) } }),
-		];
+		const detachIdOverride: SF.DetachIdOverride = {
+			type: SF.DetachIdOverrideType.Redetach,
+			id: { revision: tag2, localId: brand(1) },
+		};
+		const changeset = [Mark.delete(10, brand(42), { idOverride: detachIdOverride })];
 		const expected: DeltaFieldChanges = {
 			local: [
 				{

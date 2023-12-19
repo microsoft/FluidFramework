@@ -84,13 +84,13 @@ const scope = "contextuallyTyped";
 /**
  * A symbol for the name of the type of a tree in contexts where string keys are already in use for fields.
  * See {@link TreeNodeSchemaIdentifier}.
- * @alpha
+ * @internal
  */
 export const typeNameSymbol: unique symbol = Symbol(`${scope}:typeName`);
 
 /**
  * A symbol for the value of a tree node in contexts where string keys are already in use for fields.
- * @alpha
+ * @internal
  */
 export const valueSymbol: unique symbol = Symbol(`${scope}:value`);
 
@@ -148,13 +148,13 @@ export function getPossibleTypes(
 
 /**
  * A symbol used to define a {@link MarkedArrayLike} interface.
- * @alpha
+ * @internal
  */
 export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
- * @alpha
+ * @internal
  */
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
 	readonly [arrayLikeMarkerSymbol]: true;
@@ -163,7 +163,7 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
- * @alpha
+ * @internal
  */
 export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
 	readonly [arrayLikeMarkerSymbol]: true;
@@ -178,7 +178,7 @@ export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
  * This is why `TSet extends TGet` is required.
  *
  * See https://github.com/microsoft/TypeScript/issues/43826.
- * @alpha
+ * @internal
  */
 export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
 	[n: number]: TSet;
@@ -190,7 +190,7 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @alpha
+ * @internal
  */
 export type ContextuallyTypedNodeData =
 	| ContextuallyTypedNodeDataObject
@@ -208,7 +208,7 @@ export type ContextuallyTypedNodeData =
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @alpha
+ * @internal
  */
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
@@ -231,7 +231,7 @@ export function isArrayLike(
 
 /**
  * Checks the type of a `ContextuallyTypedNodeData`.
- * @alpha
+ * @internal
  */
 export function isContextuallyTypedNodeDataObject(
 	data: ContextuallyTypedNodeData | undefined,
@@ -241,7 +241,7 @@ export function isContextuallyTypedNodeDataObject(
 
 /**
  * Object case of {@link ContextuallyTypedNodeData}.
- * @alpha
+ * @internal
  */
 export interface ContextuallyTypedNodeDataObject {
 	/**
@@ -325,7 +325,7 @@ function shallowCompatibilityTest(
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
  * @returns a cursor in Nodes mode for a single node containing the provided data.
- * @alpha
+ * @internal
  */
 export function cursorFromContextualData(
 	context: TreeDataContext,
@@ -339,7 +339,7 @@ export function cursorFromContextualData(
 /**
  * Strongly typed {@link cursorFromContextualData} for a TreeNodeSchema.
  * @returns a cursor in Nodes mode for a single node containing the provided data.
- * @alpha
+ * @internal
  */
 export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 	context: TreeDataContext,
@@ -352,7 +352,7 @@ export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 /**
  * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
  * @returns a cursor in Nodes mode for a single node containing the provided data.
- * @alpha
+ * @internal
  */
 export function cursorForTypedData<T extends AllowedTypes>(
 	context: TreeDataContext,
@@ -383,7 +383,7 @@ export function cursorsFromContextualData(
 
 /**
  * Strongly typed {@link cursorsFromContextualData} for a TreeFieldSchema
- * @alpha
+ * @internal
  */
 export function cursorsForTypedFieldData<T extends TreeFieldSchema>(
 	context: TreeDataContext,
@@ -548,7 +548,7 @@ export function applyFieldTypesFromContext(
  *
  * TODO: this should allow a field cursor instead of an array of cursors.
  * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
- * @alpha
+ * @internal
  */
 export type NewFieldContent =
 	| ITreeCursorSynchronous

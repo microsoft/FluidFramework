@@ -82,16 +82,25 @@ describeForBothConfigs("SequenceField - MarkListFactory", (config) => {
 		withConfig(() => {
 			const factory = new SF.MarkListFactory();
 			const delete1 = Mark.delete(1, brand(0), {
-				redetachId: { revision: detachedBy, localId: brand(10) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Redetach,
+					id: { revision: detachedBy, localId: brand(10) },
+				},
 			});
 			const delete2 = Mark.delete(1, brand(1), {
-				redetachId: { revision: detachedBy, localId: brand(11) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Redetach,
+					id: { revision: detachedBy, localId: brand(11) },
+				},
 			});
 			factory.pushContent(delete1);
 			factory.pushContent(delete2);
 			assert.deepStrictEqual(factory.list, [
 				Mark.delete(2, brand(0), {
-					redetachId: { revision: detachedBy, localId: brand(10) },
+					idOverride: {
+						type: SF.DetachIdOverrideType.Redetach,
+						id: { revision: detachedBy, localId: brand(10) },
+					},
 				}),
 			]);
 		}));
@@ -100,10 +109,16 @@ describeForBothConfigs("SequenceField - MarkListFactory", (config) => {
 		withConfig(() => {
 			const factory = new SF.MarkListFactory();
 			const delete1 = Mark.delete(1, brand(0), {
-				redetachId: { revision: detachedBy, localId: brand(10) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Redetach,
+					id: { revision: detachedBy, localId: brand(10) },
+				},
 			});
 			const delete2 = Mark.delete(1, brand(1), {
-				redetachId: { revision: detachedBy, localId: brand(42) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Redetach,
+					id: { revision: detachedBy, localId: brand(42) },
+				},
 			});
 			factory.pushContent(delete1);
 			factory.pushContent(delete2);
@@ -198,15 +213,24 @@ describeForBothConfigs("SequenceField - MarkListFactory", (config) => {
 		withConfig(() => {
 			const factory = new SF.MarkListFactory();
 			const return1 = Mark.moveOut(1, brand(0), {
-				redetachId: { revision: detachedBy, localId: brand(10) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Unattach,
+					id: { revision: detachedBy, localId: brand(10) },
+				},
 			});
 			const return2 = Mark.moveOut(2, brand(1), {
-				redetachId: { revision: detachedBy, localId: brand(11) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Unattach,
+					id: { revision: detachedBy, localId: brand(11) },
+				},
 			});
 			factory.pushContent(return1);
 			factory.pushContent(return2);
 			const expected = Mark.moveOut(3, brand(0), {
-				redetachId: { revision: detachedBy, localId: brand(10) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Unattach,
+					id: { revision: detachedBy, localId: brand(10) },
+				},
 			});
 			assert.deepStrictEqual(factory.list, [expected]);
 		}));
@@ -215,10 +239,16 @@ describeForBothConfigs("SequenceField - MarkListFactory", (config) => {
 		withConfig(() => {
 			const factory = new SF.MarkListFactory();
 			const return1 = Mark.moveOut(1, brand(0), {
-				redetachId: { revision: detachedBy, localId: brand(10) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Unattach,
+					id: { revision: detachedBy, localId: brand(10) },
+				},
 			});
 			const return2 = Mark.moveOut(2, brand(1), {
-				redetachId: { revision: detachedBy, localId: brand(42) },
+				idOverride: {
+					type: SF.DetachIdOverrideType.Unattach,
+					id: { revision: detachedBy, localId: brand(42) },
+				},
 			});
 			factory.pushContent(return1);
 			factory.pushContent(return2);

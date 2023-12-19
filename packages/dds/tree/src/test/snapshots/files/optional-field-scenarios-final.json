@@ -437,36 +437,25 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": "1.0.0",
-                  "nodeSchema": [
-                    {
-                      "name": "com.fluidframework.leaf.boolean",
-                      "objectNodeFields": [],
-                      "leafValue": 2
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.boolean": {
+                      "leaf": 2
                     },
-                    {
-                      "name": "com.fluidframework.leaf.handle",
-                      "objectNodeFields": [],
-                      "leafValue": 3
+                    "com.fluidframework.leaf.handle": {
+                      "leaf": 3
                     },
-                    {
-                      "name": "com.fluidframework.leaf.null",
-                      "objectNodeFields": [],
-                      "leafValue": 4
+                    "com.fluidframework.leaf.null": {
+                      "leaf": 4
                     },
-                    {
-                      "name": "com.fluidframework.leaf.number",
-                      "objectNodeFields": [],
-                      "leafValue": 0
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
                     },
-                    {
-                      "name": "com.fluidframework.leaf.string",
-                      "objectNodeFields": [],
-                      "leafValue": 1
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
                     },
-                    {
-                      "name": "optional-field.TestNode",
-                      "mapFields": {
+                    "optional-field.TestNode": {
+                      "map": {
                         "kind": "Optional",
                         "types": [
                           "com.fluidframework.leaf.handle",
@@ -475,11 +464,10 @@
                           "com.fluidframework.leaf.boolean",
                           "com.fluidframework.leaf.string"
                         ]
-                      },
-                      "objectNodeFields": []
+                      }
                     }
-                  ],
-                  "rootFieldSchema": {
+                  },
+                  "root": {
                     "kind": "Optional",
                     "types": [
                       "optional-field.TestNode"
@@ -504,12 +492,8 @@
                     "rootFieldKey",
                     "repair-6",
                     "repair-8",
-                    "repair-9",
                     "repair-10",
-                    "repair-11",
-                    "repair-12",
-                    "repair-14",
-                    "repair-15"
+                    "repair-11"
                   ],
                   "fields": {
                     "version": 1,
@@ -548,41 +532,6 @@
                           "com.fluidframework.leaf.number",
                           true,
                           43,
-                          []
-                        ]
-                      ],
-                      [
-                        1,
-                        [
-                          "com.fluidframework.leaf.number",
-                          true,
-                          42,
-                          []
-                        ]
-                      ],
-                      [
-                        1,
-                        [
-                          "optional-field.TestNode",
-                          false,
-                          []
-                        ]
-                      ],
-                      [
-                        1,
-                        [
-                          "com.fluidframework.leaf.number",
-                          true,
-                          43,
-                          []
-                        ]
-                      ],
-                      [
-                        1,
-                        [
-                          "com.fluidframework.leaf.number",
-                          true,
-                          44,
                           []
                         ]
                       ],
@@ -649,28 +598,13 @@
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
-                      1,
+                      0,
                       8
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
-                      3,
-                      9
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000c",
-                      5,
-                      10
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000c",
-                      0,
-                      12
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000c",
                       2,
-                      15
+                      11
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000d",
@@ -678,17 +612,12 @@
                       6
                     ],
                     [
-                      "beefbeef-beef-4000-8000-00000000000d",
-                      1,
-                      11
-                    ],
-                    [
                       "beefbeef-beef-4000-8000-000000000008",
                       2,
-                      14
+                      10
                     ]
                   ],
-                  "maxId": 15
+                  "maxId": 11
                 },
                 "encoding": "utf-8"
               }

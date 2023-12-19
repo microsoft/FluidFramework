@@ -38,6 +38,8 @@ import {
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field";
 import { RevisionTagCodec } from "../../shared-tree-core";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
@@ -453,7 +455,13 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(1), { changes: node2Expected }),
+				MarkMaker.moveOut(1, brand(1), {
+					changes: node2Expected,
+					idOverride: {
+						type: DetachIdOverrideType.Unattach,
+						id: { revision: tag1, localId: brand(1) },
+					},
+				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 			];
@@ -465,7 +473,13 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldAExpected = [
-				MarkMaker.moveOut(1, brand(0), { changes: node1Expected }),
+				MarkMaker.moveOut(1, brand(0), {
+					changes: node1Expected,
+					idOverride: {
+						type: DetachIdOverrideType.Unattach,
+						id: { revision: tag1, localId: brand(0) },
+					},
+				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];

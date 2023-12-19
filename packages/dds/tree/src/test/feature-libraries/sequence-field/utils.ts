@@ -27,10 +27,9 @@ import {
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
-// eslint-disable-next-line import/no-internal-modules
-import { isRedetach } from "../../../feature-libraries/sequence-field/rebase";
 import {
 	isAttachAndDetachEffect,
+	isDetach,
 	isTombstone,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils";
@@ -40,8 +39,6 @@ import {
 	sequenceConfig,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/config";
-// eslint-disable-next-line import/no-internal-modules
-import { Detach } from "../../../feature-libraries/sequence-field";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { TestChangeset } from "./testEdits";
@@ -350,12 +347,14 @@ export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 			delete cloned.cellId.lineage;
 			delete cloned.cellId.adjacentCells;
 		}
-		if (isRedetach(cloned)) {
-			const detach = isAttachAndDetachEffect(cloned) ? cloned.detach : (cloned as Detach);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			delete detach.redetachId!.lineage;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			delete detach.redetachId!.adjacentCells;
+		if (isDetach(cloned) || isAttachAndDetachEffect(cloned)) {
+			const detach = isAttachAndDetachEffect(cloned) ? cloned.detach : cloned;
+			if (detach.idOverride !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				delete detach.idOverride.id.lineage;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				delete detach.idOverride.id.adjacentCells;
+			}
 		}
 		factory.push(cloned);
 	}

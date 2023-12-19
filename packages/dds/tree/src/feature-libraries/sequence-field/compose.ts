@@ -73,7 +73,7 @@ import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
 import { CellOrderingMethod, sequenceConfig } from "./config";
 
 /**
- * @alpha
+ * @internal
  */
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 

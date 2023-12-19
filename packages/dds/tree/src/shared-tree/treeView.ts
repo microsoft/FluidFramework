@@ -22,7 +22,7 @@ import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
  * TODO:
  * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
- * @alpha
+ * @internal
  */
 export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
 	/**
@@ -57,7 +57,7 @@ export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDis
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
- * @alpha
+ * @internal
  */
 export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
