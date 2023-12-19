@@ -69,10 +69,13 @@ function makeV0Codec<TNodeChange>(
 								effect.revision === undefined
 									? undefined
 									: revisionTagCodec.encode(effect.revision),
-							redetachId:
-								effect.redetachId === undefined
+							idOverride:
+								effect.idOverride === undefined
 									? undefined
-									: cellIdCodec.encode(effect.redetachId),
+									: {
+											type: effect.idOverride.type,
+											id: cellIdCodec.encode(effect.idOverride.id),
+									  },
 							id: effect.id,
 						},
 					};
@@ -87,10 +90,13 @@ function makeV0Codec<TNodeChange>(
 								effect.finalEndpoint === undefined
 									? undefined
 									: encodeChangeAtomId(revisionTagCodec, effect.finalEndpoint),
-							redetachId:
-								effect.redetachId === undefined
+							idOverride:
+								effect.idOverride === undefined
 									? undefined
-									: cellIdCodec.encode(effect.redetachId),
+									: {
+											type: effect.idOverride.type,
+											id: cellIdCodec.encode(effect.idOverride.id),
+									  },
 							id: effect.id,
 						},
 					};
@@ -143,22 +149,25 @@ function makeV0Codec<TNodeChange>(
 			return mark;
 		},
 		delete(encoded: Encoded.Delete): Delete {
-			const { id, revision, redetachId } = encoded;
-			const mark: Delete = {
+			const { id, revision, idOverride } = encoded;
+			const mark: Mutable<Delete> = {
 				type: "Delete",
 				id,
 			};
 			if (revision !== undefined) {
 				mark.revision = revisionTagCodec.decode(revision);
 			}
-			if (redetachId !== undefined) {
-				mark.redetachId = cellIdCodec.decode(redetachId);
+			if (idOverride !== undefined) {
+				mark.idOverride = {
+					type: idOverride.type,
+					id: cellIdCodec.decode(idOverride.id),
+				};
 			}
 			return mark;
 		},
 		moveOut(encoded: Encoded.MoveOut): MoveOut {
-			const { id, finalEndpoint, redetachId, revision } = encoded;
-			const mark: MoveOut = {
+			const { id, finalEndpoint, idOverride, revision } = encoded;
+			const mark: Mutable<MoveOut> = {
 				type: "MoveOut",
 				id,
 			};
@@ -168,9 +177,13 @@ function makeV0Codec<TNodeChange>(
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = decodeChangeAtomId(revisionTagCodec, finalEndpoint);
 			}
-			if (redetachId !== undefined) {
-				mark.redetachId = cellIdCodec.decode(redetachId);
+			if (idOverride !== undefined) {
+				mark.idOverride = {
+					type: idOverride.type,
+					id: cellIdCodec.decode(idOverride.id),
+				};
 			}
+
 			return mark;
 		},
 		attachAndDetach(encoded: Encoded.AttachAndDetach): AttachAndDetach {

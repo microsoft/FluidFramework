@@ -26,6 +26,8 @@ export {
 	IdRange,
 	CellMark,
 	AttachAndDetach,
+	DetachIdOverride,
+	DetachIdOverrideType,
 } from "./types";
 export {
 	SequenceFieldChangeHandler,
