@@ -6,22 +6,19 @@
 import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils";
-import {
-	ISequencedDocumentMessage,
-	ISummaryBlob,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockSharedObjectServices,
 	MockStorage,
+	MockDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
 
 import { MapFactory } from "../../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
-import { IDirectory, IDirectoryValueChanged, ISharedDirectory, ISharedMap } from "../../interfaces";
+import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
 function createConnectedDirectory(
@@ -39,17 +36,28 @@ function createConnectedDirectory(
 	return directory;
 }
 
+/**
+ * Create a Directory that connects to mock services that use the given
+ * onSubmit callback.
+ */
+function createDirectoryWithSubmitCallback(
+	id: string,
+	onSubmit: (messageContent: any) => number,
+): SharedDirectory {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const deltaConnection = new MockDeltaConnection(onSubmit, () => {});
+	const services = {
+		deltaConnection,
+		objectStorage: new MockStorage(),
+	};
+	const directory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
+	directory.connect(services);
+	return directory;
+}
+
 function createLocalMap(id: string): ISharedMap {
 	const factory = new MapFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id);
-}
-
-function createLocalDirectory(
-	id: string,
-	runtime: MockFluidDataStoreRuntime = new MockFluidDataStoreRuntime(),
-): ISharedDirectory {
-	const factory = new DirectoryFactory();
-	return factory.create(runtime, id);
 }
 
 async function populate(directory: SharedDirectory, content: unknown): Promise<void> {
@@ -75,41 +83,45 @@ function serialize(directory1: SharedDirectory): string {
 }
 
 describe("Directory", () => {
-	function detectHandle(contents: unknown) {
-		const handleFoundMessage = "Found a handle";
+	/**
+	 * The purpose of the tests using this helper is to ensure that the message contents submitted
+	 * by the DDS contains handles that are detectable via JSON.stringify replacers, since this
+	 * is the technique used in the ContainerRuntime to detect handles in incoming ops.
+	 * @returns true if the contents object contains at least one encoded handle anywhere
+	 */
+	function detectHandleViaJsonStingify(contents: unknown) {
 		try {
 			// use JSON.stringify as a hack to traverse the object structure
 			JSON.stringify(contents, (key, value) => {
-				if (key === "__fluid_handle__") {
-					// found a handle can abort object traversal
-					throw new Error(handleFoundMessage);
+				if (key === "type" && value === "__fluid_handle__") {
+					// Found a handle. We can abort object traversal
+					throw new Error("Found a handle");
 				}
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return value;
 			});
+			return false;
 		} catch (e: any) {
-			if (e.message === handleFoundMessage) {
+			if (e.message === "Found a handle") {
 				return true;
 			}
-			// Some unexpected error, re-throw
+			// Re-throw unexpected errors
 			throw e;
 		}
-		return false;
 	}
 
 	describe("Handle encoding", () => {
 		it("should not prematurely serialize handles", async () => {
-			const runtimeFactory = new (class Factory extends MockContainerRuntimeFactory {
-				public getMessages(): ISequencedDocumentMessage[] {
-					return this.messages;
-				}
-			})();
-			// const runtime = new MockFluidDataStoreRuntime();
-			const directory = createConnectedDirectory("directory", runtimeFactory);
+			const messages: any[] = [];
+			const directory = createDirectoryWithSubmitCallback("directory", (message) => {
+				messages.push(message);
+				return 0; // unused
+			});
 			const map = createLocalMap("map");
 			directory.set("map", map.handle);
-			const m = runtimeFactory.getMessages()[0];
-			assert(detectHandle(m.contents), "The handle should be detected");
+
+			assert.equal(messages.length, 1, "Expected a single message to be submitted");
+			assert(detectHandleViaJsonStingify(messages[0]), "The handle should be detected");
 		});
 	});
 
