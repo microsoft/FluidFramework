@@ -4,6 +4,9 @@ nyc
 src/test
 **/_api-extractor-temp/**
 
+# This is a very large test file that we don't need to distribute.
+**/merge-tree.test-files.tar
+
 docs/
 .vscode/
 
