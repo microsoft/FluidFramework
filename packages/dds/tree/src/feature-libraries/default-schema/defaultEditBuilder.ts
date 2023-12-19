@@ -94,7 +94,7 @@ export function relevantRemovedRoots(
 
 /**
  * Default editor for transactional tree data changes.
- * @alpha
+ * @internal
  */
 export interface IDefaultEditBuilder {
 	/**
@@ -356,7 +356,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface ValueFieldEditBuilder {
 	/**
@@ -367,7 +367,7 @@ export interface ValueFieldEditBuilder {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface OptionalFieldEditBuilder {
 	/**
@@ -379,7 +379,7 @@ export interface OptionalFieldEditBuilder {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface SequenceFieldEditBuilder {
 	/**

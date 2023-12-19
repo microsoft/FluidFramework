@@ -13,7 +13,7 @@ export const version = 1 as const;
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
  *
  * Stable identifier, used when persisting data.
- * @alpha
+ * @internal
  */
 export type FieldKey = Brand<string, "tree.FieldKey">;
 
@@ -27,7 +27,7 @@ export const FieldKeySchema = brandedStringType<FieldKey>();
  * Also known as "Definition"
  *
  * Stable identifier, used when persisting data.
- * @alpha
+ * @internal
  */
 export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
 	TName,
@@ -39,7 +39,7 @@ export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
  * Refers to an exact stable policy (ex: specific version of a policy),
  * for how to handle (ex: edit and merge edits to) fields marked with this kind.
  * Persisted in documents as part of stored schema.
- * @alpha
+ * @internal
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
@@ -70,7 +70,7 @@ const NamedFieldSchemaFormat = Type.Composite(
 
 /**
  * Persisted version of {@link ValueSchema}.
- * @alpha
+ * @internal
  */
 export enum PersistedValueSchema {
 	Number,
@@ -84,7 +84,7 @@ export enum PersistedValueSchema {
  * Discriminated union content of tree node schema.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
- * @alpha
+ * @internal
  */
 export const TreeNodeSchemaDataFormat = Type.Object(
 	{
@@ -106,10 +106,10 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 
 export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
 /**
- * @alpha
+ * @internal
  */
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
 /**
- * @alpha
+ * @internal
  */
 export type NamedFieldSchemaFormat = Static<typeof NamedFieldSchemaFormat>;

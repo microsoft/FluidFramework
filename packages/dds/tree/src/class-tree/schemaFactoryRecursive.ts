@@ -19,7 +19,7 @@ import { SchemaFactory } from "./schemaFactory";
  *
  * @remarks This is separated from SchemaFactory as these APIs are more experimental, and may be stabilized independently.
  *
- * @sealed @alpha
+ * @sealed @internal
  */
 export class SchemaFactoryRecursive<
 	TScope extends string,

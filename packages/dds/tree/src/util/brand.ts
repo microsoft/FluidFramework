@@ -18,7 +18,7 @@ import { Assume } from "./utils";
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
- * @alpha
+ * @internal
  */
 export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType &
 	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
@@ -31,7 +31,7 @@ export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueTy
  * ```typescript
  * export interface MyType extends Erased<"myPackage.MyType">{}
  * ```
- * @alpha
+ * @internal
  */
 export type Erased<Name extends string> = ErasedType<Name>;
 
@@ -48,7 +48,7 @@ export type Erased<Name extends string> = ErasedType<Name>;
  * but the compiler may think it's true in some cases.
  *
  * @sealed
- * @alpha
+ * @internal
  */
 export abstract class ErasedType<out Name extends string> {
 	/**
@@ -87,7 +87,7 @@ export abstract class ErasedType<out Name extends string> {
  * which is the common use-case for branding.
  *
  * @sealed
- * @alpha
+ * @internal
  */
 export abstract class BrandedType<out ValueType, Name extends string> {
 	protected _typeCheck?: Covariant<ValueType>;
@@ -121,7 +121,7 @@ export abstract class BrandedType<out ValueType, Name extends string> {
  * ```typescript
  * export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
  * ```
- * @alpha
+ * @internal
  */
 export type Opaque<T extends Brand<any, string>> = T extends BrandedType<
 	infer ValueType,
@@ -132,7 +132,7 @@ export type Opaque<T extends Brand<any, string>> = T extends BrandedType<
 
 /**
  * See {@link extractFromOpaque}.
- * @alpha
+ * @internal
  */
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
 	TOpaque extends BrandedType<infer ValueType, infer Name>
@@ -144,7 +144,7 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
- * @alpha
+ * @internal
  */
 export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
 	infer ValueType,
@@ -156,7 +156,7 @@ export type ValueFromBranded<T extends BrandedType<any, string>> = T extends Bra
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
- * @alpha
+ * @internal
  */
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
 	any,
@@ -170,7 +170,7 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
  *
  * It is assumed that only code that produces these "opaque" handles does this conversion,
  * allowing these handles to be considered opaque.
- * @alpha
+ * @internal
  */
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
 	value: TOpaque,
@@ -183,7 +183,7 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
  *
  * It is assumed that only code that produces these "opaque" handles does this conversion,
  * allowing these handles to be considered opaque.
- * @alpha
+ * @internal
  */
 export function fromErased<
 	TBranded extends BrandedType<unknown, string>,
@@ -196,7 +196,7 @@ export function fromErased<
  * Adds a type {@link Brand} to a value.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
- * @alpha
+ * @internal
  */
 export function brand<T extends Brand<any, string>>(
 	value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
@@ -208,7 +208,7 @@ export function brand<T extends Brand<any, string>>(
  * Adds a type {@link Brand} to a value, returning it as a {@link Opaque} handle.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
- * @alpha
+ * @internal
  */
 export function brandOpaque<T extends BrandedType<any, string>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
@@ -220,7 +220,7 @@ export function brandOpaque<T extends BrandedType<any, string>>(
  * Adds a type {@link Brand} to a value, returning it as a {@link Erased} handle.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
- * @alpha
+ * @internal
  */
 export function brandErased<T extends BrandedType<any, string>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,

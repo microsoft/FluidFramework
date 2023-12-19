@@ -46,7 +46,7 @@ const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
- * @alpha
+ * @internal
  */
 function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
