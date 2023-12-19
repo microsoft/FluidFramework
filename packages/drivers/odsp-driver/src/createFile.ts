@@ -36,7 +36,7 @@ import {
 } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { ClpCompliantAppHeader } from "./contractsPublic";
+import { ClpCompliantAppHeader, OdspFluidDataStoreLocator } from "./contractsPublic";
 
 const isInvalidFileName = (fileName: string): boolean => {
 	const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -72,6 +72,7 @@ export async function createNewFluidFile(
 	let itemId: string;
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
+	let storeLocatorData: OdspFluidDataStoreLocator | undefined;
 	if (createNewSummary === undefined) {
 		itemId = await createNewEmptyFluidFile(
 			getStorageToken,
@@ -95,7 +96,8 @@ export async function createNewFluidFile(
 		shareLinkInfo = extractShareLinkData(content, enableSingleRequestForShareLinkWithCreate);
 	}
 
-	const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
+	storeLocatorData = { ...newFileInfo, itemId, dataStorePath: "/" };
+	const odspUrl = createOdspUrl(storeLocatorData);
 	const resolver = new OdspDriverUrlResolver();
 	const odspResolvedUrl = await resolver.resolve({
 		url: odspUrl,
@@ -105,6 +107,11 @@ export async function createNewFluidFile(
 	fileEntry.resolvedUrl = odspResolvedUrl;
 
 	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
+	if(shareLinkInfo?.createLink?.link){
+		const sharingLink = shareLinkInfo?.createLink?.link.webUrl;
+		storeLocatorInOdspUrl(new URL(sharingLink), storeLocatorData);
+		shareLinkInfo?.createLink?.link.webUrl = sharingLink.href;
+	}
 
 	if (createNewSummary !== undefined && createNewCaching) {
 		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
