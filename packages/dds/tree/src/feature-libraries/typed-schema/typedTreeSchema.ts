@@ -15,6 +15,9 @@ import {
 	ValueSchema,
 	TreeStoredSchema,
 	StoredSchemaCollection,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
 } from "../../core";
 import {
 	MakeNominal,
@@ -95,10 +98,12 @@ export class MapNodeSchema<
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
 	): MapNodeSchema<Name, Specification> {
-		return new MapNodeSchema(builder, name, specification, {
-			objectNodeFields: new Map(),
-			mapFields: specification as MapFieldSchema,
-		});
+		return new MapNodeSchema(
+			builder,
+			name,
+			specification,
+			new MapNodeStoredSchema(specification),
+		);
 	}
 
 	public override getFieldSchema(field: FieldKey): MapFieldSchema {
@@ -123,10 +128,12 @@ export class LeafNodeSchema<
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
 	): LeafNodeSchema<Name, Specification> {
-		return new LeafNodeSchema(builder, name, specification, {
-			objectNodeFields: new Map(),
-			leafValue: specification,
-		});
+		return new LeafNodeSchema(
+			builder,
+			name,
+			specification,
+			new LeafNodeStoredSchema(specification),
+		);
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldSchema {
@@ -175,7 +182,7 @@ export class ObjectNodeSchema<
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>,
 	) {
-		super(builder, name, info, { objectNodeFields });
+		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldSchema {
@@ -206,7 +213,7 @@ export class FieldNodeSchema<
 		info: Specification,
 	) {
 		const objectNodeFields = new Map([[EmptyKey, info as TreeFieldSchema]]);
-		super(builder, name, info, { objectNodeFields });
+		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
 	}
 
 	public override getFieldSchema(field?: FieldKey): TreeFieldSchema {
