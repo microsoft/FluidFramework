@@ -7,16 +7,8 @@ const path = require("path");
 const { ESLint } = require("eslint");
 
 describe("Do not allow release tags on members", function () {
-	function createESLintInstance(config) {
-		return new ESLint({
-			useEslintrc: false,
-			overrideConfig: config,
-			rulePaths: [path.join(__dirname, "../../custom-rules")],
-		});
-	}
-
-	it("Should report errors for including release tags inside the class declaration", async function () {
-		const eslint = createESLintInstance({
+	function createESLintInstance() {
+		const eslintConfig = {
 			rules: {
 				"no-member-release-tags": ["error"],
 			},
@@ -24,12 +16,25 @@ describe("Do not allow release tags on members", function () {
 			parserOptions: {
 				project: path.join(__dirname, "../tsconfig.json"),
 			},
+		};
+
+		return new ESLint({
+			useEslintrc: false,
+			overrideConfig: eslintConfig,
+			rulePaths: [path.join(__dirname, "../../custom-rules")],
 		});
+	}
+
+	it("Should report errors for including release tags inside the class declaration", async function () {
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockClassDeclaration.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
+
 		const result = results[0];
+
 		assert.strictEqual(result.errorCount, 9, "Should have 9 errors");
 		assert.strictEqual(
 			result.messages[0].message,
@@ -70,15 +75,8 @@ describe("Do not allow release tags on members", function () {
 	});
 
 	it("Should report errors for including release tags inside the class expression", async function () {
-		const eslint = createESLintInstance({
-			rules: {
-				"no-member-release-tags": ["error"],
-			},
-			parser: "@typescript-eslint/parser",
-			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
-			},
-		});
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockClassExpression.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
@@ -116,15 +114,8 @@ describe("Do not allow release tags on members", function () {
 	});
 
 	it("Should report an error for including release tags for class constructor", async function () {
-		const eslint = createESLintInstance({
-			rules: {
-				"no-member-release-tags": ["error"],
-			},
-			parser: "@typescript-eslint/parser",
-			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
-			},
-		});
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockClassConstructor.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
@@ -138,15 +129,8 @@ describe("Do not allow release tags on members", function () {
 	});
 
 	it("Should report an error for including release tags for class accessor property", async function () {
-		const eslint = createESLintInstance({
-			rules: {
-				"no-member-release-tags": ["error"],
-			},
-			parser: "@typescript-eslint/parser",
-			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
-			},
-		});
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockAccessorProperty.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
@@ -160,15 +144,8 @@ describe("Do not allow release tags on members", function () {
 	});
 
 	it("Should report errors for including release tags inside the abstract class", async function () {
-		const eslint = createESLintInstance({
-			rules: {
-				"no-member-release-tags": ["error"],
-			},
-			parser: "@typescript-eslint/parser",
-			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
-			},
-		});
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockAbstractClass.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
@@ -186,15 +163,8 @@ describe("Do not allow release tags on members", function () {
 	});
 
 	it("Should report errors for including release tags inside the interface", async function () {
-		const eslint = createESLintInstance({
-			rules: {
-				"no-member-release-tags": ["error"],
-			},
-			parser: "@typescript-eslint/parser",
-			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
-			},
-		});
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockInterface.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
@@ -232,15 +202,8 @@ describe("Do not allow release tags on members", function () {
 	});
 
 	it("Should report errors for including release tags inside the type", async function () {
-		const eslint = createESLintInstance({
-			rules: {
-				"no-member-release-tags": ["error"],
-			},
-			parser: "@typescript-eslint/parser",
-			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
-			},
-		});
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockType.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
@@ -275,15 +238,8 @@ describe("Do not allow release tags on members", function () {
 	});
 
 	it("Should NOT report errors for including release tags for function", async function () {
-		const eslint = createESLintInstance({
-			rules: {
-				"no-member-release-tags": ["error"],
-			},
-			parser: "@typescript-eslint/parser",
-			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
-			},
-		});
+		const eslint = createESLintInstance();
+
 		const filesToLint = ["mockFunction.ts"].map((file) =>
 			path.join(__dirname, "../mockFiles/no-member-release-tags", file),
 		);
