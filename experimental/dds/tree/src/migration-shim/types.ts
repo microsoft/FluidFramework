@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ITree } from '@fluid-experimental/tree2';
+import { type ITree } from '@fluidframework/tree';
 import {
 	type IChannel,
 	type IChannelAttributes,

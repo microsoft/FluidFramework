@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeContext, FlexTreeNode } from "@fluid-experimental/tree2";
+import { TreeContext, FlexTreeNode } from "@fluidframework/tree";
 import React from "react";
 
 /**

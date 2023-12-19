@@ -12,7 +12,7 @@ import {
 	typeboxValidator,
 	TreeFactory,
 	NodeFromSchema,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";

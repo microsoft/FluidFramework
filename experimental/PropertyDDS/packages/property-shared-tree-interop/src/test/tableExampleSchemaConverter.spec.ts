@@ -15,7 +15,7 @@ import {
 	ObjectNodeSchema,
 	MapNodeSchema,
 	FieldNodeSchema,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 
 const tableTypeName: TreeNodeSchemaIdentifier = brand("Test:Table-1.0.0");

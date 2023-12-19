@@ -309,7 +309,7 @@ export interface TokenFetchOptions {
 // @internal
 export const tokenFromResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
 
-// @alpha
+// @beta
 export interface TokenResponse {
     fromCache?: boolean;
     token: string;
