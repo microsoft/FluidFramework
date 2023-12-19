@@ -74,6 +74,7 @@ export class AzureClient {
 			new RouterliciousDocumentServiceFactory(this.properties.connection.tokenProvider, {
 				enableWholeSummaryUpload: isRemoteConnection,
 				enableDiscovery: isRemoteConnection,
+				isEphemeralContainer: this.properties.isEphemeralContainer ?? false,
 			});
 
 		this.documentServiceFactory = applyStorageCompression(

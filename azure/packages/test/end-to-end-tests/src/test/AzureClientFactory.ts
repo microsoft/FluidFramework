@@ -25,6 +25,7 @@ export function createAzureClient(
 	userName?: string,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
+	isEphemeralContainer: boolean = false,
 ): AzureClient {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
@@ -68,5 +69,6 @@ export function createAzureClient(
 		connection: connectionProps,
 		logger: getLogger(),
 		configProvider,
+		isEphemeralContainer,
 	});
 }

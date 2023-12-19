@@ -31,6 +31,11 @@ export interface AzureClientProps {
 	readonly configProvider?: IConfigProviderBase;
 
 	readonly summaryCompression?: boolean | ICompressionStorageConfig;
+
+	/**
+	 * Optional. True if the container is ephemeral
+	 */
+	readonly isEphemeralContainer?: boolean;
 }
 
 /**

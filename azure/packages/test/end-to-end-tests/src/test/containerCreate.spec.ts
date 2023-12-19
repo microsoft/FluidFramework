@@ -19,13 +19,22 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
+const isEphemeralContainer = process.env.IS_EPHEMERAL_CONTAINER === "true";
+console.log(`is ephemeral? ${isEphemeralContainer}`);
+
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createAzureClient();
+		client = createAzureClient(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			isEphemeralContainer,
+		);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
@@ -164,6 +173,7 @@ describe("Container create with feature flags", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 	let mockLogger: MockLogger;
+	const isEphemeral: boolean = true;
 
 	beforeEach(() => {
 		mockLogger = new MockLogger();
@@ -174,6 +184,7 @@ describe("Container create with feature flags", () => {
 			configProvider({
 				"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
 			}),
+			isEphemeral,
 		);
 		schema = {
 			initialObjects: {

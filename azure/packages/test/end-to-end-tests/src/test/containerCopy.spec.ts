@@ -14,13 +14,22 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { createAzureClient } from "./AzureClientFactory";
 import { mapWait } from "./utils";
 
+const isEphemeralContainer = process.env.IS_EPHEMERAL_CONTAINER === "true";
+console.log(`is ephemeral? ${isEphemeralContainer}`);
+
 describe("Container copy scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createAzureClient();
+		client = createAzureClient(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			isEphemeralContainer,
+		);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
