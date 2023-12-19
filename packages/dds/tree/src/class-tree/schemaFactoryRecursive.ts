@@ -5,10 +5,14 @@
 
 import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries";
 import { TreeArrayNode } from "../simple-tree";
+import { RestrictiveReadonlyRecord } from "../util";
 import {
 	ImplicitAllowedTypes,
+	ImplicitFieldSchema,
+	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
+	ObjectFromSchemaRecord,
 	TreeMapNode,
 	TreeNodeSchemaClass,
 } from "./schemaTypes";
@@ -26,6 +30,29 @@ export class SchemaFactoryRecursive<
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
 	/**
+	 * {@link SchemaFactory.object} except tweaked to work better for recursive types.
+	 * @remarks
+	 * For unknown reasons, recursive objects work better (compile in more cases)
+	 * if they their insertable types and node types are not required to be an object.
+	 * This reduces type safety a bit, but is worth it to make the recursive types actually work at all.
+	 */
+	public objectRecursive<
+		const Name extends TName,
+		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.Object,
+		ObjectFromSchemaRecord<T>,
+		InsertableObjectFromSchemaRecord<T>,
+		true
+	> {
+		return this.object(name, t);
+	}
+
+	/**
 	 * For unknown reasons, recursive arrays work better (compile in more cases)
 	 * if their constructor takes in an object with a member containing the iterable,
 	 * rather than taking the iterable as a parameter directly.
@@ -39,7 +66,7 @@ export class SchemaFactoryRecursive<
 		name: Name,
 		allowedTypes: T,
 	) {
-		class RecursiveArray extends this.namedArray(name, allowedTypes, true, false) {
+		class RecursiveArray extends this.namedArray_internal(name, allowedTypes, true, false) {
 			public constructor(
 				data: { x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> } | FlexTreeNode,
 			) {
@@ -74,7 +101,7 @@ export class SchemaFactoryRecursive<
 		name: Name,
 		allowedTypes: T,
 	) {
-		class MapSchema extends this.namedMap(name, allowedTypes, true, false) {
+		class MapSchema extends this.namedMap_internal(name, allowedTypes, true, false) {
 			public constructor(data?: undefined | FlexTreeNode) {
 				if (isFlexTreeNode(data)) {
 					super(data as any);
