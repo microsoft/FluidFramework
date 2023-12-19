@@ -10,7 +10,7 @@ const {
 } = require("../data/versions.json");
 
 const configFileName = "staticwebapp.config.json";
-const config = require(`../${configFileName}`);
+const config = require(`../static/${configFileName}`);
 
 const routes = {
 	"/docs/apis/": `/docs/api/${currentVersion}`,
@@ -29,7 +29,7 @@ async function buildRedirects() {
 	}));
 
 	await fs.writeFile(
-		path.join(__dirname, "..", configFileName),
+		path.join(__dirname, "..", "static", configFileName),
 		JSON.stringify(config, null, 2),
 		"utf8",
 	);
