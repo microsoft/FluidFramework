@@ -136,7 +136,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.0.0-internal.7.2.0",
+		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.0.0-internal.8.0.0",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -170,22 +170,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_FluidContainer": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_ServiceAudience": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IRootDataObject": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

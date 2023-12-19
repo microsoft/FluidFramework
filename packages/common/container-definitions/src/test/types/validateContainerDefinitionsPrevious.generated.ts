@@ -403,7 +403,6 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: TypeOnly<old.IContainer>): void;
 use_old_InterfaceDeclaration_IContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -428,7 +427,6 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>): void;
 use_old_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -981,7 +979,6 @@ declare function get_current_InterfaceDeclaration_IHostLoader():
 declare function use_old_InterfaceDeclaration_IHostLoader(
     use: TypeOnly<old.IHostLoader>): void;
 use_old_InterfaceDeclaration_IHostLoader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IHostLoader());
 
 /*
@@ -1006,7 +1003,6 @@ declare function get_current_InterfaceDeclaration_ILoader():
 declare function use_old_InterfaceDeclaration_ILoader(
     use: TypeOnly<old.ILoader>): void;
 use_old_InterfaceDeclaration_ILoader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoader());
 
 /*
@@ -1060,18 +1056,6 @@ use_old_TypeAliasDeclaration_ILoaderOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingLocalState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
@@ -1115,7 +1099,6 @@ declare function get_current_InterfaceDeclaration_IProvideLoader():
 declare function use_old_InterfaceDeclaration_IProvideLoader(
     use: TypeOnly<old.IProvideLoader>): void;
 use_old_InterfaceDeclaration_IProvideLoader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideLoader());
 
 /*
@@ -1188,7 +1171,6 @@ declare function get_current_InterfaceDeclaration_IRuntime():
 declare function use_old_InterfaceDeclaration_IRuntime(
     use: TypeOnly<old.IRuntime>): void;
 use_old_InterfaceDeclaration_IRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRuntime());
 
 /*
@@ -1261,7 +1243,6 @@ declare function get_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
 declare function use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
     use: TypeOnly<old.ISnapshotTreeWithBlobContents>): void;
 use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents());
 
 /*
