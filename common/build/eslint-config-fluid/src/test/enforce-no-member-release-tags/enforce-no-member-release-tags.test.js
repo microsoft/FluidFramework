@@ -6,7 +6,7 @@ const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
 
-describe("ESLint No Release Tag Rule Tests", function () {
+describe("Do not allow release tags on members", function () {
 	function createESLintInstance(config) {
 		return new ESLint({
 			useEslintrc: false,
