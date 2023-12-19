@@ -13,46 +13,37 @@ import {
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 } from "../../core";
-import { brand, compareNamed, fromErased } from "../../util";
+import { brand, fail, fromErased } from "../../util";
 import { ICodecOptions, IJsonCodec } from "../../codec";
 import { makeVersionedValidatedCodec } from "../versioned";
-import { Format, TreeNodeSchemaFormat } from "./format";
+import { Format } from "./format";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
-	const treeNodeSchema: TreeNodeSchemaFormat[] = [];
+	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> = Object.create(null);
 	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
-	for (const [name, schema] of repo.nodeSchema) {
-		treeNodeSchema.push(encodeTree(name, schema));
+	for (const name of [...repo.nodeSchema.keys()].sort()) {
+		const schema = repo.nodeSchema.get(name) ?? fail("missing schema");
+		Object.defineProperty(nodeSchema, name, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: fromErased<BrandedTreeNodeSchemaDataFormat>(schema.encode()),
+		});
 	}
-	treeNodeSchema.sort(compareNamed);
 	return {
 		version: schemaFormat.version,
-		nodeSchema: treeNodeSchema,
-		rootFieldSchema,
+		nodes: nodeSchema,
+		root: rootFieldSchema,
 	};
-}
-
-function encodeTree(
-	name: TreeNodeSchemaIdentifier,
-	schema: TreeNodeStoredSchema,
-): TreeNodeSchemaFormat {
-	const out: TreeNodeSchemaFormat = {
-		name,
-		data: fromErased<BrandedTreeNodeSchemaDataFormat>(schema.encode()),
-	};
-	return out;
-}
-function decodeTree(schema: TreeNodeSchemaFormat): TreeNodeStoredSchema {
-	return storedSchemaDecodeDispatcher.dispatch(schema.data);
 }
 
 function decode(f: Format): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-	for (const tree of f.nodeSchema) {
-		nodeSchema.set(brand(tree.name), decodeTree(tree));
+	for (const [key, schema] of Object.entries(f.nodes)) {
+		nodeSchema.set(brand(key), storedSchemaDecodeDispatcher.dispatch(schema));
 	}
 	return {
-		rootFieldSchema: decodeFieldSchema(f.rootFieldSchema),
+		rootFieldSchema: decodeFieldSchema(f.root),
 		nodeSchema,
 	};
 }
