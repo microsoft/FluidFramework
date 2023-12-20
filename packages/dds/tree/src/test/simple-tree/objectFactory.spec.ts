@@ -6,9 +6,8 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies";
-import { SchemaFactory, Tree } from "../../class-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal";
+import { SchemaFactory, Tree, InsertableTreeFieldFromImplicitField } from "../../class-tree";
+
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode } from "../../simple-tree/flexNode";
 import { getRoot } from "./utils";

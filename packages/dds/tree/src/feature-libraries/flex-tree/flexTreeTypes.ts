@@ -9,7 +9,7 @@ import { Assume, FlattenKeys } from "../../util";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	TreeFieldSchema,
-	InternalTypedSchemaTypes,
+	LazyItem,
 	TreeNodeSchema,
 	AllowedTypes,
 	FieldNodeSchema,
@@ -50,6 +50,7 @@ export enum FlexTreeEntityKind {
 
 /**
  * Allows boxed iteration of a tree/field
+ * @internal
  */
 export const boxedIterator = Symbol();
 
@@ -106,7 +107,7 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 
 /**
  * Status of the tree that a particular node belongs to.
- * @beta
+ * @public
  */
 export enum TreeStatus {
 	/**
@@ -127,6 +128,7 @@ export enum TreeStatus {
 
 /**
  * {@inheritdoc TreeNode.[onNextChange]}
+ * @internal
  */
 export const onNextChange = Symbol("onNextChange");
 
@@ -985,7 +987,7 @@ export type FlexTreeUnboxFieldInner<
  * @internal
  */
 export type FlexTreeUnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
-	InternalTypedSchemaTypes.LazyItem<infer InnerType>,
+	LazyItem<infer InnerType>,
 ]
 	? InnerType extends TreeNodeSchema
 		? FlexTreeUnboxNode<InnerType>
