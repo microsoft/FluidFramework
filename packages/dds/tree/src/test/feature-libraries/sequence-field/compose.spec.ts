@@ -102,6 +102,15 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, cases.no_change);
 		}));
 
+	it("populates cell revision info", () =>
+		withConfig(() => {
+			const tomb = tagChange([Mark.tomb(tag1, brand(0))], tag2);
+			const insert = tagChange([Mark.insert(1, brand(0))], tag1);
+			const expected = [Mark.insert(1, { revision: tag1, localId: brand(0) })];
+			const actual = shallowCompose([tomb, insert]);
+			assert.deepEqual(actual, expected);
+		}));
+
 	it("calls composeChild", () =>
 		withConfig(() => {
 			const changes = TestChange.mint([], 1);
