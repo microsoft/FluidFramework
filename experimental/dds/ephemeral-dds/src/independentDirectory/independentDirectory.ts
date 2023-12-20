@@ -6,22 +6,20 @@
 import { assert } from "@fluidframework/core-utils";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
+import { unbrandIVM } from "../independentValue";
 import type {
+	IndependentDatastore,
 	IndependentDirectory,
 	IndependentDirectoryMethods,
 	IndependentDirectoryNode,
 	IndependentDirectoryNodeSchema,
-} from "./types";
-import type {
-	IndependentDatastore,
 	RoundTrippable,
-	StateData,
-	StateElement,
-	StateElementDirectory,
-	StateManager,
-} from "./independentDataStore";
+	ValueElementDirectory,
+	ValueElement,
+	ValueState,
+} from "./types";
 
-interface IndependentDirectoryStateUpdate extends StateData<unknown> {
+interface IndependentDirectoryValueUpdate extends ValueState<unknown> {
 	path: string;
 	keepUnregistered?: true;
 }
@@ -29,9 +27,7 @@ interface IndependentDirectoryStateUpdate extends StateData<unknown> {
 class IndependentDirectoryImpl<T extends IndependentDirectoryNodeSchema>
 	implements IndependentDirectoryMethods<T>, IndependentDatastore<T>
 {
-	private readonly datastore: StateElementDirectory<RoundTrippable<unknown>> = {};
-	// Local state is tracked uniquely from all as local client may not have id while not connected.
-	private readonly local: StateElement<RoundTrippable<unknown>> = {};
+	private readonly datastore: ValueElementDirectory<unknown> = {};
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -56,18 +52,19 @@ class IndependentDirectoryImpl<T extends IndependentDirectoryNodeSchema>
 			const { clientId } = this.runtime;
 			assert(clientId !== undefined, "Connected without local clientId");
 			Object.entries(this.datastore).forEach(([path, allKnownState]) => {
-				if (path in this.local) {
-					allKnownState[clientId] = this.local[path];
+				if (path in this.nodes) {
+					allKnownState[clientId] = unbrandIVM(this.nodes[path]).value;
 				}
 			});
 		});
 		runtime.on("signal", (message) => {
 			assert(message.clientId !== null, "Directory received signal without clientId");
-			if (message.type === "IndependentDirectoryStateUpdate") {
+			// TODO: Probably most messages can just be general state update and merged.
+			if (message.type === "IndependentDirectoryValueUpdate") {
 				const { path, keepUnregistered, rev, value } =
-					message.content as IndependentDirectoryStateUpdate;
+					message.content as IndependentDirectoryValueUpdate;
 				if (path in this.nodes) {
-					const node = this.nodes[path] as unknown as StateManager<unknown>;
+					const node = unbrandIVM(this.nodes[path]);
 					node.update(message.clientId, rev, value);
 				} else if (keepUnregistered) {
 					if (!(path in this.datastore)) {
@@ -77,12 +74,23 @@ class IndependentDirectoryImpl<T extends IndependentDirectoryNodeSchema>
 					allKnownState[message.clientId] = { rev, value };
 				}
 			} else if (message.type === "CompleteIndependentDirectory") {
-				const remoteDatastore = message.content as StateElementDirectory<
+				const remoteDatastore = message.content as ValueElementDirectory<
 					RoundTrippable<unknown>
 				>;
 				// TODO: Merge remoteDatastore into this.datastore
 			}
 		});
+	}
+
+	knownValues<Path extends keyof T & string>(
+		path: Path,
+	): { self: string | undefined; states: ValueElement<T[keyof T]> } {
+		return { self: this.runtime.clientId, states: this.datastore[path] };
+		throw new Error("Method not implemented.");
+	}
+
+	localUpdate(path: keyof T, forceBroadcast: boolean): void {
+		throw new Error("Method not implemented.");
 	}
 
 	update(path: keyof T, clientId: string, rev: number, value: RoundTrippable<unknown>): void {
@@ -93,16 +101,8 @@ class IndependentDirectoryImpl<T extends IndependentDirectoryNodeSchema>
 		path: TPath,
 		node: TNode,
 	): asserts this is IndependentDirectory<T & Record<TPath, TNode>> {
-		assert(
-			!(path in this.nodes) && !(path in this.local),
-			"Already have entry for path in directory",
-		);
+		assert(!(path in this.nodes), "Already have entry for path in directory");
 		this.nodes[path] = node;
-		// TODO: See about a safer branding conversion - use a helper that knows.
-		const nodeManager = node as unknown as StateManager<unknown>;
-		// Set local state
-		const local = { rev: 0, value: nodeManager.state };
-		this.local[path] = local;
 		if (path in this.datastore) {
 			// Already have received state from other clients. Kept in `all`.
 			// TODO: Send current `all` state to state manager.
@@ -111,11 +111,14 @@ class IndependentDirectoryImpl<T extends IndependentDirectoryNodeSchema>
 		}
 		// If we have a clientId, then add the local state entry to the all state.
 		if (this.runtime.clientId) {
-			this.datastore[path][this.runtime.clientId] = local;
+			this.datastore[path][this.runtime.clientId] = unbrandIVM(node).value;
 		}
 	}
 }
 
+/**
+ * @internal
+ */
 export function createEphemeralIndependentDirectory<T extends IndependentDirectoryNodeSchema>(
 	runtime: IFluidDataStoreRuntime,
 	initialContent: T,

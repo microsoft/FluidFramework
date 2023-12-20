@@ -3,14 +3,19 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	ClientId,
+	IndependentDatastore,
 	IndependentDirectory,
 	IndependentDirectoryNode,
 	IndependentDirectoryNodeSchema,
 	IndependentDirectoryPaths,
 	IndependentDirectoryMethods,
 	RoundTrippable,
-} from "./independentDirectory";
+	ValueElement,
+	ValueElementDirectory,
+	ValueManager,
+	ValueState,
+} from "./types";
 
-export type { IndependentValue as IndependentValueManager } from "./independentValue";
+export { EphemeralIndependentDirectory } from "./ephemeralIndependentDirectory";
