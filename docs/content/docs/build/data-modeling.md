@@ -172,7 +172,7 @@ An example where this is useful is building a collaborative storyboarding applic
 [AzureClient]: {{< relref "/docs/api/v1/azure-client/AzureClient-class.md" >}}
 [TinyliciousClient]: {{< relref "/docs/api/v1/tinylicious-client/TinyliciousClient-class.md" >}}
 
-[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/fluidcontainer-class.md" >}}
+[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
 [IFluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
 
 <!-- prettier-ignore-end -->

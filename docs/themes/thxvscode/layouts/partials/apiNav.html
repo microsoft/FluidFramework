@@ -90,7 +90,7 @@
     <ul class="nav" id="secondary-nav">
         {{ $selectedApiVersion := trim $current.RelPermalink "/" }}
         {{ $selectedApiVersion = index (split $selectedApiVersion "/") 2 }}
-        {{ $isNotSelectApiVersion := eq $selectedApiVersion nil}}
+        {{ $isNotSelectApiVersion := (not (in $allVersions $selectedApiVersion)) }}
         {{ if $isNotSelectApiVersion}}
             {{ $selectedApiVersion = $.Site.Data.versions.params.currentVersion }}
         {{ end }}

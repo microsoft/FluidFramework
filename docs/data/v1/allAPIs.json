@@ -1,203 +1,54 @@
 {
-  "example-utils": {
-    "Class": [
-      "ContainerViewRuntimeFactory"
-    ]
-  },
-  "iframe-host": {
+  "odsp-client": {
     "Interface": [
-      "IFrameInnerApi",
-      "IFrameOuterHostConfig"
+      "IOdspTokenProvider",
+      "OdspClientProps",
+      "OdspConnectionConfig",
+      "OdspContainerServices",
+      "OdspMember"
     ],
     "Class": [
-      "IFrameOuterHost"
+      "OdspClient"
     ]
   },
-  "last-edited": {
-    "Interface": [
-      "IFluidLastEditedTracker",
-      "ILastEditDetails",
-      "IProvideFluidLastEditedTracker"
-    ],
-    "Class": [
-      "LastEditedTracker",
-      "LastEditedTrackerDataObject"
-    ]
-  },
-  "react-inputs": {
-    "Class": [
-      "CollaborativeCheckbox",
-      "CollaborativeInput",
-      "SharedStringHelper"
-    ],
-    "Interface": [
-      "ICollaborativeCheckboxProps",
-      "ICollaborativeCheckboxState",
-      "ICollaborativeInputProps",
-      "ICollaborativeInputState",
-      "ICollaborativeTextAreaProps",
-      "ISharedStringHelperEvents",
-      "ISharedStringHelperTextChangedEventArgs"
-    ]
-  },
-  "sharejs-json1": {
-    "Class": [
-      "Json1Factory",
-      "SharedJson1"
-    ]
-  },
-  "task-manager": {
+  "oldest-client-observer": {
     "Interface": [
       "IOldestClientObservable",
       "IOldestClientObservableEvents",
       "IOldestClientObserver",
-      "IOldestClientObserverEvents",
-      "ITaskManager",
-      "ITaskManagerEvents"
+      "IOldestClientObserverEvents"
     ],
     "Class": [
-      "OldestClientObserver",
-      "TaskManager"
+      "OldestClientObserver"
     ]
   },
-  "tree": {
-    "Interface": [
-      "Build",
-      "BuildInternal_0_0_2",
-      "BuildInternal",
-      "BuildTreeNode",
-      "Constraint",
-      "ConstraintInternal_0_0_2",
-      "ConstraintInternal",
-      "Delta",
-      "Detach",
-      "DetachInternal_0_0_2",
-      "DetachInternal",
-      "Edit",
-      "EditBase",
-      "EditCommittedEventArguments",
-      "EditHandle",
-      "EditingResultBase",
-      "EditLogSummary",
-      "EditWithoutId",
-      "FailedEditingResult",
-      "FailingTransactionState",
-      "FluidEditHandle",
-      "ForestNode",
-      "GenericTransactionPolicy",
-      "HasTraits",
-      "HasVariadicTraits",
-      "ICheckoutEvents",
-      "Insert",
-      "InsertInternal_0_0_2",
-      "InsertInternal",
-      "InternalizedChange",
-      "ISharedTreeEvents",
-      "LogViewer",
-      "MergeHealthStats",
-      "NodeData",
-      "NodeIdBrand",
-      "NodeIdContext",
-      "NodeIdConverter",
-      "NodeIdGenerator",
-      "NodeInTrait",
-      "OrderedEditSet",
-      "ParentData",
-      "ReconciliationChange",
-      "ReconciliationEdit",
-      "ReconciliationPath",
-      "Error",
-      "Ok",
-      "SequencedEditAppliedEventArguments",
-      "SessionUnique",
-      "SetValue",
-      "SetValueInternal_0_0_2",
-      "SetValueInternal",
-      "SharedTreeOptions_0_0_2",
-      "SharedTreeOptions_0_1_1",
-      "SharedTreeSummaryBase",
-      "StablePlace",
-      "StablePlaceInternal_0_0_2",
-      "StablePlaceInternal",
-      "StableRange",
-      "StableRangeInternal_0_0_2",
-      "StableRangeInternal",
-      "StashedLocalOpMetadata",
-      "StringInterner",
-      "SucceedingTransactionState",
-      "TraitLocation",
-      "TraitLocationInternal_0_0_2",
-      "TraitLocationInternal",
-      "TraitMap",
-      "TransactionEvents",
-      "TransactionFailure",
-      "BadPlaceFailure",
-      "BadRangeFailure",
-      "ConstraintViolationFailure",
-      "DetachedSequenceIdAlreadyInUseFailure",
-      "DetachedSequenceNotFoundFailure",
-      "DuplicateIdInBuildFailure",
-      "IdAlreadyInUseFailure",
-      "UnknownIdFailure",
-      "UnusedDetachedSequenceFailure",
-      "TreeNode",
-      "TreeViewNode",
-      "TreeViewPlace",
-      "TreeViewRange",
-      "ValidEditingResult"
-    ],
-    "Enum": [
-      "ChangeType",
-      "ChangeTypeInternal",
-      "CheckoutEvent",
-      "ConstraintEffect",
-      "EditStatus",
-      "EditValidationResult",
-      "PlaceValidationResult",
-      "RangeValidationResultKind",
-      "ResultType",
-      "SharedTreeDiagnosticEvent",
-      "SharedTreeEvent",
-      "Side",
-      "TransactionEvent",
-      "ConstraintViolationKind",
-      "FailureKind",
-      "WriteFormat"
-    ],
+  "client-utils": {
     "Class": [
-      "Checkout",
-      "EagerCheckout",
-      "Forest",
-      "GenericTransaction",
-      "LazyCheckout",
-      "RevisionView",
-      "SharedTree",
-      "SharedTreeFactory",
-      "SharedTreeMergeHealthTelemetryHeartbeat",
-      "Transaction",
-      "Policy",
-      "TransactionView",
-      "TreeNodeHandle",
-      "TreeView"
-    ],
-    "Namespace": [
-      "Result",
-      "TransactionInternal"
+      "TypedEventEmitter"
     ]
   },
-  "quorum": {
-    "Interface": [
-      "IQuorum",
-      "IQuorumEvents"
-    ],
+  "agent-scheduler": {
     "Class": [
-      "Quorum"
+      "AgentSchedulerFactory",
+      "TaskSubscription"
+    ],
+    "Interface": [
+      "IAgentScheduler",
+      "IAgentSchedulerEvents",
+      "IProvideAgentScheduler",
+      "ITaskSubscriptionEvents"
+    ]
+  },
+  "app-insights-logger": {
+    "Interface": [
+      "CategoryFilter",
+      "FluidAppInsightsLoggerConfig",
+      "NamespaceFilter"
     ]
   },
   "aqueduct": {
     "Class": [
       "BaseContainerRuntimeFactory",
-      "BaseContainerService",
       "ContainerRuntimeFactoryWithDefaultDataStore",
       "DataObject",
       "DataObjectFactory",
@@ -206,15 +57,12 @@
     ],
     "Interface": [
       "DataObjectTypes",
-      "IDataObjectProps",
-      "IRootDataObjectFactory"
+      "IDataObjectProps"
     ]
   },
   "azure-client": {
     "Class": [
-      "AzureAudience",
-      "AzureClient",
-      "AzureFunctionTokenProvider"
+      "AzureClient"
     ],
     "Interface": [
       "AzureClientProps",
@@ -224,24 +72,12 @@
       "AzureGetVersionsOptions",
       "AzureLocalConnectionConfig",
       "AzureMember",
-      "AzureRemoteConnectionConfig",
-      "AzureUser"
-    ]
-  },
-  "cell": {
-    "Interface": [
-      "ISharedCell",
-      "ISharedCellEvents"
-    ],
-    "Class": [
-      "SharedCell"
+      "AzureRemoteConnectionConfig"
     ]
   },
   "container-definitions": {
     "Enum": [
       "AttachState",
-      "BindState",
-      "ContainerErrorType",
       "LoaderHeader"
     ],
     "Namespace": [
@@ -250,119 +86,99 @@
     "Interface": [
       "ContainerWarning",
       "IAudience",
-      "ICodeAllowList",
+      "IAudienceOwner",
+      "IBatchMessage",
       "ICodeDetailsLoader",
-      "ICodeLoader",
       "IConnectionDetails",
       "IContainer",
       "IContainerContext",
       "IContainerEvents",
-      "IContainerLoadMode",
-      "IDeltaHandlerStrategy",
       "IDeltaManager",
       "IDeltaManagerEvents",
       "IDeltaQueue",
       "IDeltaQueueEvents",
       "IDeltaSender",
-      "IErrorBase",
       "IFluidBrowserPackage",
       "IFluidBrowserPackageEnvironment",
       "IFluidCodeDetails",
       "IFluidCodeDetailsComparer",
       "IFluidCodeDetailsConfig",
-      "IFluidCodeResolver",
       "IFluidModule",
       "IFluidModuleWithDetails",
       "IFluidPackage",
       "IFluidPackageEnvironment",
-      "IFluidTokenProvider",
-      "IGenericError",
+      "IGetPendingLocalStateProps",
       "IHostLoader",
       "ILoader",
-      "ILoaderHeader",
-      "IPendingLocalState",
       "IProvideFluidCodeDetailsComparer",
-      "IProvideFluidTokenProvider",
       "IProvideLoader",
       "IProvideRuntimeFactory",
-      "IResolvedFluidCodeDetails",
       "IRuntime",
       "IRuntimeFactory",
-      "ISnapshotTreeWithBlobContents",
-      "IThrottlingWarning",
-      "IUsageError"
+      "ISnapshotTreeWithBlobContents"
     ]
   },
   "container-loader": {
     "Enum": [
       "ConnectionState"
     ],
-    "Class": [
-      "Container",
-      "Loader",
-      "RelativeLoader"
-    ],
     "Interface": [
       "ICodeDetailsLoader",
-      "IContainerConfig",
-      "IContainerLoadOptions",
       "IFluidModuleWithDetails",
       "ILoaderOptions",
       "ILoaderProps",
       "ILoaderServices",
-      "IPendingContainerState"
+      "IProtocolHandler"
+    ],
+    "Class": [
+      "Loader"
     ]
   },
   "container-runtime": {
     "Enum": [
-      "ContainerMessageType",
-      "RuntimeHeaders",
-      "RuntimeMessage"
+      "CompressionAlgorithms",
+      "ContainerMessageType"
     ],
     "Class": [
       "ContainerRuntime",
-      "DeltaScheduler",
-      "FluidDataStoreRegistry",
-      "ScheduleManager",
       "Summarizer",
       "SummaryCollection"
     ],
     "Interface": [
-      "ContainerRuntimeMessage",
       "IAckedSummary",
       "IAckSummaryResult",
       "IBaseSummarizeResult",
+      "IBlobManagerLoadInfo",
       "IBroadcastSummaryResult",
       "ICancellableSummarizerController",
       "ICancellationToken",
-      "IChunkedOp",
       "IClientSummaryWatcher",
+      "ICompressionRuntimeOptions",
       "IConnectableRuntime",
+      "IContainerRuntimeMetadata",
       "IContainerRuntimeOptions",
+      "ICreateContainerMetadata",
       "IEnqueueSummarizeOptions",
-      "IGarbageCollectionRuntime",
+      "IGCMetadata",
       "IGCRuntimeOptions",
       "IGCStats",
       "IGeneratedSummaryStats",
       "IGenerateSummaryTreeResult",
+      "IMarkPhaseStats",
       "INackSummaryResult",
       "IOnDemandSummarizeOptions",
-      "IPendingFlush",
-      "IPendingFlushMode",
-      "IPendingLocalState",
-      "IPendingMessage",
-      "IPendingRuntimeState",
-      "IProvideSummarizer",
-      "IRootSummaryTreeWithStats",
+      "IRefreshSummaryAckOptions",
+      "IRetriableFailureResult",
+      "ISerializedElection",
       "ISubmitSummaryOpResult",
       "ISubmitSummaryOptions",
+      "ISummarizeEventProps",
       "ISummarizeOptions",
       "ISummarizer",
       "ISummarizeResults",
       "ISummarizerEvents",
       "ISummarizerInternalsProvider",
       "ISummarizerRuntime",
-      "ISummarizingWarning",
       "ISummary",
       "ISummaryAckMessage",
       "ISummaryBaseConfiguration",
@@ -373,49 +189,58 @@
       "ISummaryNackMessage",
       "ISummaryOpMessage",
       "ISummaryRuntimeOptions",
-      "IUploadSummaryResult"
+      "ISweepPhaseStats",
+      "IUploadSummaryResult",
+      "SubmitSummaryFailureData"
     ]
   },
   "container-runtime-definitions": {
     "Interface": [
       "IContainerRuntime",
       "IContainerRuntimeEvents",
-      "IDataStoreWithBindToContext_Deprecated",
-      "IProvideContainerRuntime"
-    ]
-  },
-  "container-utils": {
-    "Class": [
-      "ClientSessionExpiredError",
-      "DataCorruptionError",
-      "DataProcessingError",
-      "GenericError",
-      "ThrottlingWarning",
-      "UsageError"
+      "IContainerRuntimeWithResolveHandle_Deprecated"
     ]
   },
   "core-interfaces": {
     "Interface": [
+      "IConfigProviderBase",
+      "IDisposable",
+      "IErrorBase",
+      "IErrorEvent",
+      "IEvent",
+      "IEventProvider",
       "IFluidCodeDetails",
-      "IFluidCodeDetailsComparer",
       "IFluidCodeDetailsConfig",
       "IFluidHandle",
       "IFluidHandleContext",
       "IFluidLoadable",
-      "IFluidObject",
       "IFluidPackage",
       "IFluidPackageEnvironment",
-      "IFluidRouter",
-      "IFluidRunnable",
-      "IProvideFluidCodeDetailsComparer",
       "IProvideFluidHandle",
       "IProvideFluidHandleContext",
       "IProvideFluidLoadable",
-      "IProvideFluidRouter",
-      "IProvideFluidRunnable",
       "IRequest",
       "IRequestHeader",
-      "IResponse"
+      "IResponse",
+      "ITelemetryBaseEvent",
+      "ITelemetryBaseLogger",
+      "ITelemetryErrorEvent",
+      "ITelemetryGenericEvent",
+      "ITelemetryLogger",
+      "ITelemetryPerformanceEvent",
+      "ITelemetryProperties",
+      "IThrottlingWarning",
+      "Tagged"
+    ]
+  },
+  "core-utils": {
+    "Class": [
+      "Deferred",
+      "LazyPromise",
+      "PromiseCache"
+    ],
+    "Interface": [
+      "PromiseCacheOptions"
     ]
   },
   "counter": {
@@ -425,13 +250,6 @@
     ],
     "Class": [
       "SharedCounter"
-    ]
-  },
-  "data-object-base": {
-    "Class": [
-      "LazyLoadedDataObject",
-      "LazyLoadedDataObjectFactory",
-      "RuntimeFactory"
     ]
   },
   "datastore": {
@@ -456,39 +274,40 @@
       "IDeltaConnection",
       "IDeltaHandler",
       "IFluidDataStoreRuntime",
-      "IFluidDataStoreRuntimeEvents"
+      "IFluidDataStoreRuntimeEvents",
+      "Internal_InterfaceOfJsonableTypesWith"
     ]
   },
   "debugger": {
-    "Class": [
-      "DebuggerUI",
-      "DebugReplayController"
-    ],
     "Namespace": [
       "FluidDebugger"
-    ],
-    "Interface": [
-      "IDebuggerController",
-      "IDebuggerUI"
     ]
   },
-  "driver-base": {
-    "Class": [
-      "DocumentDeltaConnection"
+  "devtools": {
+    "Interface": [
+      "ContainerDevtoolsProps",
+      "DevtoolsProps",
+      "IDevtools"
+    ]
+  },
+  "devtools-core": {
+    "Interface": [
+      "HasContainerKey",
+      "IDevtoolsLogger"
     ]
   },
   "driver-definitions": {
     "Enum": [
       "DriverErrorType",
       "DriverHeader",
+      "FetchSource",
       "LoaderCachingPolicy"
     ],
     "Interface": [
       "DriverPreCheckInfo",
+      "IAnyDriverError",
       "IAuthorizationError",
       "IContainerPackageInfo",
-      "IDeltasFetchResult",
-      "IDeltaStorageService",
       "IDocumentDeltaConnection",
       "IDocumentDeltaConnectionEvents",
       "IDocumentDeltaStorageService",
@@ -499,49 +318,24 @@
       "IDocumentStorageServicePolicies",
       "IDriverBasicError",
       "IDriverErrorBase",
-      "IDriverHeader",
-      "IFluidResolvedUrl",
       "IGenericNetworkError",
       "ILocationRedirectionError",
-      "IResolvedUrlBase",
+      "IResolvedUrl",
       "IStream",
       "ISummaryContext",
       "IThrottlingWarning",
-      "IUrlResolver",
-      "IWebResolvedUrl"
+      "IUrlResolver"
     ]
   },
   "driver-utils": {
-    "Class": [
-      "AuthorizationError",
-      "BlobAggregationStorage",
-      "BlobCacheStorageService",
-      "DeltaStreamConnectionForbiddenError",
-      "DocumentStorageServiceProxy",
-      "EmptyDocumentDeltaStorageService",
-      "GenericNetworkError",
-      "InsecureUrlResolver",
-      "MultiDocumentServiceFactory",
-      "MultiUrlResolver",
-      "NetworkErrorBasic",
-      "NonRetryableError",
-      "ParallelRequests",
-      "PrefetchDocumentStorageService",
-      "Queue",
-      "RateLimiter",
-      "RetryableError",
-      "SnapshotExtractor",
-      "SummaryTreeAssembler",
-      "ThrottlingError",
-      "UsageError"
-    ],
     "Interface": [
-      "IAnyDriverError",
-      "IProgress",
-      "ISummaryTreeAssemblerProps"
+      "ICompressionStorageConfig"
+    ],
+    "Class": [
+      "RateLimiter"
     ],
     "Enum": [
-      "OnlineStatus"
+      "SummaryCompressionAlgorithm"
     ]
   },
   "driver-web-cache": {
@@ -552,17 +346,12 @@
       "FluidCacheConfig"
     ]
   },
-  "file-driver": {
-    "Class": [
-      "FileDeltaStorageService",
-      "FileDocumentService",
-      "FileDocumentServiceFactory",
-      "FluidFetchReader",
-      "Replayer",
-      "ReplayFileDeltaConnection"
-    ],
+  "fluid-runner": {
     "Interface": [
-      "ISnapshotWriterStorage"
+      "IFluidFileConverter"
+    ],
+    "Enum": [
+      "OutputFormat"
     ]
   },
   "fluid-static": {
@@ -573,56 +362,23 @@
       "IFluidContainerEvents",
       "IMember",
       "IServiceAudience",
-      "IServiceAudienceEvents",
-      "RootDataObjectProps"
-    ],
-    "Class": [
-      "DOProviderContainerRuntimeFactory",
-      "FluidContainer",
-      "RootDataObject",
-      "ServiceAudience"
+      "IServiceAudienceEvents"
     ]
   },
-  "garbage-collector": {
+  "id-compressor": {
     "Class": [
-      "GCDataBuilder"
+      "IdCompressor"
     ],
     "Interface": [
-      "IGCResult"
+      "IdCreationRange",
+      "IIdCompressor",
+      "IIdCompressorCore"
     ]
   },
-  "iframe-driver": {
+  "local-driver": {
     "Class": [
-      "DocumentServiceFactoryProxy",
-      "InnerDocumentDeltaConnection",
-      "InnerDocumentService",
-      "InnerDocumentServiceFactory",
-      "InnerUrlResolver",
-      "OuterUrlResolver"
-    ],
-    "Interface": [
-      "ICombinedDriver",
-      "IDocumentServiceFactoryProxy",
-      "IOuterDocumentDeltaConnectionProxy",
-      "IUrlResolverProxy"
-    ]
-  },
-  "ink": {
-    "Interface": [
-      "IClearOperation",
-      "IColor",
-      "ICreateStrokeOperation",
-      "IInk",
-      "IInkEvents",
-      "IInkPoint",
-      "IInkStroke",
-      "IPen",
-      "IStylusOperation"
-    ],
-    "Class": [
-      "Ink",
-      "InkCanvas",
-      "InkFactory"
+      "LocalDocumentServiceFactory",
+      "LocalResolver"
     ]
   },
   "map": {
@@ -634,6 +390,7 @@
       "SharedMap"
     ],
     "Interface": [
+      "ICreateInfo",
       "IDirectory",
       "IDirectoryClearOperation",
       "IDirectoryCreateSubDirectoryOperation",
@@ -641,7 +398,6 @@
       "IDirectoryDeleteOperation",
       "IDirectoryDeleteSubDirectoryOperation",
       "IDirectoryEvents",
-      "IDirectoryNewStorageFormat",
       "IDirectorySetOperation",
       "IDirectoryValueChanged",
       "ILocalValue",
@@ -657,6 +413,7 @@
   "matrix": {
     "Interface": [
       "IRevertible",
+      "ISharedMatrixEvents",
       "IUndoConsumer"
     ],
     "Class": [
@@ -666,118 +423,87 @@
   },
   "merge-tree": {
     "Interface": [
-      "AugmentedIntervalNode",
-      "BlockAction",
-      "BlockUpdateActions",
-      "ClientSeq",
-      "Comparer",
-      "Dictionary",
-      "ICombiningOp",
-      "IConsensusInfo",
-      "IConsensusValue",
-      "IHierBlock",
-      "IIntegerRange",
-      "IInterval",
+      "AttributionPolicy",
+      "IAttributionCollection",
+      "IAttributionCollectionSerializer",
+      "IAttributionCollectionSpec",
+      "IClientEvents",
       "IJSONMarkerSegment",
       "IJSONSegment",
       "IJSONTextSegment",
       "IMarkerDef",
-      "IMarkerModifiedAction",
-      "IMergeBlock",
       "IMergeNodeCommon",
       "IMergeTreeAnnotateMsg",
-      "IMergeTreeClientSequenceArgs",
+      "IMergeTreeAttributionOptions",
       "IMergeTreeDelta",
       "IMergeTreeDeltaCallbackArgs",
       "IMergeTreeDeltaOpArgs",
       "IMergeTreeGroupMsg",
       "IMergeTreeInsertMsg",
       "IMergeTreeMaintenanceCallbackArgs",
+      "IMergeTreeObliterateMsg",
+      "IMergeTreeOptions",
       "IMergeTreeRemoveMsg",
       "IMergeTreeSegmentDelta",
-      "IncrementalBlockAction",
-      "IncrementalSegmentAction",
-      "IncrementalSegmentActions",
-      "InsertContext",
-      "IRBAugmentation",
-      "IRBMatcher",
+      "IMergeTreeTextHelper",
+      "IMoveInfo",
       "IRelativePosition",
       "IRemovalInfo",
       "ISegment",
       "ISegmentAction",
-      "ISegmentChanges",
-      "KeyComparer",
+      "ITrackingGroup",
       "LocalReferencePosition",
-      "LRUSegment",
       "MapLike",
-      "MergeTreeStats",
-      "MinListener",
-      "NodeAction",
-      "Property",
-      "PropertyAction",
-      "ProxString",
-      "QProperty",
-      "RBNode",
-      "RBNodeActions",
+      "MergeTreeRevertibleDriver",
       "ReferencePosition",
-      "SearchResult",
-      "SegmentAccumulator",
-      "SegmentActions",
       "SegmentGroup",
-      "SortedDictionary",
-      "TSTNode",
-      "TSTResult"
+      "SequenceOffsets",
+      "SerializedAttributionCollection"
     ],
     "Class": [
       "BaseSegment",
       "Client",
       "CollaborationWindow",
-      "Heap",
-      "IncrementalMapState",
-      "IntervalTree",
-      "List",
-      "LocalReference",
       "LocalReferenceCollection",
       "Marker",
-      "MergeBlock",
       "MergeNode",
-      "MergeTree",
-      "MergeTreeTextHelper",
       "PropertiesManager",
-      "RedBlackTree",
       "SegmentGroupCollection",
-      "SnapshotLegacy",
-      "SortedSegmentSet",
-      "Stack",
       "TextSegment",
       "TrackingGroup",
-      "TrackingGroupCollection",
-      "TST"
+      "TrackingGroupCollection"
     ],
     "Enum": [
-      "IncrementalExecOp",
+      "PropertiesRollback",
       "ReferenceType"
     ]
   },
+  "odsp-doclib-utils": {
+    "Interface": [
+      "IOdspAuthRequestInfo"
+    ]
+  },
   "odsp-driver": {
-    "Enum": [
-      "ClpCompliantAppHeader",
-      "SharingLinkHeader"
+    "Class": [
+      "EpochTracker",
+      "OdspDocumentServiceFactory",
+      "OdspDocumentServiceFactoryCore",
+      "OdspDriverUrlResolver",
+      "OdspDriverUrlResolverForShareLink"
     ],
     "Interface": [
-      "IClpCompliantAppHeader",
-      "ISharingLinkHeader",
+      "ICacheAndTracker",
+      "INonPersistentCache",
+      "IOdspCache",
+      "IOdspResponse",
+      "IPersistedFileCache",
+      "IPrefetchSnapshotContents",
       "ISnapshotContents",
       "OdspFluidDataStoreLocator",
       "ShareLinkFetcherProps"
     ],
-    "Class": [
-      "OdspDocumentServiceFactory",
-      "OdspDocumentServiceFactoryCore",
-      "OdspDocumentServiceFactoryWithCodeSplit",
-      "OdspDriverUrlResolver",
-      "OdspDriverUrlResolverForShareLink",
-      "ReadBuffer"
+    "Enum": [
+      "SnapshotFormatSupportType"
     ]
   },
   "odsp-driver-definitions": {
@@ -788,11 +514,17 @@
       "IEntry",
       "IFileEntry",
       "IOdspError",
+      "IOdspErrorAugmentations",
       "IOdspResolvedUrl",
       "IOdspUrlParts",
       "IOpsCachingPolicy",
       "IPersistedCache",
+      "IProvideSessionAwareDriverFactory",
+      "IRelaySessionAwareDriverFactory",
+      "ISharingLink",
+      "ISharingLinkKind",
       "ISnapshotOptions",
+      "ISocketStorageDiscovery",
       "OdspResourceTokenFetchOptions",
       "ShareLinkInfoType",
       "TokenFetchOptions",
@@ -800,7 +532,9 @@
     ],
     "Enum": [
       "OdspErrorType",
-      "ShareLinkTypes"
+      "ShareLinkTypes",
+      "SharingLinkRole",
+      "SharingLinkScope"
     ]
   },
   "ordered-collection": {
@@ -814,79 +548,8 @@
     "Interface": [
       "IConsensusOrderedCollection",
       "IConsensusOrderedCollectionEvents",
-      "IConsensusOrderedCollectionFactory",
       "IOrderedCollection",
       "ISnapshotable"
-    ]
-  },
-  "protocol-definitions": {
-    "Enum": [
-      "FileMode",
-      "MessageType",
-      "NackErrorType",
-      "ScopeType",
-      "TreeEntry"
-    ],
-    "Interface": [
-      "IActorClient",
-      "IAttachment",
-      "IBlob",
-      "IBranchOrigin",
-      "ICapabilities",
-      "IClient",
-      "IClientConfiguration",
-      "IClientDetails",
-      "IClientJoin",
-      "IConnect",
-      "IConnected",
-      "ICreateBlobResponse",
-      "IDocumentAttributes",
-      "IDocumentMessage",
-      "IDocumentSystemMessage",
-      "IHelpMessage",
-      "INack",
-      "INackContent",
-      "IProcessMessageResult",
-      "IProposal",
-      "IProtocolState",
-      "IQueueMessage",
-      "IQuorum",
-      "IQuorumClients",
-      "IQuorumClientsEvents",
-      "IQuorumProposals",
-      "IQuorumProposalsEvents",
-      "ISequencedClient",
-      "ISequencedDocumentAugmentedMessage",
-      "ISequencedDocumentMessage",
-      "ISequencedDocumentSystemMessage",
-      "IServerError",
-      "ISignalClient",
-      "ISignalMessage",
-      "ISnapshotTree",
-      "ISnapshotTreeEx",
-      "ISummaryAck",
-      "ISummaryAttachment",
-      "ISummaryAuthor",
-      "ISummaryBlob",
-      "ISummaryCommitter",
-      "ISummaryConfiguration",
-      "ISummaryContent",
-      "ISummaryHandle",
-      "ISummaryNack",
-      "ISummaryProposal",
-      "ISummaryTokenClaims",
-      "ISummaryTree",
-      "ITokenClaims",
-      "ITokenProvider",
-      "ITokenService",
-      "ITrace",
-      "ITree",
-      "IUploadedSummaryDetails",
-      "IUser",
-      "IVersion"
-    ],
-    "Namespace": [
-      "SummaryType"
     ]
   },
   "register-collection": {
@@ -903,43 +566,10 @@
       "ReadPolicy"
     ]
   },
-  "replay-driver": {
-    "Class": [
-      "FileSnapshotReader",
-      "OpStorage",
-      "ReadDocumentStorageServiceBase",
-      "ReplayController",
-      "ReplayDocumentService",
-      "ReplayDocumentServiceFactory",
-      "SnapshotStorage",
-      "StaticStorageDocumentService",
-      "StaticStorageDocumentServiceFactory"
-    ],
-    "Interface": [
-      "IFileSnapshot"
-    ]
-  },
-  "request-handler": {
-    "Class": [
-      "RuntimeRequestHandlerBuilder"
-    ]
-  },
   "routerlicious-driver": {
-    "Class": [
-      "DefaultTokenProvider",
-      "DeltaStorageService",
-      "DocumentDeltaStorageService",
-      "DocumentPostCreateError",
-      "DocumentService",
-      "DocumentStorageService",
-      "NullBlobStorageService",
-      "RouterliciousDocumentServiceFactory"
-    ],
     "Interface": [
-      "IRouterliciousDriverPolicies",
       "ITokenProvider",
-      "ITokenResponse",
-      "ITokenService"
+      "ITokenResponse"
     ]
   },
   "runtime-definitions": {
@@ -948,11 +578,13 @@
       "FlushMode"
     ],
     "Interface": [
+      "DetachedAttributionKey",
       "IAttachMessage",
       "IContainerRuntimeBase",
       "IContainerRuntimeBaseEvents",
       "IDataStore",
       "IEnvelope",
+      "IExperimentalIncrementalSummaryContext",
       "IFluidDataStoreChannel",
       "IFluidDataStoreContext",
       "IFluidDataStoreContextDetached",
@@ -961,12 +593,9 @@
       "IFluidDataStoreRegistry",
       "IGarbageCollectionData",
       "IGarbageCollectionDetailsBase",
-      "IGarbageCollectionNodeData",
-      "IGarbageCollectionState",
       "IInboundSignalMessage",
       "IProvideFluidDataStoreFactory",
       "IProvideFluidDataStoreRegistry",
-      "ISignalEnvelope",
       "ISummarizeInternalResult",
       "ISummarizeResult",
       "ISummarizerNode",
@@ -975,28 +604,25 @@
       "ISummarizerNodeWithGC",
       "ISummaryStats",
       "ISummaryTreeWithStats",
-      "ITelemetryContext"
+      "ITelemetryContext",
+      "LocalAttributionKey",
+      "OpAttributionKey"
     ]
   },
   "runtime-utils": {
-    "Interface": [
-      "IRootSummarizerNode",
-      "IRootSummarizerNodeWithGC",
-      "ISummarizerNodeRootContract"
-    ],
     "Class": [
-      "ObjectStoragePartition",
       "RequestParser",
       "RuntimeFactoryHelper",
-      "SummaryTreeBuilder",
-      "TelemetryContext"
+      "SummaryTreeBuilder"
     ]
   },
   "sequence": {
     "Interface": [
+      "IInterval",
+      "IIntervalCollection",
       "IIntervalCollectionEvent",
-      "IIntervalHelpers",
-      "IJSONRunSegment",
+      "InteriorSequencePlace",
+      "IntervalIndex",
       "ISequenceDeltaRange",
       "ISerializableInterval",
       "ISerializedInterval",
@@ -1004,49 +630,29 @@
       "ISharedSegmentSequenceEvents",
       "ISharedString"
     ],
+    "Enum": [
+      "IntervalType",
+      "Side"
+    ],
     "Class": [
-      "Interval",
-      "IntervalCollection",
-      "IntervalCollectionIterator",
-      "PaddingSegment",
-      "RunSegment",
       "SequenceDeltaEvent",
       "SequenceEvent",
       "SequenceInterval",
       "SequenceMaintenanceEvent",
-      "SharedIntervalCollection",
-      "SharedIntervalCollectionFactory",
-      "SharedNumberSequence",
-      "SharedNumberSequenceFactory",
-      "SharedObjectSequence",
-      "SharedObjectSequenceFactory",
       "SharedSegmentSequence",
-      "SharedSequence",
       "SharedString",
-      "SharedStringFactory",
-      "SparseMatrix",
-      "SparseMatrixFactory",
-      "SubSequence"
-    ],
-    "Enum": [
-      "IntervalType"
+      "SharedStringFactory"
     ]
   },
   "shared-object-base": {
-    "Class": [
-      "FluidSerializer",
-      "SharedObject",
-      "SharedObjectCore",
-      "SummarySerializer"
-    ],
     "Interface": [
       "IFluidSerializer",
-      "ISerializedHandle",
       "ISharedObject",
       "ISharedObjectEvents"
     ],
-    "Enum": [
-      "ValueType"
+    "Class": [
+      "SharedObject",
+      "SharedObjectCore"
     ]
   },
   "shared-summary-block": {
@@ -1054,8 +660,7 @@
       "ISharedSummaryBlock"
     ],
     "Class": [
-      "SharedSummaryBlock",
-      "SharedSummaryBlockFactory"
+      "SharedSummaryBlock"
     ]
   },
   "synthesize": {
@@ -1069,57 +674,24 @@
   },
   "telemetry-utils": {
     "Class": [
-      "ChildLogger",
-      "DebugLogger",
-      "EventEmitterWithErrorHandling",
-      "LoggingError",
-      "MockLogger",
-      "MultiSinkLogger",
-      "PerformanceEvent",
-      "SampledTelemetryHelper",
-      "TaggedLoggerAdapter",
-      "TelemetryLogger",
-      "TelemetryUTLogger",
-      "ThresholdCounter"
+      "EventEmitterWithErrorHandling"
     ],
     "Interface": [
-      "IConfigProvider",
-      "IConfigProviderBase",
-      "IFluidErrorAnnotations",
-      "IFluidErrorBase",
-      "IPerformanceEventMarkers",
+      "ITelemetryErrorEventExt",
+      "ITelemetryGenericEventExt",
+      "ITelemetryLoggerExt",
       "ITelemetryLoggerPropertyBag",
       "ITelemetryLoggerPropertyBags",
-      "MonitoringContext"
-    ],
-    "Enum": [
-      "TelemetryDataTag"
-    ]
-  },
-  "test-driver-definitions": {
-    "Interface": [
-      "ITelemetryBufferedLogger",
-      "ITestDriver"
-    ]
-  },
-  "test-drivers": {
-    "Interface": [
-      "DriverApiType",
-      "FluidTestDriverConfig"
-    ],
-    "Class": [
-      "LocalServerTestDriver",
-      "OdspTestDriver",
-      "RouterliciousTestDriver",
-      "TinyliciousTestDriver"
+      "ITelemetryPerformanceEventExt",
+      "ITelemetryPropertiesExt"
     ]
   },
   "test-runtime-utils": {
     "Interface": [
+      "IMockContainerRuntimeOptions",
       "IMockContainerRuntimePendingMessage"
     ],
     "Class": [
-      "InsecureTokenProvider",
       "MockContainerRuntime",
       "MockContainerRuntimeFactory",
       "MockContainerRuntimeFactoryForReconnection",
@@ -1127,7 +699,6 @@
       "MockDeltaConnection",
       "MockDeltaManager",
       "MockDeltaQueue",
-      "MockEmptyDeltaConnection",
       "MockFluidDataStoreContext",
       "MockFluidDataStoreRuntime",
       "MockHandle",
@@ -1138,91 +709,116 @@
     ]
   },
   "test-utils": {
-    "Enum": [
-      "DataObjectFactoryType"
-    ],
-    "Class": [
-      "EventAndErrorTrackingLogger",
-      "LoaderContainerTracker",
-      "LocalCodeLoader",
-      "TestFluidObject",
-      "TestFluidObjectFactory",
-      "TestObjectProvider"
-    ],
     "Interface": [
       "IOpProcessingController",
       "IProvideTestFluidObject",
-      "ITestContainerConfig",
-      "ITestFluidObject",
-      "ITestObjectProvider",
-      "TimeoutWithError",
-      "TimeoutWithValue"
-    ]
-  },
-  "tinylicious-client": {
-    "Class": [
-      "TinyliciousAudience",
-      "TinyliciousClient"
-    ],
-    "Interface": [
-      "TinyliciousClientProps",
-      "TinyliciousConnectionConfig",
-      "TinyliciousContainerServices",
-      "TinyliciousMember",
-      "TinyliciousUser"
-    ]
-  },
-  "tool-utils": {
-    "Interface": [
-      "IAsyncCache",
-      "IOdspTokenManagerCacheKey",
-      "IResources",
-      "ISnapshotNormalizerConfig"
+      "ITestFluidObject"
     ],
     "Class": [
-      "OdspTokenManager"
+      "LoaderContainerTracker"
     ]
   },
-  "undo-redo": {
+  "tree": {
     "Interface": [
-      "IRevertible"
+      "CheckoutEvents",
+      "IDisposable",
+      "MakeNominal",
+      "TreeArrayNodeBase",
+      "TreeNodeSchemaClass",
+      "TreeNodeSchemaCore",
+      "TreeNodeSchemaNonClass",
+      "ISubscribable",
+      "ITree",
+      "Revertible",
+      "TreeApi",
+      "TreeArrayNode",
+      "TreeMapNode",
+      "TreeMapNodeBase",
+      "TreeNodeEvents",
+      "TreeView"
+    ],
+    "Enum": [
+      "DiscardResult",
+      "FieldKind",
+      "NodeKind",
+      "RevertibleKind",
+      "RevertResult",
+      "TreeStatus"
+    ],
+    "Namespace": [
+      "InternalTypedSchemaTypes",
+      "InternalTypes",
+      "InternalClassTreeTypes"
     ],
     "Class": [
-      "SharedMapRevertible",
-      "SharedMapUndoRedoHandler",
-      "SharedSegmentSequenceRevertible",
-      "SharedSegmentSequenceUndoRedoHandler",
-      "UndoRedoStackManager"
+      "FieldSchema",
+      "IterableTreeListContent",
+      "SchemaFactory",
+      "TreeConfiguration",
+      "TreeNode"
     ]
   },
-  "view-adapters": {
-    "Class": [
-      "HTMLViewAdapter",
-      "MountableView",
-      "ReactViewAdapter"
+  "fluid-framework": {
+    "Interface": [
+      "CheckoutEvents",
+      "ICreateInfo",
+      "IDirectory",
+      "IDirectoryClearOperation",
+      "IDirectoryCreateSubDirectoryOperation",
+      "IDirectoryDataObject",
+      "IDirectoryDeleteOperation",
+      "IDirectoryDeleteSubDirectoryOperation",
+      "IDirectoryEvents",
+      "IDirectorySetOperation",
+      "IDirectoryValueChanged",
+      "IDisposable",
+      "ILocalValue",
+      "MakeNominal",
+      "TreeArrayNodeBase",
+      "TreeNodeSchemaClass",
+      "TreeNodeSchemaCore",
+      "TreeNodeSchemaNonClass",
+      "ISerializableValue",
+      "ISerializedValue",
+      "ISharedDirectory",
+      "ISharedDirectoryEvents",
+      "ISharedMap",
+      "ISharedMapEvents",
+      "ISubscribable",
+      "ITree",
+      "IValueChanged",
+      "Revertible",
+      "TreeApi",
+      "TreeArrayNode",
+      "TreeMapNode",
+      "TreeMapNodeBase",
+      "TreeNodeEvents",
+      "TreeView"
     ],
-    "Interface": [
-      "IReactViewAdapterProps"
-    ]
-  },
-  "view-interfaces": {
-    "Interface": [
-      "IFluidHTMLOptions",
-      "IFluidHTMLView",
-      "IFluidMountableView",
-      "IFluidMountableViewClass",
-      "IProvideFluidHTMLView",
-      "IProvideFluidMountableView"
-    ]
-  },
-  "web-code-loader": {
     "Class": [
-      "AllowList",
-      "SemVerCdnCodeResolver",
-      "WebCodeLoader"
+      "DirectoryFactory",
+      "FieldSchema",
+      "IterableTreeListContent",
+      "LocalValueMaker",
+      "MapFactory",
+      "SchemaFactory",
+      "SharedDirectory",
+      "SharedMap",
+      "TreeConfiguration",
+      "TreeNode"
     ],
-    "Interface": [
-      "IPackageIdentifierDetails"
+    "Enum": [
+      "DiscardResult",
+      "FieldKind",
+      "NodeKind",
+      "RevertibleKind",
+      "RevertResult",
+      "TreeStatus"
+    ],
+    "Namespace": [
+      "InternalTypedSchemaTypes",
+      "InternalTypes",
+      "InternalClassTreeTypes"
     ]
   }
 }

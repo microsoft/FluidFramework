@@ -34,7 +34,7 @@ npm i @fluid-experimental/data-objects
 
 ## API Documentation
 
-API documentation for **@fluid-experimental/data-objects** is available at <https://fluidframework.com/docs/apis/data-objects>.
+API documentation for **@fluid-experimental/data-objects** is available at <https://fluidframework.com/docs/api/v1data-objects>.
 
 ## Contribution Guidelines
 

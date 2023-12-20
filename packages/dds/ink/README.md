@@ -34,7 +34,7 @@ npm i @fluidframework/ink
 
 ## API Documentation
 
-API documentation for **@fluidframework/ink** is available at <https://fluidframework.com/docs/apis/ink>.
+API documentation for **@fluidframework/ink** is available at <https://fluidframework.com/docs/api/v1ink>.
 
 ## Contribution Guidelines
 

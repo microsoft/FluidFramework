@@ -27,7 +27,7 @@ npm i @fluidframework/tinylicious-driver
 
 ## API Documentation
 
-API documentation for **@fluidframework/tinylicious-driver** is available at <https://fluidframework.com/docs/apis/tinylicious-driver>.
+API documentation for **@fluidframework/tinylicious-driver** is available at <https://fluidframework.com/docs/api/v1tinylicious-driver>.
 
 ## Contribution Guidelines
 
