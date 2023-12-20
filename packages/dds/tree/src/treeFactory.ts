@@ -79,7 +79,7 @@ export class TreeFactory implements IChannelFactory {
  * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
  * of objects, arrays, and other data types.
  *
- * @beta
+ * @public
  */
 export class SharedTree implements ITree {
 	// The IFluidContainer ContainerSchema currently requires a constructable class that
