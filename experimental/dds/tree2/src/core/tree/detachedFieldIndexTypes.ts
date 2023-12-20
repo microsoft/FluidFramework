@@ -7,10 +7,10 @@ import { NestedMap } from "../../util";
 import { RevisionTag } from "../rebase";
 import { ForestRootId } from "./detachedFieldIndex";
 
-export type Major = string | number | undefined;
+export type Major = RevisionTag | undefined;
 export type Minor = number;
 
 export interface DetachedFieldSummaryData {
-	data: NestedMap<RevisionTag, Minor, ForestRootId>;
+	data: NestedMap<Major, Minor, ForestRootId>;
 	maxId: ForestRootId;
 }
