@@ -4,7 +4,7 @@
 
 ```ts
 
-import { FieldKind as FieldKind_3 } from './schemaTypes';
+import { FieldKind as FieldKind_2 } from './schemaTypes';
 import { FieldSchema as FieldSchema_2 } from './schemaTypes';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { Forbidden as Forbidden_2 } from '../default-schema';
@@ -1636,10 +1636,10 @@ export class test_RecursiveObject extends test_RecursiveObject_base {
 
 // @internal
 export const test_RecursiveObject_base: TreeNodeSchemaClass_2<"Test Recursive Domain.testObject", NodeKind.Object, object & TreeNode_2 & ObjectFromSchemaRecord_2<    {
-readonly recursive: FieldSchema_2<FieldKind_3.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly recursive: FieldSchema_2<FieldKind_2.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema_2<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>, object & InsertableObjectFromSchemaRecord_2<    {
-readonly recursive: FieldSchema_2<FieldKind_3.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly recursive: FieldSchema_2<FieldKind_2.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema_2<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>, true>;
 
@@ -1762,7 +1762,7 @@ export class TreeFieldSchema<out TKind extends OldFieldKind = OldFieldKind, cons
     get allowedTypeSet(): AllowedTypeSet;
     static create<TKind extends OldFieldKind, const Types extends OldAllowedTypes>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
     static createUnsafe<TKind extends OldFieldKind, const Types extends Unenforced<OldAllowedTypes>>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
-    static readonly empty: TreeFieldSchema<Forbidden, readonly []>;
+    static readonly empty: TreeFieldSchema<Forbidden_2, readonly []>;
     equals(other: TreeFieldSchema): boolean;
     // (undocumented)
     readonly kind: TKind;
