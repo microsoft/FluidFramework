@@ -762,12 +762,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	getIntervalById(id: string): TInterval | undefined;
 	/**
 	 * Creates a new interval and add it to the collection.
-	 * @deprecated call IntervalCollection.add without specifying an intervalType
 	 * @param start - interval start position (inclusive)
 	 * @param end - interval end position (exclusive)
-	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
 	 * @param props - properties of the interval
-	 * @returns The created interval
+	 * @returns - the created interval
 	 * @remarks See documentation on {@link SequenceInterval} for comments on
 	 * interval endpoint semantics: there are subtleties with how the current
 	 * half-open behavior is represented.
@@ -832,21 +830,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @privateRemarks TODO: ADO:5205 the above comment regarding behavior in
 	 * the case that the entire interval has been deleted should be resolved at
 	 * the same time as this ticket
-	 */
-	add(
-		start: SequencePlace,
-		end: SequencePlace,
-		intervalType: IntervalType,
-		props?: PropertySet,
-	): TInterval;
-	/**
-	 * Creates a new interval and add it to the collection.
-	 * @param start - interval start position (inclusive)
-	 * @param end - interval end position (exclusive)
-	 * @param props - properties of the interval
-	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
-	 * with how the current half-open behavior is represented.
 	 */
 	add({
 		start,
@@ -1240,15 +1223,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.add}
-	 * @deprecated call IntervalCollection.add without specifying an intervalType
 	 */
-	public add(
-		start: SequencePlace,
-		end: SequencePlace,
-		intervalType: IntervalType,
-		props?: PropertySet,
-	): TInterval;
-
 	public add({
 		start,
 		end,
@@ -1257,47 +1232,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
-	}): TInterval;
-
-	public add(
-		start:
-			| SequencePlace
-			| {
-					start: SequencePlace;
-					end: SequencePlace;
-					props?: PropertySet;
-			  },
-		end?: SequencePlace,
-		intervalType?: IntervalType,
-		props?: PropertySet,
-	): TInterval {
-		let intStart: SequencePlace;
-		let intEnd: SequencePlace;
-		let type: IntervalType;
-		let properties: PropertySet | undefined;
-
-		if (isSequencePlace(start)) {
-			intStart = start;
-			assert(end !== undefined, 0x7c0 /* end must be defined */);
-			intEnd = end;
-			assert(intervalType !== undefined, 0x7c1 /* intervalType must be defined */);
-			type = intervalType;
-			properties = props;
-		} else {
-			intStart = start.start;
-			intEnd = start.end;
-			type = IntervalType.SlideOnRemove;
-			properties = start.props;
-		}
-
+	}): TInterval {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
 		}
-		if (type & IntervalType.Transient) {
-			throw new LoggingError("Can not add transient intervals");
-		}
 
-		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(intStart, intEnd);
+		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 
 		assert(
 			startPos !== undefined &&
@@ -1309,13 +1249,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 
-		this.assertStickinessEnabled(intStart, intEnd);
+		this.assertStickinessEnabled(start, end);
 
 		const interval: TInterval = this.localCollection.addInterval(
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
-			type,
-			properties,
+			IntervalType.SlideOnRemove,
+			props,
 		);
 
 		if (interval) {
@@ -1326,7 +1266,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const serializedInterval: ISerializedInterval = {
 				start: startPos,
 				end: endPos,
-				intervalType: type,
+				intervalType: IntervalType.SlideOnRemove,
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness,
