@@ -29,7 +29,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
+import { SequenceInterval, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -40,7 +40,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/lib/utils.mjs";
+} from "@fluidframework/container-loader/test/utils";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
@@ -535,16 +535,8 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 				await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 			const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
 			sharedStringBefore.insertText(0, "Hello");
-			let interval0: SequenceInterval | undefined = intervalsBefore.add(
-				0,
-				0,
-				IntervalType.SlideOnRemove,
-			);
-			let interval1: SequenceInterval | undefined = intervalsBefore.add(
-				0,
-				1,
-				IntervalType.SlideOnRemove,
-			);
+			let interval0: SequenceInterval | undefined = intervalsBefore.add({ start: 0, end: 0 });
+			let interval1: SequenceInterval | undefined = intervalsBefore.add({ start: 0, end: 1 });
 			let id0;
 			let id1;
 

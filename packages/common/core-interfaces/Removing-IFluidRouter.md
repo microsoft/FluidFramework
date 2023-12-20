@@ -90,7 +90,36 @@ const entryPoint = await container.getEntryPoint();
 
 ### Aliased DataStores
 
-(Not yet written)
+The `getRootDataStore` API has been deprecated on `IContainerRuntime` and `ContainerRuntime`. Migrate to usage of the new `IContainerRuntime.getAliasedDataStoreEntryPoint(...)` endpoint.
+The following is an example of that this change may look like:
+
+```ts
+// OLD
+const alias = "alias";
+const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+await dataStore.trySetAlias(alias);
+
+const retrievedDataStore = await containerRuntime.getRootDataStore(alias);
+```
+
+```ts
+// NEW
+const alias = "alias";
+const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+await dataStore.trySetAlias(alias);
+
+const entryPoint: IFluidHandle<ITestDataObject> | undefined =
+	await containerRuntime.getRootDataStore(alias);
+const retrievedDataStore = await entryPoint?.get();
+```
+
+### Sub-object routing
+
+Sub-object routing and requesting will continue to work as-is for the most part. The `FluidDataStoreRuntime` class has a dedicated `request(...)` method, separate from the `IFluidRouter` concept.
+
+There is only one key thing to keep in mind. If you are using your own `IFluidDataStoreFactory` implementation, you will need to wrap the created `FluidDataStoreRuntime` (in `IFluidDataStoreFactory.instantiateDataStore`) with a `mixinRequestHandler`. This `mixinRequestHandler` should handle default cases like requesting `""`, `"/"`, or `"/?"`.
+
+For an example of this in action, please see [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts) and [pureDataObject.ts](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-objects/pureDataObject.ts).
 
 ## Status
 
