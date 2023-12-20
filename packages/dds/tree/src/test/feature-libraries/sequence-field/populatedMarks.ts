@@ -9,8 +9,14 @@ import { ChangeAtomId, mintRevisionTag, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
 // eslint-disable-next-line import/no-internal-modules
 import { CellMark } from "../../../feature-libraries/sequence-field";
-// eslint-disable-next-line import/no-internal-modules
-import { Attach, Detach, MarkEffect } from "../../../feature-libraries/sequence-field/types";
+import {
+	Attach,
+	Detach,
+	DetachIdOverride,
+	DetachIdOverrideType,
+	MarkEffect,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -33,6 +39,14 @@ const cellId: Populated<SF.CellId> = {
 	adjacentCells: [adjacentCell],
 };
 const changes = TestChange.mint([], 1);
+const unattachIdOverride: Populated<DetachIdOverride> = {
+	type: DetachIdOverrideType.Unattach,
+	id: cellId,
+};
+const redetachIdOverride: Populated<DetachIdOverride> = {
+	type: DetachIdOverrideType.Redetach,
+	id: cellId,
+};
 const attach: Populated<Attach> = {
 	type: "MoveIn",
 	id: brand(0),
@@ -44,7 +58,7 @@ const detach: Populated<Detach> = {
 	id: brand(0),
 	revision: tag,
 	finalEndpoint: atomId,
-	redetachId: atomId,
+	idOverride: unattachIdOverride,
 };
 
 export const populatedMarks: PopulatedMark[] = [
@@ -67,7 +81,7 @@ export const populatedMarks: PopulatedMark[] = [
 		id: brand(0),
 		revision: tag,
 		finalEndpoint: atomId,
-		redetachId: atomId,
+		idOverride: unattachIdOverride,
 	},
 	{
 		type: "Delete",
@@ -76,7 +90,7 @@ export const populatedMarks: PopulatedMark[] = [
 		changes,
 		id: brand(0),
 		revision: tag,
-		redetachId: atomId,
+		idOverride: redetachIdOverride,
 	},
 	{
 		type: "AttachAndDetach",

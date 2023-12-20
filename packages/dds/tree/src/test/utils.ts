@@ -613,12 +613,13 @@ export function validateSnapshotConsistency(
 	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
-	// TODO:AB#6391 enable this by default once rollbacks include destroys
-	// assert.deepEqual(
-	// 	treeA.removed,
-	// 	treeB.removed,
-	// 	`Inconsistent removed trees json representation: ${idDifferentiator}`,
-	// );
+	const mapA = nestedMapFromFlatList(treeA.removed);
+	const mapB = nestedMapFromFlatList(treeB.removed);
+	assert.deepEqual(
+		mapA,
+		mapB,
+		`Inconsistent removed trees json representation: ${idDifferentiator}`,
+	);
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
@@ -785,8 +786,7 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 export function expectJsonTree(
 	actual: ITreeCheckout | ITreeCheckout[],
 	expected: JsonCompatible[],
-	// TODO:AB#6391 enable this by default once rollbacks include destroys
-	expectRemovedRootsAreSynchronized = false,
+	expectRemovedRootsAreSynchronized = true,
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {

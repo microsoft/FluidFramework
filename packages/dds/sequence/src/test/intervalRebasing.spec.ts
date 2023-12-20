@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
-import { IntervalStickiness, IntervalType } from "../intervals";
+import { IntervalStickiness } from "../intervals";
 import { Side } from "../intervalCollection";
 import { assertConsistent, Client } from "./intervalTestUtils";
 
@@ -135,8 +135,12 @@ describe("interval rebasing", () => {
 
 		clients[0].sharedString.insertText(0, "ABC");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(0, 2, IntervalType.SlideOnRemove, {
-			intervalId: "a",
+		collection_0.add({
+			start: 0,
+			end: 2,
+			props: {
+				intervalId: "a",
+			},
 		});
 		clients[0].sharedString.obliterateRange(1, 3);
 		containerRuntimeFactory.processAllMessages();
@@ -149,8 +153,12 @@ describe("interval rebasing", () => {
 		clients[1].sharedString.insertText(0, "F");
 		clients[0].sharedString.insertText(0, "PC");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(0, 1, IntervalType.SlideOnRemove, {
-			intervalId: "a",
+		collection_0.add({
+			start: 0,
+			end: 1,
+			props: {
+				intervalId: "a",
+			},
 		});
 		clients[1].sharedString.insertText(0, "L");
 		clients[1].sharedString.obliterateRange(0, 2);
@@ -218,8 +226,12 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
-		const interval1 = collection_1.add("start", "end", IntervalType.SlideOnRemove, {
-			intervalId: "2",
+		const interval1 = collection_1.add({
+			start: "start",
+			end: "end",
+			props: {
+				intervalId: "2",
+			},
 		});
 		assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 		clients[0].sharedString.removeRange(0, 1);
@@ -341,27 +353,25 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "AB");
 		clients[0].sharedString.insertText(0, "C");
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
-		const interval1 = collection_1.add(
-			{ pos: 0, side: Side.After },
-			"end",
-			IntervalType.SlideOnRemove,
-			{
+		const interval1 = collection_1.add({
+			start: { pos: 0, side: Side.After },
+			end: "end",
+			props: {
 				intervalId: "1",
 			},
-		);
+		});
 		assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[2].sharedString.removeRange(1, 2);
 		const collection_2 = clients[1].sharedString.getIntervalCollection("comments");
-		const interval2 = collection_2.add(
-			"start",
-			{ pos: 2, side: Side.Before },
-			IntervalType.SlideOnRemove,
-			{
+		const interval2 = collection_2.add({
+			start: "start",
+			end: { pos: 2, side: Side.Before },
+			props: {
 				intervalId: "2",
 			},
-		);
+		});
 		assert.equal(interval2.stickiness, IntervalStickiness.FULL);
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
@@ -374,8 +384,12 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.removeRange(0, 1);
 		clients[0].sharedString.insertText(0, "D");
 		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
-		collection_1.add({ pos: 0, side: Side.After }, 1, IntervalType.SlideOnRemove, {
-			intervalId: "1",
+		collection_1.add({
+			start: { pos: 0, side: Side.After },
+			end: 1,
+			props: {
+				intervalId: "1",
+			},
 		});
 		clients[2].sharedString.removeRange(1, 2);
 		containerRuntimeFactory.processAllMessages();
@@ -386,8 +400,12 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
-		const interval = collection_1.add("start", 0, IntervalType.SlideOnRemove, {
-			intervalId: "1",
+		const interval = collection_1.add({
+			start: "start",
+			end: 0,
+			props: {
+				intervalId: "1",
+			},
 		});
 		assert.equal(interval.stickiness, IntervalStickiness.FULL);
 		clients[0].containerRuntime.connected = true;
@@ -399,14 +417,13 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
-		const interval = collection_1.add(
-			{ pos: 0, side: Side.After },
-			0,
-			IntervalType.SlideOnRemove,
-			{
+		const interval = collection_1.add({
+			start: { pos: 0, side: Side.After },
+			end: 0,
+			props: {
 				intervalId: "1",
 			},
-		);
+		});
 		assert.equal(interval.stickiness, IntervalStickiness.FULL);
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();

@@ -583,7 +583,9 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	relevantRemovedRoots,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges.length === 0 && change.moves.length === 0,
+		change.childChanges.length === 0 &&
+		change.moves.length === 0 &&
+		change.reservedDetachId === undefined,
 };
 
 function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
