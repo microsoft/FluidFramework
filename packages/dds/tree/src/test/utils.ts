@@ -935,10 +935,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 						() => {
 							for (const [name, data, context] of encodingTestData.successes) {
 								it(name, () => {
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 									let encoded = jsonCodec.encode(data, context!);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 									const decoded = jsonCodec.decode(encoded, context!);
 									assertEquivalent(decoded, data);
 								});
@@ -951,7 +953,9 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			describe("can binary roundtrip", () => {
 				for (const [name, data, context] of encodingTestData.successes) {
 					it(name, () => {
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						const encoded = codec.binary.encode(data, context!);
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						const decoded = codec.binary.decode(encoded, context!);
 						assertEquivalent(decoded, data);
 					});
@@ -964,6 +968,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
 							assert.throws(() =>
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								jsonCodec.decode(encodedData as JsonCompatible, context!),
 							);
 						});

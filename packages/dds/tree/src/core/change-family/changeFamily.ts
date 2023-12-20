@@ -5,9 +5,7 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { ICodecFamily, IJsonCodec } from "../../codec";
-// import { FullSchemaPolicy, TreeCompressionStrategy } from "../../feature-libraries";
 import { ChangeRebaser } from "../rebase";
-// import { StoredSchemaCollection } from "../schema-stored";
 import { JsonCompatibleReadOnly } from "../../util";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
@@ -18,9 +16,6 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 }
 
 export interface ChangeEncodingContext {
-	// readonly encodeType: TreeCompressionStrategy;
-	// readonly schema: StoredSchemaCollection;
-	// readonly policy: FullSchemaPolicy;
 	readonly originatorId: SessionId;
 }
 

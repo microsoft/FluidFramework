@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { DetachedFieldIndex, ForestRootId, RevisionTag } from "../../core";
+import { createIdCompressor } from "@fluidframework/id-compressor";
+import { DetachedFieldIndex, ForestRootId } from "../../core";
 import { IdAllocator, idAllocatorFromMaxId } from "../../util";
 import { typeboxValidator } from "../../external-utilities";
-import { createIdCompressor } from "@fluidframework/id-compressor";
 
 const wellFormedIdCompressor = createIdCompressor();
 const mintedTag = wellFormedIdCompressor.generateCompressedId();

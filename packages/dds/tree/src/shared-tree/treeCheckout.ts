@@ -23,7 +23,6 @@ import {
 	TreeStoredSchema,
 	TreeStoredSchemaSubscription,
 	JsonableTree,
-	RevisionTag,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {

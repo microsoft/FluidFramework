@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecOptions, IJsonCodec } from "../../codec";
 import { fail, forEachInNestedMap, setInNestedMap } from "../../util";
+import { RevisionTagCodec } from "../../shared-tree-core";
 import { EncodedRevisionTag } from "../rebase";
 import { ForestRootId } from "./detachedFieldIndex";
 import { Format, Versioned, version } from "./detachedFieldIndexFormat";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
-import { RevisionTagCodec } from "../../shared-tree-core";
 
 class MajorCodec implements IJsonCodec<Major> {
 	private readonly revisionTagCodec: RevisionTagCodec;
@@ -40,6 +40,8 @@ class MajorCodec implements IJsonCodec<Major> {
 		return id;
 	}
 
+	// JSON round-trips undefined values to 'null' within arrays.
+	// eslint-disable-nest-line @rushstack/no-new-null
 	public decode(major: EncodedRevisionTag | null) {
 		if (major === null) {
 			return undefined;

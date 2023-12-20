@@ -6,13 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeApi } from "../../class-tree/treeApi";
 import { TreeFactory } from "../../treeFactory";
 import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 import { rootFieldKey } from "../../core";
 import { TreeStatus } from "../../feature-libraries";
-import { createIdCompressor } from "@fluidframework/id-compressor";
 
 const schema = new SchemaFactory("com.example");
 
