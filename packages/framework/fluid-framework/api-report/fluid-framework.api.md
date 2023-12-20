@@ -279,9 +279,6 @@ export abstract class BrandedType<out ValueType, Name extends string> {
 // @internal
 export function buildTreeConfiguration<T extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<T>): InitializeAndSchematizeConfiguration<T>;
 
-// @internal
-export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
-
 // @beta
 export interface CheckoutEvents {
     afterBatch(): void;
