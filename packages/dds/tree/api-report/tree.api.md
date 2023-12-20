@@ -1731,7 +1731,7 @@ export interface TreeEvent {
 
 // @internal
 export class TreeFactory implements IChannelFactory {
-    constructor(options: TreeOptions);
+    constructor(options: SharedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;
     // (undocumented)
@@ -1861,11 +1861,6 @@ export abstract class TreeNodeStoredSchema {
     abstract encode(): ErasedTreeNodeSchemaDataFormat;
     // (undocumented)
     protected _typeCheck: MakeNominal;
-}
-
-// @internal
-export interface TreeOptions extends SharedTreeOptions {
-    readonly subtype?: string;
 }
 
 // @internal
