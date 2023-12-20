@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"main": "dist/index.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -93,6 +94,5 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	},
-	"main": "dist/index.js"
+	}
 }
