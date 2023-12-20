@@ -162,6 +162,8 @@ export class MockContainerRuntimeFactory {
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
     sequenceNumber: number;
+    // (undocumented)
+    synchronizeIdCompressors(): void;
 }
 
 // @alpha

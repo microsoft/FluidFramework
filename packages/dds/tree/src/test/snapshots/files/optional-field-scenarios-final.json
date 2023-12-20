@@ -90,8 +90,8 @@
                           }
                         }
                       ],
-                      "revision": 516,
-                      "sequenceNumber": 3,
+                      "revision": 515,
+                      "sequenceNumber": 6,
                       "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                     },
                     {
@@ -167,8 +167,8 @@
                           }
                         }
                       ],
-                      "revision": 517,
-                      "sequenceNumber": 4,
+                      "revision": 516,
+                      "sequenceNumber": 8,
                       "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                     },
                     {
@@ -201,7 +201,7 @@
                                     [
                                       {
                                         "localId": 2,
-                                        "revision": 517
+                                        "revision": 516
                                       },
                                       {
                                         "fieldChanges": [
@@ -324,7 +324,7 @@
                         }
                       ],
                       "revision": 7,
-                      "sequenceNumber": 5,
+                      "sequenceNumber": 10,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
@@ -409,7 +409,7 @@
                         }
                       ],
                       "revision": 8,
-                      "sequenceNumber": 6,
+                      "sequenceNumber": 12,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],
@@ -417,7 +417,7 @@
                     [
                       "a0693eac-892a-4396-86f7-ad20dc1cade2",
                       {
-                        "base": 517,
+                        "base": 516,
                         "commits": []
                       }
                     ]
@@ -612,7 +612,7 @@
                       6
                     ],
                     [
-                      517,
+                      516,
                       2,
                       10
                     ]

@@ -5,7 +5,12 @@
 import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { createIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import {
+	createIdCompressor,
+	deserializeIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SessionId,
+} from "@fluidframework/id-compressor";
 import {
 	moveToDetachedField,
 	Anchor,
@@ -103,12 +108,23 @@ export const failureDirectory = pathJoin(
 	"../../../../src/test/shared-tree/fuzz/failures",
 );
 
+export const createOrDeserializeCompressor = (
+	sessionId: SessionId,
+	summary?: SerializedIdCompressorWithNoSession,
+) => {
+	return summary === undefined
+		? createIdCompressor(sessionId)
+		: deserializeIdCompressor(summary, sessionId);
+};
+
 export const deterministicIdCompressorFactory: (
 	seed: number,
-) => () => ReturnType<typeof createIdCompressor> = (seed) => {
+) => (summary?: SerializedIdCompressorWithNoSession) => ReturnType<typeof createIdCompressor> = (
+	seed,
+) => {
 	const random = makeRandom(seed);
-	return () => {
+	return (summary?: SerializedIdCompressorWithNoSession) => {
 		const sessionId = random.uuid4() as SessionId;
-		return createIdCompressor(sessionId);
+		return createOrDeserializeCompressor(sessionId, summary);
 	};
 };

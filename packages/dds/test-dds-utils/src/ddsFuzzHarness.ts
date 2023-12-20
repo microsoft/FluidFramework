@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
+import {
+	IIdCompressor,
+	IIdCompressorCore,
+	SerializedIdCompressorWithNoSession,
+} from "@fluidframework/id-compressor";
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,
@@ -448,7 +452,9 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * An optional IdCompressor that can will be passed to the constructed MockDataStoreRuntime instance.
 	 */
-	idCompressorFactory?: () => IIdCompressor & IIdCompressorCore;
+	idCompressorFactory?: (
+		summary?: SerializedIdCompressorWithNoSession,
+	) => IIdCompressor & IIdCompressorCore;
 }
 
 /**
@@ -981,11 +987,20 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
+	containerRuntimeFactory.synchronizeIdCompressors();
+
 	const { summary } = summarizerClient.channel.getAttachSummary();
+	let idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
+	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
+		idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor.serialize(false);
+	}
+
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
 		idCompressor:
-			options.idCompressorFactory === undefined ? undefined : options.idCompressorFactory(),
+			options.idCompressorFactory === undefined
+				? undefined
+				: options.idCompressorFactory(idCompressorSummary),
 	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,

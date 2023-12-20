@@ -16,6 +16,7 @@ import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test
 import { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { SaveInfo } from '@fluid-private/stochastic-test-utils';
+import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
@@ -95,7 +96,7 @@ export interface DDSFuzzSuiteOptions {
         enabled: boolean;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
-    idCompressorFactory?: () => IIdCompressor & IIdCompressorCore;
+    idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
     // (undocumented)

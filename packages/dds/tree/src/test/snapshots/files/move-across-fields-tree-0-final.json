@@ -73,7 +73,7 @@
                         }
                       ],
                       "revision": 0,
-                      "sequenceNumber": 1,
+                      "sequenceNumber": 2,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
@@ -168,7 +168,7 @@
                         }
                       ],
                       "revision": 2,
-                      "sequenceNumber": 2,
+                      "sequenceNumber": 4,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
@@ -232,7 +232,7 @@
                         }
                       ],
                       "revision": 4,
-                      "sequenceNumber": 3,
+                      "sequenceNumber": 6,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],

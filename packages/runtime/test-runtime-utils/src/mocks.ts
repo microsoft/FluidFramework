@@ -107,6 +107,13 @@ export interface IMockContainerRuntimePendingMessage {
 	localOpMetadata: unknown;
 }
 
+interface IMockContainerRuntimeIdAllocationMessage {
+	contents: {
+		type: "idAllocation";
+		contents: IdCreationRange;
+	};
+}
+
 /**
  * Options for the container runtime mock.
  * @alpha
@@ -294,6 +301,19 @@ export class MockContainerRuntime {
 	}
 
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+		const idRange = this.getGeneratedIdRange();
+		if (idRange !== undefined) {
+			const idAllocationMessage = { type: "idAllocation", contents: idRange };
+			this.factory.pushMessage({
+				clientId: this.clientId,
+				clientSequenceNumber,
+				contents: idAllocationMessage,
+				referenceSequenceNumber: this.referenceSequenceNumber,
+				type: MessageType.Operation,
+			});
+			this.addPendingMessage(idAllocationMessage, undefined, clientSequenceNumber);
+		}
+
 		this.factory.pushMessage({
 			clientId: this.clientId,
 			clientSequenceNumber,
@@ -309,7 +329,14 @@ export class MockContainerRuntime {
 		this.deltaManager.lastMessage = message;
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
-		this.dataStoreRuntime.process(message, local, localOpMetadata);
+
+		if (
+			(message as IMockContainerRuntimeIdAllocationMessage).contents.type === "idAllocation"
+		) {
+			this.finalizeIdRange((message as any).contents.contents as IdCreationRange);
+		} else {
+			this.dataStoreRuntime.process(message, local, localOpMetadata);
+		}
 	}
 
 	protected addPendingMessage(
@@ -418,13 +445,19 @@ export class MockContainerRuntimeFactory {
 			this.runtimeOptions,
 		);
 
-		// Finalize all IdCreationRanges that the other runtimes have seen
-		for (const idRange of this.processedIdRanges) {
-			containerRuntime.finalizeIdRange(idRange);
-		}
-
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
+	}
+
+	public synchronizeIdCompressors() {
+		for (const runtime of this.runtimes) {
+			const range = runtime.getGeneratedIdRange();
+			if (range !== undefined) {
+				for (const nestedRuntime of this.runtimes) {
+					nestedRuntime.finalizeIdRange(range);
+				}
+			}
+		}
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
@@ -436,19 +469,6 @@ export class MockContainerRuntimeFactory {
 			this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
 		}
 		this.messages.push(msg as ISequencedDocumentMessage);
-	}
-
-	private processGeneratedIds() {
-		for (const runtime of this.runtimes) {
-			const idRange = runtime.getGeneratedIdRange();
-			if (idRange !== undefined) {
-				this.processedIdRanges.push(idRange);
-
-				for (const nestedRuntime of this.runtimes) {
-					nestedRuntime.finalizeIdRange(idRange);
-				}
-			}
-		}
 	}
 
 	private lastProcessedMessage?: ISequencedDocumentMessage;
@@ -498,8 +518,6 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process more messages than exist");
 		}
 
-		this.processGeneratedIds();
-
 		this.lastProcessedMessage = undefined;
 
 		for (let i = 0; i < count; i++) {
@@ -511,7 +529,6 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
-		this.processGeneratedIds();
 		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
