@@ -11,8 +11,20 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -21,8 +33,8 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
@@ -37,7 +49,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -55,6 +67,7 @@
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {

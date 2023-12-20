@@ -2006,7 +2006,6 @@ importers:
   examples/data-objects/inventory-app:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/tree-react-api': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2040,7 +2039,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/tree-react-api': link:../../../experimental/framework/tree-react-api
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/tree': link:../../../packages/dds/tree
@@ -5834,59 +5832,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  experimental/framework/tree-react-api:
-    specifiers:
-      '@fluid-tools/benchmark': ^0.48.0
-      '@fluid-tools/build-cli': 0.29.0-222379
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': 0.29.0-222379
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.1.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/tree': workspace:~
-      '@microsoft/api-extractor': ^7.38.3
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      '@types/react': ^17.0.44
-      '@types/sinon': ^7.0.13
-      c8: ^8.0.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      eslint-config-prettier: ~9.0.0
-      mocha: ^10.2.0
-      prettier: ~3.0.3
-      react: ^17.0.1
-      rimraf: ^4.4.0
-      sinon: ^7.4.2
-      typescript: ~5.1.6
-    dependencies:
-      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/tree': link:../../../packages/dds/tree
-      react: 17.0.2
-    devDependencies:
-      '@fluid-tools/benchmark': 0.48.0
-      '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0-222379_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      '@types/react': 17.0.71
-      '@types/sinon': 7.5.2
-      c8: 8.0.1
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      eslint-config-prettier: 9.0.0_eslint@8.50.0
-      mocha: 10.2.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      sinon: 7.5.0
-      typescript: 5.1.6
-
   packages/common/client-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -6005,6 +5950,7 @@ importers:
       events: ^3.1.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6025,6 +5971,7 @@ importers:
       eslint-plugin-deprecation: 2.0.0_loebgezstcsvd2poh2d55fifke
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-interfaces:
@@ -6041,6 +5988,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6055,6 +6003,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-utils:
@@ -6082,6 +6031,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6107,6 +6057,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/driver-definitions:
@@ -6124,6 +6075,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6140,6 +6092,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/cell:

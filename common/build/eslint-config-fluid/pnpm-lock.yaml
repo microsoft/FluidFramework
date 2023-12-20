@@ -6,6 +6,7 @@ importers:
     specifiers:
       '@fluid-tools/markdown-magic': file:../../../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.3
+      '@microsoft/tsdoc': ^0.14.2
       '@rushstack/eslint-patch': ~1.4.0
       '@rushstack/eslint-plugin': ~0.13.0
       '@rushstack/eslint-plugin-security': ~0.7.0
@@ -33,6 +34,7 @@ importers:
       ts-morph: ^20.0.0
       typescript: ~4.5.5
     dependencies:
+      '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.0_nqak32av3q5g4zvdvug5ze76xm
       '@rushstack/eslint-plugin-security': 0.7.0_nqak32av3q5g4zvdvug5ze76xm
