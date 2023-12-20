@@ -946,6 +946,11 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
+		if (!toNodePath.startsWith("/")) {
+			//* Log an error - this would be from pre-2021, but GC wouldn't be enabled.
+			return;
+		}
+
 		const outboundRoutes = this.newReferencesSinceLastRun.get(fromNodePath) ?? [];
 		outboundRoutes.push(toNodePath);
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);

@@ -2217,7 +2217,7 @@ export class ContainerRuntime
 	private deserializeContentsAndDetectOutboundReferences(
 		mutableMessage: ISequencedDocumentMessage,
 	): void {
-		//* copied from shared-object-base...
+		//* move from shared-object-base to here
 		const isSerializedHandle = (
 			value: any,
 		): value is {
@@ -2240,15 +2240,13 @@ export class ContainerRuntime
 		const referenceFinder = (key: string, value: any): any => {
 			// If 'value' is a serialized IFluidHandle return the deserialized result.
 			if (isSerializedHandle(value)) {
-				//* Does this check apply?  Original comment in FluidSerializer.decodeValue says:
-				// Old documents may have handles with relative path in their summaries...
-				//* And then does this if not: value.url = generateHandleContextPath(value.url, this.context);
-				if (value.url.startsWith("/")) {
-					outboundPaths.push(value.url);
-				}
+				outboundPaths.push(value.url);
 			}
 
+			//* Or take an even harder dependency on DataStore op format, by taking contents.contents.content.address and content.address
 			// DataStore and Channel (DDS) addresses are nested as we go deeper into the object
+			//* Add note: This is taking a hard dependnecy on our DataStore implementation (for the DDS path part)
+			//* Add test to make sure we notice if this assumption is broken
 			if (key === "address") {
 				pathParts.push(value);
 			}
@@ -2266,7 +2264,6 @@ export class ContainerRuntime
 			pathParts.splice(2);
 			const fromPath = pathParts.join("/");
 			outboundPaths.forEach((toPath) =>
-				//* Update GC to understand the new semantics of adding stuff from here instead of DDSes (and delete the other code)
 				this.garbageCollector.addedOutboundReference(fromPath, toPath),
 			);
 		}
