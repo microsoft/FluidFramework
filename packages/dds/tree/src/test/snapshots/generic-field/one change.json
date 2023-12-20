@@ -1,10 +1,14 @@
 [
-	{
-		"index": 42,
-		"nodeChange": {
-			"inputContext": [],
-			"intentions": [1],
-			"outputContext": [1]
-		}
-	}
+  {
+    "index": 42,
+    "nodeChange": {
+      "inputContext": [],
+      "intentions": [
+        1
+      ],
+      "outputContext": [
+        1
+      ]
+    }
+  }
 ]

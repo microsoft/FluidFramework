@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import { GenericChangeset } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { makeGenericChangeCodec } from "../../feature-libraries/modular-schema/genericFieldKindCodecs";
@@ -31,7 +30,7 @@ const testChangesets: { name: string; change: GenericChangeset<TestChange> }[] =
 ];
 
 describe("GenericField - Snapshots", () => {
-	useSnapshotDirectory(path.join("field-kind", "generic"));
+	useSnapshotDirectory("generic-field");
 	const family = makeGenericChangeCodec(TestChange.codec);
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {

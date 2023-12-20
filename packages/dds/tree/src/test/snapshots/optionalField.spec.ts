@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import { ChangesetLocalId } from "../../core";
 import {
 	OptionalChangeset,
@@ -68,7 +67,7 @@ function generateTestChangesets(): { name: string; change: OptionalChangeset<Tes
 }
 
 describe("OptionalField - Snapshots", () => {
-	useSnapshotDirectory(path.join("field-kind", "optional"));
+	useSnapshotDirectory("optional-field");
 	const family = makeOptionalFieldCodecFamily(TestChange.codec, new RevisionTagCodec());
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
