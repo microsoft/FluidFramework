@@ -9845,6 +9845,7 @@ importers:
 
   packages/test/functional-tests:
     specifiers:
+      '@fluid-private/test-dds-utils': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
       '@fluid-tools/build-cli': 0.29.0-225750
       '@fluidframework/build-common': ^2.0.3
@@ -9856,8 +9857,10 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-223007
+      '@fluidframework/register-collection': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -9879,6 +9882,7 @@ importers:
     dependencies:
       events: 3.3.0
     devDependencies:
+      '@fluid-private/test-dds-utils': link:../../dds/test-dds-utils
       '@fluid-private/test-loader-utils': link:../../loader/test-loader-utils
       '@fluid-tools/build-cli': 0.29.0-225750_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluidframework/build-common': 2.0.3
@@ -9890,8 +9894,10 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@fluidframework/protocol-definitions': 3.1.0-223007
+      '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
