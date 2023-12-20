@@ -15,7 +15,6 @@ import { createAzureClient } from "./AzureClientFactory";
 import { mapWait } from "./utils";
 
 const isEphemeralContainer = process.env.IS_EPHEMERAL_CONTAINER === "true";
-console.log(`is ephemeral? ${isEphemeralContainer}`);
 
 describe("Container copy scenarios", () => {
 	const connectTimeoutMs = 10_000;

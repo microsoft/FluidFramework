@@ -20,7 +20,6 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 });
 
 const isEphemeralContainer = process.env.IS_EPHEMERAL_CONTAINER === "true";
-console.log(`is ephemeral? ${isEphemeralContainer}`);
 
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
