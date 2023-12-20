@@ -8,8 +8,8 @@ import { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-te
 import { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IIdCompressor } from '@fluidframework/runtime-definitions';
-import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils';

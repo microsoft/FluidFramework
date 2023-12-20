@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/runtime-definitions";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,

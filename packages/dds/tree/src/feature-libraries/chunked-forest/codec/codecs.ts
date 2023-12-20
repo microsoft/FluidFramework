@@ -28,12 +28,14 @@ export interface SchemaAndPolicy {
 
 export type FieldBatchCodec = IJsonCodec<FieldBatch, EncodedFieldBatch, JsonCompatibleReadOnly>;
 
-// TODO: Add note here that schema mutates over time and justify why it's ok.
 export function makeFieldBatchCodec(options: ICodecOptions, context: Context): FieldBatchCodec {
 	// Note: it's important that the decode function is schema-agnostic for this strategy/layering to work, since
 	// the schema that an op was encoded in doesn't necessarily match the current schema for the document (e.g. if
 	// decode is being run on a client that just submitted a schema change, but the op is from another client who has
 	// yet to receive that change)
+	// Once the layering around schema/edit-manager/SharedTreeCore is sorted out, it would be preferable
+	// for this codec to receive the current schema as part of its context rather than retain a reference
+	// to the current schema (which can mutate between calls).
 
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch): EncodedFieldBatch => {
