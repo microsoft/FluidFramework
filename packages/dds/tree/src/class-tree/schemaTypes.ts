@@ -344,13 +344,13 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
  * Instead construct a real node of the desired type using its constructor.
  * @privateRemarks
  * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
- * @beta
+ * @public
  */
 export const type: unique symbol = Symbol("TreeNode Type");
 
 /**
  * Adds a {@link "type"} field.
- * @beta
+ * @public
  */
 export interface WithType<TName extends string = string> {
 	/**
