@@ -23,19 +23,13 @@ import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 
 // @internal
-export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => {
+export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: TValue;
-    readonly "__#124291@#brand": unknown;
-}) & { readonly [Property in keyof TEnum]: {
-        new (data?: EmptyObject | undefined): {
-            readonly value: TEnum[Property];
-            readonly "__#124291@#brand": unknown;
-        };
-        readonly identifier: `${TScope}.${TEnum[Property]}`;
-        readonly kind: NodeKind.Object;
-        readonly info: unknown;
-        readonly implicitlyConstructable: true;
-    }; };
+}) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<`${TScope}.${TEnum[Property]}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+        readonly value: TEnum[Property];
+    }, object & InsertableObjectFromSchemaRecord<EmptyObject>, true> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+        readonly value: TEnum[Property];
+    }); };
 
 // @internal
 export interface Adapters {
@@ -428,19 +422,13 @@ export type EmptyObject = {};
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
 
 // @internal
-export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => {
+export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: TValue;
-    readonly "__#124291@#brand": unknown;
-}) & Record<Members, {
-    new (data?: EmptyObject | undefined): {
-        readonly value: Members;
-        readonly "__#124291@#brand": unknown;
-    };
-    readonly identifier: `${TScope}.${Members}`;
-    readonly kind: NodeKind.Object;
-    readonly info: unknown;
-    readonly implicitlyConstructable: true;
-}>;
+}) & Record<Members, TreeNodeSchemaClass<`${TScope}.${Members}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: Members;
+}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: Members;
+})>;
 
 // @internal
 export type Erased<Name extends string> = ErasedType<Name>;
@@ -1638,16 +1626,11 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @internal
-export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): {
-    new (data?: EmptyObject): {
-        readonly value: TName;
-        readonly "__#124291@#brand": unknown;
-    };
-    readonly identifier: `${TScope}.${TName}`;
-    readonly kind: NodeKind.Object;
-    readonly info: unknown;
-    readonly implicitlyConstructable: true;
-};
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<`${TScope}.${TName}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: TName;
+}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: TName;
+});
 
 // @internal
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
