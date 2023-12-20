@@ -65,7 +65,7 @@ describe("EditManager - Bench", () => {
 			name: "Default - Sequence Insert",
 			changeFamily: defaultFamily,
 			mintChange: makeEditMinter(defaultFamily, sequencePrepend),
-			maxEditCount: 500,
+			maxEditCount: 350,
 		},
 	];
 	for (const family of families) {

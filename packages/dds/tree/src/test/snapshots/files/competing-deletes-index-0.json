@@ -60,12 +60,6 @@
                                     },
                                     "cellId": {
                                       "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
                                       "revision": 3
                                     }
                                   }
@@ -97,12 +91,6 @@
                                     },
                                     "cellId": {
                                       "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
                                       "revision": 515
                                     }
                                   }

@@ -82,8 +82,6 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			// TODO:AB#6298: Support transactions in optional field.
-			skip: [4, 12, 46, 48],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -113,8 +111,6 @@ describe("Fuzz - Top-Level", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			// TODO:AB#6298: Support transactions in optional field.
-			skip: [41],
 		};
 
 		createDDSFuzzSuite(model, options);

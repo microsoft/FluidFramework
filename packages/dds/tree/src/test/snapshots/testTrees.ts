@@ -32,7 +32,6 @@ import {
 	insert,
 	jsonSequenceRootSchema,
 	remove,
-	wrongSchema,
 } from "../utils";
 import {
 	AllowedUpdateType,
@@ -164,19 +163,27 @@ export function generateTestTrees() {
 					type: brand("Node"),
 					fields: {
 						foo: [
-							{ type: brand("Node"), value: "a" },
-							{ type: brand("Node"), value: "b" },
-							{ type: brand("Node"), value: "c" },
+							{ type: leaf.string.name, value: "a" },
+							{ type: leaf.string.name, value: "b" },
+							{ type: leaf.string.name, value: "c" },
 						],
 						bar: [
-							{ type: brand("Node"), value: "d" },
-							{ type: brand("Node"), value: "e" },
-							{ type: brand("Node"), value: "f" },
+							{ type: leaf.string.name, value: "d" },
+							{ type: leaf.string.name, value: "e" },
+							{ type: leaf.string.name, value: "f" },
 						],
 					},
 				};
 
-				tree1.updateSchema(intoStoredSchema(wrongSchema));
+				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
+				const nodeSchema = schemaBuilder.object("Node", {
+					foo: SchemaBuilder.sequence(leaf.string),
+					bar: SchemaBuilder.sequence(leaf.string),
+				});
+				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
+				const schema = schemaBuilder.intoSchema(rootFieldSchema);
+
+				tree1.updateSchema(intoStoredSchema(schema));
 
 				// Apply an edit to the tree which inserts a node with a value
 				runSynchronous(tree1, () => {
@@ -187,7 +194,6 @@ export function generateTestTrees() {
 					});
 					field.insert(0, writeCursors);
 				});
-
 				runSynchronous(tree1, () => {
 					const rootPath = {
 						parent: undefined,
@@ -202,7 +208,6 @@ export function generateTestTrees() {
 						1,
 					);
 				});
-
 				provider.processMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-final");

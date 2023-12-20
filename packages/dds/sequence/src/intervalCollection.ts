@@ -7,7 +7,7 @@
 /* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	addProperties,
@@ -35,6 +35,7 @@ import {
 	IValueOpEmitter,
 	IValueOperation,
 	IValueType,
+	IValueTypeOperationValue,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
 import {
@@ -53,6 +54,7 @@ import {
 	startReferenceSlidingPreference,
 	sequenceIntervalHelpers,
 	createInterval,
+	IntervalDeltaOpType,
 } from "./intervals";
 import {
 	EndpointIndex,
@@ -578,6 +580,13 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
+	const applyStashedOp: IValueOperation<IntervalCollection<T>>["applyStashedOp"] = (
+		collection,
+		op,
+	) => {
+		return collection.applyStashedOp(op);
+	};
+
 	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
 		[
 			IntervalOpType.ADD,
@@ -592,6 +601,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackAdd(params, local, op, localOpMetadata);
 				},
 				rebase,
+				applyStashedOp,
 			},
 		],
 		[
@@ -605,6 +615,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					// Deletion of intervals is based on id, so requires no rebasing.
 					return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
 				},
+				applyStashedOp,
 			},
 		],
 		[
@@ -620,6 +631,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackChange(params, local, op, localOpMetadata);
 				},
 				rebase,
+				applyStashedOp,
 			},
 		],
 	]);
@@ -1697,6 +1709,53 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 
 		return rebased;
+	}
+
+	public applyStashedOp(op: IValueTypeOperationValue): IMapMessageLocalMetadata {
+		let interval: TInterval | undefined;
+		let props: PropertySet | undefined;
+		let intervalId: string;
+		switch (op.opName) {
+			case IntervalDeltaOpType.ADD: {
+				assert(op.value.start !== undefined, "start is undefined");
+				assert(op.value.end !== undefined, "end is undefined");
+				interval = this.add({
+					start: op.value.start,
+					end: op.value.end,
+					props: op.value.properties,
+				});
+				const metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				if (interval !== undefined) {
+					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				}
+				return metadata;
+			}
+			case IntervalDeltaOpType.DELETE:
+				this.removeIntervalById(op.value.properties?.intervalId);
+				return {
+					localSeq: this.getNextLocalSeq(),
+				};
+			case IntervalDeltaOpType.CHANGE: {
+				assert(op.value.properties !== undefined, "properties is undefined");
+				({ intervalId, ...props } = op.value.properties);
+				interval = this.change(intervalId, {
+					start: op.value.start,
+					end: op.value.end,
+					props,
+				});
+				const metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				if (interval !== undefined) {
+					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				}
+				return metadata;
+			}
+			default:
+				unreachableCase(op.opName, `Unknown interval op type: ${op.opName}`);
+		}
 	}
 
 	private getSlideToSegment(

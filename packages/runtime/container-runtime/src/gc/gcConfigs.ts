@@ -209,12 +209,14 @@ export function generateGCConfigs(
 }
 
 /**
- * Tombstone timeout is the time after which unreferenced content can be swept.
+ * Tombstone timeout is the time after which unreferenced content is guaranteed not to be revived (re-referenced).
  * Tombstone timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
  *
  * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days.
  * The buffer is added to account for any clock skew or other edge cases.
  * We use server timestamps throughout so the skew should be minimal but make it 1 day to be safe.
+ *
+ * If there is no Session Expiry timeout, GC can never guarantee an object won't be revived, so return undefined.
  */
 function computeTombstoneTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
 	const bufferMs = oneDayMs;

@@ -366,6 +366,41 @@ describe("Branches", () => {
 		branch.isTransacting();
 	});
 
+	describe("do not include rebased-over changes in a transaction", () => {
+		it("when the transaction started on a commit known only to the local branch", () => {
+			const branch = create();
+			const fork = branch.fork();
+
+			change(branch);
+
+			change(fork);
+			fork.startTransaction();
+			change(fork);
+			change(fork);
+			fork.rebaseOnto(branch);
+			const [commits] = fork.commitTransaction() ?? [[]];
+			assert.equal(commits.length, 2);
+		});
+
+		it("when the transaction started on the commit the branch forked from", () => {
+			// i.e., the branch was created via .fork() and immediately started a transaction before any
+			// changes were applied.
+			const branch = create();
+			const fork = branch.fork();
+
+			change(branch);
+
+			fork.startTransaction();
+			change(fork);
+			change(fork);
+			fork.rebaseOnto(branch);
+			change(branch);
+			fork.rebaseOnto(branch);
+			const [commits] = fork.commitTransaction() ?? [[]];
+			assert.equal(commits.length, 2);
+		});
+	});
+
 	it("cannot be mutated after disposal", () => {
 		const branch = create();
 		const fork = branch.fork();

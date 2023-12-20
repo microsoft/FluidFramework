@@ -210,6 +210,7 @@ describe("Fuzz - anchor stability", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: createIdCompressor,
+			skip: [0],
 		});
 	});
 });

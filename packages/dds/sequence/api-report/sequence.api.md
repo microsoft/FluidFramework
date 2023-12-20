@@ -260,11 +260,11 @@ export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePos
 
 // @internal
 export const IntervalOpType: {
+    readonly PROPERTY_CHANGED: "propertyChanged";
+    readonly POSITION_REMOVE: "positionRemove";
     readonly ADD: "add";
     readonly DELETE: "delete";
     readonly CHANGE: "change";
-    readonly PROPERTY_CHANGED: "propertyChanged";
-    readonly POSITION_REMOVE: "positionRemove";
 };
 
 // @internal (undocumented)

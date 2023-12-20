@@ -200,8 +200,8 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Tombstone is a temporary feature that prevents a data store from sending / receiving ops, signals and from
-	 * loading.
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
 	 */
 	private _tombstoned = false;
 	public get tombstoned() {

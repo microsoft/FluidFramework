@@ -42,8 +42,8 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
- * Events for {@link ITreeCheckout}.
- * @beta
+ * Events for {@link TreeView}.
+ * @public
  */
 export interface CheckoutEvents {
 	/**

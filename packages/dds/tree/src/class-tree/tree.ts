@@ -19,7 +19,7 @@ import {
  * Channel for a Fluid Tree DDS.
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
- * @beta
+ * @public
  */
 export interface ITree extends IChannel {
 	/**
@@ -63,7 +63,7 @@ export interface ITree extends IChannel {
 
 /**
  * Configuration for how to {@link ITree.schematize|schematize} a tree.
- * @beta
+ * @public
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
@@ -85,7 +85,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * This is a wrapper around ITreeView that adjusted it for the public package API.
  * TODO:
  * Establish a naming conversion between these internal and wrapper types.
- * @beta
+ * @public
  */
 export interface TreeView<in out TRoot> extends IDisposable {
 	/**

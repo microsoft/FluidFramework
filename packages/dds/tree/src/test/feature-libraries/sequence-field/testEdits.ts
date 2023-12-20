@@ -326,6 +326,14 @@ function createSkipMark(count: number): SF.CellMark<SF.NoopMark, never> {
 	return { count };
 }
 
+function createTomb(
+	revision: RevisionTag | undefined,
+	localId: ChangesetLocalId = brand(0),
+	count: number = 1,
+): SF.CellMark<SF.NoopMark, never> {
+	return { count, cellId: { revision, localId } };
+}
+
 function createAttachAndDetachMark<TChange>(
 	attach: SF.CellMark<SF.Attach, TChange>,
 	detach: SF.CellMark<SF.Detach, TChange>,
@@ -365,6 +373,7 @@ export const MarkMaker = {
 	insert: createInsertMark,
 	revive: createReviveMark,
 	skip: createSkipMark,
+	tomb: createTomb,
 	pin: createPinMark,
 	delete: createDeleteMark,
 	modify: createModifyMark,

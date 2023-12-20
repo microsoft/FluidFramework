@@ -140,6 +140,29 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private readonly revertibles = new Set<Revertible>();
 	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
+	/**
+	 * After pushing a starting revision to the transaction stack, this branch might be rebased
+	 * over commits which are children of that starting revision. When the transaction is committed,
+	 * those rebased-over commits should not be included in the transaction's squash commit, even though
+	 * they exist between the starting revision and the final commit within the transaction.
+	 *
+	 * Whenever `rebaseOnto` is called during a transaction, this map is augmented with an entry from the
+	 * original merge-base to the new merge-base.
+	 *
+	 * This state need only be retained for the lifetime of the transaction.
+	 *
+	 * TODO: This strategy might need to be revisited when adding better support for async transactions.
+	 * Since:
+	 *
+	 * 1. Transactionality is guaranteed primarily by squashing at commit time
+	 * 2. Branches may be rebased with an ongoing transaction
+	 *
+	 * a rebase operation might invalidate only a portion of a transaction's commits, thus defeating the
+	 * purpose of transactionality.
+	 *
+	 * AB#6483 and children items track this work.
+	 */
+	private readonly initialTransactionRevToRebasedRev = new Map<RevisionTag, RevisionTag>();
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -332,7 +355,17 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	private popTransaction(): [GraphCommit<TChange>, GraphCommit<TChange>[]] {
-		const { startRevision } = this.transactions.pop();
+		const { startRevision: startRevisionOriginal } = this.transactions.pop();
+		let startRevision = startRevisionOriginal;
+		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision)!;
+		}
+
+		if (!this.isTransacting()) {
+			this.initialTransactionRevToRebasedRev.clear();
+		}
+
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
@@ -477,6 +510,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		const newCommits = targetCommits.concat(sourceCommits);
+		if (this.isTransacting()) {
+			const src = targetCommits[0].parent?.revision;
+			const dst = targetCommits.at(-1)?.revision;
+			if (src !== undefined && dst !== undefined) {
+				this.initialTransactionRevToRebasedRev.set(src, dst);
+			}
+		}
 		const changeEvent = {
 			type: "replace",
 			get change() {
