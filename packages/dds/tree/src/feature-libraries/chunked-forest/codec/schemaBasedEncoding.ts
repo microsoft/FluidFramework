@@ -9,6 +9,9 @@ import {
 	StoredSchemaCollection,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
+	ObjectNodeStoredSchema,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
 } from "../../../core";
 import { FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
@@ -82,22 +85,38 @@ export function treeShaper(
 ): NodeShape {
 	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing schema");
 
-	// TODO:Performance:
-	// consider moving some optional and sequence fields to extra fields if they are commonly empty
-	// to reduce encoded size.
+	if (schema instanceof ObjectNodeStoredSchema) {
+		// TODO:Performance:
+		// consider moving some optional and sequence fields to extra fields if they are commonly empty
+		// to reduce encoded size.
 
-	const objectNodeFields: KeyedFieldEncoder[] = [];
-	for (const [key, field] of schema.objectNodeFields ?? []) {
-		objectNodeFields.push({ key, shape: fieldHandler.shapeFromField(field) });
+		const objectNodeFields: KeyedFieldEncoder[] = [];
+		for (const [key, field] of schema.objectNodeFields ?? []) {
+			objectNodeFields.push({ key, shape: fieldHandler.shapeFromField(field) });
+		}
+
+		const shape = new NodeShape(schemaName, false, objectNodeFields, undefined);
+		return shape;
 	}
-
-	const shape = new NodeShape(
-		schemaName,
-		valueShapeFromSchema(schema.leafValue),
-		objectNodeFields,
-		schema.mapFields === undefined ? undefined : fieldHandler.shapeFromField(schema.mapFields),
-	);
-	return shape;
+	if (schema instanceof LeafNodeStoredSchema) {
+		const shape = new NodeShape(
+			schemaName,
+			valueShapeFromSchema(schema.leafValue),
+			[],
+			undefined,
+		);
+		return shape;
+	}
+	if (schema instanceof MapNodeStoredSchema) {
+		const shape = new NodeShape(
+			schemaName,
+			false,
+			[],
+			fieldHandler.shapeFromField(schema.mapFields),
+		);
+		return shape;
+	}
+	fail("unsupported node kind");
 }
 
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {

@@ -20,7 +20,7 @@ import {
 	estimateSocketSize,
 	sequenceNumbersMatch,
 } from "./batchManager";
-import { BatchMessage, IBatch } from "./definitions";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 import { OpCompressor } from "./opCompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -462,8 +462,11 @@ export class Outbox {
 	}
 
 	public checkpoint() {
+		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
+		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
+		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
-			mainBatch: this.mainBatch.checkpoint(),
+			mainBatch,
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};

@@ -15,7 +15,7 @@ import { Brand } from "../../util";
 import { TreeChunk } from "../chunked-forest";
 
 /**
- * @alpha
+ * @internal
  */
 export interface ModularChangeset extends HasFieldChanges {
 	/**
@@ -33,10 +33,12 @@ export interface ModularChangeset extends HasFieldChanges {
 	constraintViolationCount?: number;
 	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
+	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+	readonly destroys?: ChangeAtomIdMap<undefined>;
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface NodeExistsConstraint {
 	violated: boolean;
@@ -44,26 +46,26 @@ export interface NodeExistsConstraint {
 
 /**
  * Changeset for a subtree rooted at a specific node.
- * @alpha
+ * @internal
  */
 export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface HasFieldChanges {
 	fieldChanges?: FieldChangeMap;
 }
 
 /**
- * @alpha
+ * @internal
  */
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 /**
- * @alpha
+ * @internal
  */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
@@ -80,6 +82,6 @@ export interface FieldChange {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

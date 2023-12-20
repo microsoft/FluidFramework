@@ -66,12 +66,6 @@
                                     },
                                     "cellId": {
                                       "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
                                       "revision": "beefbeef-beef-4000-8000-000000000015"
                                     }
                                   }
@@ -106,12 +100,6 @@
                                     },
                                     "cellId": {
                                       "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
                                       "revision": "beefbeef-beef-4000-8000-000000000016"
                                     }
                                   }
@@ -217,12 +205,11 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": "1.0.0",
-                  "nodeSchema": [
-                    {
-                      "name": "com.fluidframework.json.array",
-                      "objectNodeFields": [
-                        {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.json.array": {
+                      "object": {
+                        "": {
                           "kind": "Sequence",
                           "types": [
                             "com.fluidframework.json.object",
@@ -231,14 +218,12 @@
                             "com.fluidframework.leaf.boolean",
                             "com.fluidframework.leaf.string",
                             "com.fluidframework.leaf.null"
-                          ],
-                          "name": ""
+                          ]
                         }
-                      ]
+                      }
                     },
-                    {
-                      "name": "com.fluidframework.json.object",
-                      "mapFields": {
+                    "com.fluidframework.json.object": {
+                      "map": {
                         "kind": "Optional",
                         "types": [
                           "com.fluidframework.json.object",
@@ -248,36 +233,25 @@
                           "com.fluidframework.leaf.string",
                           "com.fluidframework.leaf.null"
                         ]
-                      },
-                      "objectNodeFields": []
+                      }
                     },
-                    {
-                      "name": "com.fluidframework.leaf.boolean",
-                      "objectNodeFields": [],
-                      "leafValue": 2
+                    "com.fluidframework.leaf.boolean": {
+                      "leaf": 2
                     },
-                    {
-                      "name": "com.fluidframework.leaf.handle",
-                      "objectNodeFields": [],
-                      "leafValue": 3
+                    "com.fluidframework.leaf.handle": {
+                      "leaf": 3
                     },
-                    {
-                      "name": "com.fluidframework.leaf.null",
-                      "objectNodeFields": [],
-                      "leafValue": 4
+                    "com.fluidframework.leaf.null": {
+                      "leaf": 4
                     },
-                    {
-                      "name": "com.fluidframework.leaf.number",
-                      "objectNodeFields": [],
-                      "leafValue": 0
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
                     },
-                    {
-                      "name": "com.fluidframework.leaf.string",
-                      "objectNodeFields": [],
-                      "leafValue": 1
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
                     }
-                  ],
-                  "rootFieldSchema": {
+                  },
+                  "root": {
                     "kind": "Sequence",
                     "types": [
                       "com.fluidframework.json.object",

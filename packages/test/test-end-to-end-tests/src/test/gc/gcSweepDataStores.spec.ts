@@ -36,13 +36,15 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  * These tests validate that SweepReady data stores are correctly swept. Swept datastores should be
  * removed from the summary, added to the GC deleted blob, and prevented from changing (sending / receiving ops,
  * loading, etc.).
+ *
+ * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
 describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
-	const sweepTimeoutMs = 200;
+	const tombstoneTimeoutMs = 200;
 	assert(
-		remainingTimeUntilSweepMs < sweepTimeoutMs,
-		"remainingTimeUntilSweepMs should be < sweepTimeoutMs",
+		remainingTimeUntilSweepMs < tombstoneTimeoutMs,
+		"remainingTimeUntilSweepMs should be < tombstoneTimeoutMs",
 	);
 	const settings = {};
 
@@ -70,7 +72,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	async function loadContainer(summaryVersion: string) {
@@ -169,9 +171,9 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	};
 
 	describe("Using swept data stores not allowed", () => {
-		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
+		// If this test starts failing due to runtime is closed errors try first adjusting `tombstoneTimeoutMs` above
 		itExpects(
-			"Send ops fails for swept datastores in summarizing container loaded before sweep timeout",
+			"Send ops fails for swept datastores in summarizing container loaded before tombstone timeout",
 			[
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
@@ -181,7 +183,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { summarizerDataObject, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 
 				// The datastore should be swept now
 				await summarize(summarizer);
@@ -203,7 +205,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		);
 
 		itExpects(
-			"Send signals fails for swept datastores in summarizing container loaded before sweep timeout",
+			"Send signals fails for swept datastores in summarizing container loaded before tombstone timeout",
 			[
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
@@ -213,7 +215,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { summarizerDataObject, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 
 				// The datastore should be swept now
 				await summarize(summarizer);
@@ -251,7 +253,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			],
 			async () => {
 				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// The datastore should be swept now
@@ -328,7 +330,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summarizingContainer,
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
-				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				} = await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
@@ -396,7 +398,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summarizingContainer,
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
-				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				} = await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const sendingDataObject =
@@ -491,7 +493,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 		it("updates deleted data store state in the summary", async () => {
 			const { unreferencedId, summarizer } =
-				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
@@ -510,7 +512,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
 
 			const { unreferencedId, summarizer } =
-				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
@@ -542,7 +544,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 		it("can run sweep without failing summaries due to local changes", async () => {
 			const { summarizer } =
-				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 			// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that

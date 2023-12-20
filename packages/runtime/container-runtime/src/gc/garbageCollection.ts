@@ -289,7 +289,7 @@ export class GarbageCollector implements IGarbageCollector {
 							nodeData.unreferencedTimestampMs,
 							this.configs.inactiveTimeoutMs,
 							currentReferenceTimestampMs,
-							this.configs.sweepTimeoutMs,
+							this.configs.tombstoneTimeoutMs,
 							this.configs.sweepGracePeriodMs,
 						),
 					);
@@ -490,8 +490,11 @@ export class GarbageCollector implements IGarbageCollector {
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({
 					...gcStats,
-					timestamp: currentReferenceTimestampMs,
-					sweep: this.configs.shouldRunSweep,
+					details: {
+						timestamp: currentReferenceTimestampMs,
+						sweep: this.configs.shouldRunSweep,
+						tombstone: this.configs.throwOnTombstoneLoad,
+					},
 				});
 
 				/** Post-GC steps */
@@ -608,7 +611,7 @@ export class GarbageCollector implements IGarbageCollector {
 						currentReferenceTimestampMs,
 						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
-						this.configs.sweepTimeoutMs,
+						this.configs.tombstoneTimeoutMs,
 						this.configs.sweepGracePeriodMs,
 					),
 				);
@@ -834,7 +837,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
-			sweepTimeoutMs: this.configs.sweepTimeoutMs,
+			tombstoneTimeoutMs: this.configs.tombstoneTimeoutMs,
 		};
 	}
 

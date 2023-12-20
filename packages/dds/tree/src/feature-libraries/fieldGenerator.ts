@@ -8,10 +8,10 @@ import { FlexTreeSchema } from "./typed-schema";
 
 /**
  * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
- * @alpha
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
+ * @internal
  */
 export interface TreeDataContext {
 	/**
@@ -34,16 +34,16 @@ export interface TreeDataContext {
 
 /**
  * Generates field content for a MapTree on demand.
- * @alpha
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
+ * @internal
  */
 export type FieldGenerator = () => MapTree[];
 /**
  * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
- * @alpha
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
+ * @internal
  */

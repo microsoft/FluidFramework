@@ -21,6 +21,7 @@ export {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCMetadata_Deprecated,
 	IGCResult,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,

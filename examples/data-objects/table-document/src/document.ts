@@ -7,7 +7,6 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	IntervalType,
 	SequenceDeltaEvent,
 	ReferencePosition,
 	PropertySet,
@@ -154,7 +153,7 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		const start = rowColToPosition(minRow, minCol);
 		const end = rowColToPosition(maxRow, maxCol);
 		const intervals = this.matrix.getIntervalCollection(label);
-		intervals.add(start, end, IntervalType.SlideOnRemove);
+		intervals.add({ start, end });
 	}
 
 	public insertRows(startRow: number, numRows: number) {
