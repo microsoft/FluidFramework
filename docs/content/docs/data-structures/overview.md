@@ -45,6 +45,7 @@ These DDSes are used for storing key-value data. They are optimistic and use a l
 the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
 -   [SharedMap][] -- a basic key-value data structure.
+-   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ### Key Value Scenarios
 
@@ -57,8 +58,8 @@ Key-value data structures are the most common choice for many scenarios.
 ### Common issues and best practices for key-value DDSes
 
 -   Storing a counter in a map will have unexpected behavior. Use the [SharedCounter][] instead.
--   Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
-  collaboratively modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
+-   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't
+  collaboratively modify parts of one entry. Try storing the data in an array node of a [SharedTree][].
 -   Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
   value rather than merging two updates. Try splitting the data across multiple keys.
 
@@ -78,7 +79,7 @@ Key-value data structures are the most common choice for many scenarios.
 
 FluidFramework 2.0 preview provides a DDS can be used for hierarchical data structures. It is optimistic and uses a last-writer-wins merge policy.
 
--   [SharedTree][] -- a tree of data with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+-   [SharedTree][] -- a tree of data with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ## Strings
 
@@ -92,7 +93,7 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 ## Specialized data structures
 
--   [SharedCounter][] -- a counter.
+-   [SharedCounter][] -- a counter. (Deprecated in Fluid Framework 2.0.)
     -   `SharedCounter` is useful to keep track of increments/decrements of integer values.
     While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues]({{< relref "counter.md/#why-a-specialized-dds" >}}).
     By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.

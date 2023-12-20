@@ -18,7 +18,7 @@ There are a number of shared objects built into the Fluid Framework. See [Distri
 
 DDSes automatically ensure that each client has access to the same state. They're called *distributed data structures*
 because they are similar to data structures used commonly when programming, like strings, maps/dictionaries, and
-sequences/lists. The APIs provided by DDSes are designed to be familiar to programmers who've used these types of data
+objects, and arrays. The APIs provided by DDSes are designed to be familiar to programmers who've used these types of data
 structures before. For example, the [SharedMap][] DDS is used to store key/value pairs, like a typical map or dictionary
 data structure, and provides `get` and `set` methods to store and retrieve data in the map.
 
@@ -192,28 +192,28 @@ etc. With this data model, users can change individual properties of the shape w
 You likely have more than one shape in your data model, so you could create a `SharedMap` object to store all the shapes, then
 store the `SharedMaps` representing each shape within that parent `SharedMap` object.
 
-In version 2.0, there's a similar, but better, way. Store individual shape properties in a map node of a `SharedTree`. Your code can store the length in one key of the map node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes.
+In version 2.0, there's a better, way. Store a shape as an object node of a `SharedTree`. Your code can store the length in one property of the object node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes. 
 
-When you have more than one shape in your data model, you could create a *list* node in the `SharedTree`, with child map nodes to store all the shapes.
+When you have more than one shape in your data model, you could create a *array* node in the `SharedTree`, with child object nodes to store all the shapes.
 
 ### Key-value data
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 *   [SharedMap][] -- a basic key-value distributed data structure.
-*   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+*   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ### Array-like data
 
-*   List nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+*   Array nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ### Object data
 
-*   Object nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+*   Object nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ### Specialized data structures
 
-*   [SharedCounter][] -- a distributed counter.
+*   [SharedCounter][] -- a distributed counter. (Deprecated in Fluid Framework 2.0.)
 *   [SharedString][] -- a specialized data structure for handling collaborative text.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->

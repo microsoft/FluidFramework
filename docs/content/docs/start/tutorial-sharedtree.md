@@ -6,7 +6,7 @@ aliases:
   - "/start/tutorial-sharedtree/"
 ---
 
-In this walkthrough, you'll learn about using the Fluid Framework by examining the SharedTree demo application at [Simple Fluid demo](https://github.com/microsoft/FluidDemos/simple. To get started, go through the [Quick Start]({{< relref "quick-start-sharedtree.md" >}}) guide.
+In this walkthrough, you'll learn about using the Fluid Framework by examining the SharedTree demo application at [Simple Fluid demo](https://github.com/microsoft/FluidDemos/simple). To get started, go through the [Quick Start]({{< relref "quick-start-sharedtree.md" >}}) guide.
 
 {{< callout note >}}
 
@@ -33,40 +33,40 @@ The code begins by creating a `SchemaBuilder` object.
 const sf = new SchemaFactory('d302b84c-75f6-4ecd-9663-524f467013e3');
 ```
 
-Then it creates the type for the lists by extending the type of the object that is returned by `sf.list()`. This code has two purposes:
+Then it creates the type for the arrays by extending the type of the object that is returned by `sf.array()`. This code has two purposes:
 
--   It converts the type returned by `sf.list()` to a real TypeScript type that can be use in contexts other than `SchemaFactory`, such as in the app's React-based view.
--   It enables us create simplified wrappers around the methods of the [list node APIs]({{< relref "data-structures/tree.md#list-node-write-apis" >}})..
+-   It converts the type returned by `sf.array()` to a real TypeScript type that can be use in contexts other than `SchemaFactory`, such as in the app's React-based view.
+-   It enables us create simplified wrappers around the methods of the [array node APIs]({{< relref "data-structures/tree.md#array-node-write-apis" >}})..
 
 ```typescript
-export class List extends sf.list('List', sf.string) {
-    // Moves the first item in the source list to the start of this list
-    public move(source: List) {
+export class Array extends sf.array('Array', sf.string) {
+    // Moves the first item in the source array to the start of this array
+    public move(source: Array) {
         if (source.length > 0) this.moveToStart(0, source);
     }
 
-    // Remove the first item in the list if the list is not empty
+    // Remove the first item in the array if the array is not empty
     public remove() {
         if (this.length > 0) this.removeAt(0);
     }
 
-    // Add an item to the beginning of the list
+    // Add an item to the beginning of the array
     public insert() {
         this.insertAtStart('');
     }
 }
 ```
 
-Next it creates the type for the top node of the tree. Note that this type is required to have exactly two lists of strings and no other properties.
+Next it creates the type for the top node of the tree. Note that this type is required to have exactly two arrays of strings and no other properties.
 
 ```typescript
 export class App extends sf.object('App', {
-    left: List,
-    right: List,
+    left: Array,
+    right: Array,
 }) {}
 ```
 
-Next a tree configuration object is created. This object will be used when the app's `SharedTree` object is created. Note that the second parameter of the constructor specifies that on application startup, the tree will have two empty lists.
+Next a tree configuration object is created. This object will be used when the app's `SharedTree` object is created. Note that the second parameter of the constructor specifies that on application startup, the tree will have two empty arrays.
 
 ```typescript
 export const treeConfiguration = new TreeConfiguration(
@@ -220,13 +220,13 @@ The `<ReactApp>` component and its descendant components are defined in the reac
 The file starts with the following import statements. Note that:
 
 -   `TreeView` is a helper class that represents the current state of the data in the tree.
--   `App` and `ListOfStrings` are the TypeScript data types that are [created in the schema.ts file](#creating-a-schema-for-the-shared-data). They are used to strongly type the React app component and its child lists.
+-   `App` and `ArrayOfStrings` are the TypeScript data types that are [created in the schema.ts file](#creating-a-schema-for-the-shared-data). They are used to strongly type the React app component and its child arrays.
 -   [IFluidContainer]({{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}) is the data type for the `<ReactApp>` component's `container` property.
 -   `Tree` is a utility class that provides a method for assigning handlers to change events in the `SharedTree`. For more information, see [Tree utility APIs]({{< relref "data-structures/tree.md#tree-utility-apis" >}}).
 
 ```typescript
 import { TreeView, Tree } from '@fluid-experimental/tree2';
-import { App, List } from './schema';
+import { App, Array } from './schema';
 ```
 
 This is followed by the declaration of the `<ReactApp>` component and its props and their data types.
@@ -258,50 +258,50 @@ useEffect(() => {
 
 The final task in the `<ReactApp>` is to layout its children. Note the following about this code:
 
--   Each of the two list nodes in the shared tree is assigned to its own `<ListGroup>` component as the `target` property.
--   Each of the list node objects is also assigned to the other `<ListGroup>` component as the `destination` property. This is needed because the Fluid API that moves items from one list node to another must be called on the destination node.
+-   Each of the two array nodes in the shared tree is assigned to its own `<ArrayGroup>` component as the `target` property.
+-   Each of the array node objects is also assigned to the other `<ArrayGroup>` component as the `destination` property. This is needed because the Fluid API that moves items from one array node to another must be called on the destination node.
 
 ```typescript
 return (
     <div className="flex flex-col gap-3 items-center justify-center content-center m-6">
         <div className="flex flex-row gap-3 justify-center flex-wrap w-full h-full">
-            <ListGroup target={app.left} destination={app.right} />
-            <ListGroup target={app.right} destination={app.left} />
+            <ArrayGroup target={app.left} destination={app.right} />
+            <ArrayGroup target={app.right} destination={app.left} />
         </div>
         <Explanation />
     </div>
 );
 ```
 
-The other Fluid task for the react_app.tsx file, is to link the buttons in the view to the `List` types wrappers around the [list node APIs]({{< relref "data-structures/tree.md#list-node-write-apis" >}}). (See [Creating a schema for the shared data](#creating-a-schema-for-the-shared-data).) Note the following about this code:
+The other Fluid task for the react_app.tsx file, is to link the buttons in the view to the `Array` types wrappers around the [array node APIs]({{< relref "data-structures/tree.md#array-node-write-apis" >}}). (See [Creating a schema for the shared data](#creating-a-schema-for-the-shared-data).) Note the following about this code:
 
--   The `<InsertButton>` component calls the `insert()` method of the list node on which it is called to insert an empty string to the beginning of the list.
--   The `<RemoveButton>` component calls the `remove()` method of the list node on which it is called to remove the first item in the list.
--   The `target` property of the three components is passed to the component as the `target` property of its parent`<ListGroup>` component.
--   The `destination` property of the `<MoveButton>` component is passed to the component as the `destination` property of its parent`<ListGroup>` component. The move APIs of list nodes must be called on the destination node.
+-   The `<InsertButton>` component calls the `insert()` method of the array node on which it is called to insert an empty string to the beginning of the array.
+-   The `<RemoveButton>` component calls the `remove()` method of the array node on which it is called to remove the first item in the array.
+-   The `target` property of the three components is passed to the component as the `target` property of its parent`<ArrayGroup>` component.
+-   The `destination` property of the `<MoveButton>` component is passed to the component as the `destination` property of its parent`<ArrayGroup>` component. The move APIs of array nodes must be called on the destination node.
 
 ```typescript
-export function InsertButton(props: { target: List; }): JSX.Element {
+export function InsertButton(props: { target: Array; }): JSX.Element {
     const handleClick = () => {
-        // Add an item to the beginning of the list
+        // Add an item to the beginning of the array
         props.target.insert();
     };
 
     return <Button handleClick={handleClick}>Insert</Button>;
 }
 
-export function RemoveButton(props: { target: List; }): JSX.Element {
+export function RemoveButton(props: { target: Array; }): JSX.Element {
     const handleClick = () => {
-        // Remove the first item in the list if the list is not empty
+        // Remove the first item in the array if the array is not empty
         props.target.remove();
     };
 
     return <Button handleClick={handleClick}>Remove</Button>;
 }
 
-export function MoveButton(props: { target: List; destination: List; }): JSX.Element {
+export function MoveButton(props: { target: Array; destination: Array; }): JSX.Element {
     const handleClick = () => {
-        // Moves the first item in the list to the start of the destination list
+        // Moves the first item in the array to the start of the destination array
         props.destination.move(props.target);
     };
 

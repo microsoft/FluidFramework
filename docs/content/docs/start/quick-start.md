@@ -14,7 +14,7 @@ localhost.
 
 {{< callout note >}}
 
-The demo app uses Fluid Framework 1.0, which is in preview. For a quick start that uses version 2.0 preview, see [Quick Start V.2]({{< relref "quick-start-sharedtree.md" >}})
+The demo app uses Fluid Framework 1.0. For a quick start that uses version 2.0 preview, see [Quick Start V.2]({{< relref "quick-start-sharedtree.md" >}})
 
 {{< /callout >}}
 
