@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	Brand,
 	IdAllocator,
@@ -20,7 +21,7 @@ import { RevisionTag } from "../rebase";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
 import * as Delta from "./delta";
 import { DetachedFieldSummaryData, Minor } from "./detachedFieldIndexTypes";
-import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
+import { DetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
 
 /**
  * ID used to create a detached field key for a removed subtree.
@@ -46,16 +47,18 @@ export class DetachedFieldIndex {
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
+		private readonly idCompressor: IIdCompressor,
 		options?: ICodecOptions,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(this.options);
+		this.codec = new DetachedNodeToFieldCodec(idCompressor, this.options);
 	}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+			this.idCompressor,
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);

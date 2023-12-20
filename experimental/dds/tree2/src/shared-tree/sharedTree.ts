@@ -184,7 +184,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedRoots = makeDetachedFieldIndex("repair", options);
+		const removedRoots = makeDetachedFieldIndex("repair", runtime.idCompressor, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const fieldBatchCodec = makeFieldBatchCodec(options, {
 			// TODO: provide schema here to enable schema based compression.
@@ -194,7 +194,12 @@ export class SharedTree
 			// },
 			encodeType: TreeCompressionStrategy.Compressed,
 		});
-		const forestSummarizer = new ForestSummarizer(forest, fieldBatchCodec, options);
+		const forestSummarizer = new ForestSummarizer(
+			forest,
+			runtime.idCompressor,
+			fieldBatchCodec,
+			options,
+		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			runtime.idCompressor,

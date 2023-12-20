@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { DetachedFieldIndex, ForestRootId } from "../../core";
 import { IdAllocator, idAllocatorFromMaxId } from "../../util";
 import { typeboxValidator } from "../../external-utilities";
+import { mintRevisionTag, testIdCompressor } from "../utils";
 
 const malformedData: [string, string][] = [
 	[
@@ -55,7 +56,7 @@ const validData: [string, string][] = [
 		"single entry",
 		JSON.stringify({
 			version: 1,
-			data: [[1, 2, 3]],
+			data: [[mintRevisionTag(), 2, 3, testIdCompressor.localSessionId]],
 			maxId: -1,
 		}),
 	],
@@ -65,6 +66,7 @@ describe("DetachedFieldIndex", () => {
 		const detachedFieldIndex = new DetachedFieldIndex(
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+			testIdCompressor,
 			{ jsonValidator: typeboxValidator },
 		);
 		const expected = JSON.stringify({
@@ -77,10 +79,11 @@ describe("DetachedFieldIndex", () => {
 	describe("loadData", () => {
 		describe("accepts correct data", () => {
 			for (const [name, data] of validData) {
-				it("accepts correct data", () => {
+				it(`accepts correct data: ${name}`, () => {
 					const detachedFieldIndex = new DetachedFieldIndex(
 						"test",
 						idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+						testIdCompressor,
 						{
 							jsonValidator: typeboxValidator,
 						},
@@ -93,9 +96,14 @@ describe("DetachedFieldIndex", () => {
 			for (const [name, data] of malformedData) {
 				it(name, () => {
 					const id = idAllocatorFromMaxId() as IdAllocator<ForestRootId>;
-					const detachedFieldIndex = new DetachedFieldIndex("test", id, {
-						jsonValidator: typeboxValidator,
-					});
+					const detachedFieldIndex = new DetachedFieldIndex(
+						"test",
+						id,
+						testIdCompressor,
+						{
+							jsonValidator: typeboxValidator,
+						},
+					);
 					assert.throws(() => detachedFieldIndex.loadData(data), "malformed data");
 				});
 			}

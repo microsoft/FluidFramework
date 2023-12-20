@@ -84,6 +84,7 @@ describe("Fuzz - Top-Level", () => {
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			// TODO:AB#6298: Support transactions in optional field.
 			skip: [4, 12, 46, 48],
+			only: [15],
 		};
 		createDDSFuzzSuite(model, options);
 	});

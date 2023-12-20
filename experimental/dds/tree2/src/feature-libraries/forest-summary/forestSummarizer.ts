@@ -9,6 +9,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
@@ -51,6 +52,7 @@ export class ForestSummarizer implements Summarizable {
 
 	public constructor(
 		private readonly forest: IEditableForest,
+		private readonly idCompressor: IIdCompressor,
 		fieldBatchCodec: FieldBatchCodec,
 		options: ICodecOptions = { jsonValidator: noopValidator },
 	) {
@@ -151,7 +153,7 @@ export class ForestSummarizer implements Summarizable {
 			applyDelta(
 				{ fields: new Map(fieldChanges) },
 				this.forest,
-				makeDetachedFieldIndex("init"),
+				makeDetachedFieldIndex("init", this.idCompressor),
 			);
 		}
 	}

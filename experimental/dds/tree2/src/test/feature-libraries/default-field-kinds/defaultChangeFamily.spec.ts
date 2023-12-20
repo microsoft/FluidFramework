@@ -109,12 +109,12 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
-		initializeForest(forest, [cursorForJsonableTreeNode(data)]);
+		initializeForest(forest, [cursorForJsonableTreeNode(data)], testIdCompressor);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex();
+	const detachedFieldIndex = makeDetachedFieldIndex(undefined, testIdCompressor);
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);

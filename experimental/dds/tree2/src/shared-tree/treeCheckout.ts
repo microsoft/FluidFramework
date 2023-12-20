@@ -209,6 +209,7 @@ export function createTreeCheckout(
 		schema,
 		forest,
 		events,
+		idCompressor,
 		args?.removedRoots,
 	);
 }
@@ -309,7 +310,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
-		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
+		private readonly idCompressor: IIdCompressor,
+		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			idCompressor,
+		),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
@@ -382,6 +387,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			storedSchema,
 			forest,
 			createEmitter(),
+			this.idCompressor,
 			this.removedRoots.clone(),
 		);
 	}

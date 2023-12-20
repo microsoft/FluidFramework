@@ -670,6 +670,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 			content.schema.rootFieldSchema,
 			content.initialTree,
 		),
+		testIdCompressor,
 	);
 	return forest;
 }
@@ -1020,7 +1021,11 @@ export function applyTestDelta(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	const rootDelta: DeltaRoot = { fields: delta };
-	applyDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	applyDelta(
+		rootDelta,
+		deltaProcessor,
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+	);
 }
 
 export function announceTestDelta(
@@ -1029,7 +1034,11 @@ export function announceTestDelta(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	const rootDelta: DeltaRoot = { fields: delta };
-	announceDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	announceDelta(
+		rootDelta,
+		deltaProcessor,
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+	);
 }
 
 export function createTestUndoRedoStacks(

@@ -5,18 +5,23 @@
 
 import { Static, Type } from "@sinclair/typebox";
 import { brandedNumberType } from "../../util";
+import { RevisionTagSchema, SessionIdSchema } from "../rebase";
 import { ForestRootId } from "./detachedFieldIndex";
 
 export const version = 1.0;
 
 // Define the Major and Minor types:
-const MajorSchema = Type.Union([Type.String(), Type.Number(), Type.Undefined()]);
 const MinorSchema = Type.Number();
 
 const ForestRootIdSchema = brandedNumberType<ForestRootId>();
 
 // Define the tuple:
-const TupleSchema = Type.Tuple([MajorSchema, MinorSchema, ForestRootIdSchema]);
+const TupleSchema = Type.Tuple([
+	RevisionTagSchema,
+	MinorSchema,
+	ForestRootIdSchema,
+	SessionIdSchema,
+]);
 
 export const Format = Type.Object(
 	{
