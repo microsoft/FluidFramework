@@ -5356,6 +5356,7 @@ importers:
 
   experimental/dds/attributable-map:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/attributable-map-previous': npm:@fluid-experimental/attributable-map@2.0.0-internal.8.0.0
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
@@ -5389,6 +5390,7 @@ importers:
       path-browserify: ^1.0.1
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
@@ -5402,6 +5404,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
       path-browserify: 1.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-experimental/attributable-map-previous': /@fluid-experimental/attributable-map/2.0.0-internal.8.0.0
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../../../packages/dds/test-dds-utils
@@ -5425,10 +5428,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/ot/ot:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -5456,6 +5461,7 @@ importers:
       prettier: ~3.0.3
       quill-delta: ^4.2.2
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../../../packages/common/client-utils
@@ -5466,6 +5472,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../../packages/runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0-222379_@types+node@18.19.1
@@ -5486,10 +5493,12 @@ importers:
       prettier: 3.0.3
       quill-delta: 4.2.2
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/ot/sharejs/json1:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/ot': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -5516,6 +5525,7 @@ importers:
       ot-json1: ^1.0.1
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-experimental/ot': link:../../ot
@@ -5525,6 +5535,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../../../../packages/dds/shared-object-base
       ot-json1: 1.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0-222379_@types+node@18.19.1
@@ -5545,10 +5556,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/sequence-deprecated:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': 0.29.0-222379
       '@fluidframework/build-common': ^2.0.3
@@ -5576,6 +5589,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
@@ -5585,6 +5599,7 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -5606,10 +5621,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/tree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
@@ -5656,6 +5673,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -5675,6 +5693,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-private/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark': 0.48.0
@@ -5707,10 +5726,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/framework/data-objects:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': 0.29.0-222379
       '@fluidframework/aqueduct': workspace:~
@@ -5729,6 +5750,7 @@ importers:
       events: ^3.1.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
@@ -5740,6 +5762,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       events: 3.3.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0-222379_@types+node@18.19.1
@@ -5750,10 +5773,12 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/framework/last-edited:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': 0.29.0-222379
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -5771,6 +5796,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -5781,6 +5807,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-summary-block': link:../../../packages/dds/shared-summary-block
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0-222379_@types+node@18.19.1
@@ -5791,10 +5818,12 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/framework/react-inputs:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': 0.29.0-222379
       '@fluidframework/build-common': ^2.0.3
@@ -5811,6 +5840,7 @@ importers:
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
@@ -5820,6 +5850,7 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0-222379_@types+node@18.19.1
@@ -5830,6 +5861,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/client-utils:
