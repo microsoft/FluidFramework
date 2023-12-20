@@ -17,7 +17,12 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentAttributes,
+	ISnapshotTree,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
@@ -31,6 +36,82 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
+
+const fluidCodeDetails: IFluidCodeDetails = {
+	package: "detachedContainerTestPackage1",
+	config: {},
+};
+
+// Quorum val transormations
+const quorumKey = "code";
+const baseQuorum = [
+	[
+		quorumKey,
+		{
+			key: quorumKey,
+			value: fluidCodeDetails,
+			approvalSequenceNumber: 0,
+			commitSequenceNumber: 0,
+			sequenceNumber: 0,
+		},
+	],
+];
+
+const baseAttributes = {
+	minimumSequenceNumber: 0,
+	sequenceNumber: 0,
+	term: 1,
+};
+
+const baseSummarizer = {
+	electionSequenceNumber: 0,
+};
+
+function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
+	return {
+		type: SummaryType.Tree,
+		tree: {
+			".protocol": {
+				type: 1,
+				tree: {
+					quorumMembers: {
+						type: SummaryType.Blob,
+						content: "[]",
+					},
+					quorumProposals: {
+						type: SummaryType.Blob,
+						content: "[]",
+					},
+					quorumValues: {
+						type: SummaryType.Blob,
+						content: JSON.stringify(quorumVal),
+					},
+					attributes: {
+						type: SummaryType.Blob,
+						content: JSON.stringify(attr),
+					},
+				},
+			},
+			".app": {
+				type: 1,
+				tree: {
+					[".channels"]: {
+						type: SummaryType.Tree,
+						tree: {},
+					},
+					".metadata": {
+						type: 2,
+						content: "{}",
+					},
+					".electedSummarizer": {
+						type: 2,
+						content: JSON.stringify(summarizer),
+					},
+				},
+			},
+		},
+	};
+}
 
 interface ISerializableBlobContents {
 	[id: string]: string;
@@ -875,6 +956,24 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
 		});
 	};
+
+	it("can rehydrate from arbitrary summary that is not generated from serialized container", async () => {
+		const summaryTree = buildSummaryTree(baseAttributes, baseQuorum, baseSummarizer);
+		const summaryString = JSON.stringify(summaryTree);
+
+		await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
+	});
+
+	it("can rehydrate from summary that does not start with seq. #0", async () => {
+		const attr = {
+			...baseAttributes,
+			sequenceNumber: 5,
+		};
+		const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
+		const summaryString = JSON.stringify(summaryTree);
+
+		await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
+	});
 
 	// Run once with isolated channels
 	tests();
