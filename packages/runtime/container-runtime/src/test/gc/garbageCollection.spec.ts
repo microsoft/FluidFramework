@@ -651,8 +651,8 @@ describe("Garbage Collection Tests", () => {
 
 			/**
 			 * Here, the base snapshot contains nodes that have timed out. The test validates that we generate errors
-			 * when these nodes are used via trailing ops. It simulates trailing ops by ensuring that garbage collector
-			 * is not loaded and GC does not run before nodeUsed is called.
+			 * when these nodes are used via trailing ops. It simulates trailing ops by calling `nodeUsed` (called when
+			 * ops are processed) before initializing garbage collector.
 			 */
 			it("generates events for nodes that time out on load - nodes are used via trailing ops", async () => {
 				// Create GC state where node 3's unreferenced time was > timeout ms ago.
