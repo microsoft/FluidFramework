@@ -1,12 +1,12 @@
 {
 	"name": "@fluidframework/tree",
 	"version": "2.0.0-rc.1.0.0",
-	"description": "Tree",
+	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "experimental/dds/tree2"
+		"directory": "packages/dds/tree"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -29,6 +29,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
