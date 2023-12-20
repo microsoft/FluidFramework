@@ -44,7 +44,17 @@ export {
 	schemaLintDefault,
 } from "./schemaCollection";
 
-export { FlexList, markEager, FlexListToUnion, LazyItem, isLazy } from "./flexList";
+export {
+	FlexList,
+	markEager,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
+	ExtractItemType,
+	NormalizeLazyItem,
+} from "./flexList";
+
+export { ArrayToUnion } from "./typeUtils";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypedSchemaTypes from "./internal";

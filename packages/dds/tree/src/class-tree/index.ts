@@ -18,6 +18,15 @@ export {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeMapNode,
 	TreeLeafValue,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTypedNode,
+	NodeBuilderData,
+	ObjectFromSchemaRecord,
 } from "./schemaTypes";
 export { SchemaFactory } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi";

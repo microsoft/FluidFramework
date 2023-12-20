@@ -50,6 +50,7 @@ export enum FlexTreeEntityKind {
 
 /**
  * Allows boxed iteration of a tree/field
+ * @internal
  */
 export const boxedIterator = Symbol();
 
@@ -127,6 +128,7 @@ export enum TreeStatus {
 
 /**
  * {@inheritdoc TreeNode.[onNextChange]}
+ * @internal
  */
 export const onNextChange = Symbol("onNextChange");
 

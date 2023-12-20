@@ -163,6 +163,10 @@ export {
 	Fields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
+	ArrayToUnion,
+	ExtractItemType,
+	NormalizeLazyItem,
+	FlexList,
 } from "./typed-schema";
 
 export {

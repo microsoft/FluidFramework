@@ -54,8 +54,9 @@ export const TreeArrayNode = {
 
 /**
  * Non-exported symbol used to make IterableTreeListContent constructable only from within this file.
+ * @public
  */
-const create = Symbol("Create IterableTreeListContent");
+export const create = Symbol("Create IterableTreeListContent");
 
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.

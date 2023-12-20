@@ -126,7 +126,7 @@ export {
 export { leaf } from "./domains";
 
 export {
-	FieldKind,
+	FieldKind as OldFieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
@@ -157,7 +157,7 @@ export {
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
-	AllowedTypes,
+	AllowedTypes as OldAllowedTypes,
 	TreeNodeSchema as FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
@@ -199,7 +199,7 @@ export {
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema as FlexImplicitFieldSchema,
-	ImplicitAllowedTypes,
+	ImplicitAllowedTypes as OldImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -222,6 +222,9 @@ export {
 	NormalizeFieldSchema,
 	Fields,
 	MapFieldSchema,
+	ArrayToUnion,
+	ExtractItemType,
+	LazyItem,
 } from "./feature-libraries";
 
 export {
@@ -230,6 +233,8 @@ export {
 	Unhydrated,
 	IterableTreeListContent,
 	TreeNode,
+	TreeArrayNodeBase,
+	create,
 } from "./simple-tree";
 
 export {
@@ -269,6 +274,22 @@ export {
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	ImplicitAllowedTypes,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeKind,
+	ObjectFromSchemaRecord,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
+	InternalClassTreeTypes,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -309,6 +330,8 @@ export {
 	BrandedKeyContent,
 	ErasedType,
 	Erased,
+	RestrictiveReadonlyRecord,
+	MakeNominal,
 } from "./util";
 
 export {
@@ -330,6 +353,8 @@ export {
 	TypedFields,
 	UnbrandedName,
 	EmptyObject,
+	FlexList,
+	FlexListToUnion,
 
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
