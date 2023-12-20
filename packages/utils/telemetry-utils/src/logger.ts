@@ -9,7 +9,6 @@ import {
 	ITelemetryErrorEvent,
 	ITelemetryGenericEvent,
 	ITelemetryPerformanceEvent,
-	ITelemetryProperties,
 	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
 	Tagged,
@@ -31,6 +30,7 @@ import {
 	ITelemetryPerformanceEventExt,
 	TelemetryEventPropertyTypeExt,
 	TelemetryEventCategory,
+	ITelemetryPropertiesExt,
 } from "./telemetryTypes";
 
 export interface Memory {
@@ -642,7 +642,7 @@ export class PerformanceEvent {
 	 */
 	public static start(
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
+		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize: boolean = false,
 		emitLogs: boolean = true,
@@ -667,7 +667,7 @@ export class PerformanceEvent {
 	 */
 	public static timedExec<T>(
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
+		event: ITelemetryGenericEventExt,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
@@ -707,7 +707,7 @@ export class PerformanceEvent {
 	 */
 	public static async timedExecAsync<T>(
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
+		event: ITelemetryGenericEventExt,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize?: boolean,
@@ -734,14 +734,14 @@ export class PerformanceEvent {
 		return performance.now() - this.startTime;
 	}
 
-	private event?: ITelemetryGenericEvent;
+	private event?: ITelemetryGenericEventExt;
 	private readonly startTime = performance.now();
 	private startMark?: string;
 	private startMemoryCollection: number | undefined = 0;
 
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
+		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly recordHeapSize: boolean = false,
 		private readonly emitLogs: boolean = true,
@@ -757,7 +757,10 @@ export class PerformanceEvent {
 		}
 	}
 
-	public reportProgress(props?: ITelemetryProperties, eventNameSuffix: string = "update"): void {
+	public reportProgress(
+		props?: ITelemetryPropertiesExt,
+		eventNameSuffix: string = "update",
+	): void {
 		this.reportEvent(eventNameSuffix, props);
 	}
 
@@ -770,7 +773,7 @@ export class PerformanceEvent {
 		this.event = undefined;
 	}
 
-	public end(props?: ITelemetryProperties): void {
+	public end(props?: ITelemetryPropertiesExt): void {
 		this.reportEvent("end", props);
 		this.performanceEndMark();
 		this.event = undefined;
@@ -785,7 +788,7 @@ export class PerformanceEvent {
 		}
 	}
 
-	public cancel(props?: ITelemetryProperties, error?: unknown): void {
+	public cancel(props?: ITelemetryPropertiesExt, error?: unknown): void {
 		if (this.markers.cancel !== undefined) {
 			this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
 		}
@@ -797,7 +800,7 @@ export class PerformanceEvent {
 	 */
 	public reportEvent(
 		eventNameSuffix: string,
-		props?: ITelemetryProperties,
+		props?: ITelemetryPropertiesExt,
 		error?: unknown,
 	): void {
 		// There are strange sequences involving multiple Promise chains
@@ -811,7 +814,7 @@ export class PerformanceEvent {
 			return;
 		}
 
-		const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
+		const event: ITelemetryPerformanceEventExt = { ...this.event, ...props };
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
 			event.duration = this.duration;
@@ -834,7 +837,10 @@ export class PerformanceEvent {
 	}
 
 	private static readonly eventHits = new Map<string, number>();
-	private static shouldReport(event: ITelemetryGenericEvent, sampleThreshold: number): boolean {
+	private static shouldReport(
+		event: ITelemetryGenericEventExt,
+		sampleThreshold: number,
+	): boolean {
 		const eventKey = `.${event.category}.${event.eventName}`;
 		const hitCount = PerformanceEvent.eventHits.get(eventKey) ?? 0;
 		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
