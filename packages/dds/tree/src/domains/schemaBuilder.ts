@@ -310,27 +310,27 @@ export class SchemaBuilder<
 	/**
 	 * {@link leaf.number}
 	 */
-	public readonly number = leaf.number;
+	public readonly number: typeof leaf.number = leaf.number;
 
 	/**
 	 * {@link leaf.boolean}
 	 */
-	public readonly boolean = leaf.boolean;
+	public readonly boolean: typeof leaf.boolean = leaf.boolean;
 
 	/**
 	 * {@link leaf.string}
 	 */
-	public readonly string = leaf.string;
+	public readonly string: typeof leaf.string = leaf.string;
 
 	/**
 	 * {@link leaf.handle}
 	 */
-	public readonly handle = leaf.handle;
+	public readonly handle: typeof leaf.handle = leaf.handle;
 
 	/**
 	 * {@link leaf.null}
 	 */
-	public readonly null = leaf.null;
+	public readonly null: typeof leaf.null = leaf.null;
 
 	/**
 	 * Function which can be used for its compile time side-effects to tweak the evaluation order of recursive types to make them compile.
