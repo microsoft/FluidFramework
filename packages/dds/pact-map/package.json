@@ -92,7 +92,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json"
+		"tsc": "tsc"
 	},
 	"c8": {
 		"all": true,

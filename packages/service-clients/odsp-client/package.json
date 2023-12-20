@@ -89,7 +89,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --exit --timeout 10000",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json"
+		"tsc": "tsc"
 	},
 	"c8": {
 		"all": true,
