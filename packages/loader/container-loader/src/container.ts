@@ -102,7 +102,6 @@ import { pkgVersion } from "./packageVersion";
 import {
 	ContainerStorageAdapter,
 	getBlobContentsFromTree,
-	// getBlobContentsFromTreeWithBlobContents,
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
@@ -1834,6 +1833,7 @@ export class Container
 		}
 
 		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTree);
 		return this.rehydrateDetachedFromSnapshotWithBlobs(snapshotTree);
 	}
 
@@ -1851,13 +1851,13 @@ export class Container
 		}
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
 			recombineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
+		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
 		return this.rehydrateDetachedFromSnapshotWithBlobs(snapshotTreeWithBlobContents);
 	}
 
 	private async rehydrateDetachedFromSnapshotWithBlobs(
 		snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents,
 	) {
-		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTreeWithBlobContents);
 		const attributes = await this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,

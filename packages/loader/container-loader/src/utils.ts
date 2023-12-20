@@ -106,16 +106,16 @@ export function combineAppAndProtocolSummary(
 	return createNewSummary;
 }
 
-// /**
-//  * Converts summary tree (for upload) to snapshot tree (for download).
-//  * Summary tree blobs contain contents, but snapshot tree blobs normally
-//  * contain IDs pointing to storage. This will create 2 blob entries in the
-//  * snapshot tree for each blob in the summary tree. One will be the regular
-//  * path pointing to a uniquely generated ID. Then there will be another
-//  * entry with the path as that uniquely generated ID, and value as the
-//  * blob contents as a base-64 string.
-//  * @param summary - summary to convert
-//  */
+/**
+ * Converts summary tree to snapshot tree.
+ * Summary tree blobs contain contents, but snapshot tree blobs normally
+ * contain IDs pointing to storage. This will create 2 blob entries in the
+ * snapshot tree for each blob in the summary tree. One will be the regular
+ * path pointing to a uniquely generated ID. Then there will be another
+ * entry with the path as that uniquely generated ID, and value as the
+ * blob contents as a base-64 string.
+ * @param summary - summary to convert
+ */
 function convertSummaryToSnapshotWithEmbeddedBlobContents(
 	summary: ISummaryTree,
 ): ISnapshotTreeWithBlobContents {
@@ -162,6 +162,11 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 	return treeNode;
 }
 
+/**
+ * Converts a summary to snapshot tree and separate its blob contents
+ * to align detached container format with IPendingContainerState
+ * @param summary - ISummaryTree
+ */
 function convertSummaryToSnapshotAndBlobs(
 	summary: ISummaryTree,
 ): [ISnapshotTree, ISerializableBlobContents] {
@@ -209,11 +214,11 @@ function convertSummaryToSnapshotAndBlobs(
 	return [treeNode, blobContents];
 }
 
-// /**
-//  * Combine and convert protocol and app summary tree to format which is readable by container while rehydrating.
-//  * @param protocolSummaryTree - Protocol Summary Tree
-//  * @param appSummaryTree - App Summary Tree
-//  */
+/**
+ * Combine and convert protocol and app summary tree to format which is readable by container while rehydrating.
+ * @param protocolSummaryTree - Protocol Summary Tree
+ * @param appSummaryTree - App Summary Tree
+ */
 export function convertProtocolAndAppSummaryToSnapshotTree(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
@@ -230,6 +235,11 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
 	return snapshotTreeWithBlobContents;
 }
 
+/**
+ * Converts summary parts into a SnapshotTree and its blob contents.
+ * @param protocolSummaryTree - Protocol Summary Tree
+ * @param appSummaryTree - App Summary Tree
+ */
 export function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
@@ -293,9 +303,6 @@ export const recombineSnapshotTreeAndSnapshotBlobs = (
 		if (snapshotBlobs[id]) {
 			blobsContents[id] = stringToBuffer(snapshotBlobs[id], "utf8");
 		}
-		// else {
-		// 	throw new Error("Blob not found in snapshotBlobs");
-		// }
 	}
 
 	// Recursively process trees in the current level
@@ -325,8 +332,8 @@ export function isDeltaStreamConnectionForbiddenError(
 }
 
 /**
- * Validates the current layout of an .app + .protocol summary tree
- * this is used internally for create new, and single commit summary
+ * Validates format in parsed string get from detached container
+ * serialization using IPendingDetachedContainerState format.
  * @internal
  */
 export function isPendingDetachedContainerState(
