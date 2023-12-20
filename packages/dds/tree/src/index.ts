@@ -125,7 +125,7 @@ export {
 export { leaf } from "./domains";
 
 export {
-	FieldKind,
+	FieldKind as OldFieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
@@ -151,12 +151,11 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	EditableTreeEvents,
-	InternalTypedSchemaTypes,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
-	AllowedTypes,
+	AllowedTypes as OldAllowedTypes,
 	TreeNodeSchema as FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
@@ -198,7 +197,7 @@ export {
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema as FlexImplicitFieldSchema,
-	ImplicitAllowedTypes,
+	ImplicitAllowedTypes as OldImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -221,6 +220,9 @@ export {
 	NormalizeFieldSchema,
 	Fields,
 	MapFieldSchema,
+	ArrayToUnion,
+	ExtractItemType,
+	LazyItem,
 } from "./feature-libraries";
 
 export {
@@ -229,6 +231,8 @@ export {
 	Unhydrated,
 	IterableTreeListContent,
 	TreeNode,
+	TreeArrayNodeBase,
+	create,
 } from "./simple-tree";
 
 export {
@@ -268,6 +272,21 @@ export {
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	ImplicitAllowedTypes,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeKind,
+	ObjectFromSchemaRecord,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -279,15 +298,11 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 } from "./class-tree";
-export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
+export { SharedTree, TreeFactory } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
-
-// Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalTypes from "./internal";
-export { InternalTypes };
 
 // TODO: When previously tagged '@internal', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
 export {
@@ -308,6 +323,8 @@ export {
 	BrandedKeyContent,
 	ErasedType,
 	Erased,
+	RestrictiveReadonlyRecord,
+	MakeNominal,
 } from "./util";
 
 export {
@@ -329,6 +346,8 @@ export {
 	TypedFields,
 	UnbrandedName,
 	EmptyObject,
+	FlexList,
+	FlexListToUnion,
 
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
