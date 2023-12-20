@@ -130,7 +130,7 @@
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
