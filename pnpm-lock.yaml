@@ -9852,6 +9852,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0-225750
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
@@ -9889,6 +9890,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0-225750_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
+      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/map': link:../../dds/map
