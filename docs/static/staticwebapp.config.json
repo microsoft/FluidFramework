@@ -6,8 +6,8 @@
 			"statusCode": 301
 		},
 		{
-			"route": "/docs/apis/azure-client/{*}",
-			"redirect": "/docs/apis/azure-client/{*}",
+			"route": "/docs/apis/azure-client/{*.}",
+			"redirect": "/docs/apis/azure-client/{*.}",
 			"statusCode": 301
 		}
 	],
