@@ -33,7 +33,7 @@ export interface IDecoder<TDecoded, TEncoded> {
 /**
  * Validates data complies with some particular schema.
  * Implementations are typically created by a {@link JsonValidator}.
- * @alpha
+ * @internal
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
@@ -44,7 +44,7 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 
 /**
  * JSON schema validator compliant with draft 6 schema. See https://json-schema.org.
- * @alpha
+ * @internal
  */
 export interface JsonValidator {
 	/**
@@ -61,7 +61,7 @@ export interface JsonValidator {
 
 /**
  * Options relating to handling of persisted data.
- * @alpha
+ * @internal
  */
 export interface ICodecOptions {
 	/**

@@ -131,7 +131,7 @@ export class SchemaSummarizer implements Summarizable {
  * @privateRemarks
  * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
  * This intentionally does not leak the format types in the API.
- * @alpha
+ * @internal
  */
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
 	return encodeRepo(schema);

@@ -10,7 +10,7 @@ import {
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../class-tree";
 import { InsertableTreeNodeUnion } from "./insertable";
-import { TreeArrayNodeBase, TreeNodeUnion } from "./types";
+import { TreeArrayNodeBase, TreeNode, TreeNodeUnion } from "./types";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
@@ -27,11 +27,12 @@ export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
  * @beta
  */
 export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeArrayNodeBase<
-		TreeNodeFromImplicitAllowedTypes<T>,
-		InsertableTreeNodeFromImplicitAllowedTypes<T>,
-		TreeArrayNode
-	> {}
+	extends TreeNode,
+		TreeArrayNodeBase<
+			TreeNodeFromImplicitAllowedTypes<T>,
+			InsertableTreeNodeFromImplicitAllowedTypes<T>,
+			TreeArrayNode
+		> {}
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.

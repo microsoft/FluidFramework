@@ -784,10 +784,13 @@ describe("SequenceField - Examples", () => {
 		const redetach = invert(rebasedRevive);
 		const expected = [
 			Mark.delete(1, brand(0), {
-				redetachId: {
-					revision: tag1,
-					localId: brand(0),
-					lineage: [{ revision: tag2, id: brand(42), count: 1, offset: 0 }],
+				idOverride: {
+					type: SF.DetachIdOverrideType.Redetach,
+					id: {
+						revision: tag1,
+						localId: brand(0),
+						lineage: [{ revision: tag2, id: brand(42), count: 1, offset: 0 }],
+					},
 				},
 			}),
 		];
