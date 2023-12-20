@@ -758,9 +758,11 @@ describe("ModularChangeFamily", () => {
 		}
 
 		it("sibling fields", () => {
-			const a1 = { major: "A", minor: 1 };
-			const a2 = { major: "A", minor: 2 };
-			const b1 = { major: "B", minor: 1 };
+			const aMajor = mintRevisionTag();
+			const a1 = { major: aMajor, minor: 1 };
+			const a2 = { major: aMajor, minor: 2 };
+			const bMajor = mintRevisionTag();
+			const b1 = { major: bMajor, minor: 1 };
 
 			const changeA: HasRemovedRootsRefs = {
 				shallow: [a1, a2],
@@ -782,8 +784,10 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("nested fields", () => {
-			const a1 = { major: "A", minor: 1 };
-			const c1 = { major: "C", minor: 1 };
+			const aMajor = mintRevisionTag();
+			const cMajor = mintRevisionTag();
+			const a1 = { major: aMajor, minor: 1 };
+			const c1 = { major: cMajor, minor: 1 };
 
 			const changeC: HasRemovedRootsRefs = {
 				shallow: [c1],

@@ -16,9 +16,10 @@ import {
 	tryGetFromNestedMap,
 } from "../../util";
 import { FieldKey } from "../schema-stored";
+import { RevisionTag } from "../rebase";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
 import * as Delta from "./delta";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
+import { DetachedFieldSummaryData, Minor } from "./detachedFieldIndexTypes";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
 
 /**
@@ -34,7 +35,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
  */
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
-	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+	private detachedNodeToField: NestedMap<RevisionTag, Minor, ForestRootId> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, string>;
 	private readonly options: ICodecOptions;
 
@@ -75,7 +76,7 @@ export class DetachedFieldIndex {
 		}
 	}
 
-	public updateMajor(current: Major, updated: Major) {
+	public updateMajor(current: RevisionTag, updated: RevisionTag) {
 		const innerCurrent = this.detachedNodeToField.get(current);
 		if (innerCurrent !== undefined) {
 			this.detachedNodeToField.delete(current);
@@ -158,7 +159,7 @@ export class DetachedFieldIndex {
 	 */
 	public loadData(data: string): void {
 		const detachedFieldIndex: {
-			data: NestedMap<Major, Minor, ForestRootId>;
+			data: NestedMap<RevisionTag, Minor, ForestRootId>;
 			maxId: number;
 		} = this.codec.decode(data);
 
