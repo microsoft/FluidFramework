@@ -73,7 +73,6 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
  *
- * {@link createEmitter} can help implement this interface via delegation.
  * `EventEmitter` can be used as a base class to implement this via extension.
  * @param E - All the events that this emitter supports
  * @example
@@ -83,6 +82,9 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  *   error: (errorCode: number) => void;
  * }>
  * ```
+ * @privateRemarks
+ * {@link createEmitter} can help implement this interface via delegation.
+ *
  * @public
  */
 export interface ISubscribable<E extends Events<E>> {

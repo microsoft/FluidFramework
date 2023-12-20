@@ -286,7 +286,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
 	 *
 	 * @remarks
-	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
+	 * The unique identifier for this Map is defined as a function of the provided types.
 	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
 	 * This does not support recursive types.
 	 *
@@ -475,7 +475,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link (TreeArrayNode:interface)}.
+	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *

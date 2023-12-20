@@ -33,7 +33,7 @@ import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 export type Unhydrated<T> = T;
 
 /**
- * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
+ * A non-leaf SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
  * Base type which all nodes implement.
