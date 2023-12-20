@@ -50,6 +50,7 @@ packages/dds/sequence/src/test/results/**/*.json
 packages/dds/sequence/src/test/fuzz/**/*.json
 packages/dds/tree/src/test/snapshots/files/*.json
 packages/dds/tree/src/test/snapshots/schema-files/*.json
+packages/dds/tree/src/test/snapshots/field-kind/**/*.json
 packages/dds/tree/src/test/shared-tree/fuzz/failures/**/*.json
 packages/drivers/odsp-driver/src/test/**/*.json
 packages/framework/attributor/src/test/attribution/documents/**/*.json

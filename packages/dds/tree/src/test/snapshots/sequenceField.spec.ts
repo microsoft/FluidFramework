@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import path from "path";
 import { SequenceField } from "../../feature-libraries";
 import { RevisionTagCodec } from "../../shared-tree-core";
 import { useDeterministicStableId } from "../../util";
@@ -12,7 +13,7 @@ import { TestChange } from "../testChange";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
 
 describe("SequenceField - Snapshots", () => {
-	useSnapshotDirectory("sequence-field");
+	useSnapshotDirectory(path.join("field-kind", "sequence"));
 	const family = SequenceField.sequenceFieldChangeCodecFactory(
 		TestChange.codec,
 		new RevisionTagCodec(),
