@@ -724,12 +724,6 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	): void;
 }
 
-// solely for type checking in the implementation of add - will be removed once
-// deprecated signatures are removed
-const isSequencePlace = (place: any): place is SequencePlace => {
-	return typeof place === "number" || typeof place === "string" || place.pos !== undefined;
-};
-
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
