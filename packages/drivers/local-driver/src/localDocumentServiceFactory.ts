@@ -20,7 +20,7 @@ import { createDocument } from "./localCreateDocument";
 
 /**
  * Implementation of document service factory for local use.
- * @internal
+ * @alpha
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	// A map of clientId to LocalDocumentService.
@@ -29,6 +29,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
+	 * @alpha
 	 */
 	constructor(
 		private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,

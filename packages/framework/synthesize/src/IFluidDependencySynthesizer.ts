@@ -6,13 +6,13 @@
 import { AsyncFluidObjectProvider, FluidObjectSymbolProvider } from "./types";
 
 /**
- * @internal
+ * @alpha
  */
 export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesizer =
 	"IFluidDependencySynthesizer";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideFluidDependencySynthesizer {
 	IFluidDependencySynthesizer: IFluidDependencySynthesizer;
@@ -22,7 +22,7 @@ export interface IProvideFluidDependencySynthesizer {
  * IFluidDependencySynthesizer can generate FluidObjects based on the IProvideFluidObject pattern.
  * It allow for registering providers and uses synthesize to generate a new object with the optional
  * and required types.
- * @internal
+ * @alpha
  */
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
 	/**

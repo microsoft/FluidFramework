@@ -4,7 +4,6 @@
  */
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/protocol-definitions";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IOdspTokenProvider } from "./token";
 
@@ -12,7 +11,7 @@ import { IOdspTokenProvider } from "./token";
  * Defines the necessary properties that will be applied to all containers
  * created by an OdspClient instance. This includes callbacks for the authentication tokens
  * required for ODSP.
- * @internal
+ * @beta
  */
 export interface OdspConnectionConfig {
 	/**
@@ -31,7 +30,7 @@ export interface OdspConnectionConfig {
 	driveId: string;
 }
 /**
- * @internal
+ * @beta
  */
 export interface OdspClientProps {
 	/**
@@ -56,7 +55,7 @@ export interface OdspClientProps {
  * FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to
  * use, will not be included here but rather on the FluidContainer class itself.
- * @internal
+ * @beta
  */
 export interface OdspContainerServices {
 	/**
@@ -68,14 +67,18 @@ export interface OdspContainerServices {
 /**
  * Since ODSP provides user names and email for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
- * @alpha
+ * It will be returned for all audience members connected.
+ * @beta
  */
-export interface OdspUser extends IUser {
+export interface OdspMember extends IMember {
+	/**
+	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
+	 */
+	userId: string;
 	/**
 	 * The user's name
 	 */
 	name: string;
-
 	/**
 	 * The user's email
 	 */
@@ -83,18 +86,7 @@ export interface OdspUser extends IUser {
 }
 
 /**
- * Since ODSP provides user names and email for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
- * It will be returned for all audience members connected.
- * @internal
- */
-export interface OdspMember extends IMember {
-	name: string;
-	email: string;
-}
-
-/**
  * Audience object for ODSP containers
- * @internal
+ * @beta
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;

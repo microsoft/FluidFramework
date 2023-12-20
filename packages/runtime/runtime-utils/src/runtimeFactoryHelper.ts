@@ -11,7 +11,7 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 /**
- * @internal
+ * @alpha
  */
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
 	public get IRuntimeFactory() {

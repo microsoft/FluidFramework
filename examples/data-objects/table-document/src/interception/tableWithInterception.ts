@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { PropertySet } from "@fluidframework/merge-tree";
+import { PropertySet } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ITable, TableDocumentItem } from "../table";
 import { TableDocument } from "../document";
@@ -31,7 +31,10 @@ import { TableDocument } from "../document";
  * @param propertyInterceptionCallback - The interception callback to be called.
  *
  * @returns A new {@link ITable} object that intercepts the methods modifying the properties of cells, rows or columns.
- * @internal
+ *
+ * @deprecated `createTableWithInterception` is an abandoned prototype.
+ * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @alpha
  */
 export function createTableWithInterception<T extends ITable>(
 	table: T,

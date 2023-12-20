@@ -20,6 +20,7 @@ import {
 	IRefreshSummaryResult,
 } from "../summary";
 import { RuntimeHeaderData } from "../containerRuntime";
+import { ContainerRuntimeGCMessage } from "../messageTypes";
 
 /**
  * @alpha
@@ -32,27 +33,25 @@ export const stableGCVersion: GCVersion = 3;
 export const nextGCVersion: GCVersion = 4;
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable throwing an error when tombstone
+ * object is loaded (requested), merely logging a message instead.
  *
- * If unset, GC Tombstone phase will operate as otherwise configured
- * Otherwise, only enforce GC Tombstone if the passed in value matches the persisted value
+ * By default, attempting to load a Tombstoned object will result in an error.
  */
-export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
+export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable throwing an error when tombstone
- * object is loaded (requested).
- */
-export const gcThrowOnTombstoneLoadOptionName = "gcThrowOnTombstoneLoad";
-
-/**
- * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
+ * This undocumented GC Option (on ContainerRuntime Options) allows configuring which documents can have Sweep enabled.
+ * This provides a way to disable both Tombstone Enforcement and Sweep.
  *
- * If unset altogether, Sweep will be disabled.
- * If 0 is passed in, Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
- * If any other number is passed in, Sweep will be enabled only for documents with the same value persisted.
+ * If unset, Tombstone Enforcement + Sweep will operate as otherwise configured.
+ * Otherwise, the Sweep Phase will be disabled for documents where persisted value doesn't match what is passed into this session.
+ * This provides a way to disallow Sweep for old documents that may be too difficult for an app to repair,
+ * in case a bug is found that violates GC's assumptions.
+ *
+ * @see GCFeatureMatrix (gcGeneration)
  */
-export const gcSweepGenerationOptionName = "gcSweepGeneration";
+export const gcGenerationOptionName = "gcGeneration";
 
 /** Config key to turn GC on / off. */
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
@@ -89,25 +88,30 @@ export const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
 
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
+export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 
 /**
- * @see IGCMetadata.gcFeatureMatrix
+ * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
  * @alpha
  */
-export interface GCFeatureMatrix {
-	/**
-	 * The Tombstone Generation value in effect when this file was created.
-	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement.
-	 * Provided via Container Runtime Options.
-	 */
-	tombstoneGeneration?: number;
-	/**
-	 * The Sweep Generation value in effect when this file was created.
-	 * Gives a way for an app to disqualify old files from GC Sweep.
-	 * Provided via Container Runtime Options.
-	 */
-	sweepGeneration?: number;
-}
+export type GCFeatureMatrix =
+	| {
+			/**
+			 * The GC Generation value in effect when this file was created.
+			 * Gives a way for an app to disqualify old files from GC Sweep.
+			 * Provided via Container Runtime Options.
+			 */
+			gcGeneration?: number;
+			/** Deprecated property from legacy type. Will not be set concurrently with gcGeneration */
+			tombstoneGeneration?: undefined;
+	  }
+	| {
+			/**
+			 * The Tombstone Generation value in effect when this file was created.
+			 * Legacy - new containers would get gcGeneration instead (if anything)
+			 */
+			tombstoneGeneration: number;
+	  };
 
 /**
  * @alpha
@@ -139,7 +143,7 @@ export interface IGCMetadata {
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
 	 *
-	 * @deprecated use GCFeatureMatrix.sweepGeneration instead. @see GCFeatureMatrix.sweepGeneration
+	 * @deprecated use GCFeatureMatrix.gcGeneration instead. @see GCFeatureMatrix.gcGeneration
 	 */
 	readonly sweepEnabled?: boolean;
 	/** If this is present, the session for this container will expire after this time and the container will close */
@@ -219,6 +223,37 @@ export const GCNodeType = {
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 /**
+ * The type of a garbage collection message.
+ * @internal
+ */
+export const GarbageCollectionMessageType = {
+	/** Message sent directing GC to delete the given nodes */
+	Sweep: "Sweep",
+} as const;
+
+/**
+ * @internal
+ */
+export type GarbageCollectionMessageType =
+	(typeof GarbageCollectionMessageType)[keyof typeof GarbageCollectionMessageType];
+
+/**
+ * The garbage collection sweep message.
+ * @internal
+ */
+export interface ISweepMessage {
+	type: "Sweep";
+	// The ids of nodes that are deleted.
+	deletedNodeIds: string[];
+}
+
+/**
+ * Type for a message to be used for sending / received garbage collection messages.
+ * @internal
+ */
+export type GarbageCollectionMessage = ISweepMessage;
+
+/**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {
@@ -227,17 +262,17 @@ export interface IGarbageCollectionRuntime {
 	/** Returns the garbage collection data of the runtime. */
 	getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 	/** After GC has run, called to notify the runtime of routes that are used in it. */
-	updateUsedRoutes(usedRoutes: string[]): void;
+	updateUsedRoutes(usedRoutes: readonly string[]): void;
 	/** After GC has run, called to notify the runtime of routes that are unused in it. */
-	updateUnusedRoutes(unusedRoutes: string[]): void;
+	updateUnusedRoutes(unusedRoutes: readonly string[]): void;
 	/**
 	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
 	 * should return the routes of nodes that were deleted.
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 */
-	deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
+	deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
 	/** Called to notify the runtime of routes that are tombstones. */
-	updateTombstonedRoutes(tombstoneRoutes: string[]): void;
+	updateTombstonedRoutes(tombstoneRoutes: readonly string[]): void;
 	/** Returns a referenced timestamp to be used to track unreferenced nodes. */
 	getCurrentReferenceTimestampMs(): number | undefined;
 	/** Returns the type of the GC node. */
@@ -297,6 +332,8 @@ export interface IGarbageCollector {
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
 	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
+	/** Called to process a garbage collection message. */
+	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
@@ -316,7 +353,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
-	readonly activeConnection: () => boolean;
+	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 }
 
 /**
@@ -329,7 +366,7 @@ export interface IGCRuntimeOptions {
 	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
 	 * and marked as such in the summary. This option enables the mark phase.
 	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled using the "gcSweepGeneration" option.
+	 * Sweep phase can be enabled using the "enableGCSweep" option.
 	 *
 	 * Note: This setting is persisted in the container's summary and cannot be changed.
 	 */
@@ -340,6 +377,17 @@ export interface IGCRuntimeOptions {
 	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
 	 */
 	disableGC?: boolean;
+
+	/**
+	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
+	 * where Tombstoned objects are permanently deleted from the container.
+	 *
+	 * IMPORTANT: This only applies if this document is allowed to run Sweep Phase.
+	 *
+	 * Current default behavior is for Sweep Phase not to delete Tombstoned objects,
+	 * but merely to prevent them from being loaded.
+	 */
+	enableGCSweep?: true;
 
 	/**
 	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
@@ -353,6 +401,13 @@ export interface IGCRuntimeOptions {
 	 * Note: This setting is persisted in the container's summary and cannot be changed.
 	 */
 	sessionExpiryTimeoutMs?: number;
+
+	/**
+	 * Delay between when Tombstone should run and when the object should be deleted.
+	 * This grace period gives a chance to intervene to recover if needed, before Sweep deletes the object.
+	 * If not present, a default (non-zero) value will be used.
+	 */
+	sweepGracePeriodMs?: number;
 
 	/**
 	 * Allows additional GC options to be passed.
@@ -392,15 +447,21 @@ export interface IGarbageCollectorConfigs {
 	readonly sessionExpiryTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is ready to be swept. */
 	readonly sweepTimeoutMs: number | undefined;
+	/**
+	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
+	 * Sweep is implemented in an eventually-consistent way so this is acceptable.
+	 */
+	readonly sweepGracePeriodMs: number;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**
-	 * Tracks whether GC should run in tombstone mode. In this mode, sweep ready objects are marked as tombstones.
+	 * Tracks whether GC should run in tombstone mode. In this mode, objects are marked as tombstones as a step along the
+	 * way before they are fully deleted.
 	 * In interactive (non-summarizer) clients, tombstone objects behave as if they are deleted, i.e., access to them
-	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a staging
-	 * step for sweep where accidental sweep ready objects can be recovered.
+	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a "warning"
+	 * step before sweep, where objects wrongly marked as unreferenced can be recovered.
 	 */
 	readonly tombstoneMode: boolean;
 	/** @see GCFeatureMatrix. */
@@ -411,8 +472,6 @@ export interface IGarbageCollectorConfigs {
 	readonly gcVersionInEffect: GCVersion;
 	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
 	readonly throwOnInactiveLoad: boolean | undefined;
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	readonly tombstoneEnforcementAllowed: boolean;
 	/** If true, throw an error when a tombstone data store is retrieved */
 	readonly throwOnTombstoneLoad: boolean;
 	/** If true, throw an error when a tombstone data store is used. */
@@ -425,6 +484,8 @@ export const UnreferencedState = {
 	Active: "Active",
 	/** The node is inactive, i.e., it should not become referenced. */
 	Inactive: "Inactive",
+	/** The node is ready to be tombstoned */
+	TombstoneReady: "TombstoneReady",
 	/** The node is ready to be deleted by the sweep phase. */
 	SweepReady: "SweepReady",
 } as const;

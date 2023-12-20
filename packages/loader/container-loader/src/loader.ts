@@ -6,7 +6,6 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
@@ -17,11 +16,8 @@ import {
 import {
 	ITelemetryBaseLogger,
 	FluidObject,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IRequest,
-	IRequestHeader,
-	IResponse,
+	IConfigProviderBase,
 } from "@fluidframework/core-interfaces";
 import {
 	IContainer,
@@ -62,14 +58,6 @@ export class RelativeLoader implements ILoader {
 		private readonly loader: ILoader | undefined,
 	) {}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter(): IFluidRouter {
-		return this;
-	}
-
 	public async resolve(request: IRequest): Promise<IContainer> {
 		if (request.url.startsWith("/")) {
 			ensureResolvedUrlDefined(this.container.resolvedUrl);
@@ -92,29 +80,10 @@ export class RelativeLoader implements ILoader {
 		}
 		return this.loader.resolve(request);
 	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		if (request.url.startsWith("/")) {
-			const container = await this.resolve(request);
-			return container.request(request);
-		}
-
-		if (this.loader === undefined) {
-			return {
-				status: 404,
-				value: "Cannot request external containers",
-				mimeType: "plain/text",
-			};
-		}
-		return this.loader.request(request);
-	}
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ILoaderOptions extends ILoaderOptions1 {
 	summarizeProtocolTree?: boolean;
@@ -125,7 +94,7 @@ export interface ILoaderOptions extends ILoaderOptions1 {
  * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
- * @internal
+ * @alpha
  */
 export interface IFluidModuleWithDetails {
 	/** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
@@ -143,7 +112,7 @@ export interface IFluidModuleWithDetails {
  * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @internal
+ * @alpha
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -157,7 +126,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 /**
  * Services and properties necessary for creating a loader
- * @internal
+ * @alpha
  */
 export interface ILoaderProps {
 	/**
@@ -214,7 +183,7 @@ export interface ILoaderProps {
 
 /**
  * Services and properties used by and exposed by the loader
- * @internal
+ * @alpha
  */
 export interface ILoaderServices {
 	/**
@@ -267,7 +236,7 @@ export interface ILoaderServices {
 /**
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
- * @internal
+ * @alpha
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
 	size: number;
@@ -278,36 +247,8 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 };
 
 /**
- * With an already-resolved container, we can request a component directly, without loading the container again
- * @param container - a resolved container
- * @returns component on the container
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
- */
-export async function requestResolvedObjectFromContainer(
-	container: IContainer,
-	headers?: IRequestHeader,
-): Promise<IResponse> {
-	ensureResolvedUrlDefined(container.resolvedUrl);
-	const parsedUrl = tryParseCompatibleResolvedUrl(container.resolvedUrl.url);
-
-	if (parsedUrl === undefined) {
-		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
-	}
-
-	// eslint-disable-next-line import/no-deprecated
-	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
-	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
-
-	return router.request({
-		url: `${parsedUrl.path}${parsedUrl.query}`,
-		headers,
-	});
-}
-
-/**
  * Manages Fluid resource loading
- * @internal
+ * @alpha
  */
 export class Loader implements IHostLoader {
 	public readonly services: ILoaderServices;
@@ -356,14 +297,6 @@ export class Loader implements IHostLoader {
 		});
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter(): IFluidRouter {
-		return this;
-	}
-
 	public async createDetachedContainer(
 		codeDetails: IFluidCodeDetails,
 		createDetachedProps?: {
@@ -405,23 +338,6 @@ export class Loader implements IHostLoader {
 			);
 			return resolved.container;
 		});
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "Request" },
-			async () => {
-				const resolved = await this.resolveCore(request);
-				return resolved.container.request({
-					...request,
-					url: `${resolved.parsed.path}${resolved.parsed.query}`,
-				});
-			},
-		);
 	}
 
 	private async resolveCore(

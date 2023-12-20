@@ -6,7 +6,7 @@
 import {
 	type ISourcedDevtoolsMessage,
 	type MessageLoggingOptions,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 
 import { type TypedPortConnection } from "./TypedPortConnection";
 

@@ -141,10 +141,10 @@ describe("IntervalCollection fuzz testing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
-						changeProperties: 2,
 					},
 				}),
 			),
@@ -167,10 +167,10 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
-						changeProperties: 2,
 					},
 				}),
 			),
@@ -184,6 +184,9 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			enableGroupedBatching: true,
 		},
 		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		skip: [13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 69, 70, 73, 84, 91, 95],
+		skip: [
+			4, 9, 10, 13, 16, 17, 19, 21, 23, 26, 28, 29, 30, 35, 36, 37, 41, 43, 49, 53, 57, 59,
+			70, 79, 91,
+		],
 	});
 });

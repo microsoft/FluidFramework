@@ -9,19 +9,20 @@ import { PropertySet } from "./properties";
 import { ISegment } from "./mergeTreeNodes";
 
 /**
- * @internal
+ * @alpha
  */
 export type MergeTreeDeltaOperationType =
 	| typeof MergeTreeDeltaType.ANNOTATE
 	| typeof MergeTreeDeltaType.INSERT
-	| typeof MergeTreeDeltaType.REMOVE;
+	| typeof MergeTreeDeltaType.REMOVE
+	| typeof MergeTreeDeltaType.OBLITERATE;
 
 /**
  * Enum-like constant defining the types of "maintenance" events on a merge tree.
  * Maintenance events correspond to structural segment changes or acks of pending segments.
  *
  * Note: these values are assigned negative integers to avoid clashing with `MergeTreeDeltaType`.
- * @internal
+ * @alpha
  */
 export const MergeTreeMaintenanceType = {
 	/**
@@ -51,18 +52,18 @@ export const MergeTreeMaintenanceType = {
 	ACKNOWLEDGED: -4,
 } as const;
 /**
- * @internal
+ * @alpha
  */
 export type MergeTreeMaintenanceType =
 	(typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
 /**
- * @internal
+ * @alpha
  */
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeDeltaCallbackArgs<
 	TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
@@ -72,7 +73,7 @@ export interface IMergeTreeDeltaCallbackArgs<
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeSegmentDelta {
 	segment: ISegment;
@@ -80,7 +81,7 @@ export interface IMergeTreeSegmentDelta {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeDeltaOpArgs {
 	/**
@@ -115,7 +116,6 @@ export interface IMergeTreeClientSequenceArgs {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
 export type MergeTreeDeltaCallback = (
@@ -124,14 +124,13 @@ export type MergeTreeDeltaCallback = (
 ) => void;
 
 /**
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
 export type MergeTreeMaintenanceCallback = (

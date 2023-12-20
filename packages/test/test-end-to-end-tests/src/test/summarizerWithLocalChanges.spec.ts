@@ -40,7 +40,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/summary/index.js";
+} from "@fluidframework/container-runtime/test/summary";
 
 /**
  * Data object that creates another data object during initialization. This is used to create a scenario

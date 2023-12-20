@@ -11,7 +11,7 @@ import {
 	type HasContainerKey,
 	type IDevtoolsMessage,
 	type InboundHandlers,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import { useMessageRelay } from "../MessageRelayContext";
 import { AudienceStateTable } from "./AudienceStateTable";

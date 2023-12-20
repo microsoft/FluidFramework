@@ -29,7 +29,7 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 	value?.type === "__fluid_handle__";
 
 /**
- * @internal
+ * @public
  */
 export interface IFluidSerializer {
 	/**

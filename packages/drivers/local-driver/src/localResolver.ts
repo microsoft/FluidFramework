@@ -11,7 +11,7 @@ import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "./auth";
 
 /**
- * @internal
+ * @alpha
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
 	const createNewRequest: IRequest = {
@@ -26,7 +26,7 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
- * @internal
+ * @alpha
  */
 export class LocalResolver implements IUrlResolver {
 	private readonly tenantId = "tenantId";
@@ -39,6 +39,7 @@ export class LocalResolver implements IUrlResolver {
 	 * token from constant test strings. The root of the URL is fake, but the
 	 * remaining relative URL can still be parsed.
 	 * @param request - request to handle
+	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const parsedUrl = new URL(request.url);
