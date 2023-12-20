@@ -2211,10 +2211,13 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
-	//* RENAME / REFACTOR
-	/** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
-	private ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
-		//* aka ISerializedHandle
+	/**
+	 * Takes an incoming message and if the contents is a string, JSON.parse's it in place
+	 */
+	private deserializeContentsAndDetectOutboundReferences(
+		mutableMessage: ISequencedDocumentMessage,
+	): void {
+		//* copied from shared-object-base...
 		const isSerializedHandle = (
 			value: any,
 		): value is {
@@ -2225,13 +2228,16 @@ export class ContainerRuntime
 			url: string;
 		} => value?.type === "__fluid_handle__";
 
-		// These will be built up as we traverse the message contents
+		// These will be built up as we traverse the message contents via JSON.parse and referenceFinder
 		const outboundPaths: string[] = [];
 		const pathParts: string[] = [];
 
-		// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
-		// Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
-		const inspectReviver = (key: string, value: any): any => {
+		/**
+		 * A reviver for JSON.parse that doesn't modify the serialized object, but merely
+		 * monitors it for any outbound references, represented by encoded Fluid handles
+		 * found anywhere in the object structure.
+		 */
+		const referenceFinder = (key: string, value: any): any => {
 			// If 'value' is a serialized IFluidHandle return the deserialized result.
 			if (isSerializedHandle(value)) {
 				//* Does this check apply?  Original comment in FluidSerializer.decodeValue says:
@@ -2254,7 +2260,7 @@ export class ContainerRuntime
 		// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 		// Old ops may contain empty string (I assume noops).
 		if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
-			mutableMessage.contents = JSON.parse(mutableMessage.contents, inspectReviver);
+			mutableMessage.contents = JSON.parse(mutableMessage.contents, referenceFinder);
 
 			// Only take first two path parts in case a DDS has "address" inside its content
 			pathParts.splice(2);
@@ -2280,7 +2286,7 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 
-		this.ensureContentsDeserialized(messageCopy);
+		this.deserializeContentsAndDetectOutboundReferences(messageCopy);
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			if (modernRuntimeMessage) {
 				this.processCore({
