@@ -365,7 +365,7 @@ describe("Branches", () => {
 		branch.isTransacting();
 	});
 
-	describe("do not include rebased-over changed in a transaction", () => {
+	describe("do not include rebased-over changes in a transaction", () => {
 		it("when the transaction started on a commit known only to the local branch", () => {
 			const branch = create();
 			const fork = branch.fork();

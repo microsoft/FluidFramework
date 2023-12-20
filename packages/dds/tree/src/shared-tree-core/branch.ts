@@ -147,7 +147,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * those rebased-over commits should not be included in the transaction's squash commit, even though
 	 * they exist between the starting revision and the final commit within the transaction.
 	 *
-	 * Whenever `rebaseOver` is called during a transaction, this map is augmented with an entry from the
+	 * Whenever `rebaseOnto` is called during a transaction, this map is augmented with an entry from the
 	 * original merge-base to the new merge-base.
 	 *
 	 * This state need only be retained for the lifetime of the transaction.
@@ -274,10 +274,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
-		if (!this.isTransacting()) {
-			this.initialTransactionRevToRebasedRev.clear();
-		}
-
 		if (commits.length === 0) {
 			return undefined;
 		}
@@ -327,10 +323,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
-		if (!this.isTransacting()) {
-			this.initialTransactionRevToRebasedRev.clear();
-		}
-
 		if (commits.length === 0) {
 			return [undefined, []];
 		}
@@ -369,6 +361,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision)!;
 		}
+
+		if (!this.isTransacting()) {
+			this.initialTransactionRevToRebasedRev.clear();
+		}
+
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(

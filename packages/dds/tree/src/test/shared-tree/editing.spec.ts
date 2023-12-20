@@ -2005,31 +2005,6 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], [{ foo: "43" }]);
 		});
 
-		it("can rebase a transaction containing a node replacement and a dependent edit to the new node", () => {
-			const tree1 = makeTreeFromJson([]);
-			const tree2 = tree1.fork();
-
-			tree1.editor.optionalField(rootField).set(singleJsonCursor("41"), true);
-
-			tree2.transaction.start();
-			tree2.editor.optionalField(rootField).set(singleJsonCursor({ foo: "42" }), true);
-
-			expectJsonTree([tree1], ["41"]);
-			expectJsonTree([tree2], [{ foo: "42" }]);
-
-			tree2.editor
-				.valueField({ parent: rootNode, field: brand("foo") })
-				.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "43" }));
-
-			expectJsonTree([tree2], [{ foo: "43" }]);
-			tree2.transaction.commit();
-
-			tree1.merge(tree2, false);
-			tree2.rebaseOnto(tree1);
-
-			expectJsonTree([tree1, tree2], [{ foo: "43" }]);
-		});
-
 		it("can rebase a node replacement and a dependent edit to the new node incrementally", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
@@ -2205,6 +2180,31 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], ["45"]);
 			});
 
+			it("can rebase a transaction containing a node replacement and a dependent edit to the new node", () => {
+				const tree1 = makeTreeFromJson([]);
+				const tree2 = tree1.fork();
+
+				tree1.editor.optionalField(rootField).set(singleJsonCursor("41"), true);
+
+				tree2.transaction.start();
+				tree2.editor.optionalField(rootField).set(singleJsonCursor({ foo: "42" }), true);
+
+				expectJsonTree([tree1], ["41"]);
+				expectJsonTree([tree2], [{ foo: "42" }]);
+
+				tree2.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "43" }));
+
+				expectJsonTree([tree2], [{ foo: "43" }]);
+				tree2.transaction.commit();
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+
+				expectJsonTree([tree1, tree2], [{ foo: "43" }]);
+			});
+
 			it("Can set and delete a node within a transaction", () => {
 				const tree = makeTreeFromJson([]);
 				const tree2 = tree.fork();
@@ -2213,6 +2213,8 @@ describe("Editing", () => {
 				tree2.editor.optionalField(rootField).set(singleJsonCursor("42"), true);
 				tree2.editor.optionalField(rootField).set(undefined, false);
 				tree2.transaction.commit();
+
+				tree.editor.optionalField(rootField).set(singleJsonCursor("43"), true);
 
 				tree2.rebaseOnto(tree);
 				tree.merge(tree2, false);
