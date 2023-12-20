@@ -12,6 +12,7 @@ import { TreeType, Value } from "./types";
  * A symbol for marking an object as an {@link ITreeCursor}.
  *
  * Useful when APIs want to take in tree data in multiple formats, including cursors.
+ * @internal
  */
 export const CursorMarker: unique symbol = Symbol("CursorMarker");
 
