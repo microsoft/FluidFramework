@@ -48,7 +48,7 @@ let currentTestFile: string | undefined;
 const nameCheck = new RegExp(/^[^"/\\]+$/);
 
 console.log(`__dirname: ${__dirname}`);
-assert(__dirname.endsWith("dist/test/snapshots") || __dirname.endsWith("dist\\test\\snapshots"));
+assert(__dirname.match(/dist[/\\]test[/\\]snapshots$/));
 const snapshotsFolder = path.join(__dirname, `../../../src/test/snapshots`);
 assert(existsSync(snapshotsFolder));
 
