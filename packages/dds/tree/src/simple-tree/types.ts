@@ -12,12 +12,12 @@ import {
 	Any,
 	FieldNodeSchema,
 	TreeFieldSchema,
-	InternalTypedSchemaTypes,
 	LeafNodeSchema,
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
 	AssignableFieldKinds,
+	LazyItem,
 } from "../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { type, WithType } from "../class-tree/schemaTypes";
@@ -30,12 +30,12 @@ import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
- * @beta
+ * @public
  */
 export type Unhydrated<T> = T;
 
 /**
- * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
+ * A non-leaf SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
  * Base type which all nodes implement.
@@ -51,7 +51,7 @@ export type Unhydrated<T> = T;
  * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
  * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
  * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
- * @beta
+ * @public
  */
 export abstract class TreeNode implements WithType {
 	/**
@@ -89,7 +89,7 @@ export abstract class TreeNode implements WithType {
 
 /**
  * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
- * @beta
+ * @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -303,7 +303,7 @@ export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @beta
+ * @public
  */
 export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
 	/**
@@ -367,9 +367,7 @@ export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly
 			// TODO: Is the the best way to write this type function? Can it be simplified?
 			// This first maps the tuple of AllowedTypes to a tuple of node API types.
 			// Then, it uses [number] to index arbitrarily into that tuple, effectively converting the type tuple into a type union.
-			[Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<
-				infer InnerType
-			>
+			[Index in keyof TTypes]: TTypes[Index] extends LazyItem<infer InnerType>
 				? InnerType extends TreeNodeSchema
 					? TypedNode<InnerType>
 					: never

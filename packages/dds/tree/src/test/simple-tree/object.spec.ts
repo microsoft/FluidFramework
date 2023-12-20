@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	ImplicitFieldSchema,
+	NodeKind,
 	SchemaFactory,
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
@@ -316,7 +317,7 @@ describe("Object-like", () => {
 	describe("supports setting", () => {
 		describe("primitives", () => {
 			function check<const TNode>(
-				schema: TreeNodeSchema<any, any, TNode>,
+				schema: TreeNodeSchema<string, NodeKind, TNode>,
 				before: TNode,
 				after: TNode,
 			) {
@@ -332,11 +333,10 @@ describe("Object-like", () => {
 
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-						class Root extends factory.object("", {
-							_value: factory.optional(schema),
-						}) {}
-
-						const root = getRoot(Root, () => ({ _value: undefined }));
+						const root = getRoot(
+							makeSchema((_) => _.object("", { _value: _.optional(schema) })),
+							() => ({ _value: undefined }),
+						);
 						assert.equal(root._value, undefined);
 						root._value = before;
 						assert.equal(root._value, before);
