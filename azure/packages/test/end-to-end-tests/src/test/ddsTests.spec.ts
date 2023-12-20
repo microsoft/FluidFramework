@@ -15,8 +15,6 @@ import { createAzureClient } from "./AzureClientFactory";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
 import { mapWait } from "./utils";
 
-const isEphemeralContainer = process.env.IS_EPHEMERAL_CONTAINER === "true";
-
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;

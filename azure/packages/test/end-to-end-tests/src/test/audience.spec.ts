@@ -19,21 +19,13 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-const isEphemeralContainer = process.env.IS_EPHEMERAL_CONTAINER === "true";
-
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createAzureClient(
-			"test-user-id-1",
-			"test-user-name-1",
-			undefined,
-			undefined,
-			isEphemeralContainer,
-		);
+		client = createAzureClient("test-user-id-1", "test-user-name-1");
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
