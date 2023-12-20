@@ -51,7 +51,7 @@ import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDec
 // Therefore, there is currently no way for us to retrieve a uniform chunk from the tree for us to make the proper checks,
 // and the tests are expected to fail. The tests can be unskipped once uniform chunks can be inserted into the tree.
 describe.skip("End to End chunked encoding", () => {
-	it(`insert op values are correct, and shares reference with the original chunk. 2`, async () => {
+	it(`insert op values are correct, and shares reference with the original chunk.`, async () => {
 		const treeSchema = new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema));
 		const chunker = new Chunker(
 			treeSchema,
