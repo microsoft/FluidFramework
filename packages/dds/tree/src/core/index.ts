@@ -160,6 +160,7 @@ export {
 	GraphCommit,
 	RevisionTag,
 	RevisionTagSchema,
+	RevisionTagCodec,
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,

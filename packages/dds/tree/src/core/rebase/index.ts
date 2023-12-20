@@ -17,6 +17,9 @@ export {
 	SessionIdSchema,
 } from "./types";
 export {
+	RevisionTagCodec,
+} from "./revisionTagCodec";
+export {
 	ChangeRebaser,
 	FinalChange,
 	FinalChangeStatus,

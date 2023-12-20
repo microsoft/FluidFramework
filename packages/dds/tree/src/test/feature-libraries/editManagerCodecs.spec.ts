@@ -8,7 +8,8 @@ import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
-import { RevisionTagCodec, SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
+import { RevisionTagCodec } from "../../core";
+import { SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
 import {
 	EncodingTestData,
 	MockIdCompressor,

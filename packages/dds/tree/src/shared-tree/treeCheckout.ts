@@ -23,6 +23,7 @@ import {
 	TreeStoredSchema,
 	TreeStoredSchemaSubscription,
 	JsonableTree,
+	RevisionTagCodec,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -33,7 +34,7 @@ import {
 	makeFieldBatchCodec,
 	TreeCompressionStrategy,
 } from "../feature-libraries";
-import { RevisionTagCodec, SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
+import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, fail } from "../util";
 import { noopValidator } from "../codec";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";

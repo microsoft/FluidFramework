@@ -7,7 +7,7 @@ import { SessionId } from "@fluidframework/id-compressor";
 import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field";
-import { RevisionTagCodec } from "../../../shared-tree-core";
+import { RevisionTagCodec } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import {

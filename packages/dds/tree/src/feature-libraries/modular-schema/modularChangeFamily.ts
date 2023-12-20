@@ -36,8 +36,8 @@ import {
 	ITreeCursorSynchronous,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
+	RevisionTagCodec,
 } from "../../core";
-import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	deleteFromNestedMap,

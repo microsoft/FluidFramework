@@ -20,6 +20,7 @@ import {
 	deltaForSet,
 	DeltaFieldMap,
 	DeltaFieldChanges,
+	RevisionTagCodec,
 } from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
 import {
@@ -29,7 +30,6 @@ import {
 	makeEncodingTestSuite,
 } from "../../utils";
 import { SessionAwareCodec } from "../../../codec";
-import { RevisionTagCodec } from "../../../shared-tree-core";
 import { singleJsonCursor } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";

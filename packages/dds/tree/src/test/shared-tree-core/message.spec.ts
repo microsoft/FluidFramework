@@ -8,8 +8,7 @@ import { typeboxValidator } from "../../external-utilities";
 import { makeMessageCodec } from "../../shared-tree-core/messageCodecs";
 // eslint-disable-next-line import/no-internal-modules
 import { DecodedMessage } from "../../shared-tree-core/messageTypes";
-// eslint-disable-next-line import/no-internal-modules
-import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs";
+import { RevisionTagCodec } from "../../core";
 import { TestChange } from "../testChange";
 import {
 	EncodingTestData,

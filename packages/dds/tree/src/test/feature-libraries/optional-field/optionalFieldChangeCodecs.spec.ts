@@ -15,8 +15,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { SessionAwareCodec } from "../../../codec";
+import { RevisionTagCodec } from "../../../core";
 import { changesetForChild } from "../fieldKindTestUtils";
-import { RevisionTagCodec } from "../../../shared-tree-core";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
