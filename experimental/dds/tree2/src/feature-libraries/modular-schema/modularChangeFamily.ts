@@ -37,9 +37,9 @@ import {
 import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
-	forEachInNestedMap,
 	getFromRangeMap,
 	getOrAddEmptyToMap,
+	getOrCreate,
 	IdAllocationState,
 	IdAllocator,
 	idAllocatorFromMaxId,
@@ -213,7 +213,11 @@ export class ModularChangeFamily
 			if (change.builds) {
 				for (const [revisionKey, rangeMapData] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
-					const rangeMap: RangeMap<readonly TreeChunk[]> = [];
+					const rangeMap: RangeMap<readonly TreeChunk[]> = getOrCreate(
+						allBuilds,
+						setRevisionKey,
+						() => [],
+					);
 					for (const { start, length, value } of rangeMapData) {
 						// Check for duplicate builds and prefer earlier ones.
 						// There are two scenarios where we might get duplicate builds:
@@ -229,11 +233,10 @@ export class ModularChangeFamily
 						// Note that it would in principle be possible to adopt the later build and exclude from the
 						// composition all the changes already reflected on the tree, but that is not something we
 						// care to support at this time.
-						if (getFromRangeMap(rangeMap, start, length) === undefined) {
+						if (getFromRangeMap(rangeMap, start, length).value === undefined) {
 							setInRangeMap(rangeMap, start, length, value);
 						}
 					}
-					allBuilds.set(setRevisionKey, rangeMap);
 				}
 			}
 		}
@@ -839,18 +842,22 @@ export function intoDelta(
 	}
 	if (change.builds && change.builds.size > 0) {
 		const builds: DeltaDetachedNodeBuild[] = [];
-		forEachInNestedMap(change.builds, (tree, major, minor) => {
-			const cursor = tree.cursor();
-			assert(
-				cursor.getFieldLength() === 1,
-				0x853 /* each encoded chunk should only contain 1 node. */,
-			);
-			cursor.enterNode(0);
-			builds.push({
-				id: makeDetachedNodeId(major ?? revision, minor),
-				trees: [cursor],
-			});
-		});
+		for (const [major, rangeMap] of change.builds.entries()) {
+			for (const { start, value } of rangeMap) {
+				builds.push({
+					id: makeDetachedNodeId(major ?? revision, start),
+					trees: value.map((tree) => {
+						const cursor = tree.cursor();
+						assert(
+							cursor.getFieldLength() === 1,
+							0x853 /* each encoded chunk should only contain 1 node. */,
+						);
+						cursor.enterNode(0);
+						return cursor;
+					}),
+				});
+			}
+		}
 		rootDelta.build = builds;
 	}
 	return rootDelta;
@@ -1177,10 +1184,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const rangeMap: RangeMap<readonly TreeChunk[]> = [];
 		builds.set(undefined, rangeMap);
 
-		const trees = content.map((cursor) => chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy));
+		const trees = content.map((cursor) =>
+			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy),
+		);
 
 		assert(
-			getFromRangeMap(rangeMap, firstId, length) === undefined,
+			getFromRangeMap(rangeMap, firstId, length).value === undefined,
 			"Unexpected duplicate build ID",
 		);
 		setInRangeMap(rangeMap, firstId, length, trees);

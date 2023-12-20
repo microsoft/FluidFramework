@@ -121,10 +121,14 @@ export const EncodedTreeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
 // TODO:YA6307 adopt more efficient encoding, likely based on contiguous runs of IDs
 export const EncodedBuildsArray = Type.Array(
 	Type.Union([
-		Type.Tuple([Type.Array(Type.Tuple([ChangesetLocalIdSchema, Type.Number(), EncodedTreeIndex]))]),
+		Type.Array(
+			Type.Tuple([ChangesetLocalIdSchema, Type.Number(), Type.Array(EncodedTreeIndex)]),
+		),
 		Type.Tuple([
 			RevisionTagSchema,
-			Type.Array(Type.Tuple([ChangesetLocalIdSchema, Type.Number(), EncodedTreeIndex])),
+			Type.Array(
+				Type.Tuple([ChangesetLocalIdSchema, Type.Number(), Type.Array(EncodedTreeIndex)]),
+			),
 		]),
 	]),
 );

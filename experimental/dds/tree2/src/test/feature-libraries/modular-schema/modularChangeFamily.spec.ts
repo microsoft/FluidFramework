@@ -342,13 +342,31 @@ describe("ModularChangeFamily", () => {
 			const change1: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(1))]])],
+					[
+						undefined,
+						[
+							{
+								start: 0,
+								length: 1,
+								value: [treeChunkFromCursor(singleJsonCursor(1))],
+							},
+						],
+					],
 				]),
 			};
 			const change2: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(2))]])],
+					[
+						undefined,
+						[
+							{
+								start: 0,
+								length: 1,
+								value: [treeChunkFromCursor(singleJsonCursor(2))],
+							},
+						],
+					],
 				]),
 			};
 			assert.deepEqual(
@@ -547,8 +565,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+						[undefined, [{ start: 0, length: 1, value: [treeChunkFromCursor(node1)] }]],
+						[tag3, [{ start: 0, length: 1, value: [treeChunkFromCursor(node1)] }]],
 					]),
 				},
 				tag1,
@@ -558,8 +576,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+						[undefined, [{ start: 2, length: 1, value: [treeChunkFromCursor(node1)] }]],
+						[tag3, [{ start: 2, length: 1, value: [treeChunkFromCursor(node1)] }]],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -573,14 +591,14 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[tag1, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-					[tag2, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					[tag1, [{ start: 0, length: 1, value: [treeChunkFromCursor(node1)] }]],
+					[tag2, [{ start: 2, length: 1, value: [treeChunkFromCursor(node1)] }]],
 					[
 						tag3,
-						new Map([
-							[brand(0), treeChunkFromCursor(node1)],
-							[brand(2), treeChunkFromCursor(node1)],
-						]),
+						[
+							{ start: 0, length: 1, value: [treeChunkFromCursor(node1)] },
+							{ start: 2, length: 1, value: [treeChunkFromCursor(node1)] },
+						],
 					],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
