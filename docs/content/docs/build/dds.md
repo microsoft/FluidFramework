@@ -192,7 +192,7 @@ etc. With this data model, users can change individual properties of the shape w
 You likely have more than one shape in your data model, so you could create a `SharedMap` object to store all the shapes, then
 store the `SharedMaps` representing each shape within that parent `SharedMap` object.
 
-In version 2.0, there's a better, way. Store a shape as an object node of a `SharedTree`. Your code can store the length in one property of the object node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes. 
+In version 2.0, there's a better, way. Store a shape as an object node of a `SharedTree`. Your code can store the length in one property of the object node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes.
 
 When you have more than one shape in your data model, you could create a *array* node in the `SharedTree`, with child object nodes to store all the shapes.
 
