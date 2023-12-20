@@ -37,7 +37,7 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  * removed from the summary, added to the GC deleted blob, and prevented from changing (sending / receiving ops,
  * loading, etc.).
  *
- * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughought, since sweepGracePeriod is set to 0.
+ * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
 describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;

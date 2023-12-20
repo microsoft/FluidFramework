@@ -10,7 +10,7 @@
 export enum ReferenceType {
 	Simple = 0x0,
 	/**
-	 * Allows this reference to be located using the `findTile` API on merge-tree.
+	 * Allows this reference to be located using the `searchForMarker` API on merge-tree.
 	 */
 	Tile = 0x1,
 

@@ -178,7 +178,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { srcToDst, dstToSrc };
 		};
 
-		let latestReservedDetachId: RegisterId | undefined;
+		let earliestReservedDetachId: RegisterId | undefined;
 		let inputContext: "empty" | "filled" | undefined;
 
 		const childChangesByOriginalId = new RegisterMap<TaggedChange<NodeChangeset>[]>();
@@ -201,8 +201,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			>();
 			const nextDstToSrc = new RegisterMap<RegisterId>();
 
-			if (change.reservedDetachId !== undefined) {
-				latestReservedDetachId = withIntention(change.reservedDetachId);
+			if (change.reservedDetachId !== undefined && earliestReservedDetachId === undefined) {
+				earliestReservedDetachId = withIntention(change.reservedDetachId);
 			}
 
 			// Compose all the things that `change` moved.
@@ -271,7 +271,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		};
 
 		if (inputContext === "empty") {
-			composed.reservedDetachId = latestReservedDetachId;
+			composed.reservedDetachId = earliestReservedDetachId;
 		}
 
 		return composed;
@@ -296,23 +296,43 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertIdMap.set(src, dst);
 		}
 
-		let inverseFillsSelf = false;
-		let inverseEmptiesSelf = false;
+		let changeEmptiesSelf = false;
+		let changeFillsSelf = false;
 		const invertedMoves: typeof change.moves = [];
 		for (const [src, dst] of moves) {
-			// TODO:AB#6298: This assert can legitimately fail for transactions, meaning we have little test coverage there.
-			assert(
-				src === "self" || dst === "self",
-				0x856 /* Invert is not currently supported for changes that transfer nodes between non-self registers. */,
-			);
-			if (src !== "self" && dst === "self") {
-				inverseEmptiesSelf = true;
-				// TODO:AB#6319: This might lead to a situation where we put a node in a register it never came from, and that register may not be empty.
-				invertedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]);
-			} else {
-				inverseFillsSelf = true;
-				invertedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
-			}
+			changeEmptiesSelf ||= src === "self";
+			changeFillsSelf ||= dst === "self";
+
+			/* eslint-disable tsdoc/syntax */
+			/**
+			 * TODO:AB#6319: The targeting choices here are not really semantically right; this can lead to a situation where we put a node
+			 * in a non-empty register.
+			 *
+			 * Consider:
+			 * Start: field contents are "A". An edit E1 replaces "A" with "B". Then two branches with that edit on their undo-redo stack
+			 * concurrently undo it.
+			 *
+			 * Giving names to these edits:
+			 * E1: Replace A with B ( build [E1,1], move: cell:self->[E1,2], node:[E1,1]->self )
+			 * E2: undo E1 ( move: cell:self->[E1,1], node:[E1,2]->self )
+			 * E3, concurrent to E2: undo E1 ( move: cell:self->[E1,1], node:[E1,2]->self )
+			 *
+			 * Say E2 is sequenced first. Output context of E2 has registers "self" and [E1,1] filled with "A" and "B" respectively.
+			 *
+			 * Now consider E3' = rebase(E3 over E2).
+			 *
+			 * When rebasing the moves,
+			 * cell:self->[E1,1] remains the same as it targets the cell.
+			 * node:[E1,2]->self becomes self->self.
+			 *
+			 * This is an invalid edit for two reasons:
+			 * 1. It has two destinations for the "self" register
+			 * 2. One of those destinations is non-empty, without a corresponding move to empty it.
+			 */
+			/* eslint-enable tsdoc/syntax */
+			const target: "nodeTargeting" | "cellTargeting" =
+				src !== "self" && dst === "self" ? "cellTargeting" : "nodeTargeting";
+			invertedMoves.push([withIntention(dst), withIntention(src), target]);
 		}
 		const inverted: OptionalChangeset = {
 			moves: invertedMoves,
@@ -322,6 +342,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			]),
 		};
 
+		const inverseEmptiesSelf = changeFillsSelf;
+		const inverseFillsSelf = changeEmptiesSelf;
 		if (inverseFillsSelf && !inverseEmptiesSelf) {
 			inverted.reservedDetachId = { localId: genId.getNextId() };
 		}
@@ -583,7 +605,9 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	relevantRemovedRoots,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges.length === 0 && change.moves.length === 0,
+		change.childChanges.length === 0 &&
+		change.moves.length === 0 &&
+		change.reservedDetachId === undefined,
 };
 
 function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {

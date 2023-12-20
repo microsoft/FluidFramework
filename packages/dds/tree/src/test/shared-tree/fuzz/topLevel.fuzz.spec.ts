@@ -83,8 +83,6 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			// TODO:AB#6298: Support transactions in optional field.
-			skip: [4, 12, 46, 48],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -113,8 +111,6 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			// TODO:AB#6298: Support transactions in optional field.
-			skip: [41],
 		};
 		createDDSFuzzSuite(model, options);
 	});
