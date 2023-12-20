@@ -79,7 +79,7 @@ export class TreeFactory implements IChannelFactory {
  * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
  * of objects, arrays, and other data types.
  *
- * @internal
+ * @beta
  */
 export class SharedTree implements ITree {
 	// The IFluidContainer ContainerSchema currently requires a constructable class that
@@ -88,7 +88,7 @@ export class SharedTree implements ITree {
 	// Temporarily, we provide one until the following work items is addressed:
 	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 
-	public static getFactory(): TreeFactory {
+	public static getFactory(): IChannelFactory {
 		return new TreeFactory({});
 	}
 

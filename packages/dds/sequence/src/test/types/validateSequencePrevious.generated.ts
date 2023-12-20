@@ -1268,6 +1268,7 @@ declare function get_current_ClassDeclaration_SharedString():
 declare function use_old_ClassDeclaration_SharedString(
     use: TypeOnly<old.SharedString>): void;
 use_old_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedString());
 
 /*
