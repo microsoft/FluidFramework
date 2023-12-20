@@ -698,4 +698,40 @@ describe("optionalField", () => {
 			assert.deepEqual(actual, [{ major: tag, minor: 42 }]);
 		});
 	});
+
+	describe("isEmpty", () => {
+		it("is true for an empty change", () => {
+			const change: OptionalChangeset = {
+				moves: [],
+				childChanges: [],
+			};
+			const actual = optionalChangeHandler.isEmpty(change);
+			assert.equal(actual, true);
+		});
+		it("is false for a change with moves", () => {
+			const change: OptionalChangeset = {
+				moves: [[{ localId: brand(42) }, "self", "nodeTargeting"]],
+				childChanges: [],
+			};
+			const actual = optionalChangeHandler.isEmpty(change);
+			assert.equal(actual, false);
+		});
+		it("is false for a change with child changes", () => {
+			const change: OptionalChangeset = {
+				moves: [],
+				childChanges: [[{ localId: brand(0), revision: tag }, arbitraryChildChange]],
+			};
+			const actual = optionalChangeHandler.isEmpty(change);
+			assert.equal(actual, false);
+		});
+		it("is false for a change with a reserved detach ID", () => {
+			const change: OptionalChangeset = {
+				moves: [],
+				childChanges: [],
+				reservedDetachId: { localId: brand(0) },
+			};
+			const actual = optionalChangeHandler.isEmpty(change);
+			assert.equal(actual, false);
+		});
+	});
 });
