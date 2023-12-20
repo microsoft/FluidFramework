@@ -1,22 +1,22 @@
 {
-	"routes": [
-		{
-			"route": "/docs/api/v1/{*}",
-			"redirect": "/docs/api/v1/{*}",
-			"statusCode": 301
-		},
-		{
-			"route": "/docs/api/current/{*}",
-			"redirect": "/docs/api/v1/{*}",
-			"statusCode": 301
-		},
-		{
-			"route": "/docs/api/lts/{*}",
-			"redirect": "/docs/api/v1/{*}",
-			"statusCode": 301
-		}
-	],
-	"globalHeaders": {
-		"cache-control": "must-revalidate, max-age=3600"
-	}
+  "routes": [
+    {
+      "route": "/docs/api/v1/{*}",
+      "redirect": "/docs/api/v1/{*}",
+      "statusCode": 301
+    },
+    {
+      "route": "/docs/api/current/{*}",
+      "redirect": "/docs/api/v1/{*}",
+      "statusCode": 301
+    },
+    {
+      "route": "/docs/api/lts/{*}",
+      "redirect": "/docs/api/v1/{*}",
+      "statusCode": 301
+    }
+  ],
+  "globalHeaders": {
+    "cache-control": "must-revalidate, max-age=3600"
+  }
 }
