@@ -1,63 +1,35 @@
 [
-  {
-    "count": 1,
-    "effect": {
-      "moveOut": {
-        "revision": "beefbeef-beef-4000-8000-000000000001",
-        "finalEndpoint": {
-          "localId": 0,
-          "revision": "beefbeef-beef-4000-8000-000000000001"
-        },
-        "idOverride": {
-          "type": 0,
-          "id": {
-            "localId": 0,
-            "adjacentCells": [
-              [
-                0,
-                2
-              ]
-            ],
-            "lineage": [
-              [
-                "beefbeef-beef-4000-8000-000000000001",
-                0,
-                2,
-                1
-              ]
-            ],
-            "revision": "beefbeef-beef-4000-8000-000000000001"
-          }
-        },
-        "id": 0
-      }
-    },
-    "cellId": {
-      "localId": 0,
-      "adjacentCells": [
-        [
-          0,
-          2
-        ]
-      ],
-      "lineage": [
-        [
-          "beefbeef-beef-4000-8000-000000000001",
-          0,
-          2,
-          1
-        ]
-      ],
-      "revision": "beefbeef-beef-4000-8000-000000000001"
-    },
-    "changes": {
-      "inputContext": [],
-      "intentions": [
-        1
-      ],
-      "outputContext": [
-        1
-      ]
-    }
-  }
+	{
+		"count": 1,
+		"effect": {
+			"moveOut": {
+				"revision": "beefbeef-beef-4000-8000-000000000001",
+				"finalEndpoint": {
+					"localId": 0,
+					"revision": "beefbeef-beef-4000-8000-000000000001"
+				},
+				"idOverride": {
+					"type": 0,
+					"id": {
+						"localId": 0,
+						"adjacentCells": [[0, 2]],
+						"lineage": [["beefbeef-beef-4000-8000-000000000001", 0, 2, 1]],
+						"revision": "beefbeef-beef-4000-8000-000000000001"
+					}
+				},
+				"id": 0
+			}
+		},
+		"cellId": {
+			"localId": 0,
+			"adjacentCells": [[0, 2]],
+			"lineage": [["beefbeef-beef-4000-8000-000000000001", 0, 2, 1]],
+			"revision": "beefbeef-beef-4000-8000-000000000001"
+		},
+		"changes": {
+			"inputContext": [],
+			"intentions": [1],
+			"outputContext": [1]
+		}
+	}
 ]
