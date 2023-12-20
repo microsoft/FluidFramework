@@ -4,14 +4,14 @@
  */
 import * as Path from "node:path";
 
-import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ApiModel, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
-import { Suite } from "mocha";
+import { type Suite } from "mocha";
 
 import { renderApiModelAsMarkdown } from "../RenderMarkdown";
 import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
-import { DocumentNode } from "../documentation-domain";
+import { type DocumentNode } from "../documentation-domain";
 import { type MarkdownRenderConfiguration } from "../renderers";
 import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities";
 
@@ -184,6 +184,7 @@ describe("Markdown rendering end-to-end tests", () => {
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 				frontMatter: (documentItem): string =>
 					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
+				minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 			},
 			renderConfig: {},
 		},
@@ -217,6 +218,7 @@ describe("Markdown rendering end-to-end tests", () => {
 					ApiItemKind.Variable,
 				],
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+				minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			},
 			renderConfig: {
 				startingHeadingLevel: 2,

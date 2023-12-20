@@ -5,6 +5,7 @@
 
 /**
  * Definition of the options block for {@link DataBinder.activateDataBinding}.
+ * @internal
  */
 export interface IActivateDataBindingOptions {
 	/**

@@ -14,7 +14,12 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 } from "@fluidframework/merge-tree";
-import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
+import {
+	getTextAndMarkers,
+	SharedString,
+	IIntervalCollection,
+	SequenceInterval,
+} from "@fluidframework/sequence";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
 	ChannelFactoryRegistry,
@@ -27,26 +32,30 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IRequest,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
 const counterId = "counterKey";
 const directoryId = "directoryKey";
+const collectionId = "collectionKey";
 const registry: ChannelFactoryRegistry = [
 	[mapId, SharedMap.getFactory()],
 	[stringId, SharedString.getFactory()],
@@ -88,6 +97,8 @@ const testKey = "test key";
 const testKey2 = "another test key";
 const testValue = "test value";
 const testIncrementValue = 5;
+const testStart = 0;
+const testEnd = 3;
 
 type SharedObjCallback = (
 	container: IContainer,
@@ -127,6 +138,35 @@ const getPendingOps = async (
 
 	assert.ok(pendingState);
 	return pendingState;
+};
+
+const assertIntervals = (
+	sharedString: SharedString,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	expected: readonly { start: number; end: number }[],
+	validateOverlapping: boolean = true,
+) => {
+	const actual = Array.from(intervalCollection);
+	if (validateOverlapping && sharedString.getLength() > 0) {
+		const overlapping = intervalCollection.findOverlappingIntervals(
+			0,
+			sharedString.getLength() - 1,
+		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+	}
+	assert.strictEqual(
+		actual.length,
+		expected.length,
+		`findOverlappingIntervals() must return the expected number of intervals`,
+	);
+
+	const actualPos = actual.map((interval) => {
+		assert(interval);
+		const start = sharedString.localReferencePositionToPosition(interval.start);
+		const end = sharedString.localReferencePositionToPosition(interval.end);
+		return { start, end };
+	});
+	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
 async function loadOffline(
@@ -172,7 +212,7 @@ async function loadOffline(
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -182,6 +222,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	let cell1: SharedCell;
 	let counter1: SharedCounter;
 	let directory1: ISharedDirectory;
+	let collection1: IIntervalCollection<SequenceInterval>;
 	let waitForSummary: () => Promise<void>;
 
 	beforeEach(async () => {
@@ -200,6 +241,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
+		collection1 = string1.getIntervalCollection(collectionId);
 		string1.insertText(0, "hello");
 
 		waitForSummary = async () => {
@@ -228,7 +270,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			counter.increment(testIncrementValue);
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 			directory.set(testKey, testValue);
-
+			const string = await d.getSharedObject<SharedString>(stringId);
+			const collection = string.getIntervalCollection(collectionId);
+			collection.add({ start: testStart, end: testEnd });
 			// Submit a message with an unrecognized type
 			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 			(
@@ -252,6 +296,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+		const collection2 = string2.getIntervalCollection(collectionId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
@@ -262,6 +308,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(counter2.value, testIncrementValue);
 		assert.strictEqual(directory1.get(testKey), testValue);
 		assert.strictEqual(directory2.get(testKey), testValue);
+		assertIntervals(string1, collection1, [{ start: testStart, end: testEnd }]);
+		assertIntervals(string2, collection2, [{ start: testStart, end: testEnd }]);
 	});
 
 	it("resends compressed Ids and correctly assumes session", async function () {
@@ -1672,7 +1720,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);

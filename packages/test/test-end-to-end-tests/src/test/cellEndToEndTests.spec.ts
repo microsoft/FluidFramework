@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -14,10 +14,9 @@ import {
 	ChannelFactoryRegistry,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 
@@ -28,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullCompat("SharedCell", (getTestObjectProvider) => {
+describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -302,7 +301,7 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
+describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -312,7 +311,7 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
 	let dataObject: ITestFluidObject;
 	let sharedCell: SharedCell;
 	let containerRuntime: ContainerRuntime;
-	let changedEventData: Serializable[];
+	let changedEventData: Serializable<unknown>[];
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],

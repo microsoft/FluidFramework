@@ -12,7 +12,9 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-config && npm run prettier",
+		"build": "npm run print-config && npm run build:readme && npm run prettier",
+		"build:readme": "markdown-magic --files \"**/*.md\"",
+		"clean": "rimraf --glob nyc",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -23,9 +25,11 @@
 		"print-config:react": "eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json",
 		"print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
 		"print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
-		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json"
+		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json",
+		"test": "mocha src/test"
 	},
 	"dependencies": {
+		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/eslint-patch": "~1.4.0",
 		"@rushstack/eslint-plugin": "~0.13.0",
 		"@rushstack/eslint-plugin-security": "~0.7.0",
@@ -41,13 +45,19 @@
 		"eslint-plugin-react-hooks": "~4.6.0",
 		"eslint-plugin-tsdoc": "~0.2.17",
 		"eslint-plugin-unicorn": "~48.0.1",
-		"eslint-plugin-unused-imports": "~3.0.0"
+		"eslint-plugin-unused-imports": "~3.0.0",
+		"ts-morph": "^20.0.0"
 	},
 	"devDependencies": {
+		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.49.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.1.0",
+		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
+		"rimraf": "^4.4.1",
 		"sort-json": "^2.0.1",
 		"typescript": "~4.5.5"
 	},

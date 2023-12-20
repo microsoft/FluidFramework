@@ -13,15 +13,16 @@ import {
 	ICodeDetailsLoader,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	IContainerRuntimeBase,
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
+/**
+ * @internal
+ */
 export type SupportedExportInterfaces = Partial<
 	IProvideRuntimeFactory &
 		IProvideFluidDataStoreFactory &
@@ -30,11 +31,15 @@ export type SupportedExportInterfaces = Partial<
 >;
 
 // Represents the entry point for a Fluid container.
+/**
+ * @internal
+ */
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 
 /**
  * A simple code loader that caches a mapping of package name to a Fluid entry point.
  * On load, it retrieves the entry point matching the package name in the given code details.
+ * @internal
  */
 export class LocalCodeLoader implements ICodeDetailsLoader {
 	private readonly fluidPackageCache = new Map<string, IFluidModuleWithDetails>();
@@ -64,10 +69,6 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 						"default",
 						maybeExport.IFluidDataStoreFactory,
 					);
-					const innerRequestHandler = async (
-						request: IRequest,
-						runtime: IContainerRuntimeBase,
-					) => runtime.IFluidHandleContext.resolveHandle(request);
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,
@@ -76,7 +77,6 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 								registryEntries: [
 									[defaultFactory.type, Promise.resolve(defaultFactory)],
 								],
-								requestHandlers: [innerRequestHandler],
 								runtimeOptions,
 							}),
 						},

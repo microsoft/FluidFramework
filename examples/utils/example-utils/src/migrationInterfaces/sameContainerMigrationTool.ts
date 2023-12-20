@@ -22,6 +22,7 @@ import type { IContainer } from "@fluidframework/container-definitions";
  * * uploadingV2Summary - similar to above
  * * submittingV2Summary - similar to above
  * * migrated - migration has completed, if the client reloads from the latest summary they will be on v2.
+ * @internal
  */
 export type SameContainerMigrationState =
 	| "collaborating"
@@ -36,6 +37,9 @@ export type SameContainerMigrationState =
 	| "migrated";
 
 // TODO: Consider whether these should be after-the-fact events (collaborationStopped)
+/**
+ * @internal
+ */
 export interface ISameContainerMigrationToolEvents extends IEvent {
 	(
 		event:
@@ -51,6 +55,9 @@ export interface ISameContainerMigrationToolEvents extends IEvent {
 	);
 }
 
+/**
+ * @internal
+ */
 export interface ISameContainerMigrationTool
 	extends IEventProvider<ISameContainerMigrationToolEvents> {
 	/**

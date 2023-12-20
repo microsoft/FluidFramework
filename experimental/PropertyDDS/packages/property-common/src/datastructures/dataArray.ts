@@ -13,6 +13,7 @@
 /**
  * A typed data container that is persistable, high-performance, and can be used
  * as a backing store for collaborative property sets.
+ * @internal
  */
 class BaseDataArray {
 	protected _buffer: any;
@@ -279,48 +280,72 @@ class BaseDataArray {
 	}
 }
 
+/**
+ * @internal
+ */
 class Int8DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Int8Array, size);
 	}
 }
 
+/**
+ * @internal
+ */
 class Int16DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Int16Array, size);
 	}
 }
 
+/**
+ * @internal
+ */
 class Int32DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Int32Array, size);
 	}
 }
 
+/**
+ * @internal
+ */
 class Uint8DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Uint8Array, size);
 	}
 }
 
+/**
+ * @internal
+ */
 class Uint16DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Uint16Array, size);
 	}
 }
 
+/**
+ * @internal
+ */
 class Uint32DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Uint32Array, size);
 	}
 }
 
+/**
+ * @internal
+ */
 class Float32DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Float32Array, size);
 	}
 }
 
+/**
+ * @internal
+ */
 class Float64DataArray extends BaseDataArray {
 	constructor(size: number) {
 		super(Float64Array, size);
@@ -331,6 +356,7 @@ class Float64DataArray extends BaseDataArray {
  * A data container that can contain every native type
  *
  * @param size - The initial size with which to allocate the array.
+ * @internal
  */
 class UniversalDataArray extends BaseDataArray {
 	constructor(bufferConstructor: any, size: number);
@@ -445,6 +471,7 @@ class UniversalDataArray extends BaseDataArray {
 
 /**
  * A data container that contains a string
+ * @internal
  */
 class StringDataArray extends BaseDataArray {
 	constructor() {
@@ -511,6 +538,7 @@ class StringDataArray extends BaseDataArray {
 
 /**
  * A data container that can contain boolean type
+ * @internal
  */
 class BoolDataArray extends UniversalDataArray {
 	/**

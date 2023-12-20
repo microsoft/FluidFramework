@@ -7,6 +7,7 @@
  * Interface for a comparer.
  *
  * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 export interface IComparer<T> {
 	/**
@@ -26,6 +27,7 @@ export interface IComparer<T> {
  * A comparer for numbers.
  *
  * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 export const NumberComparer: IComparer<number> = {
 	/**
@@ -44,6 +46,7 @@ export const NumberComparer: IComparer<number> = {
  * Interface to a node in {@link Heap}.
  *
  * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 export interface IHeapNode<T> {
 	value: T;
@@ -54,6 +57,7 @@ export interface IHeapNode<T> {
  * Ordered {@link https://en.wikipedia.org/wiki/Heap_(data_structure) | Heap} data structure implementation.
  *
  * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 export class Heap<T> {
 	private L: IHeapNode<T>[];

@@ -12,7 +12,7 @@ import {
 
 /**
  * Similar to AbortController, but using promise instead of events
- * @public
+ * @alpha
  */
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
 	stop(reason: SummarizerStopReason): void;
@@ -21,7 +21,7 @@ export interface ICancellableSummarizerController extends ISummaryCancellationTo
 /**
  * Can be useful in testing as well as in places where caller does not use cancellation.
  * This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
- * @public
+ * @internal
  */
 export const neverCancelledSummaryToken: ISummaryCancellationToken = {
 	cancelled: false,

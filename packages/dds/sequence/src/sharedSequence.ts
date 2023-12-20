@@ -16,7 +16,7 @@ const MaxRun = 128;
 
 /**
  * @deprecated IJSONRunSegment will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
- * @public
+ * @internal
  */
 export interface IJSONRunSegment<T> extends IJSONSegment {
 	items: Serializable<T>[];
@@ -24,14 +24,14 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
 
 /**
  * @deprecated SubSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
- * @public
+ * @internal
  */
 export class SubSequence<T> extends BaseSegment {
 	public static readonly typeString: string = "SubSequence";
 	public static is(segment: ISegment): segment is SubSequence<any> {
 		return segment.type === SubSequence.typeString;
 	}
-	public static fromJSONObject<U>(spec: Serializable) {
+	public static fromJSONObject<U>(spec: any) {
 		if (spec && typeof spec === "object" && "items" in spec) {
 			const segment = new SubSequence<U>(spec.items);
 			if (spec.props) {
@@ -76,7 +76,10 @@ export class SubSequence<T> extends BaseSegment {
 	public append(segment: ISegment) {
 		assert(SubSequence.is(segment), 0x448 /* can only append to another run segment */);
 		super.append(segment);
-		this.items = this.items.concat(segment.items);
+		// assert above checks that segment is a SubSequence but not that generic T matches.
+		// Since SubSequence is already deprecated, assume that usage is generic T consistent
+		// and just cast here to satisfy concat.
+		this.items = this.items.concat((segment as SubSequence<T>).items);
 	}
 
 	// TODO: retain removed items for undo
@@ -108,7 +111,7 @@ export class SubSequence<T> extends BaseSegment {
 
 /**
  * @deprecated SharedSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
- * @public
+ * @internal
  */
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	constructor(
@@ -169,7 +172,10 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 					if (firstSegment === undefined) {
 						firstSegment = segment;
 					}
-					items.push(...segment.items);
+					// Condition above checks that segment is a SubSequence but not that
+					// generic T matches. Since SubSequence is already deprecated, assume
+					// that walk only has SubSequence<T> segments and just cast here.
+					items.push(...(segment as SubSequence<T>).items);
 				}
 				return true;
 			},

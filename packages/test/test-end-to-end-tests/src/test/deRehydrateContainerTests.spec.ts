@@ -29,18 +29,18 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
+import { SequenceInterval, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/lib/utils.mjs";
+} from "@fluidframework/container-loader/test/utils";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
@@ -121,7 +121,7 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 	};
 }
 
-describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
+describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjectProvider) => {
 	function assertSubtree(
 		tree: ISnapshotTreeWithBlobContents,
 		key: string,
@@ -154,7 +154,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 	function assertBlobContents<T>(subtree: ISnapshotTreeWithBlobContents, key: string): T {
 		const id = subtree.blobs[key];
 		assert(id, `blob id for ${key} missing`);
-		const contents = subtree.blobsContents[id];
+		const contents = subtree.blobsContents?.[id];
 		assert(contents, `blob contents for ${key} missing`);
 		return JSON.parse(bufferToString(contents, "utf8")) as T;
 	}
@@ -281,7 +281,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			// Check blobs contents for protocolAttributes
 			const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
 			assert(
-				snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !==
+				snapshotTree.trees[".protocol"].blobsContents?.[protocolAttributesBlobId] !==
 					undefined,
 				"Blobs should contain attributes blob",
 			);
@@ -535,16 +535,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 			const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
 			sharedStringBefore.insertText(0, "Hello");
-			let interval0: SequenceInterval | undefined = intervalsBefore.add(
-				0,
-				0,
-				IntervalType.SlideOnRemove,
-			);
-			let interval1: SequenceInterval | undefined = intervalsBefore.add(
-				0,
-				1,
-				IntervalType.SlideOnRemove,
-			);
+			let interval0: SequenceInterval | undefined = intervalsBefore.add({ start: 0, end: 0 });
+			let interval1: SequenceInterval | undefined = intervalsBefore.add({ start: 0, end: 1 });
 			let id0;
 			let id1;
 

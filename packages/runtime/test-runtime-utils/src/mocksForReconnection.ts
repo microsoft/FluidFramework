@@ -16,6 +16,7 @@ import {
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
+ * @alpha
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**
@@ -104,6 +105,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 /**
  * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
+ * @alpha
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
 	override createContainerRuntime(

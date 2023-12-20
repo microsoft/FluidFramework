@@ -13,6 +13,7 @@ import {
 
 /**
  * Implements the Token Bucket algorithm to calculate rate-limiting for throttling operations.
+ * @internal
  */
 export class ThrottlerHelper implements IThrottlerHelper {
 	constructor(

@@ -22,5 +22,6 @@ import { Jsonable } from "./jsonable";
  * ```typescript
  * function serialize<T>(value: Serializable<T>) { ... }
  * ```
+ * @alpha
  */
-export type Serializable<T = any> = Jsonable<T, IFluidHandle>;
+export type Serializable<T> = Jsonable<T, IFluidHandle>;

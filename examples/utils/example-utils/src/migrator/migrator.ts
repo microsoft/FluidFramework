@@ -14,6 +14,9 @@ import type {
 } from "../migrationInterfaces";
 import type { IModelLoader, IDetachedModel } from "../modelLoader";
 
+/**
+ * @internal
+ */
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
 	private _currentModel: IMigratableModel;
 	public get currentModel(): IMigratableModel {

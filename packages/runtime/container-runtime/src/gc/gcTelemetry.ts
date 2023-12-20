@@ -14,7 +14,6 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime";
 import { ICreateContainerMetadata } from "../summary";
 import {
-	disableSweepLogKey,
 	GCNodeType,
 	UnreferencedState,
 	IGarbageCollectorConfigs,
@@ -67,13 +66,20 @@ interface INodeUsageProps extends ICommonProps {
 }
 
 /**
- * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector. There are 4 types of
- * telemetry logged:
+ * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector.
+ *
+ * These events are not logged as errors, just generic events, since there can be false positives:
+ *
  * 1. inactiveObject telemetry - When an inactive node is used - A node that has been unreferenced for inactiveTimeoutMs.
- * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for sweepTimeoutMs.
- * 3. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
- * 4. Sweep / deleted telemetry - When a node is detected as sweep ready in the sweep phase.
- * 5. Unknown outbound reference telemetry - When a node is referenced but GC is not explicitly notified of it.
+ * 2. tombstoneReadyObject telemetry - When a tombstone-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs.
+ * 3. sweepReadyObject telemetry - When a sweep-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs + sweepGracePeriodMs.
+ *
+ * These events are logged as errors since they are based on the core GC logic:
+ *
+ * 1. Tombstone telemetry - When a tombstoned node is used - A node that has been marked as tombstone.
+ * 2. Unknown outbound reference telemetry - When a node is referenced but GC was not notified of it when the new reference appeared.
+ *
+ * Note: The telemetry for a Deleted node being used is logged elsewhere in this package.
  */
 export class GCTelemetryTracker {
 	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
@@ -143,6 +149,21 @@ export class GCTelemetryTracker {
 
 		const nodeStateTracker = this.getNodeStateTracker(nodeUsageProps.id);
 		const nodeType = this.getNodeType(nodeUsageProps.id);
+		const timeout = (() => {
+			switch (nodeStateTracker?.state) {
+				case UnreferencedState.Inactive:
+					return this.configs.inactiveTimeoutMs;
+				case UnreferencedState.TombstoneReady:
+					return this.configs.tombstoneTimeoutMs;
+				case UnreferencedState.SweepReady:
+					return (
+						this.configs.tombstoneTimeoutMs &&
+						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
+					);
+				default:
+					return undefined;
+			}
+		})();
 		const {
 			usageType,
 			currentReferenceTimestampMs,
@@ -160,10 +181,7 @@ export class GCTelemetryTracker {
 					? nodeUsageProps.currentReferenceTimestampMs -
 					  nodeStateTracker.unreferencedTimestampMs
 					: -1,
-			timeout:
-				nodeStateTracker?.state === UnreferencedState.Inactive
-					? this.configs.inactiveTimeoutMs
-					: this.configs.sweepTimeoutMs,
+			timeout,
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
 			...propsToLog,
 			...this.createContainerMetadata,
@@ -229,13 +247,9 @@ export class GCTelemetryTracker {
 					gcConfigs,
 				};
 
-				// Do not log the inactive object x events as error events as they are not the best signal for
-				// detecting something wrong with GC either from the partner or from the runtime itself.
-				if (state === UnreferencedState.Inactive) {
-					this.mc.logger.sendTelemetryEvent(event);
-				} else {
-					this.mc.logger.sendErrorEvent(event);
-				}
+				// These are logged as generic events and not errors because there can be false positives. The Tombstone
+				// and Delete errors are separately logged and are reliable.
+				this.mc.logger.sendTelemetryEvent(event);
 			}
 		}
 	}
@@ -382,67 +396,10 @@ export class GCTelemetryTracker {
 						fromPkg: fromPkg?.join("/"),
 					}),
 				};
-
-				if (state === UnreferencedState.Inactive) {
-					logger.sendTelemetryEvent(event);
-				} else {
-					logger.sendErrorEvent(event);
-				}
+				logger.sendTelemetryEvent(event);
 			}
 		}
 		this.pendingEventsQueue = [];
-	}
-
-	/**
-	 * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
-	 * this will give us a view into how much deleted content a container has.
-	 */
-	public logSweepEvents(
-		logger: ITelemetryLoggerExt,
-		currentReferenceTimestampMs: number,
-		unreferencedNodesState: Map<string, UnreferencedStateTracker>,
-		completedGCRuns: number,
-		lastSummaryTime?: number,
-	) {
-		if (
-			this.mc.config.getBoolean(disableSweepLogKey) === true ||
-			this.configs.sweepTimeoutMs === undefined
-		) {
-			return;
-		}
-
-		const deletedNodeIds: string[] = [];
-		for (const [nodeId, nodeStateTracker] of unreferencedNodesState) {
-			if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
-				return;
-			}
-
-			const nodeType = this.getNodeType(nodeId);
-			if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
-				return;
-			}
-
-			// Log deleted event for each node only once to reduce noise in telemetry.
-			const uniqueEventId = `Deleted-${nodeId}`;
-			if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
-				return;
-			}
-			this.loggedUnreferencedEvents.add(uniqueEventId);
-			deletedNodeIds.push(nodeId);
-		}
-
-		if (deletedNodeIds.length > 0) {
-			logger.sendTelemetryEvent({
-				eventName: "GC_SweepReadyObjects_Delete",
-				details: JSON.stringify({
-					timeout: this.configs.sweepTimeoutMs,
-					completedGCRuns,
-					lastSummaryTime,
-					...this.createContainerMetadata,
-				}),
-				...tagCodeArtifacts({ id: JSON.stringify(deletedNodeIds) }),
-			});
-		}
 	}
 }
 

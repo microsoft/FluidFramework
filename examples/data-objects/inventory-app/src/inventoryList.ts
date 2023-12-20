@@ -4,25 +4,19 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import {
-	ForestType,
-	ISharedTree,
-	SharedTreeFactory,
-	TreeView,
-	typeboxValidator,
-} from "@fluid-experimental/tree2";
+import { SharedTree, TreeView, ITree } from "@fluidframework/tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Inventory, treeConfiguration } from "./schema";
 
 const treeKey = "tree";
 
-const factory = new SharedTreeFactory({
-	jsonValidator: typeboxValidator,
-	forest: ForestType.Reference,
-});
+const factory = SharedTree.getFactory();
 
+/**
+ * @internal
+ */
 export class InventoryList extends DataObject {
-	#tree?: ISharedTree;
+	#tree?: ITree;
 	#view?: TreeView<Inventory>;
 
 	public get inventory(): Inventory {
@@ -32,12 +26,12 @@ export class InventoryList extends DataObject {
 	}
 
 	protected async initializingFirstTime() {
-		this.#tree = this.runtime.createChannel(undefined, factory.type) as ISharedTree;
+		this.#tree = this.runtime.createChannel(undefined, factory.type) as ITree;
 		this.root.set(treeKey, this.#tree.handle);
 	}
 
 	protected async initializingFromExisting() {
-		const handle = this.root.get<IFluidHandle<ISharedTree>>(treeKey);
+		const handle = this.root.get<IFluidHandle<ITree>>(treeKey);
 		if (handle === undefined)
 			throw new Error("map should be populated on creation by 'initializingFirstTime'");
 		this.#tree = await handle.get();
@@ -50,6 +44,9 @@ export class InventoryList extends DataObject {
 	}
 }
 
+/**
+ * @internal
+ */
 export const InventoryListFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
 	InventoryList,

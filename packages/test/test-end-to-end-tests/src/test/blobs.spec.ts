@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
@@ -11,7 +10,12 @@ import {
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -21,14 +25,12 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
-	describeNoCompat,
+	describeCompat,
 	ExpectedEvents,
 	ITestDataObject,
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -68,7 +70,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeFullCompat("blobs", (getTestObjectProvider) => {
+describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();
@@ -105,6 +107,10 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	it("can get remote attached blob", async function () {
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
+		if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			this.skip();
+		}
 		const testString = "this is a test string";
 		const testKey = "a blob";
 		const container1 = await provider.makeTestContainer(testContainerConfig);
@@ -125,6 +131,10 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	it("round trip blob handle on shared string property", async function () {
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
+		if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const testString = "this is a test string";
@@ -244,7 +254,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
 // this functionality was added in 0.47 and can be added to the compat-enabled
 // tests above when the LTS version is bumped > 0.47
-describeNoCompat("blobs", (getTestObjectProvider) => {
+describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();

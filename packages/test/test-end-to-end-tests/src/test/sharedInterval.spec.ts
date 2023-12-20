@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
-import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
+import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -25,7 +25,7 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
@@ -247,7 +247,7 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		intervalCollection.removeIntervalById(id);
 	}
 }
-describeNoCompat("SharedInterval", (getTestObjectProvider) => {
+describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

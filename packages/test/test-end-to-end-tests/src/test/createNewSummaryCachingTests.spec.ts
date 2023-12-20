@@ -8,7 +8,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
@@ -17,7 +17,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
-describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
+describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },

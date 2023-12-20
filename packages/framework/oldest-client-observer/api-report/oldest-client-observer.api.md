@@ -10,7 +10,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @alpha
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
     // (undocumented)
     attachState: AttachState;
@@ -22,7 +22,7 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     getQuorum(): IQuorumClients;
 }
 
-// @public
+// @alpha
 export interface IOldestClientObservableEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: () => void): any;
@@ -30,19 +30,19 @@ export interface IOldestClientObservableEvents extends IEvent {
     (event: "disconnected", listener: () => void): any;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
     // (undocumented)
     isOldest(): boolean;
 }
 
-// @public
+// @alpha
 export interface IOldestClientObserverEvents extends IEvent {
     // (undocumented)
     (event: "becameOldest" | "lostOldest", listener: () => void): any;
 }
 
-// @public
+// @alpha
 export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserverEvents> implements IOldestClientObserver {
     constructor(observable: IOldestClientObservable);
     // (undocumented)

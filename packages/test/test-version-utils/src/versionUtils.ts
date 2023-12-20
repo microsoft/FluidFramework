@@ -103,6 +103,9 @@ async function removeInstalled(version: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export function resolveVersion(requested: string, installed: boolean) {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
@@ -170,6 +173,9 @@ async function ensureModulePath(version: string, modulePath: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export async function ensureInstalled(
 	requested: string,
 	packageList: string[],
@@ -259,6 +265,9 @@ export async function ensureInstalled(
 	}
 }
 
+/**
+ * @internal
+ */
 export function checkInstalled(requested: string) {
 	const version = resolveVersion(requested, true);
 	const modulePath = getModulePath(version);
@@ -271,12 +280,47 @@ export function checkInstalled(requested: string) {
 	);
 }
 
+/**
+ * @internal
+ */
 export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
 	const pkgPath = path.join(modulePath, "node_modules", pkg);
-	const pkgJson: { main: string } = JSON.parse(
+	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
+	// some of Node's module loading logic here.
+	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
+	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
 		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
 	);
-	return import(pathToFileURL(path.join(pkgPath, pkgJson.main)).href);
+	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
+	let primaryExport: string;
+	if (pkgJson.exports !== undefined) {
+		// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
+		// if this assert fails.
+		// The v18 doc doesn't mention that export paths must start with ".", but the modern docs do:
+		// https://nodejs.org/api/packages.html#exports
+		for (const key of Object.keys(pkgJson.exports)) {
+			if (!key.startsWith(".")) {
+				throw new Error(
+					"Conditional exports not supported by test-version-utils. Legacy module loading logic needs to be updated.",
+				);
+			}
+		}
+		if (typeof pkgJson.exports === "string") {
+			primaryExport = pkgJson.exports;
+		} else {
+			const exp = pkgJson.exports["."];
+			primaryExport = typeof exp === "string" ? exp : exp.require.default;
+			if (primaryExport === undefined) {
+				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			}
+		}
+	} else {
+		if (pkgJson.main === undefined) {
+			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		primaryExport = pkgJson.main;
+	}
+	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
 };
 
 /**
@@ -304,6 +348,8 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
  * ```typescript
  * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
  * ```
+ *
+ * @internal
  */
 export function getRequestedVersion(
 	baseVersion: string,
@@ -324,7 +370,7 @@ export function getRequestedVersion(
 
 	// if the baseVersion passed is an internal version
 	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
-		const [publicVersion, internalVersion /* prereleaseIdentifier */] = fromInternalScheme(
+		const [publicVersion, internalVersion, prereleaseIdentifier] = fromInternalScheme(
 			baseVersion,
 			/** allowPrereleases */ true,
 			/** allowAnyPrereleaseId */ true,
@@ -333,6 +379,7 @@ export function getRequestedVersion(
 		const internalSchemeRange = internalSchema(
 			publicVersion.version,
 			internalVersion.version,
+			prereleaseIdentifier,
 			requested,
 		);
 		return resolveVersion(internalSchemeRange, false);
@@ -365,8 +412,25 @@ export function getRequestedVersion(
 	return resolveVersion(`^0.${requestedMinorVersion}.0-0`, false);
 }
 
-function internalSchema(publicVersion: string, internalVersion: string, requested: number): string {
-	if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+function internalSchema(
+	publicVersion: string,
+	internalVersion: string,
+	prereleaseIdentifier: string,
+	requested: number,
+): string {
+	// Here we handle edge cases of converting the early rc/internal releases.
+	// We convert early rc releases to internal releases, and early internal releases to public releases.
+	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {
+		if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+			if (requested === -1) {
+				return `^2.0.0-internal.8.0.0`;
+			}
+
+			if (requested === -2) {
+				return `^2.0.0-internal.7.0.0`;
+			}
+		}
+	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
 		if (requested === -1) {
 			return `^1.0.0-0`;
 		}
@@ -411,11 +475,18 @@ function internalSchema(publicVersion: string, internalVersion: string, requeste
 		throw new Error(err as string);
 	}
 
-	return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${
-		parsedVersion.major
-	}.0.0`;
+	// We treat internal and rc as valid; other values should be coerced to "internal"
+	const idToUse = ["internal", "rc"].includes(prereleaseIdentifier)
+		? prereleaseIdentifier
+		: "internal";
+	return `>=${publicVersion}-${idToUse}.${
+		parsedVersion.major - 1
+	}.0.0 <${publicVersion}-${idToUse}.${parsedVersion.major}.0.0`;
 }
 
+/**
+ * @internal
+ */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
 	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
 	return (

@@ -103,13 +103,13 @@ import { nilUuid } from './UuidUtilities';
 
 /**
  * The write format and associated options used to construct a `SharedTree`
- * @public
+ * @alpha
  */
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
 /**
  * The type of shared tree options for a given write format
- * @public
+ * @alpha
  */
 export type SharedTreeOptions<
 	WF extends WriteFormat,
@@ -126,7 +126,7 @@ export type SharedTreeOptions<
 
 /**
  * Configuration options for SharedTree that are independent of write format versions.
- * @public
+ * @alpha
  */
 export interface SharedTreeBaseOptions {
 	/**
@@ -147,7 +147,7 @@ export interface SharedTreeBaseOptions {
 
 /**
  * Configuration options for a SharedTree with write format 0.0.2
- * @public
+ * @alpha
  */
 export interface SharedTreeOptions_0_0_2 {
 	/**
@@ -169,7 +169,7 @@ export interface SharedTreeOptions_0_0_2 {
 
 /**
  * Configuration options for a SharedTree with write format 0.1.1
- * @public
+ * @alpha
  */
 export interface SharedTreeOptions_0_1_1 {
 	/**
@@ -194,7 +194,7 @@ export interface SharedTreeOptions_0_1_1 {
 /**
  * Factory for SharedTree.
  * Includes history in the summary.
- * @public
+ * @alpha
  */
 export class SharedTreeFactory implements IChannelFactory {
 	/**
@@ -288,7 +288,7 @@ const sortedWriteVersions = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
 
 /**
  * The arguments included when the EditCommitted SharedTreeEvent is emitted.
- * @public
+ * @alpha
  */
 export interface EditCommittedEventArguments {
 	/** The ID of the edit committed. */
@@ -301,7 +301,7 @@ export interface EditCommittedEventArguments {
 
 /**
  * The arguments included when the {@link SharedTreeEvent.SequencedEditApplied} SharedTreeEvent is emitted.
- * @public
+ * @alpha
  */
 export interface SequencedEditAppliedEventArguments {
 	/** The ID of the edit committed. */
@@ -320,7 +320,7 @@ export interface SequencedEditAppliedEventArguments {
 
 /**
  * The outcome of an edit.
- * @public
+ * @alpha
  */
 export type EditApplicationOutcome =
 	| {
@@ -346,7 +346,7 @@ export type EditApplicationOutcome =
 
 /**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
- * @public
+ * @alpha
  */
 export interface ISharedTreeEvents extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler);
@@ -355,13 +355,13 @@ export interface ISharedTreeEvents extends ISharedObjectEvents {
 
 /**
  * Expected type for a handler of the `EditCommitted` event.
- * @public
+ * @alpha
  */
 export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
 /**
  * Expected type for a handler of the {@link SharedTreeEvent.SequencedEditApplied} event.
- * @public
+ * @alpha
  */
 export type SequencedEditAppliedHandler = (args: SequencedEditAppliedEventArguments) => void;
 
@@ -369,7 +369,7 @@ const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isS
 
 /**
  * Contains information resulting from processing stashed shared tree ops
- * @public
+ * @alpha
  */
 export interface StashedLocalOpMetadata {
 	/** A modified version of the edit in an edit op that should be resubmitted rather than the original edit */
@@ -381,7 +381,7 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
  * A [distributed tree](../Readme.md).
- * @public
+ * @alpha
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
 	/**
@@ -425,7 +425,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * The UUID used for attribution of nodes created by this SharedTree. All shared trees with a write format of 0.1.1 or
 	 * greater have a unique attribution ID which may be configured in the constructor. All other shared trees (i.e. those
 	 * with a write format of 0.0.2) use the nil UUID as their attribution ID.
-	 * @public
 	 */
 	public get attributionId(): AttributionId {
 		switch (this.writeFormat) {
@@ -657,7 +656,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @param override - if supplied, calls to `convertToStableNodeId` using the returned node ID will return the override instead of
 	 * the UUID. Calls to `generateNodeId` with the same override always return the same ID. Performance note: passing an override string
 	 * incurs a storage cost that is significantly higher that a node ID without one, and should be avoided if possible.
-	 * @public
 	 */
 	public generateNodeId(override?: string): NodeId {
 		return this.idCompressor.generateCompressedId(override) as NodeId;
@@ -668,7 +666,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * may not be used across SharedTree instances, see `generateNodeId` for more).
 	 * The returned value will be a UUID, unless the creation of `id` used an override string (see `generateNodeId` for more).
 	 * The result is safe to persist and re-use across `SharedTree` instances, unlike `NodeId`.
-	 * @public
 	 */
 	public convertToStableNodeId(id: NodeId): StableNodeId {
 		return (this.idCompressor.tryDecompress(id) as StableNodeId) ?? fail('Node id is not known to this SharedTree');
@@ -680,7 +677,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * The returned stable ID is undefined if `id` was never created with this SharedTree. If a stable ID is returned, this does not imply
 	 * that there is a node with `id` in the current revision of the tree, only that `id` was at some point generated by some instance of
 	 * this tree.
-	 * @public
 	 */
 	public tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined {
 		return this.idCompressor.tryDecompress(id) as StableNodeId | undefined;
@@ -691,7 +687,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * as a UUID corresponding to a `NodeId` or as an override passed to `generateNodeId`.
 	 * If a stable ID is returned, this does not imply that there is a node with `id` in the current revision of the tree, only that
 	 * `id` was at some point generated by an instance of this SharedTree.
-	 * @public
 	 */
 	public convertToNodeId(id: StableNodeId): NodeId {
 		return (
@@ -704,7 +699,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * either as a UUID corresponding to a `NodeId` or as an override passed to `generateNodeId`.
 	 * If a stable ID is returned, this does not imply that there is a node with `id` in the current revision of the tree, only that
 	 * `id` was at some point generated by an instance of this SharedTree.
-	 * @public
 	 */
 	public tryConvertToNodeId(id: StableNodeId): NodeId | undefined {
 		return this.idCompressor.tryRecompress(id) as NodeId | undefined;
@@ -714,7 +708,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Returns the attribution ID associated with the SharedTree that generated the given node ID. This is generally only useful for clients
 	 * with a write format of 0.1.1 or greater since older clients cannot be given an attribution ID and will always use the default
 	 * `attributionId` of the tree.
-	 * @public
 	 */
 	public attributeNodeId(id: NodeId): AttributionId {
 		switch (this.writeFormat) {
@@ -732,7 +725,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	/**
 	 * @returns the edit history of the tree.
-	 * @public
 	 */
 	public get edits(): OrderedEditSet<InternalizedChange> {
 		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
@@ -749,7 +741,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Saves this SharedTree into a serialized summary. This is used for testing.
 	 *
 	 * @param summarizer - Optional summarizer to use. If not passed in, SharedTree's summarizer is used.
-	 * @internal
 	 */
 	public saveSerializedSummary(options?: { serializer?: IFluidSerializer }): string {
 		const { serializer } = options ?? {};
@@ -759,7 +750,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * Initialize shared tree with a serialized summary. This is used for testing.
 	 * @returns Statistics about the loaded summary.
-	 * @internal
 	 */
 	public loadSerializedSummary(blobData: string): ITelemetryProperties {
 		const summary = deserialize(blobData, this.serializer);
@@ -769,7 +759,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	/**
 	 * Saves this SharedTree into a deserialized summary.
-	 * @internal
 	 */
 	public saveSummary(): SharedTreeSummaryBase {
 		// If local changes exist, emulate the sequencing of those changes.
@@ -828,7 +817,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	/**
 	 * Initialize shared tree with a deserialized summary.
-	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
 		const { version: loadedSummaryVersion } = summary;
@@ -976,8 +964,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * - registered event listeners
 	 *
 	 * - state of caches
-	 *
-	 * @internal
 	 */
 	public equals(sharedTree: SharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
@@ -1205,7 +1191,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * This method does not allow for snapshot isolation, as the changes are always applied to the most recent revision.
 	 * If it is desireable to read from and apply changes to a fixed view that does not change when remote changes arrive, `Checkout`
 	 * should be used instead.
-	 * @public
 	 */
 	public applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
 	public applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
@@ -1253,7 +1238,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * External users should use one of the more specialized functions, like `applyEdit` which handles constructing the actual `Edit`
 	 * and uses public Change types.
 	 * This is exposed for internal use only.
-	 * @internal
 	 */
 	public applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal> {
 		let edit: Edit<ChangeInternal>;
@@ -1271,7 +1255,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * Converts a public Change type to an internal representation.
 	 * This is exposed for internal use only.
-	 * @internal
 	 */
 	public internalizeChange(change: Change): ChangeInternal {
 		switch (change.type) {
@@ -1360,7 +1343,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Reverts a previous edit by applying a new edit containing the inverse of the original edit's changes.
 	 * @param editId - the edit to revert
 	 * @returns the id of the new edit, or undefined if the original edit could not be inverted given the current tree state.
-	 * @public
 	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
@@ -1379,7 +1361,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @param changes - the changes to revert
 	 * @param before - the revision view before the changes were originally applied
 	 * @returns the inverse of `changes` or undefined if the changes could not be inverted for the given tree state.
-	 * @internal
 	 */
 	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
 		return revert(changes as unknown as readonly ChangeInternal[], before, this.logger, this.emit.bind(this));

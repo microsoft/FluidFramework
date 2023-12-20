@@ -11,7 +11,7 @@ import { NodeData, Side } from './persisted-types';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
- * @public
+ * @alpha
  */
 export interface TraitLocation {
 	readonly parent: NodeId;
@@ -20,7 +20,7 @@ export interface TraitLocation {
 
 /**
  * An immutable view of a distributed tree node.
- * @public
+ * @alpha
  */
 export interface TreeViewNode extends NodeData<NodeId> {
 	/** The IDs of the children under this node */
@@ -34,7 +34,7 @@ export interface TreeViewNode extends NodeData<NodeId> {
  * 0 = before all nodes,
  * 1 = after first node,
  * etc.
- * @public
+ * @alpha
  */
 export type PlaceIndex = number & { readonly PlaceIndex: unique symbol };
 
@@ -43,14 +43,14 @@ export type PlaceIndex = number & { readonly PlaceIndex: unique symbol };
  * 0 = first node,
  * 1 = second node,
  * etc.
- * @public
+ * @alpha
  */
 export type TraitNodeIndex = number & { readonly TraitNodeIndex: unique symbol };
 
 /**
  * A place within a particular `TreeView` that is anchored relative to a specific node in the tree, or relative to the outside of the trait.
  * Valid iff 'trait' is valid and, if provided, sibling is in the Location specified by 'trait'.
- * @public
+ * @alpha
  */
 export interface TreeViewPlace {
 	readonly sibling?: NodeId;
@@ -61,7 +61,7 @@ export interface TreeViewPlace {
 /**
  * Specifies the range of nodes from `start` to `end` within a trait within a particular `TreeView`.
  * Valid iff start and end are valid and are within the same trait.
- * @public
+ * @alpha
  */
 export interface TreeViewRange {
 	readonly start: TreeViewPlace;
@@ -70,7 +70,7 @@ export interface TreeViewRange {
 
 /**
  * Contains some redundant information. Use only in computations between edits. Do not store.
- * @public
+ * @internal
  */
 export interface NodeInTrait {
 	readonly trait: TraitLocation;
@@ -79,7 +79,7 @@ export interface NodeInTrait {
 
 /**
  * A view of a distributed tree.
- * @public
+ * @alpha
  */
 export abstract class TreeView {
 	public readonly root: NodeId;

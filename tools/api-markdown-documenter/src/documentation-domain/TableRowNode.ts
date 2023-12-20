@@ -4,7 +4,7 @@
  */
 import { DocumentationParentNodeBase } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { TableCellNode, TableHeaderCellNode } from "./TableCellNode";
+import { type TableCellNode, type TableHeaderCellNode } from "./TableCellNode";
 
 /**
  * Kind of Table Row.

@@ -12,7 +12,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public (undocumented)
+// @internal (undocumented)
 export abstract class SharedOT<TState, TOp> extends SharedObject {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, initialValue: TState);
     // (undocumented)
