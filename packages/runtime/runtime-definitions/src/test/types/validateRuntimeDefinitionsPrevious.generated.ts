@@ -307,7 +307,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<old.IContainerRuntimeBase>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -356,7 +355,6 @@ declare function get_current_InterfaceDeclaration_IDataStore():
 declare function use_old_InterfaceDeclaration_IDataStore(
     use: TypeOnly<old.IDataStore>): void;
 use_old_InterfaceDeclaration_IDataStore(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDataStore());
 
 /*
@@ -429,7 +427,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<old.IFluidDataStoreChannel>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -454,7 +451,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -479,7 +475,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -1013,6 +1008,30 @@ use_old_InterfaceDeclaration_ITelemetryContext(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_IdCompressor": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_IdCompressor():
+    TypeOnly<old.IdCompressor>;
+declare function use_current_ClassDeclaration_IdCompressor(
+    use: TypeOnly<current.IdCompressor>): void;
+use_current_ClassDeclaration_IdCompressor(
+    get_old_ClassDeclaration_IdCompressor());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_IdCompressor": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_IdCompressor():
+    TypeOnly<current.IdCompressor>;
+declare function use_old_ClassDeclaration_IdCompressor(
+    use: TypeOnly<old.IdCompressor>): void;
+use_old_ClassDeclaration_IdCompressor(
+    get_current_ClassDeclaration_IdCompressor());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IdCreationRange": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IdCreationRange():
@@ -1020,7 +1039,6 @@ declare function get_old_InterfaceDeclaration_IdCreationRange():
 declare function use_current_InterfaceDeclaration_IdCreationRange(
     use: TypeOnly<current.IdCreationRange>): void;
 use_current_InterfaceDeclaration_IdCreationRange(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IdCreationRange());
 
 /*
@@ -1034,18 +1052,6 @@ declare function use_old_InterfaceDeclaration_IdCreationRange(
     use: TypeOnly<old.IdCreationRange>): void;
 use_old_InterfaceDeclaration_IdCreationRange(
     get_current_InterfaceDeclaration_IdCreationRange());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1550,18 +1556,6 @@ declare function use_old_VariableDeclaration_gcTreeKey(
     use: TypeOnly<typeof old.gcTreeKey>): void;
 use_old_VariableDeclaration_gcTreeKey(
     get_current_VariableDeclaration_gcTreeKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_initialClusterCapacity": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_initialClusterCapacity": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

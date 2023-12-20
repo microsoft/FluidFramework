@@ -22,9 +22,10 @@ import {
 	tagChange,
 	TreeStoredSchema,
 	TreeStoredSchemaSubscription,
+	JsonableTree,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { buildForest, intoDelta } from "../feature-libraries";
+import { buildForest, intoDelta, jsonableTreeFromCursor } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, fail } from "../util";
 import { noopValidator } from "../codec";
@@ -64,7 +65,7 @@ export interface CheckoutEvents {
  * @privateRemarks
  * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
- * @alpha
+ * @internal
  */
 export interface ITreeCheckout extends AnchorLocator {
 	/**
@@ -145,6 +146,15 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	/**
+	 * Returns a JsonableTree for each tree that was removed from (and not restored to) the document.
+	 * This list is guaranteed to contain all nodes that are recoverable through undo/redo on this checkout.
+	 * The list may also contain additional nodes.
+	 *
+	 * This is only intended for use in testing and exceptional code paths: it is not performant.
+	 */
+	getRemovedRoots(): [string | number | undefined, number, JsonableTree][];
 }
 
 /**
@@ -201,7 +211,7 @@ export function createTreeCheckout(args?: {
  *
  * To avoid updating observers of the view state with intermediate results during a transaction,
  * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
- * @alpha
+ * @internal
  */
 export interface ITransaction {
 	/**
@@ -265,7 +275,7 @@ class Transaction implements ITransaction {
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link ITreeCheckout} that has forked off of the main trunk/branch.
- * @alpha
+ * @internal
  */
 export interface ITreeCheckoutFork extends ITreeCheckout {
 	/**
@@ -400,6 +410,24 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public dispose(): void {
 		this.branch.dispose();
 	}
+
+	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		const trees: [string | number | undefined, number, JsonableTree][] = [];
+		const cursor = this.forest.allocateCursor();
+		for (const { id, root } of this.removedRoots.entries()) {
+			const parentField = this.removedRoots.toFieldKey(root);
+			this.forest.moveCursorToPath(
+				{ parent: undefined, parentField, parentIndex: 0 },
+				cursor,
+			);
+			const tree = jsonableTreeFromCursor(cursor);
+			if (tree !== undefined) {
+				trees.push([id.major, id.minor, tree]);
+			}
+		}
+		cursor.free();
+		return trees;
+	}
 }
 
 /**
@@ -409,7 +437,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
  * @param transaction - the transaction function. This will be executed immediately. It is passed `view` as an argument for convenience.
  * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns whether or not the transaction was committed or aborted
- * @alpha
+ * @internal
  */
 export function runSynchronous(
 	view: ITreeCheckout,

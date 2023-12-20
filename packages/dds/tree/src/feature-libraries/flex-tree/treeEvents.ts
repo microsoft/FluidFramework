@@ -21,7 +21,7 @@ import { FlexTreeNode } from "./flexTreeTypes";
 /**
  * An event raised on a {@link FlexTreeNode}.
  *
- * @alpha
+ * @internal
  */
 export interface TreeEvent {
 	/**
@@ -41,7 +41,7 @@ export interface TreeEvent {
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
  *
- * @alpha
+ * @internal
  */
 export interface EditableTreeEvents {
 	/**

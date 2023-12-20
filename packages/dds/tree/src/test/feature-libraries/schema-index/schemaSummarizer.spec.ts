@@ -21,12 +21,12 @@ describe("schemaSummarizer", () => {
 				nodeSchema: new Map(),
 			});
 			const snapshot = {
-				rootFieldSchema: {
+				root: {
 					kind: "Forbidden",
 					types: [],
 				},
-				nodeSchema: [],
-				version: "1.0.0",
+				nodes: Object.create(null),
+				version: 1,
 			};
 			assert.deepEqual(encoded, snapshot);
 		});
@@ -34,25 +34,12 @@ describe("schemaSummarizer", () => {
 		it("simple", () => {
 			const encoded = encodeTreeSchema(intoStoredSchema(jsonSequenceRootSchema));
 			const snapshot = {
-				rootFieldSchema: {
-					kind: "Sequence",
-					types: [
-						"com.fluidframework.json.object",
-						"com.fluidframework.json.array",
-						"com.fluidframework.leaf.number",
-						"com.fluidframework.leaf.boolean",
-						"com.fluidframework.leaf.string",
-						"com.fluidframework.leaf.null",
-					],
-				},
-				nodeSchema: [
-					{
-						mapFields: undefined,
-						name: "com.fluidframework.json.array",
-						objectNodeFields: [
-							{
+				version: 1,
+				nodes: Object.assign(Object.create(null), {
+					"com.fluidframework.json.array": {
+						object: Object.assign(Object.create(null), {
+							"": {
 								kind: "Sequence",
-								name: "",
 								types: [
 									"com.fluidframework.json.object",
 									"com.fluidframework.json.array",
@@ -62,10 +49,10 @@ describe("schemaSummarizer", () => {
 									"com.fluidframework.leaf.null",
 								],
 							},
-						],
+						}),
 					},
-					{
-						mapFields: {
+					"com.fluidframework.json.object": {
+						map: {
 							kind: "Optional",
 							types: [
 								"com.fluidframework.json.object",
@@ -76,41 +63,34 @@ describe("schemaSummarizer", () => {
 								"com.fluidframework.leaf.null",
 							],
 						},
-						name: "com.fluidframework.json.object",
-						objectNodeFields: [],
 					},
-					{
-						leafValue: 2,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.boolean",
-						objectNodeFields: [],
+					"com.fluidframework.leaf.boolean": {
+						leaf: 2,
 					},
-					{
-						leafValue: 3,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.handle",
-						objectNodeFields: [],
+					"com.fluidframework.leaf.handle": {
+						leaf: 3,
 					},
-					{
-						leafValue: 4,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.null",
-						objectNodeFields: [],
+					"com.fluidframework.leaf.null": {
+						leaf: 4,
 					},
-					{
-						leafValue: 0,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.number",
-						objectNodeFields: [],
+					"com.fluidframework.leaf.number": {
+						leaf: 0,
 					},
-					{
-						leafValue: 1,
-						mapFields: undefined,
-						name: "com.fluidframework.leaf.string",
-						objectNodeFields: [],
+					"com.fluidframework.leaf.string": {
+						leaf: 1,
 					},
-				],
-				version: "1.0.0",
+				}),
+				root: {
+					kind: "Sequence",
+					types: [
+						"com.fluidframework.json.object",
+						"com.fluidframework.json.array",
+						"com.fluidframework.leaf.number",
+						"com.fluidframework.leaf.boolean",
+						"com.fluidframework.leaf.string",
+						"com.fluidframework.leaf.null",
+					],
+				},
 			};
 
 			assert.deepEqual(encoded, snapshot);
