@@ -212,7 +212,7 @@ async function loadOffline(
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -423,7 +423,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("doesn't resend successful op", async function () {
-		const id = collection1.add({ start: testStart, end: testEnd }).getIntervalId();
 		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
 			map.set(testKey, "something unimportant");
