@@ -23,7 +23,7 @@
 			},
 			"require": {
 				"types": "./dist/containerRuntime.d.ts",
-				"default": "./dist/containerRuntime.cjs"
+				"default": "./dist/containerRuntime.js"
 			}
 		},
 		"./test/deltaScheduler": {
@@ -33,7 +33,7 @@
 			},
 			"require": {
 				"types": "./dist/deltaScheduler.d.ts",
-				"default": "./dist/deltaScheduler.cjs"
+				"default": "./dist/deltaScheduler.js"
 			}
 		},
 		"./test/scheduleManager": {
@@ -43,7 +43,7 @@
 			},
 			"require": {
 				"types": "./dist/scheduleManager.d.ts",
-				"default": "./dist/scheduleManager.cjs"
+				"default": "./dist/scheduleManager.js"
 			}
 		},
 		"./test/blobManager": {
@@ -53,7 +53,7 @@
 			},
 			"require": {
 				"types": "./dist/blobManager.d.ts",
-				"default": "./dist/blobManager.cjs"
+				"default": "./dist/blobManager.js"
 			}
 		},
 		"./test/summary": {
@@ -63,7 +63,7 @@
 			},
 			"require": {
 				"types": "./dist/summary/index.d.ts",
-				"default": "./dist/summary/index.cjs"
+				"default": "./dist/summary/index.js"
 			}
 		},
 		"./test/gc": {
@@ -73,7 +73,7 @@
 			},
 			"require": {
 				"types": "./gc/index.d.ts",
-				"default": "./gc/index.cjs"
+				"default": "./gc/index.js"
 			}
 		},
 		"./alpha": {

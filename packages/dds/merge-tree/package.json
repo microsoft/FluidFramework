@@ -25,11 +25,11 @@
 		"./dist/test": {
 			"import": {
 				"types": "./dist/test/index.d.ts",
-				"default": "./dist/test/index.cjs"
+				"default": "./dist/test/index.js"
 			},
 			"require": {
 				"types": "./dist/test/index.d.ts",
-				"default": "./dist/test/index.cjs"
+				"default": "./dist/test/index.js"
 			}
 		},
 		"./alpha": {
