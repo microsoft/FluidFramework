@@ -76,7 +76,7 @@ interface INodeUsageProps extends ICommonProps {
  *
  * These events are logged as errors since they are based on the core GC logic:
  *
- * 1. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
+ * 1. Tombstone telemetry - When a tombstoned node is used - A node that has been marked as tombstone.
  * 2. Unknown outbound reference telemetry - When a node is referenced but GC was not notified of it when the new reference appeared.
  *
  * Note: The telemetry for a Deleted node being used is logged elsewhere in this package.

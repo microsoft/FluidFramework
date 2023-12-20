@@ -128,7 +128,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				this.skip();
 			}
 			settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] =
-				sweepTimeoutMs + sweepGracePeriodMs;
+				sweepTimeoutMs - sweepGracePeriodMs; // sweepGracePeriodMs is 0. In any case, this subtraction represents the correct relationship between these values
 
 			const configProvider = mockConfigProvider(settings);
 			testContainerConfig = {
