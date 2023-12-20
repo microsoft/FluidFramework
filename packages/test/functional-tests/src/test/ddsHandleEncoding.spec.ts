@@ -4,30 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-
-// import { UsageError } from "@fluidframework/telemetry-utils";
-// import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-// import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
-	// MockContainerRuntimeFactory,
-	// MockSharedObjectServices,
 	MockStorage,
 	MockDeltaConnection,
 	MockHandle,
 } from "@fluidframework/test-runtime-utils";
-import {
-	SharedDirectory,
-	// MapFactory,
-	DirectoryFactory,
-	IDirectory,
-	// ISharedDirectory,
-} from "@fluidframework/map";
-import {
-	IChannel,
-	IChannelFactory,
-	// IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+import { DirectoryFactory, IDirectory } from "@fluidframework/map";
+import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
 
 /**
@@ -36,6 +20,13 @@ import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-col
  * This is important because the runtime needs to inspect the full op payload for handles.
  */
 describe("DDS Handle Encoding", () => {
+	const handle = new MockHandle("whatever");
+	const messages: any[] = [];
+
+	beforeEach(() => {
+		messages.length = 0;
+	});
+
 	/**
 	 * The purpose of the tests using this helper is to ensure that the message contents submitted
 	 * by the DDS contains handles that are detectable via JSON.stringify replacers, since this
@@ -63,128 +54,80 @@ describe("DDS Handle Encoding", () => {
 		}
 	}
 
-	/**
-	 * Create a Directory that connects to mock services that use the given
-	 * onSubmit callback.
-	 */
-	function createDirectoryWithSubmitCallback(
-		id: string,
-		onSubmit: (messageContent: any) => number,
-	): IDirectory {
+	/** A "Mask" over IChannelFactory that specifies the return type of create */
+	interface IChannelFactoryWithCreatedType<T extends IChannel>
+		extends Omit<IChannelFactory, "create"> {
+		create: (...args: Parameters<IChannelFactory["create"]>) => T;
+	}
+
+	/** Each test case runs some code then declares whether it expects a detectable handle to be included in the op payload */
+	interface ITestCase {
+		name: string;
+		doStuff(): void;
+		expectHandlesDetected: boolean;
+	}
+
+	/** This takes care of creating the DDS behind the scenes so the testCase's code is ready to invoke */
+	function createTestCase<T extends IChannel>(
+		factory: IChannelFactoryWithCreatedType<T>,
+		doStuff: (dds: T) => void,
+		expectHandlesDetected: boolean,
+	): ITestCase {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const name = factory.type.split("/").pop()!;
+
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		const deltaConnection = new MockDeltaConnection(onSubmit, () => {});
+		const deltaConnection = new MockDeltaConnection(
+			/* submitFn: */ (message) => {
+				messages.push(message);
+				return 0; // unused
+			},
+			/* dirtyFn: */ () => {},
+		);
 		const services = {
 			deltaConnection,
 			objectStorage: new MockStorage(),
 		};
-		const directory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
-		directory.connect(services);
-		return directory;
+		const dds = factory.create(dataStoreRuntime, name);
+		dds.connect(services);
+
+		return {
+			name,
+			doStuff: () => doStuff(dds),
+			expectHandlesDetected,
+		};
 	}
 
-	describe("Generic test pattern", () => {
-		const handle = new MockHandle("whatever");
-		const messages: any[] = [];
+	const testCases: ITestCase[] = [
+		createTestCase(
+			new DirectoryFactory(),
+			(dds: IDirectory) => {
+				dds.set("whatever", handle);
+			},
+			true /* expectHandlesDetected */,
+		),
+		createTestCase(
+			new ConsensusRegisterCollectionFactory(),
+			(dds) => {
+				dds.write("whatever", handle).catch(() => {
+					assert.fail("crc.write rejected!");
+				});
+			},
+			false /* expectHandlesDetected */,
+		),
+	];
 
-		beforeEach(() => {
-			messages.length = 0;
-		});
-
-		function createTestCase<T extends IChannel>(
-			factory: IChannelFactoryWithCreatedType<T>,
-			doStuff: (dds: T) => void,
-			expectHandlesDetected: boolean,
-		): ITestCase {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const name = factory.type.split("/").pop()!;
-
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			const deltaConnection = new MockDeltaConnection(
-				/* submitFn: */ (message) => {
-					messages.push(message);
-					return 0; // unused
-				},
-				/* dirtyFn: */ () => {},
-			);
-			const services = {
-				deltaConnection,
-				objectStorage: new MockStorage(),
-			};
-			const dds = factory.create(dataStoreRuntime, name);
-			dds.connect(services);
-
-			return {
-				name,
-				doStuff: () => doStuff(dds),
-				expectHandlesDetected,
-			};
-		}
-
-		/** A "Mask" over IChannelFactory that specifies the return type of create */
-		interface IChannelFactoryWithCreatedType<T extends IChannel>
-			extends Omit<IChannelFactory, "create"> {
-			create: (...args: Parameters<IChannelFactory["create"]>) => T;
-		}
-
-		interface ITestCase {
-			name: string;
-			doStuff(): void;
-			expectHandlesDetected: boolean;
-		}
-
-		const testCases: ITestCase[] = [
-			createTestCase(
-				new DirectoryFactory(),
-				(dds: IDirectory) => {
-					dds.set("whatever", handle);
-				},
-				true /* expectHandlesDetected */,
-			),
-			createTestCase(
-				new ConsensusRegisterCollectionFactory(),
-				(dds) => {
-					dds.write("whatever", handle).catch(() => {
-						assert.fail("crc.write rejected!");
-					});
-				},
-				false /* expectHandlesDetected */,
-			),
-		];
-
-		testCases.forEach((testCase) => {
-			it(`should not obscure handles in ${testCase.name} message contents`, async () => {
-				testCase.doStuff();
-
-				assert.equal(messages.length, 1, "Expected a single message to be submitted");
-				assert.equal(
-					detectHandleViaJsonStingify(messages[0]),
-					testCase.expectHandlesDetected,
-					`The handle ${
-						testCase.expectHandlesDetected ? "should" : "should not"
-					} be detected`,
-				);
-			});
-		});
-	});
-
-	//* SKIP
-	//* SKIP
-	//* SKIP
-	//* SKIP
-	//* SKIP
-	//* SKIP
-	describe.skip("SharedMap", () => {
-		it("should not obscure handles in message contents", async () => {
-			const messages: any[] = [];
-			const directory = createDirectoryWithSubmitCallback("directory", (message) => {
-				messages.push(message);
-				return 0; // unused
-			});
-			const handle = new MockHandle("whatever");
-			directory.set("map", handle);
+	testCases.forEach((testCase) => {
+		const shouldOrShouldNot = testCase.expectHandlesDetected ? "should" : "should not";
+		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
+			testCase.doStuff();
 
 			assert.equal(messages.length, 1, "Expected a single message to be submitted");
-			assert(detectHandleViaJsonStingify(messages[0]), "The handle should be detected");
+			assert.equal(
+				detectHandleViaJsonStingify(messages[0]),
+				testCase.expectHandlesDetected,
+				`The handle ${shouldOrShouldNot} be detected`,
+			);
 		});
 	});
 });
