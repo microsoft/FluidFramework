@@ -330,10 +330,10 @@
 				// package.
 				// This reduces the number of source files VSCode needs to load to debug the e2e tests
 				// considerably, which decreases the time it takes to start debugging.
-				"${workspaceFolder}/**/dist/**/!(*.spec,*.test,*.tests).js",
-				"${fileDirname}/../../dist/**/*.js",
-				"${fileDirname}/../../../dist/**/*.js",
-				"${fileDirname}/../../../../dist/**/*.js",
+				"${workspaceFolder}/**/dist/**/!(*.spec,*.test,*.tests).cjs",
+				"${fileDirname}/../../dist/**/*.cjs",
+				"${fileDirname}/../../../dist/**/*.cjs",
+				"${fileDirname}/../../../../dist/**/*.cjs",
 			],
 			"preLaunchTask": "Build Current Tests",
 			"internalConsoleOptions": "openOnSessionStart",
