@@ -2209,6 +2209,23 @@ describe("Editing", () => {
 			assert.equal(valueAfterInsert, "43");
 			unsubscribePathVisitor();
 		});
+
+		// TODO:AB6664 - fix and re-enable the fuzz seed
+		it.skip("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
+			const tree = makeTreeFromJson([1]);
+			const fork = tree.fork();
+
+			tree.editor.optionalField(rootField).set(singleJsonCursor(2), false);
+
+			const { undoStack, redoStack } = createTestUndoRedoStacks(fork.events);
+			fork.editor.optionalField(rootField).set(undefined, false);
+			undoStack.pop()?.revert();
+			redoStack.pop()?.revert();
+
+			fork.rebaseOnto(tree);
+			tree.merge(fork, false);
+			expectJsonTree([fork, tree], []);
+		});
 	});
 
 	describe("Constraints", () => {

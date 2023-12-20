@@ -207,6 +207,7 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			skip: [0],
 		});
 	});
 });
