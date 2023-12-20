@@ -31,7 +31,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
 describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
-	let mainDataStore: ITestDataObject;
+	let mainDataObject: ITestDataObject;
 	let summarizerRuntime: ContainerRuntime;
 	const sweepTimeoutMs = 200;
 
@@ -74,8 +74,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		// These tests validate the GC stats in summary by calling summarize directly on the mainContainer runtime.
-		// They do not post these summaries or download them. So, it doesn't need to run against real services.
+		// These tests validate the GC stats in summary. It disables heuristics and summarizes explicitly on a separate
+		// container. They do not submits these summaries so it doesn't need to run against real services.
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
@@ -93,20 +93,24 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 			loaderProps: { configProvider: mockConfigProvider(settings) },
 		};
 		mainContainer = await provider.makeTestContainer(testContainerConfig);
-		mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
+		mainDataObject = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a second summarizer for running GC and summarizing so that it doesn't summarize local changes.
 		const summarizerContainer = await provider.loadTestContainer(testContainerConfig);
-		const summarizerDataStore = (await summarizerContainer.getEntryPoint()) as ITestDataObject;
-		summarizerRuntime = summarizerDataStore._context.containerRuntime as ContainerRuntime;
-		summarizerDataStore._root.set("write", "mode");
+		const summarizerDataObject = (await summarizerContainer.getEntryPoint()) as ITestDataObject;
+		summarizerRuntime = summarizerDataObject._context.containerRuntime as ContainerRuntime;
+
+		// Ensure the container used to summarize is in write mode. This is necessary because this container may
+		// submit a GC op when GC runs. If it's in read mode, it would attempt to resubmit the op and that would
+		// result in closing the container (GC op can't be resubmitted).
+		summarizerDataObject._root.set("write", "mode");
 		await waitForContainerWriteModeConnectionWrite(summarizerContainer);
 	});
 
 	async function createNewDataStore() {
 		const newDataStore =
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			await mainDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
 		return (await newDataStore.entryPoint.get()) as ITestDataObject;
 	}
 
@@ -139,22 +143,22 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
-		mainDataStore._root.set("dataStore1", dataStore1.handle);
-		mainDataStore._root.set("dataStore2", dataStore2.handle);
+		mainDataObject._root.set("dataStore1", dataStore1.handle);
+		mainDataObject._root.set("dataStore2", dataStore2.handle);
 
 		// Upload 2 attachment blobs and store their handles to mark them referenced.
 		const blob1Contents = "Blob contents 1";
 		const blob2Contents = "Blob contents 2";
 		// Blob stats will be different if we upload while not connected
 		await waitForContainerWriteModeConnectionWrite(mainContainer);
-		const blob1Handle = await mainDataStore._context.uploadBlob(
+		const blob1Handle = await mainDataObject._context.uploadBlob(
 			stringToBuffer(blob1Contents, "utf-8"),
 		);
-		const blob2Handle = await mainDataStore._context.uploadBlob(
+		const blob2Handle = await mainDataObject._context.uploadBlob(
 			stringToBuffer(blob2Contents, "utf-8"),
 		);
-		mainDataStore._root.set("blob1", blob1Handle);
-		mainDataStore._root.set("blob2", blob2Handle);
+		mainDataObject._root.set("blob1", blob1Handle);
+		mainDataObject._root.set("blob2", blob2Handle);
 
 		await provider.ensureSynchronized();
 
@@ -192,22 +196,22 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
-		mainDataStore._root.set("dataStore1", dataStore1.handle);
-		mainDataStore._root.set("dataStore2", dataStore2.handle);
+		mainDataObject._root.set("dataStore1", dataStore1.handle);
+		mainDataObject._root.set("dataStore2", dataStore2.handle);
 
 		// Upload 2 attachment blobs and store their handles to mark them referenced.
 		const blob1Contents = "Blob contents 1";
 		const blob2Contents = "Blob contents 2";
 		// Blob stats will be different if we upload while not connected
 		await waitForContainerWriteModeConnectionWrite(mainContainer);
-		const blob1Handle = await mainDataStore._context.uploadBlob(
+		const blob1Handle = await mainDataObject._context.uploadBlob(
 			stringToBuffer(blob1Contents, "utf-8"),
 		);
-		const blob2Handle = await mainDataStore._context.uploadBlob(
+		const blob2Handle = await mainDataObject._context.uploadBlob(
 			stringToBuffer(blob2Contents, "utf-8"),
 		);
-		mainDataStore._root.set("blob1", blob1Handle);
-		mainDataStore._root.set("blob2", blob2Handle);
+		mainDataObject._root.set("blob1", blob1Handle);
+		mainDataObject._root.set("blob2", blob2Handle);
 
 		await provider.ensureSynchronized();
 
@@ -215,8 +219,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
 		// Remove dataStore1 and blob1's handles to mark them unreferenced.
-		mainDataStore._root.delete("dataStore1");
-		mainDataStore._root.delete("blob1");
+		mainDataObject._root.delete("dataStore1");
+		mainDataObject._root.delete("blob1");
 		await provider.ensureSynchronized();
 
 		// dataStore1, its DDS and blob1 should be now unreferenced. Also, their reference state updated from referenced
@@ -242,8 +246,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		);
 
 		// Remove dataStore2 and blob2's handles to mark them unreferenced.
-		mainDataStore._root.delete("dataStore2");
-		mainDataStore._root.delete("blob2");
+		mainDataObject._root.delete("dataStore2");
+		mainDataObject._root.delete("blob2");
 		await provider.ensureSynchronized();
 
 		// dataStore2, its DDS, and blob2 should be now unreferenced. Also, their reference state updated from referenced
@@ -270,12 +274,15 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		);
 
 		// Deleted stats. Wait for sweep timeout and send an op to update the current reference timestamp. Usually,
-		// GC wouldn't run without ops so this step is not needed but its needed here because we are explicitly
-		// running GC in absence of ops.
+		// GC wouldn't run without ops so this step is not needed for heuristics based summaries. It's needed here
+		// because we are explicitly running GC in absence of ops.
 		await delay(sweepTimeoutMs);
-		mainDataStore._root.set("update", "timestamp");
+		mainDataObject._root.set("update", "timestamp");
 		await provider.ensureSynchronized();
 
+		// Close the main container before running GC which generates a GC op. Otherwise, it will hit this error
+		// "GC_Deleted_DataStore_Unexpected_Delete". We don't expect local data stores to be deleted because
+		// their session expires before deletion. This mimics that behavior.
 		mainContainer.close();
 
 		// Run GC. This will generate a GC sweep op with the sweep ready node ids and wait for the op to be processed.
@@ -322,36 +329,36 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
-		mainDataStore._root.set("dataStore1", dataStore1.handle);
-		mainDataStore._root.set("dataStore2", dataStore2.handle);
+		mainDataObject._root.set("dataStore1", dataStore1.handle);
+		mainDataObject._root.set("dataStore2", dataStore2.handle);
 
 		// Upload 2 attachment blobs and store their handles to mark them referenced.
 		const blob1Contents = "Blob contents 1";
 		const blob2Contents = "Blob contents 2";
 		// Blob stats will be different if we upload while not connected
 		await waitForContainerWriteModeConnectionWrite(mainContainer);
-		const blob1Handle = await mainDataStore._context.uploadBlob(
+		const blob1Handle = await mainDataObject._context.uploadBlob(
 			stringToBuffer(blob1Contents, "utf-8"),
 		);
-		const blob2Handle = await mainDataStore._context.uploadBlob(
+		const blob2Handle = await mainDataObject._context.uploadBlob(
 			stringToBuffer(blob2Contents, "utf-8"),
 		);
-		mainDataStore._root.set("blob1", blob1Handle);
-		mainDataStore._root.set("blob2", blob2Handle);
+		mainDataObject._root.set("blob1", blob1Handle);
+		mainDataObject._root.set("blob2", blob2Handle);
 		await provider.ensureSynchronized();
 
 		// Remove both data store and both blob handles to mark them unreferenced.
-		mainDataStore._root.delete("dataStore1");
-		mainDataStore._root.delete("dataStore2");
-		mainDataStore._root.delete("blob1");
-		mainDataStore._root.delete("blob2");
+		mainDataObject._root.delete("dataStore1");
+		mainDataObject._root.delete("dataStore2");
+		mainDataObject._root.delete("blob1");
+		mainDataObject._root.delete("blob2");
 		await provider.ensureSynchronized();
 
 		// Add all handles back to re-reference them.
-		mainDataStore._root.set("dataStore1", dataStore1.handle);
-		mainDataStore._root.set("dataStore2", dataStore2.handle);
-		mainDataStore._root.set("blob1", blob1Handle);
-		mainDataStore._root.set("blob2", blob2Handle);
+		mainDataObject._root.set("dataStore1", dataStore1.handle);
+		mainDataObject._root.set("dataStore2", dataStore2.handle);
+		mainDataObject._root.set("blob1", blob1Handle);
+		mainDataObject._root.set("blob2", blob2Handle);
 		await provider.ensureSynchronized();
 
 		// Nothing should be unreferenced.
@@ -388,8 +395,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
-		mainDataStore._root.set("dataStore1", dataStore1.handle);
-		mainDataStore._root.set("dataStore2", dataStore2.handle);
+		mainDataObject._root.set("dataStore1", dataStore1.handle);
+		mainDataObject._root.set("dataStore2", dataStore2.handle);
 		await provider.ensureSynchronized();
 
 		// Nothing should be unreferenced.
@@ -397,8 +404,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
 		// Remove both data store handles to mark them unreferenced.
-		mainDataStore._root.delete("dataStore1");
-		mainDataStore._root.delete("dataStore2");
+		mainDataObject._root.delete("dataStore1");
+		mainDataObject._root.delete("dataStore2");
 		await provider.ensureSynchronized();
 
 		// dataStore1, dataStore2 and their DDS should be now unreferenced. Also, their reference state updated
@@ -412,8 +419,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
 		// Add their handle back to re-reference them.
-		mainDataStore._root.set("dataStore1", dataStore1.handle);
-		mainDataStore._root.set("dataStore2", dataStore2.handle);
+		mainDataObject._root.set("dataStore1", dataStore1.handle);
+		mainDataObject._root.set("dataStore2", dataStore2.handle);
 		await provider.ensureSynchronized();
 
 		// dataStore1, dataStore2 and their DDS should be now referenced. Also, their reference state updated
