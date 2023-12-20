@@ -157,8 +157,8 @@ function measureFetch(startFile: string, withBookmarks = false) {
 	for (let i = 0; i < reps; i++) {
 		for (let pos = 0; pos < client.getLength(); ) {
 			// curPG.pos is ca end
-			const curPG = client.findTile(pos, "pg", false)!;
-			const properties = curPG.tile.properties!;
+			const curPG = client.searchForMarker(pos, "pg", true)!;
+			const properties = curPG.properties!;
 			const curSegOff = client.getContainingSegment(pos)!;
 			const curSeg = curSegOff.segment!;
 			// Combine paragraph and direct properties

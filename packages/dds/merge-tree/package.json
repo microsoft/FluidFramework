@@ -187,6 +187,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_Client": {
+				"backCompat": false
+			}
+		}
 	}
 }
