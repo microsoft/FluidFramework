@@ -27,7 +27,7 @@ npm i @fluidframework/task-manager
 
 ## API Documentation
 
-API documentation for **@fluidframework/task-manager** is available at <https://fluidframework.com/docs/api/v1task-manager>.
+API documentation for **@fluidframework/task-manager** is available at <https://fluidframework.com/docs/api/v1/task-manager>.
 
 ## Contribution Guidelines
 
