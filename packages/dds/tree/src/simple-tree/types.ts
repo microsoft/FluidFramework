@@ -19,6 +19,8 @@ import {
 	TreeNodeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { type, WithType } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 
 /**
@@ -51,7 +53,7 @@ export type Unhydrated<T> = T;
  * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
  * @beta
  */
-export abstract class TreeNode {
+export abstract class TreeNode implements WithType {
 	/**
 	 * This is added to prevent TypeScript from implicitly allowing non-TreeNode types to be used as TreeNodes.
 	 * @privateRemarks
@@ -67,8 +69,22 @@ export abstract class TreeNode {
 	 *
 	 * Another option would be to use a symbol (possibly as a private field).
 	 * That approach ran into some strange difficulties causing SchemaFactory to fail to compile, and was not investigated further.
+	 *
+	 * TODO: This is disabled due to compilation of this project not targeting es2022,
+	 * which causes this to polyfill to use of a weak map which has some undesired runtime overhead.
+	 * Consider enabling this for stronger typing after targeting es2022.
+	 * The [type] symbol here provides a lot of the value this private brand would, but is not all of it:
+	 * someone could manually make an object literal with it and pass it off as a node: this private brand would prevent that.
+	 * Another option would be to add a protected or private symbol, which would also get the stronger typing.
 	 */
-	readonly #brand!: unknown;
+	// readonly #brand!: unknown;
+
+	/**
+	 * {@inheritdoc "type"}
+	 * @privateRemarks
+	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
+	 */
+	public abstract get [type](): string;
 }
 
 /**

@@ -269,6 +269,7 @@ export {
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
+	type,
 
 	// experimental @internal APIs:
 	adaptEnum,

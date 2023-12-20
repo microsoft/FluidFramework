@@ -60,7 +60,7 @@ describe("SharedTreeObject factories", () => {
 		grand: {
 			child: {
 				list: [new ChildA({ content: 42 }), new ChildB({ content: 42 })],
-				map: new Map([
+				map: new Map<string, ChildA | ChildB>([
 					["a", new ChildA({ content: 42 })],
 					["b", new ChildB({ content: 42 })],
 				]),
@@ -110,7 +110,7 @@ describe("SharedTreeObject factories", () => {
 		root.grand = new ChildC({
 			child: new ChildD({
 				list: [new ChildA({ content: 43 }), new ChildB({ content: 43 })],
-				map: new Map([
+				map: new Map<string, ChildA | ChildB>([
 					["a", new ChildA({ content: 43 })],
 					["b", new ChildB({ content: 43 })],
 				]),
@@ -128,7 +128,7 @@ describe("SharedTreeObject factories", () => {
 		root.grand = new ChildC({
 			child: new ChildD({
 				list: [new ChildA({ content: 43 }), new ChildB({ content: 43 })],
-				map: new Map([
+				map: new Map<string, ChildA | ChildB>([
 					["a", new ChildA({ content: 43 })],
 					["b", new ChildB({ content: 43 })],
 				]),

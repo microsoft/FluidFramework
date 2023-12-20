@@ -17,4 +17,5 @@ export {
 	ApplyKind,
 	InsertableTypedNode,
 	NodeBuilderData,
+	WithType,
 } from "./schemaTypes";
