@@ -408,6 +408,7 @@ export class GarbageCollector implements IGarbageCollector {
 					{
 						eventName: "GCInitializationOrUpdateFailed",
 						gcConfigs: JSON.stringify(this.configs),
+						clientId,
 					},
 					error,
 				);
@@ -489,8 +490,11 @@ export class GarbageCollector implements IGarbageCollector {
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({
 					...gcStats,
-					timestamp: currentReferenceTimestampMs,
-					sweep: this.configs.shouldRunSweep,
+					details: {
+						timestamp: currentReferenceTimestampMs,
+						sweep: this.configs.shouldRunSweep,
+						tombstone: this.configs.throwOnTombstoneLoad,
+					},
 				});
 
 				/** Post-GC steps */

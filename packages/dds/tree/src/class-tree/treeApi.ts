@@ -28,7 +28,7 @@ import { getFlexSchema } from "./toFlexSchema";
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
  * https://github.com/microsoft/rushstack/issues/1958.
- * @beta
+ * @public
  */
 export interface TreeApi {
 	/**
@@ -79,7 +79,7 @@ export interface TreeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- * @beta
+ * @public
  */
 export const nodeApi: TreeApi = {
 	parent: (node: TreeNode) => {
@@ -137,7 +137,7 @@ export const nodeApi: TreeApi = {
 
 /**
  * A collection of events that can be raised by a {@link TreeNode}.
- * @beta
+ * @public
  */
 export interface TreeNodeEvents {
 	/**
