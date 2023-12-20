@@ -27,6 +27,7 @@ import { SchemaLibrary as SchemaLibrary_2 } from '../feature-libraries';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
+import { TreeNode as TreeNode_2 } from '..';
 import { TreeNodeSchema as TreeNodeSchema_2 } from './schemaTypes';
 import { TreeNodeSchemaClass as TreeNodeSchemaClass_2 } from './schemaTypes';
 import type { TSchema } from '@sinclair/typebox';
@@ -1672,12 +1673,12 @@ export class test_RecursiveObject extends test_RecursiveObject_base {
 }
 
 // @internal
-export const test_RecursiveObject_base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
-readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}>, object & InsertableObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
-readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
+export const test_RecursiveObject_base: TreeNodeSchemaClass_2<"Test Recursive Domain.testObject", NodeKind.Object, object & TreeNode_2 & ObjectFromSchemaRecord_2<    {
+readonly recursive: FieldSchema_2<FieldKind_3.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly number: TreeNodeSchema_2<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
+}>, object & InsertableObjectFromSchemaRecord_2<    {
+readonly recursive: FieldSchema_2<FieldKind_3.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly number: TreeNodeSchema_2<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>, true>;
 
 // @internal
