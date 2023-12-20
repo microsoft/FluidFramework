@@ -21,13 +21,16 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IValueOpEmitter,
 	IValueType,
-	IValueTypeOperationValue,
 	ISharedDefaultMapEvents,
 	IMapMessageLocalMetadata,
 	SequenceOptions,
+	IValueTypeOperationValue,
 } from "./defaultMapInterfaces";
-import { IntervalOpType, SerializedIntervalDelta } from "./intervals";
+import { SerializedIntervalDelta, IntervalDeltaOpType } from "./intervals";
 
+function isMapOperation(op: unknown): op is IMapOperation {
+	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
+}
 /**
  * Defines the means to process and submit a given op on a map.
  */
@@ -55,7 +58,7 @@ interface IMapMessageHandler {
 
 	resubmit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
 
-	getStashedOpLocalMetadata(op: IMapOperation): unknown;
+	getStashedOpLocalMetadata(op: IMapOperation): IMapMessageLocalMetadata;
 }
 
 /**
@@ -307,13 +310,12 @@ export class DefaultMap<T> {
 		return false;
 	}
 
-	public tryGetStashedOpLocalMetadata(op: IMapOperation): unknown {
-		const type: string = op.type;
-		if (this.messageHandlers.has(type)) {
+	public tryGetStashedOpLocalMetadata(op: unknown): IMapMessageLocalMetadata | undefined {
+		if (isMapOperation(op) && this.messageHandlers.has(op.type)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op);
+			return this.messageHandlers.get(op.type)!.getStashedOpLocalMetadata(op);
 		}
-		throw new Error("no apply stashed op handler");
+		return undefined;
 	}
 
 	/**
@@ -417,11 +419,11 @@ export class DefaultMap<T> {
 					this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
 				}
 			},
-			getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
-				assert(
-					false,
-					0x016 /* "apply stashed op not implemented for custom value type ops" */,
-				);
+			getStashedOpLocalMetadata: (op: IMapValueTypeOperation): IMapMessageLocalMetadata => {
+				const localValue = this.data.get(op.key) ?? this.createCore(op.key, true);
+				assert(localValue !== undefined, "Local value expected on applying stashed op");
+				const handler = localValue.getOpHandler(op.value.opName);
+				return handler.applyStashedOp(localValue.value, op.value);
 			},
 		});
 
@@ -438,7 +440,7 @@ export class DefaultMap<T> {
 	private makeMapValueOpEmitter(key: string): IValueOpEmitter {
 		// eslint-disable-next-line import/no-deprecated
 		const emit: IValueOpEmitter["emit"] = (
-			opName: IntervalOpType,
+			opName: IntervalDeltaOpType,
 			previousValue: unknown,
 			params: SerializedIntervalDelta,
 			localOpMetadata: IMapMessageLocalMetadata,

@@ -4,15 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { promises as fs, existsSync, rmSync, mkdirSync } from "fs";
 import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/protocol-definitions";
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { JsonCompatibleReadOnly } from "../../util";
-
-export const regenerateSnapshots = process.argv.includes("--snapshot");
-export const dirPathTail = "src/test/snapshots";
-
-const numberOfSpaces = 2;
+import { takeJsonSnapshot } from "./snapshotTools";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
 	const type =
@@ -117,56 +111,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 	return { type: "tree", entries };
 }
 
-export async function createSnapshot(path: string, data: ISummaryTree): Promise<void> {
+export function takeSummarySnapshot(data: ISummaryTree, suffix = ""): void {
 	const tree = serializeTree(".handle", data, ".app");
-	const dataStr = JSON.stringify(tree, undefined, numberOfSpaces);
-	await fs.writeFile(path, dataStr);
-}
-
-export async function createSchemaSnapshot(
-	path: string,
-	data: JsonCompatibleReadOnly,
-): Promise<void> {
-	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
-	await fs.writeFile(path, dataStr);
-}
-
-export async function verifyEqualPastSchemaSnapshot(
-	path: string,
-	data: JsonCompatibleReadOnly,
-	testName: string,
-): Promise<void> {
-	assert(existsSync(path), `test schema snapshot file does not exist: ${path}`);
-	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
-	const pastDataStr = await fs.readFile(path, "utf-8");
-
-	assert.equal(dataStr, pastDataStr, `snapshot different for ${testName}`);
-}
-
-export async function verifyEqualPastSnapshot(
-	path: string,
-	data: ISummaryTree,
-	testName: string,
-): Promise<void> {
-	assert(existsSync(path), `test snapshot file does not exist: ${path}`);
-	const tree = serializeTree(".handle", data, ".app");
-	const dataStr = JSON.stringify(tree, undefined, numberOfSpaces);
-	const pastDataStr = await fs.readFile(path, "utf-8");
-
-	assert.equal(dataStr, pastDataStr, `snapshot different for ${testName}`);
-}
-
-/**
- * Delete the existing test file directory and recreate it.
- *
- * If the directory does not already exist, this will create it.
- *
- * @param dirPath - The path to the `files/` directory.
- */
-export function regenTestDirectory(dirPath: string): void {
-	if (existsSync(dirPath)) {
-		rmSync(dirPath, { recursive: true, force: true });
-	}
-
-	mkdirSync(dirPath, { recursive: true });
+	takeJsonSnapshot(tree, suffix);
 }

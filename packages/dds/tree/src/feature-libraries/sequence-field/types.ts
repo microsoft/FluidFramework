@@ -31,7 +31,7 @@ export type NodeChangeType = NodeChangeset;
  * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
  * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
  * same detach.
- * @alpha
+ * @internal
  */
 export interface LineageEvent {
 	readonly revision: RevisionTag;
@@ -45,7 +45,7 @@ export interface LineageEvent {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface HasLineage {
 	/**
@@ -60,7 +60,7 @@ export interface IdRange {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface CellId extends ChangeAtomId, HasLineage {
 	/**
@@ -143,16 +143,40 @@ export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
 
-export interface RedetachFields {
+export enum DetachIdOverrideType {
 	/**
-	 * When set, the detach effect is reapplying a prior detach.
-	 * The cell ID specified is used in two ways:
+	 * The detach effect is the inverse of the prior attach characterized by the accompanying `CellId`'s revision and
+	 * local ID.
+	 *
+	 * An override is needed in such a case to ensure that rollbacks and undos return tree content to the appropriate
+	 * detached root. It is also needed to ensure that cell comparisons work properly for undos.
+	 */
+	Unattach = 0,
+	/**
+	 * The detach effect is reapplying a prior detach.
+	 *
+	 * The accompanying cell ID is used in two ways:
 	 * - It indicates the location of the cell (including adjacent cell information) so that rebasing over this detach
 	 * can contribute the correct lineage information to the rebased mark.
 	 * - It specifies the revision and local ID that should be used to characterize the cell in the output context of
 	 * detach.
 	 */
-	redetachId?: CellId;
+	Redetach = 1,
+}
+
+export interface DetachIdOverride {
+	readonly type: DetachIdOverrideType;
+	/**
+	 * This ID should be used instead of the mark's own ID when referring to the cell being emptied.
+	 */
+	readonly id: CellId;
+}
+
+export interface DetachFields {
+	/**
+	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
+	 */
+	readonly idOverride?: DetachIdOverride;
 }
 
 /**
@@ -163,7 +187,7 @@ export interface RedetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Delete extends HasRevisionTag, RedetachFields {
+export interface Delete extends HasRevisionTag, DetachFields {
 	type: "Delete";
 	id: ChangesetLocalId;
 }
@@ -176,7 +200,7 @@ export interface Delete extends HasRevisionTag, RedetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface MoveOut extends HasMoveFields, RedetachFields {
+export interface MoveOut extends HasMoveFields, DetachFields {
 	type: "MoveOut";
 }
 

@@ -74,7 +74,7 @@ import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
  * Copy of data from an {@link ISharedTree} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
- * @alpha
+ * @internal
  */
 export interface SharedTreeContentSnapshot {
 	/**
@@ -89,6 +89,10 @@ export interface SharedTreeContentSnapshot {
 	 * All {@link TreeStatus#InDocument} content.
 	 */
 	readonly tree: JsonableTree[];
+	/**
+	 * All {@link TreeStatus#Removed} content.
+	 */
+	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
 
 /**
@@ -96,7 +100,7 @@ export interface SharedTreeContentSnapshot {
  * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
  *
  * See [the README](../../README.md) for details.
- * @alpha
+ * @internal
  */
 export interface ISharedTree extends ISharedObject, ITree {
 	/**
@@ -290,6 +294,7 @@ export class SharedTree
 			return {
 				schema: this.storedSchema.clone(),
 				tree: jsonableTreeFromFieldCursor(cursor),
+				removed: this.view.getRemovedRoots(),
 			};
 		} finally {
 			cursor.free();
@@ -371,7 +376,7 @@ export class SharedTree
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	/**
@@ -383,7 +388,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 
 /**
  * Used to distinguish between different forest types.
- * @alpha
+ * @internal
  */
 export enum ForestType {
 	/**
@@ -406,7 +411,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
- * @alpha
+ * @internal
  */
 export class SharedTreeFactory implements IChannelFactory {
 	public readonly type: string = "https://graph.microsoft.com/types/tree";

@@ -16,6 +16,46 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/azure-local-service-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/azure-local-service-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/azure-local-service-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/azure-local-service-beta.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/azure-local-service-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/azure-local-service-public.d.ts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"main": "dist/index.js",
@@ -25,7 +65,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",

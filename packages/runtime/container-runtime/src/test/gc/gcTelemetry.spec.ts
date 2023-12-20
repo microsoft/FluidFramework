@@ -31,7 +31,8 @@ import { configProvider } from "./gcUnitTestHelpers";
 
 describe("GC Telemetry Tracker", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
+	const tombstoneTimeoutMs =
+		defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	const inactiveTimeoutMs = 500;
 
 	// Nodes in the reference graph.
@@ -80,7 +81,7 @@ describe("GC Telemetry Tracker", () => {
 			tombstoneMode: false,
 			inactiveTimeoutMs,
 			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-			sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
+			tombstoneTimeoutMs: enableSweep ? tombstoneTimeoutMs : undefined,
 			sweepGracePeriodMs,
 			throwOnTombstoneLoad: false,
 			throwOnTombstoneUsage: false,
@@ -113,7 +114,7 @@ describe("GC Telemetry Tracker", () => {
 					Date.now(),
 					inactiveTimeoutMs,
 					Date.now(),
-					sweepTimeoutMs,
+					tombstoneTimeoutMs,
 					sweepGracePeriodMs,
 				),
 			);
@@ -257,30 +258,30 @@ describe("GC Telemetry Tracker", () => {
 				"inactive events not as expected",
 			);
 
-			// Advance the clock to trigger sweep timeout and validate that TombstoneReady events are as expected.
-			clock.tick(sweepTimeoutMs - inactiveTimeoutMs);
+			// Advance the clock to trigger tombstone timeout and validate that TombstoneReady events are as expected.
+			clock.tick(tombstoneTimeoutMs - inactiveTimeoutMs);
 			mockNodeChanges(nodes);
 			await simulateGCToTriggerEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
 					{
 						eventName: "GarbageCollector:TombstoneReadyObject_Loaded",
-						timeout: sweepTimeoutMs,
+						timeout: tombstoneTimeoutMs,
 						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:TombstoneReadyObject_Changed",
-						timeout: sweepTimeoutMs,
+						timeout: tombstoneTimeoutMs,
 						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:TombstoneReadyObject_Loaded",
-						timeout: sweepTimeoutMs,
+						timeout: tombstoneTimeoutMs,
 						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 					{
 						eventName: "GarbageCollector:TombstoneReadyObject_Changed",
-						timeout: sweepTimeoutMs,
+						timeout: tombstoneTimeoutMs,
 						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 				],
@@ -295,22 +296,22 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
-						timeout: sweepTimeoutMs + sweepGracePeriodMs,
+						timeout: tombstoneTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs + sweepGracePeriodMs,
+						timeout: tombstoneTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
-						timeout: sweepTimeoutMs + sweepGracePeriodMs,
+						timeout: tombstoneTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs + sweepGracePeriodMs,
+						timeout: tombstoneTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 				],
@@ -323,8 +324,8 @@ describe("GC Telemetry Tracker", () => {
 			// Mark node 2 as unreferenced.
 			markNodesUnreferenced([nodes[2]]);
 
-			// Advance the clock to trigger sweep timeout and validate that tombstone revived event is as expected.
-			clock.tick(sweepTimeoutMs + 1);
+			// Advance the clock to trigger tombstone timeout and validate that tombstone revived event is as expected.
+			clock.tick(tombstoneTimeoutMs + 1);
 			reviveNode(nodes[1], nodes[2], true /* isTombstoned */);
 			mockLogger.assertMatch(
 				[
@@ -548,7 +549,7 @@ describe("GC Telemetry Tracker", () => {
 
 		describe("TombstoneReady events", () => {
 			unreferencedPhasesEventTests(
-				sweepTimeoutMs,
+				tombstoneTimeoutMs,
 				"tombstone",
 				"GarbageCollector:TombstoneReadyObject_Revived",
 				"GarbageCollector:TombstoneReadyObject_Changed",
@@ -558,7 +559,7 @@ describe("GC Telemetry Tracker", () => {
 
 		describe("SweepReady events (with no delay)", () => {
 			unreferencedPhasesEventTests(
-				sweepTimeoutMs,
+				tombstoneTimeoutMs,
 				"sweep", // Jump straight to SweepReady given 0 delay
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
@@ -569,7 +570,7 @@ describe("GC Telemetry Tracker", () => {
 
 		describe("SweepReady events", () => {
 			unreferencedPhasesEventTests(
-				sweepTimeoutMs + sweepGracePeriodMs,
+				tombstoneTimeoutMs + sweepGracePeriodMs,
 				"sweep",
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",

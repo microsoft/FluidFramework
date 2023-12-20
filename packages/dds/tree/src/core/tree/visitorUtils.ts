@@ -89,7 +89,7 @@ export function combineVisitors(
 /**
  * Visitor that is notified of changes before, after, and when changes are made.
  * Must be freed after use.
- * @alpha
+ * @internal
  */
 export interface AnnouncedVisitor {
 	/**
