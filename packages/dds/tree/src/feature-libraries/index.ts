@@ -135,7 +135,6 @@ export {
 	Any,
 	SchemaLibraryData,
 	LazyTreeNodeSchema,
-	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,

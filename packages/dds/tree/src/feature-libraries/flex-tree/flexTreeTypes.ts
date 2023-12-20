@@ -9,7 +9,7 @@ import { Assume, FlattenKeys } from "../../util";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	TreeFieldSchema,
-	InternalTypedSchemaTypes,
+	LazyItem,
 	TreeNodeSchema,
 	AllowedTypes,
 	FieldNodeSchema,
@@ -987,7 +987,7 @@ export type FlexTreeUnboxFieldInner<
  * @internal
  */
 export type FlexTreeUnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
-	InternalTypedSchemaTypes.LazyItem<infer InnerType>,
+	LazyItem<infer InnerType>,
 ]
 	? InnerType extends TreeNodeSchema
 		? FlexTreeUnboxNode<InnerType>

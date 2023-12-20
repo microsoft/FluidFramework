@@ -877,7 +877,7 @@ export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> = TSchema exte
 
 // @internal
 export type FlexTreeUnboxNodeUnion<TTypes extends OldAllowedTypes> = TTypes extends readonly [
-InternalTypedSchemaTypes.LazyItem<infer InnerType>
+LazyItem<infer InnerType>
 ] ? InnerType extends FlexTreeNodeSchema ? FlexTreeUnboxNode<InnerType> : InnerType extends Any ? FlexTreeNode : unknown : boolean extends IsArrayOfOne<TTypes> ? FlexTreeUnknownUnboxed : FlexTreeTypedNodeUnion<TTypes>;
 
 // @internal
@@ -1154,48 +1154,6 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitA
 export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
-
-declare namespace InternalClassTreeTypes {
-    export {
-        ObjectFromSchemaRecord,
-        InsertableObjectFromSchemaRecord,
-        TreeNodeFromImplicitAllowedTypes,
-        ImplicitAllowedTypes,
-        FieldKind,
-        InsertableTreeFieldFromImplicitField,
-        AllowedTypes,
-        FieldSchema,
-        ApplyKind,
-        InsertableTypedNode,
-        NodeBuilderData
-    }
-}
-export { InternalClassTreeTypes }
-
-declare namespace InternalTypedSchemaTypes {
-    export {
-        ArrayToUnion,
-        FlexList,
-        LazyItem,
-        ExtractItemType,
-        FlexListToUnion
-    }
-}
-export { InternalTypedSchemaTypes }
-
-declare namespace InternalTypes {
-    export {
-        MakeNominal,
-        RestrictiveReadonlyRecord,
-        NodeKind,
-        TreeNodeSchemaClass,
-        TreeNodeSchemaNonClass,
-        TreeNodeSchemaCore,
-        InternalClassTreeTypes,
-        TreeArrayNodeBase
-    }
-}
-export { InternalTypes }
 
 export { Interval }
 

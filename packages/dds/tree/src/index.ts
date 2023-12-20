@@ -152,7 +152,6 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	EditableTreeEvents,
-	InternalTypedSchemaTypes,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
@@ -289,7 +288,6 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
-	InternalClassTreeTypes,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -306,10 +304,6 @@ export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
-
-// Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalTypes from "./internal";
-export { InternalTypes };
 
 // TODO: When previously tagged '@internal', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
 export {
