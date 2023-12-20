@@ -33,7 +33,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 	let mainContainer: IContainer;
 	let mainDataObject: ITestDataObject;
 	let summarizerRuntime: ContainerRuntime;
-	const sweepTimeoutMs = 200;
+	const tombstoneTimeoutMs = 200;
+	const sweepGracePeriodMs = 0;
 
 	let settings = {};
 
@@ -41,7 +42,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		enableGCSweep: true,
-		sweepGracePeriodMs: 0,
+		sweepGracePeriodMs,
 	};
 
 	/**
@@ -80,7 +81,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 			this.skip();
 		}
 		settings = {};
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 		const testContainerConfig: ITestContainerConfig = {
 			runtimeOptions: {
 				summaryOptions: {
@@ -276,7 +277,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		// Deleted stats. Wait for sweep timeout and send an op to update the current reference timestamp. Usually,
 		// GC wouldn't run without ops so this step is not needed for heuristics based summaries. It's needed here
 		// because we are explicitly running GC in absence of ops.
-		await delay(sweepTimeoutMs);
+		await delay(tombstoneTimeoutMs + sweepGracePeriodMs);
 		mainDataObject._root.set("update", "timestamp");
 		await provider.ensureSynchronized();
 
