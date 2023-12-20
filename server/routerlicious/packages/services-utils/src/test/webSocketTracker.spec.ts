@@ -22,7 +22,7 @@ describe("WebSocketTracker", () => {
 	});
 
 	it("should add and retrieve a socket for a token", () => {
-		let webSocketTracker: WebSocketTracker = new WebSocketTracker();;
+		let webSocketTracker: WebSocketTracker = new WebSocketTracker();
 		const compositeTokenId = "token1";
 		webSocketTracker.addSocketForToken(compositeTokenId, webSocket1);
 
@@ -32,10 +32,10 @@ describe("WebSocketTracker", () => {
 	});
 
 	it("should work for multiple calls", () => {
-		let webSocketTracker: WebSocketTracker = new WebSocketTracker();;
+		let webSocketTracker: WebSocketTracker = new WebSocketTracker();
 		let webSocket1: IWebSocket = {
 			id: "socketId1",
-		} as IWebSocket;;
+		} as IWebSocket;
 		const compositeTokenId1 = "token1";
 
 		// Add 1st socket
@@ -59,7 +59,7 @@ describe("WebSocketTracker", () => {
 
 		// Remove the socket
 		webSocketTracker.removeSocket(webSocket1.id);
-		
+
 		// Check results
 		// socket 1 should not exist
 		sockets = webSocketTracker.getSocketsForToken(compositeTokenId1);
@@ -76,7 +76,7 @@ describe("WebSocketTracker", () => {
 	});
 
 	it("should add socket", () => {
-		let webSocketTracker: WebSocketTracker = new WebSocketTracker();;
+		let webSocketTracker: WebSocketTracker = new WebSocketTracker();
 		webSocketTracker.addSocket(webSocket1);
 
 		const sockets = webSocketTracker.getAllSockets();
