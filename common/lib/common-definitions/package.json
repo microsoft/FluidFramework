@@ -38,7 +38,7 @@
 		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
 		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
 		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",

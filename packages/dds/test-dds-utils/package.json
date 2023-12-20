@@ -42,7 +42,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
