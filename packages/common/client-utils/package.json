@@ -19,14 +19,14 @@
 			},
 			"require": {
 				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.cjs"
+				"default": "./dist/indexNode.js"
 			}
 		}
 	},
-	"main": "dist/index.js",
+	"main": "dist/indexNode.js",
 	"module": "lib/indexNode.mjs",
 	"browser": {
-		"./dist/indexNode.cjs": "./dist/indexBrowser.cjs",
+		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
 		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs",
 		"./lib/indexNode.d.mts": "./lib/indexBrowser.d.mts"
