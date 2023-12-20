@@ -6,7 +6,6 @@
 import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
 import {
-	ChangesetLocalId,
 	EncodedRevisionTag,
 	FieldKey,
 	FieldKindIdentifier,
@@ -20,6 +19,7 @@ import {
 	IMultiFormatCodec,
 	SchemaValidationFunction,
 } from "../../codec";
+import { ChangesetLocalId } from "../change-atom-id";
 import {
 	FieldBatchCodec,
 	FieldBatchEncoder,

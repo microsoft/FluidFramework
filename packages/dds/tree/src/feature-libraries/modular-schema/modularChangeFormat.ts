@@ -4,31 +4,12 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core";
-import {
-	brandedNumberType,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlySchema,
-} from "../../util";
+import { schemaFormat, RevisionTagSchema } from "../../core";
+import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema } from "../../util";
 import { EncodedFieldBatch } from "../chunked-forest";
+import { ChangesetLocalIdSchema } from "../change-atom-id";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
-
-export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
-
-export const EncodedChangeAtomId = Type.Object(
-	{
-		/**
-		 * Uniquely identifies the changeset within which the change was made.
-		 */
-		revision: Type.Optional(RevisionTagSchema),
-		/**
-		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-		 */
-		localId: ChangesetLocalIdSchema,
-	},
-	noAdditionalProps,
-);
 
 const EncodedValueChange = Type.Object(
 	{

@@ -3,15 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangeAtomIdMap,
-	ChangesetLocalId,
-	FieldKey,
-	FieldKindIdentifier,
-	RevisionInfo,
-	RevisionTag,
-} from "../../core";
+import { FieldKey, FieldKindIdentifier, RevisionInfo, RevisionTag } from "../../core";
 import { Brand } from "../../util";
+import { ChangeAtomIdMap, ChangesetLocalId } from "../change-atom-id";
 import { TreeChunk } from "../chunked-forest";
 
 /**

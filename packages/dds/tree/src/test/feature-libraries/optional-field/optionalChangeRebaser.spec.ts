@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
+import { ChangesetLocalId, CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
 import {
-	ChangesetLocalId,
 	DeltaFieldChanges,
 	makeAnonChange,
 	RevisionMetadataSource,

@@ -66,7 +66,6 @@ export {
 	TreeStoredSchema,
 	FieldAnchor,
 	SchemaEvents,
-	ChangesetLocalId,
 	ForestEvents,
 	PathRootPrefix,
 	AnchorSlot,

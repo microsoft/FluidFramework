@@ -8,7 +8,6 @@ import {
 	RevisionTag,
 	FieldKey,
 	mintRevisionTag,
-	ChangesetLocalId,
 	makeAnonChange,
 	tagChange,
 	emptyFieldChanges,
@@ -18,6 +17,7 @@ import {
 	DeltaFieldMap,
 } from "../../../core";
 import {
+	ChangesetLocalId,
 	FieldChange,
 	FieldKinds,
 	NodeChangeset,

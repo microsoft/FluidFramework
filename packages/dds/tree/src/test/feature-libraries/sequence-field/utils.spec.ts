@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeAtomId, mintRevisionTag } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { mintRevisionTag } from "../../../core";
+import { ChangeAtomId, SequenceField as SF } from "../../../feature-libraries";
 import {
 	areInputCellsEmpty,
 	splitMark,

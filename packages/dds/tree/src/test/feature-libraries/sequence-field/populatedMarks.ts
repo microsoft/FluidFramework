@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangeAtomId, SequenceField as SF } from "../../../feature-libraries";
 import { brand, Populated } from "../../../util";
-import { ChangeAtomId, mintRevisionTag, RevisionTag } from "../../../core";
+import { mintRevisionTag, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
 // eslint-disable-next-line import/no-internal-modules
 import { CellMark } from "../../../feature-libraries/sequence-field";

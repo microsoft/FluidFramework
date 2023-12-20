@@ -8,7 +8,7 @@ import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec";
 import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { decodeChangeAtomId, encodeChangeAtomId } from "../utils";
+import { decodeChangeAtomId, encodeChangeAtomId } from "../change-atom-id";
 import {
 	Attach,
 	AttachAndDetach,

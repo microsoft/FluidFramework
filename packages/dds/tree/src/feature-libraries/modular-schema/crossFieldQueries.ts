@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, RevisionTag } from "../../core";
+import { RevisionTag } from "../../core";
 import {
 	RangeMap,
 	RangeQueryResult,
@@ -11,6 +11,7 @@ import {
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util";
+import { ChangesetLocalId } from "../change-atom-id";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;

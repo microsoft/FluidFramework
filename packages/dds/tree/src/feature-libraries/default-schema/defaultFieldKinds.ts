@@ -6,11 +6,11 @@
 import {
 	FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
-	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 } from "../../core";
 import { fail } from "../../util";
+import { ChangesetLocalId } from "../change-atom-id";
 import {
 	FieldKind,
 	allowsTreeSchemaIdentifierSuperset,

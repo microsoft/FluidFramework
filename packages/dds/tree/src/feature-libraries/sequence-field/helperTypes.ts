@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId } from "../../core";
+import { ChangeAtomId } from "../change-atom-id";
 import {
 	CellId,
 	HasMarkFields,

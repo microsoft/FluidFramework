@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core";
+import { RevisionTag } from "../../core";
+import { ChangeAtomId, ChangesetLocalId } from "../change-atom-id";
 import { NodeChangeset } from "../modular-schema";
 
 export type CellCount = number;

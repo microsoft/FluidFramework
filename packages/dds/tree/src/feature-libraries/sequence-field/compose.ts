@@ -5,7 +5,6 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
-	ChangeAtomId,
 	makeAnonChange,
 	RevisionMetadataSource,
 	RevisionTag,
@@ -13,6 +12,7 @@ import {
 	TaggedChange,
 } from "../../core";
 import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
+import { ChangeAtomId } from "../change-atom-id";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import {
 	Changeset,

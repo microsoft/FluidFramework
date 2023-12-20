@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	mintRevisionTag,
-	RevisionTag,
-	tagChange,
-	tagRollbackInverse,
-} from "../../../core";
+import { mintRevisionTag, RevisionTag, tagChange, tagRollbackInverse } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { CellId } from "../../../feature-libraries/sequence-field";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangeAtomId, ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
 import {

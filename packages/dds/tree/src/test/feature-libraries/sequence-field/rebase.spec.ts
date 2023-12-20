@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF } from "../../../feature-libraries";
-import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
+import { ChangeAtomId, SequenceField as SF } from "../../../feature-libraries";
+import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules

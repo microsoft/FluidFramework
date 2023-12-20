@@ -7,9 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	TaggedChange,
 	tagChange,
-	ChangesetLocalId,
 	RevisionTag,
-	areEqualChangeAtomIds,
 	RevisionMetadataSource,
 	DeltaFieldChanges,
 	DeltaDetachedNodeRename,
@@ -18,6 +16,7 @@ import {
 	DeltaDetachedNodeChanges,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
+import { ChangesetLocalId, areEqualChangeAtomIds } from "../change-atom-id";
 import {
 	ToDelta,
 	FieldChangeRebaser,

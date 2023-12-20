@@ -12,9 +12,9 @@ import {
 	DeltaFieldMap,
 	DeltaMark,
 	TaggedChange,
-	areEqualChangeAtomIds,
 	makeDetachedNodeId,
 } from "../../core";
+import { areEqualChangeAtomIds } from "../change-atom-id";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { MarkList, NoopMarkType } from "./types";
 import {

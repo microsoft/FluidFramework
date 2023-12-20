@@ -187,6 +187,18 @@ export {
 } from "./deltaUtils";
 
 export {
+	ChangesetLocalId,
+	ChangeAtomId,
+	ChangeAtomIdRangeMap,
+	ChangeAtomIdMap,
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	encodeChangeAtomId,
+	decodeChangeAtomId,
+	areEqualChangeAtomIds,
+} from "./change-atom-id";
+
+export {
 	TreeChunk,
 	chunkTree,
 	buildChunkedForest,

@@ -5,7 +5,7 @@
 
 import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
 import { RevisionTagSchema } from "../../core";
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../change-atom-id";
 import { unionOptions } from "../../codec";
 import { DetachIdOverrideType } from "./types";
 

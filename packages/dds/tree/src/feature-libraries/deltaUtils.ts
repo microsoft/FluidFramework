@@ -4,7 +4,6 @@
  */
 
 import {
-	ChangeAtomId,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaFieldMap,
@@ -15,6 +14,7 @@ import {
 	makeDetachedNodeId,
 } from "../core";
 import { Mutable } from "../util";
+import { ChangeAtomId } from "./change-atom-id";
 
 export function nodeIdFromChangeAtom(
 	changeAtom: ChangeAtomId,

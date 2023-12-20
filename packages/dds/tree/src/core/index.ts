@@ -147,7 +147,6 @@ export {
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
-	areEqualChangeAtomIds,
 	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
@@ -156,9 +155,6 @@ export {
 	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
-	ChangesetLocalId,
-	ChangeAtomId,
-	ChangeAtomIdMap,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -179,7 +175,6 @@ export {
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
 	EncodedRevisionTag,
-	EncodedChangeAtomId,
 } from "./rebase";
 
 export {

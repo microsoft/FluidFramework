@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { MemoizedIdRangeAllocator } from "../../feature-libraries";
-import { ChangesetLocalId, RevisionTag, mintRevisionTag } from "../../core";
+import { ChangesetLocalId, MemoizedIdRangeAllocator } from "../../feature-libraries";
+import { RevisionTag, mintRevisionTag } from "../../core";
 import { brand } from "../../util";
 
 const tag1: RevisionTag = mintRevisionTag();

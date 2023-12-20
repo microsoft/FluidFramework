@@ -4,7 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
+import { RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId } from "../change-atom-id";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types";

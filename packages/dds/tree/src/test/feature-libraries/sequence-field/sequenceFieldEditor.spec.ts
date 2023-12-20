@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangesetLocalId } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";

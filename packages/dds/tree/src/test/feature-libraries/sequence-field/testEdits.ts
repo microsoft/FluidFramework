@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangeAtomId, ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
-import { ChangeAtomId, ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core";
+import { mintRevisionTag, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
 
 const tag: RevisionTag = mintRevisionTag();

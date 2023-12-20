@@ -11,12 +11,10 @@ import {
 	TreeNodeSchemaIdentifier,
 	mintRevisionTag,
 	tagRollbackInverse,
-	ChangesetLocalId,
-	ChangeAtomId,
 	RevisionInfo,
 	TaggedChange,
 } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangesetLocalId, ChangeAtomId, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";

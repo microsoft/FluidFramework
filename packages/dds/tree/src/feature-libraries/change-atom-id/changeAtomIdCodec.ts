@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IJsonCodec } from "../codec";
-import { RevisionTag, EncodedRevisionTag, ChangeAtomId, EncodedChangeAtomId } from "../core";
+import { IJsonCodec } from "../../codec";
+import { RevisionTag, EncodedRevisionTag } from "../../core";
+import { EncodedChangeAtomId } from "./changeAtomIdFormat";
+import { ChangeAtomId } from "./changeAtomIdTypes";
 
 export function encodeChangeAtomId(
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,

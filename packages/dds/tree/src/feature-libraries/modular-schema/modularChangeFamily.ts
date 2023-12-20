@@ -18,12 +18,10 @@ import {
 	makeAnonChange,
 	ChangeFamilyEditor,
 	FieldUpPath,
-	ChangesetLocalId,
 	isEmptyFieldChanges,
 	RevisionMetadataSource,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
-	ChangeAtomIdMap,
 	makeDetachedNodeId,
 	ITreeCursor,
 	emptyDelta,
@@ -49,6 +47,7 @@ import {
 	isReadonlyArray,
 	Mutable,
 } from "../../util";
+import { ChangeAtomIdMap, ChangesetLocalId } from "../change-atom-id";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { TreeChunk, chunkTree, defaultChunkPolicy, makeFieldBatchCodec } from "../chunked-forest";
 import {

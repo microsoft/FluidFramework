@@ -5,9 +5,8 @@
 
 import { strict } from "assert";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
 import {
-	ChangesetLocalId,
 	DeltaFieldChanges,
 	RevisionInfo,
 	RevisionMetadataSource,

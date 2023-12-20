@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, RevisionTag } from "../core";
+import { RevisionTag } from "../core";
 import {
 	RangeMap,
 	getOrAddEmptyToMap,
@@ -12,6 +12,7 @@ import {
 	Mutable,
 	brand,
 } from "../util";
+import { ChangesetLocalId } from "./change-atom-id";
 
 /**
  * A unique ID allocator that returns the output ID for the same input ID.

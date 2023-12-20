@@ -4,9 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
 import {
-	ChangesetLocalId,
 	makeAnonChange,
 	mintRevisionTag,
 	RevisionTag,

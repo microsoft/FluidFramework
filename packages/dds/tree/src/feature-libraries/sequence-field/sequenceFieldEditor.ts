@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangesetLocalId } from "../../core";
+import { ChangesetLocalId } from "../change-atom-id";
 import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
 import {

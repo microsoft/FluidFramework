@@ -4,14 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ChangeAtomId,
-	DeltaDetachedNodeId,
-	makeAnonChange,
-	mintRevisionTag,
-	tagChange,
-} from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { DeltaDetachedNodeId, makeAnonChange, mintRevisionTag, tagChange } from "../../../core";
+import { ChangeAtomId, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { TestChangeset, MarkMaker as Mark } from "./testEdits";

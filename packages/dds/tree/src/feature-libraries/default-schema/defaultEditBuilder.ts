@@ -17,10 +17,10 @@ import {
 	topDownPath,
 	TaggedChange,
 	DeltaRoot,
-	ChangesetLocalId,
 	DeltaDetachedNodeId,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
+import { ChangesetLocalId } from "../change-atom-id";
 import {
 	ModularChangeFamily,
 	ModularEditBuilder,
