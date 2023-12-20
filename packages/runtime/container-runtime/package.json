@@ -14,7 +14,7 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"default": "./dist/index.cjs"
+			"default": "./dist/index.js"
 		},
 		"./test/containerRuntime": {
 			"import": {
@@ -83,7 +83,7 @@
 			},
 			"require": {
 				"types": "./dist/container-runtime-alpha.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
@@ -93,7 +93,7 @@
 			},
 			"require": {
 				"types": "./dist/container-runtime-beta.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
@@ -103,7 +103,7 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./public": {
@@ -113,11 +113,11 @@
 			},
 			"require": {
 				"types": "./dist/container-runtime-public.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {

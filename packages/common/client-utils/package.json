@@ -23,7 +23,7 @@
 			}
 		}
 	},
-	"main": "dist/indexNode.cjs",
+	"main": "dist/index.js",
 	"module": "lib/indexNode.mjs",
 	"browser": {
 		"./dist/indexNode.cjs": "./dist/indexBrowser.cjs",

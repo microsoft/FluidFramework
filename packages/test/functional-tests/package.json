@@ -88,5 +88,6 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	}
+	},
+	"main": "dist/index.js"
 }
