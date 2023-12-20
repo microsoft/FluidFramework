@@ -35,7 +35,7 @@ import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilde
 
 /**
  * Events for {@link ITreeCheckout}.
- * @beta
+ * @public
  */
 export interface CheckoutEvents {
 	/**

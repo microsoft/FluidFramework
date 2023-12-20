@@ -28,7 +28,7 @@ import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
- * @beta
+ * @public
  */
 export type Unhydrated<T> = T;
 
@@ -52,14 +52,14 @@ export type Unhydrated<T> = T;
  * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
  * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
  * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
- * @beta
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class TreeNode {}
 
 /**
  * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
- * @beta
+ * @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -274,7 +274,7 @@ export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @beta
+ * @public
  */
 export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
 	/**
