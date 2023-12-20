@@ -74,8 +74,6 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			// TODO: This test currently *requires* the detachedStart option be enabled in the fuzz harness, since
-			// the fuzz harness doesn't legitimately finalize creation ranges with the option disabled.
 			clientJoinOptions: {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
