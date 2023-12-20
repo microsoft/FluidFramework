@@ -79,7 +79,10 @@ function makeV0Codec<TNodeChange>(
 									? undefined
 									: {
 											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id, originatorId),
+											id: cellIdCodec.encode(
+												effect.idOverride.id,
+												originatorId,
+											),
 									  },
 							id: effect.id,
 						},
@@ -100,7 +103,10 @@ function makeV0Codec<TNodeChange>(
 									? undefined
 									: {
 											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id, originatorId),
+											id: cellIdCodec.encode(
+												effect.idOverride.id,
+												originatorId,
+											),
 									  },
 							id: effect.id,
 						},

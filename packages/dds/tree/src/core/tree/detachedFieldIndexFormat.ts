@@ -17,11 +17,7 @@ const MinorSchema = Type.Number();
 const ForestRootIdSchema = brandedNumberType<ForestRootId>();
 
 // Define the tuple:
-const TupleSchema = Type.Tuple([
-	MajorSchema,
-	MinorSchema,
-	ForestRootIdSchema,
-]);
+const TupleSchema = Type.Tuple([MajorSchema, MinorSchema, ForestRootIdSchema]);
 
 export const Format = Type.Object(
 	{

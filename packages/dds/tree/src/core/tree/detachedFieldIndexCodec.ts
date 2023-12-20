@@ -14,7 +14,10 @@ import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexType
 
 class MajorCodec implements IJsonCodec<Major> {
 	private readonly revisionTagCodec: RevisionTagCodec;
-	public constructor (private readonly idCompressor: IIdCompressor, private readonly options: ICodecOptions) {
+	public constructor(
+		private readonly idCompressor: IIdCompressor,
+		private readonly options: ICodecOptions,
+	) {
 		this.revisionTagCodec = new RevisionTagCodec(idCompressor);
 	}
 
@@ -28,14 +31,17 @@ class MajorCodec implements IJsonCodec<Major> {
 		 * The revision associated with a detached root generally comes from the session which detaches that subtree,
 		 * which isn't generally the local session (nor is it available at decode time), despite decode using
 		 * the local session id.
-		 * 
+		 *
 		 * This is made OK by enforcing that all ids on encode/decode are non-local, since local ids won't be interpretable
 		 * at decode time.
 		 * This assert is valid because the revision for an acked edit will have already been finalized, and a revision
 		 * for a local-only edit will be finalizable at summarization time (local edits can only occur on a summarizing client
 		 * if they're created while detached, and local ids made while detached are finalized before generating the attach summary).
 		 */
-		assert(id === 'root' || id >= 0, "Expected final id on encode of detached field index revision");
+		assert(
+			id === "root" || id >= 0,
+			"Expected final id on encode of detached field index revision",
+		);
 		return id;
 	}
 
@@ -45,11 +51,13 @@ class MajorCodec implements IJsonCodec<Major> {
 		if (major === null) {
 			return undefined;
 		}
-		assert(major === 'root' || major >= 0, "Expected final id on decode of detached field index revision");
+		assert(
+			major === "root" || major >= 0,
+			"Expected final id on decode of detached field index revision",
+		);
 		return this.revisionTagCodec.decode(major, this.idCompressor.localSessionId);
 	}
 }
-
 
 export class DetachedNodeToFieldCodec implements IJsonCodec<DetachedFieldSummaryData, string> {
 	private readonly majorCodec: MajorCodec;
@@ -66,11 +74,7 @@ export class DetachedNodeToFieldCodec implements IJsonCodec<DetachedFieldSummary
 		const formatValidator = this.options.jsonValidator.compile(Format);
 		const detachedNodeToFieldData: [EncodedRevisionTag | null, Minor, ForestRootId][] = [];
 		forEachInNestedMap(data.data, (root, key1, key2) => {
-			detachedNodeToFieldData.push([
-				this.majorCodec.encode(key1),
-				key2,
-				root,
-			]);
+			detachedNodeToFieldData.push([this.majorCodec.encode(key1), key2, root]);
 		});
 		const encoded = {
 			version,

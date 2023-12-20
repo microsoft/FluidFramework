@@ -16,9 +16,7 @@ export {
 	ChangeAtomIdMap,
 	SessionIdSchema,
 } from "./types";
-export {
-	RevisionTagCodec,
-} from "./revisionTagCodec";
+export { RevisionTagCodec } from "./revisionTagCodec";
 export {
 	ChangeRebaser,
 	FinalChange,

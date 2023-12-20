@@ -1439,7 +1439,7 @@ export enum RevertResult {
 }
 
 // @internal
-export type RevisionTag = SessionSpaceCompressedId | 'root';
+export type RevisionTag = SessionSpaceCompressedId | "root";
 
 // @internal
 export interface RootField {

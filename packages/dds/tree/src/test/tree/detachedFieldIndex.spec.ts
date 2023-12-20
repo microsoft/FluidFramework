@@ -53,9 +53,9 @@ const malformedData: [string, string][] = [
 		JSON.stringify({
 			version: 1,
 			data: [[malformedIdCompressor.generateCompressedId(), 2, 3]],
-			maxId: -1
-		})
-	]
+			maxId: -1,
+		}),
+	],
 ];
 
 const validData: [string, string][] = [
@@ -119,7 +119,10 @@ describe("DetachedFieldIndex", () => {
 							jsonValidator: typeboxValidator,
 						},
 					);
-					assert.throws(() => detachedFieldIndex.loadData(data), "Expected malformed data to throw an error on decode, but it did not.");
+					assert.throws(
+						() => detachedFieldIndex.loadData(data),
+						"Expected malformed data to throw an error on decode, but it did not.",
+					);
 				});
 			}
 		});

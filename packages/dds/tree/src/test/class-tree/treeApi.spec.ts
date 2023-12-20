@@ -23,7 +23,10 @@ const factory = new TreeFactory({});
 describe("treeApi", () => {
 	it("is", () => {
 		const config = new TreeConfiguration([Point, schema.number], () => ({}));
-		const tree = factory.create(new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const root = tree.schematize(config).root;
 		assert(nodeApi.is(root, Point));
 		assert(root instanceof Point);
@@ -38,7 +41,10 @@ describe("treeApi", () => {
 	});
 	it("schema", () => {
 		const config = new TreeConfiguration([Point, schema.number], () => ({}));
-		const tree = factory.create(new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const root = tree.schematize(config).root;
 		assert.equal(nodeApi.schema(root), Point);
 		assert.equal(nodeApi.schema(5), schema.number);
@@ -47,7 +53,10 @@ describe("treeApi", () => {
 		class Child extends schema.object("Child", { x: Point }) {}
 		const Root = schema.array(Child);
 		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
-		const tree = factory.create(new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const root = tree.schematize(config).root;
 		assert.equal(nodeApi.key(root), rootFieldKey);
 		assert.equal(nodeApi.key(root[0]), 0);
@@ -59,7 +68,10 @@ describe("treeApi", () => {
 		class Child extends schema.object("Child", { x: Point }) {}
 		const Root = schema.array(Child);
 		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
-		const tree = factory.create(new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const root = tree.schematize(config).root;
 		assert.equal(nodeApi.parent(root), undefined);
 		assert.equal(nodeApi.parent(root[0]), root);
@@ -70,7 +82,10 @@ describe("treeApi", () => {
 	it("treeStatus", () => {
 		class Root extends schema.object("Root", { x: Point }) {}
 		const config = new TreeConfiguration(Root, () => ({ x: {} }));
-		const tree = factory.create(new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const root = tree.schematize(config).root;
 		const child = root.x;
 		const newChild = new Point({});
