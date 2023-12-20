@@ -268,7 +268,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 						input,
 						allowAdditionalProperties,
 						this,
-					) as schema;
+					) as unknown as schema;
 				}
 			}
 		}

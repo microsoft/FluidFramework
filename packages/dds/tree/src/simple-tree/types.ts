@@ -229,9 +229,8 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 /**
  * An object which supports property-based access to fields.
  */
-export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeObjectNodeFields<
-	TSchema["objectNodeFieldsObject"]
->;
+export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeNode &
+	TreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
  * Helper for generating the properties of a {@link TreeObjectNode}.
