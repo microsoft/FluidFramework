@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand } from "../../util";
 import {
@@ -43,7 +44,6 @@ import {
 	rootFieldKey,
 } from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
@@ -330,10 +330,7 @@ export function generateTestTrees() {
 					id: "test",
 					idCompressor,
 				});
-				const baseTree = factory.create(
-					runtime,
-					"test",
-				);
+				const baseTree = factory.create(runtime, "test");
 
 				const tree1 = baseTree.schematizeInternal({
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -351,7 +348,7 @@ export function generateTestTrees() {
 				tree2.rebaseOnto(tree1);
 				tree1.merge(tree2);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange())
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, "tree2");
 
 				const expected = ["x", "y", "a", "b", "c"];
@@ -364,7 +361,7 @@ export function generateTestTrees() {
 				tree3.rebaseOnto(tree1);
 				tree1.merge(tree3);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange())
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, "tree3");
 			},
 		},
@@ -414,7 +411,7 @@ export function generateTestTrees() {
 					true,
 				);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange())
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");
 			},
 		},
@@ -467,7 +464,7 @@ export function generateTestTrees() {
 					})
 					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
 				view.transaction.commit();
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange())
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");
 			},
 		},

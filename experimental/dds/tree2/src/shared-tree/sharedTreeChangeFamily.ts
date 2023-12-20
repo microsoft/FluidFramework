@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecFamily, ICodecOptions } from "../codec";
 import {
 	ChangeEncodingContext,
@@ -13,13 +14,16 @@ import {
 	TaggedChange,
 	mapTaggedChange,
 } from "../core";
-import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
+import {
+	fieldKinds,
+	ModularChangeFamily,
+	ModularChangeset,
+	FieldBatchCodec,
+} from "../feature-libraries";
 import { Mutable, fail } from "../util";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import { FieldBatchCodec } from "../feature-libraries/chunked-forest";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.

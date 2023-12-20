@@ -4,6 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -22,7 +23,6 @@ import { SessionAwareCodec, makeCodecFamily } from "../codec";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util";
 import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { deepFreeze } from "./utils";
-import { SessionId } from "@fluidframework/id-compressor";
 
 export interface NonEmptyTestChange {
 	/**

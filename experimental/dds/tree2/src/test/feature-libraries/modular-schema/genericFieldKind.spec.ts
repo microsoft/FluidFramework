@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	NodeChangeset,
 	GenericChangeset,
@@ -27,13 +28,12 @@ import {
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils";
-import { IJsonCodec, SessionAwareCodec } from "../../../codec";
+import { SessionAwareCodec } from "../../../codec";
 import { RevisionTagCodec } from "../../../shared-tree-core";
 import { singleJsonCursor } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
-import { SessionId } from "@fluidframework/id-compressor";
 
 const valueFieldKey: FieldKey = brand("Value");
 

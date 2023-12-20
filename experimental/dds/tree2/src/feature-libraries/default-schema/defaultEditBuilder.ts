@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { OptionalChangeset } from "../optional-field";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {

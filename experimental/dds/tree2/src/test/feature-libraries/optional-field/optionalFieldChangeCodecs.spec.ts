@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import { NodeChangeset } from "../../../feature-libraries";
 import { JsonCompatibleReadOnly, brand } from "../../../util";
 import { EncodingTestData, MockIdCompressor, makeEncodingTestSuite } from "../../utils";
@@ -16,7 +17,6 @@ import {
 import { SessionAwareCodec } from "../../../codec";
 import { changesetForChild } from "../fieldKindTestUtils";
 import { RevisionTagCodec } from "../../../shared-tree-core";
-import { SessionId } from "@fluidframework/id-compressor";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 

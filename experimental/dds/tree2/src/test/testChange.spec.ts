@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import { cursorForJsonableTreeNode } from "../feature-libraries";
 import {
 	makeAnonChange,
@@ -20,7 +21,6 @@ import { TestChange } from "./testChange";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
 import { deepFreeze, mintRevisionTag } from "./utils";
-import { SessionId } from "@fluidframework/id-compressor";
 
 describe("TestChange", () => {
 	it("can be composed", () => {

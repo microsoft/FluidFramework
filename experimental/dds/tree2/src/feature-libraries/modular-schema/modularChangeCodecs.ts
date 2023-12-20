@@ -43,7 +43,7 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 } from "./modularChangeTypes";
-import { FieldKindWithEditor, FullSchemaPolicy } from "./fieldKind";
+import { FieldKindWithEditor } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 import {
 	EncodedBuilds,

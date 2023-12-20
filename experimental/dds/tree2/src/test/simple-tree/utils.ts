@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	TreeFieldSchema,
@@ -25,7 +26,6 @@ import { TreeFactory } from "../../treeFactory";
 import { typeboxValidator } from "../../external-utilities";
 import { ForestType } from "../../shared-tree";
 import { flexTreeWithContent } from "../utils";
-import { createIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Helper for making small test schemas.

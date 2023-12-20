@@ -7,12 +7,7 @@ import { SessionId } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
-import {
-	DiscriminatedUnionDispatcher,
-	IJsonCodec,
-	SessionAwareCodec,
-	makeCodecFamily,
-} from "../../codec";
+import { DiscriminatedUnionDispatcher, SessionAwareCodec, makeCodecFamily } from "../../codec";
 import { EncodedRevisionTag, RevisionTag } from "../../core";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec";
 import {

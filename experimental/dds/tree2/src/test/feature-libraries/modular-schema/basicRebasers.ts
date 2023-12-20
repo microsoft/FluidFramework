@@ -18,7 +18,7 @@ import { makeCodecFamily } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core";
 import { Multiplicity } from "../../../feature-libraries";
-import { makeValueCodec } from "../../codec/utils";
+import { makeValueCodec } from "../../codec";
 
 /**
  * Picks the last value written.

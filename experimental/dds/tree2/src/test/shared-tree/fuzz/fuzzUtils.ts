@@ -4,6 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { createIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	moveToDetachedField,
@@ -24,7 +25,6 @@ import {
 import { SharedTree, ITreeCheckout } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.objectRecursive("node", {

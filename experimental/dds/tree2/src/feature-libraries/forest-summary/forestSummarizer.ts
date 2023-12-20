@@ -23,7 +23,6 @@ import {
 	makeDetachedFieldIndex,
 	mapCursorField,
 	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
 } from "../../core";
 import {
 	Summarizable,
@@ -33,8 +32,6 @@ import {
 import { idAllocatorFromMaxId } from "../../util";
 import { ICodecOptions, noopValidator } from "../../codec";
 import { FieldBatchCodec } from "../chunked-forest";
-import { FullSchemaPolicy } from "../modular-schema";
-import { TreeCompressionStrategy } from "../treeCompressionUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree";
 import { Format } from "./format";
@@ -50,7 +47,7 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private codec: ForestCodec;
+	private readonly codec: ForestCodec;
 
 	public constructor(
 		private readonly forest: IEditableForest,

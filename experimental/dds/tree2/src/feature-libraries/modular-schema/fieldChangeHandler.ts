@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	TaggedChange,
 	RevisionTag,
@@ -17,7 +18,6 @@ import { ICodecFamily, SessionAwareCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
 import { NodeChangeset } from "./modularChangeTypes";
-import { SessionId } from "@fluidframework/id-compressor";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import { ChangeAtomId } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import {
@@ -16,7 +17,6 @@ import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
 import { populatedMarks } from "./populatedMarks";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 
 const idCompressor = createIdCompressor("ca239bfe-7ce4-49dc-93a5-5e72ce8f089c" as SessionId);
 const vestigialEndpoint: ChangeAtomId = {

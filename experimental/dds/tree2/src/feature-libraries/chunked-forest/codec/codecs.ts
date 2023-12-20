@@ -4,13 +4,13 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { CursorLocationType, ITreeCursorSynchronous, StoredSchemaCollection } from "../../../core";
+import { CursorLocationType, StoredSchemaCollection } from "../../../core";
 import { JsonCompatibleReadOnly } from "../../../util";
 import { ICodecOptions, IJsonCodec } from "../../../codec";
 import { FullSchemaPolicy } from "../../modular-schema";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils";
-import { EncodedFieldBatch, validVersions } from "./format";
 import { makeVersionedValidatedCodec } from "../../versioned";
+import { EncodedFieldBatch, validVersions } from "./format";
 import { decode } from "./chunkDecoding";
 import { schemaCompressedEncode } from "./schemaBasedEncoding";
 import { FieldBatch } from "./fieldBatch";

@@ -4,14 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import {
-	ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
-	SessionAwareCodec,
-	makeCodecFamily,
-} from "../../codec";
+import { IIdCompressor } from "@fluidframework/id-compressor";
+import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -40,9 +34,9 @@ import {
 	DeltaRoot,
 	ITreeCursorSynchronous,
 	DeltaDetachedNodeId,
-	EncodedRevisionTag,
 	ChangeEncodingContext,
 } from "../../core";
+import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	forEachInNestedMap,
@@ -83,8 +77,6 @@ import {
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 import { makeV0Codec } from "./modularChangeCodecs";
-import { EncodedModularChangeset } from "./modularChangeFormat";
-import { RevisionTagCodec } from "../../shared-tree-core";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind

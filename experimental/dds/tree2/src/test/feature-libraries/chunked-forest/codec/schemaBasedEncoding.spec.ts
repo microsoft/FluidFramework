@@ -49,8 +49,8 @@ import {
 import { leaf, SchemaBuilder } from "../../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema";
-import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 import { ajvValidator } from "../../../codec";
+import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);

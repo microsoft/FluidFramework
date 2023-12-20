@@ -4,3 +4,4 @@
  */
 
 export { ajvValidator } from "./ajvValidator";
+export { makeValueCodec } from "./utils";
