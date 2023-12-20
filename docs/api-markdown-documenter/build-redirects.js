@@ -13,9 +13,9 @@ const configFileName = "staticwebapp.config.json";
 const config = require(`../static/${configFileName}`);
 
 const routes = {
-	"/docs/api/v1/{*}": `/docs/api/${currentVersion}/{*}`,
-	"/docs/api/current/{*}": `/docs/api/${currentVersion}/{*}`,
-	"/docs/api/lts/{*}": `/docs/api/${ltsVersion}/{*}`,
+	"/docs/apis": `/docs/api/${currentVersion}`,
+	// "/docs/api/current/*": `/docs/api/${currentVersion}/*`,
+	// "/docs/api/lts/*": `/docs/api/${ltsVersion}/*`,
 };
 
 /**
