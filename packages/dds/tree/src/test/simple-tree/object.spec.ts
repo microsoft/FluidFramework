@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	ImplicitFieldSchema,
+	NodeKind,
 	SchemaFactory,
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
@@ -314,7 +315,7 @@ describe("Object-like", () => {
 	describe("supports setting", () => {
 		describe("primitives", () => {
 			function check<const TNode>(
-				schema: TreeNodeSchema<string, any, TNode>,
+				schema: TreeNodeSchema<string, NodeKind, TNode>,
 				before: TNode,
 				after: TNode,
 			) {
