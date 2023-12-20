@@ -160,7 +160,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	/**
 	 * This stores IDs of tombstoned blobs.
-	 * GC knows these blobs won't be referenced again, and it will soon delete them.
+	 *
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
 	 */
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
@@ -802,7 +804,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	/**
 	 * This is called to update blobs whose routes are tombstones.
-	 * GC knows these blobs won't be referenced again, and it will soon delete them.
+	 *
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
+	 *
 	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
