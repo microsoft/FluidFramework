@@ -195,6 +195,13 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 				"Min Seq # <= seq #",
 			);
 
+			// Check blobs contents for protocolAttributes
+			const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+			assert(
+				snapshotBlobs[protocolAttributesBlobId] !== undefined,
+				"Blobs should contain attributes blob",
+			);
+
 			// Check for default dataStore
 			const { datastoreTree: snapshotDefaultDataStore } = assertDatastoreTree(
 				snapshotTree,
