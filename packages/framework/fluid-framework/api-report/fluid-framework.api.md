@@ -96,11 +96,11 @@ import type { TSchema } from '@sinclair/typebox';
 // @internal
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => {
     readonly value: TValue;
-    readonly "__#3@#brand"?: unknown;
+    readonly "__#3@#brand": unknown;
 }) & { readonly [Property in keyof TEnum]: {
         new (data?: EmptyObject | undefined): {
             readonly value: TEnum[Property];
-            readonly "__#3@#brand"?: unknown;
+            readonly "__#3@#brand": unknown;
         };
         readonly identifier: `${TScope}.${TEnum[Property]}`;
         readonly kind: NodeKind.Object;
@@ -531,11 +531,11 @@ export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
 // @internal
 export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => {
     readonly value: TValue;
-    readonly "__#3@#brand"?: unknown;
+    readonly "__#3@#brand": unknown;
 }) & Record<Members, {
     new (data?: EmptyObject | undefined): {
         readonly value: Members;
-        readonly "__#3@#brand"?: unknown;
+        readonly "__#3@#brand": unknown;
     };
     readonly identifier: `${TScope}.${Members}`;
     readonly kind: NodeKind.Object;
@@ -2086,7 +2086,7 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): {
     new (data?: EmptyObject): {
         readonly value: TName;
-        readonly "__#3@#brand"?: unknown;
+        readonly "__#3@#brand": unknown;
     };
     readonly identifier: `${TScope}.${TName}`;
     readonly kind: NodeKind.Object;
