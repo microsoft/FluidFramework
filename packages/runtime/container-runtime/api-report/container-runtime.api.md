@@ -416,14 +416,14 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly override?: boolean;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IGCMetadata {
     readonly gcFeature?: GCVersion;
     readonly gcFeatureMatrix?: GCFeatureMatrix;
     readonly sessionExpiryTimeoutMs?: number;
     // @deprecated
     readonly sweepEnabled?: boolean;
-    readonly sweepTimeoutMs?: number;
+    readonly tombstoneTimeoutMs?: number;
 }
 
 // @alpha (undocumented)

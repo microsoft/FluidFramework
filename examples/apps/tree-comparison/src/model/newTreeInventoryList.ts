@@ -4,15 +4,13 @@
  */
 
 import {
-	ForestType,
 	ISharedTree,
 	Tree,
 	TreeConfiguration,
 	SchemaFactory,
-	typeboxValidator,
-	TreeFactory,
+	SharedTree,
 	NodeFromSchema,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -58,11 +56,7 @@ export const treeConfiguration = new TreeConfiguration(
 		}),
 );
 
-const newTreeFactory = new TreeFactory({
-	jsonValidator: typeboxValidator,
-	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
-	forest: ForestType.Reference,
-});
+const newTreeFactory = SharedTree.getFactory();
 
 const sharedTreeKey = "sharedTree";
 

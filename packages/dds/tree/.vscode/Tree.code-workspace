@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "FluidFramework",
+			"path": "../../../../"
+		},
+		{
+			"name": "@fluidframework/tree",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"search.followSymlinks": false
+	}
+}

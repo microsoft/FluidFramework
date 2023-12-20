@@ -39,9 +39,9 @@ stages:
         - experimental/dds/tree
         testFileTarName: experimental-tree
         testCommand: test:stress
-      - name: "@fluid-experimental/tree2"
+      - name: "@fluidframework/tree"
         affectedPaths:
         - experimental/dds/tree2
-        testFileTarName: experimental-tree2
+        testFileTarName: tree
         testCommand: test:stress
       testWorkspace: ${{ variables.testWorkspace }}

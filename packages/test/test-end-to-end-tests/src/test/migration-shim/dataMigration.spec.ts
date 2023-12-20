@@ -18,12 +18,12 @@ import {
 } from "@fluid-experimental/tree";
 import {
 	type ITree,
-	TreeFactory,
+	SharedTree,
 	disposeSymbol,
 	type TreeView,
 	TreeConfiguration,
 	SchemaFactory,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -45,7 +45,7 @@ const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	private channel?: IChannel;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+
 	public get _root() {
 		return this.root;
 	}
@@ -140,7 +140,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacyTreeFactory = LegacySharedTree.getFactory();
-	const newTreeFactory = new TreeFactory({});
+	const newTreeFactory = SharedTree.getFactory();
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacyTreeFactory,
@@ -151,7 +151,6 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nodeId = rootNode.traits.get(legacyNodeId)![0];
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
 			newTree
 				.schematize(

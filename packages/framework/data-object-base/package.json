@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/data-object-base",
-	"version": "2.0.0-internal.9.0.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "Data object base for synchronously and lazily loaded object scenarios",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,6 +11,58 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/data-object-base-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/data-object-base-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/data-object-base-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/data-object-base-beta.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/data-object-base-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/data-object-base-public.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
@@ -23,13 +75,13 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:test": "tsc-multi --config ./tsc-multi.test.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib es5 \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
@@ -60,10 +112,10 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "^0.28.0",
+		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.7.2.0",
+		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/node": "^18.19.0",
@@ -87,10 +139,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_LazyLoadedDataObject": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
