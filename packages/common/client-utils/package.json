@@ -41,7 +41,10 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
+		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
+		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
+		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -134,6 +137,12 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"eslint": [
+				"tsc",
+				"build:test:mocha",
+				"build:test:jest",
+				"build:test:types"
+			],
 			"build:docs": {
 				"dependsOn": [
 					"...",
@@ -141,7 +150,16 @@
 					"api-extractor:esnext"
 				],
 				"script": false
-			}
+			},
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha": [
+				"tsc"
+			],
+			"build:test:types": [
+				"tsc"
+			]
 		}
 	},
 	"typeValidation": {
