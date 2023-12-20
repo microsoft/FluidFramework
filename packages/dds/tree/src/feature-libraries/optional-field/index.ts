@@ -8,6 +8,7 @@ export { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
 export {
 	optionalChangeHandler,
 	optionalFieldEditor,
+	OptionalFieldEditor,
 	optionalChangeRebaser,
 	optionalFieldIntoDelta,
 } from "./optionalField";

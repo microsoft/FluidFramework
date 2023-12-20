@@ -28,7 +28,7 @@ import {
 	Assume,
 	mapIterable,
 } from "../../util";
-import { FieldKinds } from "../default-schema";
+import { FieldKinds, Forbidden } from "../default-schema";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem } from "./flexList";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils";
@@ -328,7 +328,10 @@ export class TreeFieldSchema<
 	/**
 	 * Schema for a field which must always be empty.
 	 */
-	public static readonly empty = TreeFieldSchema.create(FieldKinds.forbidden, []);
+	public static readonly empty: TreeFieldSchema<Forbidden, readonly []> = TreeFieldSchema.create(
+		FieldKinds.forbidden,
+		[],
+	);
 
 	/**
 	 * Constructs a TreeFieldSchema.

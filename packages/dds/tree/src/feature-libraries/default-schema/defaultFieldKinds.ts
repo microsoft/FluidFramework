@@ -20,12 +20,13 @@ import {
 	referenceFreeFieldChangeRebaser,
 	FieldKindWithEditor,
 } from "../modular-schema";
-import { sequenceFieldChangeHandler } from "../sequence-field";
+import { SequenceFieldEditor, sequenceFieldChangeHandler } from "../sequence-field";
 import {
 	noChangeCodecFamily,
 	OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
+	OptionalFieldEditor,
 } from "../optional-field";
 import { Multiplicity } from "../multiplicity";
 
@@ -59,16 +60,17 @@ const optionalIdentifier = "Optional";
 /**
  * 0 or 1 items.
  */
-export const optional = new FieldKindWithEditor(
-	optionalIdentifier,
-	Multiplicity.Optional,
-	optionalChangeHandler,
-	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === optionalIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set([]),
-);
+export const optional: FieldKindWithEditor<OptionalFieldEditor, Multiplicity.Optional, "Optional"> =
+	new FieldKindWithEditor(
+		optionalIdentifier,
+		Multiplicity.Optional,
+		optionalChangeHandler,
+		(types, other) =>
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === optionalIdentifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		new Set([]),
+	);
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
@@ -104,16 +106,17 @@ const sequenceIdentifier = "Sequence";
 /**
  * 0 or more items.
  */
-export const sequence = new FieldKindWithEditor(
-	sequenceIdentifier,
-	Multiplicity.Sequence,
-	sequenceFieldChangeHandler,
-	(types, other) =>
-		other.kind.identifier === sequenceIdentifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	// TODO: add normalizer/importers for handling ops from other kinds.
-	new Set([]),
-);
+export const sequence: FieldKindWithEditor<SequenceFieldEditor, Multiplicity.Sequence, "Sequence"> =
+	new FieldKindWithEditor(
+		sequenceIdentifier,
+		Multiplicity.Sequence,
+		sequenceFieldChangeHandler,
+		(types, other) =>
+			other.kind.identifier === sequenceIdentifier &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		// TODO: add normalizer/importers for handling ops from other kinds.
+		new Set([]),
+	);
 
 const nodeKeyIdentifier = "NodeKey";
 
