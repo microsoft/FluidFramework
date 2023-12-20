@@ -8,14 +8,6 @@ import { schemaFormat } from "../../core";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-export const TreeNodeSchemaFormat = Type.Object(
-	{
-		name: schemaFormat.TreeNodeSchemaIdentifierSchema,
-		data: schemaFormat.TreeNodeSchemaDataFormat,
-	},
-	noAdditionalProps,
-);
-
 /**
  * Format for encoding as json.
  *
@@ -29,17 +21,9 @@ export const TreeNodeSchemaFormat = Type.Object(
 export const Format = Type.Object(
 	{
 		version: Type.Literal(schemaFormat.version),
-		nodeSchema: Type.Array(TreeNodeSchemaFormat),
-		rootFieldSchema: schemaFormat.FieldSchemaFormat,
+		nodes: Type.Record(Type.String(), schemaFormat.TreeNodeSchemaDataFormat),
+		root: schemaFormat.FieldSchemaFormat,
 	},
 	noAdditionalProps,
 );
-
 export type Format = Static<typeof Format>;
-
-export type TreeNodeSchemaFormat = Static<typeof TreeNodeSchemaFormat>;
-
-export const Versioned = Type.Object({
-	version: Type.String(),
-});
-export type Versioned = Static<typeof Versioned>;

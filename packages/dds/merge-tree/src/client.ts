@@ -1234,14 +1234,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * @deprecated Use searchForMarker instead.
-	 */
-	findTile(startPos: number, tileLabel: string, preceding = true) {
-		const clientId = this.getClientId();
-		return this._mergeTree.findTile(startPos, clientId, tileLabel, preceding);
-	}
-
-	/**
 	 * Searches a string for the nearest marker in either direction to a given start position.
 	 * The search will include the start position, so markers at the start position are valid
 	 * results of the search. Makes use of block-accelerated search functions for log(n) complexity.

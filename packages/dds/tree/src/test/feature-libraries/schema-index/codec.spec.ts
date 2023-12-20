@@ -49,9 +49,9 @@ describe("SchemaIndex", () => {
 		const cases = [
 			{
 				version: 1 as const,
-				nodeSchema: [],
-				rootFieldSchema: { kind: "x" as FieldKindIdentifier },
-			},
+				nodes: {},
+				root: { kind: "x" as FieldKindIdentifier },
+			} satisfies Format,
 		];
 		for (const data of cases) {
 			codec.decode(data);
