@@ -3,76 +3,103 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
 	AllowedUpdateType,
-	FieldKey,
+	ChangesetLocalId,
+	IEditableForest,
 	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
-	forEachField,
-	moveToDetachedField,
+	TreeStoredSchemaRepository,
+	mapCursorField,
 	rootFieldKey,
 } from "../../../core";
 import { leaf } from "../../../domains";
 import { typeboxValidator } from "../../../external-utilities";
-import { TreeCompressionStrategy } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { tryGetChunk } from "../../../feature-libraries/chunked-forest/chunk";
+import {
+	Context,
+	DefaultChangeFamily,
+	DefaultEditBuilder,
+	FlexTreeSchema,
+	ForestSummarizer,
+	ModularChangeset,
+	TreeCompressionStrategy,
+	buildChunkedForest,
+	createMockNodeKeyManager,
+	cursorForMapTreeNode,
+	defaultSchemaPolicy,
+	getTreeContext,
+	intoStoredSchema,
+	makeFieldBatchCodec,
+	mapTreeFromCursor,
+	nodeKeyFieldKey,
+} from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { SummarizeType, TestTreeProvider, jsonSequenceRootSchema } from "../../utils";
+import { noopValidator } from "../../../codec";
+import { brand } from "../../../util";
+import {
+	Chunker,
+	defaultChunkPolicy,
+	tryShapeFromSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkTree";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding";
-// eslint-disable-next-line import/no-internal-modules
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
-import { SummaryElementStringifier } from "../../../shared-tree-core";
 
 // TODO: Currently we split up a uniform chunk into several individual basicChunks for each node during op creation.
 // Therefore, there is currently no way for us to retrieve a uniform chunk from the tree for us to make the proper checks,
 // and the tests are expected to fail. The tests can be unskipped once uniform chunks can be inserted into the tree.
 describe.skip("End to End chunked encoding", () => {
-	it(`insert op values are correct, and shares reference with the original chunk.`, async () => {
-		const factory = new SharedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Optimized,
-			summaryEncodeType: TreeCompressionStrategy.Compressed,
-		});
-		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
-		const tree = provider.trees[0];
-		const flexTree = tree.schematizeInternal({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			schema: jsonSequenceRootSchema,
-			initialTree: [],
-		});
-		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
-		function submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
-			oldSubmitLocalMessage(content, localOpMetadata);
-			// Checks that the op contains correct values, and share reference to the original uniform chunk.
-			if (content.changeset[0].data !== undefined) {
-				const insertedChunk = decode(content.changeset[0].data.builds.trees)[0];
-				assert(chunk.isShared());
-				assert.deepEqual((insertedChunk as UniformChunk).values, chunk.values);
-			}
-		}
-		(tree as any).submitLocalMessage = submitLocalMessage;
+	it(`insert op values are correct, and shares reference with the original chunk. 2`, async () => {
+		const treeSchema = new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema));
+		const chunker = new Chunker(
+			treeSchema,
+			defaultSchemaPolicy,
+			Number.POSITIVE_INFINITY,
+			Number.POSITIVE_INFINITY,
+			defaultChunkPolicy.uniformChunkNodeCount,
+			tryShapeFromSchema,
+		);
 
+		const forest = buildChunkedForest(chunker);
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
-		flexTree.editableTree.insertAt(0, chunk.cursor());
+		const chunkCursor = chunk.cursor();
 
-		// checks that the final values in the tree are correct.
-		const cursor = tree.view.forest.allocateCursor();
-		moveToDetachedField(tree.view.forest, cursor);
-		const insertedValues = [];
-		for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-			const insertedChunk = tryGetChunk(cursor);
-			assert(insertedChunk !== undefined);
-			insertedValues.push((insertedChunk as BasicChunk).value);
+		// This function is declared in the test to have access to the original uniform chunk for comparison.
+		function createFlexTree(editableForest: IEditableForest, schema: FlexTreeSchema): Context {
+			const changes: ModularChangeset[] = [];
+			const changeReceiver = (change: ModularChangeset) => {
+				assert(change.builds !== undefined);
+				// TODO: This chunk is actually a BasicChunk which was split from the original UniformChunk split up.
+				// This is expected to fail currently, but should eventually pass once we have the ability to insert UniformChunk.
+				const insertedChunk = change.builds.get(undefined)?.get(0 as ChangesetLocalId);
+				assert.equal(insertedChunk, chunk);
+				assert(chunk.isShared());
+				changes.push(change);
+			};
+			const dummyEditor = new DefaultEditBuilder(
+				new DefaultChangeFamily({ jsonValidator: noopValidator }),
+				changeReceiver,
+			);
+			return getTreeContext(
+				schema,
+				editableForest,
+				dummyEditor,
+				createMockNodeKeyManager(),
+				brand(nodeKeyFieldKey),
+			);
 		}
-		assert.deepEqual(insertedValues, chunk.values);
+
+		const flexTree = createFlexTree(forest, jsonSequenceRootSchema);
+		// This conversion is currently required for inserting a uniform chunk with a topLevelLength > 1.
+		const content: ITreeCursorSynchronous[] = prepareFieldCursorForInsert(chunkCursor);
+
+		flexTree.editor
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.insert(0, content);
 	});
 
 	it(`summary values are correct, and shares reference with the original chunk.`, async () => {
@@ -96,53 +123,37 @@ describe.skip("End to End chunked encoding", () => {
 		flexTree.editableTree.insertAt(0, chunk.cursor());
 		await provider.ensureSynchronized();
 
-		const oldGetAttachSummary = (tree as any).getAttachSummary.bind(tree);
-		function getAttachSummary(
-			this: any,
-			fullTree: boolean = false,
-			trackState: boolean = false,
-			telemetryContext?: ITelemetryContext,
-		): void {
-			const forestSummarizer = this.summarizables[2];
-			function getTreeString(this: any, stringify: SummaryElementStringifier) {
-				const rootCursor = this.forest.getCursorAboveDetachedFields();
-				const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
-					new Map();
-				// TODO: Encode all detached fields in one operation for better performance and compression
-				forEachField(rootCursor, (cursor) => {
-					const key = cursor.getFieldKey();
-					const innerCursor = this.forest.allocateCursor();
-					assert(
-						this.forest.tryMoveCursorToField(
-							{ fieldKey: key, parent: undefined },
-							innerCursor,
-						) === TreeNavigationResult.Ok,
-						"failed to navigate to field",
-					);
-					fieldMap.set(
-						key,
-						innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor,
-					);
-				});
-				const encoded = this.codec.encode(fieldMap);
+		const options = {
+			jsonValidator: noopValidator,
+			forest: ForestType.Optimized,
+			summaryEncodeType: TreeCompressionStrategy.Compressed,
+		};
+		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const forestSummarizer = new ForestSummarizer(
+			tree.view.forest,
+			new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
+			defaultSchemaPolicy,
+			options.summaryEncodeType,
+			fieldBatchCodec,
+			options,
+		);
 
-				fieldMap.forEach((value) => value.free());
-
-				// Check that inserted chunk has correct values and share reference to original chunk.
-				const rootkeyCursor = fieldMap.get(rootFieldKey);
-				assert(rootkeyCursor !== undefined);
-				rootkeyCursor?.enterNode(0);
-				const insertedChunk = tryGetChunk(rootkeyCursor);
-				assert(chunk.isShared());
-				assert.deepEqual((insertedChunk as UniformChunk).values, chunk.values);
-
-				return stringify(encoded);
-			}
-			forestSummarizer.getTreeString = getTreeString;
-			oldGetAttachSummary(false, false);
+		// This function is declared in the test to have access to the original uniform chunk for comparison.
+		function stringifier(content: unknown) {
+			const insertedChunk = decode((content as any).fields);
+			assert.equal(insertedChunk, chunk);
+			assert(chunk.isShared());
+			return JSON.stringify(content);
 		}
-		(tree as any).getAttachSummary = getAttachSummary;
-
-		tree.getAttachSummary();
+		forestSummarizer.getAttachSummary(stringifier);
 	});
 });
+
+function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
+	// TODO: optionally validate content against schema.
+
+	// Convert from the desired API (single field cursor) to the currently required API (array of node cursors).
+	// This is inefficient, and particularly bad if the data was efficiently chunked using uniform chunks.
+	// TODO: update editing APIs to take in field cursors not arrays of node cursors, then remove this copying conversion.
+	return mapCursorField(cursor, () => cursorForMapTreeNode(mapTreeFromCursor(cursor)));
+}
