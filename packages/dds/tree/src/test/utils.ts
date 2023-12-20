@@ -613,7 +613,6 @@ export function validateSnapshotConsistency(
 	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
-	console.log(idDifferentiator);
 	const mapA = nestedMapFromFlatList(treeA.removed);
 	const mapB = nestedMapFromFlatList(treeB.removed);
 	assert.deepEqual(
