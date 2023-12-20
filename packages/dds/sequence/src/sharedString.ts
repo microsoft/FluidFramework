@@ -10,7 +10,6 @@ import {
 	ISegmentAction,
 	Marker,
 	PropertySet,
-	ReferencePosition,
 	ReferenceType,
 	refHasTileLabel,
 	TextSegment,
@@ -190,28 +189,6 @@ export class SharedString
 	 */
 	public annotateMarker(marker: Marker, props: PropertySet) {
 		this.guardReentrancy(() => this.client.annotateMarker(marker, props));
-	}
-
-	/**
-	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * Note that Markers receive `ReferenceType.Tile` by default.
-	 * @deprecated Use `searchForMarker` instead.
-	 * @param startPos - Position at which to start the search
-	 * @param clientId - clientId dictating the perspective to search from
-	 * @param tileLabel - Label of the tile to search for
-	 * @param preceding - Whether the desired tile comes before (true) or after (false) `startPos`
-	 */
-	public findTile(
-		startPos: number | undefined,
-		tileLabel: string,
-		preceding = true,
-	):
-		| {
-				tile: ReferencePosition;
-				pos: number;
-		  }
-		| undefined {
-		return this.client.findTile(startPos ?? 0, tileLabel, preceding);
 	}
 
 	/**

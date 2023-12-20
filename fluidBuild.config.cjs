@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "^api", "^build:rename-types", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -23,13 +23,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: [
-				"commonjs",
-				"build:esnext",
-				"build:test",
-				"build:copy",
-				"build:rename-types",
-			],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -65,8 +59,10 @@ module.exports = {
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
-		"api-extractor:esnext": ["api-extractor:commonjs", "build:esnext"],
-		"build:rename-types": ["build:esnext", "api-extractor:esnext"],
+		"api-extractor:esnext": {
+			dependsOn: ["build:esnext"],
+			script: true,
+		},
 		"build:docs": ["tsc"],
 		"ci:build:docs": ["tsc"],
 		"build:readme": {
@@ -355,12 +351,6 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreTasks: [
-					"tsc:watch",
-					"watch:devtools",
-					"watch:devtools-core",
-					"watch:devtools-view",
-				],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
 		},
