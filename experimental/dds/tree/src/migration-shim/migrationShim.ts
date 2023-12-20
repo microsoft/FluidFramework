@@ -5,6 +5,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import {
+	IChannelFactory,
 	type IChannelAttributes,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
@@ -15,7 +16,7 @@ import {
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
 } from '@fluidframework/runtime-definitions';
-import { type TreeFactory, type ITree } from '@fluidframework/tree';
+import { type ITree } from '@fluidframework/tree';
 import { assert } from '@fluidframework/core-utils';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
@@ -79,7 +80,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly legacyTreeFactory: LegacySharedTreeFactory,
-		private readonly newTreeFactory: TreeFactory,
+		private readonly newTreeFactory: IChannelFactory,
 		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ITree) => void
 	) {
 		super((event: EventEmitterEventType, e: unknown) => this.eventListenerErrorHandler(event, e));
@@ -93,14 +94,10 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	}
 
 	private readonly processMigrateOp = (message: ISequencedDocumentMessage): boolean => {
-		if (
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-			message.type !== MessageType.Operation ||
-			(message.contents as Partial<IMigrationOp>).type !== 'barrier'
-		) {
+		if (message.type !== MessageType.Operation || (message.contents as Partial<IMigrationOp>).type !== 'barrier') {
 			return false;
 		}
-		const newTree = this.newTreeFactory.create(this.runtime, this.id);
+		const newTree = this.newTreeFactory.create(this.runtime, this.id) as ITree;
 		assert(this.preMigrationDeltaConnection !== undefined, 0x82f /* Should be in v1 state */);
 		this.preMigrationDeltaConnection.disableSubmit();
 		this.populateNewSharedObjectFn(this.legacyTree, newTree);

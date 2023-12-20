@@ -27,7 +27,6 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/tree';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { TreeFactory } from '@fluidframework/tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal
@@ -620,7 +619,7 @@ export interface MergeHealthStats {
 
 // @internal
 export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent> implements IShim {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: TreeFactory, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ITree) => void);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: IChannelFactory, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ITree) => void);
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
@@ -651,7 +650,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 
 // @internal @sealed
 export class MigrationShimFactory implements IChannelFactory {
-    constructor(oldFactory: SharedTreeFactory, newFactory: TreeFactory, populateNewChannelFn: (oldChannel: SharedTree, newChannel: ITree) => void);
+    constructor(oldFactory: SharedTreeFactory, newFactory: IChannelFactory, populateNewChannelFn: (oldChannel: SharedTree, newChannel: ITree) => void);
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<MigrationShim>;
@@ -1020,7 +1019,7 @@ export interface SharedTreeOptions_0_1_1 {
 
 // @internal
 export class SharedTreeShim implements IShim {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, sharedTreeFactory: TreeFactory);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, sharedTreeFactory: IChannelFactory);
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
@@ -1046,14 +1045,14 @@ export class SharedTreeShim implements IShim {
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
     // (undocumented)
-    readonly sharedTreeFactory: TreeFactory;
+    readonly sharedTreeFactory: IChannelFactory;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
 // @internal @sealed
 export class SharedTreeShimFactory implements IChannelFactory {
-    constructor(factory: TreeFactory);
+    constructor(factory: IChannelFactory);
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedTreeShim>;
