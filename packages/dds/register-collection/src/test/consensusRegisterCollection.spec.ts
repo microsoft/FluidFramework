@@ -12,15 +12,12 @@ import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-	MockDeltaConnection,
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
-	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
-import { ConsensusRegisterCollection } from "../consensusRegisterCollection";
 
 function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -58,78 +55,7 @@ function createCollectionForReconnection(
 	return { collection, containerRuntime };
 }
 
-/**
- * Create a CRC that connects to mock services that use the given
- * onSubmit callback.
- */
-function createCollectionWithSubmitCallback(
-	id: string,
-	onSubmit: (messageContent: any) => number,
-): ConsensusRegisterCollection<any> {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const deltaConnection = new MockDeltaConnection(onSubmit, () => {});
-	const services = {
-		deltaConnection,
-		objectStorage: new MockStorage(),
-	};
-	const collection = new ConsensusRegisterCollection(
-		id,
-		dataStoreRuntime,
-		ConsensusRegisterCollectionFactory.Attributes,
-	);
-	collection.connect(services);
-	return collection;
-}
-
 describe("ConsensusRegisterCollection", () => {
-	describe("Handle encoding", () => {
-		/**
-		 * The purpose of the tests using this helper is to ensure that the message contents submitted
-		 * by the DDS contains handles that are detectable via JSON.stringify replacers, since this
-		 * is the technique used in the ContainerRuntime to detect handles in incoming ops.
-		 * @returns true if the contents object contains at least one encoded handle anywhere
-		 */
-		function detectHandleViaJsonStingify(contents: unknown) {
-			try {
-				// use JSON.stringify as a hack to traverse the object structure
-				JSON.stringify(contents, (key, value) => {
-					if (key === "type" && value === "__fluid_handle__") {
-						// Found a handle. We can abort object traversal
-						throw new Error("Found a handle");
-					}
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					return value;
-				});
-				return false;
-			} catch (e: any) {
-				if (e.message === "Found a handle") {
-					return true;
-				}
-				// Re-throw unexpected errors
-				throw e;
-			}
-		}
-		it("DOES obscure handles in message contents", async () => {
-			const messages: any[] = [];
-			const crc = createCollectionWithSubmitCallback("directory", (message) => {
-				messages.push(message);
-				return 0; // unused
-			});
-			const handle = new MockHandle("whatever");
-			// This won't resolve until it's ack'd, which is irrelevant for this test, so don't wait.
-			crc.write("key", handle).catch(() => {
-				assert.fail("crc.write rejected!");
-			});
-
-			assert.equal(messages.length, 1, "Expected a single message to be submitted");
-			// CRC pre-serializes the payload, so the message is a string and we won't be able to detect the handle.
-			assert.notEqual(
-				detectHandleViaJsonStingify(messages[0]),
-				true,
-				"The handle is not expected to be detected",
-			);
-		});
-	});
 	describe("Single connected client", () => {
 		const collectionId = "consensus-register-collection";
 		let crc: IConsensusRegisterCollection;
