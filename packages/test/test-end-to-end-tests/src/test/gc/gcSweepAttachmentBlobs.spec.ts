@@ -46,16 +46,17 @@ import {
 } from "./gcTestSummaryUtils.js";
 
 /**
- * Validates that the given blob state is correct in the summary:
- * - It should be no blob tree in the summary.
- * - The blob should not be present in the GC state in GC summary tree.
- * - The blob should be present in the deleted nodes in GC summary tree.
+ * Validates that the given blob state is correct in the summary based on expectDelete and expectGCStateHandle.
+ * - If expectDelete is true, there should be no blob tree in the summary. Otherwise, there should be.
+ * - If expectGCStateHandle is true, the GC summary tree should be handle. Otherwise, the blob should or should not be
+ * present in the GC summary tree as per expectDelete.
+ * - The blob should or should not be present in the deleted nodes in GC summary tree as per expectDelete.
  */
 function validateBlobStateInSummary(
 	summaryTree: ISummaryTree,
 	blobNodePath: string,
-	expectDelete: boolean = true,
-	expectGCStateHandle: boolean = false,
+	expectDelete: boolean,
+	expectGCStateHandle: boolean,
 ) {
 	const shouldShouldNot = expectDelete ? "should" : "should not";
 
@@ -1125,7 +1126,12 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			// Summarize again so that the sweep ready blobs are now deleted from the GC data.
 			const summary3 = await summarizeNow(summarizer);
 			// Validate that the deleted blob's state is correct in the summary.
-			validateBlobStateInSummary(summary3.summaryTree, blob1NodePath);
+			validateBlobStateInSummary(
+				summary3.summaryTree,
+				blob1NodePath,
+				true /* expectDelete */,
+				false /* expectGCStateHandle */,
+			);
 		});
 	});
 
@@ -1135,27 +1141,27 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		 * This function does the following:
 		 * 1. Overrides the summarize function of the given container runtime to fail until final summarize attempt.
 		 *
-		 * 2. If "pauseInbound" is true, pauses the inbound queue until the final summarize attempt is completed.
+		 * 2. If "blockInboundGCOp" is true, pauses the inbound queue until the final summarize attempt is completed
+		 * so that the GC op is not processed until then.
 		 *
 		 * 3. Generates and returns a promise which resolves with ISummarizeEventProps on successful summarization.
 		 */
 		async function overrideSummarizeAndGetCompletionPromise(
 			summarizer: ISummarizer,
 			containerRuntime: ContainerRuntime,
-			pauseInbound: boolean = false,
+			blockInboundGCOp: boolean = false,
 		) {
 			let latestAttemptProps: ISummarizeEventProps | undefined;
-			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
+			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve, reject) => {
 				const handler = (eventProps: ISummarizeEventProps) => {
 					latestAttemptProps = eventProps;
 					if (eventProps.result !== "failure") {
 						summarizer.off("summarize", handler);
 						resolve(eventProps);
 					} else {
-						assert(
-							eventProps.error?.message === summarizeErrorMessage,
-							"Unexpected summarization failure",
-						);
+						if (eventProps.error?.message !== summarizeErrorMessage) {
+							reject(new Error("Unexpected summarization failure"));
+						}
 						if (eventProps.currentAttempt === eventProps.maxAttempts) {
 							summarizer.off("summarize", handler);
 							resolve(eventProps);
@@ -1167,7 +1173,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 			// Pause the inbound queue so that GC ops are not processed in between failures. This will be resumed
 			// before the final attempt.
-			if (pauseInbound) {
+			if (blockInboundGCOp) {
 				await containerRuntime.deltaManager.inbound.pause();
 			}
 
@@ -1175,13 +1181,15 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			const summarizeOverride = async (options: any) => {
 				summarizeFunc = summarizeFunc.bind(containerRuntime);
 				const results = await summarizeFunc(options);
+				// If this is not the last attempt, throw an error so that summarize fails.
 				if (
 					latestAttemptProps === undefined ||
 					latestAttemptProps.maxAttempts - latestAttemptProps.currentAttempt > 1
 				) {
 					throw new RetriableSummaryError(summarizeErrorMessage, 0.01);
 				}
-				if (pauseInbound) {
+				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
+				if (blockInboundGCOp) {
 					containerRuntime.deltaManager.inbound.resume();
 				}
 				return results;
@@ -1311,7 +1319,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 						`Incorrect number of GC ops`,
 					);
 
-					// The GC sweep will be processed during the multiple summarize attempts and the final summary
+					// The GC sweep op will be processed during the multiple summarize attempts and the final summary
 					// should have the blob as deleted.
 					// If single GC op is sent, the blob will be deleted because the delete op will be processed
 					// during summary attempts.

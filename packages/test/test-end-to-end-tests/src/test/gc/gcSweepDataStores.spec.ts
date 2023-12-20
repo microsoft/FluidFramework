@@ -45,18 +45,17 @@ import {
 } from "./gcTestSummaryUtils.js";
 
 /**
- * Validates that the given data store state is correct in the summary.
- * If expectDelete is true:
- * - It should be deleted from the data store summary tree.
- * If expectGCStateHandle is not true:
- * - It should not be present in the GC state in GC summary tree.
- * - It should be present in the deleted nodes in GC summary tree.
+ * Validates that the given data store state is correct in the summary based on expectDelete and expectGCStateHandle.
+ * - The data store should or should not be present in the data store summary tree as per expectDelete.
+ * - If expectGCStateHandle is true, the GC summary tree should be handle. Otherwise, the data store should or should
+ * not be present in the GC summary tree as per expectDelete.
+ * - The data store should or should not be present in the deleted nodes in GC summary tree as per expectDelete.
  */
 function validateDataStoreStateInSummary(
 	summaryTree: ISummaryTree,
 	dataStoreNodePath: string,
-	expectDelete: boolean = true,
-	expectGCStateHandle: boolean = false,
+	expectDelete: boolean,
+	expectGCStateHandle: boolean,
 ) {
 	const shouldShouldNot = expectDelete ? "should" : "should not";
 
@@ -157,7 +156,10 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			summaryVersion,
 		);
 	};
-	const summarize = async (summarizer: ISummarizer, options?: IOnDemandSummarizeOptions) => {
+	const ensureSynchronizedAndSummarize = async (
+		summarizer: ISummarizer,
+		options?: IOnDemandSummarizeOptions,
+	) => {
 		await provider.ensureSynchronized();
 		return summarizeNow(summarizer, options);
 	};
@@ -187,7 +189,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		// Summarize
 		const { container: summarizingContainer1, summarizer: summarizer1 } =
 			await loadSummarizer(container);
-		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
+		const summaryVersion = (await ensureSynchronizedAndSummarize(summarizer1)).summaryVersion;
 
 		// Close the summarizer so that it doesn't interfere with the new one.
 		summarizingContainer1.close();
@@ -209,7 +211,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		defaultDataObject._root.set("update", "timestamp");
 		await provider.ensureSynchronized();
 
-		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
+		// Close the container as it would be closed by session expiry before sweep ready ever occurs.
 		container.close();
 
 		return {
@@ -237,7 +239,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					await summarizationWithUnreferencedDataStoreAfterTime();
 
 				// The datastore should be swept now
-				await summarize(summarizer);
+				await ensureSynchronizedAndSummarize(summarizer);
 
 				// Sending an op from a datastore substantiated from the request pattern should fail!
 				assert.throws(
@@ -267,7 +269,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					await summarizationWithUnreferencedDataStoreAfterTime();
 
 				// The datastore should be swept now
-				await summarize(summarizer);
+				await ensureSynchronizedAndSummarize(summarizer);
 
 				// Sending a signal from a testDataObject substantiated from the request pattern should fail!
 				assert.throws(
@@ -305,7 +307,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					await summarizationWithUnreferencedDataStoreAfterTime();
 
 				// The datastore should be swept now
-				const { summaryVersion } = await summarize(summarizer);
+				const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer);
 				const container = await loadContainer(summaryVersion);
 
 				// This request fails since the datastore is swept
@@ -392,7 +394,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				await provider.opProcessingController.processIncoming(sendingContainer);
 
 				// The datastore should be swept now
-				const { summaryVersion } = await summarize(summarizer);
+				const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer);
 				const receivingContainer = await loadContainer(summaryVersion);
 
 				// Send an op to the swept data store
@@ -463,7 +465,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				await sendingContainer.deltaManager.inboundSignal.pause();
 
 				// The datastore should be swept now
-				const { summaryVersion } = await summarize(summarizer);
+				const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer);
 				const receivingContainer = await loadContainer(summaryVersion);
 
 				// Send a signal to the swept data store
@@ -501,13 +503,18 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 			// Summarize. In this summary, the gc op will be sent with the deleted data store id. The data store
 			// will be removed in the subsequent summary.
-			await summarize(summarizer);
+			await ensureSynchronizedAndSummarize(summarizer);
 
 			// Summarize again so that the sweep ready blobs are now deleted from the GC data.
-			const summary3 = await summarize(summarizer);
+			const summary3 = await ensureSynchronizedAndSummarize(summarizer);
 
 			// Validate that the deleted data store's state is correct in the summary.
-			validateDataStoreStateInSummary(summary3.summaryTree, sweepReadyDataStoreNodePath);
+			validateDataStoreStateInSummary(
+				summary3.summaryTree,
+				sweepReadyDataStoreNodePath,
+				true /* expectDelete */,
+				false /* expectGCStateHandle */,
+			);
 		});
 
 		it("disableDatastoreSweep true - DOES NOT update deleted data store state in the summary", async () => {
@@ -519,12 +526,12 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 			// Summarize. If sweep was enabled, the gc op will be sent with the deleted data store id. The data store
 			// will be removed in the subsequent summary.
-			await summarize(summarizer);
+			await ensureSynchronizedAndSummarize(summarizer);
 
 			// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
 			// We need to do fullTree because the GC data won't change (since it's not swept).
 			// But the validation depends on the GC subtree being present (not a handle).
-			const summary3 = await summarize(summarizer, {
+			const summary3 = await ensureSynchronizedAndSummarize(summarizer, {
 				reason: "end-to-end test",
 				fullTree: true,
 			});
@@ -534,6 +541,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				summary3.summaryTree,
 				sweepReadyDataStoreNodePath,
 				false /* expectDelete */,
+				false /* expectGCStateHandle */,
 			);
 		});
 	});
@@ -549,14 +557,14 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
 			// the GC op does not fail summary due to local changes.
 			await assert.doesNotReject(
-				async () => summarize(summarizer),
+				async () => ensureSynchronizedAndSummarize(summarizer),
 				"Summary and GC should succeed in presence of GC op",
 			);
 
 			// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
 			// summarize and GC succeed.
 			await assert.doesNotReject(
-				async () => summarize(summarizer),
+				async () => ensureSynchronizedAndSummarize(summarizer),
 				"Summary and GC should succeed with deleted data store",
 			);
 		});
@@ -569,14 +577,15 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		 * This function does the following:
 		 * 1. Overrides the summarize function of the given container runtime to fail until final summarize attempt.
 		 *
-		 * 2. If "pauseInbound" is true, pauses the inbound queue until the final summarize attempt is completed.
+		 * 2. If "blockInboundGCOp" is true, pauses the inbound queue until the final summarize attempt is completed
+		 * so that the GC op is not processed until then.
 		 *
 		 * 3. Generates and returns a promise which resolves with ISummarizeEventProps on successful summarization.
 		 */
 		async function overrideSummarizeAndGetCompletionPromise(
 			summarizer: ISummarizer,
 			containerRuntime: ContainerRuntime,
-			pauseInbound: boolean = false,
+			blockInboundGCOp: boolean = false,
 		) {
 			let latestAttemptProps: ISummarizeEventProps | undefined;
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
@@ -601,7 +610,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 			// Pause the inbound queue so that GC ops are not processed in between failures. This will be resumed
 			// before the final attempt.
-			if (pauseInbound) {
+			if (blockInboundGCOp) {
 				await containerRuntime.deltaManager.inbound.pause();
 			}
 
@@ -609,13 +618,15 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			const summarizeOverride = async (options: any) => {
 				summarizeFunc = summarizeFunc.bind(containerRuntime);
 				const results = await summarizeFunc(options);
+				// If this is not the last attempt, throw an error so that summarize fails.
 				if (
 					latestAttemptProps === undefined ||
 					latestAttemptProps.maxAttempts - latestAttemptProps.currentAttempt > 1
 				) {
 					throw new RetriableSummaryError(summarizeErrorMessage, 0.01);
 				}
-				if (pauseInbound) {
+				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
+				if (blockInboundGCOp) {
 					containerRuntime.deltaManager.inbound.resume();
 				}
 				return results;
