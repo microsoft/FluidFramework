@@ -3,4 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { useSubtree, useTreeContext } from "./useTree";
+/**
+ * @public
+ * @returns string
+ */
+function mockFuction(): string {
+	return "hello world";
+}
