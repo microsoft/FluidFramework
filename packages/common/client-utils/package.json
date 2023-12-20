@@ -11,13 +11,27 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.cjs",
-	"module": "lib/index.mjs",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/indexNode.d.mts",
+				"default": "./lib/indexNode.mjs"
+			},
+			"require": {
+				"types": "./dist/indexNode.d.ts",
+				"default": "./dist/indexNode.cjs"
+			}
+		}
+	},
+	"main": "dist/indexNode.cjs",
+	"module": "lib/indexNode.mjs",
 	"browser": {
 		"./dist/indexNode.cjs": "./dist/indexBrowser.cjs",
-		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs"
+		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
+		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs",
+		"./lib/indexNode.d.mts": "./lib/indexBrowser.d.mts"
 	},
-	"types": "dist/index.d.ts",
+	"types": "dist/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
@@ -42,7 +56,7 @@
 		"test": "npm run test:mocha && npm run test:jest",
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
-		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.?js\" --exit --project test/tsconfig.json",
+		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
 		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
