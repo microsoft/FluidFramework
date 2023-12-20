@@ -15,15 +15,15 @@ import {
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
-import { populatedMarks } from "./populatedMarks";
+import { generatePopulatedMarks } from "./populatedMarks";
 
 const vestigialEndpoint: ChangeAtomId = { revision: mintRevisionTag(), localId: brand(42) };
 
 describe("SequenceField - Utils", () => {
 	describe("round-trip splitMark and tryMergeMarks", () => {
 		[
-			...populatedMarks,
-			populatedMarks
+			...generatePopulatedMarks(),
+			generatePopulatedMarks()
 				.filter((mark) => !areInputCellsEmpty(mark))
 				.map((mark) => ({ ...mark, vestigialEndpoint })),
 		].forEach((mark, index) => {
