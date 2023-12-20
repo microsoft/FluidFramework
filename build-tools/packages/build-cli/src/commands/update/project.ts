@@ -122,6 +122,13 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 				readFileSync(projectTsConfigPath, "utf8"),
 			);
 
+			if (typeof projectTsConfig.extends !== "string") {
+				this.log(
+					`${pkg.nameColored}: Skipping because tsconfig already inherits from new configs.`,
+				);
+				return;
+			}
+
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(projectTsConfig as any).extends = [
 				path.relative(pkg.directory, pathToBaseConfig),
@@ -198,6 +205,21 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		);
 
 		updatePackageJsonFile(pkg.directory, (json) => {
+			if (json.devDependencies?.["tsc-multi"] !== undefined) {
+				this.log(
+					`${pkg.nameColored}: Skipping tscMulti because it's already a dependency.`,
+				);
+				return;
+			}
+
+			// ESM-only package
+			if (json.type === "module" || pkg.getScript("build:esnext") === "tsc") {
+				this.log(
+					`${pkg.nameColored}: Skipping tscMulti because this is an ESM-only package`,
+				);
+				return;
+			}
+
 			if (json.devDependencies !== undefined) {
 				json.devDependencies["tsc-multi"] = "^1.1.0";
 			}
@@ -248,7 +270,10 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 	}
 
 	private async addAttw(pkg: Package): Promise<void> {
-		this.info(`adding attw`);
+		if (pkg.getScript("check:are-the-types-wrong") !== undefined) {
+			return;
+		}
+
 		updatePackageJsonFile(pkg.directory, (packageJson) => {
 			if (packageJson.devDependencies === undefined) {
 				this.warning(`Package has no devDependencies: ${pkg.nameColored}`);
