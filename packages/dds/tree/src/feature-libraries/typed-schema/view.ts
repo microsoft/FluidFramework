@@ -6,7 +6,6 @@
 import { Named, fail } from "../../util";
 import {
 	TreeFieldStoredSchema,
-	FieldKey,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeStoredSchema,
@@ -144,24 +143,14 @@ export class ViewSchema {
 	}
 
 	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
-		const objectNodeFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-		for (const [key, schema] of original.objectNodeFields) {
-			// TODO: support missing field adapters.
-			objectNodeFields.set(key, this.adaptField(schema));
-		}
-		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
-		// so copying the data over manually is better.
-		return {
-			mapFields: original.mapFields,
-			leafValue: original.leafValue,
-			objectNodeFields,
-		};
+		// TODO: support adapters like missing field adapters.
+		return original;
 	}
 }
 
 /**
  * Record where a schema came from for error reporting purposes.
- * @alpha
+ * @internal
  */
 export interface Sourced {
 	readonly builder: Named<string>;

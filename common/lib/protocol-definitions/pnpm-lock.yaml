@@ -5,7 +5,7 @@ patchedDependencies:
     hash: veevzrg6trzjzkr6gaha4thdmm
     path: ../../../patches/@microsoft__api-extractor@7.38.3.patch
   tsc-multi@1.1.0:
-    hash: 44oayjl3iesbankmh6w6z32iii
+    hash: bwju7gmfuwum2ryv7w6vqpkpiy
     path: ../../../patches/tsc-multi@1.1.0.patch
 
 importers:
@@ -43,7 +43,7 @@ importers:
       prettier: 3.0.3
       renamer: 4.0.0
       rimraf: 2.7.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
 packages:
@@ -8903,7 +8903,7 @@ packages:
       yn: 3.1.1
     dev: true
 
-  /tsc-multi/1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6:
+  /tsc-multi/1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6:
     resolution: {integrity: sha512-THE6X+sse7EZ2qMhqXvBhd2HMTvXyWwYnx+2T/ijqdp/6Rf7rUc2uPRzPdrrljZCNcYDeL0qP2P7tqm2IwayTg==}
     engines: {node: '>=14'}
     hasBin: true

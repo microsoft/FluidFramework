@@ -19,6 +19,7 @@ import {
 	AnchorNode,
 	EmptyKey,
 	ProtoNodes,
+	TreeNavigationResult,
 } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import {
@@ -243,7 +244,7 @@ describe("Editing", () => {
 
 				const expected = [...startingState];
 				expected.splice(index, 1);
-				expectJsonTree([tree, tree1, tree2, tree3], expected);
+				expectJsonTree([tree, tree1, tree2, tree3], expected, true);
 			}
 		});
 
@@ -2688,6 +2689,54 @@ describe("Editing", () => {
 		restoreRoot.rebaseOnto(tree);
 		expectJsonTree(restoreRoot, [{}]);
 		unsubscribe();
+	});
+
+	describe("Anchors", () => {
+		it("anchors to content created on a branch survive rebasing of the branch", () => {
+			const tree = makeTreeFromJson({});
+			const branch = tree.fork();
+
+			branch.editor
+				.sequenceField({ parent: rootNode, field: brand("seq") })
+				.insert(0, singleJsonCursor(1));
+			branch.editor
+				.optionalField({ parent: rootNode, field: brand("opt") })
+				.set(singleJsonCursor(2), true);
+
+			let cursor = branch.forest.allocateCursor();
+			branch.forest.moveCursorToPath(
+				{ parent: rootNode, parentField: brand("seq"), parentIndex: 0 },
+				cursor,
+			);
+			const anchor1 = cursor.buildAnchor();
+			branch.forest.moveCursorToPath(
+				{ parent: rootNode, parentField: brand("opt"), parentIndex: 0 },
+				cursor,
+			);
+			const anchor2 = cursor.buildAnchor();
+			cursor.free();
+
+			tree.editor
+				.sequenceField({ parent: rootNode, field: brand("foo") })
+				.insert(0, singleJsonCursor(3));
+
+			tree.merge(branch, false);
+			branch.rebaseOnto(tree);
+			expectJsonTree([tree, branch], [{ seq: 1, opt: 2, foo: 3 }]);
+
+			cursor = branch.forest.allocateCursor();
+			assert.equal(
+				branch.forest.tryMoveCursorToNode(anchor1, cursor),
+				TreeNavigationResult.Ok,
+			);
+			assert.equal(cursor.value, 1);
+			assert.equal(
+				branch.forest.tryMoveCursorToNode(anchor2, cursor),
+				TreeNavigationResult.Ok,
+			);
+			assert.equal(cursor.value, 2);
+			cursor.free();
+		});
 	});
 
 	describe("Can abort transactions", () => {

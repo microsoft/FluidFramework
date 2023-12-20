@@ -298,7 +298,7 @@ function contextualizeInsertedListContent(
 /**
  * PropertyDescriptorMap used to build the prototype for our SharedListNode dispatch object.
  */
-export const listPrototypeProperties: PropertyDescriptorMap = {
+export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
 	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
 	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
@@ -529,12 +529,12 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	// Array.prototype.unshift,
 	Array.prototype.values,
 ].forEach((fn) => {
-	listPrototypeProperties[fn.name] = { value: fn };
+	arrayNodePrototypeProperties[fn.name] = { value: fn };
 });
 
 /* eslint-enable @typescript-eslint/unbound-method */
 
-const listPrototype = Object.create(Object.prototype, listPrototypeProperties);
+const arrayNodePrototype = Object.create(Object.prototype, arrayNodePrototypeProperties);
 
 // #endregion
 
@@ -559,7 +559,7 @@ function asIndex(key: string | symbol, length: number) {
  * Otherwise setting of unexpected properties will error.
  * @param customTargetObject - Target object of the proxy.
  * If not provided `[]` is used for the target and a separate object created to dispatch list methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the list functionality from {@link listPrototype}.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the list functionality from {@link arrayNodePrototype}.
  */
 function createListProxy<TTypes extends AllowedTypes>(
 	allowAdditionalProperties: boolean,
@@ -575,7 +575,7 @@ function createListProxy<TTypes extends AllowedTypes>(
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
 	const dispatch: object =
 		customTargetObject ??
-		Object.create(listPrototype, {
+		Object.create(arrayNodePrototype, {
 			length: {
 				get(this: TreeListNodeOld) {
 					return getSequenceField(this).length;

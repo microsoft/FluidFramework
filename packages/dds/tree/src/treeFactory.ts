@@ -27,7 +27,7 @@ import {
 
 /**
  * Configuration to specialize a Tree DDS for a particular use.
- * @alpha
+ * @internal
  */
 export interface TreeOptions extends SharedTreeOptions {
 	/**
@@ -41,7 +41,7 @@ export interface TreeOptions extends SharedTreeOptions {
 
 /**
  * A channel factory that creates an {@link ITree}.
- * @alpha
+ * @internal
  */
 export class TreeFactory implements IChannelFactory {
 	public readonly type: string;
@@ -79,7 +79,7 @@ export class TreeFactory implements IChannelFactory {
  * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
  * of objects, arrays, and other data types.
  *
- * @internal
+ * @beta
  */
 export class SharedTree implements ITree {
 	// The IFluidContainer ContainerSchema currently requires a constructable class that
@@ -88,7 +88,7 @@ export class SharedTree implements ITree {
 	// Temporarily, we provide one until the following work items is addressed:
 	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 
-	public static getFactory(): TreeFactory {
+	public static getFactory(): IChannelFactory {
 		return new TreeFactory({});
 	}
 

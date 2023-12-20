@@ -4,7 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema, SchemaFactory, TreeFieldFromImplicitField } from "../../class-tree";
+import {
+	ImplicitFieldSchema,
+	NodeKind,
+	SchemaFactory,
+	TreeFieldFromImplicitField,
+	TreeNodeSchema,
+} from "../../class-tree";
 import { getRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -308,10 +314,10 @@ describe("Object-like", () => {
 
 	describe("supports setting", () => {
 		describe("primitives", () => {
-			function check<const TSchema extends ImplicitFieldSchema>(
-				schema: TSchema,
-				before: TreeFieldFromImplicitField<TSchema>,
-				after: TreeFieldFromImplicitField<TSchema>,
+			function check<const TNode>(
+				schema: TreeNodeSchema<string, NodeKind, TNode>,
+				before: TNode,
+				after: TNode,
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
@@ -328,9 +334,7 @@ describe("Object-like", () => {
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
 						const root = getRoot(
-							// Is there a way to avoid the cast to 'any' when using 'class-schema'?
-							// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6551
-							makeSchema((_) => _.object("", { _value: _.optional(schema as any) })),
+							makeSchema((_) => _.object("", { _value: _.optional(schema) })),
 							() => ({ _value: undefined }),
 						);
 						assert.equal(root._value, undefined);

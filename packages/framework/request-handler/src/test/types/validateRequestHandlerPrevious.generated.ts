@@ -48,18 +48,6 @@ use_old_TypeAliasDeclaration_RuntimeRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_buildRuntimeRequestHandler": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_buildRuntimeRequestHandler():
@@ -80,39 +68,3 @@ declare function use_old_FunctionDeclaration_buildRuntimeRequestHandler(
     use: TypeOnly<typeof old.buildRuntimeRequestHandler>): void;
 use_old_FunctionDeclaration_buildRuntimeRequestHandler(
     get_current_FunctionDeclaration_buildRuntimeRequestHandler());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createFluidObjectResponse": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createFluidObjectResponse": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_handleFromLegacyUri": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_handleFromLegacyUri": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_rootDataStoreRequestHandler": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_rootDataStoreRequestHandler": {"backCompat": false}
-*/

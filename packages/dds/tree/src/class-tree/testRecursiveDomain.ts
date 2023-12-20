@@ -34,7 +34,7 @@ builder.fixRecursiveReference(recursiveReference);
  * Fix API-Extractor to support class based schema, and remove this workaround (inline this type into `RecursiveObject extends` below).
  * Error: src/class-tree/testRecursiveDomain.ts:32:1 - (ae-forgotten-export) The symbol "RecursiveObject_base" needs to be exported by the entry point index.d.ts
  * See https://github.com/microsoft/rushstack/issues/4429
- * @alpha
+ * @internal
  */
 export const base = builder.object("testObject", {
 	recursive: builder.optional([recursiveReference]),
@@ -42,6 +42,6 @@ export const base = builder.object("testObject", {
 });
 
 /**
- * @alpha
+ * @internal
  */
 export class RecursiveObject extends base {}
