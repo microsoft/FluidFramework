@@ -97,27 +97,25 @@ describe("DDS Handle Encoding", () => {
 		): ITestCase {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const name = factory.type.split("/").pop()!;
-			const createAndDoStuff = () => {
-				const dataStoreRuntime = new MockFluidDataStoreRuntime();
-				const deltaConnection = new MockDeltaConnection(
-					/* submitFn: */ (message) => {
-						messages.push(message);
-						return 0; // unused
-					},
-					/* dirtyFn: */ () => {},
-				);
-				const services = {
-					deltaConnection,
-					objectStorage: new MockStorage(),
-				};
-				const dds = factory.create(dataStoreRuntime, name);
-				dds.connect(services);
 
-				doStuff(dds);
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const deltaConnection = new MockDeltaConnection(
+				/* submitFn: */ (message) => {
+					messages.push(message);
+					return 0; // unused
+				},
+				/* dirtyFn: */ () => {},
+			);
+			const services = {
+				deltaConnection,
+				objectStorage: new MockStorage(),
 			};
+			const dds = factory.create(dataStoreRuntime, name);
+			dds.connect(services);
+
 			return {
 				name,
-				createAndDoStuff,
+				doStuff: () => doStuff(dds),
 				expectHandlesDetected,
 			};
 		}
@@ -130,7 +128,7 @@ describe("DDS Handle Encoding", () => {
 
 		interface ITestCase {
 			name: string;
-			createAndDoStuff(id: string): void;
+			doStuff(): void;
 			expectHandlesDetected: boolean;
 		}
 
@@ -155,7 +153,7 @@ describe("DDS Handle Encoding", () => {
 
 		testCases.forEach((testCase) => {
 			it(`should not obscure handles in ${testCase.name} message contents`, async () => {
-				testCase.createAndDoStuff(testCase.name);
+				testCase.doStuff();
 
 				assert.equal(messages.length, 1, "Expected a single message to be submitted");
 				assert.equal(
