@@ -21,6 +21,16 @@
 				"types": "./dist/indexNode.d.ts",
 				"default": "./dist/indexNode.cjs"
 			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/indexNode.d.mts",
+				"default": "./lib/indexNode.mjs"
+			},
+			"require": {
+				"types": "./dist/indexNode.d.ts",
+				"default": "./dist/indexNode.cjs"
+			}
 		}
 	},
 	"main": "dist/indexNode.cjs",
