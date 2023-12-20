@@ -28,6 +28,7 @@ import {
 	IChannelFactory,
 	// IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -82,37 +83,48 @@ describe("DDS Handle Encoding", () => {
 	}
 
 	describe("Generic test pattern", () => {
+		const handle = new MockHandle("whatever");
 		const messages: any[] = [];
 
 		beforeEach(() => {
 			messages.length = 0;
 		});
 
-		//* Finalize name and add comment
-		function createAndDoStuff<T extends IChannel>(
-			id: string,
-			factory: IFactory<T>,
+		function createTestCase<T extends IChannel>(
+			factory: IChannelFactoryWithCreatedType<T>,
 			doStuff: (dds: T) => void,
-		) {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			const deltaConnection = new MockDeltaConnection(
-				/* submitFn: */ (message) => {
-					messages.push(message);
-					return 0; // unused
-				},
-				/* dirtyFn: */ () => {},
-			);
-			const services = {
-				deltaConnection,
-				objectStorage: new MockStorage(),
-			};
-			const dds = factory.create(dataStoreRuntime, id);
-			dds.connect(services);
+			expectHandlesDetected: boolean,
+		): ITestCase {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const name = factory.type.split("/").pop()!;
+			const createAndDoStuff = () => {
+				const dataStoreRuntime = new MockFluidDataStoreRuntime();
+				const deltaConnection = new MockDeltaConnection(
+					/* submitFn: */ (message) => {
+						messages.push(message);
+						return 0; // unused
+					},
+					/* dirtyFn: */ () => {},
+				);
+				const services = {
+					deltaConnection,
+					objectStorage: new MockStorage(),
+				};
+				const dds = factory.create(dataStoreRuntime, name);
+				dds.connect(services);
 
-			doStuff(dds);
+				doStuff(dds);
+			};
+			return {
+				name,
+				createAndDoStuff,
+				expectHandlesDetected,
+			};
 		}
 
-		interface IFactory<T extends IChannel> {
+		/** A "Mask" over IChannelFactory that specifies the return type of create */
+		interface IChannelFactoryWithCreatedType<T extends IChannel>
+			extends Omit<IChannelFactory, "create"> {
 			create: (...args: Parameters<IChannelFactory["create"]>) => T;
 		}
 
@@ -123,15 +135,22 @@ describe("DDS Handle Encoding", () => {
 		}
 
 		const testCases: ITestCase[] = [
-			{
-				name: "SharedDirectory",
-				createAndDoStuff: (id: string) => {
-					createAndDoStuff(id, new DirectoryFactory(), (dds: IDirectory) => {
-						dds.set("whatever", new MockHandle("whatever"));
+			createTestCase(
+				new DirectoryFactory(),
+				(dds: IDirectory) => {
+					dds.set("whatever", handle);
+				},
+				true /* expectHandlesDetected */,
+			),
+			createTestCase(
+				new ConsensusRegisterCollectionFactory(),
+				(dds) => {
+					dds.write("whatever", handle).catch(() => {
+						assert.fail("crc.write rejected!");
 					});
 				},
-				expectHandlesDetected: true,
-			},
+				false /* expectHandlesDetected */,
+			),
 		];
 
 		testCases.forEach((testCase) => {
