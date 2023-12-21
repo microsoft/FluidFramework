@@ -9,10 +9,8 @@ import {
 	SchemaFactory,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
+	InsertableTreeFieldFromImplicitField,
 } from "../../class-tree";
-// TODO: Does this need to be publicly exported?
-// eslint-disable-next-line import/no-internal-modules
-import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal";
 import { TreeFactory } from "../../treeFactory";
 import { typeboxValidator } from "../../external-utilities";
 import { ForestType } from "../../shared-tree";
