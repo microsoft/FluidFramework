@@ -21,7 +21,7 @@ const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
-async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
+async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersionNum) {
 	// Delete existing documentation output
 	console.log("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
@@ -91,7 +91,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 	console.log("Generating nav contents...");
 
 	try {
-		await buildNavBar(documents);
+		await buildNavBar(documents, apiVersionNum);
 	} catch (error) {
 		console.error("Error saving nav bar yaml files:", error);
 		throw error;
