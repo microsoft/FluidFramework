@@ -323,6 +323,7 @@ declare function get_old_ClassDeclaration_MockFluidDataStoreContext():
 declare function use_current_ClassDeclaration_MockFluidDataStoreContext(
     use: TypeOnly<current.MockFluidDataStoreContext>): void;
 use_current_ClassDeclaration_MockFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockFluidDataStoreContext());
 
 /*
