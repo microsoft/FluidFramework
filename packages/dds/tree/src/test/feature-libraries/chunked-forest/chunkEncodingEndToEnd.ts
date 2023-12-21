@@ -33,7 +33,6 @@ import {
 import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { ForestType } from "../../../shared-tree";
 import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils";
-import { noopValidator } from "../../../codec";
 import { brand } from "../../../util";
 import {
 	Chunker,
@@ -112,7 +111,7 @@ describe.skip("End to End chunked encoding", () => {
 		flexTree.editableTree.insertAt(0, chunk.cursor());
 
 		const options = {
-			jsonValidator: noopValidator,
+			jsonValidator: typeboxValidator,
 			forest: ForestType.Optimized,
 			summaryEncodeType: TreeCompressionStrategy.Compressed,
 		};
@@ -152,7 +151,7 @@ describe.skip("End to End chunked encoding", () => {
 		});
 
 		const options = {
-			jsonValidator: noopValidator,
+			jsonValidator: typeboxValidator,
 			forest: ForestType.Optimized,
 			summaryEncodeType: TreeCompressionStrategy.Compressed,
 		};
