@@ -29,7 +29,7 @@
 			},
 			"require": {
 				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.cjs"
+				"default": "./dist/indexNode.js"
 			}
 		}
 	},
