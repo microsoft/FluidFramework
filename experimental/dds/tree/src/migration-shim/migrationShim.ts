@@ -104,7 +104,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		this.preMigrationDeltaConnection.disableSubmit();
 		const { idCompressor } = this.runtime;
 		if (idCompressor !== undefined) {
-			(idCompressor as unknown as IIdCompressorCore).beginGhostSession(ghostSessionId, () => this.populateNewSharedObjectFn(this.legacyTree, newTree))
+			(idCompressor as unknown as IIdCompressorCore).beginGhostSession(ghostSessionId, () => this.populateNewSharedObjectFn(this.legacyTree, newTree)) // need to make this not old ghostSessionId lol.
 		} else {
 			this.populateNewSharedObjectFn(this.legacyTree, newTree);
 		}

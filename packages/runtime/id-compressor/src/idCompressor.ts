@@ -45,7 +45,7 @@ import {
 	lastFinalizedLocal,
 	Session,
 	Sessions,
-	lastAllocatedFinal,
+	lastFinalizedFinal,
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
@@ -167,7 +167,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (this.ongoingGhostSession) {
 			this.ongoingGhostSession.capacity++;
 			this.ongoingGhostSession.count++;
-			return lastAllocatedFinal(this.ongoingGhostSession) as unknown as SessionSpaceCompressedId;
+			return lastFinalizedFinal(this.ongoingGhostSession) as unknown as SessionSpaceCompressedId;
 		} else {
 			this.localGenCount++;
 			const lastCluster = this.localSession.getLastCluster();
