@@ -88,6 +88,7 @@
 		"@fluidframework/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.8.0.0",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",

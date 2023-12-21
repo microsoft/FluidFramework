@@ -11060,6 +11060,7 @@ importers:
       '@fluidframework/devtools-core-previous': npm:@fluid-experimental/devtools-core@2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -11110,6 +11111,7 @@ importers:
       '@fluidframework/devtools-core-previous': /@fluid-experimental/devtools-core/2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/id-compressor': link:../../../runtime/id-compressor
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
@@ -19872,7 +19874,7 @@ packages:
       '@previewjs/type-analyzer': 9.0.1
       assert-never: 1.2.1
       prettier: 2.8.8
-      typescript: 5.1.6
+      typescript: 5.3.2
     dev: true
 
   /@previewjs/storybook-helpers/3.0.0_@types+node@18.19.1:
@@ -19882,7 +19884,7 @@ packages:
       '@previewjs/core': 23.0.1_@types+node@18.19.1
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/type-analyzer': 8.0.2
-      typescript: 5.1.6
+      typescript: 5.3.2
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -19903,7 +19905,7 @@ packages:
       '@previewjs/vfs': 2.1.0
       assert-never: 1.2.1
       prettier: 2.8.8
-      typescript: 5.1.6
+      typescript: 5.3.2
     dev: true
 
   /@previewjs/type-analyzer/9.0.1:
@@ -24028,7 +24030,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.3
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
@@ -41514,7 +41516,7 @@ packages:
       posthtml-rename-id: 1.0.12
       posthtml-svg-mode: 1.0.3
       query-string: 4.3.4
-      traverse: 0.6.6
+      traverse: 0.6.7
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -42140,6 +42142,7 @@ packages:
 
   /traverse/0.6.6:
     resolution: {integrity: sha512-kdf4JKs8lbARxWdp7RKdNzoJBhGUcIalSYibuGyHJbmk40pOysQ0+QPvlkCOICOivDWU2IJo2rkrxyTK2AH4fw==}
+    dev: false
 
   /traverse/0.6.7:
     resolution: {integrity: sha512-/y956gpUo9ZNCb99YjxG7OaslxZWHfCHAUUfshwqOXmxUIvqLjVO581BT+gM59+QV9tFe6/CGG53tsA1Y7RSdg==}
