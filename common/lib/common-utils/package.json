@@ -13,11 +13,15 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"default": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
-		},
+		}
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.mts",
