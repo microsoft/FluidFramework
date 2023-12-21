@@ -14,7 +14,9 @@ import { EncodedFieldBatch } from "../chunked-forest";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
+export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>({
+	multipleOf: 1,
+});
 
 export const EncodedChangeAtomId = Type.Object(
 	{
@@ -78,9 +80,12 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
  */
 export type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
-const EncodedNodeExistsConstraint = Type.Object({
-	violated: Type.Boolean(),
-});
+const EncodedNodeExistsConstraint = Type.Object(
+	{
+		violated: Type.Boolean(),
+	},
+	noAdditionalProps,
+);
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
 export const EncodedNodeChangeset = Type.Object(
@@ -133,14 +138,17 @@ export const EncodedBuildsArray = Type.Array(
 
 export type EncodedBuildsArray = Static<typeof EncodedBuildsArray>;
 
-export const EncodedBuilds = Type.Object({
-	builds: EncodedBuildsArray,
-	/**
-	 * Fields indexed by the EncodedTreeIndexes above.
-	 * TODO: Strongly typing this here may result in redundant schema validation of this data.
-	 */
-	trees: EncodedFieldBatch,
-});
+export const EncodedBuilds = Type.Object(
+	{
+		builds: EncodedBuildsArray,
+		/**
+		 * Fields indexed by the EncodedTreeIndexes above.
+		 * TODO: Strongly typing this here may result in redundant schema validation of this data.
+		 */
+		trees: EncodedFieldBatch,
+	},
+	noAdditionalProps,
+);
 
 export type EncodedBuilds = Static<typeof EncodedBuilds>;
 
