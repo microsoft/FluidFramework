@@ -35,15 +35,13 @@ import {
 	DeltaDetachedNodeId,
 	ChangeAtomIdRangeMap,
 	EncodedRevisionTag,
-	ChangeAtomIdMap,
 } from "../../core";
 import {
 	brand,
-	deleteFromNestedMap,
+	deleteFromRangeMap,
 	getFromRangeMap,
 	getOrAddEmptyToMap,
 	getOrAddInMap,
-	getOrCreate,
 	IdAllocationState,
 	IdAllocator,
 	idAllocatorFromMaxId,
@@ -776,18 +774,14 @@ export class ModularChangeFamily
 
 function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 	const allBuilds: ChangeAtomIdRangeMap<readonly TreeChunk[]> = new Map();
-	const allDestroys: ChangeAtomIdMap<undefined> = new Map();
+	const allDestroys: ChangeAtomIdRangeMap<undefined> = new Map();
 	for (const taggedChange of changes) {
 		const revision = revisionFromTaggedChange(taggedChange);
 		const change = taggedChange.change;
 		if (change.builds) {
 			for (const [revisionKey, rangeMapData] of change.builds) {
 				const setRevisionKey = revisionKey ?? revision;
-				const rangeMap: RangeMap<readonly TreeChunk[]> = getOrCreate(
-					allBuilds,
-					setRevisionKey,
-					() => [],
-				);
+				const buildRangeMap = getOrAddInMap(allBuilds, setRevisionKey, []);
 				for (const { start, length, value } of rangeMapData) {
 					// Check for duplicate builds and prefer earlier ones.
 					// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
@@ -800,41 +794,45 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 					// Note that it would in principle be possible to adopt the later build and exclude from the
 					// composition all the changes already reflected on the tree, but that is not something we
 					// care to support at this time.
-					if (getFromRangeMap(rangeMap, start, length).value === undefined) {
-						// todoj fix this to deal with the entire range
+					if (getFromRangeMap(buildRangeMap, start, length).value === undefined) {
 						// Check for earlier destroys that this build might cancel-out with.
-						const didCancelOut = deleteFromNestedMap(allDestroys, setRevisionKey, start);
-						if (!didCancelOut) {
-							setInRangeMap(rangeMap, start, length, value);
+						const destroyRangeMap = allDestroys.get(setRevisionKey);
+						if (destroyRangeMap !== undefined) {
+							const didCancelOut = deleteFromRangeMap(destroyRangeMap, start, length);
+							if (!didCancelOut) {
+								setInRangeMap(buildRangeMap, start, length, value);
+							} else if (destroyRangeMap.length === 0) {
+								allDestroys.delete(setRevisionKey);
+							}
+						} else {
+							setInRangeMap(buildRangeMap, start, length, value);
 						}
 					}
-
-					if (getFromRangeMap(rangeMap, start, length).value === undefined) {
-						
-					}
 				}
-				if (rangeMap.length === 0) {
+				if (buildRangeMap.length === 0) {
 					allBuilds.delete(setRevisionKey);
 				}
 			}
 		}
 		if (change.destroys !== undefined) {
-			for (const [revisionKey, innerMap] of change.destroys) {
+			for (const [revisionKey, rangeMapData] of change.destroys) {
 				const setRevisionKey = revisionKey ?? revision;
-				const innerDstMap = getOrAddInMap(
-					allDestroys,
-					setRevisionKey,
-					new Map<ChangesetLocalId, undefined>(),
-				);
-				for (const id of innerMap.keys()) {
+				const destroyRangeMap = getOrAddInMap(allDestroys, setRevisionKey, []);
+				for (const { start, length } of rangeMapData) {
 					// Check for earlier builds that this destroy might cancel-out with.
-					// todoj
-					// const didCancelOut = deleteFromNestedMap(allBuilds, setRevisionKey, id);
-					// if (!didCancelOut) {
-					// 	innerDstMap.set(id, undefined);
-					// }
+					const buildRangeMap = allBuilds.get(setRevisionKey);
+					if (buildRangeMap !== undefined) {
+						const didCancelOut = deleteFromRangeMap(buildRangeMap, start, length);
+						if (!didCancelOut) {
+							setInRangeMap(destroyRangeMap, start, length, undefined);
+						} else if (buildRangeMap.length === 0) {
+							allBuilds.delete(setRevisionKey);
+						}
+					} else {
+						setInRangeMap(destroyRangeMap, start, length, undefined);
+					}
 				}
-				if (innerDstMap.size === 0) {
+				if (destroyRangeMap.length === 0) {
 					allDestroys.delete(setRevisionKey);
 				}
 			}
@@ -844,18 +842,18 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 }
 
 function invertBuilds(
-	builds: ChangeAtomIdMap<TreeChunk> | undefined,
+	builds: ChangeAtomIdRangeMap<readonly TreeChunk[]> | undefined,
 	fallbackRevision: RevisionTag | undefined,
-): ChangeAtomIdMap<undefined> | undefined {
+): ChangeAtomIdRangeMap<undefined> | undefined {
 	if (builds !== undefined) {
-		const destroys: ChangeAtomIdMap<undefined> = new Map();
-		for (const [revision, innerBuildMap] of builds) {
+		const destroys: ChangeAtomIdRangeMap<undefined> = new Map();
+		for (const [revision, rangeMapData] of builds) {
 			const initializedRevision = revision ?? fallbackRevision;
-			const innerDestroyMap: Map<ChangesetLocalId, undefined> = new Map();
-			for (const id of innerBuildMap.keys()) {
-				innerDestroyMap.set(id, undefined);
+			const destroyRangeMap: RangeMap<undefined> = [];
+			for (const { start, length } of rangeMapData) {
+				setInRangeMap(destroyRangeMap, start, length, undefined);
 			}
-			destroys.set(initializedRevision, innerDestroyMap);
+			destroys.set(initializedRevision, destroyRangeMap);
 		}
 		return destroys;
 	}
@@ -944,12 +942,14 @@ export function intoDelta(
 	}
 	if (change.destroys !== undefined && change.destroys.size > 0) {
 		const destroys: DeltaDetachedNodeDestruction[] = [];
-		forEachInNestedMap(change.destroys, (_, major, minor) => {
-			destroys.push({
-				id: makeDetachedNodeId(major ?? revision, minor),
-				count: 1,
-			});
-		});
+		for (const [major, rangeMap] of change.destroys.entries()) {
+			for (const { start, length } of rangeMap) {
+				destroys.push({
+					id: makeDetachedNodeId(major ?? revision, start),
+					count: length,
+				});
+			}
+		}
 		rootDelta.destroy = destroys;
 	}
 	return rootDelta;
@@ -1215,7 +1215,7 @@ function makeModularChangeset(
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
 	builds?: ChangeAtomIdRangeMap<readonly TreeChunk[]>,
-	destroys?: ChangeAtomIdMap<undefined>,
+	destroys?: ChangeAtomIdRangeMap<undefined>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {

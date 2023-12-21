@@ -569,8 +569,26 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(0), node1Chunk]])],
+						[
+							undefined,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
+						[
+							tag2,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
 					]),
 				},
 				tag1,
@@ -580,8 +598,26 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					destroys: new Map([
-						[tag1, new Map([[brand(0), undefined]])],
-						[undefined, new Map([[brand(0), undefined]])],
+						[
+							tag1,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
+						[
+							undefined,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
 					]),
 				},
 				tag2,
@@ -604,8 +640,26 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					destroys: new Map([
-						[tag1, new Map([[brand(0), undefined]])],
-						[undefined, new Map([[brand(0), undefined]])],
+						[
+							tag1,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
+						[
+							undefined,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
 					]),
 				},
 				tag2,
@@ -615,8 +669,26 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(0), node1Chunk]])],
+						[
+							undefined,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
+						[
+							tag2,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
 					]),
 				},
 				tag1,
@@ -639,12 +711,48 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, [{ start: 0, length: 1, value: [treeChunkFromCursor(node1)] }]],
-						[tag3, [{ start: 0, length: 1, value: [treeChunkFromCursor(node1)] }]],
+						[
+							undefined,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
+						[
+							tag3,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
 					]),
 					destroys: new Map([
-						[undefined, new Map([[brand(1), undefined]])],
-						[tag3, new Map([[brand(1), undefined]])],
+						[
+							undefined,
+							[
+								{
+									start: 1,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
+						[
+							tag3,
+							[
+								{
+									start: 1,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
 					]),
 				},
 				tag1,
@@ -654,12 +762,48 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, [{ start: 2, length: 1, value: [treeChunkFromCursor(node1)] }]],
-						[tag3, [{ start: 2, length: 1, value: [treeChunkFromCursor(node1)] }]],
+						[
+							undefined,
+							[
+								{
+									start: 2,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
+						[
+							tag3,
+							[
+								{
+									start: 2,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
 					]),
 					destroys: new Map([
-						[undefined, new Map([[brand(3), undefined]])],
-						[tag3, new Map([[brand(3), undefined]])],
+						[
+							undefined,
+							[
+								{
+									start: 3,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
+						[
+							tag3,
+							[
+								{
+									start: 3,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -684,14 +828,14 @@ describe("ModularChangeFamily", () => {
 					],
 				]),
 				destroys: new Map([
-					[tag1, new Map([[brand(1), undefined]])],
-					[tag2, new Map([[brand(3), undefined]])],
+					[tag1, [{ start: 1, length: 1, value: undefined }]],
+					[tag2, [{ start: 3, length: 1, value: undefined }]],
 					[
 						tag3,
-						new Map([
-							[brand(1), undefined],
-							[brand(3), undefined],
-						]),
+						[
+							{ start: 1, length: 1, value: undefined },
+							{ start: 3, length: 1, value: undefined },
+						],
 					],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
@@ -754,8 +898,26 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(1), node1Chunk]])],
+						[
+							undefined,
+							[
+								{
+									start: 0,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
+						[
+							tag2,
+							[
+								{
+									start: 1,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
 					]),
 				},
 				tag1,
@@ -764,8 +926,26 @@ describe("ModularChangeFamily", () => {
 			const expectedRollback: ModularChangeset = {
 				fieldChanges: new Map([]),
 				destroys: new Map([
-					[tag1, new Map([[brand(0), undefined]])],
-					[tag2, new Map([[brand(1), undefined]])],
+					[
+						tag1,
+						[
+							{
+								start: 0,
+								length: 1,
+								value: undefined,
+							},
+						],
+					],
+					[
+						tag2,
+						[
+							{
+								start: 1,
+								length: 1,
+								value: undefined,
+							},
+						],
+					],
 				]),
 			};
 			const expectedUndo: ModularChangeset = {
@@ -845,8 +1025,26 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(1), node1Chunk]])],
-						[tag2, new Map([[brand(2), node1Chunk]])],
+						[
+							undefined,
+							[
+								{
+									start: 1,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
+						[
+							tag2,
+							[
+								{
+									start: 2,
+									length: 1,
+									value: [node1Chunk],
+								},
+							],
+						],
 					]),
 				},
 				tag1,
@@ -868,8 +1066,26 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					destroys: new Map([
-						[undefined, new Map([[brand(1), undefined]])],
-						[tag2, new Map([[brand(2), undefined]])],
+						[
+							undefined,
+							[
+								{
+									start: 1,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
+						[
+							tag2,
+							[
+								{
+									start: 2,
+									length: 1,
+									value: undefined,
+								},
+							],
+						],
 					]),
 				},
 				tag1,
