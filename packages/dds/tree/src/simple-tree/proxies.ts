@@ -30,7 +30,7 @@ import {
 	typeNameSymbol,
 	isFluidHandle,
 } from "../feature-libraries";
-import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier } from "../core";
+import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
@@ -38,7 +38,7 @@ import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
-import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, Unhydrated, TreeNode } from "./types";
+import { TreeField, TreeMapNode, TreeObjectNode, Unhydrated, TreeNode } from "./types";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
@@ -99,32 +99,28 @@ export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | un
 	return undefined;
 }
 
-export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
-	flexNode: FlexTreeNode,
-): TypedNode<TSchema> {
+export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
 	const cachedProxy = tryGetFlexNodeTarget(flexNode);
 	if (cachedProxy !== undefined) {
-		return cachedProxy as TypedNode<TSchema>;
+		return cachedProxy;
 	}
 
 	const schema = flexNode.schema;
-	let output: TypedNode<TSchema>;
+	let output: TreeNode | TreeValue;
 	const classSchema = getClassSchema(schema);
 	if (classSchema !== undefined) {
 		if (typeof classSchema === "function") {
-			const simpleSchema = classSchema as unknown as new (
-				dummy: FlexTreeNode,
-			) => TypedNode<TSchema>;
+			const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
 			output = new simpleSchema(flexNode);
 		} else {
-			output = (
-				schema as unknown as { create: (data: FlexTreeNode) => TypedNode<TSchema> }
-			).create(flexNode);
+			output = (schema as unknown as { create: (data: FlexTreeNode) => TreeNode }).create(
+				flexNode,
+			);
 		}
 	} else {
 		// Fallback to createNodeProxy if needed.
 		// TODO: maybe remove this fallback and error once migration to class based schema is done.
-		output = createNodeProxy<TSchema>(flexNode, false);
+		output = createNodeProxy(flexNode, false);
 	}
 	return output;
 }
@@ -137,30 +133,26 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
  * If not provided an empty collection of the relevant type is used for the target and a separate object created to dispatch methods.
  * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide needed functionality depending on the schema kind.
  */
-export function createNodeProxy<TSchema extends TreeNodeSchema>(
+export function createNodeProxy(
 	flexNode: FlexTreeNode,
 	allowAdditionalProperties: boolean,
 	targetObject?: object,
-): TypedNode<TSchema> {
+): TreeNode | TreeValue {
 	const schema = flexNode.schema;
 	if (schemaIsLeaf(schema)) {
-		return flexNode.value as TypedNode<TSchema>;
+		return flexNode.value ?? fail("Leaf must have value");
 	}
-	let proxy: TypedNode<TSchema>;
+	let proxy: TreeNode;
 	if (schemaIsMap(schema)) {
-		proxy = createMapProxy(allowAdditionalProperties, targetObject) as TypedNode<TSchema>;
+		proxy = createMapProxy(allowAdditionalProperties, targetObject);
 	} else if (schemaIsFieldNode(schema)) {
-		proxy = createListProxy(allowAdditionalProperties, targetObject) as TypedNode<TSchema>;
+		proxy = createListProxy(allowAdditionalProperties, targetObject);
 	} else if (schemaIsObjectNode(schema)) {
-		proxy = createObjectProxy(
-			schema,
-			allowAdditionalProperties,
-			targetObject,
-		) as TypedNode<TSchema>;
+		proxy = createObjectProxy(schema, allowAdditionalProperties, targetObject);
 	} else {
 		fail("unrecognized node kind");
 	}
-	setFlexNode(proxy as TreeNode, flexNode);
+	setFlexNode(proxy, flexNode);
 	return proxy;
 }
 
@@ -305,7 +297,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		value: Array.prototype[Symbol.iterator],
 	},
 	at: {
-		value(this: TreeListNodeOld, index: number): TreeNode | undefined {
+		value(this: TreeListNodeOld, index: number): TreeNode | TreeValue | undefined {
 			const field = getSequenceField(this);
 			const val = field.boxedAt(index);
 

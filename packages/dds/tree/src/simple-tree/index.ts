@@ -7,9 +7,7 @@ export { getProxyForField } from "./proxies";
 export {
 	TreeObjectNodeFields,
 	TreeField,
-	TreeFieldInner,
 	TypedNode,
-	TreeNodeUnion,
 	TreeMapNode,
 	TreeObjectNode,
 	TreeNode,
