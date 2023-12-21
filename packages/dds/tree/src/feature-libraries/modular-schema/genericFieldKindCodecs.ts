@@ -20,15 +20,15 @@ function makeV0Codec<TChildChange = NodeChangeset>(
 ): IJsonCodec<GenericChangeset<TChildChange>, EncodedGenericChangeset> {
 	return {
 		encode: (change: GenericChangeset<TChildChange>): EncodedGenericChangeset => {
-			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => ({
+			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => [
 				index,
-				nodeChange: childCodec.encode(nodeChange),
-			}));
+				childCodec.encode(nodeChange),
+			]);
 			return encoded;
 		},
 		decode: (encoded: EncodedGenericChangeset): GenericChangeset<TChildChange> => {
 			return encoded.map(
-				({ index, nodeChange }: EncodedGenericChange): GenericChange<TChildChange> => ({
+				([index, nodeChange]: EncodedGenericChange): GenericChange<TChildChange> => ({
 					index,
 					nodeChange: childCodec.decode(nodeChange),
 				}),

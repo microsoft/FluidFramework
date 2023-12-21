@@ -1,7 +1,7 @@
 [
-  {
-    "index": 42,
-    "nodeChange": {
+  [
+    42,
+    {
       "inputContext": [],
       "intentions": [
         1
@@ -10,5 +10,5 @@
         1
       ]
     }
-  }
+  ]
 ]
