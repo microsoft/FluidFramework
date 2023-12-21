@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
-import { deepFreeze, testIdCompressor } from "../../utils";
+import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
 import { generatePopulatedMarks } from "./populatedMarks";
 import { describeForBothConfigs, withOrderingMethod } from "./utils";
@@ -28,7 +28,7 @@ const vestigialEndpoint: ChangeAtomId = {
 describeForBothConfigs("SequenceField - Utils", (config) => {
 	const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
 	describe("round-trip splitMark and tryMergeMarks", () => {
-		const marks = generatePopulatedMarks(testIdCompressor);
+		const marks = generatePopulatedMarks(idCompressor);
 		[
 			...marks,
 			...marks
