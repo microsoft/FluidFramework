@@ -205,7 +205,7 @@ export function createTreeCheckout(
 		new SharedTreeBranch(
 			{
 				change: changeFamily.rebaser.compose([]),
-				revision: idCompressor.generateCompressedId(),
+				revision: "root",
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
