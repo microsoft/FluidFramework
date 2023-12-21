@@ -14,7 +14,7 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"default": "./dist/index.cjs"
+			"default": "./dist/index.js"
 		},
 		"./test/containerRuntime": {
 			"import": {
@@ -23,7 +23,7 @@
 			},
 			"require": {
 				"types": "./dist/containerRuntime.d.ts",
-				"default": "./dist/containerRuntime.cjs"
+				"default": "./dist/containerRuntime.js"
 			}
 		},
 		"./test/deltaScheduler": {
@@ -33,7 +33,7 @@
 			},
 			"require": {
 				"types": "./dist/deltaScheduler.d.ts",
-				"default": "./dist/deltaScheduler.cjs"
+				"default": "./dist/deltaScheduler.js"
 			}
 		},
 		"./test/scheduleManager": {
@@ -43,7 +43,7 @@
 			},
 			"require": {
 				"types": "./dist/scheduleManager.d.ts",
-				"default": "./dist/scheduleManager.cjs"
+				"default": "./dist/scheduleManager.js"
 			}
 		},
 		"./test/blobManager": {
@@ -53,7 +53,7 @@
 			},
 			"require": {
 				"types": "./dist/blobManager.d.ts",
-				"default": "./dist/blobManager.cjs"
+				"default": "./dist/blobManager.js"
 			}
 		},
 		"./test/summary": {
@@ -63,7 +63,7 @@
 			},
 			"require": {
 				"types": "./dist/summary/index.d.ts",
-				"default": "./dist/summary/index.cjs"
+				"default": "./dist/summary/index.js"
 			}
 		},
 		"./test/gc": {
@@ -73,7 +73,7 @@
 			},
 			"require": {
 				"types": "./gc/index.d.ts",
-				"default": "./gc/index.cjs"
+				"default": "./gc/index.js"
 			}
 		},
 		"./alpha": {
@@ -83,7 +83,7 @@
 			},
 			"require": {
 				"types": "./dist/container-runtime-alpha.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
@@ -93,7 +93,7 @@
 			},
 			"require": {
 				"types": "./dist/container-runtime-beta.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
@@ -103,7 +103,7 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./public": {
@@ -113,11 +113,11 @@
 			},
 			"require": {
 				"types": "./dist/container-runtime-public.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -130,7 +130,7 @@
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -147,7 +147,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
