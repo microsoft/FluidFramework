@@ -13,15 +13,13 @@ import {
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
-	ObjectNodeSchema,
 	FlexTreeTypedNode,
 } from "../../feature-libraries";
-import { TypedNode, TreeObjectNode } from "../../simple-tree";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../simple-tree/proxies";
+import { InsertableContent, extractFactoryContent } from "../../simple-tree/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -219,11 +217,8 @@ describe("domains - SchemaBuilder", () => {
 		});
 
 		type _0 = requireFalse<isAny<typeof testObject>>;
-		type _1 = requireTrue<
-			areSafelyAssignable<TypedNode<typeof testObject>, { number: number }>
-		>;
 
-		function typeTests(x: TypedNode<typeof testObject>) {
+		function typeTests(x: FlexTreeTypedNode<typeof testObject>) {
 			const y: number = x.number;
 		}
 	});
@@ -237,13 +232,6 @@ describe("domains - SchemaBuilder", () => {
 		});
 
 		type _0 = requireFalse<isAny<typeof recursiveObject>>;
-		type Proxied = TypedNode<typeof recursiveObject>;
-		type _1 = requireFalse<isAny<Proxied>>;
-
-		function typeTests(x: Proxied) {
-			const y: number = x.number;
-			const z: number | undefined = x.recursive?.recursive?.number;
-		}
 
 		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject>) {
 			const y: number = x.number;
@@ -284,11 +272,6 @@ describe("domains - SchemaBuilder", () => {
 			>
 		>;
 
-		function typeTests(x: TypedNode<typeof recursiveObject2>) {
-			const y: number = x.number;
-			const z: number | undefined = x.recursive?.recursive?.number;
-		}
-
 		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject2>) {
 			const y: number = x.number;
 			const z: number | undefined = x.recursive?.recursive?.number;
@@ -299,9 +282,6 @@ describe("domains - SchemaBuilder", () => {
 /**
  * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
  */
-export function checkCreated<TSchema extends ObjectNodeSchema>(
-	created: TreeObjectNode<TSchema>,
-	expected: TypedNode<TSchema>,
-): void {
+export function checkCreated(created: InsertableContent, expected: InsertableContent): void {
 	assert.deepEqual(extractFactoryContent(created).content, expected);
 }

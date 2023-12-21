@@ -109,7 +109,7 @@ describe("schemaFactory", () => {
 		assert(a instanceof A);
 		assert(!(a instanceof B));
 
-		// TODO: this should be a compile error, but current API is structurally typed, and doesn't include the schema of nodes in that.
+		// @ts-expect-error Nodes should get type based nominal typing.
 		const b: A = new B({});
 	});
 

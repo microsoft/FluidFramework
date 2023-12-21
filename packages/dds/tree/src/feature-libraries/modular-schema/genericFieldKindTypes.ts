@@ -8,7 +8,7 @@ import { NodeChangeset } from "./modularChangeTypes";
 /**
  * A field-kind-agnostic change to a single node within a field.
  */
-export interface GenericChange {
+export interface GenericChange<TChildChange = NodeChangeset> {
 	/**
 	 * Index within the field of the changed node.
 	 */
@@ -16,10 +16,10 @@ export interface GenericChange {
 	/**
 	 * Change to the node.
 	 */
-	nodeChange: NodeChangeset;
+	nodeChange: TChildChange;
 }
 
 /**
  * A field-agnostic set of changes to the elements of a field.
  */
-export type GenericChangeset = GenericChange[];
+export type GenericChangeset<TChildChange = NodeChangeset> = GenericChange<TChildChange>[];
