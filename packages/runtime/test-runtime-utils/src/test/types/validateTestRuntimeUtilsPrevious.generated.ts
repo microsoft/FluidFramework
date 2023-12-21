@@ -127,6 +127,7 @@ declare function get_old_ClassDeclaration_MockContainerRuntime():
 declare function use_current_ClassDeclaration_MockContainerRuntime(
     use: TypeOnly<current.MockContainerRuntime>): void;
 use_current_ClassDeclaration_MockContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntime());
 
 /*
@@ -151,6 +152,7 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeFactory():
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactory(
     use: TypeOnly<current.MockContainerRuntimeFactory>): void;
 use_current_ClassDeclaration_MockContainerRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeFactory());
 
 /*
@@ -175,6 +177,7 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnec
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
     use: TypeOnly<current.MockContainerRuntimeFactoryForReconnection>): void;
 use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection());
 
 /*
@@ -199,6 +202,7 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeForReconnection():
 declare function use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
     use: TypeOnly<current.MockContainerRuntimeForReconnection>): void;
 use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeForReconnection());
 
 /*
@@ -343,6 +347,7 @@ declare function get_old_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_current_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<current.MockFluidDataStoreRuntime>): void;
 use_current_ClassDeclaration_MockFluidDataStoreRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*

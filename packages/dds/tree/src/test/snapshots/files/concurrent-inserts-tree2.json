@@ -120,8 +120,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  0,
-                                  0
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -185,8 +189,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -253,12 +261,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  0,
-                                  0
-                                ],
-                                [
-                                  1,
-                                  1
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -282,12 +290,7 @@
                                       "com.fluidframework.leaf.string",
                                       true,
                                       "a",
-                                      []
-                                    ]
-                                  ],
-                                  [
-                                    1,
-                                    [
+                                      [],
                                       "com.fluidframework.leaf.string",
                                       true,
                                       "c",
@@ -334,8 +337,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  2,
-                                  0
+                                  [
+                                    [
+                                      2,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {

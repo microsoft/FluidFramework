@@ -24,7 +24,7 @@
 			},
 			"require": {
 				"types": "./dist/test-runtime-utils-alpha.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
@@ -34,7 +34,7 @@
 			},
 			"require": {
 				"types": "./dist/test-runtime-utils-beta.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
@@ -44,7 +44,7 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./public": {
@@ -54,7 +54,7 @@
 			},
 			"require": {
 				"types": "./dist/test-runtime-utils-public.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		}
 	},
@@ -160,6 +160,22 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MockContainerRuntimeForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactory": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

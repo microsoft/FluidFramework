@@ -2679,6 +2679,12 @@ export class ContainerRuntime
 			this.blobManager.setRedirectTable(blobRedirectTable);
 		}
 
+		// We can finalize any allocated IDs since we're the only client
+		const idRange = this.idCompressor?.takeNextCreationRange();
+		if (idRange !== undefined) {
+			this.idCompressor?.finalizeCreationRange(idRange);
+		}
+
 		const summarizeResult = this.dataStores.createSummary(telemetryContext);
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);

@@ -23,17 +23,13 @@ import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 
 // @internal
-export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => {
+export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: TValue;
-}) & { readonly [Property in keyof TEnum]: {
-        new (data?: EmptyObject | undefined): {
-            readonly value: TEnum[Property];
-        };
-        readonly identifier: `${TScope}.${TEnum[Property]}`;
-        readonly kind: NodeKind.Object;
-        readonly info: unknown;
-        readonly implicitlyConstructable: true;
-    }; };
+}) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<`${TScope}.${TEnum[Property]}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+        readonly value: TEnum[Property];
+    }, object & InsertableObjectFromSchemaRecord<EmptyObject>, true> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+        readonly value: TEnum[Property];
+    }); };
 
 // @internal
 export interface Adapters {
@@ -426,17 +422,13 @@ export type EmptyObject = {};
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
 
 // @internal
-export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => {
+export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: TValue;
-}) & Record<Members, {
-    new (data?: EmptyObject | undefined): {
-        readonly value: Members;
-    };
-    readonly identifier: `${TScope}.${Members}`;
-    readonly kind: NodeKind.Object;
-    readonly info: unknown;
-    readonly implicitlyConstructable: true;
-}>;
+}) & Record<Members, TreeNodeSchemaClass<`${TScope}.${Members}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: Members;
+}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: Members;
+})>;
 
 // @internal
 export type Erased<Name extends string> = ErasedType<Name>;
@@ -1466,18 +1458,18 @@ export interface SchemaEvents {
 // @public @sealed
 export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
     constructor(scope: TScope);
-    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Array<${string}>`, NodeKind.Array, TreeArrayNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
-    array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Array<${string}>`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.Array<${string}>`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.${Name}`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
-    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Map<${string}>`, NodeKind.Map, TreeMapNode<T>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, true>;
-    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
-    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
-    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
+    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Map<${string}>`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.Map<${string}>`>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, true>;
+    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.${Name}`>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.${string}`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
+    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.${Name}`>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<T>, object & InsertableObjectFromSchemaRecord<T>, true>;
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>, object & InsertableObjectFromSchemaRecord<T>, true>;
     optional<const T extends ImplicitAllowedTypes>(t: T): FieldSchema<FieldKind.Optional, T>;
     // (undocumented)
     readonly scope: TScope;
@@ -1596,15 +1588,11 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @internal
-export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): {
-    new (data?: EmptyObject): {
-        readonly value: TName;
-    };
-    readonly identifier: `${TScope}.${TName}`;
-    readonly kind: NodeKind.Object;
-    readonly info: unknown;
-    readonly implicitlyConstructable: true;
-};
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<`${TScope}.${TName}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: TName;
+}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    readonly value: TName;
+});
 
 // @internal
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
@@ -1628,7 +1616,7 @@ export class test_RecursiveObject extends test_RecursiveObject_base {
 export const test_RecursiveObject_base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<    {
 readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}>, object & InsertableObjectFromSchemaRecord<    {
+}> & WithType<"Test Recursive Domain.testObject">, object & InsertableObjectFromSchemaRecord<    {
 readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>, true>;
@@ -1798,7 +1786,8 @@ export const enum TreeNavigationResult {
 }
 
 // @public
-export abstract class TreeNode {
+export abstract class TreeNode implements WithType {
+    abstract get [type](): string;
 }
 
 // @public
@@ -1905,6 +1894,9 @@ export interface TreeView<in out TRoot> extends IDisposable {
     readonly root: TRoot;
 }
 
+// @public
+export const type: unique symbol;
+
 // @internal
 export const typeboxValidator: JsonValidator;
 
@@ -1973,6 +1965,11 @@ export enum ValueSchema {
 
 // @internal
 export const valueSymbol: unique symbol;
+
+// @public
+export interface WithType<TName extends string = string> {
+    get [type](): TName;
+}
 
 // (No @packageDocumentation comment for this package)
 
