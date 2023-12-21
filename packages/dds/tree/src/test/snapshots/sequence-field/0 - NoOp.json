@@ -2,7 +2,10 @@
   {
     "count": 1,
     "cellId": {
-      "localId": 0,
+      "atom": [
+        0,
+        0
+      ],
       "adjacentCells": [
         [
           0,
@@ -16,8 +19,7 @@
           2,
           1
         ]
-      ],
-      "revision": 0
+      ]
     },
     "changes": {
       "inputContext": [],

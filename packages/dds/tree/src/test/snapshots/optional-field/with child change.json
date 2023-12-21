@@ -1,10 +1,10 @@
 {
   "c": [
     [
-      {
-        "localId": 42,
-        "revision": 0
-      },
+      [
+        42,
+        0
+      ],
       {
         "inputContext": [],
         "intentions": [
@@ -16,9 +16,9 @@
       }
     ],
     [
-      {
-        "localId": 42
-      },
+      [
+        42
+      ],
       {
         "inputContext": [],
         "intentions": [

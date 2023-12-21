@@ -7,7 +7,7 @@ import { SessionId } from "@fluidframework/id-compressor";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, SessionAwareCodec, makeCodecFamily, unitCodec } from "../../codec";
 import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { Mutable } from "../../util";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec";
 import type { NodeChangeset } from "../modular-schema";
 import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat";
@@ -25,36 +25,19 @@ export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
 function makeRegisterIdCodec(
 	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 ): SessionAwareCodec<RegisterId, EncodedRegisterId> {
+	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	return {
 		encode: (registerId: RegisterId, originatorId: SessionId) => {
 			if (registerId === "self") {
 				return 0;
 			}
-
-			const encodedRegisterId: EncodedRegisterId = { localId: registerId.localId };
-			if (registerId.revision !== undefined) {
-				encodedRegisterId.revision = revisionTagCodec.encode(
-					registerId.revision,
-					originatorId,
-				);
-			}
-
-			return encodedRegisterId;
+			return changeAtomIdCodec.encode(registerId, originatorId);
 		},
 		decode: (registerId: EncodedRegisterId, originatorId: SessionId) => {
 			if (registerId === 0) {
 				return "self";
 			}
-
-			const decodedRegisterId: Mutable<RegisterId> = { localId: registerId.localId };
-			if (registerId.revision !== undefined) {
-				decodedRegisterId.revision = revisionTagCodec.decode(
-					registerId.revision,
-					originatorId,
-				);
-			}
-
-			return decodedRegisterId;
+			return changeAtomIdCodec.decode(registerId, originatorId);
 		},
 		encodedSchema: EncodedRegisterId,
 	};

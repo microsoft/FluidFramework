@@ -94,7 +94,9 @@
                                       }
                                     },
                                     "cellId": {
-                                      "localId": 0
+                                      "atom": [
+                                        0
+                                      ]
                                     }
                                   }
                                 ]
@@ -217,7 +219,9 @@
                                                 }
                                               },
                                               "cellId": {
-                                                "localId": 0
+                                                "atom": [
+                                                  0
+                                                ]
                                               }
                                             }
                                           ]

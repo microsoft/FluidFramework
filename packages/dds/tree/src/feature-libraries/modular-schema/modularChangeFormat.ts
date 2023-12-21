@@ -16,19 +16,10 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
-export const EncodedChangeAtomId = Type.Object(
-	{
-		/**
-		 * Uniquely identifies the changeset within which the change was made.
-		 */
-		revision: Type.Optional(RevisionTagSchema),
-		/**
-		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-		 */
-		localId: ChangesetLocalIdSchema,
-	},
-	noAdditionalProps,
-);
+export const EncodedChangeAtomId = Type.Union([
+	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
+	Type.Tuple([ChangesetLocalIdSchema]),
+]);
 
 const EncodedValueChange = Type.Object(
 	{

@@ -1,28 +1,28 @@
 {
   "m": [
     [
-      {
-        "localId": 42,
-        "revision": 0
-      },
+      [
+        42,
+        0
+      ],
       0,
       true
     ],
     [
       0,
-      {
-        "localId": 42,
-        "revision": 0
-      },
+      [
+        42,
+        0
+      ],
       false
     ],
     [
-      {
-        "localId": 42
-      },
-      {
-        "localId": 42
-      },
+      [
+        42
+      ],
+      [
+        42
+      ],
       true
     ]
   ]

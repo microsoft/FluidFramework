@@ -63,9 +63,9 @@
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
                                 "change": {
-                                  "d": {
-                                    "localId": 0
-                                  }
+                                  "d": [
+                                    0
+                                  ]
                                 }
                               }
                             ]
@@ -88,16 +88,16 @@
                                 "change": {
                                   "m": [
                                     [
-                                      {
-                                        "localId": 1
-                                      },
+                                      [
+                                        1
+                                      ],
                                       0,
                                       true
                                     ]
                                   ],
-                                  "d": {
-                                    "localId": 0
-                                  }
+                                  "d": [
+                                    0
+                                  ]
                                 }
                               }
                             ],

@@ -35,16 +35,16 @@
                                           "change": {
                                             "m": [
                                               [
-                                                {
-                                                  "localId": 1
-                                                },
+                                                [
+                                                  1
+                                                ],
                                                 0,
                                                 true
                                               ]
                                             ],
-                                            "d": {
-                                              "localId": 0
-                                            }
+                                            "d": [
+                                              0
+                                            ]
                                           }
                                         }
                                       ]
@@ -106,17 +106,17 @@
                                 "change": {
                                   "m": [
                                     [
-                                      {
-                                        "localId": 3
-                                      },
+                                      [
+                                        3
+                                      ],
                                       0,
                                       true
                                     ],
                                     [
                                       0,
-                                      {
-                                        "localId": 2
-                                      },
+                                      [
+                                        2
+                                      ],
                                       false
                                     ]
                                   ]
@@ -183,26 +183,26 @@
                                 "change": {
                                   "m": [
                                     [
-                                      {
-                                        "localId": 3
-                                      },
+                                      [
+                                        3
+                                      ],
                                       0,
                                       true
                                     ],
                                     [
                                       0,
-                                      {
-                                        "localId": 2
-                                      },
+                                      [
+                                        2
+                                      ],
                                       false
                                     ]
                                   ],
                                   "c": [
                                     [
-                                      {
-                                        "localId": 2,
-                                        "revision": 516
-                                      },
+                                      [
+                                        2,
+                                        516
+                                      ],
                                       {
                                         "fieldChanges": [
                                           {
@@ -211,17 +211,17 @@
                                             "change": {
                                               "m": [
                                                 [
-                                                  {
-                                                    "localId": 1
-                                                  },
+                                                  [
+                                                    1
+                                                  ],
                                                   0,
                                                   true
                                                 ],
                                                 [
                                                   0,
-                                                  {
-                                                    "localId": 0
-                                                  },
+                                                  [
+                                                    0
+                                                  ],
                                                   false
                                                 ]
                                               ]
@@ -231,9 +231,9 @@
                                       }
                                     ],
                                     [
-                                      {
-                                        "localId": 3
-                                      },
+                                      [
+                                        3
+                                      ],
                                       {
                                         "fieldChanges": [
                                           {
@@ -242,16 +242,16 @@
                                             "change": {
                                               "m": [
                                                 [
-                                                  {
-                                                    "localId": 5
-                                                  },
+                                                  [
+                                                    5
+                                                  ],
                                                   0,
                                                   true
                                                 ]
                                               ],
-                                              "d": {
-                                                "localId": 4
-                                              }
+                                              "d": [
+                                                4
+                                              ]
                                             }
                                           }
                                         ]
@@ -348,17 +348,17 @@
                                             "change": {
                                               "m": [
                                                 [
-                                                  {
-                                                    "localId": 1
-                                                  },
+                                                  [
+                                                    1
+                                                  ],
                                                   0,
                                                   true
                                                 ],
                                                 [
                                                   0,
-                                                  {
-                                                    "localId": 0
-                                                  },
+                                                  [
+                                                    0
+                                                  ],
                                                   false
                                                 ]
                                               ]
