@@ -6,7 +6,6 @@
 /* eslint-disable no-bitwise */
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	Client,
 	PropertiesManager,
 	PropertySet,
@@ -69,13 +68,23 @@ export interface IInterval {
 }
 
 /**
- * Values are used in persisted formats (ops) and revertibles.
+ * Values are used in persisted formats (ops).
  * @internal
  */
-export const IntervalOpType = {
+export const IntervalDeltaOpType = {
 	ADD: "add",
 	DELETE: "delete",
 	CHANGE: "change",
+} as const;
+
+export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof IntervalDeltaOpType];
+
+/**
+ * Values are used in revertibles.
+ * @internal
+ */
+export const IntervalOpType = {
+	...IntervalDeltaOpType,
 	PROPERTY_CHANGED: "propertyChanged",
 	POSITION_REMOVE: "positionRemove",
 } as const;
@@ -83,6 +92,7 @@ export const IntervalOpType = {
  * @internal
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
+
 /**
  * @alpha
  */
@@ -221,7 +231,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
-		// eslint-disable-next-line import/no-deprecated
+
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,

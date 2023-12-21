@@ -18,6 +18,17 @@ export {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeMapNode,
 	TreeLeafValue,
+	type,
+	WithType,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTypedNode,
+	NodeBuilderData,
+	ObjectFromSchemaRecord,
 } from "./schemaTypes";
 export { SchemaFactory } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi";
@@ -30,10 +41,6 @@ export {
 	singletonSchema,
 	typedObjectValues,
 } from "./schemaCreationUtilities";
-
-// Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalClassTreeTypes from "./internal";
-export { InternalClassTreeTypes };
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

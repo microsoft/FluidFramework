@@ -135,7 +135,6 @@ export {
 	Any,
 	SchemaLibraryData,
 	LazyTreeNodeSchema,
-	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
@@ -163,6 +162,10 @@ export {
 	Fields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
+	ArrayToUnion,
+	ExtractItemType,
+	NormalizeLazyItem,
+	FlexList,
 } from "./typed-schema";
 
 export {
@@ -189,6 +192,7 @@ export {
 export {
 	TreeChunk,
 	chunkTree,
+	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
