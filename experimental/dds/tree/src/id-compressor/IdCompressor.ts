@@ -7,8 +7,8 @@
 
 import { assert } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
-import BTree from 'sorted-btree';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { BTree } from '../b-tree';
 import {
 	hasLength,
 	assertNotUndefined,

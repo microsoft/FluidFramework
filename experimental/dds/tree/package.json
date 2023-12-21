@@ -77,7 +77,6 @@
 		"buffer": "^6.0.3",
 		"denque": "^1.5.1",
 		"lru-cache": "^6.0.0",
-		"sorted-btree": "^1.8.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

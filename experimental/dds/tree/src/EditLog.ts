@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { assert, compareArrays } from '@fluidframework/core-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { BTree } from './b-tree';
 import { fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
