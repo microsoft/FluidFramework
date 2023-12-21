@@ -56,8 +56,8 @@ export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | un
  * Base type which all nodes implement.
  *
  * This can be used as a type to indicate/document values which should be tree nodes.
- * Runtime use of this class object (for example when used with `instanceof` or subclassed), is not supported:
- * it may be replaced with an interface or union in the future.
+ * Runtime use of this class object (for example when subclassed), is not supported except for use with `instanceof`:
+ * it may be replaced with an interface or union in the future (with `instanceof TreeNode` replaced with a free function).
  * @privateRemarks
  * Future changes may replace this with a branded interface if the runtime oddities related to this are not cleaned up.
  *
@@ -113,7 +113,7 @@ export abstract class TreeNode implements WithType {
 	 * TODO: once class-tree and simple-tree are merged, consider refactoring this to share logic with `Tree.is`.
 	 */
 	public static [Symbol.hasInstance]<
-		TSchema extends typeof TreeNode & (new (...args: any[]) => TreeNode),
+		TSchema extends typeof TreeNode & (abstract new (...args: any[]) => TreeNode),
 	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
 
 	/**

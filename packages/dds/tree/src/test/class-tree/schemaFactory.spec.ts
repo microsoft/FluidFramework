@@ -118,9 +118,6 @@ describe("schemaFactory", () => {
 		assert(n instanceof TreeNode);
 		assert(!(n instanceof B));
 
-		// TODO: this should be a compile error, but current API is structurally typed, and doesn't include the schema of nodes in that.
-		const b: A = new B({});
-
 		// TODO: make structural types easier to construct
 		const factory = new TreeFactory({});
 		const config = new TreeConfiguration(StructuralArray, () => []);
