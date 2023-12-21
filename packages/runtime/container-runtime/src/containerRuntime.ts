@@ -2254,7 +2254,11 @@ export class ContainerRuntime
 		const { local } = messageWithContext;
 		switch (messageWithContext.message.type) {
 			case ContainerMessageType.Attach:
-				this.dataStores.processAttachMessage(messageWithContext.message, local);
+				this.dataStores.processAttachMessage(
+					messageWithContext.message,
+					local,
+					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
+				);
 				break;
 			case ContainerMessageType.Alias:
 				this.dataStores.processAliasMessage(

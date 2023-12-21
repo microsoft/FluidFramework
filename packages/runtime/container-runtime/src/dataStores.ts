@@ -193,7 +193,11 @@ export class DataStores implements IDisposable {
 		return pendingAliasPromise ?? "Success";
 	}
 
-	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
+	public processAttachMessage(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+	) {
 		const attachMessage = message.contents as InboundAttachMessage;
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
@@ -227,6 +231,14 @@ export class DataStores implements IDisposable {
 		let snapshotTree: ISnapshotTree | undefined;
 		if (attachMessage.snapshot) {
 			snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
+			//* TODO: find outbound references in attach snapshot
+			/**
+			 * Here's how we may choose to find outbound references in attach snapshot:
+			 * - Walk the attach snapshot, looking for an object with path: "header"
+			 * - Check value.contents for __fluid_handle__ and if it's found, JSON.parse value.contents
+			 * - Then pass that object to the same code we use for the op payload to find the outbound reference.
+			 * - And I need to find the fromPath too.
+			 */
 		}
 
 		// Include the type of attach message which is the pkg of the store to be
@@ -433,8 +445,12 @@ export class DataStores implements IDisposable {
 
 	public async applyStashedAttachOp(message: IAttachMessage) {
 		this.pendingAttach.set(message.id, message);
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
+		this.processAttachMessage(
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			{ contents: message } as ISequencedDocumentMessage,
+			false,
+			() => {}, //* Help
+		);
 	}
 
 	/**
