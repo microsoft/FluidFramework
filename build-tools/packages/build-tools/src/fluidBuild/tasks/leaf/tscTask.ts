@@ -499,14 +499,14 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 		try {
 			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
 			// the command string to determine which file to use.
-			const tsbuildinfo = this.getPackageFileFullPath(
-				command.includes("esnext")
+			const tsbuildinfoPath = this.getPackageFileFullPath(
+				command.includes("tsc-multi.esm.json")
 					? "tsconfig.mjs.tsbuildinfo"
 					: "tsconfig.cjs.tsbuildinfo",
 			);
-			if (!existsSync(tsbuildinfo)) {
+			if (!existsSync(tsbuildinfoPath)) {
 				// No tsbuildinfo file, so we need to build
-				return undefined;
+				throw new Error(`no tsbuildinfo file found: ${tsbuildinfoPath}`);
 			}
 
 			const files = [...commonFiles];
@@ -522,7 +522,7 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 				return { name, hash };
 			});
 
-			const buildInfo = readFileSync(tsbuildinfo).toString();
+			const buildInfo = readFileSync(tsbuildinfoPath).toString();
 			const version = await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
 			const hashes = await Promise.all(hashesP);
 			const result = JSON.stringify({
@@ -532,7 +532,7 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 			});
 			return result;
 		} catch (e) {
-			this.traceError(`error generating done file content. ${e}`);
+			this.traceError(`error generating done file content: ${e}`);
 		}
 		return undefined;
 	}
