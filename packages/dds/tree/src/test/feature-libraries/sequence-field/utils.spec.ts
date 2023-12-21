@@ -15,7 +15,7 @@ import {
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
-import { populatedMarks } from "./populatedMarks";
+import { generatePopulatedMarks } from "./populatedMarks";
 import { describeForBothConfigs, withOrderingMethod } from "./utils";
 
 const vestigialEndpoint: ChangeAtomId = { revision: mintRevisionTag(), localId: brand(42) };
@@ -24,8 +24,8 @@ describeForBothConfigs("SequenceField - Utils", (config) => {
 	const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
 	describe("round-trip splitMark and tryMergeMarks", () => {
 		[
-			...populatedMarks,
-			populatedMarks
+			...generatePopulatedMarks(),
+			generatePopulatedMarks()
 				.filter((mark) => !areInputCellsEmpty(mark))
 				.map((mark) => ({ ...mark, vestigialEndpoint })),
 		].forEach((mark, index) => {
