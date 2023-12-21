@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { BTree } from "./b-tree";
 export {
 	bufferToString,
 	isArrayBuffer,

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { BTree } from '@fluid-internal/client-utils';
 import { assert } from '@fluidframework/core-utils';
 import LRU from 'lru-cache';
-import { BTree } from './b-tree';
 import { fail, compareFiniteNumbers } from './Common';
 
 /**

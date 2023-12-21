@@ -1,34 +1,5 @@
-/* eslint-disable eqeqeq */
-/* eslint-disable prefer-spread */
-/* eslint-disable @typescript-eslint/no-this-alias */
-/* eslint-disable no-bitwise */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable object-shorthand */
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable no-sequences */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable default-case */
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-/* eslint-disable @typescript-eslint/prefer-for-of */
-/* eslint-disable prefer-const */
-/* eslint-disable no-var */
-/* eslint-disable one-var */
-/* eslint-disable spaced-comment */
-/* eslint-disable jsdoc/check-line-alignment */
-/* eslint-disable jsdoc/require-hyphen-before-param-description */
-/* eslint-disable jsdoc/check-indentation */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable no-param-reassign */
-/* eslint-disable tsdoc/syntax */
 // B+ tree by David Piepgrass. License: MIT
-import { ISortedMap, ISortedMapF, ISortedSet } from './interfaces';
+import { ISortedMap, ISortedMapF, ISortedSet } from "./interfaces";
 
 export {
 	ISetSource,
@@ -45,7 +16,7 @@ export {
 	ISortedMapSource,
 	ISortedMap,
 	ISortedMapF,
-} from './interfaces';
+} from "./interfaces";
 
 export type EditRangeResult<V, R = number> = { value?: V; break?: R; delete?: boolean };
 
@@ -113,7 +84,7 @@ export function defaultComparator(a: DefaultComparable, b: DefaultComparable): n
 		return ta < tb ? -1 : 1;
 	}
 
-	if (ta === 'object') {
+	if (ta === "object") {
 		// standardized JavaScript bug: null is not an object, but typeof says it is
 		if (a === null) return b === null ? 0 : -1;
 		else if (b === null) return 1;
@@ -282,7 +253,10 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 *        value for each callback.
 	 * @returns the number of values that were sent to the callback,
 	 *        or the R value if the callback returned {break:R}. */
-	forEach<R = number>(callback: (v: V, k: K, tree: BTree<K, V>) => { break?: R } | void, thisArg?: any): R | number {
+	forEach<R = number>(
+		callback: (v: V, k: K, tree: BTree<K, V>) => { break?: R } | void,
+		thisArg?: any,
+	): R | number {
 		if (thisArg !== undefined) callback = callback.bind(thisArg);
 		return this.forEachPair((k, v) => callback(v, k, this));
 	}
@@ -303,7 +277,7 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 *        the R value is returned instead. */
 	forEachPair<R = number>(
 		callback: (k: K, v: V, counter: number) => { break?: R } | void,
-		initialCounter?: number
+		initialCounter?: number,
 	): R | number {
 		var low = this.minKey(),
 			high = this.maxKey();
@@ -393,7 +367,8 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	withKeys(keys: K[], returnThisIfUnchanged?: boolean): BTree<K, V | undefined> {
 		let nu = this.clone() as BTree<K, V | undefined>,
 			changed = false;
-		for (var i = 0; i < keys.length; i++) changed = nu.set(keys[i], undefined, false) || changed;
+		for (var i = 0; i < keys.length; i++)
+			changed = nu.set(keys[i], undefined, false) || changed;
 		return returnThisIfUnchanged && !changed ? this : nu;
 	}
 
@@ -419,7 +394,12 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	}
 
 	/** Returns a copy of the tree with the specified range of keys removed. */
-	withoutRange(low: K, high: K, includeHigh: boolean, returnThisIfUnchanged?: boolean): BTree<K, V> {
+	withoutRange(
+		low: K,
+		high: K,
+		includeHigh: boolean,
+		returnThisIfUnchanged?: boolean,
+	): BTree<K, V> {
 		let nu = this.clone();
 		if (nu.deleteRange(low, high, includeHigh) === 0 && returnThisIfUnchanged) return this;
 		return nu;
@@ -427,7 +407,10 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 
 	/** Returns a copy of the tree with pairs removed whenever the callback
 	 *  function returns false. `where()` is a synonym for this method. */
-	filter(callback: (k: K, v: V, counter: number) => boolean, returnThisIfUnchanged?: boolean): BTree<K, V> {
+	filter(
+		callback: (k: K, v: V, counter: number) => boolean,
+		returnThisIfUnchanged?: boolean,
+	): BTree<K, V> {
 		var nu = this.greedyClone();
 		var del: any;
 		nu.editAll((k, v, i) => {
@@ -461,14 +444,24 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 */
 	reduce<R>(
 		callback: (previous: R, currentPair: [K, V], counter: number, tree: BTree<K, V>) => R,
-		initialValue: R
+		initialValue: R,
 	): R;
 	reduce<R>(
-		callback: (previous: R | undefined, currentPair: [K, V], counter: number, tree: BTree<K, V>) => R
+		callback: (
+			previous: R | undefined,
+			currentPair: [K, V],
+			counter: number,
+			tree: BTree<K, V>,
+		) => R,
 	): R | undefined;
 	reduce<R>(
-		callback: (previous: R | undefined, currentPair: [K, V], counter: number, tree: BTree<K, V>) => R,
-		initialValue?: R
+		callback: (
+			previous: R | undefined,
+			currentPair: [K, V],
+			counter: number,
+			tree: BTree<K, V>,
+		) => R,
+		initialValue?: R,
 	): R | undefined {
 		let i = 0,
 			p = initialValue;
@@ -500,7 +493,8 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 			jump: for (;;) {
 				switch (state) {
 					case 0:
-						if (++i < leaf.keys.length) return { done: false, value: [leaf.keys[i], leaf.values[i]] };
+						if (++i < leaf.keys.length)
+							return { done: false, value: [leaf.keys[i], leaf.values[i]] };
 						state = 2;
 						continue;
 					case 1:
@@ -519,7 +513,9 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 							if (++nodeindex[level] < nodequeue[level].length) break;
 						}
 						for (; level > 0; level--) {
-							nodequeue[level - 1] = (nodequeue[level][nodeindex[level]] as BNodeInternal<K, V>).children;
+							nodequeue[level - 1] = (
+								nodequeue[level][nodeindex[level]] as BNodeInternal<K, V>
+							).children;
 							nodeindex[level - 1] = 0;
 						}
 						leaf = nodequeue[0][nodeindex[0]];
@@ -542,16 +538,22 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 *  @param skipHighest Iff this flag is true and the highestKey exists in the
 	 *         collection, the pair matching highestKey is skipped, not iterated.
 	 */
-	entriesReversed(highestKey?: K, reusedArray?: (K | V)[], skipHighest?: boolean): IterableIterator<[K, V]> {
+	entriesReversed(
+		highestKey?: K,
+		reusedArray?: (K | V)[],
+		skipHighest?: boolean,
+	): IterableIterator<[K, V]> {
 		if (highestKey === undefined) {
 			highestKey = this.maxKey();
 			skipHighest = undefined;
 			if (highestKey === undefined) return iterator<[K, V]>(); // collection is empty
 		}
-		var { nodequeue, nodeindex, leaf } = this.findPath(highestKey) || this.findPath(this.maxKey())!;
-		check(!nodequeue[0] || leaf === nodequeue[0][nodeindex[0]], 'wat!');
+		var { nodequeue, nodeindex, leaf } =
+			this.findPath(highestKey) || this.findPath(this.maxKey())!;
+		check(!nodequeue[0] || leaf === nodequeue[0][nodeindex[0]], "wat!");
 		var i = leaf.indexOf(highestKey, 0, this._compare);
-		if (!skipHighest && i < leaf.keys.length && this._compare(leaf.keys[i], highestKey) <= 0) i++;
+		if (!skipHighest && i < leaf.keys.length && this._compare(leaf.keys[i], highestKey) <= 0)
+			i++;
 		var state = reusedArray !== undefined ? 1 : 0;
 
 		return iterator<[K, V]>(() => {
@@ -577,7 +579,9 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 							if (--nodeindex[level] >= 0) break;
 						}
 						for (; level > 0; level--) {
-							nodequeue[level - 1] = (nodequeue[level][nodeindex[level]] as BNodeInternal<K, V>).children;
+							nodequeue[level - 1] = (
+								nodequeue[level][nodeindex[level]] as BNodeInternal<K, V>
+							).children;
 							nodeindex[level - 1] = nodequeue[level - 1].length - 1;
 						}
 						leaf = nodequeue[0][nodeindex[0]];
@@ -600,7 +604,9 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 * such that nodequeue[L-1] === nodequeue[L][nodeindex[L]].children.
 	 * (However inside this function the order is reversed.)
 	 */
-	private findPath(key?: K): { nodequeue: BNode<K, V>[][]; nodeindex: number[]; leaf: BNode<K, V> } | undefined {
+	private findPath(
+		key?: K,
+	): { nodequeue: BNode<K, V>[][]; nodeindex: number[]; leaf: BNode<K, V> } | undefined {
 		var nextnode = this._root;
 		var nodequeue: BNode<K, V>[][], nodeindex: number[];
 
@@ -637,18 +643,22 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 		other: BTree<K, V>,
 		onlyThis?: (k: K, v: V) => { break?: R } | void,
 		onlyOther?: (k: K, v: V) => { break?: R } | void,
-		different?: (k: K, vThis: V, vOther: V) => { break?: R } | void
+		different?: (k: K, vThis: V, vOther: V) => { break?: R } | void,
 	): R | undefined {
 		if (other._compare !== this._compare) {
-			throw new Error('Tree comparators are not the same.');
+			throw new Error("Tree comparators are not the same.");
 		}
 
 		if (this.isEmpty || other.isEmpty) {
 			if (this.isEmpty && other.isEmpty) return undefined;
 			// If one tree is empty, everything will be an onlyThis/onlyOther.
 			if (this.isEmpty)
-				return onlyOther === undefined ? undefined : BTree.stepToEnd(BTree.makeDiffCursor(other), onlyOther);
-			return onlyThis === undefined ? undefined : BTree.stepToEnd(BTree.makeDiffCursor(this), onlyThis);
+				return onlyOther === undefined
+					? undefined
+					: BTree.stepToEnd(BTree.makeDiffCursor(other), onlyOther);
+			return onlyThis === undefined
+				? undefined
+				: BTree.stepToEnd(BTree.makeDiffCursor(this), onlyThis);
 		}
 
 		// Cursor-based diff algorithm is as follows:
@@ -679,16 +689,26 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 			prevCursorOrder = BTree.compare(thisCursor, otherCursor, _compare);
 		while (thisSuccess && otherSuccess) {
 			const cursorOrder = BTree.compare(thisCursor, otherCursor, _compare);
-			const { leaf: thisLeaf, internalSpine: thisInternalSpine, levelIndices: thisLevelIndices } = thisCursor;
-			const { leaf: otherLeaf, internalSpine: otherInternalSpine, levelIndices: otherLevelIndices } = otherCursor;
+			const {
+				leaf: thisLeaf,
+				internalSpine: thisInternalSpine,
+				levelIndices: thisLevelIndices,
+			} = thisCursor;
+			const {
+				leaf: otherLeaf,
+				internalSpine: otherInternalSpine,
+				levelIndices: otherLevelIndices,
+			} = otherCursor;
 			if (thisLeaf || otherLeaf) {
 				// If the cursors were at the same location last step, then there is no work to be done.
 				if (prevCursorOrder !== 0) {
 					if (cursorOrder === 0) {
 						if (thisLeaf && otherLeaf && different) {
 							// Equal keys, check for modifications
-							const valThis = thisLeaf.values[thisLevelIndices[thisLevelIndices.length - 1]];
-							const valOther = otherLeaf.values[otherLevelIndices[otherLevelIndices.length - 1]];
+							const valThis =
+								thisLeaf.values[thisLevelIndices[thisLevelIndices.length - 1]];
+							const valOther =
+								otherLeaf.values[otherLevelIndices[otherLevelIndices.length - 1]];
 							if (!Object.is(valThis, valOther)) {
 								const result = different(thisCursor.currentKey, valThis, valOther);
 								if (result && result.break) return result.break;
@@ -700,13 +720,15 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 						// 2. thisCursor stepped last and leapfrogged otherCursor
 						// Either of these cases is an "only other"
 						if (otherLeaf && onlyOther) {
-							const otherVal = otherLeaf.values[otherLevelIndices[otherLevelIndices.length - 1]];
+							const otherVal =
+								otherLeaf.values[otherLevelIndices[otherLevelIndices.length - 1]];
 							const result = onlyOther(otherCursor.currentKey, otherVal);
 							if (result && result.break) return result.break;
 						}
 					} else if (onlyThis) {
 						if (thisLeaf && prevCursorOrder !== 0) {
-							const valThis = thisLeaf.values[thisLevelIndices[thisLevelIndices.length - 1]];
+							const valThis =
+								thisLeaf.values[thisLevelIndices[thisLevelIndices.length - 1]];
 							const result = onlyThis(thisCursor.currentKey, valThis);
 							if (result && result.break) return result.break;
 						}
@@ -732,8 +754,10 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 			}
 		}
 
-		if (thisSuccess && onlyThis) return BTree.finishCursorWalk(thisCursor, otherCursor, _compare, onlyThis);
-		if (otherSuccess && onlyOther) return BTree.finishCursorWalk(otherCursor, thisCursor, _compare, onlyOther);
+		if (thisSuccess && onlyThis)
+			return BTree.finishCursorWalk(thisCursor, otherCursor, _compare, onlyThis);
+		if (otherSuccess && onlyOther)
+			return BTree.finishCursorWalk(otherCursor, thisCursor, _compare, onlyOther);
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -743,20 +767,20 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 		cursor: DiffCursor<K, V>,
 		cursorFinished: DiffCursor<K, V>,
 		compareKeys: (a: K, b: K) => number,
-		callback: (k: K, v: V) => { break?: R } | void
+		callback: (k: K, v: V) => { break?: R } | void,
 	): R | undefined {
 		const compared = BTree.compare(cursor, cursorFinished, compareKeys);
 		if (compared === 0) {
 			if (!BTree.step(cursor)) return undefined;
 		} else if (compared < 0) {
-			check(false, 'cursor walk terminated early');
+			check(false, "cursor walk terminated early");
 		}
 		return BTree.stepToEnd(cursor, callback);
 	}
 
 	private static stepToEnd<K, V, R>(
 		cursor: DiffCursor<K, V>,
-		callback: (k: K, v: V) => { break?: R } | void
+		callback: (k: K, v: V) => { break?: R } | void,
 	): R | undefined {
 		let canStep: boolean = true;
 		while (canStep) {
@@ -815,7 +839,9 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 							cursor.internalSpine = internalSpine.slice(0, levelIndexWalkBack + 1);
 						// Move to new internal node
 						cursor.currentKey =
-							internalSpine[levelIndexWalkBack][--levelIndices[levelIndexWalkBack]].maxKey();
+							internalSpine[levelIndexWalkBack][
+								--levelIndices[levelIndexWalkBack]
+							].maxKey();
 						return true;
 					}
 					levelIndexWalkBack--;
@@ -856,7 +882,7 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	private static compare<K, V>(
 		cursorA: DiffCursor<K, V>,
 		cursorB: DiffCursor<K, V>,
-		compareKeys: (a: K, b: K) => number
+		compareKeys: (a: K, b: K) => number,
 	): number {
 		const { height: heightA, currentKey: currentKeyA, levelIndices: levelIndicesA } = cursorA;
 		const { height: heightB, currentKey: currentKeyB, levelIndices: levelIndicesB } = cursorB;
@@ -1035,7 +1061,12 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 *        avoid creating a new array each time you call this method.
 	 * */
 	getPairOrNextLower(key: K, reusedArray?: [K, V]): [K, V] | undefined {
-		return this._root.getPairOrNextLower(key, this._compare, true, reusedArray || ([] as unknown as [K, V]));
+		return this._root.getPairOrNextLower(
+			key,
+			this._compare,
+			true,
+			reusedArray || ([] as unknown as [K, V]),
+		);
 	}
 
 	/** Returns the key-value pair associated with the supplied key if it exists
@@ -1046,7 +1077,12 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 *        avoid creating a new array each time you call this method.
 	 * */
 	getPairOrNextHigher(key: K, reusedArray?: [K, V]): [K, V] | undefined {
-		return this._root.getPairOrNextHigher(key, this._compare, true, reusedArray || ([] as unknown as [K, V]));
+		return this._root.getPairOrNextHigher(
+			key,
+			this._compare,
+			true,
+			reusedArray || ([] as unknown as [K, V]),
+		);
 	}
 
 	/** Edits the value associated with a key in the tree, if it already exists.
@@ -1088,7 +1124,8 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 */
 	setPairs(pairs: [K, V][], overwrite?: boolean): number {
 		var added = 0;
-		for (var i = 0; i < pairs.length; i++) if (this.set(pairs[i][0], pairs[i][1], overwrite)) added++;
+		for (var i = 0; i < pairs.length; i++)
+			if (this.set(pairs[i][0], pairs[i][1], overwrite)) added++;
 		return added;
 	}
 
@@ -1097,7 +1134,7 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 		high: K,
 		includeHigh: boolean,
 		onFound?: (k: K, v: V, counter: number) => void,
-		initialCounter?: number
+		initialCounter?: number,
 	): number;
 
 	/**
@@ -1122,10 +1159,18 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 		high: K,
 		includeHigh: boolean,
 		onFound?: (k: K, v: V, counter: number) => { break?: R } | void,
-		initialCounter?: number
+		initialCounter?: number,
 	): R | number {
-		var r = this._root.forRange(low, high, includeHigh, false, this, initialCounter || 0, onFound);
-		return typeof r === 'number' ? r : r.break!;
+		var r = this._root.forRange(
+			low,
+			high,
+			includeHigh,
+			false,
+			this,
+			initialCounter || 0,
+			onFound,
+		);
+		return typeof r === "number" ? r : r.break!;
 	}
 
 	/**
@@ -1162,19 +1207,21 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 		high: K,
 		includeHigh: boolean,
 		onFound: (k: K, v: V, counter: number) => EditRangeResult<V, R> | void,
-		initialCounter?: number
+		initialCounter?: number,
 	): R | number {
 		var root = this._root;
 		if (root.isShared) this._root = root = root.clone();
 		try {
 			var r = root.forRange(low, high, includeHigh, true, this, initialCounter || 0, onFound);
-			return typeof r === 'number' ? r : r.break!;
+			return typeof r === "number" ? r : r.break!;
 		} finally {
 			let isShared;
 			while (root.keys.length <= 1 && !root.isLeaf) {
 				isShared ||= root.isShared;
 				this._root = root =
-					root.keys.length === 0 ? EmptyLeaf : (root as any as BNodeInternal<K, V>).children[0];
+					root.keys.length === 0
+						? EmptyLeaf
+						: (root as any as BNodeInternal<K, V>).children[0];
 			}
 			// If any ancestor of the new root was shared, the new root must also be shared
 			if (isShared) {
@@ -1186,7 +1233,7 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	/** Same as `editRange` except that the callback is called for all pairs. */
 	editAll<R = V>(
 		onFound: (k: K, v: V, counter: number) => EditRangeResult<V, R> | void,
-		initialCounter?: number
+		initialCounter?: number,
 	): R | number {
 		return this.editRange(this.minKey()!, this.maxKey()!, true, onFound, initialCounter);
 	}
@@ -1235,7 +1282,7 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 			t.set =
 			t.editRange =
 				function () {
-					throw new Error('Attempted to modify a frozen BTree');
+					throw new Error("Attempted to modify a frozen BTree");
 				};
 	}
 
@@ -1252,7 +1299,7 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 
 	/** Returns true if the tree appears to be frozen. */
 	get isFrozen() {
-		return this.hasOwnProperty('editRange');
+		return this.hasOwnProperty("editRange");
 	}
 
 	/** Scans the tree for signs of serious bugs (e.g. this.size doesn't match
@@ -1262,7 +1309,7 @@ export class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K,
 	 *  does check that maxKey() of the children of internal nodes are sorted. */
 	checkValid() {
 		var size = this._root.checkValid(0, this, 0);
-		check(size === this.size, 'size mismatch: counted ', size, 'but stored', this.size);
+		check(size === this.size, "size mismatch: counted ", size, "but stored", this.size);
 	}
 }
 
@@ -1283,7 +1330,9 @@ if (Symbol && Symbol.iterator)
 (BTree as any).prototype.setRange = BTree.prototype.setPairs;
 (BTree as any).prototype.add = BTree.prototype.set; // for compatibility with ISetSink<K>
 
-function iterator<T>(next: () => IteratorResult<T> = () => ({ done: true, value: undefined })): IterableIterator<T> {
+function iterator<T>(
+	next: () => IteratorResult<T> = () => ({ done: true, value: undefined }),
+): IterableIterator<T> {
 	var result: any = { next };
 	if (Symbol && Symbol.iterator)
 		result[Symbol.iterator] = function () {
@@ -1338,7 +1387,7 @@ class BNode<K, V> {
 				if (key === key)
 					// at least the search key is not NaN
 					return keys.length;
-				else throw new Error('BTree: NaN was used as a key');
+				else throw new Error("BTree: NaN was used as a key");
 			}
 			mid = (lo + hi) >> 1;
 		}
@@ -1430,7 +1479,7 @@ class BNode<K, V> {
 		key: K,
 		compare: (a: K, b: K) => number,
 		inclusive: boolean,
-		reusedArray: [K, V]
+		reusedArray: [K, V],
 	): [K, V] | undefined {
 		var i = this.indexOf(key, -1, compare);
 		const indexOrLower = i < 0 ? ~i - 1 : inclusive ? i : i - 1;
@@ -1446,7 +1495,7 @@ class BNode<K, V> {
 		key: K,
 		compare: (a: K, b: K) => number,
 		inclusive: boolean,
-		reusedArray: [K, V]
+		reusedArray: [K, V],
 	): [K, V] | undefined {
 		var i = this.indexOf(key, -1, compare);
 		const indexOrLower = i < 0 ? ~i : inclusive ? i : i + 1;
@@ -1464,27 +1513,32 @@ class BNode<K, V> {
 			vL = this.values.length;
 		check(
 			this.values === undefVals ? kL <= vL : kL === vL,
-			'keys/values length mismatch: depth',
+			"keys/values length mismatch: depth",
 			depth,
-			'with lengths',
+			"with lengths",
 			kL,
 			vL,
-			'and baseIndex',
-			baseIndex
+			"and baseIndex",
+			baseIndex,
 		);
 		// Note: we don't check for "node too small" because sometimes a node
 		// can legitimately have size 1. This occurs if there is a batch
 		// deletion, leaving a node of size 1, and the siblings are full so
 		// it can't be merged with adjacent nodes. However, the parent will
 		// verify that the average node size is at least half of the maximum.
-		check(depth == 0 || kL > 0, 'empty leaf at depth', depth, 'and baseIndex', baseIndex);
+		check(depth == 0 || kL > 0, "empty leaf at depth", depth, "and baseIndex", baseIndex);
 		return kL;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
 	// Leaf Node: set & node splitting //////////////////////////////////////////
 
-	set(key: K, value: V, overwrite: boolean | undefined, tree: BTree<K, V>): boolean | BNode<K, V> {
+	set(
+		key: K,
+		value: V,
+		overwrite: boolean | undefined,
+		tree: BTree<K, V>,
+	): boolean | BNode<K, V> {
 		var i = this.indexOf(key, -1, tree._compare);
 		if (i < 0) {
 			// key does not exist yet
@@ -1517,7 +1571,8 @@ class BNode<K, V> {
 	}
 
 	reifyValues() {
-		if (this.values === undefVals) return (this.values = this.values.slice(0, this.keys.length));
+		if (this.values === undefVals)
+			return (this.values = this.values.slice(0, this.keys.length));
 		return this.values;
 	}
 
@@ -1581,7 +1636,7 @@ class BNode<K, V> {
 		editMode: boolean,
 		tree: BTree<K, V>,
 		count: number,
-		onFound?: (k: K, v: V, counter: number) => EditRangeResult<V, R> | void
+		onFound?: (k: K, v: V, counter: number) => EditRangeResult<V, R> | void,
 	): EditRangeResult<V, R> | number {
 		var cmp = tree._compare;
 		var iLow, iHigh;
@@ -1604,14 +1659,14 @@ class BNode<K, V> {
 				if (result !== undefined) {
 					if (editMode === true) {
 						if (key !== keys[i] || this.isShared === true)
-							throw new Error('BTree illegally changed or cloned in editRange');
+							throw new Error("BTree illegally changed or cloned in editRange");
 						if (result.delete) {
 							this.keys.splice(i, 1);
 							if (this.values !== undefVals) this.values.splice(i, 1);
 							tree._size--;
 							i--;
 							iHigh--;
-						} else if (result.hasOwnProperty('value')) {
+						} else if (result.hasOwnProperty("value")) {
 							values![i] = result.value!;
 						}
 					}
@@ -1662,7 +1717,8 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 	greedyClone(force?: boolean): BNode<K, V> {
 		if (this.isShared && !force) return this;
 		var nu = new BNodeInternal<K, V>(this.children.slice(0), this.keys.slice(0));
-		for (var i = 0; i < nu.children.length; i++) nu.children[i] = nu.children[i].greedyClone(force);
+		for (var i = 0; i < nu.children.length; i++)
+			nu.children[i] = nu.children[i].greedyClone(force);
 		return nu;
 	}
 
@@ -1688,7 +1744,7 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 		key: K,
 		compare: (a: K, b: K) => number,
 		inclusive: boolean,
-		reusedArray: [K, V]
+		reusedArray: [K, V],
 	): [K, V] | undefined {
 		var i = this.indexOf(key, 0, compare),
 			children = this.children;
@@ -1704,7 +1760,7 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 		key: K,
 		compare: (a: K, b: K) => number,
 		inclusive: boolean,
-		reusedArray: [K, V]
+		reusedArray: [K, V],
 	): [K, V] | undefined {
 		var i = this.indexOf(key, 0, compare),
 			children = this.children,
@@ -1720,8 +1776,25 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 	checkValid(depth: number, tree: BTree<K, V>, baseIndex: number): number {
 		let kL = this.keys.length,
 			cL = this.children.length;
-		check(kL === cL, 'keys/children length mismatch: depth', depth, 'lengths', kL, cL, 'baseIndex', baseIndex);
-		check(kL > 1 || depth > 0, 'internal node has length', kL, 'at depth', depth, 'baseIndex', baseIndex);
+		check(
+			kL === cL,
+			"keys/children length mismatch: depth",
+			depth,
+			"lengths",
+			kL,
+			cL,
+			"baseIndex",
+			baseIndex,
+		);
+		check(
+			kL > 1 || depth > 0,
+			"internal node has length",
+			kL,
+			"at depth",
+			depth,
+			"baseIndex",
+			baseIndex,
+		);
 		let size = 0,
 			c = this.children,
 			k = this.keys,
@@ -1729,24 +1802,28 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 		for (var i = 0; i < cL; i++) {
 			size += c[i].checkValid(depth + 1, tree, baseIndex + size);
 			childSize += c[i].keys.length;
-			check(size >= childSize, 'wtf', baseIndex); // no way this will ever fail
-			check(i === 0 || c[i - 1].constructor === c[i].constructor, 'type mismatch, baseIndex:', baseIndex);
+			check(size >= childSize, "wtf", baseIndex); // no way this will ever fail
+			check(
+				i === 0 || c[i - 1].constructor === c[i].constructor,
+				"type mismatch, baseIndex:",
+				baseIndex,
+			);
 			if (c[i].maxKey() != k[i])
 				check(
 					false,
-					'keys[',
+					"keys[",
 					i,
-					'] =',
+					"] =",
 					k[i],
-					'is wrong, should be ',
+					"is wrong, should be ",
 					c[i].maxKey(),
-					'at depth',
+					"at depth",
 					depth,
-					'baseIndex',
-					baseIndex
+					"baseIndex",
+					baseIndex,
 				);
 			if (!(i === 0 || tree._compare(k[i - 1], k[i]) < 0))
-				check(false, 'sort violation at depth', depth, 'index', i, 'keys', k[i - 1], k[i]);
+				check(false, "sort violation at depth", depth, "index", i, "keys", k[i - 1], k[i]);
 		}
 		// 2020/08: BTree doesn't always avoid grossly undersized nodes,
 		// but AFAIK such nodes are pretty harmless, so accept them.
@@ -1754,18 +1831,18 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 		if (toofew || childSize > tree.maxNodeSize * cL)
 			check(
 				false,
-				toofew ? 'too few' : 'too many',
-				'children (',
+				toofew ? "too few" : "too many",
+				"children (",
 				childSize,
 				size,
-				') at depth',
+				") at depth",
 				depth,
-				'maxNodeSize:',
+				"maxNodeSize:",
 				tree.maxNodeSize,
-				'children.length:',
+				"children.length:",
 				cL,
-				'baseIndex:',
-				baseIndex
+				"baseIndex:",
+				baseIndex,
 			);
 		return size;
 	}
@@ -1773,7 +1850,12 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 	/////////////////////////////////////////////////////////////////////////////
 	// Internal Node: set & node splitting //////////////////////////////////////
 
-	set(key: K, value: V, overwrite: boolean | undefined, tree: BTree<K, V>): boolean | BNodeInternal<K, V> {
+	set(
+		key: K,
+		value: V,
+		overwrite: boolean | undefined,
+		tree: BTree<K, V>,
+	): boolean | BNodeInternal<K, V> {
 		var c = this.children,
 			max = tree._maxNodeSize,
 			cmp = tree._compare;
@@ -1791,7 +1873,11 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 				if (other.isShared) c[i - 1] = other = other.clone();
 				other.takeFromRight(child);
 				this.keys[i - 1] = other.maxKey();
-			} else if ((other = c[i + 1]) !== undefined && other.keys.length < max && cmp(child.maxKey(), key) < 0) {
+			} else if (
+				(other = c[i + 1]) !== undefined &&
+				other.keys.length < max &&
+				cmp(child.maxKey(), key) < 0
+			) {
 				if (other.isShared) c[i + 1] = other = other.clone();
 				other.takeFromLeft(child);
 				this.keys[i] = c[i].maxKey();
@@ -1870,7 +1956,7 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 		editMode: boolean,
 		tree: BTree<K, V>,
 		count: number,
-		onFound?: (k: K, v: V, counter: number) => EditRangeResult<V, R> | void
+		onFound?: (k: K, v: V, counter: number) => EditRangeResult<V, R> | void,
 	): EditRangeResult<V, R> | number {
 		var cmp = tree._compare;
 		var keys = this.keys,
@@ -1881,19 +1967,35 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 		if (!editMode) {
 			// Simple case
 			for (; i <= iHigh; i++) {
-				var result = children[i].forRange(low, high, includeHigh, editMode, tree, count, onFound);
-				if (typeof result !== 'number') return result;
+				var result = children[i].forRange(
+					low,
+					high,
+					includeHigh,
+					editMode,
+					tree,
+					count,
+					onFound,
+				);
+				if (typeof result !== "number") return result;
 				count = result;
 			}
 		} else if (i <= iHigh) {
 			try {
 				for (; i <= iHigh; i++) {
 					if (children[i].isShared) children[i] = children[i].clone();
-					var result = children[i].forRange(low, high, includeHigh, editMode, tree, count, onFound);
+					var result = children[i].forRange(
+						low,
+						high,
+						includeHigh,
+						editMode,
+						tree,
+						count,
+						onFound,
+					);
 					// Note: if children[i] is empty then keys[i]=undefined.
 					//       This is an invalid state, but it is fixed below.
 					keys[i] = children[i].maxKey();
-					if (typeof result !== 'number') return result;
+					if (typeof result !== "number") return result;
 					count = result;
 				}
 			} finally {
@@ -1911,7 +2013,8 @@ class BNodeInternal<K, V> extends BNode<K, V> {
 						}
 					}
 				}
-				if (children.length !== 0 && children[0].keys.length === 0) check(false, 'emptiness bug');
+				if (children.length !== 0 && children[0].keys.length === 0)
+					check(false, "emptiness bug");
 			}
 		}
 		return count;
@@ -2007,8 +2110,8 @@ const ReusedArray: any[] = []; // assumed thread-local
 
 function check(fact: boolean, ...args: any[]) {
 	if (!fact) {
-		args.unshift('B+ tree'); // at beginning of message
-		throw new Error(args.join(' '));
+		args.unshift("B+ tree"); // at beginning of message
+		throw new Error(args.join(" "));
 	}
 }
 

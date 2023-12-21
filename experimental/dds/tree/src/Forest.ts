@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { BTree } from '@fluid-internal/client-utils';
 import { assert } from '@fluidframework/core-utils';
-import { BTree } from './b-tree';
 import { fail, copyPropertyIfDefined, compareBtrees, compareFiniteNumbers } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { comparePayloads } from './PayloadUtilities';

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { BTree } from "./b-tree";
 export { type Buffer } from "./bufferNode";
 export { bufferToString, IsoBuffer, stringToBuffer, Uint8ArrayToString } from "./bufferNode";
 export { gitHashFile, hashFile } from "./hashFileNode";
