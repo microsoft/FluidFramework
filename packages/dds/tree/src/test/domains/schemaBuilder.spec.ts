@@ -18,8 +18,6 @@ import {
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
-// eslint-disable-next-line import/no-internal-modules
-import { InsertableContent, extractFactoryContent } from "../../simple-tree/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -237,17 +235,6 @@ describe("domains - SchemaBuilder", () => {
 			const y: number = x.number;
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}
-
-		const innerContents = { recursive: undefined, number: 5 };
-		const inner = recursiveObject.create(innerContents);
-		const testOptional = recursiveObject.create({ number: 5 });
-		const outer1 = recursiveObject.create({ recursive: innerContents, number: 1 });
-		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
-
-		checkCreated(inner, { number: 5 });
-		checkCreated(testOptional, { number: 5 });
-		checkCreated(outer1, { number: 1, recursive: { number: 5 } });
-		checkCreated(outer2, { number: 1, recursive: { number: 5 } });
 	});
 
 	it("fixRecursiveReference", () => {
@@ -278,10 +265,3 @@ describe("domains - SchemaBuilder", () => {
 		}
 	});
 });
-
-/**
- * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
- */
-export function checkCreated(created: InsertableContent, expected: InsertableContent): void {
-	assert.deepEqual(extractFactoryContent(created).content, expected);
-}
