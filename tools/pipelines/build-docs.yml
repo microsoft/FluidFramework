@@ -217,19 +217,20 @@ stages:
               output=$(node docs/readVersionData.js)
               
               # Pipe script output and loop through each value in the array
-              echo "$output" | while IFS= read -r version; do
-                version=$(echo "$version" | sed 's/"//g')
-                echo "Version: $version"
+              if [ -n "$output" ]; then
+                echo "$output" | while IFS= read -r version; do
+                  version=$(echo "$version" | sed 's/"//g')
+                  echo "Version: $version"
 
-                echo "creating api-extractor-temp-$version folder"
-                mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-$version/doc-models
+                  echo "creating api-extractor-temp-$version folder"
+                  mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-$version/doc-models
 
-                az storage blob download -f latest-$version.tar.gz -c 'api-extractor-json' -n latest-$version.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
-                
-                tar -xzf latest-$version.tar.gz -C _api-extractor-temp-$version/doc-models
+                  az storage blob download -f latest-$version.tar.gz -c 'api-extractor-json' -n latest-$version.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
+                  
+                  tar -xzf latest-$version.tar.gz -C _api-extractor-temp-$version/doc-models
 
-              done
-
+                done
+              fi
         - task: Npm@1
           displayName: npm run build
           inputs:
