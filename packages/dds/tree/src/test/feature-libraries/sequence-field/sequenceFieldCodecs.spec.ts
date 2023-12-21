@@ -15,8 +15,9 @@ import {
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	MockIdCompressor,
+	testIdCompressor,
 } from "../../utils";
-import { populatedMarks } from "./populatedMarks";
+import { generatePopulatedMarks } from "./populatedMarks";
 import { ChangeMaker as Change, cases } from "./testEdits";
 
 type TestCase = [string, Changeset<TestChange>, SessionId];
@@ -32,7 +33,7 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, Session
 			sessionId,
 		],
 		...Object.entries(cases).map<TestCase>(([name, change]) => [name, change, sessionId]),
-		...populatedMarks.map<TestCase>((mark) => [
+		...generatePopulatedMarks(testIdCompressor).map<TestCase>((mark) => [
 			"type" in mark ? mark.type : "NoOp",
 			[mark],
 			sessionId,

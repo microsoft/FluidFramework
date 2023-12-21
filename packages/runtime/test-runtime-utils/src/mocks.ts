@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -43,10 +44,7 @@ import {
 	FlushMode,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
-	IIdCompressor,
-	IIdCompressorCore,
 	ISummaryTreeWithStats,
-	IdCreationRange,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -301,6 +299,9 @@ export class MockContainerRuntime {
 	}
 
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
+		// and sticking it in front of any op that might rely on that Id. It differs slightly in that
+		// in the actual runtime it would get put in its own separate batch
 		const idRange = this.getGeneratedIdRange();
 		if (idRange !== undefined) {
 			const idAllocationMessage = { type: "idAllocation", contents: idRange };

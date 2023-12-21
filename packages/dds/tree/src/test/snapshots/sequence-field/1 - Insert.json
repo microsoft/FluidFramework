@@ -1,0 +1,38 @@
+[
+  {
+    "count": 1,
+    "effect": {
+      "insert": {
+        "revision": 0,
+        "id": 0
+      }
+    },
+    "cellId": {
+      "localId": 0,
+      "adjacentCells": [
+        [
+          0,
+          2
+        ]
+      ],
+      "lineage": [
+        [
+          0,
+          0,
+          2,
+          1
+        ]
+      ],
+      "revision": 0
+    },
+    "changes": {
+      "inputContext": [],
+      "intentions": [
+        1
+      ],
+      "outputContext": [
+        1
+      ]
+    }
+  }
+]

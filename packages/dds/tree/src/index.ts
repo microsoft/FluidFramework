@@ -274,6 +274,8 @@ export {
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
+	type,
+	WithType,
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
@@ -300,7 +302,7 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 } from "./class-tree";
-export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
+export { SharedTree, TreeFactory } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";

@@ -19,7 +19,7 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { IdCreationRange } from '@fluidframework/runtime-definitions';
+import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -36,9 +36,7 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressor as IIdCompressor_2 } from '@fluidframework/runtime-definitions';
 import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { IIdCompressorCore as IIdCompressorCore_2 } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -391,7 +389,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryLoggerExt;
-        idCompressor?: IIdCompressor_2 & IIdCompressorCore_2;
+        idCompressor?: IIdCompressor & IIdCompressorCore;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -452,7 +450,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor?: IIdCompressor_2 & IIdCompressorCore_2;
+    idCompressor?: IIdCompressor & IIdCompressorCore;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)

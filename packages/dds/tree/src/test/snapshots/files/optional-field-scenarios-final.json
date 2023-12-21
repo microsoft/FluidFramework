@@ -25,9 +25,9 @@
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "root 1 child",
@@ -49,7 +49,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],

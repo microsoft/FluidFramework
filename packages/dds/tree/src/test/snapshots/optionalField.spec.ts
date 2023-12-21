@@ -1,0 +1,93 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { IIdCompressor, createIdCompressor } from "@fluidframework/id-compressor";
+import { ChangesetLocalId, RevisionTagCodec } from "../../core";
+import {
+	OptionalChangeset,
+	makeOptionalFieldCodecFamily,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/optional-field";
+import { brand } from "../../util";
+import { TestChange } from "../testChange";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
+import { sessionId } from "./testTrees";
+
+function generateTestChangesets(
+	idCompressor: IIdCompressor,
+): { name: string; change: OptionalChangeset<TestChange> }[] {
+	const revision = idCompressor.generateCompressedId();
+	const localId: ChangesetLocalId = brand(42);
+	const childChange = TestChange.mint([], 1);
+	return [
+		{
+			name: "empty",
+			change: {
+				moves: [],
+				childChanges: [],
+			},
+		},
+		{
+			name: "change with moves",
+			change: {
+				moves: [
+					[{ revision, localId }, "self", "nodeTargeting"],
+					["self", { revision, localId }, "cellTargeting"],
+					[{ localId }, { localId }, "nodeTargeting"],
+				],
+				childChanges: [],
+			},
+		},
+		{
+			name: "with child change",
+			change: {
+				moves: [],
+				childChanges: [
+					[{ revision, localId }, childChange],
+					[{ localId }, childChange],
+				],
+			},
+		},
+		{
+			name: "with reserved detach on self",
+			change: {
+				moves: [],
+				childChanges: [],
+				reservedDetachId: "self",
+			},
+		},
+		{
+			name: "with reserved detach not on self",
+			change: {
+				moves: [],
+				childChanges: [],
+				reservedDetachId: { revision, localId },
+			},
+		},
+	];
+}
+
+describe("OptionalField - Snapshots", () => {
+	useSnapshotDirectory("optional-field");
+	const idCompressor = createIdCompressor(sessionId);
+	const changesets = generateTestChangesets(idCompressor);
+	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+	const family = makeOptionalFieldCodecFamily(
+		TestChange.codec,
+		new RevisionTagCodec(idCompressor),
+	);
+
+	for (const version of family.getSupportedFormats()) {
+		describe(`version ${version}`, () => {
+			const codec = family.resolve(version);
+			for (const { name, change } of changesets) {
+				it(name, () => {
+					const encoded = codec.json.encode(change, idCompressor.localSessionId);
+					takeJsonSnapshot(encoded);
+				});
+			}
+		});
+	}
+});

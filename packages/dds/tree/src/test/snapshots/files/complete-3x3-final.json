@@ -136,9 +136,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -159,7 +159,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -214,9 +214,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -240,7 +240,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -295,9 +295,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -321,7 +321,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -376,9 +376,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -399,7 +399,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -454,9 +454,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -480,7 +480,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -535,9 +535,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -561,7 +561,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -616,9 +616,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -639,7 +639,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -694,9 +694,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -720,7 +720,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -775,9 +775,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -801,7 +801,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -923,9 +923,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -946,7 +946,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1001,9 +1001,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1027,7 +1027,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1082,9 +1082,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1108,7 +1108,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1163,9 +1163,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1186,7 +1186,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1241,9 +1241,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1267,7 +1267,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1322,9 +1322,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1348,7 +1348,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1403,9 +1403,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -1426,7 +1426,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1481,9 +1481,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -1507,7 +1507,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1562,9 +1562,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -1588,7 +1588,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1710,9 +1710,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1733,7 +1733,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1788,9 +1788,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1814,7 +1814,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1869,9 +1869,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1895,7 +1895,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -1950,9 +1950,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1973,7 +1973,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2028,9 +2028,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2054,7 +2054,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2109,9 +2109,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2135,7 +2135,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2190,9 +2190,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -2213,7 +2213,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2268,9 +2268,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -2294,7 +2294,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2349,9 +2349,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -2375,7 +2375,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2494,9 +2494,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -2517,7 +2517,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2572,9 +2572,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -2598,7 +2598,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2653,9 +2653,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -2679,7 +2679,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2734,9 +2734,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2757,7 +2757,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2812,9 +2812,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2838,7 +2838,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2893,9 +2893,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2919,7 +2919,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -2974,9 +2974,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -2997,7 +2997,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3052,9 +3052,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3078,7 +3078,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3133,9 +3133,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3159,7 +3159,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3281,9 +3281,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -3304,7 +3304,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3359,9 +3359,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -3385,7 +3385,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3440,9 +3440,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -3466,7 +3466,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3521,9 +3521,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -3544,7 +3544,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3599,9 +3599,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -3625,7 +3625,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3680,9 +3680,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -3706,7 +3706,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3761,9 +3761,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3784,7 +3784,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3839,9 +3839,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3865,7 +3865,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -3920,9 +3920,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3946,7 +3946,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4068,9 +4068,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4091,7 +4091,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4146,9 +4146,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4172,7 +4172,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4227,9 +4227,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4253,7 +4253,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4308,9 +4308,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -4331,7 +4331,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4386,9 +4386,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -4412,7 +4412,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4467,9 +4467,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -4493,7 +4493,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4548,9 +4548,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -4571,7 +4571,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4626,9 +4626,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -4652,7 +4652,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4707,9 +4707,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -4733,7 +4733,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4852,9 +4852,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4875,7 +4875,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -4930,9 +4930,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4956,7 +4956,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5011,9 +5011,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5037,7 +5037,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5092,9 +5092,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5115,7 +5115,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5170,9 +5170,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5196,7 +5196,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5251,9 +5251,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5277,7 +5277,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5332,9 +5332,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -5355,7 +5355,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5410,9 +5410,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -5436,7 +5436,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5491,9 +5491,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -5517,7 +5517,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5639,9 +5639,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5662,7 +5662,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5717,9 +5717,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5743,7 +5743,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5798,9 +5798,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5824,7 +5824,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5879,9 +5879,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5902,7 +5902,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -5957,9 +5957,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5983,7 +5983,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6038,9 +6038,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6064,7 +6064,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6119,9 +6119,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6142,7 +6142,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6197,9 +6197,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6223,7 +6223,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6278,9 +6278,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6304,7 +6304,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6426,9 +6426,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -6449,7 +6449,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6504,9 +6504,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -6530,7 +6530,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6585,9 +6585,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -6611,7 +6611,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6666,9 +6666,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6689,7 +6689,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6744,9 +6744,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6770,7 +6770,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6825,9 +6825,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6851,7 +6851,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6906,9 +6906,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6929,7 +6929,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -6984,9 +6984,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -7010,7 +7010,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -7065,9 +7065,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -7091,7 +7091,7 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],

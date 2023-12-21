@@ -46,7 +46,7 @@ class MajorCodec implements IJsonCodec<Major> {
 	}
 
 	// JSON round-trips undefined values to 'null' within arrays.
-	// eslint-disable-nest-line @rushstack/no-new-null
+	// eslint-disable-next-line @rushstack/no-new-null
 	public decode(major: EncodedRevisionTag | null) {
 		if (major === null) {
 			return undefined;

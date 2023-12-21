@@ -10,26 +10,32 @@ import type { NodeChangeset } from "../modular-schema";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 
-export function makeGenericChangeCodec(
-	childCodec: SessionAwareCodec<NodeChangeset>,
-): ICodecFamily<GenericChangeset, SessionId> {
+export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
+	childCodec: SessionAwareCodec<TChildChange>,
+): ICodecFamily<GenericChangeset<TChildChange>, SessionId> {
 	return makeCodecFamily([[0, makeV0Codec(childCodec)]]);
 }
 
-function makeV0Codec(
-	childCodec: SessionAwareCodec<NodeChangeset>,
-): SessionAwareCodec<GenericChangeset, EncodedGenericChangeset> {
+function makeV0Codec<TChildChange = NodeChangeset>(
+	childCodec: SessionAwareCodec<TChildChange>,
+): SessionAwareCodec<GenericChangeset<TChildChange>, EncodedGenericChangeset> {
 	return {
-		encode: (change: GenericChangeset, originatorId: SessionId): EncodedGenericChangeset => {
-			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => ({
+		encode: (
+			change: GenericChangeset<TChildChange>,
+			originatorId: SessionId,
+		): EncodedGenericChangeset => {
+			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => [
 				index,
-				nodeChange: childCodec.encode(nodeChange, originatorId),
-			}));
+				childCodec.encode(nodeChange, originatorId),
+			]);
 			return encoded;
 		},
-		decode: (encoded: EncodedGenericChangeset, originatorId: SessionId): GenericChangeset => {
+		decode: (
+			encoded: EncodedGenericChangeset,
+			originatorId: SessionId,
+		): GenericChangeset<TChildChange> => {
 			return encoded.map(
-				({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
+				([index, nodeChange]: EncodedGenericChange): GenericChange<TChildChange> => ({
 					index,
 					nodeChange: childCodec.decode(nodeChange, originatorId),
 				}),

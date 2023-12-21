@@ -1,0 +1,32 @@
+[
+  {
+    "count": 1,
+    "cellId": {
+      "localId": 0,
+      "adjacentCells": [
+        [
+          0,
+          2
+        ]
+      ],
+      "lineage": [
+        [
+          0,
+          0,
+          2,
+          1
+        ]
+      ],
+      "revision": 0
+    },
+    "changes": {
+      "inputContext": [],
+      "intentions": [
+        1
+      ],
+      "outputContext": [
+        1
+      ]
+    }
+  }
+]

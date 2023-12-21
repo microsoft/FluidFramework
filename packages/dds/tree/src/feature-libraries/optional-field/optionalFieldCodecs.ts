@@ -16,10 +16,10 @@ export const noChangeCodecFamily: ICodecFamily<0, SessionId> = makeCodecFamily<0
 	[0, unitCodec],
 ]);
 
-export const makeOptionalFieldCodecFamily = (
-	childCodec: SessionAwareCodec<NodeChangeset>,
+export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
+	childCodec: SessionAwareCodec<TChildChange>,
 	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
-): ICodecFamily<OptionalChangeset, SessionId> =>
+): ICodecFamily<OptionalChangeset<TChildChange>, SessionId> =>
 	makeCodecFamily([[0, makeOptionalFieldCodec(childCodec, revisionTagCodec)]]);
 
 function makeRegisterIdCodec(
@@ -60,14 +60,14 @@ function makeRegisterIdCodec(
 	};
 }
 
-function makeOptionalFieldCodec(
-	childCodec: SessionAwareCodec<NodeChangeset>,
+function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
+	childCodec: SessionAwareCodec<TChildChange>,
 	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
-): SessionAwareCodec<OptionalChangeset, EncodedOptionalChangeset<TAnySchema>> {
+): SessionAwareCodec<OptionalChangeset<TChildChange>, EncodedOptionalChangeset<TAnySchema>> {
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
 	return {
-		encode: (change: OptionalChangeset, originatorId: SessionId) => {
+		encode: (change: OptionalChangeset<TChildChange>, originatorId: SessionId) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.moves.length > 0) {
 				encoded.m = [];
@@ -107,7 +107,7 @@ function makeOptionalFieldCodec(
 							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
 						] as const,
 				) ?? [];
-			const decoded: OptionalChangeset = {
+			const decoded: OptionalChangeset<TChildChange> = {
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [

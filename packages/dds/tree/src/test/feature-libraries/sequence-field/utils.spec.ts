@@ -14,9 +14,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
-import { deepFreeze } from "../../utils";
+import { deepFreeze, testIdCompressor } from "../../utils";
 import { TestChange } from "../../testChange";
-import { populatedMarks } from "./populatedMarks";
+import { generatePopulatedMarks } from "./populatedMarks";
 import { describeForBothConfigs, withOrderingMethod } from "./utils";
 
 const idCompressor = createIdCompressor("ca239bfe-7ce4-49dc-93a5-5e72ce8f089c" as SessionId);
@@ -28,9 +28,10 @@ const vestigialEndpoint: ChangeAtomId = {
 describeForBothConfigs("SequenceField - Utils", (config) => {
 	const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
 	describe("round-trip splitMark and tryMergeMarks", () => {
+		const marks = generatePopulatedMarks(testIdCompressor);
 		[
-			...populatedMarks,
-			populatedMarks
+			...marks,
+			...marks
 				.filter((mark) => !areInputCellsEmpty(mark))
 				.map((mark) => ({ ...mark, vestigialEndpoint })),
 		].forEach((mark, index) => {

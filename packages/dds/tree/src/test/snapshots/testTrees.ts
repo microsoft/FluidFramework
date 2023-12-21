@@ -137,7 +137,7 @@ function generateTreeRecursively(
 // Note: trees which simulate attach scenarios using the mocks should finalize ids created
 // while detached. This is only relevant for attach scenarios as the mocks set up appropriate
 // finalization when messages are processed.
-const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+export const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees() {
