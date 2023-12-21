@@ -36,9 +36,9 @@ import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeKind } from "../class-tree/schemaTypes";
+import { NodeKind, TreeMapNode } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeArrayNode } from "./treeListNode";
-import { TreeField, TreeMapNode, TreeObjectNode, Unhydrated, TreeNode } from "./types";
+import { TreeField, TreeObjectNode, Unhydrated, TreeNode } from "./types";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
@@ -753,7 +753,7 @@ const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
 function createMapProxy<TSchema extends MapNodeSchema>(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
-): TreeMapNode<TSchema> {
+): TreeMapNode {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
 	const dispatch: object =
 		customTargetObject ??
@@ -765,7 +765,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	const proxy = new Proxy<TreeMapNode<TSchema>>(targetObject as TreeMapNode<TSchema>, {
+	const proxy = new Proxy<TreeMapNode>(targetObject as TreeMapNode, {
 		get: (target, key, receiver): unknown => {
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 			return Reflect.get(dispatch, key, proxy);
@@ -817,7 +817,7 @@ export function createRawNodeProxy<TSchema extends MapNodeSchema>(
 	content: InsertableTypedNode<TSchema>,
 	allowAdditionalProperties: boolean,
 	target?: object,
-): Unhydrated<TreeMapNode<TSchema>>;
+): Unhydrated<TreeMapNode>;
 export function createRawNodeProxy<TSchema extends TreeNodeSchema>(
 	schema: TSchema,
 	content: InsertableTypedNode<TSchema>,
