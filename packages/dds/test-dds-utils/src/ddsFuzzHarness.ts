@@ -450,11 +450,7 @@ export interface DDSFuzzSuiteOptions {
 	skipMinimization?: boolean;
 
 	/**
-<<<<<<< HEAD
-	 * An optional IdCompressor that can will be passed to the constructed MockDataStoreRuntime instance.
-=======
 	 * An optional IdCompressor that will be passed to the constructed MockDataStoreRuntime instance.
->>>>>>> c013010768517b19bf2a5311525209f32a66cf43
 	 */
 	idCompressorFactory?: (
 		summary?: SerializedIdCompressorWithNoSession,
