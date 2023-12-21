@@ -10,18 +10,19 @@ import { IWebSocket } from "./http";
  * @internal
  */
 export interface IWebSocketTracker {
-	// Add a socket to internal map
+	// Add a token to socket mapping
 	addSocketForToken(compositeTokenId: string, webSocket: IWebSocket);
 
-	// Get socket objects from internal map
+	// Get the socket objects with the given token
 	getSocketsForToken(compositeTokenId: string): IWebSocket[];
 
+	// Add a socket to tracking
 	addSocket(webSocket: IWebSocket);
 
-	// Remove socket from tracking
+	// Remove a socket from tracking
 	// Return true if socket is removed, false if socket is not found
 	removeSocket(socketId: string): boolean;
 
-	// Get all tracked sockets
+	// Get all tracked socket objects
 	getAllSockets(): IWebSocket[];
 }
