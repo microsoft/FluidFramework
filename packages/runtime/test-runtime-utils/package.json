@@ -128,7 +128,7 @@
 		"@fluid-tools/build-cli": "0.29.0-222379",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
@@ -174,6 +174,9 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_MockContainerRuntimeFactory": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreContext": {
 				"forwardCompat": false
 			}
 		}

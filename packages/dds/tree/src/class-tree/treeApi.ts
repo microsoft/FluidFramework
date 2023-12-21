@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { TreeValue } from "../core";
 import {
 	EditableTreeEvents,
@@ -82,13 +83,15 @@ export interface TreeApi {
  * @public
  */
 export const nodeApi: TreeApi = {
-	parent: (node: TreeNode) => {
+	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
-		if (editNode !== undefined) {
-			return getOrCreateNodeProxy(editNode);
+		if (editNode === undefined) {
+			return undefined;
 		}
 
-		return undefined;
+		const output = getOrCreateNodeProxy(editNode);
+		assert(!isTreeValue(output), "Parent can't be a leaf, so it should be a node not a value");
+		return output;
 	},
 	key: (node: TreeNode) => {
 		const parentField = getFlexNode(node).parentField;
