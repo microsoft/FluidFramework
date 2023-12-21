@@ -21,6 +21,16 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./dist/EditLog": {
+			"import": {
+				"types": "./lib/EditLog.d.mts",
+				"default": "./lib/EditLog.mjs"
+			},
+			"require": {
+				"types": "./dist/EditLog.d.ts",
+				"default": "./dist/EditLog.js"
+			}
 		}
 	},
 	"main": "dist/index.js",
