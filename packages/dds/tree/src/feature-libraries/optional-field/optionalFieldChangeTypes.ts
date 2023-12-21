@@ -23,7 +23,7 @@ export type RegisterId = ChangeAtomId | "self";
  * Each register is identified using a {@link RegisterId}.
  * The active register holds the current value of the field, and other registers hold detached roots.
  */
-export interface OptionalChangeset {
+export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	/**
 	 * Each entry signifies the intent to move a node from `src` to `dst`.
 	 *
@@ -44,7 +44,7 @@ export interface OptionalChangeset {
 	 *
 	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
 	 */
-	childChanges: [register: RegisterId, childChange: NodeChangeset][];
+	childChanges: [register: RegisterId, childChange: TChildChange][];
 
 	/**
 	 * Set iff:

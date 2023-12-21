@@ -41,7 +41,7 @@ import {
 	TreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
-	InternalTypedSchemaTypes,
+	ArrayToUnion,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
@@ -334,7 +334,7 @@ describe("editableTreeTypes", () => {
 				areSafelyAssignable<FlexTreeTypedNodeUnion<AllowedTypes>, FlexTreeNode>
 			>;
 
-			type z = InternalTypedSchemaTypes.ArrayToUnion<[FlexTreeNode]>;
+			type z = ArrayToUnion<[FlexTreeNode]>;
 		}
 	}
 
