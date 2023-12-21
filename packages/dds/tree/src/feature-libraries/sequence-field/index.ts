@@ -27,8 +27,8 @@ export {
 	CellMark,
 	AttachAndDetach,
 	DetachIdOverride,
-	DetachIdOverrideType,
 } from "./types";
+export { DetachIdOverrideType } from "./format";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
