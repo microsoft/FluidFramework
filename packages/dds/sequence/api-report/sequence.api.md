@@ -136,8 +136,6 @@ export interface IInterval {
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
-    // @deprecated
-    add(start: SequencePlace, end: SequencePlace, intervalType: IntervalType, props?: PropertySet): TInterval;
     add({ start, end, props, }: {
         start: SequencePlace;
         end: SequencePlace;
@@ -262,11 +260,11 @@ export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePos
 
 // @internal
 export const IntervalOpType: {
+    readonly PROPERTY_CHANGED: "propertyChanged";
+    readonly POSITION_REMOVE: "positionRemove";
     readonly ADD: "add";
     readonly DELETE: "delete";
     readonly CHANGE: "change";
-    readonly PROPERTY_CHANGED: "propertyChanged";
-    readonly POSITION_REMOVE: "positionRemove";
 };
 
 // @internal (undocumented)
@@ -648,11 +646,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
-    // @deprecated
-    findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
     static getFactory(): SharedStringFactory;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;

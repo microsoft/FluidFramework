@@ -21,6 +21,7 @@ import {
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
+import { BlobManager } from "../blobManager";
 import {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
@@ -288,7 +289,7 @@ export class GarbageCollector implements IGarbageCollector {
 							nodeData.unreferencedTimestampMs,
 							this.configs.inactiveTimeoutMs,
 							currentReferenceTimestampMs,
-							this.configs.sweepTimeoutMs,
+							this.configs.tombstoneTimeoutMs,
 							this.configs.sweepGracePeriodMs,
 						),
 					);
@@ -408,6 +409,7 @@ export class GarbageCollector implements IGarbageCollector {
 					{
 						eventName: "GCInitializationOrUpdateFailed",
 						gcConfigs: JSON.stringify(this.configs),
+						clientId,
 					},
 					error,
 				);
@@ -489,8 +491,11 @@ export class GarbageCollector implements IGarbageCollector {
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({
 					...gcStats,
-					timestamp: currentReferenceTimestampMs,
-					sweep: this.configs.shouldRunSweep,
+					details: {
+						timestamp: currentReferenceTimestampMs,
+						sweep: this.configs.shouldRunSweep,
+						tombstone: this.configs.throwOnTombstoneLoad,
+					},
 				});
 
 				/** Post-GC steps */
@@ -607,7 +612,7 @@ export class GarbageCollector implements IGarbageCollector {
 						currentReferenceTimestampMs,
 						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
-						this.configs.sweepTimeoutMs,
+						this.configs.tombstoneTimeoutMs,
 						this.configs.sweepGracePeriodMs,
 					),
 				);
@@ -833,7 +838,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
-			sweepTimeoutMs: this.configs.sweepTimeoutMs,
+			tombstoneTimeoutMs: this.configs.tombstoneTimeoutMs,
 		};
 	}
 
@@ -1116,9 +1121,25 @@ export class GarbageCollector implements IGarbageCollector {
 			deletedAttachmentBlobCount: 0,
 		};
 
+		// The runtime can't reliably identify the type of deleted nodes. So, get the type here. This should
+		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
+		const getDeletedNodeType = (nodeId: string): GCNodeType => {
+			const pathParts = nodeId.split("/");
+			if (pathParts[1] === BlobManager.basePath) {
+				return GCNodeType.Blob;
+			}
+			if (pathParts.length === 2) {
+				return GCNodeType.DataStore;
+			}
+			if (pathParts.length === 3) {
+				return GCNodeType.SubDataStore;
+			}
+			return GCNodeType.Other;
+		};
+
 		for (const nodeId of deletedNodes) {
 			sweepPhaseStats.deletedNodeCount++;
-			const nodeType = this.runtime.getNodeType(nodeId);
+			const nodeType = getDeletedNodeType(nodeId);
 			if (nodeType === GCNodeType.DataStore) {
 				sweepPhaseStats.deletedDataStoreCount++;
 			} else if (nodeType === GCNodeType.Blob) {

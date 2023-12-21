@@ -114,11 +114,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
-    // @deprecated (undocumented)
-    findTile(startPos: number, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
     // (undocumented)
     getClientId(): number;
     // (undocumented)

@@ -63,6 +63,7 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"mocha": "^10.2.0"
@@ -78,7 +79,7 @@
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",

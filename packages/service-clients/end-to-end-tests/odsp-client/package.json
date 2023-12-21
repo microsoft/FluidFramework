@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"main": "dist/index.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -84,7 +85,7 @@
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"eslint": "~8.50.0",
 		"nock": "^13.3.3",
 		"rimraf": "^4.4.0",

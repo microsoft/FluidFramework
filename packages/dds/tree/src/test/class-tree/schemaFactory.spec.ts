@@ -145,7 +145,7 @@ describe("schemaFactory", () => {
 		assert(a instanceof A);
 		assert(!(a instanceof B));
 
-		// TODO: this should be a compile error, but current API is structurally typed, and doesn't include the schema of nodes in that.
+		// @ts-expect-error Nodes should get type based nominal typing.
 		const b: A = new B({});
 	});
 
@@ -304,8 +304,8 @@ describe("schemaFactory", () => {
 		assert.equal(s, "hi");
 	});
 
-	describe("List", () => {
-		it("Nested List", () => {
+	describe("Array", () => {
+		it("Nested Array", () => {
 			const builder = new SchemaFactory("test");
 
 			class Inventory extends builder.object("Inventory", {
@@ -341,6 +341,8 @@ describe("schemaFactory", () => {
 				// @ts-expect-error structural list schema are not typed as classes.
 				class NotAClass extends factory.array(factory.number) {}
 			}
+
+			assert.equal(MyList.identifier, `test.Array<["${factory.number.identifier}"]>`);
 		});
 
 		it("Named", () => {

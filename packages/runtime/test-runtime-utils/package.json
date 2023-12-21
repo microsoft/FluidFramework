@@ -16,6 +16,46 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/test-runtime-utils-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/test-runtime-utils-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/test-runtime-utils-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/test-runtime-utils-beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/test-runtime-utils-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/test-runtime-utils-public.d.ts",
+				"default": "./dist/index.js"
+			}
 		}
 	},
 	"main": "dist/index.js",
@@ -27,7 +67,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -96,7 +136,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
@@ -120,6 +160,22 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MockContainerRuntimeForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactory": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

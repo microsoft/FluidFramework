@@ -18,7 +18,7 @@ patchedDependencies:
     hash: p7f5djbjd3zgfisasebtom74n4
     path: patches/socket.io-client@4.7.2.patch
   tsc-multi@1.1.0:
-    hash: 44oayjl3iesbankmh6w6z32iii
+    hash: bwju7gmfuwum2ryv7w6vqpkpiy
     path: patches/tsc-multi@1.1.0.patch
 
 importers:
@@ -37,7 +37,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@octokit/core': ^4.0.5
       auto-changelog: ^2.4.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       changesets-format-with-issue-links: ^0.3.0
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
@@ -64,7 +64,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@octokit/core': 4.2.4
       auto-changelog: 2.4.0
-      c8: 7.14.0
+      c8: 8.0.1
       changesets-format-with-issue-links: 0.3.0_@changesets+cli@2.26.2
       concurrently: 8.2.2
       copyfiles: 2.4.1
@@ -117,7 +117,6 @@ importers:
       eslint-config-prettier: ~9.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tsc-multi: ^1.1.0
@@ -161,10 +160,9 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       uuid: 9.0.1
 
@@ -215,7 +213,6 @@ importers:
       eslint-config-prettier: ~9.0.0
       jsrsasign: ^10.5.25
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -237,9 +234,8 @@ importers:
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   azure/packages/external-controller:
@@ -334,7 +330,7 @@ importers:
       tinylicious: 2.0.2
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
@@ -364,7 +360,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -412,7 +408,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       nock: 13.4.0
       rimraf: 4.4.1
@@ -445,7 +441,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       commander: ^5.1.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -494,7 +490,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       nock: 13.4.0
       prettier: 3.0.3
@@ -1255,7 +1251,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -1291,7 +1287,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -1556,7 +1552,7 @@ importers:
       '@types/fs-extra': ^9.0.11
       '@types/node': ^18.19.0
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       css-loader: ^1.0.0
       eslint: ~8.50.0
       express: ^4.16.3
@@ -1594,7 +1590,7 @@ importers:
       '@types/fs-extra': 9.0.13
       '@types/node': 18.19.1
       buffer: 6.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.50.0
       fs-extra: 9.1.0
@@ -2010,7 +2006,6 @@ importers:
   examples/data-objects/inventory-app:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/tree-react-api': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2044,7 +2039,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/tree-react-api': link:../../../experimental/framework/tree-react-api
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/tree': link:../../../packages/dds/tree
@@ -2897,7 +2891,7 @@ importers:
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
@@ -2932,7 +2926,7 @@ importers:
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -3129,7 +3123,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       assert: ^2.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -3190,7 +3184,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.89.0
@@ -4596,7 +4590,7 @@ importers:
       babel-plugin-polyfill-regenerator: ^0.1.6
       babel-plugin-transform-jsx: ^2.0.0
       body-parser: ^1.18.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       eslint: ~8.50.0
       jest: ^29.6.2
@@ -4642,7 +4636,7 @@ importers:
       babel-plugin-polyfill-regenerator: 0.1.6_@babel+core@7.23.3
       babel-plugin-transform-jsx: 2.0.0
       body-parser: 1.20.2
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       eslint: 8.50.0
       jest: 29.7.0_@types+node@18.19.1
@@ -4668,7 +4662,7 @@ importers:
       ajv: ^8.12.0
       ajv-keywords: ^5.1.0
       async: ^3.2.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -4701,7 +4695,7 @@ importers:
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -4731,7 +4725,7 @@ importers:
       ajv: ^8.12.0
       async: ^3.2.2
       base64-js: ^1.5.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -4772,7 +4766,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/semver': 7.5.6
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -5042,7 +5036,7 @@ importers:
       '@types/node': ^18.19.0
       ajv: ^8.12.0
       async: ^3.2.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -5076,7 +5070,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -5247,7 +5241,7 @@ importers:
       aws-sdk: 2.547.0
       basicauth-middleware: 2.0.0
       body-parser: ^1.18.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       chai-as-promised: 7.1.1
       chalk: ^2.4.2
@@ -5329,7 +5323,7 @@ importers:
       '@fluidframework/server-local-server': 3.0.0-223236
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       aws-sdk: 2.547.0
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       chai-as-promised: 7.1.1_chai@4.3.10
       cross-env: 7.0.3
@@ -5385,7 +5379,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/path-browserify': ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -5422,7 +5416,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -5452,7 +5446,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -5482,7 +5476,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -5511,7 +5505,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       concurrently: ^8.2.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -5541,7 +5535,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       concurrently: 8.2.2
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -5572,7 +5566,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -5602,7 +5596,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -5646,7 +5640,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/uuid': ^9.0.2
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       cross-env: ^7.0.3
       denque: ^1.5.1
@@ -5700,7 +5694,7 @@ importers:
       '@types/lru-cache': 5.1.1
       '@types/mocha': 9.1.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
       easy-table: 1.2.0
@@ -5838,59 +5832,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  experimental/framework/tree-react-api:
-    specifiers:
-      '@fluid-tools/benchmark': ^0.48.0
-      '@fluid-tools/build-cli': 0.29.0-222379
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': 0.29.0-222379
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.1.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/tree': workspace:~
-      '@microsoft/api-extractor': ^7.38.3
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      '@types/react': ^17.0.44
-      '@types/sinon': ^7.0.13
-      c8: ^7.7.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      eslint-config-prettier: ~9.0.0
-      mocha: ^10.2.0
-      prettier: ~3.0.3
-      react: ^17.0.1
-      rimraf: ^4.4.0
-      sinon: ^7.4.2
-      typescript: ~5.1.6
-    dependencies:
-      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/tree': link:../../../packages/dds/tree
-      react: 17.0.2
-    devDependencies:
-      '@fluid-tools/benchmark': 0.48.0
-      '@fluid-tools/build-cli': 0.29.0-222379_mhw3tufvtaceew37hrkkevjcli
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0-222379_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      '@types/react': 17.0.71
-      '@types/sinon': 7.5.2
-      c8: 7.14.0
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      eslint-config-prettier: 9.0.0_eslint@8.50.0
-      mocha: 10.2.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      sinon: 7.5.0
-      typescript: 5.1.6
-
   packages/common/client-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -5915,7 +5856,7 @@ importers:
       '@types/sinon': ^7.0.13
       base64-js: ^1.5.1
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -5932,7 +5873,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       puppeteer: ^17.1.3
-      renamer: ^4.0.0
       rewire: ^5.0.0
       rimraf: ^4.4.0
       sha.js: ^2.4.11
@@ -5968,7 +5908,7 @@ importers:
       '@types/rewire': 2.5.30
       '@types/sha.js': 2.4.4
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       concurrently: 8.2.2
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -5983,13 +5923,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       puppeteer: 17.1.3
-      renamer: 4.0.0
       rewire: 5.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/container-definitions:
@@ -6011,6 +5950,7 @@ importers:
       events: ^3.1.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6031,6 +5971,7 @@ importers:
       eslint-plugin-deprecation: 2.0.0_loebgezstcsvd2poh2d55fifke
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-interfaces:
@@ -6047,6 +5988,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6061,6 +6003,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-utils:
@@ -6076,7 +6019,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6088,6 +6031,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6101,7 +6045,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6113,6 +6057,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/driver-definitions:
@@ -6130,6 +6075,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6146,6 +6092,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/cell:
@@ -6169,7 +6116,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6178,7 +6125,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6204,7 +6150,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6213,10 +6159,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/counter:
@@ -6239,7 +6184,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6248,7 +6193,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6273,7 +6217,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6282,10 +6226,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ink:
@@ -6306,7 +6249,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6315,7 +6258,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6340,7 +6282,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@types/mocha': 9.1.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6349,10 +6291,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/map:
@@ -6383,7 +6324,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/path-browserify': ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6393,7 +6334,6 @@ importers:
       moment: ^2.21.0
       path-browserify: ^1.0.1
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6427,7 +6367,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6436,10 +6376,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/matrix:
@@ -6471,7 +6410,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6482,7 +6421,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       ts-node: ^10.9.1
@@ -6521,7 +6459,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6531,11 +6469,10 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       uuid: 9.0.1
 
@@ -6566,7 +6503,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -6576,7 +6513,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6608,7 +6544,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -6618,10 +6554,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ordered-collection:
@@ -6646,7 +6581,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6655,7 +6590,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6684,7 +6618,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6693,10 +6627,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/pact-map:
@@ -6719,7 +6652,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6730,7 +6663,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6756,7 +6688,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6766,10 +6698,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/register-collection:
@@ -6794,7 +6725,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6803,7 +6734,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6830,7 +6760,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -6839,10 +6769,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/sequence:
@@ -6873,7 +6802,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -6884,7 +6813,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       random-js: ^2.1.0
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6919,7 +6847,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -6930,10 +6858,9 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       random-js: 2.1.0
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-object-base:
@@ -6962,7 +6889,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       benchmark: ^2.1.4
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -6971,7 +6898,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       ts-node: ^10.9.1
@@ -7005,7 +6931,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       benchmark: 2.1.4
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7014,11 +6940,10 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-summary-block:
@@ -7042,7 +6967,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       benchmark: ^2.1.4
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7051,7 +6976,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -7077,7 +7001,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       benchmark: 2.1.4
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7086,10 +7010,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/task-manager:
@@ -7116,7 +7039,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7127,7 +7050,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -7157,7 +7079,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7167,10 +7089,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/test-dds-utils:
@@ -7184,6 +7105,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -7191,7 +7113,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7209,6 +7131,7 @@ importers:
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
+      '@fluidframework/id-compressor': link:../../runtime/id-compressor
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
@@ -7223,7 +7146,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7233,11 +7156,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/tree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -7273,7 +7197,7 @@ importers:
       '@ungap/structured-clone': ^1.2.0
       ajv: ^8.12.0
       ajv-formats: ^2.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       dependency-cruiser: ^14.1.0
       diff: ^3.5.0
@@ -7306,6 +7230,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-private/test-drivers': link:../../test/test-drivers
@@ -7328,7 +7253,7 @@ importers:
       '@types/uuid': 9.0.7
       ajv: 8.12.0
       ajv-formats: 2.1.1_ajv@8.12.0
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       dependency-cruiser: 14.1.2
       diff: 3.5.0
@@ -7362,7 +7287,6 @@ importers:
       eslint: ~8.50.0
       jsonschema: ^1.2.6
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7385,9 +7309,8 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-base:
@@ -7409,7 +7332,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7418,7 +7341,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       tsc-multi: ^1.1.0
@@ -7442,7 +7364,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7451,10 +7373,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-web-cache:
@@ -7478,7 +7399,6 @@ importers:
       idb: ^6.1.2
       jest: ^29.6.2
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7503,9 +7423,8 @@ importers:
       fake-indexeddb: 3.1.4
       jest: 29.7.0_@types+node@18.19.1
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/file-driver:
@@ -7579,7 +7498,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7609,9 +7527,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/local-driver:
@@ -7642,7 +7559,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7653,7 +7570,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       tsc-multi: ^1.1.0
@@ -7692,7 +7608,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7701,10 +7617,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-driver:
@@ -7732,7 +7647,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
       '@types/sinon': ^7.0.13
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -7742,7 +7657,6 @@ importers:
       moment: ^2.21.0
       node-fetch: ^2.6.9
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -7777,7 +7691,7 @@ importers:
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7786,10 +7700,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-driver-definitions:
@@ -7807,7 +7720,6 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7826,9 +7738,8 @@ importers:
       cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-urlResolver:
@@ -7855,7 +7766,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7883,9 +7793,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/replay-driver:
@@ -7910,7 +7819,6 @@ importers:
       eslint: ~8.50.0
       nock: ^13.3.3
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7936,9 +7844,8 @@ importers:
       eslint: 8.50.0
       nock: 13.4.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/routerlicious-driver:
@@ -7969,7 +7876,7 @@ importers:
       '@types/url-parse': 1.4.4
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       cross-fetch: ^3.1.5
@@ -7981,7 +7888,6 @@ importers:
       moment: ^2.21.0
       nock: ^13.3.3
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -8022,7 +7928,7 @@ importers:
       '@types/url-parse': 1.4.4
       '@types/uuid': 9.0.7
       axios: 1.6.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8032,10 +7938,9 @@ importers:
       moment: 2.29.4
       nock: 13.4.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/routerlicious-urlResolver:
@@ -8065,7 +7970,6 @@ importers:
       moment: ^2.21.0
       nconf: ^0.12.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8098,9 +8002,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/tinylicious-driver:
@@ -8129,7 +8032,6 @@ importers:
       jsrsasign: ^10.5.25
       mocha: ^10.2.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8161,9 +8063,8 @@ importers:
       eslint: 8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/agent-scheduler:
@@ -8190,7 +8091,6 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8220,9 +8120,8 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/aqueduct:
@@ -8252,7 +8151,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8261,7 +8160,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8294,7 +8192,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8303,9 +8201,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/attributor:
@@ -8335,7 +8232,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8345,7 +8242,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8377,7 +8273,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8386,9 +8282,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/client-logger/app-insights-logger:
@@ -8413,7 +8308,6 @@ importers:
       eslint-plugin-react-hooks: ~4.6.0
       mocha: ^10.2.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       tsc-multi: ^1.1.0
@@ -8441,10 +8335,9 @@ importers:
       eslint-plugin-react-hooks: 4.6.0_eslint@8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       tslib: 1.14.1
       typescript: 5.1.6
 
@@ -8473,7 +8366,6 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8502,9 +8394,8 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/dds-interceptions:
@@ -8526,7 +8417,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -8536,7 +8427,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8559,7 +8449,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -8569,9 +8459,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-framework:
@@ -8593,7 +8482,6 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8616,9 +8504,8 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-static:
@@ -8647,7 +8534,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8656,7 +8543,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8686,7 +8572,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8695,9 +8581,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/oldest-client-observer:
@@ -8720,7 +8605,6 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8744,9 +8628,8 @@ importers:
       cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/request-handler:
@@ -8768,7 +8651,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -8778,7 +8661,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8801,7 +8683,7 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -8811,9 +8693,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/synthesize:
@@ -8831,7 +8712,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8840,7 +8721,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -8859,7 +8739,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8868,9 +8748,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/tinylicious-client:
@@ -8904,7 +8783,6 @@ importers:
       eslint: ~8.50.0
       mocha: ^10.2.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^2.0.2
@@ -8943,11 +8821,10 @@ importers:
       eslint: 8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.2
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/undo-redo:
@@ -8969,7 +8846,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -8980,7 +8857,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -9004,7 +8880,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -9014,9 +8890,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-adapters:
@@ -9037,7 +8912,6 @@ importers:
       prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -9059,9 +8933,8 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-interfaces:
@@ -9079,7 +8952,6 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -9098,9 +8970,8 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/container-loader:
@@ -9129,7 +9000,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -9141,7 +9012,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       tsc-multi: ^1.1.0
@@ -9179,7 +9049,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9188,10 +9058,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/driver-utils:
@@ -9216,7 +9085,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
       axios: ^1.6.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9226,7 +9095,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       tsc-multi: ^1.1.0
@@ -9258,7 +9126,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9267,10 +9135,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/test-loader-utils:
@@ -9341,7 +9208,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/sinon': ^7.0.13
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
@@ -9353,7 +9220,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       sorted-btree: ^1.8.0
@@ -9396,7 +9262,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/sinon': 7.5.2
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9405,10 +9271,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/container-runtime-definitions:
@@ -9476,7 +9341,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9486,7 +9351,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -9519,7 +9383,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9528,9 +9392,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/datastore-definitions:
@@ -9590,7 +9453,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9599,7 +9462,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       tsc-multi: ^1.1.0
@@ -9625,7 +9487,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@types/mocha': 9.1.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9634,9 +9496,8 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/runtime-definitions:
@@ -9702,7 +9563,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9711,7 +9572,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       ts-node: ^10.9.1
@@ -9739,7 +9599,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9748,11 +9608,10 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/test-runtime-utils:
@@ -9781,7 +9640,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9824,7 +9683,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9861,7 +9720,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -9907,7 +9766,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       nock: 13.4.0
       rimraf: 4.4.1
@@ -9937,13 +9796,12 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -9973,15 +9831,14 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/test/functional-tests:
@@ -10001,7 +9858,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -10010,7 +9867,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
       tsc-multi: ^1.1.0
@@ -10035,7 +9891,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -10043,10 +9899,9 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.89.0
@@ -10098,7 +9953,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -10159,7 +10014,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -10247,7 +10102,7 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -10289,7 +10144,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
@@ -10312,7 +10167,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10337,7 +10192,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -10446,7 +10301,7 @@ importers:
       '@types/node': ^18.19.0
       agentkeepalive: ^4.5.0
       axios: ^1.6.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
@@ -10484,7 +10339,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -10544,7 +10399,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -10622,7 +10477,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       eslint: 8.50.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -10643,7 +10498,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10664,7 +10519,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -10705,7 +10560,7 @@ importers:
       '@fluidframework/tool-utils': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       commander: ^5.1.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10752,7 +10607,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -10797,7 +10652,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       best-random: ^1.0.0
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -10850,7 +10705,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -10903,7 +10758,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/semver': ^7.5.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -10965,7 +10820,7 @@ importers:
       '@types/node': 18.19.1
       '@types/semver': 7.5.6
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -10998,7 +10853,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/chai': ^4.0.0
       '@types/mocha': ^9.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -11028,7 +10883,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -11082,7 +10937,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/sinon': ^7.0.13
       '@types/sinon-chrome': ^2.2.11
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       concurrently: ^8.2.1
       copy-webpack-plugin: ^11.0.0
@@ -11158,7 +11013,7 @@ importers:
       '@types/react-dom': 17.0.25
       '@types/sinon': 7.5.2
       '@types/sinon-chrome': 2.2.15
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       concurrently: 8.2.2
       copy-webpack-plugin: 11.0.0_webpack@5.89.0
@@ -11218,7 +11073,7 @@ importers:
       '@types/chai': ^4.0.0
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       chai: ^4.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -11261,7 +11116,7 @@ importers:
       '@types/chai': 4.3.11
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
-      c8: 7.14.0
+      c8: 8.0.1
       chai: 4.3.10
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -11631,7 +11486,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/yargs': ^13
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       json2csv: ^5.0.7
@@ -11666,7 +11521,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/yargs': 13.0.12
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -11796,7 +11651,7 @@ importers:
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
       buffer: ^6.0.3
-      c8: ^7.7.1
+      c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       express: ^4.16.3
@@ -11857,7 +11712,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.50.0
       fs-extra: 9.1.0
@@ -11893,7 +11748,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -11926,7 +11781,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -11957,7 +11812,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -11994,7 +11849,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -12025,7 +11880,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       async-mutex: ^0.3.1
-      c8: ^7.7.1
+      c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
@@ -12060,7 +11915,7 @@ importers:
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      c8: 7.14.0
+      c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -23756,21 +23611,6 @@ packages:
       typical: 2.6.1
     dev: true
 
-  /array-back/3.1.0:
-    resolution: {integrity: sha512-TkuxA4UCOvxuDK6NZYXCalszEzj+TLszyASooky+i742l9TqsOdYCMJJupxRic61hwquNtppB3hgcuq9SVSH1Q==}
-    engines: {node: '>=6'}
-    dev: true
-
-  /array-back/4.0.2:
-    resolution: {integrity: sha512-NbdMezxqf94cnNfWLL7V/im0Ub+Anbb0IoZhvzie8+4HJ4nMQuzHuy49FkGYCJK2yAloZ3meiB6AVMClbrI1vg==}
-    engines: {node: '>=8'}
-    dev: true
-
-  /array-back/6.2.2:
-    resolution: {integrity: sha512-gUAZ7HPyb4SJczXAMUXMGAvI976JoK3qEx9v1FTmeYuJj0IBiaKttG1ydtGKdkfqWkIkouke7nG8ufGy77+Cvw==}
-    engines: {node: '>=12.17'}
-    dev: true
-
   /array-buffer-byte-length/1.0.0:
     resolution: {integrity: sha512-LPuwb2P+NrQw3XhxGc36+XSvuBPopovXYTR9Ew++Du9Yb/bx5AzBfrIsBoj0EZUifjQU+sHL21sseZ3jerWO/A==}
     dependencies:
@@ -25090,6 +24930,25 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /c8/8.0.1:
+    resolution: {integrity: sha512-EINpopxZNH1mETuI0DzRA4MZpAUH+IFiRhnmFD3vFr3vdrgxqi3VfE3KL0AIL+zDq8rC9bZqwM/VDmmoe04y7w==}
+    engines: {node: '>=12'}
+    hasBin: true
+    dependencies:
+      '@bcoe/v8-coverage': 0.2.3
+      '@istanbuljs/schema': 0.1.3
+      find-up: 5.0.0
+      foreground-child: 2.0.0
+      istanbul-lib-coverage: 3.2.2
+      istanbul-lib-report: 3.0.1
+      istanbul-reports: 3.1.6
+      rimraf: 3.0.2
+      test-exclude: 6.0.0
+      v8-to-istanbul: 9.2.0
+      yargs: 17.7.2
+      yargs-parser: 21.1.1
+    dev: true
+
   /cacache/12.0.4:
     resolution: {integrity: sha512-a0tMB40oefvuInr4Cwb3GerbL9xTj1D5yg0T5xrjGCGyfvbxseIXX7BAO/u/hIXdafzOI5JC3wDwHyf24buOAQ==}
     dependencies:
@@ -26041,26 +25900,6 @@ packages:
       typical: 2.6.1
     dev: true
 
-  /command-line-args/5.2.1:
-    resolution: {integrity: sha512-H4UfQhZyakIjC74I9d34fGYDwk3XpSr17QhEd0Q3I9Xq1CETHo4Hcuo87WyWHpAF1aSLjLRf5lD9ZGX2qStUvg==}
-    engines: {node: '>=4.0.0'}
-    dependencies:
-      array-back: 3.1.0
-      find-replace: 3.0.0
-      lodash.camelcase: 4.3.0
-      typical: 4.0.0
-    dev: true
-
-  /command-line-usage/6.1.3:
-    resolution: {integrity: sha512-sH5ZSPr+7UStsloltmDh7Ce5fb8XPlHyoPzTpyyMuYCtervL65+ubVZ6Q61cFtFl62UyJlc8/JwERRbAFPUqgw==}
-    engines: {node: '>=8.0.0'}
-    dependencies:
-      array-back: 4.0.2
-      chalk: 2.4.2
-      table-layout: 1.0.2
-      typical: 5.2.0
-    dev: true
-
   /commander/10.0.1:
     resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
     engines: {node: '>=14'}
@@ -26868,11 +26707,6 @@ packages:
       csv-parse: 4.16.3
       csv-stringify: 5.6.5
       stream-transform: 2.1.3
-    dev: true
-
-  /current-module-paths/1.1.1:
-    resolution: {integrity: sha512-8Ga5T8oMXBaSsHq9Gj+bddX7kHSaJKsl2vaAd3ep51eQLkr4W18eFEmEZM5bLo1zrz8tt3jE1U8QK9QGhaLR4g==}
-    engines: {node: '>=12.17'}
     dev: true
 
   /currently-unhandled/0.4.1:
@@ -29493,14 +29327,6 @@ packages:
       webpack: 4.47.0_webpack-cli@4.10.0
     dev: true
 
-  /file-set/5.1.3:
-    resolution: {integrity: sha512-mQ6dqz+z59on3B50IGF3ujNGbZmY1TAeLHpNfhLEeNM6Lky31w3RUlbCyqZWQs0DuZJQU4R2qDuVd9ojyzadcg==}
-    engines: {node: '>=12.17'}
-    dependencies:
-      array-back: 6.2.2
-      glob: 7.2.3
-    dev: true
-
   /file-system-cache/1.1.0:
     resolution: {integrity: sha512-IzF5MBq+5CR0jXx5RxPe4BICl/oEhBSXKaL9fLhAXrIfIUS77Hr4vzrYyqYMHN6uTt+BOqi3fDCTjjEBCjERKw==}
     dependencies:
@@ -29620,13 +29446,6 @@ packages:
     dependencies:
       array-back: 1.0.4
       test-value: 2.1.0
-    dev: true
-
-  /find-replace/3.0.0:
-    resolution: {integrity: sha512-6Tb2myMioCAgv5kfvP5/PkZZ/ntTpVK39fHY7WkWBgvbeE+VHd/tZuZ4mrC+bxh4cfOZeYKVPaJIZtZXV7GNCQ==}
-    engines: {node: '>=4.0.0'}
-    dependencies:
-      array-back: 3.1.0
     dev: true
 
   /find-root/1.1.0:
@@ -34373,13 +34192,6 @@ packages:
       strip-bom: 3.0.0
       type-fest: 0.3.1
 
-  /load-module/4.2.1:
-    resolution: {integrity: sha512-Sbfg6R4LjvyThJpqUoADHMjyoI2+cL4msbCQeZ9kkY/CqP/TT2938eftKm7x4I2gd4/A+DEe6nePkbfWYbXwSw==}
-    engines: {node: '>=12.17'}
-    dependencies:
-      array-back: 6.2.2
-    dev: true
-
   /load-yaml-file/0.2.0:
     resolution: {integrity: sha512-OfCBkGEw4nN6JLtgRidPX6QxjBQGQf72q3si2uvqyFEMbycSFFHwAZeXx6cJgFM9wmLrf9zBwCP3Ivqa+LLZPw==}
     engines: {node: '>=6'}
@@ -38179,12 +37991,6 @@ packages:
     engines: {node: '>=0.8'}
     hasBin: true
 
-  /printj/1.3.1:
-    resolution: {integrity: sha512-GA3TdL8szPK4AQ2YnOe/b+Y1jUFwmmGMMK/qbY7VcE3Z7FU8JstbKiKRzO6CIiAKPhTO8m01NoQ0V5f3jc4OGg==}
-    engines: {node: '>=0.8'}
-    hasBin: true
-    dev: true
-
   /proc-log/1.0.0:
     resolution: {integrity: sha512-aCk8AO51s+4JyuYGg3Q/a6gnrlDO09NpVWePtjp7xwphcoQ04x5WAfCyugcsbLooWcMJ87CLkD4+604IckEdhg==}
     dev: true
@@ -39392,11 +39198,6 @@ packages:
     dependencies:
       redis-errors: 1.2.0
 
-  /reduce-flatten/2.0.0:
-    resolution: {integrity: sha512-EJ4UNY/U1t2P/2k6oqotuX2Cc3T6nxJwsM0N0asT7dhrtH1ltUxDn4NalSYmPE2rCkVpcf/X6R0wDwcFpzhd4w==}
-    engines: {node: '>=6'}
-    dev: true
-
   /reduce-to-639-1/1.1.0:
     resolution: {integrity: sha512-9yy/xgTE8qPlZKQrQmyCU1Y1ZSnnOCP4K0Oe1YrBtteUmVXk0AgyINp0NS5kHGzZfpvjgHr6ygFZc9fpqf7moQ==}
     dev: true
@@ -39649,25 +39450,6 @@ packages:
 
   /remove-trailing-separator/1.1.0:
     resolution: {integrity: sha512-/hS+Y0u3aOfIETiaiirUFwDBDzmXPvO+jAfKTitUngIPzdKc6Z0LoFjM/CK5PL4C+eKwHohlHAb6H0VFfmmUsw==}
-    dev: true
-
-  /renamer/4.0.0:
-    resolution: {integrity: sha512-yurufcXxbJfFBVAUoByNyDVH811zTZ/MrKo6gUH8pHGeAmdK7J5egj2lSNe57HuVIvnVzSalzeVGu8pi8UHGxg==}
-    engines: {node: '>=12.17'}
-    hasBin: true
-    dependencies:
-      array-back: 6.2.2
-      chalk: 4.1.2
-      command-line-args: 5.2.1
-      command-line-usage: 6.1.3
-      current-module-paths: 1.1.1
-      fast-diff: 1.2.0
-      file-set: 5.1.3
-      global-dirs: 3.0.1
-      load-module: 4.2.1
-      printj: 1.3.1
-      stream-read-all: 3.0.1
-      typical: 7.1.1
     dev: true
 
   /renderkid/2.0.7:
@@ -41285,11 +41067,6 @@ packages:
       xtend: 4.0.2
     dev: true
 
-  /stream-read-all/3.0.1:
-    resolution: {integrity: sha512-EWZT9XOceBPlVJRrYcykW8jyRSZYbkb/0ZK36uLEmoWVO5gxBOnntNTseNzfREsqxqdfEGQrD8SXQ3QWbBmq8A==}
-    engines: {node: '>=10'}
-    dev: true
-
   /stream-shift/1.0.1:
     resolution: {integrity: sha512-AiisoFqQ0vbGcZgQPY1cdP2I76glaVA/RauYR4G4thNFgkTqr90yXTo4LYX60Jl+sIlPNHHdGSwo01AvbKUSVQ==}
     dev: true
@@ -41837,16 +41614,6 @@ packages:
       semver: 7.5.0
       tightrope: 0.1.0
       zod: 3.21.4
-    dev: true
-
-  /table-layout/1.0.2:
-    resolution: {integrity: sha512-qd/R7n5rQTRFi+Zf2sk5XVVd9UQl6ZkduPFC3S7WEGJAmetDTjY3qPN50eSKzwuzEyQKy5TN2TiZdkIjos2L6A==}
-    engines: {node: '>=8.0.0'}
-    dependencies:
-      array-back: 4.0.2
-      deep-extend: 0.6.0
-      typical: 5.2.0
-      wordwrapjs: 4.0.1
     dev: true
 
   /table-parser/0.1.3:
@@ -42609,7 +42376,7 @@ packages:
       typescript: 5.1.6
     dev: true
 
-  /tsc-multi/1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6:
+  /tsc-multi/1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6:
     resolution: {integrity: sha512-THE6X+sse7EZ2qMhqXvBhd2HMTvXyWwYnx+2T/ijqdp/6Rf7rUc2uPRzPdrrljZCNcYDeL0qP2P7tqm2IwayTg==}
     engines: {node: '>=14'}
     hasBin: true
@@ -42971,21 +42738,6 @@ packages:
 
   /typical/2.6.1:
     resolution: {integrity: sha512-ofhi8kjIje6npGozTip9Fr8iecmYfEbS06i0JnIg+rh51KakryWF4+jX8lLKZVhy6N+ID45WYSFCxPOdTWCzNg==}
-    dev: true
-
-  /typical/4.0.0:
-    resolution: {integrity: sha512-VAH4IvQ7BDFYglMd7BPRDfLgxZZX4O4TFcRDA6EN5X7erNJJq+McIEp8np9aVtxrCJ6qx4GTYVfOWNjcqwZgRw==}
-    engines: {node: '>=8'}
-    dev: true
-
-  /typical/5.2.0:
-    resolution: {integrity: sha512-dvdQgNDNJo+8B2uBQoqdb11eUCE1JQXhvjC/CZtgvZseVd5TYMXnq0+vuUemXbd/Se29cTaUuPX3YIc2xgbvIg==}
-    engines: {node: '>=8'}
-    dev: true
-
-  /typical/7.1.1:
-    resolution: {integrity: sha512-T+tKVNs6Wu7IWiAce5BgMd7OZfNYUndHwc5MknN+UHOudi7sGZzuHdCadllRuqJ3fPtgFtIH9+lt9qRv6lmpfA==}
-    engines: {node: '>=12.17'}
     dev: true
 
   /typo-js/1.2.3:
@@ -44714,14 +44466,6 @@ packages:
 
   /wordwrap/1.0.0:
     resolution: {integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==}
-
-  /wordwrapjs/4.0.1:
-    resolution: {integrity: sha512-kKlNACbvHrkpIw6oPeYDSmdCTu2hdMHoyXLTcUKala++lx5Y+wjJ/e474Jqv5abnVmwxw08DiTuHmw69lJGksA==}
-    engines: {node: '>=8.0.0'}
-    dependencies:
-      reduce-flatten: 2.0.0
-      typical: 5.2.0
-    dev: true
 
   /worker-farm/1.7.0:
     resolution: {integrity: sha512-rvw3QTZc8lAxyVrqcSGVm5yP/IJ2UcB3U0graE3LCFoZ0Yn2x4EoVSqJKdB/T5M+FLcRPjz4TDacRf3OCfNUzw==}

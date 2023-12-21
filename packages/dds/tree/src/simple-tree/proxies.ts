@@ -26,7 +26,6 @@ import {
 	FlexTreeSequenceField,
 	FlexTreeNode,
 	FlexTreeTypedField,
-	FlexTreeUnknownUnboxed,
 	onNextChange,
 	typeNameSymbol,
 	isFluidHandle,
@@ -293,7 +292,7 @@ function contextualizeInsertedListContent(
 /**
  * PropertyDescriptorMap used to build the prototype for our SharedListNode dispatch object.
  */
-export const listPrototypeProperties: PropertyDescriptorMap = {
+export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
 	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
 	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
@@ -301,7 +300,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 		value: Array.prototype[Symbol.iterator],
 	},
 	at: {
-		value(this: TreeListNodeOld, index: number): FlexTreeUnknownUnboxed | undefined {
+		value(this: TreeListNodeOld, index: number): TreeNode | undefined {
 			const field = getSequenceField(this);
 			const val = field.boxedAt(index);
 
@@ -309,7 +308,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 				return val;
 			}
 
-			return getOrCreateNodeProxy(val) as FlexTreeUnknownUnboxed;
+			return getOrCreateNodeProxy(val);
 		},
 	},
 	insertAt: {
@@ -524,12 +523,12 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	// Array.prototype.unshift,
 	Array.prototype.values,
 ].forEach((fn) => {
-	listPrototypeProperties[fn.name] = { value: fn };
+	arrayNodePrototypeProperties[fn.name] = { value: fn };
 });
 
 /* eslint-enable @typescript-eslint/unbound-method */
 
-const listPrototype = Object.create(Object.prototype, listPrototypeProperties);
+const arrayNodePrototype = Object.create(Object.prototype, arrayNodePrototypeProperties);
 
 // #endregion
 
@@ -554,7 +553,7 @@ function asIndex(key: string | symbol, length: number) {
  * Otherwise setting of unexpected properties will error.
  * @param customTargetObject - Target object of the proxy.
  * If not provided `[]` is used for the target and a separate object created to dispatch list methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the list functionality from {@link listPrototype}.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the list functionality from {@link arrayNodePrototype}.
  */
 function createListProxy<TTypes extends AllowedTypes>(
 	allowAdditionalProperties: boolean,
@@ -570,7 +569,7 @@ function createListProxy<TTypes extends AllowedTypes>(
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
 	const dispatch: object =
 		customTargetObject ??
-		Object.create(listPrototype, {
+		Object.create(arrayNodePrototype, {
 			length: {
 				get(this: TreeListNodeOld) {
 					return getSequenceField(this).length;
@@ -769,28 +768,25 @@ function createMapProxy<TSchema extends MapNodeSchema>(
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	const proxy = new Proxy<TreeMapNode<TSchema>>(
-		targetObject as Map<string, TreeField<TSchema["info"], "notEmpty">>,
-		{
-			get: (target, key, receiver): unknown => {
-				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-				return Reflect.get(dispatch, key, proxy);
-			},
-			getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
-				return Reflect.getOwnPropertyDescriptor(dispatch, key);
-			},
-			has: (target, key) => {
-				return Reflect.has(dispatch, key);
-			},
-			set: (target, key, newValue): boolean => {
-				return allowAdditionalProperties ? Reflect.set(dispatch, key, newValue) : false;
-			},
-			ownKeys: (target) => {
-				// All of Map's properties are inherited via its prototype, so there is nothing to return here,
-				return [];
-			},
+	const proxy = new Proxy<TreeMapNode<TSchema>>(targetObject as TreeMapNode<TSchema>, {
+		get: (target, key, receiver): unknown => {
+			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
+			return Reflect.get(dispatch, key, proxy);
 		},
-	);
+		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
+			return Reflect.getOwnPropertyDescriptor(dispatch, key);
+		},
+		has: (target, key) => {
+			return Reflect.has(dispatch, key);
+		},
+		set: (target, key, newValue): boolean => {
+			return allowAdditionalProperties ? Reflect.set(dispatch, key, newValue) : false;
+		},
+		ownKeys: (target) => {
+			// All of Map's properties are inherited via its prototype, so there is nothing to return here,
+			return [];
+		},
+	});
 	return proxy;
 }
 

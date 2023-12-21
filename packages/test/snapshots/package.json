@@ -12,7 +12,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/generateSnapshotFiles.js",
+	"main": "dist/index.js",
 	"types": "dist/generateSnapshotFiles.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
@@ -88,7 +88,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha-json-output-reporter": "^2.0.1",

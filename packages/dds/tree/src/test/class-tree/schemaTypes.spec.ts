@@ -16,6 +16,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../class-tree/schemaTypes";
 import { TreeValue } from "../../core";
+import { TreeNode } from "../../simple-tree";
 import { TreeFactory } from "../../treeFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 
@@ -24,6 +25,11 @@ const schema = new SchemaFactory("com.example");
 const factory = new TreeFactory({});
 
 describe("schemaTypes", () => {
+	it("TreeNode", () => {
+		// @ts-expect-error TreeNode should not allow non-node objects.
+		const n: TreeNode = {};
+	});
+
 	describe("insertable", () => {
 		it("Lists", () => {
 			const List = schema.array(schema.number);
@@ -98,6 +104,17 @@ describe("schemaTypes", () => {
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
+
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a2: NodeFromSchema<typeof A> = 0;
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a3: InsertableTypedNode<typeof A> = 0;
+
+			// @ts-expect-error empty nodes should not allow non-node.
+			const a4: NodeFromSchema<typeof A> = {};
+
+			// Insertable nodes allow non-node objects.
+			const a5: InsertableTypedNode<typeof A> = {};
 		});
 
 		it("Customized Objects", () => {
