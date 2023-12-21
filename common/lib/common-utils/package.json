@@ -21,7 +21,7 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		}
+		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.mts",
