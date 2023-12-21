@@ -198,7 +198,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	private ongoingGhostSession: IdCluster | undefined = undefined;
 	// todo move this to persisted state file
-	private ghostClusterInitialSize = 512;
+	private readonly ghostClusterInitialSize = 512;
 
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}

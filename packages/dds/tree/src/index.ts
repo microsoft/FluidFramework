@@ -127,7 +127,7 @@ export {
 export { leaf } from "./domains";
 
 export {
-	FieldKind as OldFieldKind,
+	FieldKind as FlexFieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
@@ -157,7 +157,7 @@ export {
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
-	AllowedTypes as OldAllowedTypes,
+	AllowedTypes as FlexAllowedTypes,
 	TreeNodeSchema as FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
@@ -199,7 +199,7 @@ export {
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema as FlexImplicitFieldSchema,
-	ImplicitAllowedTypes as OldImplicitAllowedTypes,
+	ImplicitAllowedTypes as FlexImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
