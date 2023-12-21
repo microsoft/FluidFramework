@@ -4,9 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema } from "../../class-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal";
+import { ImplicitFieldSchema, InsertableTreeFieldFromImplicitField } from "../../class-tree";
 import { getRoot, makeSchema, pretty } from "./utils";
 
 // Construct a SharedTree with each of the above primitives as the root and then

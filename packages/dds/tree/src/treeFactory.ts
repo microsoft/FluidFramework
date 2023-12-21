@@ -24,20 +24,7 @@ import {
 	TreeFieldFromImplicitField,
 	TreeView,
 } from "./class-tree";
-
-/**
- * Configuration to specialize a Tree DDS for a particular use.
- * @internal
- */
-export interface TreeOptions extends SharedTreeOptions {
-	/**
-	 * Name appended to {@link @fluidframework/datastore-definitions#IChannelFactory."type"} to identify this factory configuration.
-	 * @privateRemarks
-	 * TODO: evaluate if this design is a good idea, or if "subtype" should be removed.
-	 * TODO: evaluate if schematize should be separated from DDS construction.
-	 */
-	readonly subtype?: string;
-}
+import { pkgVersion } from "./packageVersion";
 
 /**
  * A channel factory that creates an {@link ITree}.
@@ -47,13 +34,13 @@ export class TreeFactory implements IChannelFactory {
 	public readonly type: string;
 	public readonly attributes: IChannelAttributes;
 
-	public constructor(private readonly options: TreeOptions) {
-		this.type = `https://graph.microsoft.com/types/tree/${options.subtype ?? "default"}`;
+	public constructor(private readonly options: SharedTreeOptions) {
+		this.type = "https://graph.microsoft.com/types/tree";
 
 		this.attributes = {
 			type: this.type,
 			snapshotFormatVersion: "0.0.0",
-			packageVersion: "0.0.0",
+			packageVersion: pkgVersion,
 		};
 	}
 
@@ -79,7 +66,7 @@ export class TreeFactory implements IChannelFactory {
  * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
  * of objects, arrays, and other data types.
  *
- * @beta
+ * @public
  */
 export class SharedTree implements ITree {
 	// The IFluidContainer ContainerSchema currently requires a constructable class that

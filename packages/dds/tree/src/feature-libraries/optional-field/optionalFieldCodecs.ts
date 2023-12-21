@@ -13,10 +13,10 @@ import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChan
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 
-export const makeOptionalFieldCodecFamily = (
-	childCodec: IJsonCodec<NodeChangeset>,
+export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
+	childCodec: IJsonCodec<TChildChange>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): ICodecFamily<OptionalChangeset> =>
+): ICodecFamily<OptionalChangeset<TChildChange>> =>
 	makeCodecFamily([[0, makeOptionalFieldCodec(childCodec, revisionTagCodec)]]);
 
 function makeRegisterIdCodec(
@@ -51,14 +51,14 @@ function makeRegisterIdCodec(
 	};
 }
 
-function makeOptionalFieldCodec(
-	childCodec: IJsonCodec<NodeChangeset>,
+function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
+	childCodec: IJsonCodec<TChildChange>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset<TAnySchema>> {
+): IJsonCodec<OptionalChangeset<TChildChange>, EncodedOptionalChangeset<TAnySchema>> {
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
 	return {
-		encode: (change: OptionalChangeset) => {
+		encode: (change: OptionalChangeset<TChildChange>) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.moves.length > 0) {
 				encoded.m = [];
@@ -95,7 +95,7 @@ function makeOptionalFieldCodec(
 							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
 						] as const,
 				) ?? [];
-			const decoded: OptionalChangeset = {
+			const decoded: OptionalChangeset<TChildChange> = {
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
