@@ -86,9 +86,7 @@
                                       }
                                     },
                                     "cellId": {
-                                      "atom": [
-                                        0
-                                      ]
+                                      "atom": 0
                                     },
                                     "changes": {
                                       "fieldChanges": [
@@ -104,9 +102,7 @@
                                                 }
                                               },
                                               "cellId": {
-                                                "atom": [
-                                                  1
-                                                ]
+                                                "atom": 1
                                               }
                                             }
                                           ]

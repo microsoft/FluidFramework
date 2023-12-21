@@ -58,7 +58,7 @@ export interface ChangeAtomId {
 	readonly localId: ChangesetLocalId;
 }
 
-export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | [ChangesetLocalId];
+export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
 
 /**
  * @internal

@@ -63,9 +63,7 @@
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
                                 "change": {
-                                  "d": [
-                                    0
-                                  ]
+                                  "d": 0
                                 }
                               }
                             ]
@@ -88,16 +86,12 @@
                                 "change": {
                                   "m": [
                                     [
-                                      [
-                                        1
-                                      ],
-                                      0,
+                                      1,
+                                      null,
                                       true
                                     ]
                                   ],
-                                  "d": [
-                                    0
-                                  ]
+                                  "d": 0
                                 }
                               }
                             ],

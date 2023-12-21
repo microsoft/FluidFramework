@@ -6,7 +6,6 @@
 import { SessionId } from "@fluidframework/id-compressor";
 import { SessionAwareCodec } from "../codec";
 import { RevisionTag, EncodedRevisionTag, ChangeAtomId, EncodedChangeAtomId } from "../core";
-import { Mutable } from "../util";
 
 export function makeChangeAtomIdCodec(
 	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
@@ -14,18 +13,19 @@ export function makeChangeAtomIdCodec(
 	return {
 		encode(changeAtomId: ChangeAtomId, originatorId: SessionId): EncodedChangeAtomId {
 			return changeAtomId.revision === undefined
-				? [changeAtomId.localId]
+				? changeAtomId.localId
 				: [
 						changeAtomId.localId,
 						revisionTagCodec.encode(changeAtomId.revision, originatorId),
 				  ];
 		},
-		decode([localId, revision]: EncodedChangeAtomId, originatorId: SessionId): ChangeAtomId {
-			const decoded: Mutable<ChangeAtomId> = { localId };
-			if (revision !== undefined) {
-				decoded.revision = revisionTagCodec.decode(revision, originatorId);
-			}
-			return decoded;
+		decode(changeAtomId: EncodedChangeAtomId, originatorId: SessionId): ChangeAtomId {
+			return Array.isArray(changeAtomId)
+				? {
+						localId: changeAtomId[0],
+						revision: revisionTagCodec.decode(changeAtomId[1], originatorId),
+				  }
+				: { localId: changeAtomId };
 		},
 	};
 }

@@ -29,12 +29,12 @@ function makeRegisterIdCodec(
 	return {
 		encode: (registerId: RegisterId, originatorId: SessionId) => {
 			if (registerId === "self") {
-				return 0;
+				return null;
 			}
 			return changeAtomIdCodec.encode(registerId, originatorId);
 		},
 		decode: (registerId: EncodedRegisterId, originatorId: SessionId) => {
-			if (registerId === 0) {
+			if (registerId === null) {
 				return "self";
 			}
 			return changeAtomIdCodec.decode(registerId, originatorId);

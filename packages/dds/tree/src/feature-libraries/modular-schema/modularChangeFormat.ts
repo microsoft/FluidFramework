@@ -18,7 +18,7 @@ export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
 export const EncodedChangeAtomId = Type.Union([
 	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
-	Type.Tuple([ChangesetLocalIdSchema]),
+	ChangesetLocalIdSchema,
 ]);
 
 const EncodedValueChange = Type.Object(

@@ -47,6 +47,7 @@ function generateTestChangesets(
 				childChanges: [
 					[{ revision, localId }, childChange],
 					[{ localId }, childChange],
+					["self", childChange],
 				],
 			},
 		},
