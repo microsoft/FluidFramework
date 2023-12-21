@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.handle",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      0,
+      {
+        "value": 5,
+        "path": "mock-handle-0580wbde029r",
+        "absolutePath": "/mock-handle-0580wbde029r",
+        "graphAttachState": "Detached"
+      }
+    ]
+  ]
+}
