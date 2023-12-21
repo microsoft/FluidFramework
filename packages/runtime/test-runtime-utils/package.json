@@ -175,6 +175,9 @@
 			},
 			"ClassDeclaration_MockContainerRuntimeFactory": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreContext": {
+				"forwardCompat": false
 			}
 		}
 	}

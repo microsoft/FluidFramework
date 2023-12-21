@@ -116,6 +116,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IIdCompressorCore": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_IdCompressor": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
