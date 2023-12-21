@@ -12,7 +12,7 @@ The `SharedCell` Distributed Data Structure (DDS) stores a single, shared value 
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluidframework/cell
+npm i fluid-framework
 ```
 
 <!-- prettier-ignore-end -->

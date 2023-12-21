@@ -13,7 +13,7 @@
 {{- $fileNameWithoutExtension := lower (delimit (slice $name $kind) "-") -}}
 {{- $fileName := delimit (slice $fileNameWithoutExtension ".md") "" -}}
 
-{{- $path := delimit (slice "/docs/api/v1/1.0/" $unscopedPackageName "/" $fileName) "" -}}
+{{- $path := delimit (slice "/docs/api/v1/" $unscopedPackageName "/" $fileName) "" -}}
 
 <a href="{{ relref . $path }}"><code>{{ $name }}</code></a>
 
