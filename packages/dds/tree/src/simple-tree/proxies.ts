@@ -140,7 +140,9 @@ export function createNodeProxy(
 ): TreeNode | TreeValue {
 	const schema = flexNode.schema;
 	if (schemaIsLeaf(schema)) {
-		return flexNode.value ?? fail("Leaf must have value");
+		// Can't use `??` here since null is a valid TreeValue.
+		assert(flexNode.value !== undefined, "Leaf must have value");
+		return flexNode.value;
 	}
 	let proxy: TreeNode;
 	if (schemaIsMap(schema)) {
