@@ -17,44 +17,20 @@
 			"default": "./dist/index.js"
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/fluid-runner-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/fluid-runner-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/fluid-runner-alpha.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/fluid-runner-beta.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/fluid-runner-beta.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/fluid-runner-beta.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./public": {
-			"import": {
-				"types": "./lib/fluid-runner-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/fluid-runner-public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/fluid-runner-public.d.ts",
+			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",

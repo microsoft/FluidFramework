@@ -18,44 +18,20 @@
 			"default": "./dist/index.js"
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/datastore-definitions-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/datastore-definitions-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/datastore-definitions-alpha.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/datastore-definitions-beta.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/datastore-definitions-beta.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/datastore-definitions-beta.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./public": {
-			"import": {
-				"types": "./lib/datastore-definitions-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/datastore-definitions-public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/datastore-definitions-public.d.ts",
+			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
