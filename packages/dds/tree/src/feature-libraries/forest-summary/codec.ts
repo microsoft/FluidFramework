@@ -4,12 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodecWithContext } from "../../codec";
+import { ICodecOptions, IJsonCodecWithContext, makeVersionedValidatedCodec } from "../../codec";
 import { FieldKey, ITreeCursorSynchronous } from "../../core";
 import { FieldBatchCodec } from "../chunked-forest";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../chunked-forest/codec/codecs";
-import { makeVersionedValidatedCodec } from "../versioned";
 import { Format } from "./format";
 
 /**

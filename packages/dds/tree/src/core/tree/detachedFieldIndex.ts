@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	Brand,
 	IdAllocator,
+	JsonCompatibleReadOnly,
 	NestedMap,
 	brand,
 	deleteFromNestedMap,
@@ -20,6 +21,7 @@ import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
 import * as Delta from "./delta";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
+import { Format } from "./detachedFieldIndexFormat";
 
 /**
  * ID used to create a detached field key for a removed subtree.
@@ -35,7 +37,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
-	private readonly codec: IJsonCodec<DetachedFieldSummaryData, string>;
+	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
 	/**
@@ -146,21 +148,21 @@ export class DetachedFieldIndex {
 		return root;
 	}
 
-	public encode(): string {
+	public encode(): JsonCompatibleReadOnly {
 		return this.codec.encode({
 			data: this.detachedNodeToField,
 			maxId: this.rootIdAllocator.getNextId(),
-		});
+		}) as JsonCompatibleReadOnly;
 	}
 
 	/**
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
-	public loadData(data: string): void {
+	public loadData(data: JsonCompatibleReadOnly): void {
 		const detachedFieldIndex: {
 			data: NestedMap<Major, Minor, ForestRootId>;
 			maxId: number;
-		} = this.codec.decode(data);
+		} = this.codec.decode(data as Format);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,

@@ -67,12 +67,12 @@ describe("DetachedFieldIndex", () => {
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			{ jsonValidator: typeboxValidator },
 		);
-		const expected = JSON.stringify({
+		const expected = {
 			version: 1,
 			data: [],
 			maxId: -1,
-		});
-		assert.equal(detachedFieldIndex.encode(), expected);
+		};
+		assert.deepEqual(detachedFieldIndex.encode(), expected);
 	});
 	describe("loadData", () => {
 		describe("accepts correct data", () => {
