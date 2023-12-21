@@ -232,6 +232,7 @@ export function configureWebSocketServices(
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	clusterDrainingChecker?: core.IClusterDrainingChecker,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -299,6 +300,25 @@ export function configureWebSocketServices(
 
 			if (!message.token) {
 				throw new NetworkError(403, "Must provide an authorization token");
+			}
+
+			// Check if current cluster is in draining
+			if (clusterDrainingChecker) {
+				let clusterInDraining = false;
+				try {
+					clusterInDraining = await clusterDrainingChecker.isClusterDraining();
+				} catch (error) {
+					Lumberjack.error(
+						"Failed to get cluster draining status. Will allow requests to proceed.",
+						undefined,
+						error,
+					);
+					clusterInDraining = false;
+				}
+				if (clusterInDraining) {
+					// TODO: add a new error class
+					throw new Error("Cluster is not available");
+				}
 			}
 
 			// Validate token signature and claims, and check if it's revoked
