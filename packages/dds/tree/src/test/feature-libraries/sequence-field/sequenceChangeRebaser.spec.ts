@@ -566,7 +566,15 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 			for (let iDst = 0; iDst <= currentState.length; iDst += 1) {
 				const moveInIntention = mintIntention();
 				const newState = [...stateWithoutDetached];
-				newState.splice(iDst - iDst < iSrc ? 0 : nodeCount, 0, ...detached);
+				let adjustedDst = iDst;
+				if (adjustedDst > iSrc) {
+					if (adjustedDst > iSrc + nodeCount) {
+						adjustedDst -= nodeCount;
+					} else {
+						adjustedDst = iSrc;
+					}
+				}
+				newState.splice(adjustedDst, 0, ...detached);
 				yield {
 					content: {
 						currentState: newState,
