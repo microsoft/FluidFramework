@@ -495,7 +495,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 				traceTaskTrigger(doneFileContent);
 			} else {
 				this.traceTrigger(
-					"unable to generate done file expected content (getDoneFileContent returned undefined",
+					"unable to generate done file expected content (getDoneFileContent returned undefined)",
 				);
 			}
 		} catch {
