@@ -1,3 +1,10 @@
+/* eslint-disable @typescript-eslint/prefer-function-type */
+/* eslint-disable jsdoc/check-line-alignment */
+/* eslint-disable jsdoc/require-hyphen-before-param-description */
+/* eslint-disable spaced-comment */
+/* eslint-disable jsdoc/check-indentation */
+/* eslint-disable tsdoc/syntax */
+
 /** Read-only set interface (subinterface of IMapSource<K,any>).
  *  The word "set" usually means that each item in the collection is unique
  *  (appears only once, based on a definition of equality used by the
@@ -101,7 +108,7 @@ export interface ISortedSetSource<K = any> extends ISetSource<K> {
 		high: K,
 		includeHigh: boolean,
 		onFound?: (k: K, v: any, counter: number) => void,
-		initialCounter?: number,
+		initialCounter?: number
 	): number;
 	/** Returns a new iterator for iterating the keys of each pair in ascending order.
 	 *  @param firstKey: Minimum key to include in the output. */
@@ -142,7 +149,7 @@ export interface ISortedMapSource<K = any, V = any> extends IMapSource<K, V>, IS
 		high: K,
 		includeHigh: boolean,
 		onFound?: (k: K, v: V, counter: number) => void,
-		initialCounter?: number,
+		initialCounter?: number
 	): number;
 	/** Returns an iterator that provides items in order by key.
 	 *  @param firstKey: Minimum key to include in the output. */
@@ -159,17 +166,12 @@ export interface ISortedMapSource<K = any, V = any> extends IMapSource<K, V>, IS
 	 *  It is used to combine all pairs into a single value, or perform conversions. */
 	reduce<R>(
 		callback: (previous: R, currentPair: [K, V], counter: number, tree: IMapF<K, V>) => R,
-		initialValue: R,
+		initialValue: R
 	): R;
 	/** Performs a reduce operation like the `reduce` method of `Array`.
 	 *  It is used to combine all pairs into a single value, or perform conversions. */
 	reduce<R>(
-		callback: (
-			previous: R | undefined,
-			currentPair: [K, V],
-			counter: number,
-			tree: IMapF<K, V>,
-		) => R,
+		callback: (previous: R | undefined, currentPair: [K, V], counter: number, tree: IMapF<K, V>) => R
 	): R | undefined;
 }
 
@@ -244,10 +246,7 @@ export interface ISetF<K = any> extends ISetSource<K> {
 	 *         is a subinterface of IMapF. If the object is a map, v
 	 *         is the value associated with the key, otherwise v could be
 	 *         undefined or another copy of the third parameter (counter). */
-	filter(
-		callback: (k: K, v: any, counter: number) => boolean,
-		returnThisIfUnchanged?: boolean,
-	): ISetF<K>;
+	filter(callback: (k: K, v: any, counter: number) => boolean, returnThisIfUnchanged?: boolean): ISetF<K>;
 }
 
 /** An interface for a functional map, in which the map object could be read-only
@@ -275,17 +274,12 @@ export interface IMapF<K = any, V = any> extends IMapSource<K, V>, ISetF<K> {
 	 *  It is used to combine all pairs into a single value, or perform conversions. */
 	reduce<R>(
 		callback: (previous: R, currentPair: [K, V], counter: number, tree: IMapF<K, V>) => R,
-		initialValue: R,
+		initialValue: R
 	): R;
 	/** Performs a reduce operation like the `reduce` method of `Array`.
 	 *  It is used to combine all pairs into a single value, or perform conversions. */
 	reduce<R>(
-		callback: (
-			previous: R | undefined,
-			currentPair: [K, V],
-			counter: number,
-			tree: IMapF<K, V>,
-		) => R,
+		callback: (previous: R | undefined, currentPair: [K, V], counter: number, tree: IMapF<K, V>) => R
 	): R | undefined;
 
 	// Update return types in ISetF
@@ -293,10 +287,7 @@ export interface IMapF<K = any, V = any> extends IMapSource<K, V>, ISetF<K> {
 	withoutKeys(keys: K[], returnThisIfUnchanged?: boolean): IMapF<K, V>;
 	/** Returns a copy of the tree with pairs removed whenever the callback
 	 *  function returns false. */
-	filter(
-		callback: (k: K, v: V, counter: number) => boolean,
-		returnThisIfUnchanged?: boolean,
-	): IMapF<K, V>;
+	filter(callback: (k: K, v: V, counter: number) => boolean, returnThisIfUnchanged?: boolean): IMapF<K, V>;
 }
 
 /** An interface for a functional sorted set: a functional set in which the
@@ -306,17 +297,9 @@ export interface ISortedSetF<K = any> extends ISetF<K>, ISortedSetSource<K> {
 	keys(firstKey?: K): IterableIterator<K>;
 }
 
-export interface ISortedMapF<K = any, V = any>
-	extends ISortedSetF<K>,
-		IMapF<K, V>,
-		ISortedMapSource<K, V> {
+export interface ISortedMapF<K = any, V = any> extends ISortedSetF<K>, IMapF<K, V>, ISortedMapSource<K, V> {
 	/** Returns a copy of the tree with the specified range of keys removed. */
-	withoutRange(
-		low: K,
-		high: K,
-		includeHigh: boolean,
-		returnThisIfUnchanged?: boolean,
-	): ISortedMapF<K, V>;
+	withoutRange(low: K, high: K, includeHigh: boolean, returnThisIfUnchanged?: boolean): ISortedMapF<K, V>;
 
 	// TypeScript requires these methods of ISortedSetF and ISortedMapSource to be repeated
 	entries(firstKey?: K): IterableIterator<[K, V]>;
@@ -327,7 +310,7 @@ export interface ISortedMapF<K = any, V = any>
 		high: K,
 		includeHigh: boolean,
 		onFound?: (k: K, v: V, counter: number) => void,
-		initialCounter?: number,
+		initialCounter?: number
 	): number;
 
 	// Update the return value of methods from base interfaces
@@ -338,10 +321,7 @@ export interface ISortedMapF<K = any, V = any>
 	mapValues<R>(callback: (v: V, k: K, counter: number) => R): ISortedMapF<K, R>;
 	without(key: K): ISortedMapF<K, V>;
 	withoutKeys(keys: K[], returnThisIfUnchanged?: boolean): ISortedMapF<K, V>;
-	filter(
-		callback: (k: K, v: any, counter: number) => boolean,
-		returnThisIfUnchanged?: boolean,
-	): ISortedMapF<K, V>;
+	filter(callback: (k: K, v: any, counter: number) => boolean, returnThisIfUnchanged?: boolean): ISortedMapF<K, V>;
 }
 
 export interface ISortedMapConstructor<K, V> {
