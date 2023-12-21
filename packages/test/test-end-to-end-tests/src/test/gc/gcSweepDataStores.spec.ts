@@ -32,12 +32,13 @@ import {
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IErrorBase } from "@fluidframework/core-interfaces";
+import {
+	defaultMaxAttemptsForSubmitFailures,
+	RetriableSummaryError,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/test/summary";
 // eslint-disable-next-line import/no-internal-modules
-import { RetriableSummaryError } from "@fluidframework/container-runtime/dist/summary/summaryGenerator.js";
-// eslint-disable-next-line import/no-internal-modules
-import { defaultMaxAttemptsForSubmitFailures } from "@fluidframework/container-runtime/dist/summary/runningSummarizer.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ISweepMessage } from "@fluidframework/container-runtime/dist/gc/gcDefinitions.js";
+import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -109,7 +110,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		enableGCSweep: true,
-		sweepGracePeriodMs: 0,
+		sweepGracePeriodMs,
 	};
 
 	let provider: ITestObjectProvider;

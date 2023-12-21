@@ -30,9 +30,9 @@ import {
 	ISummarizer,
 	RetriableSummaryError,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/summary/index.js";
+} from "@fluidframework/container-runtime/test/summary";
 // eslint-disable-next-line import/no-internal-modules
-import { ISweepMessage } from "@fluidframework/container-runtime/dist/gc/gcDefinitions.js";
+import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -102,6 +102,7 @@ function validateBlobStateInSummary(
 describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const sweepGracePeriodMs = 50;
 	const tombstoneTimeoutMs = 150;
+	const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		enableGCSweep: true,
@@ -223,7 +224,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				assert(summary1 !== undefined);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -301,7 +302,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -365,11 +366,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			await provider.ensureSynchronized();
 			const summary1 = await summarizeNow(summarizer);
 
-			const sweepFullTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
 			// Wait for half sweep timeout and load a container. This container will upload a blob with the same content
 			// as above so that it is de-duped. This container should be able to use this blob until its session
 			// expires.
-			await delay(sweepFullTimeoutMs / 2);
+			await delay(sweepTimeoutMs / 2);
 			const container2 = await loadContainer(summary1.summaryVersion);
 			const container2MainDataStore = (await container2.getEntryPoint()) as ITestDataObject;
 			// Upload the blob and keep the handle around until the blob uploaded by first container is deleted.
@@ -378,7 +378,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			);
 
 			// Wait for sweep timeout so that the blob uploaded by the first container is ready to be deleted.
-			await delay(sweepFullTimeoutMs / 2 + 10);
+			await delay(sweepTimeoutMs / 2 + 10);
 
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
@@ -492,7 +492,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -597,7 +597,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -719,7 +719,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -842,7 +842,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -935,7 +935,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -1045,7 +1045,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -1113,7 +1113,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			await summarizeNow(summarizer);
 
 			// Wait for sweep full timeout so that blob is ready to be deleted.
-			await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+			await delay(sweepTimeoutMs + 10);
 
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
