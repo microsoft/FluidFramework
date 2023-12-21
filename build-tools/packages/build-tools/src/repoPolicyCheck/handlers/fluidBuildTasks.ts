@@ -374,7 +374,8 @@ function getTscCommandDependencies(
 	if (
 		json.scripts["build:test"] === undefined &&
 		json.scripts["typetests:gen"] !== undefined &&
-		(script === "tsc" || (json.scripts["tsc"] === undefined && script === "build:esnext"))
+		(["tsc", "tsc-multi"].includes(script) ||
+			(json.scripts["tsc"] === undefined && script === "build:esnext"))
 	) {
 		deps.push("typetests:gen");
 	}
