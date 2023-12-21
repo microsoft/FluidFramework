@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { BTree } from "sorted-btree";
 import { SessionId, StableId } from "./types";
 import {
 	compareBigints,
@@ -15,11 +16,6 @@ import {
 	offsetNumericUuid,
 } from "./utilities";
 import { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers";
-
-// importing this way is needed to work around https://github.com/qwertie/btree-typescript/issues/36
-// eslint-disable-next-line import/order
-import BTree_ from "sorted-btree";
-const BTree = (BTree_ as any).default as typeof BTree_;
 
 /**
  * A collection of all sessions known to the compressor (i.e. all finalized/acked allocated UUIDs and their corresponding local and final forms).
