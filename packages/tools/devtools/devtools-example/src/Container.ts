@@ -34,8 +34,8 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 		super(
 			new Map([AppData.getFactory().registryEntry]), // registryEntries
 			{
-				enableRuntimeIdCompressor: true
-			}
+				enableRuntimeIdCompressor: true,
+			},
 		);
 	}
 
