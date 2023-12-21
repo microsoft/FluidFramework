@@ -236,6 +236,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
