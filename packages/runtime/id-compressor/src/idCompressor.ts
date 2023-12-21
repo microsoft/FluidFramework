@@ -45,6 +45,7 @@ import {
 	lastFinalizedLocal,
 	Session,
 	Sessions,
+	lastAllocatedFinal,
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
@@ -163,28 +164,50 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public generateCompressedId(): SessionSpaceCompressedId {
-		this.localGenCount++;
-		const lastCluster = this.localSession.getLastCluster();
-		if (lastCluster === undefined) {
+		if (this.ongoingGhostSession) {
+			this.ongoingGhostSession.capacity++;
+			this.ongoingGhostSession.count++;
+			return lastAllocatedFinal(this.ongoingGhostSession) as unknown as SessionSpaceCompressedId;
+		} else {
+			this.localGenCount++;
+			const lastCluster = this.localSession.getLastCluster();
+			if (lastCluster === undefined) {
+				this.telemetryLocalIdCount++;
+				return this.generateNextLocalId();
+			}
+	
+			// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
+			// it is known prior to range sequencing what a local ID's corresponding final ID will be.
+			// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
+			// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
+			// collaborators *after* the one containing the creation range.
+			const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
+			if (lastCluster.capacity > clusterOffset) {
+				this.telemetryEagerFinalIdCount++;
+				// Space in the cluster: eager final
+				return ((lastCluster.baseFinalId as number) +
+					clusterOffset) as SessionSpaceCompressedId;
+			}
+			// No space in the cluster, return next local
 			this.telemetryLocalIdCount++;
-			return this.generateNextLocalId();
+			return this.generateNextLocalId();	
 		}
+	}
 
-		// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
-		// it is known prior to range sequencing what a local ID's corresponding final ID will be.
-		// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
-		// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
-		// collaborators *after* the one containing the creation range.
-		const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
-		if (lastCluster.capacity > clusterOffset) {
-			this.telemetryEagerFinalIdCount++;
-			// Space in the cluster: eager final
-			return ((lastCluster.baseFinalId as number) +
-				clusterOffset) as SessionSpaceCompressedId;
+	private ongoingGhostSession: IdCluster | undefined = undefined;
+	// todo move this to persisted state file
+	private ghostClusterInitialSize = 512;
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
+	 */
+	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
+		this.ongoingGhostSession = this.addEmptyCluster(this.sessions.getOrCreate(ghostSessionId), this.ghostClusterInitialSize);
+		try {
+			ghostSessionCallback();
+		} finally {
+			this.ongoingGhostSession = undefined;
 		}
-		// No space in the cluster, return next local
-		this.telemetryLocalIdCount++;
-		return this.generateNextLocalId();
 	}
 
 	private generateNextLocalId(): LocalCompressedId {
@@ -194,6 +217,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public takeNextCreationRange(): IdCreationRange {
+		assert(!this.ongoingGhostSession, "IdCompressor should not be operated normally when in a ghost session");
 		const count = this.localGenCount - (this.nextRangeBaseGenCount - 1);
 		if (count === 0) {
 			return {
@@ -227,6 +251,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
+		assert(!this.ongoingGhostSession, "IdCompressor should not be operated normally when in a ghost session");
 		// Check if the range has IDs
 		if (range.ids === undefined) {
 			return;
@@ -310,6 +335,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {
+		assert(!this.ongoingGhostSession, "IdCompressor should not be operated normally when in a ghost session");
 		const newCluster = session.addNewCluster(
 			this.finalSpace.getAllocatedIdLimit(),
 			capacity,
@@ -473,6 +499,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
 	public serialize(hasLocalState: boolean): SerializedIdCompressor {
+		assert(!this.ongoingGhostSession, "IdCompressor should not be operated normally when in a ghost session");
 		const { normalizer, finalSpace, sessions } = this;
 		const sessionIndexMap = new Map<Session, number>();
 		let sessionIndex = 0;
