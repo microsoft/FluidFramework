@@ -3,24 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypes } from "../feature-libraries";
 import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../class-tree";
-import { InsertableTreeNodeUnion } from "./insertable";
-import { TreeArrayNodeBase, TreeNode, TreeNodeUnion } from "./types";
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- */
-export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
-	extends TreeArrayNodeBase<
-		TreeNodeUnion<TTypes>,
-		InsertableTreeNodeUnion<TTypes>,
-		TreeListNodeOld
-	> {}
+import { TreeArrayNodeBase, TreeNode } from "./types";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
