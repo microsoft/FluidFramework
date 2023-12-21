@@ -129,6 +129,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V1 of the registry -----------------------------------------
@@ -145,6 +146,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory1,
 		registryEntries: [dataObjectFactory1.registryEntry],
+		runtimeOptions,
 	});
 
 	// V2 of the registry (the migration registry) -----------------------------------------
