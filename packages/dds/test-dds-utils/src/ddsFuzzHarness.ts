@@ -450,7 +450,7 @@ export interface DDSFuzzSuiteOptions {
 	skipMinimization?: boolean;
 
 	/**
-	 * An optional IdCompressor that can will be passed to the constructed MockDataStoreRuntime instance.
+	 * An optional IdCompressor that will be passed to the constructed MockDataStoreRuntime instance.
 	 */
 	idCompressorFactory?: (
 		summary?: SerializedIdCompressorWithNoSession,
@@ -641,7 +641,7 @@ export function mixinAttach<
 			};
 			clientA.channel.connect(services);
 
-			// This is necessary to get al IdCreationRanges finalized before connecting further clients.
+			// This is necessary to get all IdCreationRanges finalized before connecting further clients.
 			// The production codepath also finalizes ids before attaching. It's difficult for the mocks
 			// to be more direct about this as they don't directly manage any state related to attach
 			// (it's up to the user of the mocks to set them up how they want)
