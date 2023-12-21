@@ -4,8 +4,8 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
+import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
-import { BTree } from './b-tree';
 import { fail, compareFiniteNumbers } from './Common';
 
 /**

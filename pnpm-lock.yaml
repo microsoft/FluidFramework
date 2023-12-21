@@ -5672,6 +5672,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      sorted-btree: ^1.8.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -5689,6 +5690,7 @@ importers:
       buffer: 6.0.3
       denque: 1.5.1
       lru-cache: 6.0.0
+      sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
