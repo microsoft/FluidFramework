@@ -160,6 +160,22 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MockContainerRuntimeForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactory": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
