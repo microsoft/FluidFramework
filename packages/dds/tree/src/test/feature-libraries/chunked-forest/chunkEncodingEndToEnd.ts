@@ -99,7 +99,7 @@ describe.skip("End to End chunked encoding", () => {
 		assert(chunk.isShared());
 	});
 
-	it(`summary values are correct, and shares reference with the original chunk when inserting content.`, async () => {
+	it(`summary values are correct, and shares reference with the original chunk when inserting content.`, () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
@@ -135,7 +135,7 @@ describe.skip("End to End chunked encoding", () => {
 		forestSummarizer.getAttachSummary(stringifier);
 	});
 
-	it(`summary values are correct, and shares reference with the original chunk when initializing with content.`, async () => {
+	it(`summary values are correct, and shares reference with the original chunk when initializing with content.`, () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
