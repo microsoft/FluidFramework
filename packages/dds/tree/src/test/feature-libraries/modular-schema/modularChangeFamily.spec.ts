@@ -19,6 +19,8 @@ import {
 	chunkTree,
 	defaultChunkPolicy,
 	TreeChunk,
+	cursorForJsonableTreeField,
+	chunkFieldSingle,
 	makeFieldBatchCodec,
 	TreeCompressionStrategy,
 } from "../../../feature-libraries";
@@ -56,7 +58,7 @@ import {
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily";
-import { singleJsonCursor } from "../../../domains";
+import { jsonObject, singleJsonCursor } from "../../../domains";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
@@ -326,7 +328,12 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
 };
 
 const node1 = singleJsonCursor(1);
+const objectNode = singleJsonCursor({});
 const node1Chunk = treeChunkFromCursor(node1);
+const nodesChunk = chunkFieldSingle(
+	cursorForJsonableTreeField([{ type: jsonObject.name }, { type: jsonObject.name }]),
+	defaultChunkPolicy,
+);
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -569,8 +576,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					destroys: new Map([
-						[tag1, new Map([[brand(0), undefined]])],
-						[undefined, new Map([[brand(0), undefined]])],
+						[tag1, new Map([[brand(0), 1]])],
+						[undefined, new Map([[brand(0), 1]])],
 					]),
 				},
 				tag2,
@@ -593,8 +600,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					destroys: new Map([
-						[tag1, new Map([[brand(0), undefined]])],
-						[undefined, new Map([[brand(0), undefined]])],
+						[tag1, new Map([[brand(0), 1]])],
+						[undefined, new Map([[brand(0), 1]])],
 					]),
 				},
 				tag2,
@@ -632,8 +639,8 @@ describe("ModularChangeFamily", () => {
 						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 					]),
 					destroys: new Map([
-						[undefined, new Map([[brand(1), undefined]])],
-						[tag3, new Map([[brand(1), undefined]])],
+						[undefined, new Map([[brand(1), 1]])],
+						[tag3, new Map([[brand(1), 1]])],
 					]),
 				},
 				tag1,
@@ -647,8 +654,8 @@ describe("ModularChangeFamily", () => {
 						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 					]),
 					destroys: new Map([
-						[undefined, new Map([[brand(3), undefined]])],
-						[tag3, new Map([[brand(3), undefined]])],
+						[undefined, new Map([[brand(3), 1]])],
+						[tag3, new Map([[brand(3), 1]])],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -673,13 +680,13 @@ describe("ModularChangeFamily", () => {
 					],
 				]),
 				destroys: new Map([
-					[tag1, new Map([[brand(1), undefined]])],
-					[tag2, new Map([[brand(3), undefined]])],
+					[tag1, new Map([[brand(1), 1]])],
+					[tag2, new Map([[brand(3), 1]])],
 					[
 						tag3,
 						new Map([
-							[brand(1), undefined],
-							[brand(3), undefined],
+							[brand(1), 1],
+							[brand(3), 1],
 						]),
 					],
 				]),
@@ -753,8 +760,8 @@ describe("ModularChangeFamily", () => {
 			const expectedRollback: ModularChangeset = {
 				fieldChanges: new Map([]),
 				destroys: new Map([
-					[tag1, new Map([[brand(0), undefined]])],
-					[tag2, new Map([[brand(1), undefined]])],
+					[tag1, new Map([[brand(0), 1]])],
+					[tag2, new Map([[brand(1), 1]])],
 				]),
 			};
 			const expectedUndo: ModularChangeset = {
@@ -835,7 +842,13 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map([]),
 					builds: new Map([
 						[undefined, new Map([[brand(1), node1Chunk]])],
-						[tag2, new Map([[brand(2), node1Chunk]])],
+						[
+							tag2,
+							new Map([
+								[brand(2), node1Chunk],
+								[brand(3), nodesChunk],
+							]),
+						],
 					]),
 				},
 				tag1,
@@ -845,6 +858,7 @@ describe("ModularChangeFamily", () => {
 				build: [
 					{ id: { major: tag1, minor: 1 }, trees: [node1] },
 					{ id: { major: tag2, minor: 2 }, trees: [node1] },
+					{ id: { major: tag2, minor: 3 }, trees: [objectNode, objectNode] },
 				],
 			};
 
@@ -857,8 +871,9 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					destroys: new Map([
-						[undefined, new Map([[brand(1), undefined]])],
-						[tag2, new Map([[brand(2), undefined]])],
+						[undefined, new Map([[brand(1), 1]])],
+						[tag2, new Map([[brand(2), 1]])],
+						[tag2, new Map([[brand(3), 10]])],
 					]),
 				},
 				tag1,
@@ -868,6 +883,7 @@ describe("ModularChangeFamily", () => {
 				destroy: [
 					{ id: { major: tag1, minor: 1 }, count: 1 },
 					{ id: { major: tag2, minor: 2 }, count: 1 },
+					{ id: { major: tag2, minor: 3 }, count: 10 },
 				],
 			};
 

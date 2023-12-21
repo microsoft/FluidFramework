@@ -33,10 +33,10 @@ import {
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
 	DeltaRoot,
-	ITreeCursorSynchronous,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
 	RevisionTagCodec,
+	mapCursorField,
 } from "../../core";
 import {
 	brand,
@@ -50,9 +50,16 @@ import {
 	idAllocatorFromState,
 	isReadonlyArray,
 	Mutable,
+	tryGetFromNestedMap,
 } from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import { FieldBatchCodec, TreeChunk, chunkTree, defaultChunkPolicy } from "../chunked-forest";
+import {
+	TreeChunk,
+	chunkFieldSingle,
+	defaultChunkPolicy,
+	FieldBatchCodec,
+} from "../chunked-forest";
+import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -774,7 +781,7 @@ export class ModularChangeFamily
 
 function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
-	const allDestroys: ChangeAtomIdMap<undefined> = new Map();
+	const allDestroys: ChangeAtomIdMap<number> = new Map();
 	for (const taggedChange of changes) {
 		const revision = revisionFromTaggedChange(taggedChange);
 		const change = taggedChange.change;
@@ -786,7 +793,7 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 					setRevisionKey,
 					new Map<ChangesetLocalId, TreeChunk>(),
 				);
-				for (const [id, tree] of innerMap) {
+				for (const [id, chunk] of innerMap) {
 					// Check for duplicate builds and prefer earlier ones.
 					// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
 					// In that case, it's possible for the refreshers to contain different trees because the latter
@@ -800,9 +807,15 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 					// care to support at this time.
 					if (!innerDstMap.has(id)) {
 						// Check for earlier destroys that this build might cancel-out with.
-						const didCancelOut = deleteFromNestedMap(allDestroys, setRevisionKey, id);
-						if (!didCancelOut) {
-							innerDstMap.set(id, tree);
+						const destroyCount = tryGetFromNestedMap(allDestroys, setRevisionKey, id);
+						if (destroyCount === undefined) {
+							innerDstMap.set(id, chunk);
+						} else {
+							assert(
+								destroyCount === chunk.topLevelLength,
+								"Expected build and destroy to have the same length",
+							);
+							deleteFromNestedMap(allDestroys, setRevisionKey, id);
 						}
 					}
 				}
@@ -817,13 +830,19 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 				const innerDstMap = getOrAddInMap(
 					allDestroys,
 					setRevisionKey,
-					new Map<ChangesetLocalId, undefined>(),
+					new Map<ChangesetLocalId, number>(),
 				);
-				for (const id of innerMap.keys()) {
+				for (const [id, count] of innerMap) {
 					// Check for earlier builds that this destroy might cancel-out with.
-					const didCancelOut = deleteFromNestedMap(allBuilds, setRevisionKey, id);
-					if (!didCancelOut) {
-						innerDstMap.set(id, undefined);
+					const chunk = tryGetFromNestedMap(allBuilds, setRevisionKey, id);
+					if (chunk === undefined) {
+						innerDstMap.set(id, count);
+					} else {
+						assert(
+							count === chunk.topLevelLength,
+							"Expected build and destroy to have the same length",
+						);
+						deleteFromNestedMap(allBuilds, setRevisionKey, id);
 					}
 				}
 				if (innerDstMap.size === 0) {
@@ -838,14 +857,14 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 function invertBuilds(
 	builds: ChangeAtomIdMap<TreeChunk> | undefined,
 	fallbackRevision: RevisionTag | undefined,
-): ChangeAtomIdMap<undefined> | undefined {
+): ChangeAtomIdMap<number> | undefined {
 	if (builds !== undefined) {
-		const destroys: ChangeAtomIdMap<undefined> = new Map();
+		const destroys: ChangeAtomIdMap<number> = new Map();
 		for (const [revision, innerBuildMap] of builds) {
 			const initializedRevision = revision ?? fallbackRevision;
-			const innerDestroyMap: Map<ChangesetLocalId, undefined> = new Map();
-			for (const id of innerBuildMap.keys()) {
-				innerDestroyMap.set(id, undefined);
+			const innerDestroyMap: Map<ChangesetLocalId, number> = new Map();
+			for (const [id, chunk] of innerBuildMap) {
+				innerDestroyMap.set(id, chunk.topLevelLength);
 			}
 			destroys.set(initializedRevision, innerDestroyMap);
 		}
@@ -916,26 +935,25 @@ export function intoDelta(
 	}
 	if (change.builds && change.builds.size > 0) {
 		const builds: DeltaDetachedNodeBuild[] = [];
-		forEachInNestedMap(change.builds, (tree, major, minor) => {
-			const cursor = tree.cursor();
-			assert(
-				cursor.getFieldLength() === 1,
-				0x853 /* each encoded chunk should only contain 1 node. */,
-			);
-			cursor.enterNode(0);
-			builds.push({
-				id: makeDetachedNodeId(major ?? revision, minor),
-				trees: [cursor],
-			});
+		forEachInNestedMap(change.builds, (chunk, major, minor) => {
+			if (chunk.topLevelLength > 0) {
+				const trees = mapCursorField(chunk.cursor(), (c) =>
+					cursorForMapTreeNode(mapTreeFromCursor(c)),
+				);
+				builds.push({
+					id: makeDetachedNodeId(major ?? revision, minor),
+					trees,
+				});
+			}
 		});
 		rootDelta.build = builds;
 	}
 	if (change.destroys !== undefined && change.destroys.size > 0) {
 		const destroys: DeltaDetachedNodeDestruction[] = [];
-		forEachInNestedMap(change.destroys, (_, major, minor) => {
+		forEachInNestedMap(change.destroys, (count, major, minor) => {
 			destroys.push({
 				id: makeDetachedNodeId(major ?? revision, minor),
-				count: 1,
+				count,
 			});
 		});
 		rootDelta.destroy = destroys;
@@ -1203,7 +1221,7 @@ function makeModularChangeset(
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
 	builds?: ChangeAtomIdMap<TreeChunk>,
-	destroys?: ChangeAtomIdMap<undefined>,
+	destroys?: ChangeAtomIdMap<number>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1263,14 +1281,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
-		let id = firstId;
 
-		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const cursor of content) {
-			assert(!innerMap.has(id), 0x854 /* Unexpected duplicate build ID */);
-			innerMap.set(id, chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy));
-			id = brand((id as number) + 1);
-		}
+		const mapTrees = content.map((c) => mapTreeFromCursor(c));
+		const fieldCursor = cursorForMapTreeField(mapTrees);
+		const chunk = chunkFieldSingle(fieldCursor, defaultChunkPolicy);
+		innerMap.set(firstId, chunk);
+
 		return {
 			type: "global",
 			builds,

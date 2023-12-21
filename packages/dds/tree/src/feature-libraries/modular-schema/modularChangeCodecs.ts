@@ -16,14 +16,7 @@ import {
 	RevisionInfo,
 	RevisionTag,
 } from "../../core";
-import {
-	brand,
-	fail,
-	JsonCompatibleReadOnly,
-	Mutable,
-	nestedMapFromFlatList,
-	nestedMapToFlatList,
-} from "../../util";
+import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
 import {
 	ICodecOptions,
 	IJsonCodec,
@@ -207,16 +200,23 @@ export function makeV0Codec(
 		}
 
 		const treesToEncode: ITreeCursorSynchronous[] = [];
-		const buildsArray: EncodedBuildsArray = nestedMapToFlatList(builds).map(([r, i, t]) => {
-			treesToEncode.push(t.cursor());
-			const treeIndexInBatch = treesToEncode.length - 1;
-			// `undefined` does not round-trip through JSON strings, so it needs special handling.
-			// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
-			// We therefore optimize for the common case by omitting the revision when it is undefined.
-			return r !== undefined
-				? [revisionTagCodec.encode(r, context.originatorId), i, treeIndexInBatch]
-				: [i, treeIndexInBatch];
-		});
+		const buildsArray: EncodedBuildsArray = Array.from(builds.entries()).map(
+			([r, commitBuilds]) => {
+				const commitBuildsEncoded: [ChangesetLocalId, number][] = Array.from(
+					commitBuilds.entries(),
+				).map(([i, t]) => {
+					treesToEncode.push(t.cursor());
+					const treeIndexInBatch = treesToEncode.length - 1;
+					return [i, treeIndexInBatch];
+				});
+				// `undefined` does not round-trip through JSON strings, so it needs special handling.
+				// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
+				// We therefore optimize for the common case by omitting the revision when it is undefined.
+				return r !== undefined
+					? [commitBuildsEncoded, revisionTagCodec.encode(r, context.originatorId)]
+					: [commitBuildsEncoded];
+			},
+		);
 		return buildsArray.length === 0
 			? undefined
 			: { builds: buildsArray, trees: fieldsCodec.encode(treesToEncode) };
@@ -236,17 +236,17 @@ export function makeV0Codec(
 			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
 		};
 
-		const list: [RevisionTag | undefined, ChangesetLocalId, TreeChunk][] = encoded.builds.map(
-			(tuple) =>
-				tuple.length === 3
-					? [
-							revisionTagCodec.decode(tuple[0], context.originatorId),
-							tuple[1],
-							getChunk(tuple[2]),
-					  ]
-					: [undefined, tuple[0], getChunk(tuple[1])],
-		);
-		return nestedMapFromFlatList(list);
+		const map: ModularChangeset["builds"] = new Map();
+		encoded.builds.forEach((build) => {
+			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
+			const revision =
+				build[1] === undefined
+					? undefined
+					: revisionTagCodec.decode(build[1], context.originatorId);
+			map.set(revision, new Map(build[0].map(([i, n]) => [i, getChunk(n)])));
+		});
+
+		return map;
 	}
 
 	function encodeRevisionInfos(
