@@ -2161,64 +2161,6 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
-	/**
-	 * Takes an incoming message and if the contents is a string, JSON.parse's it in place
-	 */
-	private deserializeContentsAndDetectOutboundReferences(
-		mutableMessage: ISequencedDocumentMessage,
-	): void {
-		//* move from shared-object-base to here
-		const isSerializedHandle = (
-			value: any,
-		): value is {
-			// Marker to indicate to JSON.parse that the object is a Fluid handle
-			type: "__fluid_handle__";
-
-			// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
-			url: string;
-		} => value?.type === "__fluid_handle__";
-
-		// These will be built up as we traverse the message contents via JSON.parse and referenceFinder
-		const outboundPaths: string[] = [];
-		const pathParts: string[] = [];
-
-		/**
-		 * A reviver for JSON.parse that doesn't modify the serialized object, but merely
-		 * monitors it for any outbound references, represented by encoded Fluid handles
-		 * found anywhere in the object structure.
-		 */
-		const referenceFinder = (key: string, value: any): any => {
-			// If 'value' is a serialized IFluidHandle return the deserialized result.
-			if (isSerializedHandle(value)) {
-				outboundPaths.push(value.url);
-			}
-
-			//* Or take an even harder dependency on DataStore op format, by taking contents.contents.content.address and content.address
-			// DataStore and Channel (DDS) addresses are nested as we go deeper into the object
-			//* Add note: This is taking a hard dependnecy on our DataStore implementation (for the DDS path part)
-			//* Add test to make sure we notice if this assumption is broken
-			if (key === "address") {
-				pathParts.push(value);
-			}
-
-			return value;
-		};
-
-		// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
-		// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
-		// Old ops may contain empty string (I assume noops).
-		if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
-			mutableMessage.contents = JSON.parse(mutableMessage.contents, referenceFinder);
-
-			// Only take first two path parts in case a DDS has "address" inside its content
-			pathParts.splice(2);
-			const fromPath = pathParts.join("/");
-			outboundPaths.forEach((toPath) =>
-				this.garbageCollector.addedOutboundReference(fromPath, toPath),
-			);
-		}
-	}
-
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
@@ -2232,8 +2174,6 @@ export class ContainerRuntime
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
-
-		this.deserializeContentsAndDetectOutboundReferences(messageCopy);
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			if (modernRuntimeMessage) {
 				this.processCore({
@@ -2328,6 +2268,7 @@ export class ContainerRuntime
 					messageWithContext.message,
 					local,
 					localOpMetadata,
+					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
 				);
 				break;
 			case ContainerMessageType.BlobAttach:

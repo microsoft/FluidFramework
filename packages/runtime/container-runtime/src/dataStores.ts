@@ -437,10 +437,70 @@ export class DataStores implements IDisposable {
 		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
 	}
 
+	/**
+	 * //*
+	 */
+	private detectOutboundReferences(
+		envelope: IEnvelope,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+	): void {
+		//* move from shared-object-base to here
+		const isSerializedHandle = (
+			value: any,
+		): value is {
+			// Marker to indicate to JSON.parse that the object is a Fluid handle
+			type: "__fluid_handle__";
+
+			// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
+			url: string;
+		} => value?.type === "__fluid_handle__";
+
+		function recursivelyWalkObject(obj: any, visitor: (key: string, value: any) => void) {
+			if (typeof obj === "object" && obj !== null) {
+				for (const key of Object.keys(obj)) {
+					visitor(key, obj[key]);
+					recursivelyWalkObject(obj[key], visitor);
+				}
+			}
+		}
+
+		// These will be built up as we traverse the message contents via JSON.parse and referenceFinder
+		const outboundPaths: string[] = [];
+		let ddsAddress: string | undefined;
+
+		//* UPdate comment
+		/**
+		 * A reviver for JSON.parse that doesn't modify the serialized object, but merely
+		 * monitors it for any outbound references, represented by encoded Fluid handles
+		 * found anywhere in the object structure.
+		 */
+		const referenceFinder = (key: string, value: any): any => {
+			// If 'value' is a serialized IFluidHandle return the deserialized result.
+			if (isSerializedHandle(value)) {
+				outboundPaths.push(value.url);
+			}
+
+			//* Add note: This is taking a hard dependnecy on our DataStore implementation (for the DDS path part)
+			//* Add test to make sure we notice if this assumption is broken
+			if (key === "address" && ddsAddress === undefined) {
+				ddsAddress = value;
+			}
+
+			return value;
+		};
+
+		recursivelyWalkObject(envelope.contents, referenceFinder);
+
+		//* leading slash?
+		const fromPath = ["", envelope.address, ddsAddress].join("/");
+		outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
+	}
+
 	public processFluidDataStoreOp(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localMessageMetadata: unknown,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	) {
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
@@ -461,6 +521,9 @@ export class DataStores implements IDisposable {
 
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
+
+		// Notify GC of any outbound references that were added by this op.
+		this.detectOutboundReferences(envelope, addedOutboundReference);
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.

@@ -794,6 +794,7 @@ describe("Runtime", () => {
 						_message: ISequencedDocumentMessage,
 						_local: boolean,
 						_localMessageMetadata: unknown,
+						_addedOutboundReference: any, //*
 					) => {},
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 				} as DataStores;
