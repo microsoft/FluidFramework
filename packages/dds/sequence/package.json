@@ -29,7 +29,7 @@
 			},
 			"require": {
 				"types": "./dist/intervalCollection.d.ts",
-				"default": "./dist/intervalCollection.cjs"
+				"default": "./dist/intervalCollection.js"
 			}
 		},
 		"./alpha": {

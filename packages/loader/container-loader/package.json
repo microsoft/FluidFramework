@@ -29,7 +29,7 @@
 			},
 			"require": {
 				"types": "./dist/container.d.ts",
-				"default": "./dist/container.cjs"
+				"default": "./dist/container.js"
 			}
 		},
 		"./test/contracts": {
@@ -39,7 +39,7 @@
 			},
 			"require": {
 				"types": "./dist/contracts.d.ts",
-				"default": "./dist/contracts.cjs"
+				"default": "./dist/contracts.js"
 			}
 		},
 		"./test/connectionManager": {
@@ -49,7 +49,7 @@
 			},
 			"require": {
 				"types": "./dist/connectionManager.d.ts",
-				"default": "./dist/connectionManager.cjs"
+				"default": "./dist/connectionManager.js"
 			}
 		},
 		"./test/deltaManager": {
@@ -59,7 +59,7 @@
 			},
 			"require": {
 				"types": "./dist/deltaManager.d.ts",
-				"default": "./dist/deltaManager.cjs"
+				"default": "./dist/deltaManager.js"
 			}
 		},
 		"./test/utils": {
@@ -69,7 +69,7 @@
 			},
 			"require": {
 				"types": "./dist/utils.d.ts",
-				"default": "./dist/utils.cjs"
+				"default": "./dist/utils.js"
 			}
 		},
 		"./alpha": {
