@@ -12,7 +12,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/generateSnapshotFiles.js",
+	"main": "dist/index.js",
 	"types": "dist/generateSnapshotFiles.js",
 	"scripts": {
 		"build": "fluid-build . --task build",

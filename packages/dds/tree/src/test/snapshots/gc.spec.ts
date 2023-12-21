@@ -15,13 +15,12 @@ import { typeboxValidator } from "../../external-utilities";
 import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 
 const builder = new SchemaFactory("test");
+class Bar extends builder.object("bar", {
+	nestedHandles: builder.array(builder.handle),
+}) {}
 class SomeType extends builder.object("foo", {
 	handles: builder.array(builder.handle),
-	nested: builder.optional(
-		builder.object("bar", {
-			nestedHandles: builder.array(builder.handle),
-		}),
-	),
+	nested: builder.optional(Bar),
 	bump: builder.optional(builder.number),
 }) {}
 
@@ -126,9 +125,9 @@ describe("Garbage Collection", () => {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			this.tree1View.nested = {
-				nestedHandles: [subtree1.handle, subtree2.handle] as any,
-			};
+			this.tree1View.nested = new Bar({
+				nestedHandles: [subtree1.handle, subtree2.handle],
+			});
 
 			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();

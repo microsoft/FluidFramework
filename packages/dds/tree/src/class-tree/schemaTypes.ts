@@ -332,3 +332,29 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes>
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
+
+/**
+ * The type of a {@link TreeNode}.
+ * For moore information about the type, use `Tree.schema(theNode)` instead.
+ * @remarks
+ * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
+ * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
+ *
+ * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where nodes are expected.
+ * Instead construct a real node of the desired type using its constructor.
+ * @privateRemarks
+ * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
+ * @public
+ */
+export const type: unique symbol = Symbol("TreeNode Type");
+
+/**
+ * Adds a {@link "type"} field.
+ * @public
+ */
+export interface WithType<TName extends string = string> {
+	/**
+	 * {@inheritdoc "type"}
+	 */
+	get [type](): TName;
+}

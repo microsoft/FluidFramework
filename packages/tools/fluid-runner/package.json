@@ -23,7 +23,7 @@
 			},
 			"require": {
 				"types": "./dist/fluid-runner-alpha.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
@@ -33,7 +33,7 @@
 			},
 			"require": {
 				"types": "./dist/fluid-runner-beta.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
@@ -43,7 +43,7 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./public": {
@@ -53,7 +53,7 @@
 			},
 			"require": {
 				"types": "./dist/fluid-runner-public.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		}
 	},
