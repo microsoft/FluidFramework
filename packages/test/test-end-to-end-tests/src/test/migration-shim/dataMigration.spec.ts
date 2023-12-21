@@ -38,6 +38,7 @@ import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
+	timeoutPromise,
 } from "@fluidframework/test-utils";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
@@ -119,6 +120,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V1 of the registry -----------------------------------------
@@ -135,6 +137,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory1,
 		registryEntries: [dataObjectFactory1.registryEntry],
+		runtimeOptions,
 	});
 
 	// V2 of the registry (the migration registry) -----------------------------------------

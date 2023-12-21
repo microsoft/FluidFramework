@@ -15,6 +15,7 @@ import {
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
+	IIdCompressorCore,
 } from '@fluidframework/runtime-definitions';
 import { type ITree } from '@fluidframework/tree';
 import { assert } from '@fluidframework/core-utils';
@@ -27,6 +28,7 @@ import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
 import { ShimHandle } from './shimHandle.js';
 import { type IShim, type IOpContents } from './types.js';
+import { ghostSessionId } from '../persisted-types';
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -100,7 +102,12 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		const newTree = this.newTreeFactory.create(this.runtime, this.id) as ITree;
 		assert(this.preMigrationDeltaConnection !== undefined, 0x82f /* Should be in v1 state */);
 		this.preMigrationDeltaConnection.disableSubmit();
-		this.populateNewSharedObjectFn(this.legacyTree, newTree);
+		const { idCompressor } = this.runtime;
+		if (idCompressor !== undefined) {
+			(idCompressor as unknown as IIdCompressorCore).beginGhostSession(ghostSessionId, () => this.populateNewSharedObjectFn(this.legacyTree, newTree)) // need to make this not old ghostSessionId lol.
+		} else {
+			this.populateNewSharedObjectFn(this.legacyTree, newTree);
+		}
 		this.newTree = newTree;
 		this.reconnect();
 		this.emit('migrated');
