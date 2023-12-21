@@ -74,6 +74,8 @@ export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgrade
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
 /** Config key to disable GC sweep for attachment blobs. */
 export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
+/** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer */
+export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;

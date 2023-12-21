@@ -78,7 +78,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent } from "./gc";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -659,8 +659,10 @@ export abstract class FluidDataStoreContext
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
-		// About back-compat: If an old (n-1) DataStoreRuntime calls this, it should no-op,
-		// since the new ContainerRuntime is responsible for adding new outbound routes directly.
+		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
+		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
+			this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
+		}
 	}
 
 	/**
