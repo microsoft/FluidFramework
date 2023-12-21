@@ -7137,6 +7137,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -7162,6 +7163,7 @@ importers:
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
+      '@fluidframework/id-compressor': link:../../runtime/id-compressor
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
