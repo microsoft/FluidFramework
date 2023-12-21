@@ -1186,7 +1186,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 					latestAttemptProps === undefined ||
 					latestAttemptProps.maxAttempts - latestAttemptProps.currentAttempt > 1
 				) {
-					throw new RetriableSummaryError(summarizeErrorMessage, 0.01);
+					throw new RetriableSummaryError(summarizeErrorMessage, 0.1);
 				}
 				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
 				if (blockInboundGCOp) {
@@ -1200,12 +1200,12 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 		/**
 		 * In these test, summarize fails until the final attempt but GC succeeds in each of the attempts.
-		 * In case of "single" gcOps, in first attempt, GC sends a single sweep op which is processed before the
-		 * next summarize attempt.
-		 * In case of "multiple" gcOps, in every attempt, GC sends a sweep op with the same deleted blob id.
+		 * - In case of "multiple" gcOps, in every attempt, GC sends a sweep op with the same deleted blob.
+		 * - In case of "one+" gcOps, in the first attempt, GC sends a sweep op. Depending on when this op is
+		 * processed, there will be one or more GC ops for the summarization.
 		 * It validates that in these scenario, the blob is correctly deleted and nothing unexpected happens.
 		 */
-		for (const gcOps of ["single", "multiple"]) {
+		for (const gcOps of ["one+", "multiple"]) {
 			itExpects(
 				`sweep with multiple successful GC runs and [${gcOps}] GC op(s) for a single successful summarization`,
 				[
@@ -1292,8 +1292,8 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 						);
 
 					// Summarize. There will be multiple summary attempts and in each, GC runs successfully.
-					// In "single" gcOps scenario, a GC op will be sent in first attempt and will be processed by the
-					// time next attempt starts. The blob will be deleted in this summary itself.
+					// In "one+" gcOps scenario, a GC op will be sent in first attempt and it may be processed by the
+					// time next attempt starts. The blob may be deleted in this summary itself.
 					// In "multiple" gcOps scenario, a GC op will be sent in every attempt and will not be processed
 					// until the summary successfully completes. The blob will be deleted in the next summary.
 					let summary = await summarizeNow(summarizer, {
@@ -1313,23 +1313,33 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 						defaultMaxAttemptsForSubmitFailures,
 						`The summary should have succeeded at attempt number ${defaultMaxAttemptsForSubmitFailures}`,
 					);
-					assert.equal(
-						gcSweepOpCount,
-						gcOps === "single" ? 1 : props.currentAttempt,
-						`Incorrect number of GC ops`,
-					);
 
-					// The GC sweep op will be processed during the multiple summarize attempts and the final summary
-					// should have the blob as deleted.
-					// If single GC op is sent, the blob will be deleted because the delete op will be processed
-					// during summary attempts.
-					// If multiple GC ops are sent, the blob will not be deleted yet because the inbound queue
-					// was paused and GC sweep ops will be processed later. The GC state will be a handle because it
-					// would not have changed since last time.
+					if (gcOps === "multiple") {
+						assert.equal(
+							gcSweepOpCount,
+							props.currentAttempt,
+							"Incorrect number of GC ops",
+						);
+					} else {
+						assert(gcSweepOpCount >= 1, "Incorrect number of GC ops");
+					}
+
+					// If the number of GC ops sent is equal to the number of summarize attempts, then the blob
+					// won't be deleted in this summary. That's because the final GC run didn't know about the deletion
+					// and sent a GC op.
+					const expectedDeletedInFirstSummary =
+						gcSweepOpCount !== defaultMaxAttemptsForSubmitFailures;
+
+					// In "one+" gcOps scenario, the blob may or may not have been deleted depending on how many
+					// ops were sent out as described above.
+					// In "multiple" gcOps scenario, the blob will not be deleted yet because the inbound queue
+					// was paused and GC sweep ops will be processed later.
+					// The GC state will be a handle if blob is not deleted because it would not have changed
+					// since last time.
 					validateBlobStateInSummary(
 						summary.summaryTree,
 						blob1NodePath,
-						gcOps === "single" /* expectDelete */,
+						expectedDeletedInFirstSummary /* expectDelete */,
 						gcOps === "multiple" /* expectGCStateHandle */,
 					);
 
@@ -1364,15 +1374,14 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 					// Summarize again.
 					summary = await summarizeNow(summarizer);
 
-					// The blob should be deleted now.
-					// In case of "single" GC op, the blob was deleted in the previous summary. So, the GC state
-					// will be a handle as its same as before.
-					// In case of "multiple" GC ops, the blob will be deleted in the this summary.
+					// The blob should be deleted from the summary / GC tree.
+					// The GC state will be a handle if the blob was deleted in the previous summary because it
+					// would not have changed since last time.
 					validateBlobStateInSummary(
 						summary.summaryTree,
 						blob1NodePath,
 						true /* expectDelete */,
-						gcOps === "single" /* expectGCStateHandle */,
+						expectedDeletedInFirstSummary /* expectGCStateHandle */,
 					);
 				},
 			);

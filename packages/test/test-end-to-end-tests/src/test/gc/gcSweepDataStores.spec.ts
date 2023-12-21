@@ -624,7 +624,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					latestAttemptProps === undefined ||
 					latestAttemptProps.maxAttempts - latestAttemptProps.currentAttempt > 1
 				) {
-					throw new RetriableSummaryError(summarizeErrorMessage, 0.01);
+					throw new RetriableSummaryError(summarizeErrorMessage, 0.1);
 				}
 				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
 				if (blockInboundGCOp) {
@@ -638,12 +638,12 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 		/**
 		 * In these test, summarize fails until the final attempt but GC succeeds in each of the attempts.
-		 * In case of "single" gcOps, in first attempt, GC sends a single sweep op which is processed before the
-		 * next summarize attempt.
-		 * In case of "multiple" gcOps, in every attempt, GC sends a sweep op with the same deleted data store.
+		 * - In case of "multiple" gcOps, in every attempt, GC sends a sweep op with the same deleted data store.
+		 * - In case of "one+" gcOps, in the first attempt, GC sends a sweep op. Depending on when this op is
+		 * processed, there will be one or more GC ops for the summarization.
 		 * It validates that in these scenario, the data store is correctly deleted and nothing unexpected happens.
 		 */
-		for (const gcOps of ["single", "multiple"]) {
+		for (const gcOps of ["one+", "multiple"]) {
 			itExpects(
 				`sweep with multiple successful GC runs and [${gcOps}] GC op(s) for a single successful summarization`,
 				[
@@ -707,12 +707,12 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 						await overrideSummarizeAndGetCompletionPromise(
 							summarizer,
 							containerRuntime,
-							gcOps === "multiple",
+							gcOps === "multiple" /* blockInboundGCOp */,
 						);
 
 					// Summarize. There will be multiple summary attempts and in each, GC runs successfully.
-					// In "single" gcOps scenario, a GC op will be sent in first attempt and will be processed by the
-					// time next attempt starts. The data store will be deleted in this summary itself.
+					// In "one+" gcOps scenario, a GC op will be sent in first attempt and it may be processed by the
+					// time next attempt starts. The data store may be deleted in this summary itself.
 					// In "multiple" gcOps scenario, a GC op will be sent in every attempt and will not be processed
 					// until the summary successfully completes. The data store will be deleted in the next summary.
 					let summary = await summarizeNow(summarizer, {
@@ -732,23 +732,33 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 						defaultMaxAttemptsForSubmitFailures,
 						`The summary should have succeeded at attempt number ${defaultMaxAttemptsForSubmitFailures}`,
 					);
-					assert.equal(
-						gcSweepOpCount,
-						gcOps === "single" ? 1 : props.currentAttempt,
-						`Incorrect number of GC ops`,
-					);
 
-					// The GC sweep will be processed during the multiple summarize attempts and the final summary
-					// should have the data store as deleted.
-					// If single GC op is sent, the data store will be deleted because the delete op will be processed
-					// during summary attempts.
-					// If multiple GC ops are sent, the data store will not be deleted yet because the inbound queue
-					// was paused and GC sweep ops will be processed later. The GC state will be a handle because it
-					// would not have changed since last time.
+					if (gcOps === "multiple") {
+						assert.equal(
+							gcSweepOpCount,
+							props.currentAttempt,
+							"Incorrect number of GC ops",
+						);
+					} else {
+						assert(gcSweepOpCount >= 1, "Incorrect number of GC ops");
+					}
+
+					// If the number of GC ops sent is equal to the number of summarize attempts, then the data store
+					// won't be deleted in this summary. That's because the final GC run didn't know about the deletion
+					// and sent a GC op.
+					const expectedDeletedInFirstSummary =
+						gcSweepOpCount !== defaultMaxAttemptsForSubmitFailures;
+
+					// In "one+" gcOps scenario, the data store may or may not have been deleted depending on how many
+					// ops were sent out as described above.
+					// In "multiple" gcOps scenario, the data store will not be deleted yet because the inbound queue
+					// was paused and GC sweep ops will be processed later.
+					// The GC state will be a handle if data store is not deleted because it would not have changed
+					// since last time.
 					validateDataStoreStateInSummary(
 						summary.summaryTree,
 						sweepReadyDataStoreNodePath,
-						gcOps === "single" /* expectDelete */,
+						expectedDeletedInFirstSummary /* expectDelete */,
 						gcOps === "multiple" /* expectGCStateHandle */,
 					);
 
@@ -783,15 +793,14 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					// Summarize again.
 					summary = await summarizeNow(summarizer);
 
-					// The data store should be deleted now.
-					// In case of "single" GC op, the data store was deleted in the previous summary. So, the GC state
-					// will be a handle as its same as before.
-					// In case of "multiple" GC ops, the data store will be deleted in the this summary.
+					// The data store should be deleted from the summary / GC tree.
+					// The GC state will be a handle if the data store was deleted in the previous summary because it
+					// would not have changed since last time.
 					validateDataStoreStateInSummary(
 						summary.summaryTree,
 						sweepReadyDataStoreNodePath,
 						true /* expectDelete */,
-						gcOps === "single" /* expectGCStateHandle */,
+						expectedDeletedInFirstSummary /* expectGCStateHandle */,
 					);
 				},
 			);
