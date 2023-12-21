@@ -118,7 +118,6 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 			this.runtimeOptions,
 			overrides,
 		);
-
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
 	}
