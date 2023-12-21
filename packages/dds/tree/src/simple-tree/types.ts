@@ -20,8 +20,8 @@ import {
 	LazyItem,
 } from "../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { type, WithType } from "../class-tree/schemaTypes";
-import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
+import { type, WithType, TreeMapNode } from "../class-tree/schemaTypes";
+import { IterableTreeListContent, TreeArrayNode } from "./treeListNode";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -293,16 +293,6 @@ export type TreeObjectNodeFields<
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- */
-export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
-	extends TreeMapNodeBase<TreeField<TSchema["info"], "notEmpty">> {}
-
-/**
- * A map of string keys to tree objects.
- *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
- *
  * @public
  */
 export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
@@ -380,9 +370,9 @@ export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly
 export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
 	: TSchema extends MapNodeSchema
-	? TreeMapNode<TSchema>
+	? TreeMapNode
 	: TSchema extends FieldNodeSchema
-	? TreeListNodeOld<TSchema["info"]["allowedTypes"]>
+	? TreeArrayNode
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNode<TSchema>
 	: TreeNode;

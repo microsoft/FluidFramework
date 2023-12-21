@@ -320,7 +320,7 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
  *
  * @public
  */
-export interface TreeMapNode<T extends ImplicitAllowedTypes>
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeMapNodeBase<
 		TreeNodeFromImplicitAllowedTypes<T>,
 		InsertableTreeNodeFromImplicitAllowedTypes<T>

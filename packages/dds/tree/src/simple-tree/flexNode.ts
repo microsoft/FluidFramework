@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/core-utils";
 import { fail } from "../util";
 import {
 	ObjectNodeSchema,
-	AllowedTypes,
 	FieldNodeSchema,
 	MapNodeSchema,
 	FlexTreeNode,
@@ -15,8 +14,7 @@ import {
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
 } from "../feature-libraries";
-import { TreeObjectNode, TreeMapNode, TreeNode } from "./types";
-import { TreeListNodeOld } from "./treeListNode";
+import { TreeNode, TypedNode } from "./types";
 
 /** Associates an FlexTreeNode with a target object  */
 const targetSymbol = Symbol("FlexNodeTarget");
@@ -36,15 +34,9 @@ const flexNodeMap = new WeakMap<TreeNode, FlexTreeNode>();
  * Retrieves the flex node associated with the given target via {@link setFlexNode}.
  * @remarks Fails if the flex node has not been set.
  */
-export function getFlexNode<TSchema extends ObjectNodeSchema>(
-	target: TreeObjectNode<TSchema>,
-): FlexTreeObjectNode;
-export function getFlexNode<TTypes extends AllowedTypes>(
-	target: TreeListNodeOld<TTypes>,
-): FlexTreeFieldNode<FieldNodeSchema>;
-export function getFlexNode<TSchema extends MapNodeSchema>(
-	target: TreeMapNode<TSchema>,
-): FlexTreeMapNode<TSchema>;
+export function getFlexNode(target: TypedNode<ObjectNodeSchema>): FlexTreeObjectNode;
+export function getFlexNode(target: TypedNode<FieldNodeSchema>): FlexTreeFieldNode<FieldNodeSchema>;
+export function getFlexNode(target: TypedNode<MapNodeSchema>): FlexTreeMapNode<MapNodeSchema>;
 export function getFlexNode(target: TreeNode): FlexTreeNode;
 export function getFlexNode(target: TreeNode): FlexTreeNode {
 	return flexNodeMap.get(target) ?? fail("Target is not associated with an flex node");
