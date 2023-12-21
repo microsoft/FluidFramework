@@ -84,6 +84,10 @@ describe("schemaCreationUtilities", () => {
 		class Parent extends schemaFactory.object("Parent", {
 			mode: typedObjectValues(ModeNodes),
 		}) {}
+
+		const _test1: InstanceType<typeof ModeNodes.a> = new ModeNodes.a();
+		// @ts-expect-error Incompatible enums types should not be assignable.
+		const _test2: InstanceType<typeof ModeNodes.a> = new ModeNodes.b();
 	});
 
 	it("enum value switch", () => {

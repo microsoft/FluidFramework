@@ -17,11 +17,11 @@ import {
 	FlexTreeTypedNode,
 } from "../../feature-libraries";
 import { TypedNode, TreeObjectNode } from "../../simple-tree";
-import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
+import { areSafelyAssignable, isAny, isAssignableTo, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../simple-tree/proxies";
+import { InsertableContent, extractFactoryContent } from "../../simple-tree/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -219,9 +219,7 @@ describe("domains - SchemaBuilder", () => {
 		});
 
 		type _0 = requireFalse<isAny<typeof testObject>>;
-		type _1 = requireTrue<
-			areSafelyAssignable<TypedNode<typeof testObject>, { number: number }>
-		>;
+		type _1 = isAssignableTo<TypedNode<typeof testObject>, { number: number }>;
 
 		function typeTests(x: TypedNode<typeof testObject>) {
 			const y: number = x.number;
@@ -301,7 +299,7 @@ describe("domains - SchemaBuilder", () => {
  */
 export function checkCreated<TSchema extends ObjectNodeSchema>(
 	created: TreeObjectNode<TSchema>,
-	expected: TypedNode<TSchema>,
+	expected: InsertableContent,
 ): void {
 	assert.deepEqual(extractFactoryContent(created).content, expected);
 }

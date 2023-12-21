@@ -18,6 +18,8 @@ export {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeMapNode,
 	TreeLeafValue,
+	type,
+	WithType,
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
