@@ -63,6 +63,7 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
+import { isSerializedHandle } from "./handles";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -444,17 +445,6 @@ export class DataStores implements IDisposable {
 		envelope: IEnvelope,
 		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	): void {
-		//* move from shared-object-base to here
-		const isSerializedHandle = (
-			value: any,
-		): value is {
-			// Marker to indicate to JSON.parse that the object is a Fluid handle
-			type: "__fluid_handle__";
-
-			// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
-			url: string;
-		} => value?.type === "__fluid_handle__";
-
 		function recursivelyWalkObject(obj: any, visitor: (key: string, value: any) => void) {
 			if (typeof obj === "object" && obj !== null) {
 				for (const key of Object.keys(obj)) {
