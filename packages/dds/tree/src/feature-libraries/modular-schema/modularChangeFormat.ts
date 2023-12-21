@@ -113,11 +113,21 @@ export type EncodedRevisionInfo = Static<typeof EncodedRevisionInfo>;
  */
 export const EncodedTreeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
 
-// TODO:YA6307 adopt more efficient encoding, likely based on contiguous runs of IDs
+export const CommitBuilds = Type.Array(
+	Type.Tuple([
+		// ID for first node
+		ChangesetLocalIdSchema,
+		// Index for a TreeChunk that represents all the nodes
+		EncodedTreeIndex,
+	]),
+);
+export type CommitBuilds = Static<typeof CommitBuilds>;
+
 export const EncodedBuildsArray = Type.Array(
 	Type.Union([
-		Type.Tuple([ChangesetLocalIdSchema, EncodedTreeIndex]),
-		Type.Tuple([RevisionTagSchema, ChangesetLocalIdSchema, EncodedTreeIndex]),
+		Type.Tuple([CommitBuilds, RevisionTagSchema]),
+		// Revision is omitted when undefined
+		Type.Tuple([CommitBuilds]),
 	]),
 );
 
