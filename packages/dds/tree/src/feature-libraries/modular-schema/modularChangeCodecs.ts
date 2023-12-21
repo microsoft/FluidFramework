@@ -174,19 +174,18 @@ export function makeV0Codec(
 		}
 
 		const treeBatcher = new FieldBatchEncoder();
-
-		const mapCommitBuilds: (
-			commitBuilds: Map<ChangesetLocalId, TreeChunk>,
-		) => [ChangesetLocalId, number][] = (commitBuilds: Map<ChangesetLocalId, TreeChunk>) =>
-			Array.from(commitBuilds.entries()).map(([i, t]) => [i, treeBatcher.add(t.cursor())]);
 		const buildsArray: EncodedBuildsArray = Array.from(builds.entries()).map(
-			([r, commitBuilds]) =>
+			([r, commitBuilds]) => {
+				const commitBuildsEncoded: [ChangesetLocalId, number][] = Array.from(
+					commitBuilds.entries(),
+				).map(([i, t]) => [i, treeBatcher.add(t.cursor())]);
 				// `undefined` does not round-trip through JSON strings, so it needs special handling.
 				// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 				// We therefore optimize for the common case by omitting the revision when it is undefined.
-				r !== undefined
-					? [mapCommitBuilds(commitBuilds), revisionTagCodec.encode(r)]
-					: [mapCommitBuilds(commitBuilds)],
+				return r !== undefined
+					? [commitBuildsEncoded, revisionTagCodec.encode(r)]
+					: [commitBuildsEncoded];
+			},
 		);
 		return buildsArray.length === 0
 			? undefined
