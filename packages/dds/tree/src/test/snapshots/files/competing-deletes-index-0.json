@@ -59,8 +59,10 @@
                                       }
                                     },
                                     "cellId": {
-                                      "localId": 0,
-                                      "revision": 3
+                                      "atom": [
+                                        0,
+                                        3
+                                      ]
                                     }
                                   }
                                 ]
@@ -90,8 +92,10 @@
                                       }
                                     },
                                     "cellId": {
-                                      "localId": 0,
-                                      "revision": 515
+                                      "atom": [
+                                        0,
+                                        515
+                                      ]
                                     }
                                   }
                                 ]

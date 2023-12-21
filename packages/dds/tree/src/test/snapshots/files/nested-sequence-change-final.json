@@ -86,7 +86,7 @@
                                       }
                                     },
                                     "cellId": {
-                                      "localId": 0
+                                      "atom": 0
                                     },
                                     "changes": {
                                       "fieldChanges": [
@@ -102,7 +102,7 @@
                                                 }
                                               },
                                               "cellId": {
-                                                "localId": 1
+                                                "atom": 1
                                               }
                                             }
                                           ]

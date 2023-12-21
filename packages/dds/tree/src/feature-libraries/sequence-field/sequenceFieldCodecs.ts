@@ -221,7 +221,7 @@ function makeV0Codec<TNodeChange>(
 			originatorId: SessionId,
 		): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
-				localId,
+				atom: changeAtomIdCodec.encode({ localId, revision }, originatorId),
 				adjacentCells: adjacentCells?.map(({ id, count }) => [id, count]),
 				// eslint-disable-next-line @typescript-eslint/no-shadow
 				lineage: lineage?.map(({ revision, id, count, offset }) => [
@@ -230,25 +230,20 @@ function makeV0Codec<TNodeChange>(
 					count,
 					offset,
 				]),
-				revision:
-					revision === undefined
-						? revision
-						: revisionTagCodec.encode(revision, originatorId),
 			};
 			return encoded;
 		},
 		decode: (
-			{ localId, adjacentCells, lineage, revision }: Encoded.CellId,
+			{ atom, adjacentCells, lineage }: Encoded.CellId,
 			originatorId: SessionId,
 		): CellId => {
+			const { localId, revision } = changeAtomIdCodec.decode(atom, originatorId);
 			// Note: this isn't inlined on decode so that round-tripping changes compare as deep-equal works,
 			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
 			// explicit undefined properties.
-			const decoded: Mutable<CellId> = {
-				localId,
-			};
+			const decoded: Mutable<CellId> = { localId };
 			if (revision !== undefined) {
-				decoded.revision = revisionTagCodec.decode(revision, originatorId);
+				decoded.revision = revision;
 			}
 			if (adjacentCells !== undefined) {
 				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({

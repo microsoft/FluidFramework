@@ -4,14 +4,17 @@
     "effect": {
       "moveOut": {
         "revision": 0,
-        "finalEndpoint": {
-          "localId": 0,
-          "revision": 0
-        },
+        "finalEndpoint": [
+          0,
+          0
+        ],
         "idOverride": {
           "type": 0,
           "id": {
-            "localId": 0,
+            "atom": [
+              0,
+              0
+            ],
             "adjacentCells": [
               [
                 0,
@@ -25,15 +28,17 @@
                 2,
                 1
               ]
-            ],
-            "revision": 0
+            ]
           }
         },
         "id": 0
       }
     },
     "cellId": {
-      "localId": 0,
+      "atom": [
+        0,
+        0
+      ],
       "adjacentCells": [
         [
           0,
@@ -47,8 +52,7 @@
           2,
           1
         ]
-      ],
-      "revision": 0
+      ]
     },
     "changes": {
       "inputContext": [],
