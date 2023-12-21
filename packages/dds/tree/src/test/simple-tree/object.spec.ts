@@ -323,7 +323,7 @@ describe("Object-like", () => {
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-						class Root extends factory.object("", { _value: schema }) {}
+						const Root = factory.object("", { _value: schema });
 						const root = getRoot(Root, () => ({ _value: before }));
 						assert.equal(root._value, before);
 						root._value = after;
@@ -364,12 +364,12 @@ describe("Object-like", () => {
 		});
 
 		describe("required object", () => {
-			class Child extends factory.object("child", {
+			const Child = factory.object("child", {
 				objId: factory.number,
-			}) {}
-			class Schema extends factory.object("parent", {
+			});
+			const Schema = factory.object("parent", {
 				child: Child,
-			}) {}
+			});
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
@@ -383,12 +383,12 @@ describe("Object-like", () => {
 		});
 
 		describe("optional object", () => {
-			class Child extends factory.object("child", {
+			const Child = factory.object("child", {
 				objId: factory.number,
-			}) {}
-			class Schema extends factory.object("parent", {
+			});
+			const Schema = factory.object("parent", {
 				child: factory.optional(Child),
-			}) {}
+			});
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
