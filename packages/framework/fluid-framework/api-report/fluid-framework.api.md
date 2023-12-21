@@ -406,7 +406,7 @@ export interface DeltaDetachedNodeDestruction {
 // @internal
 export interface DeltaDetachedNodeId {
     // (undocumented)
-    readonly major?: string | number;
+    readonly major?: RevisionTag;
     // (undocumented)
     readonly minor: number;
 }
@@ -1729,6 +1729,9 @@ export enum RevertResult {
     Failure = 1,
     Success = 0
 }
+
+// @internal
+export type RevisionTag = SessionSpaceCompressedId | "root";
 
 // @internal
 export interface RootField {

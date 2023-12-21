@@ -1139,6 +1139,9 @@ export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
 	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
 		throw new Error("Method not implemented.");
 	}
+	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
+		throw new Error("Method not implemented.");
+	}
 }
 
 export const testIdCompressor = createIdCompressor();

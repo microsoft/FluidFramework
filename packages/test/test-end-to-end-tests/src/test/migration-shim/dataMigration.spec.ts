@@ -38,7 +38,6 @@ import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	timeoutPromise,
 } from "@fluidframework/test-utils";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
