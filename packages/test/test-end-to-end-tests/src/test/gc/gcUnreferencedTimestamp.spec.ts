@@ -522,12 +522,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider) 
 			 * The difference from previous test case is that the reference from B to C is added before B is referenced and
 			 * observed by summarizer. So, the summarizer does not see this reference directly but only when B is realized.
 			 */
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			it.only(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
+			it(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
@@ -548,7 +543,6 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider) 
 				const dataStoreB = await createNewDataStore();
 
 				// 3. Add reference from B to C. E = [].
-				//* NO OP SUBMITTED since B is not attached
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 
 				// 4. Add reference from A to B. E = [A -> B, B -> C].
@@ -558,7 +552,6 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider) 
 				dataStoreB._root.delete("dataStoreC");
 
 				// 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
-				//* ATTACH OP FOR B HAS THE REFERENCE FROM B->C, so we miss it and this test fails.
 				await provider.ensureSynchronized();
 				const summaryResult2 = await summarizeNow(summarizer);
 				const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
