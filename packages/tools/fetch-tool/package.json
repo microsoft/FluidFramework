@@ -10,7 +10,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/fluidFetch.js",
+	"main": "dist/index.js",
 	"types": "dist/fluidFetch.d.ts",
 	"bin": {
 		"fluid-fetch": "bin/fluid-fetch"

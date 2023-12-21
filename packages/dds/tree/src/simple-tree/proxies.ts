@@ -26,7 +26,6 @@ import {
 	FlexTreeSequenceField,
 	FlexTreeNode,
 	FlexTreeTypedField,
-	FlexTreeUnknownUnboxed,
 	onNextChange,
 	typeNameSymbol,
 	isFluidHandle,
@@ -306,7 +305,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		value: Array.prototype[Symbol.iterator],
 	},
 	at: {
-		value(this: TreeListNodeOld, index: number): FlexTreeUnknownUnboxed | undefined {
+		value(this: TreeListNodeOld, index: number): TreeNode | undefined {
 			const field = getSequenceField(this);
 			const val = field.boxedAt(index);
 
@@ -314,7 +313,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 				return val;
 			}
 
-			return getOrCreateNodeProxy(val) as FlexTreeUnknownUnboxed;
+			return getOrCreateNodeProxy(val);
 		},
 	},
 	insertAt: {
@@ -774,28 +773,25 @@ function createMapProxy<TSchema extends MapNodeSchema>(
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	const proxy = new Proxy<TreeMapNode<TSchema>>(
-		targetObject as Map<string, TreeField<TSchema["info"], "notEmpty">>,
-		{
-			get: (target, key, receiver): unknown => {
-				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-				return Reflect.get(dispatch, key, proxy);
-			},
-			getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
-				return Reflect.getOwnPropertyDescriptor(dispatch, key);
-			},
-			has: (target, key) => {
-				return Reflect.has(dispatch, key);
-			},
-			set: (target, key, newValue): boolean => {
-				return allowAdditionalProperties ? Reflect.set(dispatch, key, newValue) : false;
-			},
-			ownKeys: (target) => {
-				// All of Map's properties are inherited via its prototype, so there is nothing to return here,
-				return [];
-			},
+	const proxy = new Proxy<TreeMapNode<TSchema>>(targetObject as TreeMapNode<TSchema>, {
+		get: (target, key, receiver): unknown => {
+			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
+			return Reflect.get(dispatch, key, proxy);
 		},
-	);
+		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
+			return Reflect.getOwnPropertyDescriptor(dispatch, key);
+		},
+		has: (target, key) => {
+			return Reflect.has(dispatch, key);
+		},
+		set: (target, key, newValue): boolean => {
+			return allowAdditionalProperties ? Reflect.set(dispatch, key, newValue) : false;
+		},
+		ownKeys: (target) => {
+			// All of Map's properties are inherited via its prototype, so there is nothing to return here,
+			return [];
+		},
+	});
 	return proxy;
 }
 

@@ -85,6 +85,7 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"mocha": "^10.2.0"

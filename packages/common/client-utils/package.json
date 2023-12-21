@@ -19,7 +19,7 @@
 			},
 			"require": {
 				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.cjs"
+				"default": "./dist/indexNode.js"
 			}
 		},
 		"./internal": {
@@ -33,10 +33,10 @@
 			}
 		}
 	},
-	"main": "dist/indexNode.cjs",
+	"main": "dist/indexNode.js",
 	"module": "lib/indexNode.mjs",
 	"browser": {
-		"./dist/indexNode.cjs": "./dist/indexBrowser.cjs",
+		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
 		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs",
 		"./lib/indexNode.d.mts": "./lib/indexBrowser.d.mts"
@@ -51,7 +51,10 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
-		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
+		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
+		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
+		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -67,7 +70,7 @@
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -144,6 +147,12 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"eslint": [
+				"tsc",
+				"build:test:mocha",
+				"build:test:jest",
+				"build:test:types"
+			],
 			"build:docs": {
 				"dependsOn": [
 					"...",
@@ -151,7 +160,16 @@
 					"api-extractor:esnext"
 				],
 				"script": false
-			}
+			},
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha": [
+				"tsc"
+			],
+			"build:test:types": [
+				"tsc"
+			]
 		}
 	},
 	"typeValidation": {

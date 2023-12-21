@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator, Mutable, fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import {
@@ -18,6 +18,7 @@ import {
 	CellMark,
 	MoveIn,
 	MarkEffect,
+	CellId,
 	DetachIdOverrideType,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
@@ -93,7 +94,8 @@ function invertMark<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange>[] {
 	if (!isImpactful(mark, revision, revisionMetadata)) {
-		return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
+		const inputId = getInputCellId(mark, revision, revisionMetadata);
+		return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, inputId)];
 	}
 	const type = mark.type;
 	switch (type) {
@@ -359,24 +361,27 @@ function applyMovedChanges<TNodeChange>(
 }
 
 function invertNodeChangeOrSkip<TNodeChange>(
-	length: number,
+	count: number,
 	changes: TNodeChange | undefined,
 	inverter: NodeChangeInverter<TNodeChange>,
-	detachEvent?: ChangeAtomId,
+	cellId?: CellId,
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
-		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
+		assert(count === 1, 0x66c /* A modify mark must have length equal to one */);
 		const noop: CellMark<NoopMark, TNodeChange> = {
-			count: 1,
+			count,
 			changes: inverter(changes),
 		};
-		if (detachEvent !== undefined) {
-			noop.cellId = detachEvent;
+		if (cellId !== undefined) {
+			noop.cellId = cellId;
 		}
 		return noop;
 	}
 
-	return { count: detachEvent === undefined ? length : 0 };
+	if (cellId !== undefined) {
+		return { count, cellId };
+	}
+	return { count };
 }
 
 function invertNodeChange<TNodeChange>(

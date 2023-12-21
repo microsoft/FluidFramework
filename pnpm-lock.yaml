@@ -7105,6 +7105,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -7130,6 +7131,7 @@ importers:
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
+      '@fluidframework/id-compressor': link:../../runtime/id-compressor
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
@@ -7159,6 +7161,7 @@ importers:
 
   packages/dds/tree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -7227,6 +7230,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-private/test-drivers': link:../../test/test-drivers

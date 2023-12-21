@@ -14,7 +14,7 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"default": "./dist/index.cjs"
+			"default": "./dist/index.js"
 		},
 		"./internal": {
 			"import": {
@@ -27,7 +27,7 @@
 			}
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -52,7 +52,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc-multi --config ../../build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir ."
@@ -91,7 +91,8 @@
 	},
 	"pnpm": {
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch"
+			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch",
+			"tsc-multi@1.1.0": "../../../patches/tsc-multi@1.1.0.patch"
 		}
 	},
 	"typeValidation": {

@@ -11,7 +11,7 @@ import { RevisionTagCodec } from "../../../shared-tree-core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
-import { populatedMarks } from "./populatedMarks";
+import { generatePopulatedMarks } from "./populatedMarks";
 import { ChangeMaker as Change, cases } from "./testEdits";
 
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
@@ -23,7 +23,7 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
 		],
 		...Object.entries(cases),
-		...populatedMarks.map((mark): [string, Changeset<TestChange>] => [
+		...generatePopulatedMarks().map((mark): [string, Changeset<TestChange>] => [
 			"type" in mark ? mark.type : "NoOp",
 			[mark],
 		]),

@@ -15,6 +15,7 @@ import {
 	ObjectFromSchemaRecord,
 	TreeMapNode,
 	TreeNodeSchemaClass,
+	WithType,
 } from "./schemaTypes";
 import { SchemaFactory } from "./schemaFactory";
 
@@ -45,7 +46,7 @@ export class SchemaFactoryRecursive<
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Object,
-		ObjectFromSchemaRecord<T>,
+		ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>,
 		InsertableObjectFromSchemaRecord<T>,
 		true
 	> {
@@ -81,7 +82,7 @@ export class SchemaFactoryRecursive<
 		return RecursiveArray as unknown as TreeNodeSchemaClass<
 			`${TScope}.${string}`,
 			NodeKind.Array,
-			TreeArrayNode<T>,
+			TreeArrayNode<T> & WithType<`${TScope}.${string}`>,
 			{ x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> },
 			false
 		>;
@@ -114,7 +115,7 @@ export class SchemaFactoryRecursive<
 		return MapSchema as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.Map,
-			TreeMapNode<T>,
+			TreeMapNode<T> & WithType<`${TScope}.${Name}`>,
 			undefined,
 			false
 		>;

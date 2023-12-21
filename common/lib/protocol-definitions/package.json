@@ -19,7 +19,7 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
@@ -33,7 +33,7 @@
 			}
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -57,7 +57,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc-multi --config ../../build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -81,6 +81,13 @@
 		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"typetests:gen"
+			]
+		}
+	},
 	"pnpm": {
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch",
