@@ -11060,6 +11060,7 @@ importers:
       '@fluidframework/devtools-core-previous': npm:@fluid-experimental/devtools-core@2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -11110,6 +11111,7 @@ importers:
       '@fluidframework/devtools-core-previous': /@fluid-experimental/devtools-core/2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/id-compressor': link:../../../runtime/id-compressor
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm

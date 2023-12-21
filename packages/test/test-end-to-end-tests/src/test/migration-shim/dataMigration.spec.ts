@@ -119,6 +119,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V1 of the registry -----------------------------------------
