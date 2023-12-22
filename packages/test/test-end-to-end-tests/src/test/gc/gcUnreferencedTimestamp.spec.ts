@@ -542,6 +542,7 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 			 */
 			it(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
 				// Disable new Reference Detection behavior for now
+				// The re-referencing happens via attach op which we don't detect yet.
 				settings[detectOutboundRoutesViaDDSKey] = true;
 
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
@@ -606,6 +607,7 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 			 */
 			it(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
 				// Disable new Reference Detection behavior for now
+				// Same reason as Scenario 6 - The re-referencing happens via attach op which we don't detect yet.
 				settings[detectOutboundRoutesViaDDSKey] = true;
 
 				const { summarizer } = await createSummarizer(provider, mainContainer, {

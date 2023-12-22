@@ -1271,7 +1271,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	/**
 	 * These tests validate cases where we saw unexpected tombstone behavior in the past - tombstone revived
-	 * events were logged to data stores that were un-tombstoned unexpectedly, etc.
+	 * events were logged, data stores were un-tombstoned unexpectedly, etc.
 	 */
 	describe("No unexpected tombstone revival in unreachable subtrees", () => {
 		beforeEach(() => {

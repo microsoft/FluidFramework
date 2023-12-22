@@ -967,7 +967,7 @@ export function detectOutboundReferences(
 	envelope: IEnvelope,
 	addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 ): void {
-	// These will be built up as we traverse the message contents via JSON.parse and referenceFinder
+	// These will be built up as we traverse the envelope contents
 	const outboundPaths: string[] = [];
 	let ddsAddress: string | undefined;
 
@@ -993,6 +993,8 @@ export function detectOutboundReferences(
 
 	recursivelyFindHandles(envelope.contents);
 
+	// GC node paths are all absolute paths, hence the "" prefix.
+	// e.g. this will yield "/dataStoreId/ddsId"
 	const fromPath = ["", envelope.address, ddsAddress].join("/");
 	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
 }
