@@ -13,8 +13,18 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
+			"import": {
+				"types": "./dist/esm-wrapper.d.mts",
+				"default": "./dist/esm-wrapper.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./esm": {
+			"types": "./lib/index.d.mts",
+			"default": "./lib/index.mjs"
 		}
 	},
 	"main": "dist/index.js",
