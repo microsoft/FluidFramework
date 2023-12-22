@@ -41,84 +41,88 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-00000000002f",
-                      "sequenceNumber": 2,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000028"
-                    },
-                    {
-                      "change": [
-                        {
-                          "data": {
-                            "changes": [
-                              {
-                                "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
-                                "change": [
-                                  {
-                                    "count": 3
-                                  },
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "delete": {
-                                        "id": 0
-                                      }
-                                    },
-                                    "cellId": {
-                                      "localId": 0,
-                                      "revision": "beefbeef-beef-4000-8000-00000000002f"
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        }
-                      ],
-                      "revision": "beefbeef-beef-4000-8000-000000000030",
-                      "sequenceNumber": 3,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000029"
-                    },
-                    {
-                      "change": [
-                        {
-                          "data": {
-                            "changes": [
-                              {
-                                "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
-                                "change": [
-                                  {
-                                    "count": 3
-                                  },
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "delete": {
-                                        "id": 0
-                                      }
-                                    },
-                                    "cellId": {
-                                      "localId": 0,
-                                      "revision": "beefbeef-beef-4000-8000-000000000030"
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        }
-                      ],
-                      "revision": "beefbeef-beef-4000-8000-000000000031",
+                      "revision": 3,
                       "sequenceNumber": 4,
-                      "sessionId": "beefbeef-beef-4000-8000-00000000002a"
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 3
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
+                                      }
+                                    },
+                                    "cellId": {
+                                      "atom": [
+                                        0,
+                                        3
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 515,
+                      "sequenceNumber": 6,
+                      "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 3
+                                  },
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
+                                      }
+                                    },
+                                    "cellId": {
+                                      "atom": [
+                                        0,
+                                        515
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 1028,
+                      "sequenceNumber": 8,
+                      "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                     }
                   ],
                   "branches": [
                     [
-                      "beefbeef-beef-4000-8000-000000000029",
+                      "a0693eac-892a-4396-86f7-ad20dc1cade2",
                       {
-                        "base": "00000000-0000-4000-8000-000000000000",
+                        "base": "root",
                         "commits": [
                           {
                             "change": [
@@ -146,16 +150,16 @@
                                 }
                               }
                             ],
-                            "revision": "beefbeef-beef-4000-8000-000000000030",
-                            "sessionId": "beefbeef-beef-4000-8000-000000000029"
+                            "revision": 515,
+                            "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                           }
                         ]
                       }
                     ],
                     [
-                      "beefbeef-beef-4000-8000-00000000002a",
+                      "5a126183-91e7-488a-b7e9-3342a05c25ae",
                       {
-                        "base": "00000000-0000-4000-8000-000000000000",
+                        "base": "root",
                         "commits": [
                           {
                             "change": [
@@ -183,13 +187,14 @@
                                 }
                               }
                             ],
-                            "revision": "beefbeef-beef-4000-8000-000000000031",
-                            "sessionId": "beefbeef-beef-4000-8000-00000000002a"
+                            "revision": 1028,
+                            "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                           }
                         ]
                       }
                     ]
-                  ]
+                  ],
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -342,7 +347,7 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-000000000031",
+                      1028,
                       0,
                       6
                     ]

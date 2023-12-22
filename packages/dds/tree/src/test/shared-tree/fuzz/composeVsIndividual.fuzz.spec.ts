@@ -24,7 +24,11 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators";
 import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers";
-import { fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
+import {
+	deterministicIdCompressorFactory,
+	fuzzSchema,
+	isRevertibleSharedTreeView,
+} from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 /**
@@ -127,6 +131,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 1,
 			emitter,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
 });

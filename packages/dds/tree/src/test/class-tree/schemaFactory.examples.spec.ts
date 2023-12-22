@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, ITree, TreeConfiguration, TreeView, Tree } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
@@ -107,14 +108,20 @@ function setup(tree: ITree): Note[] {
 describe("Class based end to end example", () => {
 	it("run example", () => {
 		const factory = new TreeFactory({});
-		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const theTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		setup(theTree);
 	});
 
 	// Confirm that the alternative syntax for the config from the example above (config2) actually works.
 	it("config2", () => {
 		const factory = new TreeFactory({});
-		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const theTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const view: TreeView<Canvas> = theTree.schematize(config2);
 	});
 });

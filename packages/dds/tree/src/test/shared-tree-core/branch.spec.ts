@@ -9,7 +9,6 @@ import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../.
 import {
 	GraphCommit,
 	RevisionTag,
-	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	rootFieldKey,
@@ -22,15 +21,17 @@ import {
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { noopValidator } from "../../codec";
-import { createTestUndoRedoStacks } from "../utils";
+import { createTestUndoRedoStacks, failCodec, mintRevisionTag, testIdCompressor } from "../utils";
 
-const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
+	jsonValidator: noopValidator,
+});
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
 describe("Branches", () => {
 	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */
-	const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+	const nullRevisionTag = mintRevisionTag();
 
 	it("have a consistent history as they apply changes", () => {
 		// Create a new branch
@@ -594,7 +595,7 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 		let head = branch.getHead();
 		branch.on("beforeChange", (c) => {
 			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.

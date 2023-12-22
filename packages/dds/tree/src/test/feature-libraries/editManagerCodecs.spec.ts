@@ -3,32 +3,38 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
-import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
-import { RevisionTagCodec, SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
-import { EncodingTestData, makeEncodingTestSuite } from "../utils";
+import { RevisionTagCodec } from "../../core";
+import { SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
+import {
+	EncodingTestData,
+	MockIdCompressor,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+} from "../utils";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
 const trunkCommits: SummaryData<TestChange>["trunk"] = [
 	{
 		revision: tags[0],
-		sessionId: "1",
+		sessionId: "1" as SessionId,
 		change: TestChange.mint([0], 1),
 		sequenceNumber: brand(1),
 	},
 	{
 		revision: tags[1],
-		sessionId: "2",
+		sessionId: "2" as SessionId,
 		change: TestChange.mint([0, 1], 2),
 		sequenceNumber: brand(2),
 	},
 	{
 		revision: tags[2],
-		sessionId: "1",
+		sessionId: "1" as SessionId,
 		change: TestChange.mint([0, 1, 2], 3),
 		sequenceNumber: brand(3),
 	},
@@ -147,7 +153,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 describe("EditManager codec", () => {
 	const codec = makeEditManagerCodec(
 		withDefaultBinaryEncoding(TestChange.codec),
-		new RevisionTagCodec(),
+		new RevisionTagCodec(new MockIdCompressor()),
 		{
 			jsonValidator: typeboxValidator,
 		},

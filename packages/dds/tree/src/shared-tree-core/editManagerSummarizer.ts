@@ -12,7 +12,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec";
+import { ICodecOptions, IJsonCodec, SessionAwareCodec } from "../codec";
 import { ChangeFamily, ChangeFamilyEditor, EncodedRevisionTag, RevisionTag } from "../core";
 import { JsonCompatibleReadOnly } from "../util";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
@@ -41,7 +41,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			TChangeset,
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
-		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+		revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 		options: ICodecOptions,
 	) {
 		const changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
