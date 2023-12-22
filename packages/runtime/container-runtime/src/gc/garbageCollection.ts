@@ -20,6 +20,7 @@ import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager } from "../blobManager";
 import {
@@ -1007,7 +1008,10 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		if (!toNodePath.startsWith("/")) {
-			//* Log an error - this would be from pre-2021, but GC wouldn't be enabled.
+			this.mc.logger.sendErrorEvent({
+				eventName: "InvalidRelativeOutboundRoute",
+				...tagCodeArtifacts({ fromId: fromNodePath, id: toNodePath }),
+			});
 			return;
 		}
 
