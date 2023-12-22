@@ -117,8 +117,7 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 			throw new Error("error parsing command line");
 		}
 		if (!this._srcFiles) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
+			const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg);
 			this._srcFiles = await globFn(srcGlob, {
 				nodir: true,
 				ignore: this.ignore,

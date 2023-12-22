@@ -7,7 +7,7 @@
  * Examples of known categories, however category can be any string for extensibility.
  *
  * @deprecated Moved to \@fluidframework/telemetry-utils package
- * @alpha
+ * @public
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -17,7 +17,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
- * @internal
+ * @alpha
  */
 export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 
@@ -25,7 +25,7 @@ export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
  * {@inheritDoc TelemetryBaseEventPropertyType}
  *
  * @deprecated Renamed to {@link TelemetryBaseEventPropertyType}
- * @alpha
+ * @public
  */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
@@ -35,7 +35,7 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
  *
  * This indicates that the value should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
- * @alpha
+ * @public
  */
 export interface Tagged<V, T extends string = string> {
 	value: V;
@@ -55,7 +55,7 @@ export interface ITaggedTelemetryPropertyType {
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
- * @alpha
+ * @public
  */
 export type ITelemetryBaseProperties = ITelemetryProperties;
 
@@ -63,7 +63,7 @@ export type ITelemetryBaseProperties = ITelemetryProperties;
  * {@inheritDoc ITelemetryBaseProperties}
  *
  * @deprecated Renamed to {@link ITelemetryBaseProperties}
- * @alpha
+ * @public
  */
 export interface ITelemetryProperties {
 	[index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
@@ -74,7 +74,7 @@ export interface ITelemetryProperties {
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
- * @alpha
+ * @public
  */
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 	category: string;
@@ -83,7 +83,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 /**
  * Specify levels of the logs.
- * @alpha
+ * @public
  */
 export const LogLevel = {
 	verbose: 10, // To log any verbose event for example when you are debugging something.
@@ -93,14 +93,14 @@ export const LogLevel = {
 
 /**
  * Specify a level to the log to filter out logs based on the level.
- * @alpha
+ * @public
  */
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 /**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
- * @alpha
+ * @public
  */
 export interface ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
@@ -114,7 +114,7 @@ export interface ITelemetryBaseLogger {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryGenericEventExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @alpha
+ * @public
  */
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
 	eventName: string;
@@ -127,7 +127,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryErrorEventExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @alpha
+ * @public
  */
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
 	eventName: string;
@@ -139,7 +139,7 @@ export interface ITelemetryErrorEvent extends ITelemetryProperties {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryPerformanceEventExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @alpha
+ * @public
  */
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 	duration?: number; // Duration of event (optional)
@@ -163,7 +163,7 @@ export interface ILoggingError extends Error {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryLoggerExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @alpha
+ * @public
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	/**

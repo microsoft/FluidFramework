@@ -52,13 +52,13 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-    # Relevant to the test-azure-frs pipeline
+    # Relevant to the test-service-clients pipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
     - packages/framework/fluid-static
     - packages/framework/loader/container-loader
     - packages/test/test-end-to-end-tests
-    - tools/pipelines/test-azure-frs.yml
+    - tools/pipelines/test-service-clients.yml
     - tools/pipelines/templates/include-test-real-service.yml
 
 pr:
@@ -86,13 +86,13 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-    # Relevant to the test-azure-frs pipeline
+    # Relevant to the test-service-clientspipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
     - packages/framework/fluid-static
     - packages/framework/loader/container-loader
     - packages/test/test-end-to-end-tests
-    - tools/pipelines/test-azure-frs.yml
+    - tools/pipelines/test-service-clients.yml
     - tools/pipelines/templates/include-test-real-service.yml
 
 extends:

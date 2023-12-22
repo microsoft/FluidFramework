@@ -38,7 +38,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			env: "VERSION_RELEASE",
 		}),
 		patch: Flags.string({
-			description: "Indicates the build is a patch build.",
+			description: `Indicates the build should use "simple patch versioning" where the value of the --build flag is used as the patch version.`,
 			env: "VERSION_PATCH",
 		}),
 		base: Flags.string({

@@ -1,5 +1,18 @@
 # @fluid-experimental/attributor
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-runtime: Removed `ContainerRuntime.load(...)` [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The static method `ContainerRuntime.load(...)` has been removed. Please migrate all usage of this method to
+    `ContainerRuntime.loadRuntime(...)`.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

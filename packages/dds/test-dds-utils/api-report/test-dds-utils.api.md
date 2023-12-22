@@ -8,12 +8,15 @@ import { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-te
 import { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils';
 import { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { SaveInfo } from '@fluid-private/stochastic-test-utils';
+import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
@@ -93,6 +96,7 @@ export interface DDSFuzzSuiteOptions {
         enabled: boolean;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
+    idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
     // (undocumented)

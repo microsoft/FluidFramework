@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { PropertySet } from "@fluidframework/merge-tree";
+import { PropertySet } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";

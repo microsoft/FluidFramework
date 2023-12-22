@@ -15,7 +15,12 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ChannelFactoryRegistry,
@@ -28,11 +33,7 @@ import {
 	assertDocumentTypeInfo,
 	isDocumentMatrixPlainInfo,
 } from "@fluid-private/test-version-utils";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 // Tests usually make use of the default data object provided by the test object provider.

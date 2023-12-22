@@ -6,7 +6,12 @@
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { ISerializedInterval, IntervalOpType, SerializedIntervalDelta } from "./intervals";
+import {
+	ISerializedInterval,
+	IntervalOpType,
+	SerializedIntervalDelta,
+	IntervalDeltaOpType,
+} from "./intervals";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -128,7 +133,7 @@ export interface IValueOperation<T> {
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
-	);
+	): void;
 
 	/**
 	 * Rebases an `op` on `value` from its original perspective (ref/local seq) to the current
@@ -145,6 +150,8 @@ export interface IValueOperation<T> {
 	):
 		| { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata }
 		| undefined;
+
+	applyStashedOp(value: T, op: IValueTypeOperationValue): IMapMessageLocalMetadata;
 }
 
 /**
@@ -174,7 +181,7 @@ export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
 	(
 		event: "valueChanged" | "create",
 		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 }
 
 /**
@@ -225,7 +232,7 @@ export interface IValueTypeOperationValue {
 	/**
 	 * The name of the operation.
 	 */
-	opName: IntervalOpType;
+	opName: IntervalDeltaOpType;
 
 	/**
 	 * The payload that is submitted along with the operation.

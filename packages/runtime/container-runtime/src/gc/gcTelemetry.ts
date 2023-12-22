@@ -66,13 +66,20 @@ interface INodeUsageProps extends ICommonProps {
 }
 
 /**
- * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector. There are 4 types of
- * telemetry logged:
+ * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector.
+ *
+ * These events are not logged as errors, just generic events, since there can be false positives:
+ *
  * 1. inactiveObject telemetry - When an inactive node is used - A node that has been unreferenced for inactiveTimeoutMs.
- * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for sweepTimeoutMs.
- * 3. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
- * 4. Sweep / deleted telemetry - When a node is detected as sweep ready in the sweep phase.
- * 5. Unknown outbound reference telemetry - When a node is referenced but GC is not explicitly notified of it.
+ * 2. tombstoneReadyObject telemetry - When a tombstone-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs.
+ * 3. sweepReadyObject telemetry - When a sweep-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs + sweepGracePeriodMs.
+ *
+ * These events are logged as errors since they are based on the core GC logic:
+ *
+ * 1. Tombstone telemetry - When a tombstoned node is used - A node that has been marked as tombstone.
+ * 2. Unknown outbound reference telemetry - When a node is referenced but GC was not notified of it when the new reference appeared.
+ *
+ * Note: The telemetry for a Deleted node being used is logged elsewhere in this package.
  */
 export class GCTelemetryTracker {
 	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
@@ -142,6 +149,21 @@ export class GCTelemetryTracker {
 
 		const nodeStateTracker = this.getNodeStateTracker(nodeUsageProps.id);
 		const nodeType = this.getNodeType(nodeUsageProps.id);
+		const timeout = (() => {
+			switch (nodeStateTracker?.state) {
+				case UnreferencedState.Inactive:
+					return this.configs.inactiveTimeoutMs;
+				case UnreferencedState.TombstoneReady:
+					return this.configs.tombstoneTimeoutMs;
+				case UnreferencedState.SweepReady:
+					return (
+						this.configs.tombstoneTimeoutMs &&
+						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
+					);
+				default:
+					return undefined;
+			}
+		})();
 		const {
 			usageType,
 			currentReferenceTimestampMs,
@@ -159,10 +181,7 @@ export class GCTelemetryTracker {
 					? nodeUsageProps.currentReferenceTimestampMs -
 					  nodeStateTracker.unreferencedTimestampMs
 					: -1,
-			timeout:
-				nodeStateTracker?.state === UnreferencedState.Inactive
-					? this.configs.inactiveTimeoutMs
-					: this.configs.sweepTimeoutMs,
+			timeout,
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
 			...propsToLog,
 			...this.createContainerMetadata,
@@ -228,13 +247,9 @@ export class GCTelemetryTracker {
 					gcConfigs,
 				};
 
-				// Do not log the inactive object x events as error events as they are not the best signal for
-				// detecting something wrong with GC either from the partner or from the runtime itself.
-				if (state === UnreferencedState.Inactive) {
-					this.mc.logger.sendTelemetryEvent(event);
-				} else {
-					this.mc.logger.sendErrorEvent(event);
-				}
+				// These are logged as generic events and not errors because there can be false positives. The Tombstone
+				// and Delete errors are separately logged and are reliable.
+				this.mc.logger.sendTelemetryEvent(event);
 			}
 		}
 	}
@@ -382,11 +397,9 @@ export class GCTelemetryTracker {
 					}),
 				};
 
-				if (state === UnreferencedState.Inactive) {
-					logger.sendTelemetryEvent(event);
-				} else {
-					logger.sendErrorEvent(event);
-				}
+				// These are logged as generic events and not errors because there can be false positives. The Tombstone
+				// and Delete errors are separately logged and are reliable.
+				logger.sendTelemetryEvent(event);
 			}
 		}
 		this.pendingEventsQueue = [];

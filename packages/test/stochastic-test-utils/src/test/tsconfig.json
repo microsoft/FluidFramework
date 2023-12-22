@@ -1,14 +1,19 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
-	"compilerOptions": {
-		"rootDir": "./",
-		"outDir": "../../dist/test",
-		"types": ["node", "mocha"],
-	},
+	"extends": [
+		"../../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../../common/build/build-common/tsconfig.test.json",
+	],
 	"include": ["./**/*"],
 	"references": [
 		{
 			"path": "../..",
 		},
 	],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../dist/test",
+		"types": ["node", "mocha"],
+		// test types are used in downstream projects, so we need to generate them
+		"declaration": true,
+	},
 }

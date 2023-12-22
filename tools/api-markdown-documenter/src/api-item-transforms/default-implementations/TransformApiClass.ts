@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 import {
-	ApiCallSignature,
-	ApiClass,
-	ApiConstructor,
-	ApiIndexSignature,
-	ApiItem,
+	type ApiCallSignature,
+	type ApiClass,
+	type ApiConstructor,
+	type ApiIndexSignature,
+	type ApiItem,
 	ApiItemKind,
-	ApiMethod,
-	ApiProperty,
+	type ApiMethod,
+	type ApiProperty,
 } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
+import { type SectionNode } from "../../documentation-domain";
 import { ApiModifier, filterByKind, isStatic } from "../../utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { filterChildMembers } from "../ApiItemTransformUtilities";
 
 /**
  * Default documentation transform for `Class` items.
@@ -64,9 +65,8 @@ export function transformApiClass(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	const hasAnyChildren = apiClass.members.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterChildMembers(apiClass, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructors = filterByKind(apiClass.members, [ApiItemKind.Constructor]).map(
 			(apiItem) => apiItem as ApiConstructor,
