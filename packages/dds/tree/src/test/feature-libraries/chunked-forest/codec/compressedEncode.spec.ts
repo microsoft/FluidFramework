@@ -55,9 +55,7 @@ import { cursorForJsonableTreeField } from "../../../../feature-libraries";
 import { fieldKinds } from "../../../../feature-libraries/default-schema";
 // eslint-disable-next-line import/no-internal-modules
 import { FieldBatch } from "../../../../feature-libraries/chunked-forest";
-import { ICodecOptions, IJsonCodec } from "../../../../codec";
-// eslint-disable-next-line import/no-internal-modules
-import { makeVersionedValidatedCodec } from "../../../../feature-libraries/versioned";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 

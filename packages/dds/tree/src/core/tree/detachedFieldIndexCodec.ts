@@ -3,49 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { fail, forEachInNestedMap, setInNestedMap } from "../../util";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
+import { forEachInNestedMap, setInNestedMap } from "../../util";
 import { ForestRootId } from "./detachedFieldIndex";
-import { Format, Versioned, version } from "./detachedFieldIndexFormat";
+import { Format, version } from "./detachedFieldIndexFormat";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
 
-export function makeDetachedNodeToFieldCodec({
-	jsonValidator: validator,
-}: ICodecOptions): IJsonCodec<DetachedFieldSummaryData, string> {
-	const versionedValidator = validator.compile(Versioned);
-	const formatValidator = validator.compile(Format);
-	return {
-		encode: (data: DetachedFieldSummaryData): string => {
+export function makeDetachedNodeToFieldCodec(
+	options: ICodecOptions,
+): IJsonCodec<DetachedFieldSummaryData, Format> {
+	return makeVersionedValidatedCodec(options, new Set([version]), Format, {
+		encode: (data: DetachedFieldSummaryData): Format => {
 			const detachedNodeToFieldData: [Major, Minor, ForestRootId][] = [];
 			forEachInNestedMap(data.data, (root, key1, key2) => {
 				detachedNodeToFieldData.push([key1, key2, root]);
 			});
-			const encoded = {
+			const encoded: Format = {
 				version,
 				data: detachedNodeToFieldData,
 				maxId: data.maxId,
 			};
-			assert(
-				versionedValidator.check(encoded),
-				0x7ff /* Encoded detachedNodeToField data should be versioned */,
-			);
-			assert(formatValidator.check(encoded), 0x800 /* Encoded schema should validate */);
-			return JSON.stringify(encoded);
+			return encoded;
 		},
-		decode: (data: string): DetachedFieldSummaryData => {
-			const parsed = JSON.parse(data);
-
-			if (!versionedValidator.check(parsed)) {
-				fail("invalid serialized data: did not have a version");
-			}
-			// When more versions exist, we can switch on the version here.
-			if (parsed.version !== version) {
-				fail("Unexpected version for serialized data");
-			}
-			if (!formatValidator.check(parsed)) {
-				fail("Serialized data failed validation");
-			}
+		decode: (parsed: Format): DetachedFieldSummaryData => {
 			const map = new Map();
 			for (const [major, minor, root] of parsed.data) {
 				setInNestedMap(map, major, minor, root);
@@ -55,5 +35,5 @@ export function makeDetachedNodeToFieldCodec({
 				maxId: parsed.maxId,
 			};
 		},
-	};
+	});
 }
