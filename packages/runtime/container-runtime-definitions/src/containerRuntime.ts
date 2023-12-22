@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type AttachState, type IDeltaManager, type ILoaderOptions } from "@fluidframework/container-definitions";
+import {
+	type AttachState,
+	type IDeltaManager,
+	type ILoaderOptions,
+} from "@fluidframework/container-definitions";
 import {
 	type IEventProvider,
 	type IRequest,
