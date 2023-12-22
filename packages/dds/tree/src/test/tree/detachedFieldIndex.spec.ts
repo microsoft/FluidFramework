@@ -13,6 +13,7 @@ import {
 	brand,
 	generateStableId,
 	idAllocatorFromMaxId,
+	useDeterministicStableId,
 } from "../../util";
 import { typeboxValidator } from "../../external-utilities";
 // eslint-disable-next-line import/no-internal-modules
@@ -20,6 +21,7 @@ import { Format } from "../../core/tree/detachedFieldIndexFormat";
 // eslint-disable-next-line import/no-internal-modules
 import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec";
 import { RevisionTagCodec } from "../../shared-tree-core";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots";
 
 const malformedData: [string, JsonCompatibleReadOnly][] = [
 	[
@@ -201,6 +203,20 @@ describe("DetachedFieldIndex", () => {
 						new RevisionTagCodec(),
 					);
 					assert.throws(() => detachedFieldIndex.loadData(data), "malformed data");
+				});
+			}
+		});
+	});
+	describe("Snapshots", () => {
+		useSnapshotDirectory("detached-field-index");
+		const codec = makeDetachedNodeToFieldCodec(new RevisionTagCodec(), {
+			jsonValidator: typeboxValidator,
+		});
+		useDeterministicStableId(() => {
+			for (const { name, data: change } of generateTestCases()) {
+				it(name, () => {
+					const encoded = codec.encode(change);
+					takeJsonSnapshot(encoded as JsonCompatibleReadOnly);
 				});
 			}
 		});
