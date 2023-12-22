@@ -13,20 +13,12 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"default": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"main": "lib/index.js",
