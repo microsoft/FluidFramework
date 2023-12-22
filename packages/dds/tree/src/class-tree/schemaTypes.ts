@@ -6,17 +6,24 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
 import { FlexListToUnion, LazyItem } from "../feature-libraries";
-import { Unhydrated, TreeMapNodeBase } from "../simple-tree";
+import { Unhydrated, TreeMapNodeBase, TreeNode } from "../simple-tree";
 
 /**
  * Helper used to produce types for object nodes.
- * @beta
+ * @public
  */
 export type ObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = {
 	-readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
+
+/**
+ * Helper used to produce types for object nodes.
+ * @public
+ */
+export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> =
+	object & TreeNode & ObjectFromSchemaRecord<T>;
 
 /**
  * Helper used to produce types for:
@@ -28,7 +35,7 @@ export type ObjectFromSchemaRecord<
  * 3. Union of 1 and 2.
  *
  * TODO: consider separating these cases into different types.
- * @beta
+ * @public
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
@@ -44,7 +51,7 @@ export type InsertableObjectFromSchemaRecord<
  * @typeParam TBuild - Data which can be used to construct an unhydrated node of this type.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
- * @beta
+ * @public
  */
 export type TreeNodeSchema<
 	Name extends string = string,
@@ -62,7 +69,7 @@ export type TreeNodeSchema<
  * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
  * @privateRemarks
  * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
- * @beta
+ * @public
  */
 export interface TreeNodeSchemaNonClass<
 	out Name extends string = string,
@@ -82,7 +89,7 @@ export interface TreeNodeSchemaNonClass<
  *
  * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
  * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
- * @beta
+ * @public
  */
 export interface TreeNodeSchemaClass<
 	out Name extends string = string,
@@ -103,7 +110,7 @@ export interface TreeNodeSchemaClass<
 
 /**
  * Data common to all tree node schema.
- * @beta
+ * @public
  */
 export interface TreeNodeSchemaCore<
 	out Name extends string,
@@ -129,13 +136,13 @@ export interface TreeNodeSchemaCore<
 
 /**
  * Types for use in fields.
- * @beta
+ * @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
  * Kind of a field on a node.
- * @beta
+ * @public
  */
 export enum FieldKind {
 	/**
@@ -154,7 +161,7 @@ export enum FieldKind {
 
 /**
  * Kind of tree node.
- * @beta
+ * @public
  */
 export enum NodeKind {
 	/**
@@ -182,7 +189,7 @@ export enum NodeKind {
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * @sealed @beta
+ * @sealed @public
  */
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
@@ -209,20 +216,20 @@ export class FieldSchema<
  * Types allowed in a field.
  * @remarks
  * Implicitly treats a single type as an array of one type.
- * @beta
+ * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 /**
  * Schema for a field of a tree node.
  * @remarks
  * Implicitly treats {@link ImplicitAllowedTypes} as a Required field of that type.
- * @beta
+ * @public
  */
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
  * Converts ImplicitFieldSchema to the corresponding tree node's field type.
- * @beta
+ * @public
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
 	TSchema extends FieldSchema<infer Kind, infer Types>
@@ -233,7 +240,7 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
- * @beta
+ * @public
  */
 export type InsertableTreeFieldFromImplicitField<
 	TSchema extends ImplicitFieldSchema = FieldSchema,
@@ -246,7 +253,7 @@ export type InsertableTreeFieldFromImplicitField<
 /**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
- * @beta
+ * @public
  */
 export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required
 	? T
@@ -254,7 +261,7 @@ export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Requir
 
 /**
  * Type of of tree node for a field of the given schema.
- * @beta
+ * @public
  */
 export type TreeNodeFromImplicitAllowedTypes<
 	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
@@ -266,7 +273,7 @@ export type TreeNodeFromImplicitAllowedTypes<
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
- * @beta
+ * @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypes<
 	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
@@ -278,7 +285,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
- * @beta
+ * @public
  */
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,
@@ -291,7 +298,7 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 /**
  * Data which can be used as a node to be inserted.
  * Either an unhydrated node, or content to build a new node.
- * @beta
+ * @public
  */
 export type InsertableTypedNode<T extends TreeNodeSchema> =
 	| (T extends { implicitlyConstructable: true } ? NodeBuilderData<T> : never)
@@ -304,7 +311,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * This could be changed if needed.
  *
  * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
- * @beta
+ * @public
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,
@@ -318,9 +325,9 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 /**
  * A map of string keys to tree objects.
  *
- * @beta
+ * @public
  */
-export interface TreeMapNode<T extends ImplicitAllowedTypes>
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeMapNodeBase<
 		TreeNodeFromImplicitAllowedTypes<T>,
 		InsertableTreeNodeFromImplicitAllowedTypes<T>
@@ -328,7 +335,33 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes>
 
 /**
  * Value that may be stored as a leaf node.
- * @beta
+ * @public
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
+
+/**
+ * The type of a {@link TreeNode}.
+ * For moore information about the type, use `Tree.schema(theNode)` instead.
+ * @remarks
+ * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
+ * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
+ *
+ * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where nodes are expected.
+ * Instead construct a real node of the desired type using its constructor.
+ * @privateRemarks
+ * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
+ * @public
+ */
+export const type: unique symbol = Symbol("TreeNode Type");
+
+/**
+ * Adds a {@link "type"} field.
+ * @public
+ */
+export interface WithType<TName extends string = string> {
+	/**
+	 * {@inheritdoc "type"}
+	 */
+	get [type](): TName;
+}

@@ -66,12 +66,6 @@
                                     },
                                     "cellId": {
                                       "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
                                       "revision": "beefbeef-beef-4000-8000-000000000015"
                                     }
                                   }
@@ -106,12 +100,6 @@
                                     },
                                     "cellId": {
                                       "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
                                       "revision": "beefbeef-beef-4000-8000-000000000016"
                                     }
                                   }
@@ -299,8 +287,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {

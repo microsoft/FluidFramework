@@ -19,7 +19,7 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./alpha": {
@@ -29,7 +29,7 @@
 			},
 			"require": {
 				"types": "./dist/debugger-alpha.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
@@ -39,17 +39,17 @@
 			},
 			"require": {
 				"types": "./dist/debugger-beta.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/debugger-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/debugger-untrimmed.d.ts",
-				"default": "./dist/index.cjs"
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		},
 		"./public": {
@@ -59,11 +59,11 @@
 			},
 			"require": {
 				"types": "./dist/debugger-public.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -85,7 +85,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -99,11 +99,11 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/build-tools": "0.29.0-225750",
 		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.0.0-internal.8.0.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",

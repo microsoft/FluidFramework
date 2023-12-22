@@ -3,28 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypes } from "../feature-libraries";
 import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../class-tree";
-import { InsertableTreeNodeUnion } from "./insertable";
-import { TreeArrayNodeBase, TreeNode, TreeNodeUnion } from "./types";
+import { TreeArrayNodeBase, TreeNode } from "./types";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- */
-export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
-	extends TreeArrayNodeBase<
-		TreeNodeUnion<TTypes>,
-		InsertableTreeNodeUnion<TTypes>,
-		TreeListNodeOld
-	> {}
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @beta
+ * @public
  */
 export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeNode,
@@ -36,7 +24,7 @@ export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedT
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @beta
+ * @public
  */
 export const TreeArrayNode = {
 	/**
@@ -54,13 +42,14 @@ export const TreeArrayNode = {
 
 /**
  * Non-exported symbol used to make IterableTreeListContent constructable only from within this file.
+ * @public
  */
-const create = Symbol("Create IterableTreeListContent");
+export const create = Symbol("Create IterableTreeListContent");
 
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
  * Use {@link (TreeArrayNode:variable).inline} to create an instance of this type.
- * @beta
+ * @public
  */
 export class IterableTreeListContent<T> implements Iterable<T> {
 	private constructor(private readonly content: Iterable<T>) {}

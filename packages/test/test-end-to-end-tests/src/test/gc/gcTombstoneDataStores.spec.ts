@@ -39,14 +39,15 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const remainingTimeUntilSweepMs = 100;
 	const tombstoneTimeoutMs = 200;
 	assert(

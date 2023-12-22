@@ -19,7 +19,7 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./alpha": {
@@ -29,7 +29,7 @@
 			},
 			"require": {
 				"types": "./dist/odsp-client-alpha.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
@@ -39,17 +39,17 @@
 			},
 			"require": {
 				"types": "./dist/odsp-client-beta.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/odsp-client-untrimmed.d.mts",
+				"types": "./lib/index.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/odsp-client-untrimmed.d.ts",
-				"default": "./dist/index.cjs"
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		},
 		"./public": {
@@ -59,11 +59,11 @@
 			},
 			"require": {
 				"types": "./dist/odsp-client-public.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
 			}
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -75,7 +75,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
-		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -89,7 +89,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --exit --timeout 10000",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json"
+		"tsc": "tsc"
 	},
 	"c8": {
 		"all": true,
@@ -128,10 +128,10 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",

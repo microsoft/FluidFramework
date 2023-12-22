@@ -417,20 +417,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public findTile(
-		position: number,
-		tileType: DocTile,
-		preceding: boolean,
-	): { tile: ReferencePosition; pos: number } {
-		return this.sharedString.findTile(position, tileType as unknown as string, preceding);
+	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean) {
+		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
 	public findParagraph(position: number) {
-		const maybeStart = this.findTile(position, DocTile.paragraph, /* preceding: */ true);
-		const start = maybeStart ? maybeStart.pos : 0;
+		const maybeStart = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ true);
+		const start = maybeStart
+			? this.sharedString.localReferencePositionToPosition(maybeStart)
+			: 0;
 
-		const maybeEnd = this.findTile(position, DocTile.paragraph, /* preceding: */ false);
-		const end = maybeEnd ? maybeEnd.pos + 1 : this.length;
+		const maybeEnd = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ false);
+		const end = maybeEnd
+			? this.sharedString.localReferencePositionToPosition(maybeEnd) + 1
+			: this.length;
 
 		return { start, end };
 	}
