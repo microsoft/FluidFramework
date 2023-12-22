@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
+import { TSchema, Type, ObjectOptions, Static } from "@sinclair/typebox";
 import { SessionId } from "@fluidframework/id-compressor";
 import { Brand, brandedNumberType } from "../util";
 import { SessionIdSchema, RevisionTag, RevisionTagSchema, EncodedRevisionTag } from "../core";

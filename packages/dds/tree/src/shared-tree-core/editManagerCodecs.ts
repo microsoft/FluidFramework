@@ -13,7 +13,13 @@ import {
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core";
 import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
 import { SummaryData } from "./editManager";
-import { Commit, EncodedCommit, EncodedEditManager, version } from "./editManagerFormat";
+import {
+	Commit,
+	EncodedCommit,
+	EncodedEditManager,
+	SequencedCommit,
+	version,
+} from "./editManagerFormat";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<
@@ -70,12 +76,16 @@ export function makeEditManagerCodec<TChangeset>(
 			return json;
 		},
 		decode: (json: EncodedEditManager<TChangeset>): SummaryData<TChangeset> => {
+			// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
+			const trunk: readonly any[] = json.trunk;
 			return {
-				trunk: json.trunk.map((commit) =>
-					// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-					decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
-						originatorId: commit.sessionId,
-					}),
+				trunk: trunk.map(
+					(commit): SequencedCommit<TChangeset> =>
+						// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+						decodeCommit(commit, {
+							originatorId: commit.sessionId,
+						}),
 				),
 				branches: new Map(
 					mapIterable(json.branches, ([sessionId, branch]) => [
