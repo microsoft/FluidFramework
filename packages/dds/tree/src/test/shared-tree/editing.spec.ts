@@ -19,6 +19,7 @@ import {
 	AnchorNode,
 	EmptyKey,
 	ProtoNodes,
+	TreeNavigationResult,
 } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import {
@@ -243,7 +244,7 @@ describe("Editing", () => {
 
 				const expected = [...startingState];
 				expected.splice(index, 1);
-				expectJsonTree([tree, tree1, tree2, tree3], expected);
+				expectJsonTree([tree, tree1, tree2, tree3], expected, true);
 			}
 		});
 
@@ -2159,6 +2160,69 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
+		describe("Transactions", () => {
+			// Exercises a scenario where a transaction's inverse must be computed as part of a rebase sandwich.
+			it("Can rebase a series of edits including a transaction", () => {
+				const tree = makeTreeFromJson(["42"]);
+				const tree2 = tree.fork();
+
+				tree2.transaction.start();
+				tree2.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
+				tree2.editor.optionalField(rootField).set(singleJsonCursor("44"), false);
+				tree2.transaction.commit();
+
+				tree2.editor.optionalField(rootField).set(singleJsonCursor("45"), false);
+
+				tree.editor.optionalField(rootField).set(singleJsonCursor("46"), false);
+
+				tree2.rebaseOnto(tree);
+				tree.merge(tree2, false);
+
+				expectJsonTree([tree, tree2], ["45"]);
+			});
+
+			it("can rebase a transaction containing a node replacement and a dependent edit to the new node", () => {
+				const tree1 = makeTreeFromJson([]);
+				const tree2 = tree1.fork();
+
+				tree1.editor.optionalField(rootField).set(singleJsonCursor("41"), true);
+
+				tree2.transaction.start();
+				tree2.editor.optionalField(rootField).set(singleJsonCursor({ foo: "42" }), true);
+
+				expectJsonTree([tree1], ["41"]);
+				expectJsonTree([tree2], [{ foo: "42" }]);
+
+				tree2.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "43" }));
+
+				expectJsonTree([tree2], [{ foo: "43" }]);
+				tree2.transaction.commit();
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+
+				expectJsonTree([tree1, tree2], [{ foo: "43" }]);
+			});
+
+			it("Can set and delete a node within a transaction", () => {
+				const tree = makeTreeFromJson([]);
+				const tree2 = tree.fork();
+
+				tree2.transaction.start();
+				tree2.editor.optionalField(rootField).set(singleJsonCursor("42"), true);
+				tree2.editor.optionalField(rootField).set(undefined, false);
+				tree2.transaction.commit();
+
+				tree.editor.optionalField(rootField).set(singleJsonCursor("43"), true);
+
+				tree2.rebaseOnto(tree);
+				tree.merge(tree2, false);
+				expectJsonTree([tree, tree2], []);
+			});
+		});
+
 		it("can be registered a path visitor that can read new content being inserted into the tree when afterAttach is invoked", () => {
 			const tree = makeTreeFromJson({ foo: "A" });
 			const cursor = tree.forest.allocateCursor();
@@ -2207,6 +2271,23 @@ describe("Editing", () => {
 				.set(singleJsonCursor("43"), true);
 			assert.equal(valueAfterInsert, "43");
 			unsubscribePathVisitor();
+		});
+
+		// TODO:AB6664 - fix and re-enable the fuzz seed
+		it.skip("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
+			const tree = makeTreeFromJson([1]);
+			const fork = tree.fork();
+
+			tree.editor.optionalField(rootField).set(singleJsonCursor(2), false);
+
+			const { undoStack, redoStack } = createTestUndoRedoStacks(fork.events);
+			fork.editor.optionalField(rootField).set(undefined, false);
+			undoStack.pop()?.revert();
+			redoStack.pop()?.revert();
+
+			fork.rebaseOnto(tree);
+			tree.merge(fork, false);
+			expectJsonTree([fork, tree], []);
 		});
 	});
 
@@ -2688,6 +2769,54 @@ describe("Editing", () => {
 		restoreRoot.rebaseOnto(tree);
 		expectJsonTree(restoreRoot, [{}]);
 		unsubscribe();
+	});
+
+	describe("Anchors", () => {
+		it("anchors to content created on a branch survive rebasing of the branch", () => {
+			const tree = makeTreeFromJson({});
+			const branch = tree.fork();
+
+			branch.editor
+				.sequenceField({ parent: rootNode, field: brand("seq") })
+				.insert(0, singleJsonCursor(1));
+			branch.editor
+				.optionalField({ parent: rootNode, field: brand("opt") })
+				.set(singleJsonCursor(2), true);
+
+			let cursor = branch.forest.allocateCursor();
+			branch.forest.moveCursorToPath(
+				{ parent: rootNode, parentField: brand("seq"), parentIndex: 0 },
+				cursor,
+			);
+			const anchor1 = cursor.buildAnchor();
+			branch.forest.moveCursorToPath(
+				{ parent: rootNode, parentField: brand("opt"), parentIndex: 0 },
+				cursor,
+			);
+			const anchor2 = cursor.buildAnchor();
+			cursor.free();
+
+			tree.editor
+				.sequenceField({ parent: rootNode, field: brand("foo") })
+				.insert(0, singleJsonCursor(3));
+
+			tree.merge(branch, false);
+			branch.rebaseOnto(tree);
+			expectJsonTree([tree, branch], [{ seq: 1, opt: 2, foo: 3 }]);
+
+			cursor = branch.forest.allocateCursor();
+			assert.equal(
+				branch.forest.tryMoveCursorToNode(anchor1, cursor),
+				TreeNavigationResult.Ok,
+			);
+			assert.equal(cursor.value, 1);
+			assert.equal(
+				branch.forest.tryMoveCursorToNode(anchor2, cursor),
+				TreeNavigationResult.Ok,
+			);
+			assert.equal(cursor.value, 2);
+			cursor.free();
+		});
 	});
 
 	describe("Can abort transactions", () => {

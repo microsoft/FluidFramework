@@ -70,7 +70,6 @@ fluid-framework
 @fluidframework/core-interfaces
 @fluidframework/container-definitions
 @fluid-internal/client-utils
-@fluid-experimental/tree-react-api
 @fluid-experimental/react-inputs
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects

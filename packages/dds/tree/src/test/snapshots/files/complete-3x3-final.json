@@ -20,49 +20,37 @@
                         {
                           "schema": {
                             "new": {
-                              "version": "1.0.0",
-                              "nodeSchema": [
-                                {
-                                  "name": "com.fluidframework.leaf.boolean",
-                                  "objectNodeFields": [],
-                                  "leafValue": 2
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.boolean": {
+                                  "leaf": 2
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.handle",
-                                  "objectNodeFields": [],
-                                  "leafValue": 3
+                                "com.fluidframework.leaf.handle": {
+                                  "leaf": 3
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.null",
-                                  "objectNodeFields": [],
-                                  "leafValue": 4
+                                "com.fluidframework.leaf.null": {
+                                  "leaf": 4
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.number",
-                                  "objectNodeFields": [],
-                                  "leafValue": 0
+                                "com.fluidframework.leaf.number": {
+                                  "leaf": 0
                                 },
-                                {
-                                  "name": "com.fluidframework.leaf.string",
-                                  "objectNodeFields": [],
-                                  "leafValue": 1
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
                                 },
-                                {
-                                  "name": "test trees.TestInner",
-                                  "mapFields": {
+                                "test trees.TestInner": {
+                                  "map": {
                                     "kind": "Sequence"
-                                  },
-                                  "objectNodeFields": []
+                                  }
                                 }
-                              ],
-                              "rootFieldSchema": {
+                              },
+                              "root": {
                                 "kind": "Sequence"
                               }
                             },
                             "old": {
-                              "version": "1.0.0",
-                              "nodeSchema": [],
-                              "rootFieldSchema": {
+                              "version": 1,
+                              "nodes": {},
+                              "root": {
                                 "kind": "Forbidden",
                                 "types": []
                               }
@@ -101,8 +89,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  0,
-                                  0
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -111,8 +103,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -148,9 +139,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -171,15 +162,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -188,8 +183,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -226,9 +220,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -252,15 +246,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  2,
-                                  0
+                                  [
+                                    [
+                                      2,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -269,8 +267,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -307,9 +304,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -333,15 +330,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  3,
-                                  0
+                                  [
+                                    [
+                                      3,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -350,8 +351,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -388,9 +388,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -411,15 +411,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  4,
-                                  0
+                                  [
+                                    [
+                                      4,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -428,8 +432,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -466,9 +469,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -492,15 +495,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  5,
-                                  0
+                                  [
+                                    [
+                                      5,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -509,8 +516,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -547,9 +553,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -573,15 +579,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  6,
-                                  0
+                                  [
+                                    [
+                                      6,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -590,8 +600,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -628,9 +637,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -651,15 +660,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  7,
-                                  0
+                                  [
+                                    [
+                                      7,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -668,8 +681,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -706,9 +718,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -732,15 +744,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  8,
-                                  0
+                                  [
+                                    [
+                                      8,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -749,8 +765,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -787,9 +802,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -813,15 +828,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  9,
-                                  0
+                                  [
+                                    [
+                                      9,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -830,8 +849,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -888,8 +906,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  10,
-                                  0
+                                  [
+                                    [
+                                      10,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -898,8 +920,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -935,9 +956,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -958,15 +979,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  11,
-                                  0
+                                  [
+                                    [
+                                      11,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -975,8 +1000,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1013,9 +1037,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1039,15 +1063,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  12,
-                                  0
+                                  [
+                                    [
+                                      12,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1056,8 +1084,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1094,9 +1121,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1120,15 +1147,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  13,
-                                  0
+                                  [
+                                    [
+                                      13,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1137,8 +1168,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1175,9 +1205,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1198,15 +1228,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  14,
-                                  0
+                                  [
+                                    [
+                                      14,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1215,8 +1249,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1253,9 +1286,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1279,15 +1312,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  15,
-                                  0
+                                  [
+                                    [
+                                      15,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1296,8 +1333,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1334,9 +1370,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1360,15 +1396,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  16,
-                                  0
+                                  [
+                                    [
+                                      16,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1377,8 +1417,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1415,9 +1454,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -1438,15 +1477,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  17,
-                                  0
+                                  [
+                                    [
+                                      17,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1455,8 +1498,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1493,9 +1535,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -1519,15 +1561,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  18,
-                                  0
+                                  [
+                                    [
+                                      18,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1536,8 +1582,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1574,9 +1619,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -1600,15 +1645,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  19,
-                                  0
+                                  [
+                                    [
+                                      19,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1617,8 +1666,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1675,8 +1723,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  20,
-                                  0
+                                  [
+                                    [
+                                      20,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1685,8 +1737,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1722,9 +1773,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1745,15 +1796,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  21,
-                                  0
+                                  [
+                                    [
+                                      21,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1762,8 +1817,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1800,9 +1854,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1826,15 +1880,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  22,
-                                  0
+                                  [
+                                    [
+                                      22,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1843,8 +1901,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1881,9 +1938,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -1907,15 +1964,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  23,
-                                  0
+                                  [
+                                    [
+                                      23,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -1924,8 +1985,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -1962,9 +2022,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -1985,15 +2045,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  24,
-                                  0
+                                  [
+                                    [
+                                      24,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2002,8 +2066,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2040,9 +2103,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2066,15 +2129,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  25,
-                                  0
+                                  [
+                                    [
+                                      25,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2083,8 +2150,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2121,9 +2187,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2147,15 +2213,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  26,
-                                  0
+                                  [
+                                    [
+                                      26,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2164,8 +2234,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2202,9 +2271,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -2225,15 +2294,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  27,
-                                  0
+                                  [
+                                    [
+                                      27,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2242,8 +2315,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2280,9 +2352,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -2306,15 +2378,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  28,
-                                  0
+                                  [
+                                    [
+                                      28,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2323,8 +2399,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2361,9 +2436,9 @@
                                 "fieldKey": "FieldA",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -2387,15 +2462,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  29,
-                                  0
+                                  [
+                                    [
+                                      29,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2404,8 +2483,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2459,8 +2537,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  30,
-                                  0
+                                  [
+                                    [
+                                      30,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2469,8 +2551,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2506,9 +2587,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -2529,15 +2610,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  31,
-                                  0
+                                  [
+                                    [
+                                      31,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2546,8 +2631,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2584,9 +2668,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -2610,15 +2694,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  32,
-                                  0
+                                  [
+                                    [
+                                      32,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2627,8 +2715,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2665,9 +2752,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -2691,15 +2778,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  33,
-                                  0
+                                  [
+                                    [
+                                      33,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2708,8 +2799,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2746,9 +2836,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2769,15 +2859,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  34,
-                                  0
+                                  [
+                                    [
+                                      34,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2786,8 +2880,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2824,9 +2917,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2850,15 +2943,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  35,
-                                  0
+                                  [
+                                    [
+                                      35,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2867,8 +2964,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2905,9 +3001,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -2931,15 +3027,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  36,
-                                  0
+                                  [
+                                    [
+                                      36,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -2948,8 +3048,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -2986,9 +3085,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3009,15 +3108,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  37,
-                                  0
+                                  [
+                                    [
+                                      37,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3026,8 +3129,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3064,9 +3166,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3090,15 +3192,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  38,
-                                  0
+                                  [
+                                    [
+                                      38,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3107,8 +3213,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3145,9 +3250,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3171,15 +3276,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  39,
-                                  0
+                                  [
+                                    [
+                                      39,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3188,8 +3297,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3246,8 +3354,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  40,
-                                  0
+                                  [
+                                    [
+                                      40,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3256,8 +3368,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3293,9 +3404,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -3316,15 +3427,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  41,
-                                  0
+                                  [
+                                    [
+                                      41,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3333,8 +3448,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3371,9 +3485,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -3397,15 +3511,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  42,
-                                  0
+                                  [
+                                    [
+                                      42,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3414,8 +3532,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3452,9 +3569,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -3478,15 +3595,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  43,
-                                  0
+                                  [
+                                    [
+                                      43,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3495,8 +3616,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3533,9 +3653,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -3556,15 +3676,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  44,
-                                  0
+                                  [
+                                    [
+                                      44,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3573,8 +3697,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3611,9 +3734,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -3637,15 +3760,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  45,
-                                  0
+                                  [
+                                    [
+                                      45,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3654,8 +3781,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3692,9 +3818,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -3718,15 +3844,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  46,
-                                  0
+                                  [
+                                    [
+                                      46,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3735,8 +3865,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3773,9 +3902,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3796,15 +3925,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  47,
-                                  0
+                                  [
+                                    [
+                                      47,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3813,8 +3946,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3851,9 +3983,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3877,15 +4009,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  48,
-                                  0
+                                  [
+                                    [
+                                      48,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3894,8 +4030,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -3932,9 +4067,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -3958,15 +4093,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  49,
-                                  0
+                                  [
+                                    [
+                                      49,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -3975,8 +4114,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4033,8 +4171,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  50,
-                                  0
+                                  [
+                                    [
+                                      50,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4043,8 +4185,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4080,9 +4221,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4103,15 +4244,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  51,
-                                  0
+                                  [
+                                    [
+                                      51,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4120,8 +4265,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4158,9 +4302,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4184,15 +4328,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  52,
-                                  0
+                                  [
+                                    [
+                                      52,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4201,8 +4349,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4239,9 +4386,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4265,15 +4412,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  53,
-                                  0
+                                  [
+                                    [
+                                      53,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4282,8 +4433,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4320,9 +4470,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -4343,15 +4493,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  54,
-                                  0
+                                  [
+                                    [
+                                      54,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4360,8 +4514,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4398,9 +4551,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -4424,15 +4577,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  55,
-                                  0
+                                  [
+                                    [
+                                      55,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4441,8 +4598,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4479,9 +4635,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -4505,15 +4661,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  56,
-                                  0
+                                  [
+                                    [
+                                      56,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4522,8 +4682,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4560,9 +4719,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -4583,15 +4742,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  57,
-                                  0
+                                  [
+                                    [
+                                      57,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4600,8 +4763,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4638,9 +4800,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -4664,15 +4826,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  58,
-                                  0
+                                  [
+                                    [
+                                      58,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4681,8 +4847,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4719,9 +4884,9 @@
                                 "fieldKey": "FieldB",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -4745,15 +4910,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  59,
-                                  0
+                                  [
+                                    [
+                                      59,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4762,8 +4931,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4817,8 +4985,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  60,
-                                  0
+                                  [
+                                    [
+                                      60,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4827,8 +4999,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4864,9 +5035,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4887,15 +5058,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  61,
-                                  0
+                                  [
+                                    [
+                                      61,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4904,8 +5079,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -4942,9 +5116,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -4968,15 +5142,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  62,
-                                  0
+                                  [
+                                    [
+                                      62,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -4985,8 +5163,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5023,9 +5200,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5049,15 +5226,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  63,
-                                  0
+                                  [
+                                    [
+                                      63,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5066,8 +5247,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5104,9 +5284,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5127,15 +5307,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  64,
-                                  0
+                                  [
+                                    [
+                                      64,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5144,8 +5328,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5182,9 +5365,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5208,15 +5391,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  65,
-                                  0
+                                  [
+                                    [
+                                      65,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5225,8 +5412,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5263,9 +5449,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5289,15 +5475,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  66,
-                                  0
+                                  [
+                                    [
+                                      66,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5306,8 +5496,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5344,9 +5533,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -5367,15 +5556,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  67,
-                                  0
+                                  [
+                                    [
+                                      67,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5384,8 +5577,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5422,9 +5614,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -5448,15 +5640,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  68,
-                                  0
+                                  [
+                                    [
+                                      68,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5465,8 +5661,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5503,9 +5698,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -5529,15 +5724,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  69,
-                                  0
+                                  [
+                                    [
+                                      69,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5546,8 +5745,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5604,8 +5802,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  70,
-                                  0
+                                  [
+                                    [
+                                      70,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5614,8 +5816,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5651,9 +5852,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5674,15 +5875,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  71,
-                                  0
+                                  [
+                                    [
+                                      71,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5691,8 +5896,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5729,9 +5933,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5755,15 +5959,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  72,
-                                  0
+                                  [
+                                    [
+                                      72,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5772,8 +5980,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5810,9 +6017,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -5836,15 +6043,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  73,
-                                  0
+                                  [
+                                    [
+                                      73,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5853,8 +6064,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5891,9 +6101,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5914,15 +6124,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  74,
-                                  0
+                                  [
+                                    [
+                                      74,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -5931,8 +6145,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -5969,9 +6182,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -5995,15 +6208,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  75,
-                                  0
+                                  [
+                                    [
+                                      75,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6012,8 +6229,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6050,9 +6266,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6076,15 +6292,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  76,
-                                  0
+                                  [
+                                    [
+                                      76,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6093,8 +6313,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6131,9 +6350,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6154,15 +6373,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  77,
-                                  0
+                                  [
+                                    [
+                                      77,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6171,8 +6394,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6209,9 +6431,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6235,15 +6457,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  78,
-                                  0
+                                  [
+                                    [
+                                      78,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6252,8 +6478,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6290,9 +6515,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 1,
-                                    "nodeChange": {
+                                  [
+                                    1,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6316,15 +6541,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  79,
-                                  0
+                                  [
+                                    [
+                                      79,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6333,8 +6562,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6391,8 +6619,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  80,
-                                  0
+                                  [
+                                    [
+                                      80,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6401,8 +6633,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6438,9 +6669,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -6461,15 +6692,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  81,
-                                  0
+                                  [
+                                    [
+                                      81,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6478,8 +6713,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6516,9 +6750,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -6542,15 +6776,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  82,
-                                  0
+                                  [
+                                    [
+                                      82,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6559,8 +6797,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6597,9 +6834,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldA",
@@ -6623,15 +6860,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  83,
-                                  0
+                                  [
+                                    [
+                                      83,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6640,8 +6881,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6678,9 +6918,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6701,15 +6941,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  84,
-                                  0
+                                  [
+                                    [
+                                      84,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6718,8 +6962,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6756,9 +6999,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6782,15 +7025,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  85,
-                                  0
+                                  [
+                                    [
+                                      85,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6799,8 +7046,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6837,9 +7083,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldB",
@@ -6863,15 +7109,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  86,
-                                  0
+                                  [
+                                    [
+                                      86,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6880,8 +7130,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6918,9 +7167,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -6941,15 +7190,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  87,
-                                  0
+                                  [
+                                    [
+                                      87,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -6958,8 +7211,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -6996,9 +7248,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -7022,15 +7274,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  88,
-                                  0
+                                  [
+                                    [
+                                      88,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -7039,8 +7295,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -7077,9 +7332,9 @@
                                 "fieldKey": "FieldC",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 2,
-                                    "nodeChange": {
+                                  [
+                                    2,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "FieldC",
@@ -7103,15 +7358,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  89,
-                                  0
+                                  [
+                                    [
+                                      89,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -7120,8 +7379,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -7165,42 +7423,30 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": "1.0.0",
-                  "nodeSchema": [
-                    {
-                      "name": "com.fluidframework.leaf.boolean",
-                      "objectNodeFields": [],
-                      "leafValue": 2
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.boolean": {
+                      "leaf": 2
                     },
-                    {
-                      "name": "com.fluidframework.leaf.handle",
-                      "objectNodeFields": [],
-                      "leafValue": 3
+                    "com.fluidframework.leaf.handle": {
+                      "leaf": 3
                     },
-                    {
-                      "name": "com.fluidframework.leaf.null",
-                      "objectNodeFields": [],
-                      "leafValue": 4
+                    "com.fluidframework.leaf.null": {
+                      "leaf": 4
                     },
-                    {
-                      "name": "com.fluidframework.leaf.number",
-                      "objectNodeFields": [],
-                      "leafValue": 0
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
                     },
-                    {
-                      "name": "com.fluidframework.leaf.string",
-                      "objectNodeFields": [],
-                      "leafValue": 1
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
                     },
-                    {
-                      "name": "test trees.TestInner",
-                      "mapFields": {
+                    "test trees.TestInner": {
+                      "map": {
                         "kind": "Sequence"
-                      },
-                      "objectNodeFields": []
+                      }
                     }
-                  ],
-                  "rootFieldSchema": {
+                  },
+                  "root": {
                     "kind": "Sequence"
                   }
                 },
@@ -7229,8 +7475,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {

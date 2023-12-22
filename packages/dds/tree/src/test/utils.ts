@@ -99,9 +99,8 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
-	DeltaProtoNode,
 } from "../core";
-import { JsonCompatible, brand } from "../util";
+import { JsonCompatible, brand, nestedMapFromFlatList } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import {
@@ -525,16 +524,22 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	}
 }
 
-export function noRepair(): DeltaProtoNode[] {
-	assert.fail("Unexpected request for repair data");
-}
-
 export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
 }
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
+
+export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]) {
+	if (trees.length > 1) {
+		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());
+		for (const tree of trees.slice(1)) {
+			const actual = nestedMapFromFlatList(tree.getRemovedRoots());
+			assert.deepEqual(actual, baseline);
+		}
+	}
+}
 
 /**
  * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
@@ -580,8 +585,16 @@ export function validateViewConsistency(
 	idDifferentiator: string | undefined = undefined,
 ): void {
 	validateSnapshotConsistency(
-		{ tree: toJsonableTree(treeA), schema: treeA.storedSchema },
-		{ tree: toJsonableTree(treeB), schema: treeB.storedSchema },
+		{
+			tree: toJsonableTree(treeA),
+			schema: treeA.storedSchema,
+			removed: treeA.getRemovedRoots(),
+		},
+		{
+			tree: toJsonableTree(treeB),
+			schema: treeB.storedSchema,
+			removed: treeA.getRemovedRoots(),
+		},
 		idDifferentiator,
 	);
 }
@@ -594,7 +607,18 @@ export function validateSnapshotConsistency(
 	assert.deepEqual(
 		treeA.tree,
 		treeB.tree,
-		`Inconsistent json representation: ${idDifferentiator}`,
+		`Inconsistent document tree json representation: ${idDifferentiator}`,
+	);
+	// Note: removed trees are not currently GCed, which allows us to expect that all clients should share the same
+	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
+	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
+	// should be consistent about the content being stored (the third tuple entry).
+	const mapA = nestedMapFromFlatList(treeA.removed);
+	const mapB = nestedMapFromFlatList(treeB.removed);
+	assert.deepEqual(
+		mapA,
+		mapB,
+		`Inconsistent removed trees json representation: ${idDifferentiator}`,
 	);
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
@@ -762,11 +786,15 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 export function expectJsonTree(
 	actual: ITreeCheckout | ITreeCheckout[],
 	expected: JsonCompatible[],
+	expectRemovedRootsAreSynchronized = true,
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {
 		const roots = toJsonTree(tree);
 		assert.deepEqual(roots, expected);
+	}
+	if (expectRemovedRootsAreSynchronized) {
+		checkRemovedRootsAreSynchronized(trees);
 	}
 }
 

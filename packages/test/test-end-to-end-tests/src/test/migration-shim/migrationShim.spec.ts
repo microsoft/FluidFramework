@@ -20,7 +20,7 @@ import {
 import {
 	type ITree,
 	type TreeView,
-	TreeFactory,
+	SharedTree,
 	disposeSymbol,
 	SchemaFactory,
 	TreeConfiguration,
@@ -112,12 +112,13 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacyTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new TreeFactory({});
+	const newSharedTreeFactory = SharedTree.getFactory();
 	const migrationShimFactory = new MigrationShimFactory(
 		legacyTreeFactory,
 		newSharedTreeFactory,

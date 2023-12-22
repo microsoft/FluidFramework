@@ -53,7 +53,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * @alpha
+ * @internal
  */
 export function fail(message: string): never {
 	throw new Error(message);
@@ -199,7 +199,7 @@ export function* zipIterables<T, U>(
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatible =
 	| string
@@ -215,7 +215,7 @@ export type JsonCompatible =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
 
@@ -224,7 +224,7 @@ export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -309,7 +309,7 @@ export function assertNonNegativeSafeInteger(index: number) {
  * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
  * it will behave like `TInput` was used directly.
  *
- * @alpha
+ * @internal
  */
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
@@ -447,7 +447,7 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- * @alpha
+ * @internal
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
@@ -464,17 +464,31 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 /**
  * Type with a name describing what it is.
  * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- * @alpha
+ * @internal
  */
 export interface Named<TName> {
 	readonly name: TName;
 }
 
 /**
+ * Order {@link Named} objects by their name.
+ * @internal
+ */
+export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.
- * @beta
+ * @public
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
@@ -482,7 +496,7 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
  * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
- * @beta
+ * @public
  */
 export interface IDisposable {
 	/**

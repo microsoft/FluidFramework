@@ -82,7 +82,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * ```
  * @privateRemarks
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
- * @beta
+ * @public
  */
 export interface MakeNominal {}
 
@@ -95,7 +95,7 @@ export interface MakeNominal {}
  * protected _typeCheck?: Contravariant<T>;
  * ```
  *
- * @alpha
+ * @internal
  */
 export interface Contravariant<in T> {
 	_removeCovariance?: (_: T) => void;
@@ -110,7 +110,7 @@ export interface Contravariant<in T> {
  * protected _typeCheck?: Covariant<T>;
  * ```
  *
- * @alpha
+ * @internal
  */
 export interface Covariant<out T> {
 	_removeContravariance?: T;
@@ -125,7 +125,7 @@ export interface Covariant<out T> {
  * protected _typeCheck?: Invariant<T>;
  * ```
  *
- * @alpha
+ * @internal
  */
 export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
 
@@ -134,7 +134,7 @@ export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
  * To use, simply define a type:
  * `type _check = requireTrue<your type check>;`
  *
- * @alpha
+ * @internal
  */
 export type requireTrue<_X extends true> = true;
 
@@ -143,7 +143,7 @@ export type requireTrue<_X extends true> = true;
  * To use, simply define a type:
  * `type _check = requireFalse<your type check>;`
  *
- * @alpha
+ * @internal
  */
 export type requireFalse<_X extends false> = true;
 
@@ -153,14 +153,14 @@ export type requireFalse<_X extends false> = true;
  * @privateRemarks
  * Use of [] in the extends clause prevents unions from being distributed over this conditional and returning `boolean` in some cases.
  * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
- * @alpha
+ * @internal
  */
 export type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
 
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
  *
- * @alpha
+ * @internal
  */
 export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
 	? false
@@ -172,7 +172,7 @@ export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> 
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
  * This is useful for checking if the output of a type meta-function is the expected type.
  *
- * @alpha
+ * @internal
  */
 export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 	? false
@@ -183,7 +183,7 @@ export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 /**
  * Returns a type parameter that is true iff A is any or B is any.
  *
- * @alpha
+ * @internal
  */
 export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
 
@@ -194,7 +194,7 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
  * Only `never` is assignable to `never` (`any` isn't),
  * but `any` distributes over the `extends` here while nothing else should.
  * This can be used to detect `any`.
- * @alpha
+ * @internal
  */
 export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
@@ -203,6 +203,6 @@ export type isAny<T> = boolean extends (T extends never ? true : false) ? true :
  * To use, simply define a type:
  * `type _check = requireAssignableTo<T, Expected>;`
  *
- * @alpha
+ * @internal
  */
 export type requireAssignableTo<_A extends B, B> = true;

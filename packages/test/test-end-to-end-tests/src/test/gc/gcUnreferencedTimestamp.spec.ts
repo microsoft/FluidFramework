@@ -8,7 +8,6 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
@@ -28,7 +27,9 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Validates that the unreferenced timestamp is correctly set in the GC summary tree. Also, the timestamp is removed
  * when an unreferenced node becomes referenced again.
  */
-describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;

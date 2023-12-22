@@ -87,6 +87,7 @@ export {
 	DiscardResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
+	ErasedTreeNodeSchemaDataFormat,
 } from "./core";
 
 export {
@@ -125,7 +126,7 @@ export {
 export { leaf } from "./domains";
 
 export {
-	FieldKind,
+	FieldKind as FlexFieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
@@ -151,12 +152,11 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	EditableTreeEvents,
-	InternalTypedSchemaTypes,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
-	AllowedTypes,
+	AllowedTypes as FlexAllowedTypes,
 	TreeNodeSchema as FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
@@ -198,7 +198,7 @@ export {
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema as FlexImplicitFieldSchema,
-	ImplicitAllowedTypes,
+	ImplicitAllowedTypes as FlexImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -221,6 +221,9 @@ export {
 	NormalizeFieldSchema,
 	Fields,
 	MapFieldSchema,
+	ArrayToUnion,
+	ExtractItemType,
+	LazyItem,
 } from "./feature-libraries";
 
 export {
@@ -229,6 +232,8 @@ export {
 	Unhydrated,
 	IterableTreeListContent,
 	TreeNode,
+	TreeArrayNodeBase,
+	create,
 } from "./simple-tree";
 
 export {
@@ -268,8 +273,25 @@ export {
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
+	type,
+	WithType,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	ImplicitAllowedTypes,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeKind,
+	ObjectFromSchemaRecord,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
 
-	// experimental @alpha APIs:
+	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
@@ -279,17 +301,13 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 } from "./class-tree";
-export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
+export { SharedTree, TreeFactory } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
 
-// Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalTypes from "./internal";
-export { InternalTypes };
-
-// These would be in InternalTypes above but are `@alpha` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
+// TODO: When previously tagged '@internal', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
 export {
 	Invariant,
 	Contravariant,
@@ -306,6 +324,10 @@ export {
 	AllowOptionalNotFlattened,
 	isAny,
 	BrandedKeyContent,
+	ErasedType,
+	Erased,
+	RestrictiveReadonlyRecord,
+	MakeNominal,
 } from "./util";
 
 export {
@@ -327,6 +349,8 @@ export {
 	TypedFields,
 	UnbrandedName,
 	EmptyObject,
+	FlexList,
+	FlexListToUnion,
 
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
