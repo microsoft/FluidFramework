@@ -6,12 +6,14 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { CursorLocationType, ITreeCursorSynchronous, StoredSchemaCollection } from "../../../core";
 import { JsonCompatibleReadOnly } from "../../../util";
-import { ICodecOptions, IJsonCodec } from "../../../codec";
+import {
+	ICodecOptions,
+	IJsonCodec,
+	IJsonCodecWithContext,
+	makeVersionedValidatedCodec,
+} from "../../../codec";
 import { FullSchemaPolicy } from "../../modular-schema";
-// eslint-disable-next-line import/no-internal-modules
-import { IJsonCodecWithContext } from "../../../codec/codec";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils";
-import { makeVersionedValidatedCodec } from "../../versioned";
 import { EncodedFieldBatch, validVersions } from "./format";
 import { decode } from "./chunkDecoding";
 import { schemaCompressedEncode } from "./schemaBasedEncoding";

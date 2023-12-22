@@ -43,8 +43,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:snapshots": "cross-env MOCHA_SPEC=./dist/test/snapshots mocha",
-		"test:snapshots:regen": "cross-env MOCHA_SPEC=./dist/test/snapshots mocha -- --snapshot",
+		"test:snapshots:regen": "npm run test:mocha -- --snapshot",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\" -r @fluidframework/mocha-test-setup",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
@@ -83,8 +82,8 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@sinclair/typebox": "^0.29.4",
+		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"@ungap/structured-clone": "^1.2.0",
-		"sorted-btree": "^1.8.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

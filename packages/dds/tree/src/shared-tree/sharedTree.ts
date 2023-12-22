@@ -25,7 +25,7 @@ import {
 	rootFieldKey,
 	schemaDataIsEmpty,
 } from "../core";
-import { SharedTreeCore } from "../shared-tree-core";
+import { RevisionTagCodec, SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	ForestSummarizer,
@@ -183,7 +183,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedRoots = makeDetachedFieldIndex("repair", options);
+		const removedRoots = makeDetachedFieldIndex("repair", options, new RevisionTagCodec());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
