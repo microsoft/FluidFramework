@@ -29,8 +29,3 @@ export const Format = Type.Object(
 );
 
 export type Format = Static<typeof Format>;
-
-export const Versioned = Type.Object({
-	version: Type.Number(),
-});
-export type Versioned = Static<typeof Versioned>;

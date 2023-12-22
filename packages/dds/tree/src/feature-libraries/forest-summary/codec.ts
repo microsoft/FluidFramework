@@ -4,10 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec } from "../../codec";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
 import { FieldKey, ITreeCursorSynchronous } from "../../core";
 import { FieldBatchCodec } from "../chunked-forest";
-import { makeVersionedValidatedCodec } from "../versioned";
 import { Format } from "./format";
 
 /**

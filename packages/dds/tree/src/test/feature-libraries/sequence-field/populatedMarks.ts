@@ -9,12 +9,11 @@ import { brand, Populated } from "../../../util";
 import { ChangeAtomId } from "../../../core";
 import { TestChange } from "../../testChange";
 // eslint-disable-next-line import/no-internal-modules
-import { CellMark } from "../../../feature-libraries/sequence-field";
+import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field";
 import {
 	Attach,
 	Detach,
 	DetachIdOverride,
-	DetachIdOverrideType,
 	MarkEffect,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types";

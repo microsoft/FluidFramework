@@ -6,10 +6,9 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { CursorLocationType, StoredSchemaCollection } from "../../../core";
 import { JsonCompatibleReadOnly } from "../../../util";
-import { ICodecOptions, IJsonCodec } from "../../../codec";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec";
 import { FullSchemaPolicy } from "../../modular-schema";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils";
-import { makeVersionedValidatedCodec } from "../../versioned";
 import { EncodedFieldBatch, validVersions } from "./format";
 import { decode } from "./chunkDecoding";
 import { schemaCompressedEncode } from "./schemaBasedEncoding";

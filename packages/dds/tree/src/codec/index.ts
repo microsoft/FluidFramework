@@ -20,3 +20,4 @@ export {
 } from "./codec";
 export { DiscriminatedUnionDispatcher, unionOptions } from "./discriminatedUnions";
 export { noopValidator } from "./noopValidator";
+export { Versioned, makeVersionedCodec, makeVersionedValidatedCodec } from "./versioned";

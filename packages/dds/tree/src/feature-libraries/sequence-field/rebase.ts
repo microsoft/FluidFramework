@@ -60,7 +60,6 @@ import {
 	MoveOut,
 	MoveIn,
 	LineageEvent,
-	DetachIdOverrideType,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -75,6 +74,7 @@ import {
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
 import { CellOrderingMethod, sequenceConfig } from "./config";
+import { DetachIdOverrideType } from "./format";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.

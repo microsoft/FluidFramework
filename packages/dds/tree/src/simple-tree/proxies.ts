@@ -29,6 +29,7 @@ import {
 	onNextChange,
 	typeNameSymbol,
 	isFluidHandle,
+	FlexTreeField,
 } from "../feature-libraries";
 import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
@@ -38,16 +39,16 @@ import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKind, TreeMapNode } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeArrayNode } from "./treeListNode";
-import { TreeField, TreeObjectNode, Unhydrated, TreeNode } from "./types";
+import { Unhydrated, TreeNode, TypedNode } from "./types";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode";
 
-/** Retrieve the associated proxy for the given field. */
-export function getProxyForField<TSchema extends TreeFieldSchema>(
-	field: FlexTreeTypedField<TSchema>,
-): TreeField<TSchema> {
+/**
+ * Retrieve the associated proxy for the given field.
+ * */
+export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
 			const asValue = field as FlexTreeTypedField<
@@ -57,7 +58,7 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
-			return getOrCreateNodeProxy(asValue.boxedContent) as TreeField<TSchema>;
+			return getOrCreateNodeProxy(asValue.boxedContent);
 		}
 		case FieldKinds.optional: {
 			const asValue = field as FlexTreeTypedField<
@@ -72,9 +73,7 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 
 			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
 			// root field is a special case where the field is always present (even if empty).
-			return (
-				maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent)
-			) as TreeField<TSchema>;
+			return maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent);
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
@@ -168,7 +167,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 	allowAdditionalProperties: boolean,
 	targetObject: object = {},
-): TreeObjectNode<TSchema> {
+): TreeNode {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
 	// as a way to quickly reject objects with different prototype chains.
@@ -190,7 +189,9 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 		},
 		set(target, key, value: InsertableContent) {
 			const flexNode = getFlexNode(proxy);
-			const fieldSchema = flexNode.schema.objectNodeFields.get(key as FieldKey);
+			const flexNodeSchema = flexNode.schema;
+			assert(flexNodeSchema instanceof ObjectNodeSchema, "invalid schema");
+			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, key, value) : false;
@@ -260,7 +261,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 
 			return p;
 		},
-	}) as TreeObjectNode<TSchema>;
+	}) as TreeNode;
 	return proxy;
 }
 
@@ -752,7 +753,7 @@ const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
  * If not provided `new Map()` is used for the target and a separate object created to dispatch map methods.
  * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide the map functionality from {@link mapPrototype}.
  */
-function createMapProxy<TSchema extends MapNodeSchema>(
+function createMapProxy(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
 ): TreeMapNode {
@@ -762,8 +763,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(
 		Object.create(mapPrototype, {
 			// Empty - JavaScript Maps do not expose any "own" properties.
 		});
-	const targetObject: object =
-		customTargetObject ?? new Map<string, TreeField<TSchema["info"], "notEmpty">>();
+	const targetObject: object = customTargetObject ?? new Map<string, TreeNode>();
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
@@ -807,7 +807,7 @@ export function createRawNodeProxy<TSchema extends ObjectNodeSchema>(
 	content: InsertableTypedNode<TSchema>,
 	allowAdditionalProperties: boolean,
 	target?: object,
-): Unhydrated<TreeObjectNode<TSchema>>;
+): Unhydrated<TypedNode<TSchema>>;
 export function createRawNodeProxy<TSchema extends FieldNodeSchema>(
 	schema: TSchema,
 	content: InsertableTypedNode<TSchema>,

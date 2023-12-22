@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { TSchema } from "@sinclair/typebox";
-import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../../codec";
+import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec";
 import { JsonCompatibleReadOnly } from "../../util";
 import { Versioned } from "./format";
 
