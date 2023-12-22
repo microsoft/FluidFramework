@@ -115,11 +115,16 @@ export function encodeFieldShapes(
 	fields: readonly KeyedFieldEncoder[],
 	identifiers: DeduplicationTable<string>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-): EncodedFieldShape[] {
-	return fields.map((field) => ({
-		key: encodeIdentifier(field.key, identifiers),
-		shape: shapes.valueToIndex.get(field.shape.shape) ?? fail("missing shape"),
-	}));
+): EncodedFieldShape[] | undefined {
+	if (fields.length === 0) {
+		return undefined;
+	}
+	return fields.map((field) => [
+		// key
+		encodeIdentifier(field.key, identifiers),
+		// shape
+		shapes.valueToIndex.get(field.shape.shape) ?? fail("missing shape"),
+	]);
 }
 
 function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<string>) {

@@ -5,7 +5,7 @@
 
 import { Static, Type } from "@sinclair/typebox";
 import { schemaFormat } from "../../core";
-import { Versioned } from "../versioned";
+import { Versioned } from "../../codec";
 
 export const version = 1.0;
 
