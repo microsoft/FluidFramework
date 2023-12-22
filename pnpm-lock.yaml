@@ -17,9 +17,6 @@ patchedDependencies:
   socket.io-client@4.7.2:
     hash: p7f5djbjd3zgfisasebtom74n4
     path: patches/socket.io-client@4.7.2.patch
-  sorted-btree@1.8.1:
-    hash: cke7rqeapbr7ujdurvmvspbbsq
-    path: patches/sorted-btree@1.8.1.patch
   tsc-multi@1.1.0:
     hash: bwju7gmfuwum2ryv7w6vqpkpiy
     path: patches/tsc-multi@1.1.0.patch
@@ -5677,7 +5674,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sorted-btree: ^1.8.0
+      sorted-btree: npm:@tylerbu/sorted-btree-es6@^1.8.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -5695,7 +5692,7 @@ importers:
       buffer: 6.0.3
       denque: 1.5.1
       lru-cache: 6.0.0
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: /@tylerbu/sorted-btree-es6/1.8.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7247,7 +7244,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sorted-btree: ^1.8.0
+      sorted-btree: npm:@tylerbu/sorted-btree-es6@^1.8.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7264,7 +7261,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@sinclair/typebox': 0.29.6
       '@ungap/structured-clone': 1.2.0
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: /@tylerbu/sorted-btree-es6/1.8.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9259,7 +9256,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      sorted-btree: ^1.8.0
+      sorted-btree: npm:@tylerbu/sorted-btree-es6@^1.8.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9280,7 +9277,7 @@ importers:
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lz4js: 0.2.0
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: /@tylerbu/sorted-btree-es6/1.8.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9500,7 +9497,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sorted-btree: ^1.8.0
+      sorted-btree: npm:@tylerbu/sorted-btree-es6@^1.8.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9509,7 +9506,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: /@tylerbu/sorted-btree-es6/1.8.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -15688,7 +15685,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       '@sinclair/typebox': 0.29.6
       '@ungap/structured-clone': 1.2.0
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: 1.8.1
       uuid: 9.0.1
     transitivePeerDependencies:
       - debug
@@ -16433,7 +16430,7 @@ packages:
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lz4js: 0.2.0
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: 1.8.1
       uuid: 9.0.1
     transitivePeerDependencies:
       - debug
@@ -16459,7 +16456,7 @@ packages:
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lz4js: 0.2.0
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: 1.8.1
       uuid: 9.0.1
     transitivePeerDependencies:
       - debug
@@ -16778,7 +16775,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
       '@fluidframework/core-utils': 2.0.0-internal.8.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
-      sorted-btree: 1.8.1_cke7rqeapbr7ujdurvmvspbbsq
+      sorted-btree: /@tylerbu/sorted-btree-es6/1.8.0
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
@@ -21738,6 +21735,9 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@tylerbu/sorted-btree-es6/1.8.0:
+    resolution: {integrity: sha512-qkwgE0G5OGn7F+1fMkFZLwyjc99xCy4kmQ8p7N0Jj540HD6xU0jTPjcqELogH4f5YGMPXLqd8sQ7uOYC0QRBeg==}
 
   /@types/argparse/1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
@@ -40745,9 +40745,9 @@ packages:
     resolution: {integrity: sha512-58eys3wXg05rI51Gg/90Uvc0id0aboGLSzHm4nFvuD0MofSg/y8cyJ7ZqYuZ1eyj6AA8XwFTGaXA+6tApsMv4w==}
     dev: true
 
-  /sorted-btree/1.8.1_cke7rqeapbr7ujdurvmvspbbsq:
+  /sorted-btree/1.8.1:
     resolution: {integrity: sha512-395+XIP+wqNn3USkFSrNz7G3Ss/MXlZEqesxvzCRFwL14h6e8LukDHdLBePn5pwbm5OQ9vGu8mDyz2lLDIqamQ==}
-    patched: true
+    dev: true
 
   /source-list-map/2.0.1:
     resolution: {integrity: sha512-qnQ7gVMxGNxsiL4lEuJwe/To8UnK7fAnmbGEEH8RpLouuKbeEm0lhbQVFIrNSuB+G7tVrAlVsZgETT5nljf+Iw==}
