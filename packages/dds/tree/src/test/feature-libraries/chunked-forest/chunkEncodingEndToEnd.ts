@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import {
 	ChangesetLocalId,
 	IEditableForest,
@@ -43,6 +44,21 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 
+const options = {
+	jsonValidator: typeboxValidator,
+	forest: ForestType.Optimized,
+	summaryEncodeType: TreeCompressionStrategy.Compressed,
+};
+
+const context = {
+	encodeType: options.summaryEncodeType,
+	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
+};
+
+const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
+const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+const idCompressor = createIdCompressor(sessionId);
+
 // TODO: Currently we split up a uniform chunk into several individual basicChunks for each node during op creation.
 // Therefore, there is currently no way for us to retrieve a uniform chunk from the tree for us to make the proper checks,
 // and the tests are expected to fail. The tests can be unskipped once uniform chunks can be inserted into the tree.
@@ -72,7 +88,9 @@ describe.skip("End to End chunked encoding", () => {
 				changeLog.push(change);
 			};
 			const dummyEditor = new DefaultEditBuilder(
-				new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
+				new DefaultChangeFamily(idCompressor, fieldBatchCodec, {
+					jsonValidator: typeboxValidator,
+				}),
 				changeReceiver,
 			);
 			return getTreeContext(
@@ -110,17 +128,9 @@ describe.skip("End to End chunked encoding", () => {
 
 		flexTree.editableTree.insertAt(0, chunk.cursor());
 
-		const options = {
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Optimized,
-			summaryEncodeType: TreeCompressionStrategy.Compressed,
-		};
-		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
-			new TreeStoredSchemaRepository(intoStoredSchema(numberSequenceRootSchema)),
-			defaultSchemaPolicy,
-			options.summaryEncodeType,
+			idCompressor,
 			fieldBatchCodec,
 			options,
 		);
@@ -150,17 +160,9 @@ describe.skip("End to End chunked encoding", () => {
 			),
 		});
 
-		const options = {
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Optimized,
-			summaryEncodeType: TreeCompressionStrategy.Compressed,
-		};
-		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
-			new TreeStoredSchemaRepository(intoStoredSchema(numberSequenceRootSchema)),
-			defaultSchemaPolicy,
-			options.summaryEncodeType,
+			idCompressor,
 			fieldBatchCodec,
 			options,
 		);
