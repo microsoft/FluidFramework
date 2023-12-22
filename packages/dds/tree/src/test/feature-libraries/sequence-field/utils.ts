@@ -350,9 +350,7 @@ export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 		if (isDetach(cloned) || isAttachAndDetachEffect(cloned)) {
 			const detach = isAttachAndDetachEffect(cloned) ? cloned.detach : cloned;
 			if (detach.idOverride !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				delete detach.idOverride.id.lineage;
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				delete detach.idOverride.id.adjacentCells;
 			}
 		}
