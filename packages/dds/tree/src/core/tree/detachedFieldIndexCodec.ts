@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
-import { brand } from "../../util";
 import { EncodedRevisionTag, RevisionTag } from "../rebase";
 import { EncodedRootsForRevision, Format, RootRanges, version } from "./detachedFieldIndexFormat";
 import { DetachedFieldSummaryData } from "./detachedFieldIndexTypes";
