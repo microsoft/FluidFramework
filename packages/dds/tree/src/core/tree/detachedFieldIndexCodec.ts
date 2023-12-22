@@ -4,11 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../rebase";
-import { EncodedRootsForRevision, Format, RootRanges, version } from "./detachedFieldIndexFormat";
-import { DetachedFieldSummaryData } from "./detachedFieldIndexTypes";
-import { ForestRootId } from "./detachedFieldIndex";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../rebase/index.js";
+import {
+	EncodedRootsForRevision,
+	Format,
+	RootRanges,
+	version,
+} from "./detachedFieldIndexFormat.js";
+import { DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
+import { ForestRootId } from "./detachedFieldIndex.js";
 
 export function makeDetachedNodeToFieldCodec(
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag> | undefined,

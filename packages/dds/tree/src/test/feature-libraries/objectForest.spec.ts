@@ -8,13 +8,13 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { buildForest } from "../../feature-libraries/object-forest";
-import { FieldKey, initializeForest, rootFieldKey } from "../../core";
-import { JsonCompatible, brand } from "../../util";
+import { buildForest } from "../../feature-libraries/object-forest/index.js";
+import { FieldKey, initializeForest, rootFieldKey } from "../../core/index.js";
+import { JsonCompatible, brand } from "../../util/index.js";
 
-import { testForest } from "../forestTestSuite";
-import { singleJsonCursor } from "../../domains";
-import { cursorForMapTreeNode } from "../../feature-libraries";
+import { testForest } from "../forestTestSuite.js";
+import { singleJsonCursor } from "../../domains/index.js";
+import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 
 describe("object-forest", () => {
 	testForest({

@@ -23,16 +23,16 @@ import {
 	typeNameSymbol,
 	FlexTreeSchema,
 	intoStoredSchema,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/chunked-forest/chunkedForest";
+} from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/object-forest/objectForest";
-import { brand, disposeSymbol, fail, TransactionResult } from "../../util";
+} from "../../feature-libraries/object-forest/objectForest.js";
+import { brand, disposeSymbol, fail, TransactionResult } from "../../util/index.js";
 import {
 	SharedTreeTestFactory,
 	SummarizeType,
@@ -48,7 +48,7 @@ import {
 	validateTreeContent,
 	validateViewConsistency,
 	checkoutWithContent,
-} from "../utils";
+} from "../utils.js";
 import {
 	ForestType,
 	ISharedTree,
@@ -59,7 +59,7 @@ import {
 	SharedTreeFactory,
 	TreeContent,
 	runSynchronous,
-} from "../../shared-tree";
+} from "../../shared-tree/index.js";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -70,11 +70,11 @@ import {
 	moveToDetachedField,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
-} from "../../core";
-import { typeboxValidator } from "../../external-utilities";
-import { EditManager } from "../../shared-tree-core";
-import { leaf, SchemaBuilder } from "../../domains";
-import { SchemaFactory, TreeConfiguration } from "../../class-tree";
+} from "../../core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { EditManager } from "../../shared-tree-core/index.js";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree/index.js";
 
 const fooKey: FieldKey = brand("foo");
 

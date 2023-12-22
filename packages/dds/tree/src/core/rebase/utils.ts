@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Mutable } from "../../util";
+import { Mutable } from "../../util/index.js";
 import {
 	ChangeRebaser,
 	RevisionInfo,
@@ -13,8 +13,8 @@ import {
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
-} from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
+} from "./changeRebaser.js";
+import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.

@@ -18,16 +18,16 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../core";
-import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
-import { SharedTreeBranch, getChangeReplaceType } from "./branch";
-import { EditManagerSummarizer } from "./editManagerSummarizer";
-import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
-import { SeqNumber } from "./editManagerFormat";
-import { DecodedMessage } from "./messageTypes";
-import { makeMessageCodec } from "./messageCodecs";
-import { RevisionTagCodec } from "./revisionTagCodecs";
+import { ICodecOptions, IJsonCodec } from "../codec/index.js";
+import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../core/index.js";
+import { brand, JsonCompatibleReadOnly, generateStableId } from "../util/index.js";
+import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
+import { EditManagerSummarizer } from "./editManagerSummarizer.js";
+import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import { SeqNumber } from "./editManagerFormat.js";
+import { DecodedMessage } from "./messageTypes.js";
+import { makeMessageCodec } from "./messageCodecs.js";
+import { RevisionTagCodec } from "./revisionTagCodecs.js";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;

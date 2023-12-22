@@ -9,10 +9,10 @@ import {
 	ChangeRebaser,
 	ChangeFamilyEditor,
 	mintRevisionTag,
-} from "../../core";
-import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange";
-import { Commit, EditManager } from "../../shared-tree-core";
-import { brand, makeArray } from "../../util";
+} from "../../core/index.js";
+import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange.js";
+import { Commit, EditManager } from "../../shared-tree-core/index.js";
+import { brand, makeArray } from "../../util/index.js";
 
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 

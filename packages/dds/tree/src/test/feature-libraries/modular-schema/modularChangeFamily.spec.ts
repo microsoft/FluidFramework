@@ -20,7 +20,7 @@ import {
 	TreeChunk,
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	makeDetachedNodeId,
@@ -38,29 +38,29 @@ import {
 	DeltaFieldChanges,
 	DeltaRoot,
 	DeltaDetachedNodeId,
-} from "../../../core";
-import { brand, fail } from "../../../util";
-import { makeCodecFamily } from "../../../codec";
-import { typeboxValidator } from "../../../external-utilities";
+} from "../../../core/index.js";
+import { brand, fail } from "../../../util/index.js";
+import { makeCodecFamily } from "../../../codec/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	EncodingTestData,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
 	testChangeReceiver,
-} from "../../utils";
+} from "../../utils.js";
 import {
 	ModularChangeFamily,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily";
-import { jsonObject, singleJsonCursor } from "../../../domains";
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
-import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
-import { RevisionTagCodec } from "../../../shared-tree-core";
-import { ValueChangeset, valueField } from "./basicRebasers";
+import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat.js";
+import { RevisionTagCodec } from "../../../shared-tree-core/index.js";
+import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),

@@ -4,20 +4,20 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions } from "../codec";
+import { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
 	TaggedChange,
 	mapTaggedChange,
-} from "../core";
-import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
-import { Mutable, fail } from "../util";
-import { RevisionTagCodec } from "../shared-tree-core";
-import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+} from "../core/index.js";
+import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries/index.js";
+import { Mutable, fail } from "../util/index.js";
+import { RevisionTagCodec } from "../shared-tree-core/index.js";
+import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.

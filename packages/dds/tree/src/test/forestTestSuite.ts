@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { RevisionTagCodec } from "../shared-tree-core";
+import { RevisionTagCodec } from "../shared-tree-core/index.js";
 import {
 	IEditableForest,
 	initializeForest,
@@ -30,7 +30,7 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	TreeStoredSchemaRepository,
-} from "../core";
+} from "../core/index.js";
 import {
 	cursorToJsonObject,
 	jsonSchema,
@@ -38,9 +38,15 @@ import {
 	singleJsonCursor,
 	SchemaBuilder,
 	leaf,
-} from "../domains";
-import { typeboxValidator } from "../external-utilities";
-import { IdAllocator, JsonCompatible, brand, idAllocatorFromMaxId, mapIterable } from "../util";
+} from "../domains/index.js";
+import { typeboxValidator } from "../external-utilities/index.js";
+import {
+	IdAllocator,
+	JsonCompatible,
+	brand,
+	idAllocatorFromMaxId,
+	mapIterable,
+} from "../util/index.js";
 import {
 	FieldKinds,
 	jsonableTreeFromCursor,
@@ -50,14 +56,14 @@ import {
 	cursorForTypedTreeData,
 	TreeFieldSchema,
 	intoStoredSchema,
-} from "../feature-libraries";
+} from "../feature-libraries/index.js";
 import {
 	applyTestDelta,
 	expectEqualFieldPaths,
 	expectEqualPaths,
 	jsonSequenceRootSchema,
-} from "./utils";
-import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite";
+} from "./utils.js";
+import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
 
 /**
  * Configuration for the forest test suite.

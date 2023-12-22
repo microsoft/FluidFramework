@@ -13,10 +13,10 @@ import {
 	compareLocalNodeKeys,
 	createMockNodeKeyManager,
 	createNodeKeyManager,
-} from "../../../feature-libraries";
-import { TestTreeProvider } from "../../utils";
+} from "../../../feature-libraries/index.js";
+import { TestTreeProvider } from "../../utils.js";
 
-import { ISharedTree } from "../../../shared-tree";
+import { ISharedTree } from "../../../shared-tree/index.js";
 
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily } from "../../codec";
-import { ChangeRebaser } from "../rebase";
+import { ICodecFamily } from "../../codec/index.js";
+import { ChangeRebaser } from "../rebase/index.js";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;

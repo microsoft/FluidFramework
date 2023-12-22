@@ -15,17 +15,17 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { ITreeViewFork, FlexTreeView } from "../../../shared-tree";
+import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+import { ITreeViewFork, FlexTreeView } from "../../../shared-tree/index.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
 	viewFromState,
-} from "./fuzzEditGenerators";
-import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers";
-import { fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+} from "./fuzzEditGenerators.js";
+import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers.js";
+import { fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree

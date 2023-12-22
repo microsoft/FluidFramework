@@ -14,10 +14,10 @@ import {
 	RangeUpPath,
 	UpPath,
 	topDownPath,
-} from "../core";
-import { Events, ISubscribable } from "../events";
-import { brand, getOrCreate } from "../util";
-import { FlexTreeNode } from "./flex-tree";
+} from "../core/index.js";
+import { Events, ISubscribable } from "../events/index.js";
+import { brand, getOrCreate } from "../util/index.js";
+import { FlexTreeNode } from "./flex-tree/index.js";
 
 // TODO:
 // Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.

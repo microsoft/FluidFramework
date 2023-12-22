@@ -4,10 +4,10 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec";
-import type { NodeChangeset } from "../modular-schema";
-import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
-import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import type { NodeChangeset } from "../modular-schema/index.js";
+import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
+import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 
 export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
 	childCodec: IJsonCodec<TChildChange>,

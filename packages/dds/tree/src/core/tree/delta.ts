@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../schema-stored";
-import { ITreeCursorSynchronous } from "./cursor";
+import { FieldKey } from "../schema-stored/index.js";
+import { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * This format describes changes that must be applied to a forest in order to update it.

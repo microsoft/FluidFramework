@@ -4,19 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeAtomId, mintRevisionTag } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { ChangeAtomId, mintRevisionTag } from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	areInputCellsEmpty,
 	splitMark,
 	tryMergeMarks,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/utils";
-import { brand } from "../../../util";
-import { deepFreeze } from "../../utils";
-import { TestChange } from "../../testChange";
-import { generatePopulatedMarks } from "./populatedMarks";
-import { describeForBothConfigs, withOrderingMethod } from "./utils";
+} from "../../../feature-libraries/sequence-field/utils.js";
+import { brand } from "../../../util/index.js";
+import { deepFreeze } from "../../utils.js";
+import { TestChange } from "../../testChange.js";
+import { generatePopulatedMarks } from "./populatedMarks.js";
+import { describeForBothConfigs, withOrderingMethod } from "./utils.js";
 
 const vestigialEndpoint: ChangeAtomId = { revision: mintRevisionTag(), localId: brand(42) };
 

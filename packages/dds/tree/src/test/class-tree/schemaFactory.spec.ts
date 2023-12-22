@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
+import { Tree, TreeConfiguration, TreeView } from "../../class-tree/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -16,15 +16,15 @@ import {
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaTypes";
+} from "../../class-tree/schemaTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaFactory";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
-import { TreeFactory } from "../../treeFactory";
-import { TreeNode } from "../../simple-tree";
+} from "../../class-tree/schemaFactory.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { TreeNode } from "../../simple-tree/index.js";
 
 {
 	const schema = new SchemaFactory("Blah");

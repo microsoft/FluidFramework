@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
 
-import { jsonObject, leaf, singleJsonCursor } from "../../domains";
+import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
 import {
 	rootFieldKey,
 	UpPath,
@@ -20,17 +20,17 @@ import {
 	EmptyKey,
 	ProtoNodes,
 	TreeNavigationResult,
-} from "../../core";
-import { JsonCompatible, brand, makeArray } from "../../util";
+} from "../../core/index.js";
+import { JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	makeTreeFromJson,
 	remove,
 	insert,
 	expectJsonTree,
 	createTestUndoRedoStacks,
-} from "../utils";
-import { ITreeCheckout } from "../../shared-tree";
-import { cursorForJsonableTreeNode } from "../../feature-libraries";
+} from "../utils.js";
+import { ITreeCheckout } from "../../shared-tree/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,

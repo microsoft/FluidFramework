@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IJsonCodec } from "../codec";
-import { EncodedRevisionTag, RevisionTag } from "../core";
+import { IJsonCodec } from "../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../core/index.js";
 
 export class RevisionTagCodec implements IJsonCodec<RevisionTag, EncodedRevisionTag> {
 	public encode(tag: RevisionTag) {

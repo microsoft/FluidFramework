@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { OptionalChangeset } from "../optional-field";
-import { ICodecFamily, ICodecOptions } from "../../codec";
+import { OptionalChangeset } from "../optional-field/index.js";
+import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -19,8 +19,8 @@ import {
 	DeltaRoot,
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
-} from "../../core";
-import { brand, isReadonlyArray } from "../../util";
+} from "../../core/index.js";
+import { brand, isReadonlyArray } from "../../util/index.js";
 import {
 	ModularChangeFamily,
 	ModularEditBuilder,
@@ -30,9 +30,9 @@ import {
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 	EditDescription,
-} from "../modular-schema";
-import { RevisionTagCodec } from "../../shared-tree-core";
-import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
+} from "../modular-schema/index.js";
+import { RevisionTagCodec } from "../../shared-tree-core/index.js";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 

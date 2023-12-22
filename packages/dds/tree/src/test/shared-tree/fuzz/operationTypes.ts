@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, JsonableTree } from "../../../core";
-import { DownPath } from "../../../feature-libraries";
+import { FieldKey, JsonableTree } from "../../../core/index.js";
+import { DownPath } from "../../../feature-libraries/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 

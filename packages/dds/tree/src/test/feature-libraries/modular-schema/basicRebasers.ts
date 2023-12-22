@@ -11,12 +11,12 @@ import {
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema";
-import { Mutable, fail } from "../../../util";
-import { makeCodecFamily, makeValueCodec } from "../../../codec";
-import { singleJsonCursor } from "../../../domains";
-import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core";
-import { Multiplicity } from "../../../feature-libraries";
+} from "../../../feature-libraries/modular-schema/index.js";
+import { Mutable, fail } from "../../../util/index.js";
+import { makeCodecFamily, makeValueCodec } from "../../../codec/index.js";
+import { singleJsonCursor } from "../../../domains/index.js";
+import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core/index.js";
+import { Multiplicity } from "../../../feature-libraries/index.js";
 
 /**
  * Picks the last value written.

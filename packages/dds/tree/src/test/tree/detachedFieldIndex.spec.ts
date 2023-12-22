@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { DetachedFieldIndex, ForestRootId } from "../../core";
+import { DetachedFieldIndex, ForestRootId } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes";
+import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
 import {
 	IdAllocator,
 	JsonCompatibleReadOnly,
@@ -14,14 +14,14 @@ import {
 	generateStableId,
 	idAllocatorFromMaxId,
 	useDeterministicStableId,
-} from "../../util";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../util/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Format } from "../../core/tree/detachedFieldIndexFormat";
+import { Format } from "../../core/tree/detachedFieldIndexFormat.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec";
-import { RevisionTagCodec } from "../../shared-tree-core";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots";
+import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
+import { RevisionTagCodec } from "../../shared-tree-core/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 
 const malformedData: [string, JsonCompatibleReadOnly][] = [
 	[

@@ -11,10 +11,10 @@ import {
 	SchemaFactoryRecursive,
 	TreeConfiguration,
 	TreeView,
-} from "../../class-tree";
-import { TreeFactory } from "../../treeFactory";
-import { areSafelyAssignable, disposeSymbol, requireTrue } from "../../util";
-import { ListRecursive, MapRecursive } from "./testRecursiveSchema";
+} from "../../class-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { areSafelyAssignable, disposeSymbol, requireTrue } from "../../util/index.js";
+import { ListRecursive, MapRecursive } from "./testRecursiveSchema.js";
 
 describe("Recursive Class based end to end example", () => {
 	it("test", () => {

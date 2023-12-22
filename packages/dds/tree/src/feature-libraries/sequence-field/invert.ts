@@ -4,9 +4,9 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
-import { IdAllocator, Mutable, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core/index.js";
+import { IdAllocator, Mutable, fail } from "../../util/index.js";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import {
 	Changeset,
 	Mark,
@@ -19,8 +19,8 @@ import {
 	MoveIn,
 	MarkEffect,
 	CellId,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
 import {
 	extractMarkEffect,
 	getDetachOutputId,
@@ -34,8 +34,8 @@ import {
 	normalizeCellRename,
 	splitMark,
 	withNodeChange,
-} from "./utils";
-import { DetachIdOverrideType } from "./format";
+} from "./utils.js";
+import { DetachIdOverrideType } from "./format.js";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 

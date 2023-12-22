@@ -8,8 +8,8 @@ import {
 	PlaceUpPath,
 	RangeUpPath,
 	UpPath,
-} from "./pathTree";
-import { ProtoNodes } from "./delta";
+} from "./pathTree.js";
+import { ProtoNodes } from "./delta.js";
 
 /**
  * Delta visitor for the path tree.

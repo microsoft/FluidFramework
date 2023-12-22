@@ -13,7 +13,7 @@ import {
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { ICodecOptions, noopValidator } from "../codec";
+import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	Compatibility,
 	FieldKey,
@@ -24,8 +24,8 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	schemaDataIsEmpty,
-} from "../core";
-import { RevisionTagCodec, SharedTreeCore } from "../shared-tree-core";
+} from "../core/index.js";
+import { RevisionTagCodec, SharedTreeCore } from "../shared-tree-core/index.js";
 import {
 	defaultSchemaPolicy,
 	ForestSummarizer,
@@ -46,9 +46,9 @@ import {
 	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
 	makeFieldBatchCodec,
-} from "../feature-libraries";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, disposeSymbol, fail } from "../util";
+} from "../feature-libraries/index.js";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import { brand, disposeSymbol, fail } from "../util/index.js";
 import {
 	ITree,
 	TreeConfiguration,
@@ -57,18 +57,18 @@ import {
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "../class-tree";
+} from "../class-tree/index.js";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
 	initializeContent,
 	schematize,
-} from "./schematizedTree";
-import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
-import { FlexTreeView, CheckoutFlexTreeView } from "./treeView";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+} from "./schematizedTree.js";
+import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
+import { FlexTreeView, CheckoutFlexTreeView } from "./treeView.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.

@@ -4,14 +4,14 @@
  */
 
 import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
-import { Brand, brand, brandedNumberType } from "../util";
+import { Brand, brand, brandedNumberType } from "../util/index.js";
 import {
 	SessionId,
 	SessionIdSchema,
 	RevisionTag,
 	RevisionTagSchema,
 	EncodedRevisionTag,
-} from "../core";
+} from "../core/index.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.

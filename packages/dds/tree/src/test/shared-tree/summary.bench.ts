@@ -14,11 +14,11 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { SharedTreeFactory, TreeContent } from "../../shared-tree";
-import { TestTreeProviderLite } from "../utils";
-import { AllowedUpdateType } from "../../core";
-import { typeboxValidator } from "../../external-utilities";
-import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees";
+import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
+import { TestTreeProviderLite } from "../utils.js";
+import { AllowedUpdateType } from "../../core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.

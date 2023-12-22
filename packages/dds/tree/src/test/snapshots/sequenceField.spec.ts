@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField } from "../../feature-libraries";
-import { RevisionTagCodec } from "../../shared-tree-core";
-import { useDeterministicStableId } from "../../util";
+import { SequenceField } from "../../feature-libraries/index.js";
+import { RevisionTagCodec } from "../../shared-tree-core/index.js";
+import { useDeterministicStableId } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { generatePopulatedMarks } from "../feature-libraries/sequence-field/populatedMarks";
-import { TestChange } from "../testChange";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
+import { generatePopulatedMarks } from "../feature-libraries/sequence-field/populatedMarks.js";
+import { TestChange } from "../testChange.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 
 describe("SequenceField - Snapshots", () => {
 	useSnapshotDirectory("sequence-field");

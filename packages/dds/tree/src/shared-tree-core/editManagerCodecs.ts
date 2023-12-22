@@ -4,11 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec, IMultiFormatCodec } from "../codec";
-import { EncodedRevisionTag, RevisionTag } from "../core";
-import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
-import { SummaryData } from "./editManager";
-import { Commit, EncodedCommit, EncodedEditManager } from "./editManagerFormat";
+import { ICodecOptions, IJsonCodec, IMultiFormatCodec } from "../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlySchema,
+	mapIterable,
+} from "../util/index.js";
+import { SummaryData } from "./editManager.js";
+import { Commit, EncodedCommit, EncodedEditManager } from "./editManagerFormat.js";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<TChangeset>,

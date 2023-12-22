@@ -4,12 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodecWithContext, makeVersionedValidatedCodec } from "../../codec";
-import { FieldKey, ITreeCursorSynchronous } from "../../core";
-import { FieldBatchCodec } from "../chunked-forest";
+import {
+	ICodecOptions,
+	IJsonCodecWithContext,
+	makeVersionedValidatedCodec,
+} from "../../codec/index.js";
+import { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
+import { FieldBatchCodec } from "../chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Context } from "../chunked-forest/codec/codecs";
-import { Format } from "./format";
+import { Context } from "../chunked-forest/codec/codecs.js";
+import { Format } from "./format.js";
 
 /**
  * Uses field cursors

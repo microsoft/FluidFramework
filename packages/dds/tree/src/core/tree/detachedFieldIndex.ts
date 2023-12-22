@@ -15,14 +15,14 @@ import {
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
-} from "../../util";
-import { FieldKey } from "../schema-stored";
-import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../rebase";
-import * as Delta from "./delta";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
-import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
-import { Format } from "./detachedFieldIndexFormat";
+} from "../../util/index.js";
+import { FieldKey } from "../schema-stored/index.js";
+import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../rebase/index.js";
+import * as Delta from "./delta.js";
+import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
+import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
+import { Format } from "./detachedFieldIndexFormat.js";
 
 /**
  * ID used to create a detached field key for a removed subtree.

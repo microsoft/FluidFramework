@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core";
-import { NodeChangeset } from "../modular-schema";
-import { DetachIdOverrideType } from "./format";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import { NodeChangeset } from "../modular-schema/index.js";
+import { DetachIdOverrideType } from "./format.js";
 
 export type CellCount = number;
 

@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { makeCodecFamily } from "../../codec";
-import { mintRevisionTag } from "../../core";
-import { typeboxValidator } from "../../external-utilities";
+import { makeCodecFamily } from "../../codec/index.js";
+import { mintRevisionTag } from "../../core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeMessageCodec } from "../../shared-tree-core/messageCodecs";
+import { makeMessageCodec } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DecodedMessage } from "../../shared-tree-core/messageTypes";
+import { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs";
-import { useDeterministicStableId } from "../../util";
-import { TestChange } from "../testChange";
-import { EncodingTestData, makeEncodingTestSuite } from "../utils";
+import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs.js";
+import { useDeterministicStableId } from "../../util/index.js";
+import { TestChange } from "../testChange.js";
+import { EncodingTestData, makeEncodingTestSuite } from "../utils.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),

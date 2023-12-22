@@ -13,8 +13,8 @@ import {
 	findCommonAncestor,
 	rebaseBranch,
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../core/rebase";
-import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange";
+} from "../../core/rebase/index.js";
+import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
 
 function newCommit(
 	intention: number | number[],

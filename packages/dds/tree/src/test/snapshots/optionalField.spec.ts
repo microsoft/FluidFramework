@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId } from "../../core";
+import { ChangesetLocalId } from "../../core/index.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/optional-field";
-import { RevisionTagCodec } from "../../shared-tree-core";
-import { brand, generateStableId, useDeterministicStableId } from "../../util";
-import { TestChange } from "../testChange";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
+} from "../../feature-libraries/optional-field/index.js";
+import { RevisionTagCodec } from "../../shared-tree-core/index.js";
+import { brand, generateStableId, useDeterministicStableId } from "../../util/index.js";
+import { TestChange } from "../testChange.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 
 function generateTestChangesets(): { name: string; change: OptionalChangeset<TestChange> }[] {
 	const revision = generateStableId();

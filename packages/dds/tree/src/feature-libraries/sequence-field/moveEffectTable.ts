@@ -4,12 +4,12 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
-import { RangeQueryResult, brand } from "../../util";
-import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types";
-import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
-import { MoveMarkEffect, tryGetVestigialEndpoint } from "./helperTypes";
+import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
+import { RangeQueryResult, brand } from "../../util/index.js";
+import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
+import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils.js";
+import { MoveMarkEffect, tryGetVestigialEndpoint } from "./helperTypes.js";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { FieldNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../feature-libraries";
+import { FieldNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type, WithType } from "../class-tree/schemaTypes";
-import { IterableTreeListContent } from "./treeListNode";
+import { type, WithType } from "../class-tree/schemaTypes.js";
+import { IterableTreeListContent } from "./treeListNode.js";
 
 /**
  * Type alias to document which values are un-hydrated.

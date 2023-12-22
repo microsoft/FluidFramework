@@ -10,7 +10,7 @@ import {
 	prefixPath,
 	prefixFieldPath,
 	Any,
-} from "../feature-libraries";
+} from "../feature-libraries/index.js";
 import {
 	FieldKey,
 	EmptyKey,
@@ -23,10 +23,10 @@ import {
 	compareFieldUpPaths,
 	FieldUpPath,
 	PathRootPrefix,
-} from "../core";
-import { brand } from "../util";
-import { SchemaBuilder, leaf } from "../domains";
-import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
+} from "../core/index.js";
+import { brand } from "../util/index.js";
+import { SchemaBuilder, leaf } from "../domains/index.js";
+import { expectEqualFieldPaths, expectEqualPaths } from "./utils.js";
 
 const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite" });
 

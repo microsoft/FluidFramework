@@ -7,14 +7,19 @@ import { strict as assert } from "node:assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { NodeFromSchema, SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
-import { TreeFactory } from "../../treeFactory";
+import {
+	NodeFromSchema,
+	SchemaFactory,
+	TreeConfiguration,
+	TreeView,
+} from "../../class-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
 import {
 	enumFromStrings,
 	typedObjectValues,
 	adaptEnum,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaCreationUtilities";
+} from "../../class-tree/schemaCreationUtilities.js";
 
 const schema = new SchemaFactory("test");
 

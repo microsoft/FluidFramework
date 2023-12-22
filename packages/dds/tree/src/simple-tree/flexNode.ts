@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../util";
+import { fail } from "../util/index.js";
 import {
 	ObjectNodeSchema,
 	FieldNodeSchema,
@@ -13,10 +13,10 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
-} from "../feature-libraries";
-import { TreeMapNode } from "../class-tree";
-import { TreeNode, TypedNode } from "./types";
-import { TreeArrayNode } from "./treeListNode";
+} from "../feature-libraries/index.js";
+import { TreeMapNode } from "../class-tree/index.js";
+import { TreeNode, TypedNode } from "./types.js";
+import { TreeArrayNode } from "./treeListNode.js";
 
 /** Associates an FlexTreeNode with a target object  */
 const targetSymbol = Symbol("FlexNodeTarget");

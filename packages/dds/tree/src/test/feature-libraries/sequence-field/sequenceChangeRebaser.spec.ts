@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
@@ -13,18 +13,18 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	RevisionInfo,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,
 	FieldStateTree,
-} from "../../exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
-import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
-import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util";
+} from "../../exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
+import { TestChange } from "../../testChange.js";
+import { deepFreeze } from "../../utils.js";
+import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	compose,
 	invert,
@@ -40,8 +40,8 @@ import {
 	assertChangesetsEqual,
 	withoutTombstones,
 	skipOnLineageMethod,
-} from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "./utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag1: RevisionTag = mintRevisionTag();

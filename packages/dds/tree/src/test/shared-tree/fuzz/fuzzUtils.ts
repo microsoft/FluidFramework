@@ -13,16 +13,16 @@ import {
 	forEachNodeInSubtree,
 	Revertible,
 	TreeNavigationResult,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	FieldKinds,
 	TreeFieldSchema,
 	FlexTreeObjectNodeTyped,
 	intoStoredSchema,
-} from "../../../feature-libraries";
-import { SharedTree, ITreeCheckout } from "../../../shared-tree";
-import { SchemaBuilder, leaf } from "../../../domains";
-import { expectEqualPaths } from "../../utils";
+} from "../../../feature-libraries/index.js";
+import { SharedTree, ITreeCheckout } from "../../../shared-tree/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import { expectEqualPaths } from "../../utils.js";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.objectRecursive("node", {

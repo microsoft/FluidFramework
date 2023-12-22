@@ -9,15 +9,15 @@ import {
 	ICodecFamily,
 	makeCodecFamily,
 	DiscriminatedUnionDispatcher,
-} from "../codec";
-import { Mutable } from "../util";
+} from "../codec/index.js";
+import { Mutable } from "../util/index.js";
 import {
 	EncodedModularChangeset,
 	ModularChangeset,
 	makeSchemaChangeCodec,
-} from "../feature-libraries";
-import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes";
-import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat";
+} from "../feature-libraries/index.js";
+import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
 
 export function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<ModularChangeset, EncodedModularChangeset>,

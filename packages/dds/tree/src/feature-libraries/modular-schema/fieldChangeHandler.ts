@@ -11,12 +11,12 @@ import {
 	DeltaFieldChanges,
 	DeltaDetachedNodeId,
 	EncodedRevisionTag,
-} from "../../core";
-import { fail, IdAllocator, Invariant } from "../../util";
-import { ICodecFamily, IJsonCodec } from "../../codec";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import { CrossFieldManager } from "./crossFieldQueries";
-import { NodeChangeset } from "./modularChangeTypes";
+} from "../../core/index.js";
+import { fail, IdAllocator, Invariant } from "../../util/index.js";
+import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
+import { CrossFieldManager } from "./crossFieldQueries.js";
+import { NodeChangeset } from "./modularChangeTypes.js";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to

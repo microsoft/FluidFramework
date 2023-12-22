@@ -5,7 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { isStableId, StableId } from "@fluidframework/id-compressor";
-import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
+import {
+	Brand,
+	NestedMap,
+	RangeMap,
+	brandedStringType,
+	generateStableId,
+} from "../../util/index.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s

@@ -18,21 +18,27 @@ import {
 	isCursor,
 	ITreeCursorSynchronous,
 	mapCursorField,
-} from "../../core";
-import { FieldKind } from "../modular-schema";
+} from "../../core/index.js";
+import { FieldKind } from "../modular-schema/index.js";
 // TODO: stop depending on contextuallyTyped
-import { cursorFromContextualData } from "../contextuallyTyped";
+import { cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
-} from "../default-schema";
-import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
-import { AllowedTypes, TreeFieldSchema } from "../typed-schema";
-import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
-import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
-import { Context } from "./context";
+} from "../default-schema/index.js";
+import {
+	assertValidIndex,
+	assertValidRangeIndices,
+	brand,
+	disposeSymbol,
+	fail,
+} from "../../util/index.js";
+import { AllowedTypes, TreeFieldSchema } from "../typed-schema/index.js";
+import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor.js";
+import { Context } from "./context.js";
 import {
 	FlexibleNodeContent,
 	FlexTreeOptionalField,
@@ -49,8 +55,8 @@ import {
 	FlexibleNodeSubSequence,
 	FlexTreeEntityKind,
 	flexTreeMarker,
-} from "./flexTreeTypes";
-import { makeTree } from "./lazyNode";
+} from "./flexTreeTypes.js";
+import { makeTree } from "./lazyNode.js";
 import {
 	LazyEntity,
 	anchorSymbol,
@@ -60,9 +66,9 @@ import {
 	makePropertyEnumerableOwn,
 	makePropertyNotEnumerable,
 	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity";
-import { unboxedUnion } from "./unboxed";
-import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities";
+} from "./lazyEntity.js";
+import { unboxedUnion } from "./unboxed.js";
+import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
 
 /**
  * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the

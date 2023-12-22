@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IdAllocator, idAllocatorFromMaxId } from "../../util";
-import { FieldKey } from "../schema-stored";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../rebase";
-import { PlaceIndex, Range } from "./pathTree";
-import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
-import { DeltaVisitor, visitDelta } from "./visitDelta";
-import { ProtoNodes, Root } from "./delta";
+import { IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import { FieldKey } from "../schema-stored/index.js";
+import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../rebase/index.js";
+import { PlaceIndex, Range } from "./pathTree.js";
+import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex.js";
+import { DeltaVisitor, visitDelta } from "./visitDelta.js";
+import { ProtoNodes, Root } from "./delta.js";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",

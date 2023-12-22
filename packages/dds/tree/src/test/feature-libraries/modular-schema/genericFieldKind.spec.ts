@@ -10,7 +10,7 @@ import {
 	genericFieldKind,
 	CrossFieldManager,
 	MemoizedIdRangeAllocator,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	tagChange,
@@ -19,19 +19,19 @@ import {
 	deltaForSet,
 	DeltaFieldMap,
 	DeltaFieldChanges,
-} from "../../../core";
-import { fakeIdAllocator, brand } from "../../../util";
+} from "../../../core/index.js";
+import { fakeIdAllocator, brand } from "../../../util/index.js";
 import {
 	EncodingTestData,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
-} from "../../utils";
-import { IJsonCodec } from "../../../codec";
-import { RevisionTagCodec } from "../../../shared-tree-core";
-import { singleJsonCursor } from "../../../domains";
+} from "../../utils.js";
+import { IJsonCodec } from "../../../codec/index.js";
+import { RevisionTagCodec } from "../../../shared-tree-core/index.js";
+import { singleJsonCursor } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
-import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
 
 const valueFieldKey: FieldKey = brand("Value");
 

@@ -17,11 +17,11 @@ import {
 	deltaForSet,
 	DeltaFieldMap,
 	DeltaRoot,
-} from "../core";
-import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
-import { RecursiveReadonly, brand } from "../util";
-import { cursorForJsonableTreeNode } from "../feature-libraries";
-import { deepFreeze } from "./utils";
+} from "../core/index.js";
+import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec/index.js";
+import { RecursiveReadonly, brand } from "../util/index.js";
+import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
+import { deepFreeze } from "./utils.js";
 
 export interface NonEmptyTestChange {
 	/**

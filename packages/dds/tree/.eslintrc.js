@@ -22,6 +22,7 @@ module.exports = {
 				caughtErrorsIgnorePattern: "^_",
 			},
 		],
+		"import/no-internal-modules": "off",
 	},
 	overrides: [
 		{

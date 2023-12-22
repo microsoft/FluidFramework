@@ -11,8 +11,15 @@ import {
 	RevisionTag,
 	TaggedChange,
 	areEqualChangeAtomIds,
-} from "../../core";
-import { brand, fail, getFromRangeMap, getOrAddEmptyToMap, Mutable, RangeMap } from "../../util";
+} from "../../core/index.js";
+import {
+	brand,
+	fail,
+	getFromRangeMap,
+	getOrAddEmptyToMap,
+	Mutable,
+	RangeMap,
+} from "../../util/index.js";
 import {
 	addCrossFieldQuery,
 	CrossFieldManager,
@@ -20,7 +27,7 @@ import {
 	CrossFieldTarget,
 	getIntention,
 	setInCrossFieldMap,
-} from "../modular-schema";
+} from "../modular-schema/index.js";
 import {
 	Attach,
 	Detach,
@@ -42,9 +49,9 @@ import {
 	MarkEffect,
 	DetachFields,
 	IdRange,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
-import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
+import { isMoveMark, MoveEffectTable } from "./moveEffectTable.js";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
@@ -53,8 +60,8 @@ import {
 	CellRename,
 	VestigialEndpoint,
 	isVestigialEndpoint,
-} from "./helperTypes";
-import { DetachIdOverrideType } from "./format";
+} from "./helperTypes.js";
+import { DetachIdOverrideType } from "./format.js";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;

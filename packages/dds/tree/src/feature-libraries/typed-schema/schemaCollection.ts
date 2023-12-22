@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
-import { capitalize, fail, requireAssignableTo } from "../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema";
-import { Multiplicity } from "../multiplicity";
+import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core/index.js";
+import { capitalize, fail, requireAssignableTo } from "../../util/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { Multiplicity } from "../multiplicity.js";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -17,9 +17,9 @@ import {
 	LeafNodeSchema,
 	FieldNodeSchema,
 	ObjectNodeSchema,
-} from "./typedTreeSchema";
-import { normalizeFlexListEager } from "./flexList";
-import { Sourced } from "./view";
+} from "./typedTreeSchema.js";
+import { normalizeFlexListEager } from "./flexList.js";
+import { Sourced } from "./view.js";
 
 // TODO: tests for this file
 

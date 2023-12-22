@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { cursorForJsonableTreeNode } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	FieldKey,
@@ -14,12 +14,12 @@ import {
 	RevisionTag,
 	TaggedChange,
 	RevisionMetadataSource,
-} from "../core";
-import { brand } from "../util";
-import { TestChange } from "./testChange";
-import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
-import { deepFreeze } from "./utils";
+} from "../core/index.js";
+import { brand } from "../util/index.js";
+import { TestChange } from "./testChange.js";
+import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
+import { deepFreeze } from "./utils.js";
 
 describe("TestChange", () => {
 	it("can be composed", () => {

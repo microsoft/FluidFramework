@@ -10,22 +10,22 @@ import {
 	ModularChangeset,
 	cursorForJsonableTreeNode,
 	fieldKinds,
-} from "../../feature-libraries";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../feature-libraries/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily";
+import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily.js";
 import {
 	TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
-} from "../../core";
-import { leaf } from "../../domains";
+} from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes";
+import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
-import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds";
-import { RevisionTagCodec } from "../../shared-tree-core";
+import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+import { RevisionTagCodec } from "../../shared-tree-core/index.js";
 
 const dataChanges: ModularChangeset[] = [];
 const modularFamily = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {

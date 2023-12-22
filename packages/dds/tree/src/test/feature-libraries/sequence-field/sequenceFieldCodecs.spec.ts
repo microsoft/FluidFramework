@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { mintRevisionTag } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { mintRevisionTag } from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Changeset } from "../../../feature-libraries/sequence-field";
-import { RevisionTagCodec } from "../../../shared-tree-core";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
-import { generatePopulatedMarks } from "./populatedMarks";
-import { ChangeMaker as Change, cases } from "./testEdits";
+import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import { RevisionTagCodec } from "../../../shared-tree-core/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
+import { generatePopulatedMarks } from "./populatedMarks.js";
+import { ChangeMaker as Change, cases } from "./testEdits.js";
 
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 	successes: [

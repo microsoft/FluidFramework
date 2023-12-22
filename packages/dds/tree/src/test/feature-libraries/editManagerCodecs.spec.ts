@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
-import { typeboxValidator } from "../../external-utilities";
-import { mintRevisionTag } from "../../core";
-import { TestChange } from "../testChange";
-import { brand } from "../../util";
-import { RevisionTagCodec, SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
-import { EncodingTestData, makeEncodingTestSuite } from "../utils";
+import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { mintRevisionTag } from "../../core/index.js";
+import { TestChange } from "../testChange.js";
+import { brand } from "../../util/index.js";
+import {
+	RevisionTagCodec,
+	SummaryData,
+	makeEditManagerCodec,
+} from "../../shared-tree-core/index.js";
+import { EncodingTestData, makeEncodingTestSuite } from "../utils.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 

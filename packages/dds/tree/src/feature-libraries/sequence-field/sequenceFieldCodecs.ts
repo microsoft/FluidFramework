@@ -5,10 +5,10 @@
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
-import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { decodeChangeAtomId, encodeChangeAtomId } from "../utils";
+import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
+import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { decodeChangeAtomId, encodeChangeAtomId } from "../utils.js";
 import {
 	Attach,
 	AttachAndDetach,
@@ -22,9 +22,9 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
-} from "./types";
-import { Changeset as ChangesetSchema, Encoded } from "./format";
-import { isNoopMark } from "./utils";
+} from "./types.js";
+import { Changeset as ChangesetSchema, Encoded } from "./format.js";
+import { isNoopMark } from "./utils.js";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(
 	childCodec: IJsonCodec<TNodeChange>,

@@ -5,7 +5,14 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assert } from "@fluidframework/core-utils";
-import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
+import {
+	brand,
+	fail,
+	getOrCreate,
+	mapIterable,
+	Mutable,
+	RecursiveReadonly,
+} from "../util/index.js";
 import {
 	assertIsRevisionTag,
 	ChangeFamily,
@@ -17,8 +24,8 @@ import {
 	rebaseChange,
 	RevisionTag,
 	SessionId,
-} from "../core";
-import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
+} from "../core/index.js";
+import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch.js";
 import {
 	Commit,
 	SeqNumber,
@@ -30,7 +37,7 @@ import {
 	SummarySessionBranch,
 	decrementSequenceId,
 	maxSequenceId,
-} from "./editManagerFormat";
+} from "./editManagerFormat.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {

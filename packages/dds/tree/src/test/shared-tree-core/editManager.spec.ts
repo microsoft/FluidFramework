@@ -15,24 +15,24 @@ import {
 	ChangeFamilyEditor,
 	GraphCommit,
 	DeltaRoot,
-} from "../../core";
-import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
-import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+} from "../../core/index.js";
+import { brand, clone, makeArray, RecursiveReadonly } from "../../util/index.js";
+import { Commit, EditManager, SeqNumber } from "../../shared-tree-core/index.js";
 import {
 	TestChange,
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
 	asDelta,
 	NoOpChangeRebaser,
-} from "../testChange";
-import { createTestUndoRedoStacks } from "../utils";
+} from "../testChange.js";
+import { createTestUndoRedoStacks } from "../utils.js";
 import {
 	TestEditManager,
 	testChangeEditManagerFactory,
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
-} from "./editManagerTestUtils";
+} from "./editManagerTestUtils.js";
 
 const localSessionId: SessionId = "0";
 const peer1: SessionId = "1";

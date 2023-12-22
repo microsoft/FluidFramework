@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core";
+import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	EditableTreeEvents,
 	FieldNodeSchema,
@@ -27,9 +27,9 @@ import {
 	TreeNodeSchemaBase,
 	TreeStatus,
 	FlexTreeFieldNode,
-} from "../feature-libraries";
-import { fail } from "../util";
-import { InsertableTypedNode } from "./insertable";
+} from "../feature-libraries/index.js";
+import { fail } from "../util/index.js";
+import { InsertableTypedNode } from "./insertable.js";
 
 /** Stores the content of the raw node, i.e. the data that was passed to the factory */
 const nodeContent = Symbol();

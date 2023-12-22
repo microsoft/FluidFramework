@@ -4,18 +4,18 @@
  */
 
 import { strict as assert } from "assert";
-import { NodeChangeset } from "../../../feature-libraries";
-import { JsonCompatibleReadOnly, brand } from "../../../util";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
+import { NodeChangeset } from "../../../feature-libraries/index.js";
+import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/optional-field";
-import { IJsonCodec } from "../../../codec";
-import { changesetForChild } from "../fieldKindTestUtils";
-import { RevisionTagCodec } from "../../../shared-tree-core";
+} from "../../../feature-libraries/optional-field/index.js";
+import { IJsonCodec } from "../../../codec/index.js";
+import { changesetForChild } from "../fieldKindTestUtils.js";
+import { RevisionTagCodec } from "../../../shared-tree-core/index.js";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 

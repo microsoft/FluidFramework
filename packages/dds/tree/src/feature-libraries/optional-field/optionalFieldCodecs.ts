@@ -4,12 +4,12 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { Mutable } from "../../util";
-import type { NodeChangeset } from "../modular-schema";
-import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
-import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat";
+import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { Mutable } from "../../util/index.js";
+import type { NodeChangeset } from "../modular-schema/index.js";
+import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 

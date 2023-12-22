@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
+import {
+	onForkTransitive,
+	SharedTreeBranch,
+	SharedTreeBranchChange,
+} from "../../shared-tree-core/index.js";
 import {
 	GraphCommit,
 	RevisionTag,
@@ -13,16 +17,16 @@ import {
 	findAncestor,
 	findCommonAncestor,
 	rootFieldKey,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	cursorForJsonableTreeNode,
-} from "../../feature-libraries";
-import { brand, fail } from "../../util";
-import { noopValidator } from "../../codec";
-import { createTestUndoRedoStacks } from "../utils";
+} from "../../feature-libraries/index.js";
+import { brand, fail } from "../../util/index.js";
+import { noopValidator } from "../../codec/index.js";
+import { createTestUndoRedoStacks } from "../utils.js";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 

@@ -4,9 +4,13 @@
  */
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import { typeboxValidator } from "../../external-utilities";
-import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
+import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import {
+	DefaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
+} from "../../feature-libraries/index.js";
 
 /**
  * A `SharedTreeCore` with
