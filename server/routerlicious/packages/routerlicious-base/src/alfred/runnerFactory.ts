@@ -238,7 +238,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster(
 					[{ port: redisConfig2.port, host: redisConfig2.host }],
-					redisOptions2,
+					{
+						redisOptions: redisOptions2,
+						slotsRefreshTimeout: 5000,
+						dnsLookup: (address, callback) => callback(null, address),
+						scaleReads: 'slave'
+					},
 			  )
 			: new Redis.default(redisOptions2);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
@@ -246,7 +251,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster(
 					[{ port: redisConfig2.port, host: redisConfig2.host }],
-					redisOptions2,
+					{
+						redisOptions: redisOptions2,
+						slotsRefreshTimeout: 5000,
+						dnsLookup: (address, callback) => callback(null, address),
+						scaleReads: 'slave'
+					},
 			  )
 			: new Redis.default(redisOptions2);
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
@@ -353,7 +363,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 								host: redisConfigForThrottling.host,
 							},
 						],
-						redisOptionsForThrottling,
+						{
+							redisOptions: redisOptionsForThrottling,
+							slotsRefreshTimeout: 5000,
+							dnsLookup: (address, callback) => callback(null, address),
+							scaleReads: 'slave'
+						},
 				  )
 				: new Redis.default(redisOptionsForThrottling);
 
@@ -549,7 +564,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				redisConfig.enableClustering
 					? new Redis.Cluster(
 							[{ port: redisConfig.port, host: redisConfig.host }],
-							redisOptions,
+							{
+								redisOptions: redisOptions2,
+								slotsRefreshTimeout: 5000,
+								dnsLookup: (address, callback) => callback(null, address),
+								scaleReads: 'slave'
+							},
 					  )
 					: new Redis.default(redisOptions);
 

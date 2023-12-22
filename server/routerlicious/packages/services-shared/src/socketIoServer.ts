@@ -164,10 +164,20 @@ export function create(
 	}
 
 	const pub: Redis.default | Redis.Cluster = redisConfig.enableClustering
-		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], clone(options))
+		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
+			redisOptions: clone(options),
+			slotsRefreshTimeout: 5000,
+			dnsLookup: (address, callback) => callback(null, address),
+			scaleReads: 'slave'
+		})
 		: new Redis.default(clone(options));
 	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
-		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], clone(options))
+		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
+			redisOptions: clone(options),
+			slotsRefreshTimeout: 5000,
+			dnsLookup: (address, callback) => callback(null, address),
+			scaleReads: 'slave'
+		})
 		: new Redis.default(clone(options));
 
 	pub.on("error", (err) => {
