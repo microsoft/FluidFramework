@@ -75,16 +75,24 @@ const validData: [string, Format][] = [
 		},
 	],
 	[
-		"non-empty data",
+		"revision with a single entry",
+		{
+			version: 1,
+			data: [[brand("beefbeef-beef-4000-8000-000000000001"), 0, brand(1)]],
+			maxId: brand(-1),
+		},
+	],
+	[
+		"revision with multiple entries",
 		{
 			version: 1,
 			data: [
 				[
+					brand("beefbeef-beef-4000-8000-000000000001"),
 					[
 						[1, brand(0)],
 						[0, brand(1)],
 					],
-					brand("beefbeef-beef-4000-8000-000000000001"),
 				],
 			],
 			maxId: brand(-1),

@@ -8,6 +8,7 @@ import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../co
 import { EncodedRevisionTag, RevisionTag } from "../rebase";
 import { EncodedRootsForRevision, Format, RootRanges, version } from "./detachedFieldIndexFormat";
 import { DetachedFieldSummaryData } from "./detachedFieldIndexTypes";
+import { ForestRootId } from "./detachedFieldIndex";
 
 export function makeDetachedNodeToFieldCodec(
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag> | undefined,
@@ -22,12 +23,19 @@ export function makeDetachedNodeToFieldCodec(
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
 				assert(major !== undefined, "Unexpected undefined revision");
+				const encodedRevision = revisionTagCodec.encode(major);
 				const rootRanges: RootRanges = [...innerMap];
-				const rootsForRevision: EncodedRootsForRevision = [
-					rootRanges,
-					revisionTagCodec.encode(major),
-				];
-				rootsForRevisions.push(rootsForRevision);
+				if (rootRanges.length === 1) {
+					const rootsForRevision: EncodedRootsForRevision = [
+						encodedRevision,
+						rootRanges[0][0],
+						rootRanges[0][1],
+					];
+					rootsForRevisions.push(rootsForRevision);
+				} else {
+					const rootsForRevision: EncodedRootsForRevision = [encodedRevision, rootRanges];
+					rootsForRevisions.push(rootsForRevision);
+				}
 			}
 			const encoded: Format = {
 				version,
@@ -42,9 +50,13 @@ export function makeDetachedNodeToFieldCodec(
 				"Cannot decode detached field index without revision tag codec",
 			);
 			const map = new Map();
-			for (const [rootRanges, revision] of parsed.data) {
-				const innerMap = new Map(rootRanges);
-				map.set(revision, innerMap);
+			for (const rootsForRevision of parsed.data) {
+				const innerMap = new Map<number, ForestRootId>(
+					rootsForRevision.length === 2
+						? rootsForRevision[1]
+						: [[rootsForRevision[1], rootsForRevision[2]]],
+				);
+				map.set(revisionTagCodec.decode(rootsForRevision[0]), innerMap);
 			}
 			return {
 				data: map,
