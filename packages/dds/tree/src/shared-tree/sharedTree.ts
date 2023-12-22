@@ -193,11 +193,10 @@ export class SharedTree
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, {
-			// TODO: provide schema here to enable schema based compression.
-			// schema: {
-			// 	schema,
-			// 	policy: defaultSchemaPolicy,
-			// },
+			schema: {
+				schema,
+				policy: defaultSchemaPolicy,
+			},
 			encodeType: TreeCompressionStrategy.Compressed,
 		});
 		const forestSummarizer = new ForestSummarizer(

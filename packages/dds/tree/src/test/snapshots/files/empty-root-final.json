@@ -124,16 +124,7 @@
                   "fields": {
                     "version": 1,
                     "identifiers": [],
-                    "shapes": [
-                      {
-                        "c": {
-                          "extraFields": 1
-                        }
-                      },
-                      {
-                        "a": 0
-                      }
-                    ],
+                    "shapes": [],
                     "data": []
                   },
                   "version": 1
