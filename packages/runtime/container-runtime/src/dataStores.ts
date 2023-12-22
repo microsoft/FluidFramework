@@ -950,3 +950,57 @@ export function getSummaryForDatastores(
 		};
 	}
 }
+
+//* ACCEPT ALL CURRENT CHANGES FROM MAIN FOR THIS FILE
+
+//* These will be imported properly after merging
+interface ISerializedHandle {
+	// Marker to indicate to JSON.parse that the object is a Fluid handle
+	type: "__fluid_handle__";
+
+	// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
+	url: string;
+}
+const isSerializedHandle = (value: any): value is ISerializedHandle =>
+	value?.type === "__fluid_handle__";
+
+/**
+ * Traverse this op's contents and detect any outbound routes that were added by this op.
+ *
+ * @internal
+ */
+export function detectOutboundReferences(
+	envelope: IEnvelope,
+	addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+): void {
+	// These will be built up as we traverse the envelope contents
+	const outboundPaths: string[] = [];
+	let ddsAddress: string | undefined;
+
+	function recursivelyFindHandles(obj: unknown) {
+		if (typeof obj === "object" && obj !== null) {
+			for (const [key, value] of Object.entries(obj)) {
+				// If 'value' is a serialized IFluidHandle, it represents a new outbound route.
+				if (isSerializedHandle(value)) {
+					outboundPaths.push(value.url);
+				}
+
+				// NOTE: This is taking a hard dependency on the fact that in our DataStore implementation,
+				// the address of the DDS is stored in a property called "address".  This is not ideal.
+				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
+				if (key === "address" && ddsAddress === undefined) {
+					ddsAddress = value;
+				}
+
+				recursivelyFindHandles(value);
+			}
+		}
+	}
+
+	recursivelyFindHandles(envelope.contents);
+
+	// GC node paths are all absolute paths, hence the "" prefix.
+	// e.g. this will yield "/dataStoreId/ddsId"
+	const fromPath = ["", envelope.address, ddsAddress].join("/");
+	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
+}

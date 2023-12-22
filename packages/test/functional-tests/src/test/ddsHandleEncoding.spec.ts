@@ -13,6 +13,7 @@ import {
 import { DirectoryFactory, IDirectory } from "@fluidframework/map";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
+import { detectOutboundReferences } from "@fluidframework/container-runtime";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -28,30 +29,15 @@ describe("DDS Handle Encoding", () => {
 	});
 
 	/**
-	 * The purpose of the tests using this helper is to ensure that the message contents submitted
-	 * by the DDS contains handles that are detectable via JSON.stringify replacers, since this
-	 * is the technique used in the ContainerRuntime to detect handles in incoming ops.
-	 * @returns true if the contents object contains at least one encoded handle anywhere
+	 * @returns The list of handles found in the given contents object
 	 */
-	function detectHandleViaJsonStingify(contents: unknown) {
-		try {
-			// use JSON.stringify as a hack to traverse the object structure
-			JSON.stringify(contents, (key, value) => {
-				if (key === "type" && value === "__fluid_handle__") {
-					// Found a handle. We can abort object traversal
-					throw new Error("Found a handle");
-				}
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				return value;
-			});
-			return false;
-		} catch (e: any) {
-			if (e.message === "Found a handle") {
-				return true;
-			}
-			// Re-throw unexpected errors
-			throw e;
-		}
+	function findAllHandles(contents: unknown) {
+		const envelope = { contents, address: "envelope" };
+		const handlesFound: string[] = [];
+		detectOutboundReferences(envelope, (from, to) => {
+			handlesFound.push(to);
+		});
+		return handlesFound;
 	}
 
 	/** A "Mask" over IChannelFactory that specifies the return type of create */
@@ -64,14 +50,14 @@ describe("DDS Handle Encoding", () => {
 	interface ITestCase {
 		name: string;
 		doStuff(): void;
-		expectHandlesDetected: boolean;
+		expectedHandles: string[];
 	}
 
 	/** This takes care of creating the DDS behind the scenes so the testCase's code is ready to invoke */
 	function createTestCase<T extends IChannel>(
 		factory: IChannelFactoryWithCreatedType<T>,
 		doStuff: (dds: T) => void,
-		expectHandlesDetected: boolean,
+		expectedHandles: string[],
 	): ITestCase {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const name = factory.type.split("/").pop()!;
@@ -94,7 +80,7 @@ describe("DDS Handle Encoding", () => {
 		return {
 			name,
 			doStuff: () => doStuff(dds),
-			expectHandlesDetected,
+			expectedHandles,
 		};
 	}
 
@@ -104,7 +90,7 @@ describe("DDS Handle Encoding", () => {
 			(dds: IDirectory) => {
 				dds.set("whatever", handle);
 			},
-			true /* expectHandlesDetected */,
+			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
 			new ConsensusRegisterCollectionFactory(),
@@ -113,19 +99,19 @@ describe("DDS Handle Encoding", () => {
 					assert.fail("crc.write rejected!");
 				});
 			},
-			false /* expectHandlesDetected */,
+			[] /* expectedHandles */,
 		),
 	];
 
 	testCases.forEach((testCase) => {
-		const shouldOrShouldNot = testCase.expectHandlesDetected ? "should" : "should not";
+		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should" : "should not";
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
 			testCase.doStuff();
 
 			assert.equal(messages.length, 1, "Expected a single message to be submitted");
-			assert.equal(
-				detectHandleViaJsonStingify(messages[0]),
-				testCase.expectHandlesDetected,
+			assert.deepEqual(
+				findAllHandles(messages[0]),
+				testCase.expectedHandles,
 				`The handle ${shouldOrShouldNot} be detected`,
 			);
 		});
