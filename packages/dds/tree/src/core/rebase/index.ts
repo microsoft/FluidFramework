@@ -4,10 +4,7 @@
  */
 
 export {
-	assertIsRevisionTag,
 	areEqualChangeAtomIds,
-	mintRevisionTag,
-	isRevisionTag,
 	mintCommit,
 	GraphCommit,
 	RevisionTag,
@@ -17,9 +14,9 @@ export {
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,
-	SessionId,
 	SessionIdSchema,
 } from "./types";
+export { RevisionTagCodec } from "./revisionTagCodec";
 export {
 	ChangeRebaser,
 	FinalChange,

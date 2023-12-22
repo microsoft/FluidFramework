@@ -14,10 +14,4 @@ export {
 	chunkField,
 } from "./chunkTree";
 export { buildChunkedForest } from "./chunkedForest";
-export {
-	EncodedFieldBatch,
-	FieldBatch,
-	FieldBatchCodec,
-	makeFieldBatchCodec,
-	FieldBatchEncoder,
-} from "./codec";
+export { EncodedFieldBatch, FieldBatch, FieldBatchCodec, makeFieldBatchCodec } from "./codec";

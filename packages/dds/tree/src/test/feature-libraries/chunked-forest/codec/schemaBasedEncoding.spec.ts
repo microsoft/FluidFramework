@@ -47,10 +47,10 @@ import {
 	storedLibrary,
 	testTrees,
 } from "../../../testTrees";
-import { typeboxValidator } from "../../../../external-utilities";
 import { leaf, SchemaBuilder } from "../../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema";
+import { ajvValidator } from "../../../codec";
 import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
@@ -258,7 +258,7 @@ describe("schemaBasedEncoding", () => {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator })(context);
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, context);
 				// End to end test
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)]);
 				const result = codec.decode(encoded);

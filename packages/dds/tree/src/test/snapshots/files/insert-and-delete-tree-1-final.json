@@ -38,16 +38,16 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000006",
-                      "sequenceNumber": 3,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "revision": 3,
+                      "sequenceNumber": 6,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],
                   "branches": [
                     [
-                      "beefbeef-beef-4000-8000-000000000001",
+                      "8f95be09-8376-4ff7-8755-ccd7e8124b06",
                       {
-                        "base": "beefbeef-beef-4000-8000-000000000006",
+                        "base": 3,
                         "commits": []
                       }
                     ]
@@ -186,7 +186,7 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-000000000006",
+                      3,
                       1,
                       1
                     ]

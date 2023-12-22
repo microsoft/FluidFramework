@@ -3,5 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { ChangeFamily, ChangeFamilyEditor } from "./changeFamily";
+export {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeEncodingContext,
+	ChangeFamilyCodec,
+} from "./changeFamily";
 export { EditBuilder } from "./editBuilder";

@@ -5,4 +5,4 @@
 
 export { EncodedFieldBatch } from "./format";
 export { FieldBatch } from "./fieldBatch";
-export { FieldBatchCodec, makeFieldBatchCodec, FieldBatchEncoder } from "./codecs";
+export { FieldBatchCodec, makeFieldBatchCodec } from "./codecs";
