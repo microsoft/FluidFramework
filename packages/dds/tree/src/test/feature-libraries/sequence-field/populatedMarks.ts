@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { brand, generateStableId, Populated } from "../../../util";
+import { brand, Populated } from "../../../util";
 import { ChangeAtomId } from "../../../core";
 import { TestChange } from "../../testChange";
 // eslint-disable-next-line import/no-internal-modules
@@ -27,8 +28,8 @@ export type PopulatedMark<TNodeChange = TestChange> = Populated<
  * @remarks - New objects are generated every time this function is called. This is to ensure that stable IDs are
  * generated when appropriate.
  */
-export function generatePopulatedMarks(): PopulatedMark[] {
-	const tag = generateStableId();
+export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMark[] {
+	const tag = idCompressor.generateCompressedId();
 	const lineageEvent: Populated<SF.LineageEvent> = {
 		count: 2,
 		id: brand(0),

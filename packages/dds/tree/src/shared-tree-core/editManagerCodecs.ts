@@ -7,63 +7,87 @@ import {
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
+	SessionAwareCodec,
 	makeVersionedValidatedCodec,
 } from "../codec";
-import { EncodedRevisionTag, RevisionTag } from "../core";
+import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core";
 import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
 import { SummaryData } from "./editManager";
 import { Commit, EncodedCommit, EncodedEditManager, version } from "./editManagerFormat";
 
 export function makeEditManagerCodec<TChangeset>(
-	changeCodec: IMultiFormatCodec<TChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	changeCodec: IMultiFormatCodec<
+		TChangeset,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		ChangeEncodingContext
+	>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>> {
 	const format = EncodedEditManager(
 		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
 	);
 
-	const encodeCommit = <T extends Commit<TChangeset>>(commit: T) => ({
+	const encodeCommit = <T extends Commit<TChangeset>>(
+		commit: T,
+		context: ChangeEncodingContext,
+	) => ({
 		...commit,
-		revision: revisionTagCodec.encode(commit.revision),
-		change: changeCodec.json.encode(commit.change),
+		revision: revisionTagCodec.encode(commit.revision, commit.sessionId),
+		change: changeCodec.json.encode(commit.change, context),
 	});
 
-	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(commit: T) => ({
+	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(
+		commit: T,
+		context: ChangeEncodingContext,
+	) => ({
 		...commit,
-		revision: revisionTagCodec.decode(commit.revision),
-		change: changeCodec.json.decode(commit.change),
+		revision: revisionTagCodec.decode(commit.revision, commit.sessionId),
+		change: changeCodec.json.decode(commit.change, context),
 	});
 
 	const codec: IJsonCodec<
 		SummaryData<TChangeset>,
-		EncodedEditManager<JsonCompatibleReadOnly>
+		EncodedEditManager<TChangeset>
 	> = makeVersionedValidatedCodec(options, new Set([version]), format, {
-		encode: (data: SummaryData<TChangeset>): EncodedEditManager<JsonCompatibleReadOnly> => {
-			const json: EncodedEditManager<JsonCompatibleReadOnly> = {
-				trunk: data.trunk.map(encodeCommit),
+		encode: (data) => {
+			const json: EncodedEditManager<TChangeset> = {
+				trunk: data.trunk.map((commit) =>
+					encodeCommit(commit, { originatorId: commit.sessionId }),
+				),
 				branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
 					sessionId,
-					{ ...branch, commits: branch.commits.map(encodeCommit) },
+					{
+						base: revisionTagCodec.encode(branch.base, sessionId),
+						commits: branch.commits.map((commit) =>
+							encodeCommit(commit, { originatorId: commit.sessionId }),
+						),
+					},
 				]),
 				version,
 			};
 			return json;
 		},
-		decode: (json: EncodedEditManager<JsonCompatibleReadOnly>): SummaryData<TChangeset> => {
-			// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
-			const trunk: any = json.trunk;
+		decode: (json: EncodedEditManager<TChangeset>): SummaryData<TChangeset> => {
 			return {
-				trunk: trunk.map(decodeCommit),
+				trunk: json.trunk.map((commit) =>
+					// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
+					decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
+						originatorId: commit.sessionId,
+					}),
+				),
 				branches: new Map(
 					mapIterable(json.branches, ([sessionId, branch]) => [
 						sessionId,
 						{
-							...branch,
-							// TODO: fix typing around revision tag encoding, so this compiles without using `any`
-							base: revisionTagCodec.decode(branch.base as any),
-							// TODO: fix typing around revision tag encoding, so this compiles without using `any`
-							commits: branch.commits.map(decodeCommit as any),
+							base: revisionTagCodec.decode(branch.base, sessionId),
+							commits: branch.commits.map((commit) =>
+								// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
+								decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
+									originatorId: commit.sessionId,
+								}),
+							),
 						},
 					]),
 				),

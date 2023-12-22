@@ -3,15 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { TSchema, Type, ObjectOptions, Static } from "@sinclair/typebox";
+import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
+import { SessionId } from "@fluidframework/id-compressor";
 import { Brand, brandedNumberType } from "../util";
-import {
-	SessionId,
-	SessionIdSchema,
-	RevisionTag,
-	RevisionTagSchema,
-	EncodedRevisionTag,
-} from "../core";
+import { SessionIdSchema, RevisionTag, RevisionTagSchema, EncodedRevisionTag } from "../core";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -76,6 +71,11 @@ export interface SummarySessionBranch<TChangeset> {
 	readonly base: RevisionTag;
 	readonly commits: Commit<TChangeset>[];
 }
+
+export interface EncodedSummarySessionBranch<TChangeset> {
+	readonly base: EncodedRevisionTag;
+	readonly commits: Commit<TChangeset>[];
+}
 const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
@@ -87,7 +87,7 @@ const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchem
 
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
-	readonly branches: readonly [SessionId, Readonly<SummarySessionBranch<TChangeset>>][];
+	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 	readonly version: typeof version;
 }
 

@@ -195,6 +195,8 @@ export {
 	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
+	FieldBatch,
+	FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
 } from "./chunked-forest";

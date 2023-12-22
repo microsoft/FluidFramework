@@ -72,9 +72,9 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000003",
-                      "sequenceNumber": 1,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "revision": 0,
+                      "sequenceNumber": 2,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
                       "change": [
@@ -94,7 +94,7 @@
                                       }
                                     },
                                     "cellId": {
-                                      "localId": 0
+                                      "atom": 0
                                     }
                                   }
                                 ]
@@ -170,9 +170,9 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000005",
-                      "sequenceNumber": 2,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "revision": 2,
+                      "sequenceNumber": 4,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
                       "change": [
@@ -220,7 +220,7 @@
                                                 }
                                               },
                                               "cellId": {
-                                                "localId": 0
+                                                "atom": 0
                                               }
                                             }
                                           ]
@@ -234,9 +234,9 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000007",
-                      "sequenceNumber": 3,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "revision": 4,
+                      "sequenceNumber": 6,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],
                   "branches": [],

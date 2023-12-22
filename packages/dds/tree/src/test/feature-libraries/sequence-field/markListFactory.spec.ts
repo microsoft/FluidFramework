@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core";
+import { mintRevisionTag } from "../../utils";
+import { ChangesetLocalId, RevisionTag } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	CellOrderingMethod,

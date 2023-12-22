@@ -4,17 +4,23 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecFamily, ICodecOptions } from "../codec";
 import {
+	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
 	TaggedChange,
 	mapTaggedChange,
 } from "../core";
-import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
+import {
+	fieldKinds,
+	ModularChangeFamily,
+	ModularChangeset,
+	FieldBatchCodec,
+} from "../feature-libraries";
 import { Mutable, fail } from "../util";
-import { RevisionTagCodec } from "../shared-tree-core";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
@@ -33,13 +39,18 @@ export class SharedTreeChangeFamily
 		changes: [],
 	};
 
-	public readonly codecs: ICodecFamily<SharedTreeChange>;
+	public readonly codecs: ICodecFamily<SharedTreeChange, ChangeEncodingContext>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 
-	public constructor(codecOptions: ICodecOptions) {
+	public constructor(
+		idCompressor: IIdCompressor,
+		fieldBatchCodec: FieldBatchCodec,
+		codecOptions: ICodecOptions,
+	) {
 		this.modularChangeFamily = new ModularChangeFamily(
 			fieldKinds,
-			new RevisionTagCodec(),
+			idCompressor,
+			fieldBatchCodec,
 			codecOptions,
 		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
