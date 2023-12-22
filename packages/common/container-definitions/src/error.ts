@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes, type IErrorBase } from "@fluidframework/core-interfaces";
 
 /**
  * Different error types the ClientSession may report out to the Host.

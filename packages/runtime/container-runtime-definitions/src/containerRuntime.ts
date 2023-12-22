@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
+import { type AttachState, type IDeltaManager, type ILoaderOptions } from "@fluidframework/container-definitions";
 import {
-	IEventProvider,
-	IRequest,
-	IResponse,
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
+	type IEventProvider,
+	type IRequest,
+	type IResponse,
+	type FluidObject,
+	type IFluidHandle,
+	type IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { type IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	IClientDetails,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
+	type IClientDetails,
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	FlushMode,
-	IContainerRuntimeBase,
-	IContainerRuntimeBaseEvents,
-	IFluidDataStoreContextDetached,
-	IProvideFluidDataStoreRegistry,
+	type FlushMode,
+	type IContainerRuntimeBase,
+	type IContainerRuntimeBaseEvents,
+	type IFluidDataStoreContextDetached,
+	type IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
 /**

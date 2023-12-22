@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, FluidObject, IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import {
+import type {
+	IRequest,
+	FluidObject,
+	IEvent,
+	IEventProvider,
+} from "@fluidframework/core-interfaces";
+import type {
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
@@ -12,13 +17,17 @@ import {
 	ISequencedProposal,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IAudience } from "./audience";
-import { IDeltaManager, ReadOnlyInfo } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
-import { IFluidModule } from "./fluidModule";
-import { AttachState } from "./runtime";
-import { IFluidCodeDetails, IFluidPackage, IProvideFluidCodeDetailsComparer } from "./fluidPackage";
+import { type IResolvedUrl } from "@fluidframework/driver-definitions";
+import { type IAudience } from "./audience";
+import type { IDeltaManager, ReadOnlyInfo } from "./deltas";
+import type { ICriticalContainerError, ContainerWarning } from "./error";
+import { type IFluidModule } from "./fluidModule";
+import { type AttachState } from "./runtime";
+import type {
+	IFluidCodeDetails,
+	IFluidPackage,
+	IProvideFluidCodeDetailsComparer,
+} from "./fluidPackage";
 
 /**
  * Encapsulates a module entry point with corresponding code details.
@@ -296,7 +305,6 @@ export type ConnectionState =
  * The Host's view of a Container and its connection to storage
  * @alpha
  */
-// eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
@@ -671,6 +679,8 @@ export interface IProvideLoader {
  * @alpha
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	blobsContents?: { [path: string]: ArrayBufferLike };
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }

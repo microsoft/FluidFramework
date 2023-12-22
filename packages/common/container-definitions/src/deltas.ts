@@ -4,20 +4,20 @@
  */
 
 import {
-	IDisposable,
-	IEventProvider,
-	IEvent,
-	IErrorEvent,
-	IErrorBase,
+	type IDisposable,
+	type IEventProvider,
+	type IEvent,
+	type IErrorEvent,
+	type IErrorBase,
 } from "@fluidframework/core-interfaces";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { type IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
-	IClientDetails,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	ITokenClaims,
+	type IClientConfiguration,
+	type IClientDetails,
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
+	type ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 
 /**

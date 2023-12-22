@@ -6,6 +6,7 @@
 /**
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface IRequestHeader {
 	// TODO: Use `unknown` instead (API-Breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,7 +31,7 @@ export interface IResponse {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 	// TODO: Use `unknown` instead (API-Breaking)
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-indexed-object-style
 	headers?: { [key: string]: any };
 	stack?: string;
 }

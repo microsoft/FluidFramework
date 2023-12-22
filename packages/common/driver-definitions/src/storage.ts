@@ -4,29 +4,29 @@
  */
 
 import {
-	IDisposable,
-	IEventProvider,
-	IErrorEvent,
-	ITelemetryBaseLogger,
+	type IDisposable,
+	type IEventProvider,
+	type IErrorEvent,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
-	ConnectionMode,
-	IClient,
-	IClientConfiguration,
-	ICreateBlobResponse,
-	IDocumentMessage,
-	INack,
-	ISequencedDocumentMessage,
-	ISignalClient,
-	ISignalMessage,
-	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
-	ITokenClaims,
-	IVersion,
+	type ConnectionMode,
+	type IClient,
+	type IClientConfiguration,
+	type ICreateBlobResponse,
+	type IDocumentMessage,
+	type INack,
+	type ISequencedDocumentMessage,
+	type ISignalClient,
+	type ISignalMessage,
+	type ISnapshotTree,
+	type ISummaryHandle,
+	type ISummaryTree,
+	type ITokenClaims,
+	type IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IAnyDriverError } from "./driverError";
-import { IResolvedUrl } from "./urlResolver";
+import { type IAnyDriverError } from "./driverError";
+import { type IResolvedUrl } from "./urlResolver";
 
 /**
  * @internal

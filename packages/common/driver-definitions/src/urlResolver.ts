@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
+import { type IRequest } from "@fluidframework/core-interfaces";
 
 /**
  * @alpha
@@ -14,7 +14,9 @@ export interface IResolvedUrl {
 	 */
 	id: string;
 	url: string;
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	tokens: { [name: string]: string };
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	endpoints: { [name: string]: string };
 }
 
@@ -92,6 +94,6 @@ export interface IDriverHeader {
 }
 
 declare module "@fluidframework/core-interfaces" {
-	// eslint-disable-next-line @typescript-eslint/no-empty-interface
+	// eslint-disable-next-line @typescript-eslint/no-empty-interface, jsdoc/require-jsdoc
 	export interface IRequestHeader extends Partial<IDriverHeader> {}
 }
