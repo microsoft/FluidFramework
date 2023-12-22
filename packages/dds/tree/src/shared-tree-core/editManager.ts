@@ -31,7 +31,7 @@ import {
 	SummarySessionBranch,
 	SeqNumber,
 	SequencedCommit,
-} from "./editManagerFormat";
+} from "./editManagerFormat.js";
 import {
 	sequenceIdComparator,
 	equalSequenceIds,
