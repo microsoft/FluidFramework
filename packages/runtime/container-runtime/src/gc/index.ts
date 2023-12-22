@@ -38,6 +38,7 @@ export {
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
+	ISweepMessage,
 } from "./gcDefinitions";
 export {
 	cloneGCData,

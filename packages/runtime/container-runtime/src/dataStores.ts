@@ -876,12 +876,15 @@ export class DataStores implements IDisposable {
 
 			const dataStoreContext = this.contexts.get(dataStoreId);
 			if (dataStoreContext === undefined) {
-				this.mc.logger.sendErrorEvent({
+				// If the data store hasn't already been deleted, log an error because this should never happen.
+				// If the data store has already been deleted, log a telemetry event. This can happen because multiple GC
+				// sweep ops can contain the same data store. It would be interesting to track how often this happens.
+				const alreadyDeleted = this.isDataStoreDeleted(`/${dataStoreId}`);
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "DeletedDataStoreNotFound",
+					category: alreadyDeleted ? "generic" : "error",
 					...tagCodeArtifacts({ id: dataStoreId }),
-					details: {
-						alreadyDeleted: this.isDataStoreDeleted(dataStoreId),
-					},
+					details: { alreadyDeleted },
 				});
 				continue;
 			}

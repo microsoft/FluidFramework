@@ -13,13 +13,16 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
@@ -56,6 +59,7 @@
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
+		"tsc-multi": "^1.1.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -70,6 +74,18 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

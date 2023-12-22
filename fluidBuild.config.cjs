@@ -48,6 +48,8 @@ module.exports = {
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
+			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
+			// requires them. I don't want to change the policy right now.
 			...tscDependsOn,
 			"typetests:gen",
 			"tsc",

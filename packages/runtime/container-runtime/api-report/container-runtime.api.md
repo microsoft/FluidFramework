@@ -488,6 +488,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 // @alpha (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
+    readonly retryOnFailure?: boolean;
 }
 
 // @alpha
