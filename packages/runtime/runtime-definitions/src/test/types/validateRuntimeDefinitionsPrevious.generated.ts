@@ -679,6 +679,7 @@ declare function get_old_InterfaceDeclaration_IIdCompressorCore():
 declare function use_current_InterfaceDeclaration_IIdCompressorCore(
     use: TypeOnly<current.IIdCompressorCore>): void;
 use_current_InterfaceDeclaration_IIdCompressorCore(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IIdCompressorCore());
 
 /*
@@ -1015,6 +1016,7 @@ declare function get_old_ClassDeclaration_IdCompressor():
 declare function use_current_ClassDeclaration_IdCompressor(
     use: TypeOnly<current.IdCompressor>): void;
 use_current_ClassDeclaration_IdCompressor(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_IdCompressor());
 
 /*

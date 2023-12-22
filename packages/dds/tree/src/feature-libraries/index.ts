@@ -192,6 +192,7 @@ export {
 export {
 	TreeChunk,
 	chunkTree,
+	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
