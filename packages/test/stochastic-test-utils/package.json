@@ -20,22 +20,6 @@
 		"./test/utils": {
 			"types": "./dist/test/utils.d.ts",
 			"default": "./dist/test/utils.js"
-		},
-		"./alpha": {
-			"types": "./dist/stochastic-test-utils-alpha.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./beta": {
-			"types": "./dist/stochastic-test-utils-beta.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./internal": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./public": {
-			"types": "./dist/stochastic-test-utils-public.d.ts",
-			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
