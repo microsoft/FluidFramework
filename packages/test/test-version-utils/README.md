@@ -170,7 +170,7 @@ The legacy version are installed in their own version folder
 Legacy versions of all packages in all categories are installed regardless of what compat combination is requested.
 (See `packageList` in `src/testApi.ts`).
 
-For now, the current version are statically bound to also provide type.
+For now, the current versions are statically bound to also provide typings.
 This is a lie since the public API of a package may change over time: `ContainerRuntime` in FF@10.0.0 will not have the
 same public API as `ContainerRuntime` in FF@1.0.0.
 

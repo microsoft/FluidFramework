@@ -81,19 +81,19 @@ describeCompat(
 			}
 			private readonly mapKey = "SharedMap";
 			public map!: SharedMap;
-		
+
 			protected async initializingFirstTime() {
 				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
 				this.root.set(this.mapKey, sharedMap.handle);
 			}
-		
+
 			protected async hasInitialized() {
 				const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
 				assert(mapHandle !== undefined, "SharedMap not found");
 				this.map = await mapHandle.get();
 			}
 		}
-		
+
 		class TestDataObject1 extends DataObject implements SearchContent {
 			public async getSearchContent(): Promise<string | undefined> {
 				// By this time, we are in the middle of the summarization process and
@@ -105,39 +105,40 @@ describeCompat(
 				assert(dataTestDataObject2Handle, "dsFactory2 not located");
 				const dataStore2 = await dataTestDataObject2Handle.get();
 				dataStore2.map.set("mapkey", "value");
-		
+
 				return Promise.resolve("TestDataObject1 Search Blob");
 			}
-		
+
 			public get SearchContent() {
 				return this;
 			}
-		
+
 			public get _root() {
 				return this.root;
 			}
-		
+
 			public get _context() {
 				return this.context;
 			}
-		
+
 			private readonly matrixKey = "SharedMatrix";
 			public matrix!: SharedMatrix;
-		
+
 			protected async initializingFirstTime() {
 				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 				this.root.set(this.matrixKey, sharedMatrix.handle);
-		
-				const dataStore = await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+
+				const dataStore =
+					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
 				const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
 				this.root.set("dsFactory2", dsFactory2.handle);
 			}
-		
+
 			protected async hasInitialized() {
 				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 				assert(matrixHandle !== undefined, "SharedMatrix not found");
 				this.matrix = await matrixHandle.get();
-		
+
 				this.matrix.insertRows(0, 3);
 				this.matrix.insertCols(0, 3);
 			}
@@ -158,7 +159,7 @@ describeCompat(
 			[],
 			createDataStoreRuntime(),
 		);
-		
+
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
@@ -173,14 +174,14 @@ describeCompat(
 				runtimeOptions,
 			},
 		);
-		
+
 		async function createSummarizer(
-			provider: ITestObjectProvider,
+			testObjectProvider: ITestObjectProvider,
 			container: IContainer,
 			summaryVersion?: string,
 		): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
-				provider,
+				testObjectProvider,
 				container,
 				dataStoreFactory1,
 				summaryVersion,

@@ -86,7 +86,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[directoryId, SharedDirectory.getFactory()],
 	];
 
-
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
@@ -111,110 +110,116 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	};
 
-// load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (
-	args: ITestObjectProvider,
-	send: boolean,
-	cb: SharedObjCallback = () => undefined,
-) => {
-	const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
-	await waitForContainerConnection(container);
-	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
+	const getPendingOps = async (
+		args: ITestObjectProvider,
+		send: boolean,
+		cb: SharedObjCallback = () => undefined,
+	) => {
+		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
-	[...Array(lots).keys()].map((i) =>
-		dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
-	);
-
-	await args.ensureSynchronized();
-	await args.opProcessingController.pauseProcessing(container);
-	assert(dataStore.runtime.deltaManager.outbound.paused);
-
-	await cb(container, dataStore);
-
-	let pendingState: string | undefined;
-	if (send) {
-		pendingState = await container.getPendingLocalState?.();
-		await args.ensureSynchronized();
-		container.close();
-	} else {
-		pendingState = await container.closeAndGetPendingLocalState?.();
-	}
-
-	args.opProcessingController.resumeProcessing();
-
-	assert.ok(pendingState);
-	return pendingState;
-};
-
-const assertIntervals = (
-	sharedString: SharedString,
-	intervalCollection: IIntervalCollection<SequenceInterval>,
-	expected: readonly { start: number; end: number }[],
-	validateOverlapping: boolean = true,
-) => {
-	const actual = Array.from(intervalCollection);
-	if (validateOverlapping && sharedString.getLength() > 0) {
-		const overlapping = intervalCollection.findOverlappingIntervals(
-			0,
-			sharedString.getLength() - 1,
+		[...Array(lots).keys()].map((i) =>
+			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
 		);
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
-	}
-	assert.strictEqual(
-		actual.length,
-		expected.length,
-		`findOverlappingIntervals() must return the expected number of intervals`,
-	);
 
-	const actualPos = actual.map((interval) => {
-		assert(interval);
-		const start = sharedString.localReferencePositionToPosition(interval.start);
-		const end = sharedString.localReferencePositionToPosition(interval.end);
-		return { start, end };
-	});
-	assert.deepEqual(actualPos, expected, "intervals are not as expected");
-};
+		await args.ensureSynchronized();
+		await args.opProcessingController.pauseProcessing(container);
+		assert(dataStore.runtime.deltaManager.outbound.paused);
 
-async function loadOffline(
-	provider: ITestObjectProvider,
-	request: IRequest,
-	pendingLocalState?: string,
-): Promise<{ container: IContainerExperimental; connect: () => void }> {
-	const p = new Deferred();
-	const documentServiceFactory = provider.driver.createDocumentServiceFactory();
+		await cb(container, dataStore);
 
-	// patch document service methods to simulate offline by not resolving until we choose to
-	const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
-	documentServiceFactory.createDocumentService = async (...args) => {
-		const docServ = await boundFn(...args);
-		const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
-		docServ.connectToDeltaStream = async (...args2) => {
-			await p.promise;
-			return boundCTDStream(...args2);
-		};
-		const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
-		docServ.connectToDeltaStorage = async (...args2) => {
-			await p.promise;
-			return boundCTDStorage(...args2);
-		};
-		const boundCTStorage = docServ.connectToStorage.bind(docServ);
-		docServ.connectToStorage = async (...args2) => {
-			await p.promise;
-			return boundCTStorage(...args2);
-		};
+		let pendingState: string | undefined;
+		if (send) {
+			pendingState = await container.getPendingLocalState?.();
+			await args.ensureSynchronized();
+			container.close();
+		} else {
+			pendingState = await container.closeAndGetPendingLocalState?.();
+		}
 
-		return docServ;
+		args.opProcessingController.resumeProcessing();
+
+		assert.ok(pendingState);
+		return pendingState;
 	};
-	const loader = provider.createLoader(
-		[[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
-		{ ...testContainerConfig.loaderProps, documentServiceFactory },
-	);
-	const container = await loader.resolve(
-		request,
-		pendingLocalState ?? (await getPendingOps(provider, false)),
-	);
-	return { container, connect: () => p.resolve(undefined) };
-}
+
+	const assertIntervals = (
+		sharedString: SharedString,
+		intervalCollection: IIntervalCollection<SequenceInterval>,
+		expected: readonly { start: number; end: number }[],
+		validateOverlapping: boolean = true,
+	) => {
+		const actual = Array.from(intervalCollection);
+		if (validateOverlapping && sharedString.getLength() > 0) {
+			const overlapping = intervalCollection.findOverlappingIntervals(
+				0,
+				sharedString.getLength() - 1,
+			);
+			assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+		}
+		assert.strictEqual(
+			actual.length,
+			expected.length,
+			`findOverlappingIntervals() must return the expected number of intervals`,
+		);
+
+		const actualPos = actual.map((interval) => {
+			assert(interval);
+			const start = sharedString.localReferencePositionToPosition(interval.start);
+			const end = sharedString.localReferencePositionToPosition(interval.end);
+			return { start, end };
+		});
+		assert.deepEqual(actualPos, expected, "intervals are not as expected");
+	};
+
+	async function loadOffline(
+		testObjectProvider: ITestObjectProvider,
+		request: IRequest,
+		pendingLocalState?: string,
+	): Promise<{ container: IContainerExperimental; connect: () => void }> {
+		const p = new Deferred();
+		const documentServiceFactory = testObjectProvider.driver.createDocumentServiceFactory();
+
+		// patch document service methods to simulate offline by not resolving until we choose to
+		const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
+		documentServiceFactory.createDocumentService = async (...args) => {
+			const docServ = await boundFn(...args);
+			const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
+			docServ.connectToDeltaStream = async (...args2) => {
+				await p.promise;
+				return boundCTDStream(...args2);
+			};
+			const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
+			docServ.connectToDeltaStorage = async (...args2) => {
+				await p.promise;
+				return boundCTDStorage(...args2);
+			};
+			const boundCTStorage = docServ.connectToStorage.bind(docServ);
+			docServ.connectToStorage = async (...args2) => {
+				await p.promise;
+				return boundCTStorage(...args2);
+			};
+
+			return docServ;
+		};
+		// eslint-disable-next-line @typescript-eslint/no-shadow
+		const loader = testObjectProvider.createLoader(
+			[
+				[
+					testObjectProvider.defaultCodeDetails,
+					testObjectProvider.createFluidEntryPoint(testContainerConfig),
+				],
+			],
+			{ ...testContainerConfig.loaderProps, documentServiceFactory },
+		);
+		const container = await loader.resolve(
+			request,
+			pendingLocalState ?? (await getPendingOps(testObjectProvider, false)),
+		);
+		return { container, connect: () => p.resolve(undefined) };
+	}
 
 	let provider: ITestObjectProvider;
 	let url;

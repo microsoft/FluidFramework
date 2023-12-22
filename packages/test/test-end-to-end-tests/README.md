@@ -57,11 +57,10 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 #### ✅ Correct
 
 ```typescript
-// If you don't need to refer to the SharedString type, you can omit the emport entirely!
-import type { SharedString } from "@fluidframework/sequence";
-
 describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	// Note that `SharedString` below is equivalent to `apis.dds.SharedString`.
+	// It can be used as if you had imported it from @fluidframework/sequence at runtime.
 	const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
@@ -77,6 +76,17 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 	});
 });
+```
+
+If your code needs to refer to a DDS's type (e.g. to explicitly annotate the type of a variable), you can
+use `import type` expressions freely:
+
+```typescript
+import type { SharedString } from "@fluidframework/sequence";
+
+function insert(str: SharedString): void {
+	str.insertText(0, "hello");
+}
 ```
 
 #### Exceptions
