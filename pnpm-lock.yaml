@@ -7218,7 +7218,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      renamer: ^4.0.0
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7275,7 +7274,6 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      renamer: 4.0.0
       rimraf: 4.4.1
       tsc-multi: 1.1.0_krvjbdfqlasute72a2lencb5tq_typescript@5.1.6
       typescript: 5.1.6
