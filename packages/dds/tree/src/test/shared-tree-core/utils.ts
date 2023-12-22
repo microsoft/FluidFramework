@@ -10,7 +10,11 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	TreeCompressionStrategy,
+	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
+import { testIdCompressor } from "../utils.js";
+import { ICodecOptions } from "../../codec/index.js";
 
 /**
  * A `SharedTreeCore` with
@@ -29,10 +33,17 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		id = "TestSharedTreeCore",
 		summarizables: readonly Summarizable[] = [],
 	) {
+		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 		super(
 			summarizables,
-			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
-			{ jsonValidator: typeboxValidator },
+			new DefaultChangeFamily(
+				testIdCompressor,
+				makeFieldBatchCodec(codecOptions, {
+					encodeType: TreeCompressionStrategy.Uncompressed,
+				}),
+				codecOptions,
+			),
+			codecOptions,
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

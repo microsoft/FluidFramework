@@ -19,5 +19,4 @@ export {
 	FieldBatch,
 	FieldBatchCodec,
 	makeFieldBatchCodec,
-	FieldBatchEncoder,
 } from "./codec/index.js";

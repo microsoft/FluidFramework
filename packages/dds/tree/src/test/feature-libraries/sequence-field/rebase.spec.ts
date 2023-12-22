@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { mintRevisionTag } from "../../utils.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core/index.js";
+import { ChangeAtomId, RevisionTag, tagChange } from "../../../core/index.js";
 import { TestChange } from "../../testChange.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules

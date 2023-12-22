@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import { mintRevisionTag } from "../../utils.js";
 import {
 	ChangeAtomId,
 	DeltaDetachedNodeId,
 	makeAnonChange,
-	mintRevisionTag,
 	tagChange,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";

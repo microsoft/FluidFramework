@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
+import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -33,7 +34,8 @@ import {
 	DeltaDetachedNodeDestruction,
 	DeltaRoot,
 	DeltaDetachedNodeId,
-	EncodedRevisionTag,
+	ChangeEncodingContext,
+	RevisionTagCodec,
 	mapCursorField,
 } from "../../core/index.js";
 import {
@@ -55,7 +57,7 @@ import {
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
-	makeFieldBatchCodec,
+	FieldBatchCodec,
 } from "../chunked-forest/index.js";
 import {
 	cursorForMapTreeField,
@@ -88,7 +90,6 @@ import {
 	NodeExistsConstraint,
 } from "./modularChangeTypes.js";
 import { makeV0Codec } from "./modularChangeCodecs.js";
-import { EncodedModularChangeset } from "./modularChangeFormat.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -99,19 +100,20 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly latestCodec: IJsonCodec<ModularChangeset, EncodedModularChangeset>;
+	public readonly latestCodec: ReturnType<typeof makeV0Codec>;
 
-	public readonly codecs: ICodecFamily<ModularChangeset>;
+	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+		idCompressor: IIdCompressor,
+		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 	) {
 		this.latestCodec = makeV0Codec(
 			fieldKinds,
-			revisionTagCodec,
-			makeFieldBatchCodec(codecOptions),
+			new RevisionTagCodec(idCompressor),
+			fieldBatchCodec,
 			codecOptions,
 		);
 		this.codecs = makeCodecFamily([[0, this.latestCodec]]);

@@ -29,4 +29,3 @@ export {
 	SummarySessionBranch,
 	EncodedCommit,
 } from "./editManagerFormat.js";
-export { RevisionTagCodec } from "./revisionTagCodecs.js";

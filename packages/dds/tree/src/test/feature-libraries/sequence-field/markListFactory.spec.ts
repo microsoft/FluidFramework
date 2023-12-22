@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core/index.js";
+import { mintRevisionTag } from "../../utils.js";
+import { ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	CellOrderingMethod,

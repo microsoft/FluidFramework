@@ -7,7 +7,6 @@ import { fail, strict as assert } from "assert";
 import {
 	RevisionTag,
 	FieldKey,
-	mintRevisionTag,
 	ChangesetLocalId,
 	makeAnonChange,
 	tagChange,
@@ -25,7 +24,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { assertFieldChangesEqual, deepFreeze } from "../../utils.js";
+import { assertFieldChangesEqual, deepFreeze, mintRevisionTag } from "../../utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import { toDelta } from "./utils.js";
 

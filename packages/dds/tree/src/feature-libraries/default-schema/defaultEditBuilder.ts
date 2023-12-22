@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { OptionalChangeset } from "../optional-field/index.js";
 import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
@@ -19,6 +20,7 @@ import {
 	DeltaRoot,
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
+	ChangeEncodingContext,
 } from "../../core/index.js";
 import { brand, isReadonlyArray } from "../../util/index.js";
 import {
@@ -31,7 +33,7 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 	EditDescription,
 } from "../modular-schema/index.js";
-import { RevisionTagCodec } from "../../shared-tree-core/index.js";
+import { FieldBatchCodec } from "../chunked-forest/index.js";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
@@ -44,10 +46,15 @@ export type DefaultChangeset = ModularChangeset;
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(codecOptions: ICodecOptions) {
+	public constructor(
+		idCompressor: IIdCompressor,
+		fieldBatchCodec: FieldBatchCodec,
+		codecOptions: ICodecOptions,
+	) {
 		this.modularFamily = new ModularChangeFamily(
 			fieldKinds,
-			new RevisionTagCodec(),
+			idCompressor,
+			fieldBatchCodec,
 			codecOptions,
 		);
 	}
@@ -56,7 +63,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.rebaser;
 	}
 
-	public get codecs(): ICodecFamily<DefaultChangeset> {
+	public get codecs(): ICodecFamily<DefaultChangeset, ChangeEncodingContext> {
 		return this.modularFamily.codecs;
 	}
 

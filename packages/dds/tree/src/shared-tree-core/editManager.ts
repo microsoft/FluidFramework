@@ -5,6 +5,7 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assert } from "@fluidframework/core-utils";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	brand,
 	fail,
@@ -14,7 +15,6 @@ import {
 	RecursiveReadonly,
 } from "../util/index.js";
 import {
-	assertIsRevisionTag,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	findAncestor,
@@ -23,7 +23,6 @@ import {
 	mintCommit,
 	rebaseChange,
 	RevisionTag,
-	SessionId,
 } from "../core/index.js";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch.js";
 import {
@@ -125,16 +124,20 @@ export class EditManager<
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
-		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
+		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		this.trunkBase = {
-			revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
+			revision: "root",
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
-		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
+		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, mintRevisionTag);
+		this.localBranch = new SharedTreeBranch(
+			this.trunk.getHead(),
+			changeFamily,
+			mintRevisionTag,
+		);
 
 		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
 
@@ -465,7 +468,11 @@ export class EditManager<
 
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(branch.commits.reduce(mintCommit, commit), this.changeFamily),
+				new SharedTreeBranch(
+					branch.commits.reduce(mintCommit, commit),
+					this.changeFamily,
+					this.mintRevisionTag,
+				),
 			);
 		}
 	}
@@ -551,7 +558,8 @@ export class EditManager<
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			newCommit.sessionId,
-			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
+			() =>
+				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
@@ -566,6 +574,7 @@ export class EditManager<
 				newCommit.change,
 				peerLocalBranch.getHead(),
 				this.trunk.getHead(),
+				this.mintRevisionTag,
 			);
 
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);

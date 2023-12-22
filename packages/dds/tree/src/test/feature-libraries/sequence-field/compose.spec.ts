@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+import { mintRevisionTag } from "../../utils.js";
 import {
 	RevisionTag,
 	makeAnonChange,
 	tagChange,
 	TreeNodeSchemaIdentifier,
-	mintRevisionTag,
 	tagRollbackInverse,
 	ChangesetLocalId,
 	ChangeAtomId,

@@ -13,7 +13,6 @@ import {
 	FieldKey,
 	FieldKindIdentifier,
 	makeAnonChange,
-	mintRevisionTag,
 	revisionMetadataSourceFromInfo,
 	RevisionTag,
 	tagChange,
@@ -32,7 +31,10 @@ import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util/in
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
+	failCodec,
+	mintRevisionTag,
 	testChangeReceiver,
+	testIdCompressor,
 } from "../utils.js";
 import {
 	intoDelta,
@@ -44,7 +46,6 @@ import { leaf } from "../../domains/index.js";
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 // eslint-disable-next-line import/no-internal-modules
 import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
-import { RevisionTagCodec } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -54,7 +55,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
+const family = new ModularChangeFamily(fieldKinds, testIdCompressor, failCodec, {
 	jsonValidator: typeboxValidator,
 });
 

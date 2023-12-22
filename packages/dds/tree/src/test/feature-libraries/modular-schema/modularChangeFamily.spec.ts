@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -20,6 +21,8 @@ import {
 	TreeChunk,
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
+	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -30,23 +33,23 @@ import {
 	FieldKindIdentifier,
 	FieldKey,
 	UpPath,
-	mintRevisionTag,
-	assertIsRevisionTag,
 	deltaForSet,
 	revisionMetadataSourceFromInfo,
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
 	DeltaDetachedNodeId,
+	ChangeEncodingContext,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
-import { makeCodecFamily } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
+	MockIdCompressor,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
+	mintRevisionTag,
 	testChangeReceiver,
 } from "../../utils.js";
 import {
@@ -59,7 +62,7 @@ import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat.js";
-import { RevisionTagCodec } from "../../../shared-tree-core/index.js";
+import { ajvValidator } from "../../codec/index.js";
 import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
@@ -101,9 +104,15 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
-	jsonValidator: typeboxValidator,
-});
+const codecOptions: ICodecOptions = {
+	jsonValidator: ajvValidator,
+};
+const family = new ModularChangeFamily(
+	fieldKinds,
+	new MockIdCompressor(),
+	makeFieldBatchCodec(codecOptions, { encodeType: TreeCompressionStrategy.Uncompressed }),
+	codecOptions,
+);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -289,7 +298,7 @@ const rootChange3: ModularChangeset = {
 };
 
 const dummyMaxId = 10;
-const dummyRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+const dummyRevisionTag = mintRevisionTag();
 const rootChange4: ModularChangeset = {
 	maxId: brand(dummyMaxId),
 	revisions: [{ revision: dummyRevisionTag }],
@@ -927,9 +936,11 @@ describe("ModularChangeFamily", () => {
 		}
 
 		it("sibling fields", () => {
-			const a1 = { major: "A", minor: 1 };
-			const a2 = { major: "A", minor: 2 };
-			const b1 = { major: "B", minor: 1 };
+			const aMajor = mintRevisionTag();
+			const a1 = { major: aMajor, minor: 1 };
+			const a2 = { major: aMajor, minor: 2 };
+			const bMajor = mintRevisionTag();
+			const b1 = { major: bMajor, minor: 1 };
 
 			const changeA: HasRemovedRootsRefs = {
 				shallow: [a1, a2],
@@ -951,8 +962,10 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("nested fields", () => {
-			const a1 = { major: "A", minor: 1 };
-			const c1 = { major: "C", minor: 1 };
+			const aMajor = mintRevisionTag();
+			const cMajor = mintRevisionTag();
+			const a1 = { major: aMajor, minor: 1 };
+			const c1 = { major: cMajor, minor: 1 };
 
 			const changeC: HasRemovedRootsRefs = {
 				shallow: [c1],
@@ -1027,12 +1040,18 @@ describe("ModularChangeFamily", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<ModularChangeset, EncodedModularChangeset> = {
+		const sessionId = "session1" as SessionId;
+		const context: ChangeEncodingContext = { originatorId: sessionId };
+		const encodingTestData: EncodingTestData<
+			ModularChangeset,
+			EncodedModularChangeset,
+			ChangeEncodingContext
+		> = {
 			successes: [
-				["without constrain", rootChange1a],
-				["with constrain", rootChange3],
-				["with node existence constraint", rootChange4],
-				["without node field changes", rootChangeWithoutNodeFieldChanges],
+				["without constraint", rootChange1a, context],
+				["with constraint", rootChange3, context],
+				["with node existence constraint", rootChange4, context],
+				["without node field changes", rootChangeWithoutNodeFieldChanges, context],
 			],
 		};
 

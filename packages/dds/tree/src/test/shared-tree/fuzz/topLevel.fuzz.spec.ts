@@ -13,7 +13,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import { failureDirectory, onCreate } from "./fuzzUtils.js";
+import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -74,15 +74,12 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 0.2,
-			},
 			clientJoinOptions: {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -111,7 +108,9 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
+
 		createDDSFuzzSuite(model, options);
 	});
 });

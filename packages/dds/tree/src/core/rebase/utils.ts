@@ -14,7 +14,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "./changeRebaser.js";
-import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types.js";
+import { GraphCommit, mintCommit, RevisionTag } from "./types.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -100,6 +100,7 @@ export interface BranchRebaseResult<TChange> {
  * ```
  */
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -140,12 +141,14 @@ export function rebaseBranch<TChange>(
  * ```
  */
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): BranchRebaseResult<TChange>;
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
@@ -280,6 +283,7 @@ export function rebaseChange<TChange>(
 	change: TChange,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
 ): TChange {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -288,7 +292,9 @@ export function rebaseChange<TChange>(
 		0x576 /* branch A and branch B must be related */,
 	);
 
-	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	const inverses = sourcePath.map((commit) =>
+		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
+	);
 	inverses.reverse();
 	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
@@ -359,6 +365,7 @@ function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): Revi
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
 ): TaggedChange<TChange> {
 	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);

@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId } from "../../core/index.js";
+import { IIdCompressor, createIdCompressor } from "@fluidframework/id-compressor";
+import { ChangesetLocalId, RevisionTagCodec } from "../../core/index.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/optional-field/index.js";
-import { RevisionTagCodec } from "../../shared-tree-core/index.js";
-import { brand, generateStableId, useDeterministicStableId } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import { TestChange } from "../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
+import { sessionId } from "./testTrees.js";
 
-function generateTestChangesets(): { name: string; change: OptionalChangeset<TestChange> }[] {
-	const revision = generateStableId();
+function generateTestChangesets(
+	idCompressor: IIdCompressor,
+): { name: string; change: OptionalChangeset<TestChange> }[] {
+	const revision = idCompressor.generateCompressedId();
 	const localId: ChangesetLocalId = brand(42);
 	const childChange = TestChange.mint([], 1);
 	return [
@@ -44,6 +47,7 @@ function generateTestChangesets(): { name: string; change: OptionalChangeset<Tes
 				childChanges: [
 					[{ revision, localId }, childChange],
 					[{ localId }, childChange],
+					["self", childChange],
 				],
 			},
 		},
@@ -68,18 +72,23 @@ function generateTestChangesets(): { name: string; change: OptionalChangeset<Tes
 
 describe("OptionalField - Snapshots", () => {
 	useSnapshotDirectory("optional-field");
-	const family = makeOptionalFieldCodecFamily(TestChange.codec, new RevisionTagCodec());
+	const idCompressor = createIdCompressor(sessionId);
+	const changesets = generateTestChangesets(idCompressor);
+	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+	const family = makeOptionalFieldCodecFamily(
+		TestChange.codec,
+		new RevisionTagCodec(idCompressor),
+	);
+
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
-			useDeterministicStableId(() => {
-				for (const { name, change } of generateTestChangesets()) {
-					it(name, () => {
-						const encoded = codec.json.encode(change);
-						takeJsonSnapshot(encoded);
-					});
-				}
-			});
+			for (const { name, change } of changesets) {
+				it(name, () => {
+					const encoded = codec.json.encode(change, idCompressor.localSessionId);
+					takeJsonSnapshot(encoded);
+				});
+			}
 		});
 	}
 });

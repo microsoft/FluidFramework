@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
 import { Tree, TreeConfiguration, TreeView } from "../../class-tree/index.js";
@@ -89,7 +90,10 @@ describe("schemaFactory", () => {
 		const config = new TreeConfiguration(schema.number, () => 5);
 
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const view = tree.schematize(config);
 		assert.equal(view.root, 5);
 	});
@@ -100,7 +104,10 @@ describe("schemaFactory", () => {
 		const config = new TreeConfiguration(schema.number, () => 5);
 
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		class A extends schema.object("A", {}) {}
 		class B extends schema.object("B", {}) {}
@@ -124,7 +131,10 @@ describe("schemaFactory", () => {
 			const config = new TreeConfiguration(Point, () => new Point({ x: 1, y: 2 }));
 
 			const factory = new TreeFactory({});
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
 			const root = tree.schematize(config).root;
 			assert.equal(root.x, 1);
 			assert.equal(root.y, 2);
@@ -158,7 +168,10 @@ describe("schemaFactory", () => {
 			const config = new TreeConfiguration(Point, () => new Point({ x: 1 }));
 
 			const factory = new TreeFactory({});
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
 			const root = tree.schematize(config).root;
 			assert.equal(root.x, 1);
 
@@ -259,7 +272,10 @@ describe("schemaFactory", () => {
 		);
 
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		const view: TreeView<Canvas> = tree.schematize(config);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
@@ -285,7 +301,10 @@ describe("schemaFactory", () => {
 			);
 
 			const factory = new TreeFactory({});
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
 			const view = tree.schematize(treeConfiguration);
 		});
 
@@ -323,7 +342,10 @@ describe("schemaFactory", () => {
 				Parent,
 				() => new Parent({ child: [5] }),
 			);
-			const tree = treeFactory.create(new MockFluidDataStoreRuntime(), "tree");
+			const tree = treeFactory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
 			const view = tree.schematize(treeConfiguration);
 
 			const listNode = view.root.child;
@@ -378,7 +400,10 @@ describe("schemaFactory", () => {
 				Parent,
 				() => new Parent({ child: new Map([["x", 5]]) }),
 			);
-			const tree = treeFactory.create(new MockFluidDataStoreRuntime(), "tree");
+			const tree = treeFactory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
 			const view = tree.schematize(treeConfiguration);
 
 			const mapNode = view.root.child;
@@ -549,7 +574,10 @@ describe("schemaFactory", () => {
 				it(`${parentType} → ${childType}`, () => {
 					const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
 					const factory = new TreeFactory({});
-					const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+					const tree = factory.create(
+						new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+						"tree",
+					);
 					const view = tree.schematize(config);
 					const { parent, nodes } = createComboTree({
 						parentType,
@@ -598,7 +626,10 @@ function hydrate<TSchema extends ImplicitFieldSchema>(
 ): TreeFieldFromImplicitField<TSchema> {
 	const config = new TreeConfiguration(schema, () => data);
 	const factory = new TreeFactory({});
-	const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+	const tree = factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		"tree",
+	);
 	const root = tree.schematize(config).root;
 	return root;
 }

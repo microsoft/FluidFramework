@@ -6,7 +6,6 @@
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
@@ -15,6 +14,7 @@ import {
 import { CellId } from "../../../feature-libraries/sequence-field/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { TestChange } from "../../testChange.js";
+import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
 import {
 	invert as invertChange,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	TaggedChange,
 	RevisionTag,
@@ -13,7 +14,7 @@ import {
 	EncodedRevisionTag,
 } from "../../core/index.js";
 import { fail, IdAllocator, Invariant } from "../../util/index.js";
-import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import { ICodecFamily, SessionAwareCodec } from "../../codec/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import { NodeChangeset } from "./modularChangeTypes.js";
@@ -29,9 +30,9 @@ export interface FieldChangeHandler<
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (
-		childCodec: IJsonCodec<NodeChangeset>,
-		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-	) => ICodecFamily<TChangeset>;
+		childCodec: SessionAwareCodec<NodeChangeset>,
+		revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+	) => ICodecFamily<TChangeset, SessionId>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,

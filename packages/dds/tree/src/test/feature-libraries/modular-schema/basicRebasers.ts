@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { TUnsafe, Type } from "@sinclair/typebox";
+import { assert } from "@fluidframework/core-utils";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -13,10 +14,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { Mutable, fail } from "../../../util/index.js";
-import { makeCodecFamily, makeValueCodec } from "../../../codec/index.js";
+import { makeCodecFamily } from "../../../codec/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core/index.js";
 import { Multiplicity } from "../../../feature-libraries/index.js";
+import { makeValueCodec } from "../../codec/index.js";
 
 /**
  * Picks the last value written.
@@ -78,7 +80,7 @@ export type ValueChangeset = ReplaceOp<number>;
 export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
+		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>, SessionId>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: ({ change, revision }): DeltaFieldChanges => {

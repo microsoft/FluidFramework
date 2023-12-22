@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 import { makeCodecFamily } from "../../codec/index.js";
-import { mintRevisionTag } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeMessageCodec } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs.js";
-import { useDeterministicStableId } from "../../util/index.js";
+import { RevisionTagCodec } from "../../core/index.js";
 import { TestChange } from "../testChange.js";
-import { EncodingTestData, makeEncodingTestSuite } from "../utils.js";
+import {
+	EncodingTestData,
+	MockIdCompressor,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+} from "../utils.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -38,69 +40,66 @@ const commitInvalid = {
 	change: "Invalid change",
 };
 
-const testCases = useDeterministicStableId(() => {
-	const data: EncodingTestData<DecodedMessage<TestChange>, unknown> = {
-		successes: [
+const idCompressor = new MockIdCompressor();
+const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown> = {
+	successes: [
+		[
+			"Message with commit 1",
+			{
+				sessionId: idCompressor.localSessionId,
+				commit: commit1,
+			},
+		],
+		[
+			"Message with commit 2",
+			{
+				sessionId: idCompressor.localSessionId,
+				commit: commit2,
+			},
+		],
+	],
+	failures: {
+		0: [
+			["Empty message", {}],
 			[
-				"Message with commit 1",
+				"Missing sessionId",
 				{
-					sessionId: "session1",
 					commit: commit1,
 				},
 			],
 			[
-				"Message with commit 2",
+				"Missing commit",
 				{
 					sessionId: "session1",
-					commit: commit2,
+				},
+			],
+			[
+				"Message with invalid sessionId",
+				{
+					sessionId: 1,
+					commit: commit1,
+				},
+			],
+			[
+				"Message with commit without revision",
+				{
+					sessionId: "session1",
+					commit: commitWithoutRevision,
+				},
+			],
+			[
+				"Message with invalid commit",
+				{
+					sessionId: "session1",
+					commit: commitInvalid,
 				},
 			],
 		],
-		failures: {
-			0: [
-				["Empty message", {}],
-				[
-					"Missing sessionId",
-					{
-						commit: commit1,
-					},
-				],
-				[
-					"Missing commit",
-					{
-						sessionId: "session1",
-					},
-				],
-				[
-					"Message with invalid sessionId",
-					{
-						sessionId: 1,
-						commit: commit1,
-					},
-				],
-				[
-					"Message with commit without revision",
-					{
-						sessionId: "session1",
-						commit: commitWithoutRevision,
-					},
-				],
-				[
-					"Message with invalid commit",
-					{
-						sessionId: "session1",
-						commit: commitInvalid,
-					},
-				],
-			],
-		},
-	};
-
-	return data;
-});
+	},
+};
 
 describe("message codec", () => {
-	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(), {
+	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(idCompressor), {
 		jsonValidator: typeboxValidator,
 	});
 

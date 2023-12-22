@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -156,7 +157,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits behind the minimum sequence number", () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -187,7 +188,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("can complete a transaction that spans trunk eviction", () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -213,7 +214,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -279,8 +280,12 @@ describe("SharedTreeCore", () => {
 	 */
 	it("Can rebase and process edits to detached portions of the tree", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+		});
+		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+		});
 		const factory = new SharedTreeTestFactory(() => {});
 
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -346,7 +351,11 @@ describe("SharedTreeCore", () => {
 	function createTree<TIndexes extends readonly Summarizable[]>(
 		indexes: TIndexes,
 	): TestSharedTreeCore {
-		return new TestSharedTreeCore(undefined, undefined, indexes);
+		return new TestSharedTreeCore(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			undefined,
+			indexes,
+		);
 	}
 
 	interface MockSummarizableEvents extends IEvent {

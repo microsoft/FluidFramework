@@ -67,7 +67,12 @@ import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/co
 import { TreeContent } from "../../../shared-tree/index.js";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
 import { testTrees, treeContentFromTestTree } from "../../testTrees.js";
-import { forestWithContent, flexTreeViewWithContent } from "../../utils.js";
+import {
+	forestWithContent,
+	flexTreeViewWithContent,
+	testIdCompressor,
+	failCodec,
+} from "../../utils.js";
 import { contextWithContentReadonly } from "./utils.js";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -366,7 +371,7 @@ describe("LazyMap", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},
@@ -461,7 +466,7 @@ describe("LazyObjectNode", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},

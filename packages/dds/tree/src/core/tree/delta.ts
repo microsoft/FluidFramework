@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { RevisionTag } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { ITreeCursorSynchronous } from "./cursor.js";
 
@@ -151,7 +152,7 @@ export interface Mark<TTree = ProtoNode> {
  * @internal
  */
 export interface DetachedNodeId {
-	readonly major?: string | number;
+	readonly major?: RevisionTag;
 	readonly minor: number;
 }
 

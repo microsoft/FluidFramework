@@ -4,33 +4,40 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import { SessionId } from "@fluidframework/id-compressor";
+import { ICodecFamily, SessionAwareCodec, makeCodecFamily } from "../../codec/index.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 
 export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
-	childCodec: IJsonCodec<TChildChange>,
-): ICodecFamily<GenericChangeset<TChildChange>> {
+	childCodec: SessionAwareCodec<TChildChange>,
+): ICodecFamily<GenericChangeset<TChildChange>, SessionId> {
 	return makeCodecFamily([[0, makeV0Codec(childCodec)]]);
 }
 
 function makeV0Codec<TChildChange = NodeChangeset>(
-	childCodec: IJsonCodec<TChildChange>,
-): IJsonCodec<GenericChangeset<TChildChange>, EncodedGenericChangeset> {
+	childCodec: SessionAwareCodec<TChildChange>,
+): SessionAwareCodec<GenericChangeset<TChildChange>, EncodedGenericChangeset> {
 	return {
-		encode: (change: GenericChangeset<TChildChange>): EncodedGenericChangeset => {
+		encode: (
+			change: GenericChangeset<TChildChange>,
+			originatorId: SessionId,
+		): EncodedGenericChangeset => {
 			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => [
 				index,
-				childCodec.encode(nodeChange),
+				childCodec.encode(nodeChange, originatorId),
 			]);
 			return encoded;
 		},
-		decode: (encoded: EncodedGenericChangeset): GenericChangeset<TChildChange> => {
+		decode: (
+			encoded: EncodedGenericChangeset,
+			originatorId: SessionId,
+		): GenericChangeset<TChildChange> => {
 			return encoded.map(
 				([index, nodeChange]: EncodedGenericChange): GenericChange<TChildChange> => ({
 					index,
-					nodeChange: childCodec.decode(nodeChange),
+					nodeChange: childCodec.decode(nodeChange, originatorId),
 				}),
 			);
 		},

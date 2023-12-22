@@ -25,7 +25,7 @@ import {
 	rootFieldKey,
 	schemaDataIsEmpty,
 } from "../core/index.js";
-import { RevisionTagCodec, SharedTreeCore } from "../shared-tree-core/index.js";
+import { SharedTreeCore } from "../shared-tree-core/index.js";
 import {
 	defaultSchemaPolicy,
 	ForestSummarizer,
@@ -177,27 +177,41 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
+		assert(
+			runtime.idCompressor !== undefined,
+			"IdCompressor must be enabled to use SharedTree",
+		);
+
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedRoots = makeDetachedFieldIndex("repair", options, new RevisionTagCodec());
+		const removedRoots = makeDetachedFieldIndex("repair", runtime.idCompressor, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = makeFieldBatchCodec(options, {
+			// TODO: provide schema here to enable schema based compression.
+			// schema: {
+			// 	schema,
+			// 	policy: defaultSchemaPolicy,
+			// },
+			encodeType: TreeCompressionStrategy.Compressed,
+		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			schema,
-			defaultSchemaPolicy,
-			options.summaryEncodeType,
+			runtime.idCompressor,
 			fieldBatchCodec,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
-		const innerChangeFamily = new SharedTreeChangeFamily(options);
+		const innerChangeFamily = new SharedTreeChangeFamily(
+			runtime.idCompressor,
+			fieldBatchCodec,
+			options,
+		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
 			SharedTreeChangeFamily.emptyChange,
@@ -231,11 +245,12 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.view = createTreeCheckout({
+		this.view = createTreeCheckout(runtime.idCompressor, {
 			branch: localBranch,
 			changeFamily,
 			schema,
 			forest,
+			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
 		});

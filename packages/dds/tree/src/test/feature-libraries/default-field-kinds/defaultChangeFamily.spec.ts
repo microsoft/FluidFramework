@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
 	FieldKey,
-	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
 	JsonableTree,
@@ -30,10 +29,12 @@ import {
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { assertDeltaEqual } from "../../utils.js";
+import { assertDeltaEqual, failCodec, mintRevisionTag, testIdCompressor } from "../../utils.js";
 import { noopValidator } from "../../../codec/index.js";
 
-const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
+	jsonValidator: noopValidator,
+});
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;
@@ -108,12 +109,12 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
-		initializeForest(forest, [cursorForJsonableTreeNode(data)]);
+		initializeForest(forest, [cursorForJsonableTreeNode(data)], testIdCompressor);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex();
+	const detachedFieldIndex = makeDetachedFieldIndex(undefined, testIdCompressor);
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);

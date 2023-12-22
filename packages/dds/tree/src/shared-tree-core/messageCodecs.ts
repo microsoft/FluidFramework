@@ -5,25 +5,30 @@
 
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly } from "../util/index.js";
-import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec/index.js";
-import { EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import {
+	ICodecOptions,
+	IJsonCodec,
+	SessionAwareCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
+import { ChangeFamilyCodec, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 import { DecodedMessage } from "./messageTypes.js";
 import { Message } from "./messageFormat.js";
 
 export function makeMessageCodec<TChangeset>(
-	changesetCodec: IJsonCodec<TChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	changeCodec: ChangeFamilyCodec<TChangeset>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
 ): IJsonCodec<DecodedMessage<TChangeset>> {
 	// TODO: consider adding version and using makeVersionedValidatedCodec
 	return withSchemaValidation<DecodedMessage<TChangeset>, TAnySchema>(
-		Message(changesetCodec.encodedSchema ?? Type.Any()),
+		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
-			encode: ({ commit, sessionId }: DecodedMessage<TChangeset>) => {
+			encode: ({ commit, sessionId: originatorId }: DecodedMessage<TChangeset>) => {
 				const message: Message = {
-					revision: revisionTagCodec.encode(commit.revision),
-					originatorId: sessionId,
-					changeset: changesetCodec.encode(commit.change),
+					revision: revisionTagCodec.encode(commit.revision, originatorId),
+					originatorId,
+					changeset: changeCodec.encode(commit.change, { originatorId }),
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
@@ -31,8 +36,8 @@ export function makeMessageCodec<TChangeset>(
 				const { revision, originatorId, changeset } = encoded as unknown as Message;
 				return {
 					commit: {
-						revision: revisionTagCodec.decode(revision),
-						change: changesetCodec.decode(changeset),
+						revision: revisionTagCodec.decode(revision, originatorId),
+						change: changeCodec.decode(changeset, { originatorId }),
 					},
 					sessionId: originatorId,
 				};

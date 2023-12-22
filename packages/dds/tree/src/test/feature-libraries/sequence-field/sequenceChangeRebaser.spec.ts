@@ -8,7 +8,6 @@ import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
-	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
@@ -21,7 +20,7 @@ import {
 } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
-import { deepFreeze } from "../../utils.js";
+import { deepFreeze, mintRevisionTag } from "../../utils.js";
 import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";

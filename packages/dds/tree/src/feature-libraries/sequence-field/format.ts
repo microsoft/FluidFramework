@@ -51,9 +51,11 @@ const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 const CellId = Type.Composite(
 	[
-		EncodedChangeAtomId,
 		HasLineage,
-		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+		Type.Object({
+			atom: EncodedChangeAtomId,
+			adjacentCells: Type.Optional(Type.Array(IdRange)),
+		}),
 	],
 	noAdditionalProps,
 );

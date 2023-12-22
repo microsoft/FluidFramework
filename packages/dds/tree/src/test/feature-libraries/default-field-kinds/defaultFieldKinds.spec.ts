@@ -16,9 +16,9 @@ import {
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core/index.js";
+import { makeAnonChange, TaggedChange, tagChange } from "../../../core/index.js";
 import { brand, fakeIdAllocator } from "../../../util/index.js";
-import { defaultRevisionMetadataFromChanges } from "../../utils.js";
+import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";

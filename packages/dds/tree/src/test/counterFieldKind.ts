@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/id-compressor";
 import { Type } from "@sinclair/typebox";
-import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../codec/index.js";
+import { ICodecFamily, makeCodecFamily } from "../codec/index.js";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -20,8 +21,9 @@ import {
 import { brand, fail } from "../util/index.js";
 import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from "../core/index.js";
 import { leaf } from "../domains/index.js";
+import { makeValueCodec } from "./codec/index.js";
 
-export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
+export const counterCodecFamily: ICodecFamily<number, SessionId> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],
 ]);
 

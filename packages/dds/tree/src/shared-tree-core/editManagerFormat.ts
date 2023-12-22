@@ -4,9 +4,9 @@
  */
 
 import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
+import { SessionId } from "@fluidframework/id-compressor";
 import { Brand, brand, brandedNumberType } from "../util/index.js";
 import {
-	SessionId,
 	SessionIdSchema,
 	RevisionTag,
 	RevisionTagSchema,
@@ -96,6 +96,11 @@ export interface SummarySessionBranch<TChangeset> {
 	readonly base: RevisionTag;
 	readonly commits: Commit<TChangeset>[];
 }
+
+export interface EncodedSummarySessionBranch<TChangeset> {
+	readonly base: EncodedRevisionTag;
+	readonly commits: Commit<TChangeset>[];
+}
 const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
@@ -107,7 +112,7 @@ const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchem
 
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
-	readonly branches: readonly [SessionId, Readonly<SummarySessionBranch<TChangeset>>][];
+	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 }
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(

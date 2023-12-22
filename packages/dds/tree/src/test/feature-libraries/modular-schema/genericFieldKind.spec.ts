@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	NodeChangeset,
 	GenericChangeset,
@@ -19,15 +20,16 @@ import {
 	deltaForSet,
 	DeltaFieldMap,
 	DeltaFieldChanges,
+	RevisionTagCodec,
 } from "../../../core/index.js";
 import { fakeIdAllocator, brand } from "../../../util/index.js";
 import {
 	EncodingTestData,
+	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils.js";
-import { IJsonCodec } from "../../../codec/index.js";
-import { RevisionTagCodec } from "../../../shared-tree-core/index.js";
+import { SessionAwareCodec } from "../../../codec/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
@@ -398,7 +400,7 @@ describe("Generic FieldKind", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<GenericChangeset, unknown> = {
+		const encodingTestData: EncodingTestData<GenericChangeset, unknown, SessionId> = {
 			successes: [
 				[
 					"Misc",
@@ -412,31 +414,35 @@ describe("Generic FieldKind", () => {
 							nodeChange: nodeChange1To2,
 						},
 					],
+					"session1" as SessionId,
 				],
 			],
 		};
 
-		const throwCodec: IJsonCodec<any> = {
+		const throwCodec: SessionAwareCodec<any> = {
 			encode: unexpectedDelegate,
 			decode: unexpectedDelegate,
 		};
 
 		const leafCodec = valueHandler
-			.codecsFactory(throwCodec, new RevisionTagCodec())
+			.codecsFactory(throwCodec, new RevisionTagCodec(new MockIdCompressor()))
 			.resolve(0).json;
-		const childCodec: IJsonCodec<NodeChangeset> = {
-			encode: (nodeChange) => {
+		const childCodec: SessionAwareCodec<NodeChangeset> = {
+			encode: (nodeChange, originatorId) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
-				return leafCodec.encode(valueChange);
+				return leafCodec.encode(valueChange, originatorId);
 			},
-			decode: (nodeChange) => {
-				const valueChange = leafCodec.decode(nodeChange);
+			decode: (nodeChange, originatorId) => {
+				const valueChange = leafCodec.decode(nodeChange, originatorId);
 				return nodeChangeFromValueChange(valueChange);
 			},
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(childCodec, new RevisionTagCodec()),
+			genericFieldKind.changeHandler.codecsFactory(
+				childCodec,
+				new RevisionTagCodec(new MockIdCompressor()),
+			),
 			encodingTestData,
 		);
 	});

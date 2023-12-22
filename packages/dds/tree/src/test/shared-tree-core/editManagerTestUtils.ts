@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangeFamily,
-	SessionId,
-	ChangeRebaser,
-	ChangeFamilyEditor,
-	mintRevisionTag,
-} from "../../core/index.js";
+import { createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/runtime-definitions";
+import { ChangeFamily, ChangeRebaser, ChangeFamilyEditor } from "../../core/index.js";
 import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange.js";
 import { Commit, EditManager } from "../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../util/index.js";
-
+import { mintRevisionTag } from "../utils.js";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 export function testChangeEditManagerFactory(options: {
@@ -41,11 +37,13 @@ export function editManagerFactory<TChange = TestChange>(
 	} = {},
 ): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
 	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
+	const idCompressor = createIdCompressor();
+	const genId = () => idCompressor.generateCompressedId();
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TChange,
 		ChangeFamily<ChangeFamilyEditor, TChange>
-	>(family, options.sessionId ?? "0");
+	>(family, options.sessionId ?? ("0" as SessionId), genId);
 
 	if (autoDiscardRevertibles === true) {
 		// by default, discard revertibles in the edit manager tests
@@ -128,7 +126,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	const trunkEdits = makeArray(trunkEditCount, () => ({
 		change: mintChange(),
 		revision: mintRevisionTag(),
-		sessionId: "trunk",
+		sessionId: "trunk" as SessionId,
 	}));
 	const run = () => {
 		for (let iChange = 0; iChange < trunkEditCount; iChange++) {
@@ -208,7 +206,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 			{
 				change: mintChange(),
 				revision: mintRevisionTag(),
-				sessionId: "trunk",
+				sessionId: "trunk" as SessionId,
 			},
 			brand(iChange + 1),
 			brand(iChange),
@@ -217,7 +215,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 	const peerEdits = makeArray(peerEditCount, () => ({
 		change: mintChange(),
 		revision: mintRevisionTag(),
-		sessionId: "peer",
+		sessionId: "peer" as SessionId,
 	}));
 	const run = () => {
 		for (let iChange = 0; iChange < peerEditCount; iChange++) {
@@ -302,7 +300,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 			{
 				change: mintChange(),
 				revision: mintRevisionTag(),
-				sessionId: "trunk",
+				sessionId: "trunk" as SessionId,
 			},
 			brand(iChange + 1),
 			brand(iChange),
@@ -311,7 +309,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	const peerEdits = makeArray(editCount, () => ({
 		change: mintChange(),
 		revision: mintRevisionTag(),
-		sessionId: "peer",
+		sessionId: "peer" as SessionId,
 	}));
 	const run = () => {
 		for (let iChange = 0; iChange < editCount; iChange++) {
@@ -395,7 +393,7 @@ export function rebaseConcurrentPeerEdits<TChange>(
 			peerEdits.push({
 				change: mintChange(),
 				revision: mintRevisionTag(),
-				sessionId: `p${iPeer}`,
+				sessionId: `p${iPeer}` as SessionId,
 			});
 		}
 	}
