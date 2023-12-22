@@ -32,7 +32,6 @@ import {
 	ISummaryCancellationToken,
 	SummaryGeneratorTelemetry,
 	SubmitSummaryFailureData,
-	IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -204,9 +203,7 @@ export class SummaryGenerator {
 		private readonly submitSummaryCallback: (
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
-		private readonly successfulSummaryCallback: (
-			options: IRefreshSummaryAckOptions,
-		) => Promise<void>,
+		private readonly successfulSummaryCallback: () => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
@@ -433,12 +430,7 @@ export class SummaryGenerator {
 			};
 			if (ackNackOp.type === MessageType.SummaryAck) {
 				this.heuristicData.markLastAttemptAsSuccessful();
-				await this.successfulSummaryCallback({
-					proposalHandle: summarizeOp.contents.handle,
-					ackHandle: ackNackOp.contents.handle,
-					summaryRefSeq: summarizeOp.referenceSequenceNumber,
-					summaryLogger,
-				});
+				this.successfulSummaryCallback();
 				summarizeEvent.end({
 					...summarizeTelemetryProps,
 					handle: ackNackOp.contents.handle,

@@ -243,17 +243,11 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			}
 		});
 
-		const immediatelyRefreshLatestSummaryAck =
-			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ??
-			false;
 		this.generator = new SummaryGenerator(
 			this.pendingAckTimer,
 			this.heuristicData,
 			this.submitSummaryCallback,
-			async (options: IRefreshSummaryAckOptions) => {
-				if (immediatelyRefreshLatestSummaryAck) {
-					await this.refreshLatestSummaryAckCallback(options);
-				}
+			() => {
 				this.totalSuccessfulAttempts++;
 			},
 			this.summaryWatcher,
