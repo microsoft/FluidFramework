@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec, IMultiFormatCodec } from "../codec";
+import {
+	ICodecOptions,
+	IJsonCodec,
+	IMultiFormatCodec,
+	makeVersionedValidatedCodec,
+} from "../codec";
 import { EncodedRevisionTag, RevisionTag } from "../core";
 import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
 import { SummaryData } from "./editManager";
-import { Commit, EncodedCommit, EncodedEditManager } from "./editManagerFormat";
+import { Commit, EncodedCommit, EncodedEditManager, version } from "./editManagerFormat";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<TChangeset>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-	{ jsonValidator: validator }: ICodecOptions,
+	options: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>> {
-	const format = validator.compile(
-		EncodedEditManager(changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema),
+	const format = EncodedEditManager(
+		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
 	);
 
 	const encodeCommit = <T extends Commit<TChangeset>>(commit: T) => ({
@@ -31,33 +35,43 @@ export function makeEditManagerCodec<TChangeset>(
 		change: changeCodec.json.decode(commit.change),
 	});
 
-	return {
-		encode: (data) => {
-			const json: EncodedEditManager<TChangeset> = {
+	const codec: IJsonCodec<
+		SummaryData<TChangeset>,
+		EncodedEditManager<JsonCompatibleReadOnly>
+	> = makeVersionedValidatedCodec(options, new Set([version]), format, {
+		encode: (data: SummaryData<TChangeset>): EncodedEditManager<JsonCompatibleReadOnly> => {
+			const json: EncodedEditManager<JsonCompatibleReadOnly> = {
 				trunk: data.trunk.map(encodeCommit),
 				branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
 					sessionId,
 					{ ...branch, commits: branch.commits.map(encodeCommit) },
 				]),
+				version,
 			};
-			assert(format.check(json), 0x6cc /* Encoded schema should validate */);
-			return json as unknown as JsonCompatibleReadOnly;
+			return json;
 		},
-		decode: (json) => {
-			assert(format.check(json), 0x6cd /* Encoded schema should validate */);
+		decode: (json: EncodedEditManager<JsonCompatibleReadOnly>): SummaryData<TChangeset> => {
+			// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
+			const trunk: any = json.trunk;
 			return {
-				trunk: json.trunk.map(decodeCommit),
+				trunk: trunk.map(decodeCommit),
 				branches: new Map(
 					mapIterable(json.branches, ([sessionId, branch]) => [
 						sessionId,
 						{
 							...branch,
-							base: revisionTagCodec.decode(branch.base),
-							commits: branch.commits.map(decodeCommit),
+							// TODO: fix typing around revision tag encoding, so this compiles without using `any`
+							base: revisionTagCodec.decode(branch.base as any),
+							// TODO: fix typing around revision tag encoding, so this compiles without using `any`
+							commits: branch.commits.map(decodeCommit as any),
 						},
 					]),
 				),
 			};
 		},
-	};
+	});
+	// TODO: makeVersionedValidatedCodec and withSchemaValidation should allow the codec to decode JsonCompatibleReadOnly, or Versioned or something like that,
+	// and not leak the internal encoded format in the API surface.
+	// Fixing that would remove the need for this cast.
+	return codec as unknown as IJsonCodec<SummaryData<TChangeset>>;
 }
