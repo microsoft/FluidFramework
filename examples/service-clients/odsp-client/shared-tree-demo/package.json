@@ -37,8 +37,8 @@
 		"@fluid-experimental/odsp-client": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"fluid-framework": "workspace:~",
 		"css-loader": "^1.0.0",
+		"fluid-framework": "workspace:~",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^1.0.0"
