@@ -4,7 +4,7 @@
 
 ```ts
 
-import { FieldKind as FieldKind_3 } from './schemaTypes';
+import { FieldKind as FieldKind_2 } from './schemaTypes';
 import { FieldSchema as FieldSchema_2 } from './schemaTypes';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -30,6 +30,7 @@ import { TreeNode as TreeNode_2 } from '..';
 import { TreeNodeSchema as TreeNodeSchema_2 } from './schemaTypes';
 import { TreeNodeSchemaClass as TreeNodeSchemaClass_2 } from './schemaTypes';
 import type { TSchema } from '@sinclair/typebox';
+import { WithType as WithType_2 } from './schemaTypes';
 
 // @internal
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
@@ -1625,12 +1626,12 @@ export class test_RecursiveObject extends test_RecursiveObject_base {
 }
 
 // @internal
-export const test_RecursiveObject_base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
-readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}> & WithType<"Test Recursive Domain.testObject">, object & InsertableObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
-readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
+export const test_RecursiveObject_base: TreeNodeSchemaClass_2<"Test Recursive Domain.testObject", NodeKind.Object, object & TreeNode_2 & ObjectFromSchemaRecord_2<    {
+readonly recursive: FieldSchema_2<FieldKind_2.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly number: TreeNodeSchema_2<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
+}> & WithType_2<"Test Recursive Domain.testObject">, object & InsertableObjectFromSchemaRecord_2<    {
+readonly recursive: FieldSchema_2<FieldKind_2.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly number: TreeNodeSchema_2<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>, true>;
 
 // @internal

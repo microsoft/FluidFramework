@@ -14,7 +14,6 @@ import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { FieldKind as FieldKind_2 } from './schemaTypes';
 import { FieldSchema as FieldSchema_2 } from './schemaTypes';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { Forbidden as Forbidden_2 } from '../default-schema';
 import { getTextAndMarkers } from '@fluidframework/sequence';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -2191,7 +2190,7 @@ export class TreeFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, co
     get allowedTypeSet(): AllowedTypeSet;
     static create<TKind extends FlexFieldKind, const Types extends FlexAllowedTypes>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
     static createUnsafe<TKind extends FlexFieldKind, const Types extends Unenforced<FlexAllowedTypes>>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
-    static readonly empty: TreeFieldSchema<Forbidden_2, readonly []>;
+    static readonly empty: TreeFieldSchema<Forbidden, readonly []>;
     equals(other: TreeFieldSchema): boolean;
     // (undocumented)
     readonly kind: TKind;
