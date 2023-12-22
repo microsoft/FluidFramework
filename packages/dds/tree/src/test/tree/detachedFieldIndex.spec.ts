@@ -5,10 +5,21 @@
 
 import { strict as assert } from "assert";
 import { DetachedFieldIndex, ForestRootId } from "../../core";
-import { IdAllocator, JsonCompatibleReadOnly, brand, idAllocatorFromMaxId } from "../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes";
+import {
+	IdAllocator,
+	JsonCompatibleReadOnly,
+	brand,
+	generateStableId,
+	idAllocatorFromMaxId,
+} from "../../util";
 import { typeboxValidator } from "../../external-utilities";
 // eslint-disable-next-line import/no-internal-modules
 import { Format } from "../../core/tree/detachedFieldIndexFormat";
+// eslint-disable-next-line import/no-internal-modules
+import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec";
+import { RevisionTagCodec } from "../../shared-tree-core";
 
 const malformedData: [string, JsonCompatibleReadOnly][] = [
 	[
@@ -62,20 +73,83 @@ const validData: [string, Format][] = [
 		},
 	],
 	[
-		"single entry",
+		"one of everything",
 		{
 			version: 1,
-			data: [[1, 2, brand(3)]],
+			data: [
+				[[[0, brand(1)]]],
+				[[[1, brand(0), 2]], brand("beefbeef-beef-4000-8000-000000000001")],
+			],
 			maxId: brand(-1),
 		},
 	],
 ];
+
+export function generateTestCases(): { name: string; data: DetachedFieldSummaryData }[] {
+	const revision = generateStableId();
+	const maxId: ForestRootId = brand(42);
+	return [
+		{
+			name: "empty",
+			data: {
+				maxId,
+				data: new Map(),
+			},
+		},
+		{
+			name: "single range with single node",
+			data: {
+				maxId,
+				data: new Map([
+					[undefined, new Map([[0, 1]])],
+					[revision, new Map([[0, 1]])],
+				]),
+			},
+		},
+		{
+			name: "multiple nodes that do not form a single range",
+			data: {
+				maxId,
+				data: new Map([
+					[
+						revision,
+						new Map([
+							[2, 1],
+							[0, 2],
+							[1, 4],
+						]),
+					],
+				]),
+			},
+		},
+		{
+			name: "multiple nodes that form ranges",
+			data: {
+				maxId,
+				data: new Map([
+					[
+						undefined,
+						new Map([
+							[1, 2],
+							[3, 4],
+							[2, 3],
+							[7, 6],
+							[6, 5],
+						]),
+					],
+				]),
+			},
+		},
+	];
+}
+
 describe("DetachedFieldIndex", () => {
 	it("encodes with a version stamp.", () => {
 		const detachedFieldIndex = new DetachedFieldIndex(
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			{ jsonValidator: typeboxValidator },
+			new RevisionTagCodec(),
 		);
 		const expected = {
 			version: 1,
@@ -83,6 +157,19 @@ describe("DetachedFieldIndex", () => {
 			maxId: -1,
 		};
 		assert.deepEqual(detachedFieldIndex.encode(), expected);
+	});
+	describe("round-trip through JSON", () => {
+		const codec = makeDetachedNodeToFieldCodec(new RevisionTagCodec(), {
+			jsonValidator: typeboxValidator,
+		});
+		for (const { name, data } of generateTestCases()) {
+			it(name, () => {
+				const id = idAllocatorFromMaxId() as IdAllocator<ForestRootId>;
+				const encoded = codec.encode(data);
+				const decoded = codec.decode(encoded);
+				assert.deepEqual(decoded, data);
+			});
+		}
 	});
 	describe("loadData", () => {
 		describe("accepts correct data", () => {
@@ -94,6 +181,7 @@ describe("DetachedFieldIndex", () => {
 						{
 							jsonValidator: typeboxValidator,
 						},
+						new RevisionTagCodec(),
 					);
 					detachedFieldIndex.loadData(data as JsonCompatibleReadOnly);
 				});
@@ -103,9 +191,14 @@ describe("DetachedFieldIndex", () => {
 			for (const [name, data] of malformedData) {
 				it(name, () => {
 					const id = idAllocatorFromMaxId() as IdAllocator<ForestRootId>;
-					const detachedFieldIndex = new DetachedFieldIndex("test", id, {
-						jsonValidator: typeboxValidator,
-					});
+					const detachedFieldIndex = new DetachedFieldIndex(
+						"test",
+						id,
+						{
+							jsonValidator: typeboxValidator,
+						},
+						new RevisionTagCodec(),
+					);
 					assert.throws(() => detachedFieldIndex.loadData(data), "malformed data");
 				});
 			}

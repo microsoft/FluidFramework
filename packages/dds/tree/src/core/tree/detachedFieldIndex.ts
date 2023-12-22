@@ -18,6 +18,7 @@ import {
 } from "../../util";
 import { FieldKey } from "../schema-stored";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
+import { EncodedRevisionTag, RevisionTag } from "../rebase";
 import * as Delta from "./delta";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
@@ -48,9 +49,10 @@ export class DetachedFieldIndex {
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 		options?: ICodecOptions,
+		private readonly revisionTagCodec?: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(this.options);
+		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options);
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -58,6 +60,7 @@ export class DetachedFieldIndex {
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
 			this.options,
+			this.revisionTagCodec,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
 		return clone;

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { RevisionTagCodec } from "../shared-tree-core";
 import {
 	IEditableForest,
 	initializeForest,
@@ -418,6 +419,8 @@ export function testForest(config: ForestTestConfiguration): void {
 			const detachedFieldIndex = new DetachedFieldIndex(
 				"test",
 				idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+				undefined,
+				new RevisionTagCodec(),
 			);
 			const delta: DeltaFieldMap = new Map<FieldKey, DeltaFieldChanges>([
 				[rootFieldKey, { local: [mark] }],
