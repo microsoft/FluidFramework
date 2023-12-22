@@ -15,7 +15,8 @@ import { VestigialEndpointMark } from "../../../feature-libraries/sequence-field
 import { CrossFieldTarget, SequenceField as SF } from "../../../feature-libraries";
 import { brand, idAllocatorFromMaxId } from "../../../util";
 import { TestChange } from "../../testChange";
-import { TaggedChange, mintRevisionTag, tagChange } from "../../../core";
+import { TaggedChange, tagChange } from "../../../core";
+import { mintRevisionTag } from "../../utils";
 
 const tag1 = mintRevisionTag();
 const tag2 = mintRevisionTag();

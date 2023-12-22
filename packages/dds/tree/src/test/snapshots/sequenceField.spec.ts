@@ -3,30 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
+import { RevisionTagCodec } from "../../core";
 import { SequenceField } from "../../feature-libraries";
-import { RevisionTagCodec } from "../../shared-tree-core";
-import { useDeterministicStableId } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { generatePopulatedMarks } from "../feature-libraries/sequence-field/populatedMarks";
 import { TestChange } from "../testChange";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
+import { sessionId } from "./testTrees";
 
 describe("SequenceField - Snapshots", () => {
 	useSnapshotDirectory("sequence-field");
+	const idCompressor = createIdCompressor(sessionId);
 	const family = SequenceField.sequenceFieldChangeCodecFactory(
 		TestChange.codec,
-		new RevisionTagCodec(),
+		new RevisionTagCodec(idCompressor),
 	);
+	const marks = generatePopulatedMarks(idCompressor);
+	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
-			useDeterministicStableId(() => {
-				generatePopulatedMarks().forEach((mark, index) => {
-					it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
-						const changeset = [mark];
-						const encoded = codec.json.encode(changeset);
-						takeJsonSnapshot(encoded);
-					});
+			marks.forEach((mark, index) => {
+				it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
+					const changeset = [mark];
+					const encoded = codec.json.encode(changeset, idCompressor.localSessionId);
+					takeJsonSnapshot(encoded);
 				});
 			});
 		});

@@ -33,6 +33,7 @@ import {
 	fuzzSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
+	deterministicIdCompressorFactory,
 } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
@@ -134,6 +135,7 @@ describe("Fuzz - anchor stability", () => {
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
 			detachedStartOptions: { enabled: false, attachProbability: 1 },
 			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
 	describe("Anchors are stable", () => {
@@ -207,6 +209,7 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			skip: [0],
 		});
 	});
