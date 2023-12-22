@@ -1009,7 +1009,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		if (!toNodePath.startsWith("/")) {
 			// A long time ago we stored handles with relatives paths. We don't expect to see these cases though
-			// because GC was disabled after we made the switch to always using relative paths.
+			// because GC was enabled only after we made the switch to always using absolute paths.
 			this.mc.logger.sendErrorEvent({
 				eventName: "InvalidRelativeOutboundRoute",
 				...tagCodeArtifacts({ fromId: fromNodePath, id: toNodePath }),

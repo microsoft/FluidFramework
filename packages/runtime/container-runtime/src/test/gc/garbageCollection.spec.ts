@@ -238,7 +238,7 @@ describe("Garbage Collection Tests", () => {
 			const spies = {
 				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
 			};
-			garbageCollector.addedOutboundReference("from", "to/relative/url");
+			garbageCollector.addedOutboundReference("/from", "to/relative/url");
 			mockLogger.assertMatch(
 				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute", category: "error" }],
 				"Expected error log",
@@ -254,7 +254,7 @@ describe("Garbage Collection Tests", () => {
 			const spies = {
 				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
 			};
-			garbageCollector.addedOutboundReference("from", "/to/relative/url");
+			garbageCollector.addedOutboundReference("/from", "/to/absolute/url");
 			mockLogger.assertMatchNone(
 				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute" }],
 				"unexpected events logged",
