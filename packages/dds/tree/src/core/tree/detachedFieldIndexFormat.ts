@@ -41,7 +41,12 @@ export type RootRanges = Static<typeof RootRanges>;
 /**
  * For all the roots detached in a revision, represents a mapping from the detached node ID to corresponding root ID.
  */
-export const EncodedRootsForRevision = Type.Tuple([RootRanges, RevisionTagSchema]);
+export const EncodedRootsForRevision = Type.Union([
+	// Used to represent a revision in which more than one node were detached
+	Type.Tuple([RevisionTagSchema, RootRanges]),
+	// Used to represent a revision in which a single node was detached
+	Type.Tuple([RevisionTagSchema, DetachId, ForestRootIdSchema]),
+]);
 export type EncodedRootsForRevision = Static<typeof EncodedRootsForRevision>;
 
 export const Format = Type.Object(
