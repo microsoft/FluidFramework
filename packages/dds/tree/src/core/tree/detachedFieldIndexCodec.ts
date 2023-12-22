@@ -21,11 +21,12 @@ export function makeDetachedNodeToFieldCodec(
 			);
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
+				assert(major !== undefined, "Unexpected undefined revision");
 				const rootRanges: RootRanges = [...innerMap];
-				const rootsForRevision: EncodedRootsForRevision =
-					major === undefined
-						? [rootRanges]
-						: [rootRanges, revisionTagCodec.encode(major)];
+				const rootsForRevision: EncodedRootsForRevision = [
+					rootRanges,
+					revisionTagCodec.encode(major),
+				];
 				rootsForRevisions.push(rootsForRevision);
 			}
 			const encoded: Format = {
@@ -41,13 +42,9 @@ export function makeDetachedNodeToFieldCodec(
 				"Cannot decode detached field index without revision tag codec",
 			);
 			const map = new Map();
-			for (const rootsForRevision of parsed.data) {
-				const major =
-					rootsForRevision.length === 2
-						? revisionTagCodec.decode(rootsForRevision[1])
-						: undefined;
-				const innerMap = new Map(rootsForRevision[0]);
-				map.set(major, innerMap);
+			for (const [rootRanges, revision] of parsed.data) {
+				const innerMap = new Map(rootRanges);
+				map.set(revision, innerMap);
 			}
 			return {
 				data: map,

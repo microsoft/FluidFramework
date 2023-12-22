@@ -73,12 +73,17 @@ const validData: [string, Format][] = [
 		},
 	],
 	[
-		"one of everything",
+		"non-empty data",
 		{
 			version: 1,
 			data: [
-				[[[0, brand(1)]]],
-				[[[1, brand(0)]], brand("beefbeef-beef-4000-8000-000000000001")],
+				[
+					[
+						[1, brand(0)],
+						[0, brand(1)],
+					],
+					brand("beefbeef-beef-4000-8000-000000000001"),
+				],
 			],
 			maxId: brand(-1),
 		},
@@ -97,14 +102,7 @@ export function generateTestCases(): { name: string; data: DetachedFieldSummaryD
 			},
 		},
 		{
-			name: "single range with single node - no revision",
-			data: {
-				maxId,
-				data: new Map([[undefined, new Map([[0, 1]])]]),
-			},
-		},
-		{
-			name: "single range with single node - with revision",
+			name: "single range with single node",
 			data: {
 				maxId,
 				data: new Map([[revision, new Map([[0, 1]])]]),
@@ -132,7 +130,7 @@ export function generateTestCases(): { name: string; data: DetachedFieldSummaryD
 				maxId,
 				data: new Map([
 					[
-						undefined,
+						revision,
 						new Map([
 							[1, 2],
 							[3, 4],
@@ -168,7 +166,6 @@ describe("DetachedFieldIndex", () => {
 		});
 		for (const { name, data } of generateTestCases()) {
 			it(name, () => {
-				const id = idAllocatorFromMaxId() as IdAllocator<ForestRootId>;
 				const encoded = codec.encode(data);
 				const decoded = codec.decode(encoded);
 				assert.deepEqual(decoded, data);

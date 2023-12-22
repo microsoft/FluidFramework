@@ -26,11 +26,7 @@ export type RootRange = Static<typeof RootRange>;
 export const RootRanges = Type.Array(RootRange);
 export type RootRanges = Static<typeof RootRanges>;
 
-export const EncodedRootsForRevision = Type.Union([
-	Type.Tuple([RootRanges, RevisionTagSchema]),
-	// Revision is omitted when undefined
-	Type.Tuple([RootRanges]),
-]);
+export const EncodedRootsForRevision = Type.Tuple([RootRanges, RevisionTagSchema]);
 export type EncodedRootsForRevision = Static<typeof EncodedRootsForRevision>;
 
 export const Format = Type.Object(
