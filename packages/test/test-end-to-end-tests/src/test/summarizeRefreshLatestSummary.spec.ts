@@ -49,8 +49,8 @@ describeCompat(
 			await provider.ensureSynchronized();
 		});
 
-		itExpects.only(
-			"The summarizing client can refresh from an unexpected ack",
+		itExpects(
+			"The summarizing client will immediately refresh its own summaries",
 			[
 				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
 				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
