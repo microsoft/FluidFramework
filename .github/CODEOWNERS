@@ -27,7 +27,7 @@
 /experimental/                                                            @microsoft/fluid-cr-framework
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
-/experimental/dds/tree2/                                                  @microsoft/fluid-cr-tree
+/packages/dds/tree/                                                       @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
@@ -57,7 +57,7 @@ azure/packages/azure-service-utils/api-report/         @microsoft/fluid-cr-api
 packages/framework/fluid-framework/api-report/         @microsoft/fluid-cr-api
 packages/framework/tinylicious-client/api-report/      @microsoft/fluid-cr-api
 
-experimental/dds/tree2/api-report/                     @microsoft/fluid-cr-tree
+packages/dds/tree/api-report/                          @microsoft/fluid-cr-tree
 
 # INTERNAL API REPORTS
 # The packages listed here are not necessarily considered part of the public API.

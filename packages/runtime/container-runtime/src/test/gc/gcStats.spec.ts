@@ -9,11 +9,11 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -25,14 +25,13 @@ import {
 	oneDayMs,
 	stableGCVersion,
 	IGCStats,
+	defaultSweepGracePeriodMs,
 } from "../../gc";
 import { ContainerRuntimeGCMessage } from "../../messageTypes";
 import { pkgVersion } from "../../packageVersion";
 import { configProvider } from "./gcUnitTestHelpers";
 
 describe("Garbage Collection Stats", () => {
-	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
@@ -120,7 +119,6 @@ describe("Garbage Collection Stats", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
-			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {
 				gcMessagesCount++;
 				lastGCMessage = message;
@@ -307,7 +305,14 @@ describe("Garbage Collection Stats", () => {
 	 * Note that the life time and deleted stats are the same whether sweep is enabled or not.
 	 */
 	describe("Sweep phase stats", () => {
-		const sweepGracePeriodMs = 0; // Skip TombstoneReady for these tests and go straight to SweepReady
+		const defaultSnapshotCacheExpiryMs = 5 * oneDayMs;
+		const sweepTimeoutMs =
+			// Tombstone timeout
+			defaultSessionExpiryDurationMs +
+			defaultSnapshotCacheExpiryMs +
+			oneDayMs +
+			// + Grace Period
+			defaultSweepGracePeriodMs;
 
 		/**
 		 * When sweep is enabled, deleted stats are updated in the GC run next to the one where the objects become
@@ -316,7 +321,7 @@ describe("Garbage Collection Stats", () => {
 		it("can generate stats with deleted nodes - sweep enabled", async () => {
 			// Create garbage collector with sweep enabled.
 			garbageCollector = createGarbageCollector({
-				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true },
 			});
 
 			let previousGCMessagesCount = gcMessagesCount;
@@ -371,7 +376,7 @@ describe("Garbage Collection Stats", () => {
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep enabled", async () => {
 			garbageCollector = createGarbageCollector({
-				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true },
 			});
 
 			const expectedStats = initialStats;
@@ -459,7 +464,7 @@ describe("Garbage Collection Stats", () => {
 		 * sweep ready. This is because the stats are based on sweep ready state.
 		 */
 		it("can generate stats with deleted nodes - sweep disabled", async () => {
-			garbageCollector = createGarbageCollector({ gcOptions: { sweepGracePeriodMs } });
+			garbageCollector = createGarbageCollector({});
 
 			const expectedStats = initialStats;
 			let gcStats = await garbageCollector.collectGarbage({});
@@ -488,7 +493,7 @@ describe("Garbage Collection Stats", () => {
 		 * sweep ready. This is because the stats are based on sweep ready state.
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep disabled", async () => {
-			garbageCollector = createGarbageCollector({ gcOptions: { sweepGracePeriodMs } });
+			garbageCollector = createGarbageCollector({});
 
 			const expectedStats = initialStats;
 			let gcStats = await garbageCollector.collectGarbage({});

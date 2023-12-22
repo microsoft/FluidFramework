@@ -41,7 +41,6 @@ import {
 	MaxNodesInBlock,
 	MergeBlock,
 	reservedMarkerIdKey,
-	SegmentActions,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 	toMoveInfo,
@@ -136,59 +135,6 @@ const LRUSegmentComparer: IComparer<LRUSegment> = {
 	min: { maxSeq: -2 },
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
-
-interface IReferenceSearchInfo {
-	mergeTree: MergeTree;
-	tileLabel: string;
-	tilePrecedesPos?: boolean;
-	tile?: ReferencePosition;
-}
-
-function recordTileStart(
-	segment: ISegment,
-	segpos: number,
-	refSeq: number,
-	clientId: number,
-	start: number,
-	end: number,
-	searchInfo: IReferenceSearchInfo,
-) {
-	if (Marker.is(segment)) {
-		if (refHasTileLabel(segment, searchInfo.tileLabel)) {
-			searchInfo.tile = segment;
-		}
-	}
-	return false;
-}
-
-function tileShift(
-	node: IMergeNode,
-	segpos: number,
-	refSeq: number,
-	clientId: number,
-	offset: number | undefined,
-	end: number | undefined,
-	searchInfo: IReferenceSearchInfo,
-) {
-	if (node.isLeaf()) {
-		const seg = node;
-		if ((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
-			if (refHasTileLabel(seg, searchInfo.tileLabel)) {
-				searchInfo.tile = seg;
-			}
-		}
-	} else {
-		const block = node as IHierBlock;
-		const marker = searchInfo.tilePrecedesPos
-			? block.rightmostTiles[searchInfo.tileLabel]
-			: block.leftmostTiles[searchInfo.tileLabel];
-		if (marker !== undefined) {
-			assert(marker.isLeaf() && Marker.is(marker), "Object returned is not a valid marker");
-			searchInfo.tile = marker;
-		}
-	}
-	return true;
-}
 
 function addTile(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
 	const tileLabels = refGetTileLabels(tile);
@@ -1132,60 +1078,6 @@ export class MergeTree {
 		return DetachedReferencePosition;
 	}
 
-	// TODO: filter function
-	/**
-	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * @deprecated Use searchForMarker instead.
-	 *
-	 * @param startPos - Position at which to start the search
-	 * @param clientId - clientId dictating the perspective to search from
-	 * @param tileLabel - Label of the tile to search for
-	 * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
-	 */
-	public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
-		const searchInfo: IReferenceSearchInfo = {
-			mergeTree: this,
-			tilePrecedesPos,
-			tileLabel,
-		};
-
-		if (tilePrecedesPos) {
-			this.search(
-				startPos,
-				UniversalSequenceNumber,
-				clientId,
-				{ leaf: recordTileStart, shift: tileShift },
-				searchInfo,
-			);
-		} else {
-			this.backwardSearch(
-				startPos,
-				UniversalSequenceNumber,
-				clientId,
-				{ leaf: recordTileStart, shift: tileShift },
-				searchInfo,
-			);
-		}
-
-		if (searchInfo.tile) {
-			let pos: number;
-			if (searchInfo.tile.isLeaf()) {
-				const marker = searchInfo.tile as Marker;
-				pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
-			} else {
-				const localRef = searchInfo.tile;
-				pos = this.referencePositionToLocalPosition(
-					localRef,
-					UniversalSequenceNumber,
-					clientId,
-				);
-			}
-			return { tile: searchInfo.tile, pos };
-		}
-
-		return undefined;
-	}
-
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `forwards`.
 	 * Uses depthFirstNodeWalk in addition to block-accelerated functionality. The search position will be included in
@@ -1241,121 +1133,6 @@ export class MergeTree {
 		);
 
 		return foundMarker;
-	}
-
-	private search<TClientData>(
-		pos: number,
-		refSeq: number,
-		clientId: number,
-		actions: SegmentActions<TClientData> | undefined,
-		clientData: TClientData,
-	): ISegment | undefined {
-		return this.searchBlock(this.root, pos, 0, refSeq, clientId, actions, clientData);
-	}
-
-	private searchBlock<TClientData>(
-		block: IMergeBlock,
-		pos: number,
-		segpos: number,
-		refSeq: number,
-		clientId: number,
-		actions: SegmentActions<TClientData> | undefined,
-		clientData: TClientData,
-		localSeq?: number,
-	): ISegment | undefined {
-		const { pre, post, contains, leaf, shift } = actions ?? {};
-		let _pos = pos;
-		let _segpos = segpos;
-		const children = block.children;
-		pre?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
-		for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
-			const child = children[childIndex];
-			const len = this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
-			if (
-				(!contains && _pos < len) ||
-				contains?.(child, _pos, refSeq, clientId, undefined, undefined, clientData)
-			) {
-				// Found entry containing pos
-				if (!child.isLeaf()) {
-					return this.searchBlock(
-						child,
-						_pos,
-						_segpos,
-						refSeq,
-						clientId,
-						actions,
-						clientData,
-						localSeq,
-					);
-				} else {
-					leaf?.(child, _segpos, refSeq, clientId, _pos, -1, clientData);
-					return child;
-				}
-			} else {
-				shift?.(child, _segpos, refSeq, clientId, _pos, undefined, clientData);
-				_pos -= len;
-				_segpos += len;
-			}
-		}
-		post?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
-	}
-
-	private backwardSearch<TClientData>(
-		pos: number,
-		refSeq: number,
-		clientId: number,
-		actions: SegmentActions<TClientData> | undefined,
-		clientData: TClientData,
-	): ISegment | undefined {
-		const len = this.getLength(refSeq, clientId);
-		if (pos > len) {
-			return undefined;
-		}
-		return this.backwardSearchBlock(this.root, pos, len, refSeq, clientId, actions, clientData);
-	}
-
-	private backwardSearchBlock<TClientData>(
-		block: IMergeBlock,
-		pos: number,
-		segEnd: number,
-		refSeq: number,
-		clientId: number,
-		actions: SegmentActions<TClientData> | undefined,
-		clientData: TClientData,
-	): ISegment | undefined {
-		const { pre, post, contains, leaf, shift } = actions ?? {};
-		let _segEnd = segEnd;
-		const children = block.children;
-		pre?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
-		for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
-			const child = children[childIndex];
-			const len = this.nodeLength(child, refSeq, clientId) ?? 0;
-			const segpos = _segEnd - len;
-			if (
-				(!contains && pos >= segpos) ||
-				contains?.(child, pos, refSeq, clientId, undefined, undefined, clientData)
-			) {
-				// Found entry containing pos
-				if (!child.isLeaf()) {
-					return this.backwardSearchBlock(
-						child,
-						pos,
-						_segEnd,
-						refSeq,
-						clientId,
-						actions,
-						clientData,
-					);
-				} else {
-					leaf?.(child, segpos, refSeq, clientId, pos, -1, clientData);
-					return child;
-				}
-			} else {
-				shift?.(child, segpos, refSeq, clientId, pos, undefined, clientData);
-				_segEnd = segpos;
-			}
-		}
-		post?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
 	}
 
 	private updateRoot(splitNode: IMergeBlock | undefined) {
@@ -1743,7 +1520,10 @@ export class MergeTree {
 							_movedSeq = movedSeq;
 							const clientIdIdx = left.movedSeqs?.indexOf(movedSeq) ?? -1;
 							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(movedClientId !== undefined, "expected client id to exist");
+							assert(
+								movedClientId !== undefined,
+								0x869 /* expected client id to exist */,
+							);
 							movedClientIds = [movedClientId];
 							return false;
 						}
@@ -1756,7 +1536,10 @@ export class MergeTree {
 							const clientIdIdx =
 								left.movedSeqs?.indexOf(UnassignedSequenceNumber) ?? -1;
 							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(movedClientId !== undefined, "expected client id to exist");
+							assert(
+								movedClientId !== undefined,
+								0x86a /* expected client id to exist */,
+							);
 							movedClientIds = [movedClientId];
 							return false;
 						}
@@ -1784,7 +1567,7 @@ export class MergeTree {
 				if (_localMovedSeq !== undefined || _movedSeq !== undefined) {
 					assert(
 						movedClientIds !== undefined,
-						"movedClientIds should be set if local/moved seq is set",
+						0x86b /* movedClientIds should be set if local/moved seq is set */,
 					);
 					const moveInfo = {
 						movedClientIds,
@@ -1802,7 +1585,10 @@ export class MergeTree {
 							moveInfo.localMovedSeq,
 						);
 
-						assert(movedSegmentGroup !== undefined, "expected segment group to exist");
+						assert(
+							movedSegmentGroup !== undefined,
+							0x86c /* expected segment group to exist */,
+						);
 
 						this.addToPendingList(newSegment, movedSegmentGroup, localSeq);
 					}

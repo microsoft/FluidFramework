@@ -151,6 +151,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/** Reason for generating summary. */
 	readonly reason: string;
+	/** In case of a failure, will attempt to retry based on if the failure is retriable. */
+	readonly retryOnFailure?: boolean;
 }
 
 /**
@@ -420,7 +422,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**

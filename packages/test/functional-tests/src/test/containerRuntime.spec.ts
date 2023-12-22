@@ -14,16 +14,16 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
+import { DeltaManager } from "@fluidframework/container-loader/test/deltaManager";
 // eslint-disable-next-line import/no-internal-modules
-import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
+import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/test/contracts";
 // eslint-disable-next-line import/no-internal-modules
-import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionManager";
+import { ConnectionManager } from "@fluidframework/container-loader/test/connectionManager";
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
-import { ScheduleManager } from "@fluidframework/container-runtime/dist/scheduleManager";
+import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
 // eslint-disable-next-line import/no-internal-modules
-import { DeltaScheduler } from "@fluidframework/container-runtime/dist/deltaScheduler";
+import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
 
 describe("Container Runtime", () => {
 	/**

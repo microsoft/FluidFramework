@@ -15,7 +15,7 @@ import {
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { AsyncGenerator, chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-private/stochastic-test-utils/dist/test/utils";
+import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
 import {
 	BaseOperation,
 	ChangeConnectionState,

@@ -24,10 +24,10 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
-// @alpha @deprecated
+// @public @deprecated
 export enum DriverErrorType {
     authorizationError = "authorizationError",
     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
@@ -50,7 +50,7 @@ export enum DriverErrorType {
     writeError = "writeError"
 }
 
-// @internal
+// @public
 export const DriverErrorTypes: {
     readonly genericNetworkError: "genericNetworkError";
     readonly authorizationError: "authorizationError";
@@ -72,10 +72,10 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @public (undocumented)
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
-// @internal
+// @alpha
 export enum DriverHeader {
     // (undocumented)
     createNew = "createNew",
@@ -83,7 +83,7 @@ export enum DriverHeader {
     summarizingClient = "fluid-client-summarizer"
 }
 
-// @internal
+// @alpha
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
     criticalBootDomains?: string[];
@@ -100,13 +100,13 @@ export enum FetchSource {
 // @alpha (undocumented)
 export type FiveDaysMs = 432000000;
 
-// @alpha
+// @public
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
     readonly claims?: string;
@@ -214,7 +214,7 @@ export interface IDocumentStorageServicePolicies {
     readonly maximumCacheDurationMs?: FiveDaysMs;
 }
 
-// @internal
+// @alpha
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.fetchTokenError | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError | DriverErrorType.fileIsLocked | DriverErrorType.outOfStorageError;
@@ -222,7 +222,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
-// @alpha
+// @public
 export interface IDriverErrorBase {
     canRetry: boolean;
     endpointReached?: boolean;
@@ -239,7 +239,7 @@ export interface IDriverHeader {
     [DriverHeader.createNew]: any;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IGenericNetworkError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: DriverErrorType.genericNetworkError;
@@ -247,7 +247,7 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ILocationRedirectionError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: DriverErrorType.locationRedirection;
@@ -294,7 +294,7 @@ export interface ISummaryContext {
     readonly referenceSequenceNumber: number;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IThrottlingWarning extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: DriverErrorType.throttlingError;
