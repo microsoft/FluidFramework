@@ -11,17 +11,18 @@ import {
 	OdspTestDriver,
 } from "@fluid-private/test-drivers";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryBaseEvent,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import {
-	ConfigTypes,
-	createChildLogger,
-	IConfigProviderBase,
-} from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,

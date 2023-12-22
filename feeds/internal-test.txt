@@ -4,8 +4,8 @@
 @fluid-tools/webpack-fluid-loader
 @fluidframework/fluid-runner
 @fluid-tools/fetch-tool
-@fluid-experimental/devtools-core
-@fluid-experimental/devtools
+@fluidframework/devtools-core
+@fluidframework/devtools
 @fluid-private/test-version-utils
 @fluidframework/test-utils
 @fluid-internal/test-service-load
@@ -17,15 +17,16 @@
 @fluid-private/stochastic-test-utils
 @fluidframework/mocha-test-setup
 @fluid-experimental/odsp-client
+@fluid-experimental/odsp-end-to-end-tests
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
+@fluidframework/id-compressor
 @fluidframework/datastore-definitions
 @fluidframework/datastore
 @fluidframework/container-runtime-definitions
 @fluidframework/container-runtime
 @fluid-private/test-loader-utils
-@fluidframework/location-redirection-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/view-interfaces
@@ -39,7 +40,7 @@
 fluid-framework
 @fluidframework/dds-interceptions
 @fluidframework/data-object-base
-@fluid-experimental/app-insights-logger
+@fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
 @fluidframework/agent-scheduler
@@ -56,6 +57,7 @@ fluid-framework
 @fluidframework/driver-web-cache
 @fluidframework/driver-base
 @fluidframework/debugger
+@fluidframework/tree
 @fluid-private/test-dds-utils
 @fluidframework/task-manager
 @fluidframework/shared-summary-block
@@ -75,11 +77,9 @@ fluid-framework
 @fluidframework/core-interfaces
 @fluidframework/container-definitions
 @fluid-internal/client-utils
-@fluid-experimental/tree-react-api
 @fluid-experimental/react-inputs
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects
-@fluid-experimental/tree2
 @fluid-experimental/tree
 @fluid-experimental/sequence-deprecated
 @fluid-experimental/sharejs-json1

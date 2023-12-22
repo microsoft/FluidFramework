@@ -1,0 +1,169 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+/* eslint-disable @typescript-eslint/dot-notation */
+
+import { strict as assert } from "assert";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { IntervalType } from "@fluidframework/sequence-previous";
+import { IntervalOpType, SequenceInterval } from "../intervals";
+import { IIntervalCollection } from "../intervalCollection";
+import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
+import { IMapValueTypeOperation } from "../defaultMap";
+
+const assertIntervals = (
+	sharedString: SharedString,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	expected: readonly { start: number; end: number }[],
+	validateOverlapping: boolean = true,
+) => {
+	const actual = Array.from(intervalCollection);
+	if (validateOverlapping && sharedString.getLength() > 0) {
+		const overlapping = intervalCollection.findOverlappingIntervals(
+			0,
+			sharedString.getLength() - 1,
+		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+	}
+	assert.strictEqual(
+		actual.length,
+		expected.length,
+		`findOverlappingIntervals() must return the expected number of intervals`,
+	);
+
+	const actualPos = actual.map((interval) => {
+		assert(interval);
+		const start = sharedString.localReferencePositionToPosition(interval.start);
+		const end = sharedString.localReferencePositionToPosition(interval.end);
+		return { start, end };
+	});
+	assert.deepEqual(actualPos, expected, "intervals are not as expected");
+};
+
+describe("Interval Stashed Ops on client ", () => {
+	const localUserLongId = "localUser";
+	let sharedString: SharedString;
+	let dataStoreRuntime1: MockFluidDataStoreRuntime;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
+	beforeEach(() => {
+		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
+		sharedString = new SharedString(
+			dataStoreRuntime1,
+			"shared-string-1",
+			SharedStringFactory.Attributes,
+		);
+		containerRuntimeFactory = new MockContainerRuntimeFactory();
+
+		// Connect the first SharedString.
+		dataStoreRuntime1.local = false;
+		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		const services1 = {
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		};
+		sharedString.initializeLocal();
+		sharedString.connect(services1);
+	});
+
+	describe("applyStashedOp", () => {
+		let collection: IIntervalCollection<SequenceInterval>;
+		let intervalId: string;
+		const label = "test";
+		let startingInterval;
+		let startingIntervalWithProps;
+		beforeEach(() => {
+			sharedString.insertText(0, "hello world");
+			collection = sharedString.getIntervalCollection(label);
+			startingInterval = {
+				start: 0,
+				end: 5,
+				sequenceNumber: sharedString.getCurrentSeq(),
+				intervalType: IntervalType.SlideOnRemove,
+			};
+			startingIntervalWithProps = { ...startingInterval, props: { a: 1 } };
+			intervalId = collection.add(startingInterval).getIntervalId();
+		});
+		it("for add interval", () => {
+			const interval = {
+				start: 5,
+				end: 10,
+				sequenceNumber: sharedString.getCurrentSeq(),
+				intervalType: 2,
+			};
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.ADD,
+					value: interval,
+				},
+			};
+
+			const metadata = sharedString["applyStashedOp"](opArgs);
+			assertIntervals(sharedString, collection, [
+				{ start: 0, end: 5 },
+				{ start: 5, end: 10 },
+			]);
+		});
+		it("for delete interval", () => {
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.DELETE,
+					value: {
+						properties: { intervalId },
+						sequenceNumber: sharedString.getCurrentSeq(),
+						intervalType: 2,
+					},
+				},
+			};
+			const metadata = sharedString["applyStashedOp"](opArgs);
+			assertIntervals(sharedString, collection, []);
+			assert.equal(collection.getIntervalById(intervalId), undefined);
+		});
+		it("for change interval", () => {
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.CHANGE,
+					value: {
+						start: 5,
+						end: 10,
+						properties: { intervalId },
+						sequenceNumber: sharedString.getCurrentSeq(),
+						intervalType: 2,
+					},
+				},
+			};
+			const metadata = sharedString["applyStashedOp"](opArgs);
+			assertIntervals(sharedString, collection, [{ start: 5, end: 10 }]);
+		});
+		it("for interval property change", () => {
+			const interval = collection.getIntervalById(intervalId);
+			assert(interval !== undefined);
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.CHANGE,
+					value: {
+						properties: { intervalId, a: 2 },
+						sequenceNumber: sharedString.getCurrentSeq(),
+						intervalType: 2,
+					},
+				},
+			};
+			const metadata = sharedString["applyStashedOp"](opArgs);
+			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+			assert.equal(interval.properties.a, 2);
+		});
+	});
+});

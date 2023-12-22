@@ -9,12 +9,12 @@ import {
 	FieldKinds,
 	TreeFieldSchema,
 	SchemaBuilderBase,
-	FieldKind,
+	FlexFieldKind as FieldKind,
 	Any,
 	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,
 	leaf,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 

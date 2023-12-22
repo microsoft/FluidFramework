@@ -24,15 +24,11 @@ import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
+	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import {
-	ContainerRuntime,
-	ISummarizer,
-	TEST_requestSummarizer,
-} from "@fluidframework/container-runtime";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 
 const counterKey = "count";
 
@@ -100,7 +96,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -162,34 +158,6 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 			url: await provider.driver.createContainerUrl(documentId, containerUrl),
 			headers,
 		});
-	}
-
-	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory: testDataObjectFactory,
-			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-		});
-		const loader = createLoader(
-			[[provider.defaultCodeDetails, runtimeFactory]],
-			provider.documentServiceFactory,
-			provider.urlResolver,
-			provider.logger,
-		);
-		loaderContainerTracker.add(loader);
-		const absoluteUrl = await container.getAbsoluteUrl("");
-		if (absoluteUrl === undefined) {
-			throw new Error("URL could not be resolved");
-		}
-		const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
-		await waitForSummarizerConnection(summarizer);
-		return summarizer;
-	}
-
-	async function waitForSummarizerConnection(summarizer: ISummarizer): Promise<void> {
-		const runtime = (summarizer as any).runtime as ContainerRuntime;
-		if (!runtime.connected) {
-			return new Promise((resolve) => runtime.once("connected", () => resolve()));
-		}
 	}
 
 	it("Can load a paused container", async () => {
@@ -296,7 +264,11 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("Can load a paused container after a summary", async () => {
-		const summarizer = await createSummarizerFromContainer(container1);
+		const { summarizer } = await createSummarizerFromFactory(
+			provider,
+			container1,
+			testDataObjectFactory,
+		);
 		// Send 5 ops
 		const numIncrement = 5;
 		for (let i = 0; i < numIncrement; i++) {
@@ -363,7 +335,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 		const mapId = "mapKey";
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [[mapId, SharedMap.getFactory()]],
+			registry: [[mapId, apis.dds.SharedMap.getFactory()]],
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
 		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
@@ -435,7 +407,11 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		it("Throw if attempting to pause at a sequence number before the latest summary", async () => {
-			const summarizer = await createSummarizerFromContainer(container1);
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container1,
+				testDataObjectFactory,
+			);
 			// Send 5 ops
 			const numIncrement = 5;
 			for (let i = 0; i < numIncrement; i++) {

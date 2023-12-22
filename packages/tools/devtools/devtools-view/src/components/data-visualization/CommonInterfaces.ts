@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type VisualNode, type VisualNodeBase } from "@fluid-experimental/devtools-core";
+import { type VisualNode, type VisualNodeBase } from "@fluidframework/devtools-core";
 import { type Serializable } from "@fluidframework/datastore-definitions";
 
 /**
@@ -22,7 +22,7 @@ export interface HasLabel {
 }
 
 /**
- * Base props interface for components displaying {@link @fluid-experimental/devtools-core#VisualTreeNode}s.
+ * Base props interface for components displaying {@link @fluidframework/devtools-core#VisualTreeNode}s.
  */
 export interface DataVisualizationTreeProps<TNode extends VisualNodeBase = VisualNode>
 	extends HasLabel {
@@ -36,5 +36,5 @@ export interface DataVisualizationTreeProps<TNode extends VisualNodeBase = Visua
  * TODO
  */
 export interface CanSupplyEdit {
-	edit(newValue: Serializable<unknown>);
+	edit<T>(newValue: Serializable<T>);
 }

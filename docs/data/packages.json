@@ -1,0 +1,12 @@
+{
+	"v1": {
+		"libraries": ["fluid-framework", "@fluidframework/counter"],
+		"serviceClients": ["@fluidframework/azure-client", "@fluidframework/tinylicious-client"],
+		"utilities": ["@fluidframework/azure-service-utils"]
+	},
+	"v2": {
+		"libraries": ["fluid-framework"],
+		"serviceClients": ["@fluidframework/azure-client", "@fluid-experimental/odsp-client"],
+		"utilities": ["@fluidframework/azure-service-utils"]
+	}
+}

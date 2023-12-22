@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
+import lodashPkg from "lodash";
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const { cloneDeep } = lodashPkg;
+
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -17,6 +19,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
@@ -245,18 +248,19 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 	}
 
 	private isSnapshotInOldFormatAndCollectBlobs(
-		snapshotTree: ISnapshotTree,
+		snapshotTree: ISnapshotTreeWithBlobContents,
 		blobMap: Map<string, ArrayBufferLike>,
 	): boolean {
 		let sanitize = false;
-		const blobsContents: { [path: string]: ArrayBufferLike } = (snapshotTree as any)
-			.blobsContents;
-		Object.entries(blobsContents).forEach(([key, value]) => {
-			blobMap.set(key, value);
-			if (snapshotTree.blobs[key] !== undefined) {
-				sanitize = true;
-			}
-		});
+		const blobsContents = snapshotTree.blobsContents;
+		if (blobsContents !== undefined) {
+			Object.entries(blobsContents).forEach(([key, value]) => {
+				blobMap.set(key, value);
+				if (snapshotTree.blobs[key] !== undefined) {
+					sanitize = true;
+				}
+			});
+		}
 		for (const value of Object.values(snapshotTree.trees)) {
 			sanitize = sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
 		}

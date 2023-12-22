@@ -32,12 +32,8 @@ export type {
 	MemberChangedListener,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
-export {
-	DOProviderContainerRuntimeFactory,
-	FluidContainer,
-	ServiceAudience,
-} from "@fluidframework/fluid-static";
 export type {
+	ICreateInfo,
 	IDirectory,
 	IDirectoryClearOperation,
 	IDirectoryCreateSubDirectoryOperation,
@@ -104,3 +100,7 @@ export {
 	SharedStringFactory,
 	SubSequence,
 } from "@fluidframework/sequence";
+
+// The tree package manages its own API surface.
+// eslint-disable-next-line no-restricted-syntax
+export * from "@fluidframework/tree";

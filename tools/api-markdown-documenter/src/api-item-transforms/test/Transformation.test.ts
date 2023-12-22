@@ -5,13 +5,13 @@
 import * as Path from "node:path";
 
 import {
-	ApiFunction,
-	ApiInterface,
-	ApiItem,
+	type ApiFunction,
+	type ApiInterface,
+	type ApiItem,
 	ApiItemKind,
 	ApiModel,
-	ApiNamespace,
-	ApiVariable,
+	type ApiNamespace,
+	type ApiVariable,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
@@ -19,7 +19,7 @@ import { expect } from "chai";
 import {
 	CodeSpanNode,
 	DocumentNode,
-	DocumentationNode,
+	type DocumentationNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
@@ -37,7 +37,7 @@ import {
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities";
 import { apiItemToSections } from "../TransformApiItem";
 import {
-	ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration";
 import { betaWarningSpan, wrapInSection } from "../helpers";

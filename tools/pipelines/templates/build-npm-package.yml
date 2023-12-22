@@ -178,6 +178,7 @@ extends:
           # Job - Build
           - job: build
             displayName: Build
+            timeoutInMinutes: 90
             variables:
               - group: ado-feeds
               - name: testCoverage
@@ -590,7 +591,6 @@ extends:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
 
-      # Capture per-pipeline stage results
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
         - stage: upload_run_telemetry

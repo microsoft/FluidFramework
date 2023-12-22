@@ -24,175 +24,102 @@ const checkRequestedVersionSatisfies = (
 	adjustPublicMajor,
 	expectedVersion,
 ) => {
-	const version = getRequestedVersion(baseVersion, requested, adjustPublicMajor);
-	assert(
-		satisfies(version, expectedVersion),
-		`getRequestedVersion("${baseVersion}", ${requested}) -> ${version} does not satisfy ${expectedVersion}`,
-	);
+	try {
+		const version = getRequestedVersion(baseVersion, requested, adjustPublicMajor);
+		assert(
+			satisfies(version, expectedVersion),
+			`getRequestedVersion("${baseVersion}", ${requested}) -> ${version} does not satisfy ${expectedVersion}`,
+		);
+	} catch (e) {
+		throw new Error(
+			`Failed to resolve getRequestedVersion("${baseVersion}", ${requested}) -> ${expectedVersion}: ${e}`,
+		);
+	}
 };
 
 describe("versionUtils", () => {
 	describe("getRequestedVersion", () => {
-		it("bumping public releases", () => {
+		function createTest(baseVersion, requested, adjustPublicMajor, expectedVersion) {
+			return it(`${baseVersion}, ${requested}, ${adjustPublicMajor}, ${expectedVersion}`, () => {
+				checkRequestedVersionSatisfies(
+					baseVersion,
+					requested,
+					adjustPublicMajor,
+					expectedVersion,
+				);
+			});
+		}
+
+		describe("bumping public releases", () => {
 			const adjustPublicMajor = false;
-			checkRequestedVersionSatisfies("1.0.0", -1, adjustPublicMajor, "^0.59.0");
-			checkRequestedVersionSatisfies("1.0.0", -2, adjustPublicMajor, "^0.58.0");
-			checkRequestedVersionSatisfies("2.0.0", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies("2.3.5", -1, adjustPublicMajor, "^1.0.0");
+			createTest("1.0.0", -1, adjustPublicMajor, "^0.59.0");
+			createTest("1.0.0", -2, adjustPublicMajor, "^0.58.0");
+			createTest("2.0.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.3.5", -1, adjustPublicMajor, "^1.0.0");
 		});
 
-		it("bumping internal releases to public releases (adjustPublicMajor = false)", () => {
+		describe("bumping internal releases to public releases (adjustPublicMajor = false)", () => {
 			const adjustPublicMajor = false;
-			checkRequestedVersionSatisfies("2.0.0-internal.1.0.0", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies("2.0.0-internal.1.1.0", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies("2.0.0-internal.1.1.1", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies("2.0.0-internal.1.2.3", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies("2.0.0-internal.1.4.2", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.1.4.2",
-				-2,
-				adjustPublicMajor,
-				"^0.59.0",
-			);
-			checkRequestedVersionSatisfies("2.0.0-internal.2.0.0", -2, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.2.0.0",
-				-3,
-				adjustPublicMajor,
-				"^0.58.0",
-			);
-			checkRequestedVersionSatisfies("2.0.0-internal.2.0.1", -2, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.1.0.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.1.1.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.1.1.1", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.1.2.3", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.1.4.2", -1, adjustPublicMajor, "^1.0.0");
+
+			createTest("2.0.0-internal.1.4.2", -2, adjustPublicMajor, "^0.59.0");
+			createTest("2.0.0-internal.2.0.0", -2, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.2.0.0", -3, adjustPublicMajor, "^0.58.0");
+			createTest("2.0.0-internal.2.0.1", -2, adjustPublicMajor, "^1.0.0");
 		});
 
-		it("bumping internal releases to public releases (adjustPublicMajor = true)", () => {
+		describe("bumping internal/rc releases to public releases (adjustPublicMajor = true)", () => {
 			const adjustPublicMajor = true;
-			checkRequestedVersionSatisfies("2.0.0-internal.1.0.0", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies("2.0.0-internal.2.0.0", -1, adjustPublicMajor, "^1.0.0");
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.1.0.0",
-				-2,
-				adjustPublicMajor,
-				"^0.59.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.2.0.0",
-				-2,
-				adjustPublicMajor,
-				"^0.59.0",
-			);
-			checkRequestedVersionSatisfies("2.0.0-internal.6.4.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.1.0.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.2.0.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-internal.1.0.0", -2, adjustPublicMajor, "^0.59.0");
+			createTest("2.0.0-internal.2.0.0", -2, adjustPublicMajor, "^0.59.0");
+			createTest("2.0.0-internal.6.4.0", -1, adjustPublicMajor, "^1.0.0");
+
+			createTest("2.0.0-rc.1.0.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-rc.2.0.0", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-rc.1.0.0", -2, adjustPublicMajor, "^0.59.0");
+			createTest("2.0.0-rc.2.0.0", -2, adjustPublicMajor, "^0.59.0");
+			createTest("2.0.0-rc.6.4.0", -1, adjustPublicMajor, "^1.0.0");
 		});
 
-		it("bumping internal releases to other internal releases", () => {
+		describe("bumping internal releases to other internal releases", () => {
 			const adjustPublicMajor = false;
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.2.0.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.1.4.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.2.1.1",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.1.4.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.2.1.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.1.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.3.0.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.2.4.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.3.0.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.2.4.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.3.0.0",
-				-2,
-				adjustPublicMajor,
-				"^2.0.0-internal.1.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.4.0.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.3.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.4.0.0",
-				-2,
-				adjustPublicMajor,
-				"^2.0.0-internal.2.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.4.0.0",
-				-3,
-				adjustPublicMajor,
-				"^2.0.0-internal.1.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.5.0.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.4.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.5.0.0",
-				-2,
-				adjustPublicMajor,
-				"^2.0.0-internal.3.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.5.0.0",
-				-3,
-				adjustPublicMajor,
-				"^2.0.0-internal.2.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.6.0.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.5.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.6.0.0",
-				-2,
-				adjustPublicMajor,
-				"^2.0.0-internal.4.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.6.0.0",
-				-3,
-				adjustPublicMajor,
-				"^2.0.0-internal.3.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.7.0.0",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.6.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.6.2.0",
-				-2,
-				adjustPublicMajor,
-				"^2.0.0-internal.4.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-internal.6.2.0",
-				-3,
-				adjustPublicMajor,
-				"^2.0.0-internal.3.0.0-0",
-			);
+			createTest("2.0.0-internal.2.0.0", -1, adjustPublicMajor, "^2.0.0-internal.1.4.0");
+			createTest("2.0.0-internal.2.1.1", -1, adjustPublicMajor, "^2.0.0-internal.1.4.0");
+			createTest("2.0.0-internal.2.1.0", -1, adjustPublicMajor, "^2.0.0-internal.1.0.0");
+			createTest("2.0.0-internal.3.0.0", -1, adjustPublicMajor, "^2.0.0-internal.2.4.0");
+			createTest("2.0.0-internal.3.0.0", -1, adjustPublicMajor, "^2.0.0-internal.2.4.0");
+			createTest("2.0.0-internal.3.0.0", -2, adjustPublicMajor, "^2.0.0-internal.1.0.0");
+			createTest("2.0.0-internal.4.0.0", -1, adjustPublicMajor, "^2.0.0-internal.3.0.0");
+			createTest("2.0.0-internal.4.0.0", -2, adjustPublicMajor, "^2.0.0-internal.2.0.0");
+			createTest("2.0.0-internal.4.0.0", -3, adjustPublicMajor, "^2.0.0-internal.1.0.0");
+			createTest("2.0.0-internal.5.0.0", -1, adjustPublicMajor, "^2.0.0-internal.4.0.0");
+			createTest("2.0.0-internal.5.0.0", -2, adjustPublicMajor, "^2.0.0-internal.3.0.0");
+			createTest("2.0.0-internal.5.0.0", -3, adjustPublicMajor, "^2.0.0-internal.2.0.0");
+			createTest("2.0.0-internal.6.0.0", -1, adjustPublicMajor, "^2.0.0-internal.5.0.0");
+			createTest("2.0.0-internal.6.0.0", -2, adjustPublicMajor, "^2.0.0-internal.4.0.0");
+			createTest("2.0.0-internal.6.0.0", -3, adjustPublicMajor, "^2.0.0-internal.3.0.0");
+			createTest("2.0.0-internal.7.0.0", -1, adjustPublicMajor, "^2.0.0-internal.6.0.0");
+			createTest("2.0.0-internal.6.2.0", -2, adjustPublicMajor, "^2.0.0-internal.4.0.0");
+			createTest("2.0.0-internal.6.2.0", -3, adjustPublicMajor, "^2.0.0-internal.3.0.0-0");
+		});
+
+		describe("bumping rc releases to other rc/internal releases", () => {
+			const adjustPublicMajor = false;
+			createTest("2.0.0-rc.1.0.0", -1, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+			createTest("2.0.0-rc.1.2.0", -1, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+			createTest("2.0.0-rc.1.2.4", -1, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+			createTest("2.0.0-rc.1.3.4", -1, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+			createTest("2.0.0-rc.1.3.4", -2, adjustPublicMajor, "^2.0.0-internal.7.0.0");
+
+			// These tests should be enabled once 2.0.0-rc.1.0.0 is released (currently throws trying to fetch the unreleased packages)
+			// createTest("2.0.0-rc.2.0.0", -1, adjustPublicMajor, "^2.0.0-rc.1.0.0");
+			// createTest("2.0.0-rc.2.0.0", -2, adjustPublicMajor, "^2.0.0-internal.8.0.0");
 		});
 
 		it("error cases for malformed versions", () => {
@@ -225,50 +152,32 @@ describe("versionUtils", () => {
 			);
 		});
 
-		it("bumping public releases (minor)", () => {
+		describe("bumping public releases (minor)", () => {
 			const adjustPublicMajor = false;
 
-			checkRequestedVersionSatisfies("0.59.1000", -1, adjustPublicMajor, "^0.58.0-0");
-			checkRequestedVersionSatisfies("0.59.2000", -1, adjustPublicMajor, "^0.58.0");
-			checkRequestedVersionSatisfies("0.59.2000", -1, adjustPublicMajor, "^0.58.0");
+			createTest("0.59.1000", -1, adjustPublicMajor, "^0.58.0-0");
+			createTest("0.59.2000", -1, adjustPublicMajor, "^0.58.0");
+			createTest("0.59.2000", -1, adjustPublicMajor, "^0.58.0");
 		});
 
-		it("bumping down public releases (patch)", () => {
+		describe("bumping down public releases (patch)", () => {
 			const adjustPublicMajor = false;
 
-			checkRequestedVersionSatisfies("0.59.1001", -1, adjustPublicMajor, "^0.58.0");
-			checkRequestedVersionSatisfies("0.59.1002", -1, adjustPublicMajor, "^0.58.0");
-			checkRequestedVersionSatisfies("1.1.0", -1, adjustPublicMajor, "^0.59.0");
-			checkRequestedVersionSatisfies("2.4.5", -1, adjustPublicMajor, "^1.0.0-0");
+			createTest("0.59.1001", -1, adjustPublicMajor, "^0.58.0");
+			createTest("0.59.1002", -1, adjustPublicMajor, "^0.58.0");
+			createTest("1.1.0", -1, adjustPublicMajor, "^0.59.0");
+			createTest("2.4.5", -1, adjustPublicMajor, "^1.0.0-0");
 		});
 
-		it("bumping down public releases (prerelease/dev)", () => {
+		describe("bumping down public releases (prerelease/dev)", () => {
 			const adjustPublicMajor = false;
 
-			checkRequestedVersionSatisfies(
-				"2.0.0-dev.2.2.0.110039",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.1.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-dev.2.2.0.110039",
-				-2,
-				adjustPublicMajor,
-				"^1.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-dev.2.2.0.110039",
-				-1,
-				adjustPublicMajor,
-				"^2.0.0-internal.1.0.0",
-			);
-			checkRequestedVersionSatisfies(
-				"2.0.0-dev.2.1.0.110039",
-				-2,
-				adjustPublicMajor,
-				"^1.0.0-0",
-			);
+			createTest("2.0.0-dev.2.2.0.110039", -1, adjustPublicMajor, "^2.0.0-internal.1.0.0");
+			createTest("2.0.0-dev.2.2.0.110039", -2, adjustPublicMajor, "^1.0.0");
+			createTest("2.0.0-dev.2.2.0.110039", -1, adjustPublicMajor, "^2.0.0-internal.1.0.0");
+			createTest("2.0.0-dev.2.1.0.110039", -2, adjustPublicMajor, "^1.0.0-0");
+			createTest("2.0.0-dev-rc.1.0.0.223149", -1, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+			createTest("2.0.0-dev-rc.1.5.3.223149", -2, adjustPublicMajor, "^2.0.0-internal.7.0.0");
 		});
 	});
 

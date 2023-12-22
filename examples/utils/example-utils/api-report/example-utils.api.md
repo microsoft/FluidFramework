@@ -22,7 +22,6 @@ import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
 import { ILoaderProps } from '@fluidframework/container-loader';
 import type { IRequest } from '@fluidframework/core-interfaces';
-import type { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -174,9 +173,6 @@ export interface IVersionedModel {
     readonly version: string;
 }
 
-// @internal @deprecated
-export const makeModelRequestHandler: <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-
 // @internal
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
@@ -248,9 +244,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     // (undocumented)
     supportsVersion(version: string): Promise<boolean>;
 }
-
-// @internal
-export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
 
 // @internal
 export type SameContainerMigrationState = "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "uploadingV2Summary" | "submittingV2Summary" | "migrated";

@@ -48,6 +48,8 @@ module.exports = {
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
+			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
+			// requires them. I don't want to change the policy right now.
 			...tscDependsOn,
 			"typetests:gen",
 			"tsc",
@@ -58,10 +60,13 @@ module.exports = {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
-		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
-		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
-		"build:docs": [...tscDependsOn, "tsc"],
-		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:esnext": {
+			dependsOn: ["build:esnext"],
+			script: true,
+		},
+		"build:docs": ["tsc"],
+		"ci:build:docs": ["tsc"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
@@ -159,9 +164,17 @@ module.exports = {
 				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
+				"^experimental/dds/tree2/package.json",
+				"^experimental/dds/sequence-deprecated/package.json",
+				"^experimental/framework/tree-react-api/package.json",
+				"^packages/common/.*/package.json",
 				"^packages/dds/.*/package.json",
 				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
+				"^packages/loader/.*/package.json",
+				"^packages/runtime/.*/package.json",
+				"^packages/service-clients/.*/package.json",
+				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
 			"html-copyright-file-header": [
@@ -217,9 +230,10 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
-				// This is an ESM-only package, and uses tsc to build the ESM output. The policy handler doesn't understand this
+				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",
+				"packages/test/functional-tests/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -315,6 +329,9 @@ module.exports = {
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
+				["renamer", "renamer"],
+				["tsc-multi", "tsc-multi"],
+				["attw", "@arethetypeswrong/cli"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -336,12 +353,6 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreTasks: [
-					"tsc:watch",
-					"watch:devtools",
-					"watch:devtools-core",
-					"watch:devtools-view",
-				],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
 		},
