@@ -274,7 +274,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    // @deprecated
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;

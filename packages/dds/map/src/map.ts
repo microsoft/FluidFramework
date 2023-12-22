@@ -113,7 +113,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * Get a factory for SharedMap to register with the data store.
 	 * @returns A factory that creates SharedMaps and loads them from storage.
-	 * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
 	 */
 	public static getFactory(): IChannelFactory {
 		return new MapFactory();
