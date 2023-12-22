@@ -196,7 +196,7 @@ describe("SharedString interval collection event spec", () => {
 		});
 
 		it("is emitted on initial local change but not ack of that change", () => {
-			collection.change(intervalId, { start: 2, end: 3 });
+			collection.change(intervalId, 2, 3);
 			assert.equal(eventLog.length, 1);
 			{
 				const [{ interval, previousEndpoints, local, op, slide }] = eventLog;
@@ -212,7 +212,7 @@ describe("SharedString interval collection event spec", () => {
 
 		it("is emitted on a remote change", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
-			collection2.change(intervalId, { start: 2, end: 3 });
+			collection2.change(intervalId, 2, 3);
 			assert.equal(eventLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 1);
@@ -227,7 +227,7 @@ describe("SharedString interval collection event spec", () => {
 		});
 
 		it("is not emitted on a property change", () => {
-			collection.change(intervalId, { props: { foo: "bar" } });
+			collection.changeProperties(intervalId, { foo: "bar" });
 			assert.equal(eventLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 0);
@@ -287,7 +287,7 @@ describe("SharedString interval collection event spec", () => {
 
 			it("on ack of a change to a concurrently removed segment", () => {
 				sharedString2.removeRange(3, sharedString2.getLength());
-				collection.change(intervalId, { start: 4, end: 4 });
+				collection.change(intervalId, 4, 4);
 				assert.equal(eventLog.length, 1);
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 2);
@@ -330,7 +330,7 @@ describe("SharedString interval collection event spec", () => {
 		});
 
 		it("is emitted on initial local property change but not ack of that change", () => {
-			collection.change(intervalId, { props: { foo: "bar" } });
+			collection.changeProperties(intervalId, { foo: "bar" });
 			assert.equal(eventLog.length, 1);
 			{
 				const [{ id, deltas, local, op }] = eventLog;
@@ -345,7 +345,7 @@ describe("SharedString interval collection event spec", () => {
 
 		it("is emitted on ack of remote property change", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
-			collection2.change(intervalId, { props: { foo: "bar" } });
+			collection2.changeProperties(intervalId, { foo: "bar" });
 			assert.equal(eventLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 1);
@@ -360,9 +360,9 @@ describe("SharedString interval collection event spec", () => {
 
 		it("only includes deltas for values that actually changed", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
-			collection2.change(intervalId, { props: { applies: true, conflictedDoesNotApply: 5 } });
+			collection2.changeProperties(intervalId, { applies: true, conflictedDoesNotApply: 5 });
 			assert.equal(eventLog.length, 0);
-			collection.change(intervalId, { props: { conflictedDoesNotApply: 2 } });
+			collection.changeProperties(intervalId, { conflictedDoesNotApply: 2 });
 			assert.equal(eventLog.length, 1);
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 2);

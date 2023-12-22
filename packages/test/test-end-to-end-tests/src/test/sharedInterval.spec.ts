@@ -680,8 +680,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 				typeof intervals2.change === "function"
 			) {
 				// Conflicting changes
-				intervals1.change(id1, { start: 1, end: 2 });
-				intervals2.change(id1, { start: 2, end: 1 });
+				intervals1.change(id1, 1, 2);
+				intervals2.change(id1, 2, 1);
 
 				await provider.ensureSynchronized();
 
@@ -715,8 +715,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 				}
 			}
 			if (
-				typeof intervals1.change === "function" &&
-				typeof intervals2.change === "function"
+				typeof intervals1.changeProperties === "function" &&
+				typeof intervals2.changeProperties === "function"
 			) {
 				const assertPropertyChangedArg = (p: any, v: any, m: string) => {
 					// Check expected values of args passed to the propertyChanged event only if IntervalCollection
@@ -743,14 +743,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 						deltaArgs2 = propertyDeltas;
 					},
 				);
-				intervals1.change(id1, { props: { prop1: "prop1" } });
+				intervals1.changeProperties(id1, { prop1: "prop1" });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					null,
 					"Mismatch in property-changed event arg 1",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, { props: { prop2: "prop2" } });
+				intervals2.changeProperties(id1, { prop2: "prop2" });
 				assertPropertyChangedArg(
 					deltaArgs2.prop2,
 					null,
@@ -792,14 +792,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 					"Mismatch in changed properties 4",
 				);
 
-				intervals1.change(id1, { props: { prop1: "no" } });
+				intervals1.changeProperties(id1, { prop1: "no" });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"prop1",
 					"Mismatch in property-changed event arg 5",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, { props: { prop1: "yes" } });
+				intervals2.changeProperties(id1, { prop1: "yes" });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"prop1",
@@ -839,14 +839,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 					"Mismatch in changed properties 8",
 				);
 
-				intervals1.change(id1, { props: { prop1: "maybe" } });
+				intervals1.changeProperties(id1, { prop1: "maybe" });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"yes",
 					"Mismatch in property-changed event arg 9",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, { props: { prop1: null } });
+				intervals2.changeProperties(id1, { prop1: null });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"yes",
