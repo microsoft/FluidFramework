@@ -7245,6 +7245,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sorted-btree: npm:@tylerbu/sorted-btree-es6@^1.8.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7300,6 +7301,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/debugger:
@@ -16775,7 +16777,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
       '@fluidframework/core-utils': 2.0.0-internal.8.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
-      sorted-btree: /@tylerbu/sorted-btree-es6/1.8.0
+      sorted-btree: 1.8.1
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
@@ -21738,6 +21740,7 @@ packages:
 
   /@tylerbu/sorted-btree-es6/1.8.0:
     resolution: {integrity: sha512-qkwgE0G5OGn7F+1fMkFZLwyjc99xCy4kmQ8p7N0Jj540HD6xU0jTPjcqELogH4f5YGMPXLqd8sQ7uOYC0QRBeg==}
+    dev: false
 
   /@types/argparse/1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
