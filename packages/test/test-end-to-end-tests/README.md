@@ -1,6 +1,6 @@
 # @fluid-private/test-end-to-end-tests
 
-This package hosts end-to-end tests for the Fluid framework.
+This package hosts end-to-end tests for the Fluid Framework.
 The tests are end-to-end in the sense that they construct, load, and orchestrate collaborative scenarios involving containers
 in much the same way a real application using Fluid would.
 
