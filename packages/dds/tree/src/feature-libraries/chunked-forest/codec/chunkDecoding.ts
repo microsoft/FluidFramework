@@ -230,9 +230,9 @@ export class TreeDecoder implements ChunkDecoder {
 		this.type = shape.type === undefined ? undefined : cache.identifier(shape.type);
 
 		const fieldDecoders: BasicFieldDecoder[] = [];
-		for (const field of shape.fields) {
-			const key: FieldKey = cache.identifier(field.key);
-			fieldDecoders.push(fieldDecoder(cache, key, field.shape));
+		for (const [fieldKey, fieldShape] of shape.fields ?? []) {
+			const key: FieldKey = cache.identifier(fieldKey);
+			fieldDecoders.push(fieldDecoder(cache, key, fieldShape));
 		}
 		this.fieldDecoders = fieldDecoders;
 	}
