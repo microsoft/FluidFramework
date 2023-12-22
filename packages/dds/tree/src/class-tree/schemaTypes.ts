@@ -6,7 +6,7 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
 import { FlexListToUnion, LazyItem } from "../feature-libraries";
-import { Unhydrated, TreeMapNodeBase } from "../simple-tree";
+import { Unhydrated, TreeMapNodeBase, TreeNode } from "../simple-tree";
 
 /**
  * Helper used to produce types for object nodes.
@@ -17,6 +17,13 @@ export type ObjectFromSchemaRecord<
 > = {
 	-readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
+
+/**
+ * Helper used to produce types for object nodes.
+ * @public
+ */
+export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> =
+	object & TreeNode & ObjectFromSchemaRecord<T>;
 
 /**
  * Helper used to produce types for:
@@ -320,7 +327,7 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
  *
  * @public
  */
-export interface TreeMapNode<T extends ImplicitAllowedTypes>
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeMapNodeBase<
 		TreeNodeFromImplicitAllowedTypes<T>,
 		InsertableTreeNodeFromImplicitAllowedTypes<T>

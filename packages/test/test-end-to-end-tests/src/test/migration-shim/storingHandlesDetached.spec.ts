@@ -96,6 +96,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);

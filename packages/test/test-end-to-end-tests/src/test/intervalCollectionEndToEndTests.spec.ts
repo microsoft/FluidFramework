@@ -126,7 +126,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		// the "callback" portion of the original e2e test
 		const sharedString = await dataStore.getSharedObject<SharedString>(stringId);
 		const collection = sharedString.getIntervalCollection(collectionId);
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 
 		const pendingState: string | undefined = await container.closeAndGetPendingLocalState?.();
 		provider.opProcessingController.resumeProcessing();
@@ -148,7 +148,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		await provider.ensureSynchronized();
 		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
 
-		collection1.change(id, 2, 9);
+		collection1.change(id, { start: 2, end: 9 });
 		await provider.ensureSynchronized();
 
 		// reload the container and verify that the above change takes effect

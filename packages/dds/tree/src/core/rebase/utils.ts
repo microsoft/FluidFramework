@@ -10,6 +10,8 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	TaggedChange,
+	makeAnonChange,
+	tagChange,
 	tagRollbackInverse,
 } from "./changeRebaser";
 import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
@@ -230,35 +232,31 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	const inverses: TaggedChange<TChange>[] = [];
+	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
+	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
+	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
+	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
 	for (const c of sourcePath) {
+		const editsToCompose: TaggedChange<TChange>[] = [
+			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
+			currentComposedEdit,
+		];
 		if (sourceSet.has(c.revision)) {
-			const change = rebaseChangeOverChanges(changeRebaser, c.change, [
-				...inverses,
-				...targetRebasePath,
-			]);
+			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
 			newHead = {
 				revision: c.revision,
 				change,
 				parent: newHead,
 			};
 			sourceCommits.push(newHead);
-			targetRebasePath.push({ ...c, change });
+			editsToCompose.push(tagChange(change, c.revision));
 		}
-		inverses.unshift(
-			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
-		);
+		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
 	}
 
-	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		get sourceChange() {
-			if (netChange === undefined) {
-				netChange = changeRebaser.compose([...inverses, ...targetRebasePath]);
-			}
-			return netChange;
-		},
+		sourceChange: currentComposedEdit.change,
 		commits: {
 			deletedSourceCommits,
 			targetCommits,

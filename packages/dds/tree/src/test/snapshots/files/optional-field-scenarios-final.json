@@ -70,8 +70,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -144,8 +143,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -294,8 +292,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -400,8 +397,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -517,8 +513,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {
@@ -614,13 +609,16 @@
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
-                      0,
-                      8
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000c",
-                      2,
-                      11
+                      [
+                        [
+                          0,
+                          8
+                        ],
+                        [
+                          2,
+                          11
+                        ]
+                      ]
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000d",

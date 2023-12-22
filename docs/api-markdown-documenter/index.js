@@ -11,9 +11,10 @@
  */
 
 const chalk = require("chalk");
-const versions = require("../data/versions.json");
-const { renderApiDocumentation } = require("./render-api-documentation");
 const path = require("path");
+const versions = require("../data/versions.json");
+const { buildRedirects } = require("./build-redirects");
+const { renderApiDocumentation } = require("./render-api-documentation");
 
 const renderMultiVersion = process.argv[2];
 
@@ -29,18 +30,19 @@ docVersions.forEach((version) => {
 	// TODO: remove check for 2.0 and just set apiDocsDirectoryPath to include version.
 	// currently publishing to base apis directory until 2.0 release
 	const apiDocsDirectoryPath = renderMultiVersion
-		? path.resolve(__dirname, "..", "content", "docs", "apis", version)
-		: path.resolve(__dirname, "..", "content", "docs", "apis");
+		? path.resolve(__dirname, "..", "content", "docs", "api", version)
+		: path.resolve(__dirname, "..", "content", "docs", "api");
 
 	// TODO: remove check for 2.0 and just set uriDirectoryPath to include version.
 	// currently publishing to base apis directory until 2.0 release
-	const uriRootDirectoryPath = renderMultiVersion ? `/docs/apis/${version}` : `/docs/apis`;
+	const uriRootDirectoryPath = renderMultiVersion ? `/docs/api/${version}` : `/docs/api`;
 
 	apiDocRenders.push(
 		renderApiDocumentation(
 			apiReportsDirectoryPath,
 			apiDocsDirectoryPath,
 			uriRootDirectoryPath,
+			version,
 		).then(
 			() => {
 				console.log(chalk.green(`${version} API docs written!`));
@@ -64,3 +66,5 @@ Promise.all(apiDocRenders).then(
 		process.exit(1);
 	},
 );
+
+buildRedirects();
