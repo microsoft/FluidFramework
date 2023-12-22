@@ -22,6 +22,7 @@ import {
 import { makeCodecFamily } from "../../../codec";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { library } from "../../testTrees";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -44,14 +45,21 @@ const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 };
 
 describe("SchemaIndex", () => {
+	useSnapshotDirectory();
+
+	it("SchemaIndexFormat", () => {
+		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
+		takeJsonSnapshot(Format);
+	});
+
 	it("accepts valid data", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: "1.0.0" as const,
-				nodeSchema: [],
-				rootFieldSchema: { kind: "x" as FieldKindIdentifier },
-			},
+				version: 1 as const,
+				nodes: {},
+				root: { kind: "x" as FieldKindIdentifier },
+			} satisfies Format,
 		];
 		for (const data of cases) {
 			codec.decode(data);
@@ -65,11 +73,13 @@ describe("SchemaIndex", () => {
 			undefined,
 			null,
 			{},
-			{ version: "2.0.0" },
 			{ version: "1.0.0" },
+			{ version: "1" },
 			{ version: "2.0.0" },
-			{ version: "1.0.0", nodeSchema: [], globalFieldSchema: [] },
-			{ version: "1.0.0", nodeSchema: [], extraField: 0 },
+			{ version: 1 },
+			{ version: 2 },
+			{ version: 1, nodeSchema: [], globalFieldSchema: [] },
+			{ version: 1, nodeSchema: [], extraField: 0 },
 		];
 		for (const data of badCases) {
 			assert.throws(() => codec.decode(data as unknown as Format));

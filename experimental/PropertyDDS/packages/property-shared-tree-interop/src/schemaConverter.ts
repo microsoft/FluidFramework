@@ -9,7 +9,7 @@ import {
 	FieldKinds,
 	TreeFieldSchema,
 	SchemaBuilderBase,
-	FieldKind,
+	FlexFieldKind as FieldKind,
 	Any,
 	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,

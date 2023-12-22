@@ -10,6 +10,7 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 	TreeCompressionStrategy,
+	isFluidHandle,
 } from "../../../../feature-libraries";
 
 import {
@@ -32,7 +33,7 @@ import {
 	anyFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
-import { brand } from "../../../../util";
+import { JsonCompatibleReadOnly, brand } from "../../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
 // eslint-disable-next-line import/no-internal-modules
@@ -46,10 +47,11 @@ import {
 	storedLibrary,
 	testTrees,
 } from "../../../testTrees";
-import { typeboxValidator } from "../../../../external-utilities";
 import { leaf, SchemaBuilder } from "../../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema";
+import { ajvValidator } from "../../../codec";
+import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -242,6 +244,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
+		useSnapshotDirectory("chunked-forest-schema-compressed");
 		// TODO: test non size 1 batches
 		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
@@ -255,12 +258,26 @@ describe("schemaBasedEncoding", () => {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator })(context);
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, context);
 				// End to end test
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)]);
 				const result = codec.decode(encoded);
 				const resultTree = result.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual(resultTree, [tree]);
+
+				// This snapshot makes it clear when the format changes.
+				// This can include compression/heuristic changes which are non breaking,
+				// but does not handle ensuring different old versions stull load (for example encoded with different heuristics).
+				// TODO: add a new test suite with a library of encoded test data which we can parse to cover that.
+
+				const dataStr = JSON.stringify(
+					encoded,
+					// The mock handle doesn't stringify deterministically, so replace it:
+					(key, value: JsonCompatibleReadOnly) =>
+						isFluidHandle(value) ? "Handle Placeholder" : value,
+					2,
+				);
+				takeSnapshot(dataStr, `.json`);
 			});
 		}
 	});

@@ -4,9 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	Brand,
 	IdAllocator,
+	JsonCompatibleReadOnly,
 	NestedMap,
 	brand,
 	deleteFromNestedMap,
@@ -20,12 +22,13 @@ import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
 import * as Delta from "./delta";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
+import { Format } from "./detachedFieldIndexFormat";
 
 /**
  * ID used to create a detached field key for a removed subtree.
- * @alpha
  *
  * TODO: Move to Forest once forests can support multiple roots.
+ * @internal
  */
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
@@ -35,7 +38,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
-	private readonly codec: IJsonCodec<DetachedFieldSummaryData, string>;
+	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
 	/**
@@ -45,16 +48,18 @@ export class DetachedFieldIndex {
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
+		private readonly idCompressor: IIdCompressor,
 		options?: ICodecOptions,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(this.options);
+		this.codec = makeDetachedNodeToFieldCodec(idCompressor, this.options);
 	}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+			this.idCompressor,
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
@@ -146,21 +151,18 @@ export class DetachedFieldIndex {
 		return root;
 	}
 
-	public encode(): string {
+	public encode(): JsonCompatibleReadOnly {
 		return this.codec.encode({
 			data: this.detachedNodeToField,
 			maxId: this.rootIdAllocator.getNextId(),
-		});
+		}) as JsonCompatibleReadOnly;
 	}
 
 	/**
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
-	public loadData(data: string): void {
-		const detachedFieldIndex: {
-			data: NestedMap<Major, Minor, ForestRootId>;
-			maxId: number;
-		} = this.codec.decode(data);
+	public loadData(data: JsonCompatibleReadOnly): void {
+		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data as Format);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,

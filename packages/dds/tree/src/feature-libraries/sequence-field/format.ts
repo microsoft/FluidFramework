@@ -8,9 +8,30 @@ import { RevisionTagSchema } from "../../core";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema";
 import { unionOptions } from "../../codec";
 
+export enum DetachIdOverrideType {
+	/**
+	 * The detach effect is the inverse of the prior attach characterized by the accompanying `CellId`'s revision and
+	 * local ID.
+	 *
+	 * An override is needed in such a case to ensure that rollbacks and undos return tree content to the appropriate
+	 * detached root. It is also needed to ensure that cell comparisons work properly for undos.
+	 */
+	Unattach = 0,
+	/**
+	 * The detach effect is reapplying a prior detach.
+	 *
+	 * The accompanying cell ID is used in two ways:
+	 * - It indicates the location of the cell (including adjacent cell information) so that rebasing over this detach
+	 * can contribute the correct lineage information to the rebased mark.
+	 * - It specifies the revision and local ID that should be used to characterize the cell in the output context of
+	 * detach.
+	 */
+	Redetach = 1,
+}
+
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-const CellCount = Type.Number();
+const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
 
 const MoveId = ChangesetLocalIdSchema;
 const HasMoveId = Type.Object({ id: MoveId });
@@ -18,8 +39,10 @@ const HasMoveId = Type.Object({ id: MoveId });
 const LineageEvent = Type.Tuple([
 	RevisionTagSchema,
 	ChangesetLocalIdSchema,
-	/* count */ Type.Number(),
-	/* offset */ Type.Number(),
+	/** count */
+	CellCount,
+	/** offset */
+	Type.Number({ multipleOf: 1, minimum: 0 }),
 ]);
 
 const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
@@ -28,9 +51,11 @@ const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 const CellId = Type.Composite(
 	[
-		EncodedChangeAtomId,
 		HasLineage,
-		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+		Type.Object({
+			atom: EncodedChangeAtomId,
+			adjacentCells: Type.Optional(Type.Array(IdRange)),
+		}),
 	],
 	noAdditionalProps,
 );
@@ -47,8 +72,16 @@ const HasMoveFields = Type.Composite([
 
 const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
 
-const RedetachFields = Type.Object({
-	redetachId: Type.Optional(CellId),
+const DetachIdOverride = Type.Object(
+	{
+		type: Type.Enum(DetachIdOverrideType),
+		id: CellId,
+	},
+	noAdditionalProps,
+);
+
+const DetachFields = Type.Object({
+	idOverride: Type.Optional(DetachIdOverride),
 });
 
 const Delete = Type.Composite(
@@ -57,12 +90,12 @@ const Delete = Type.Composite(
 			id: ChangesetLocalIdSchema,
 		}),
 		HasRevisionTag,
-		RedetachFields,
+		DetachFields,
 	],
 	noAdditionalProps,
 );
 
-const MoveOut = Type.Composite([HasMoveFields, RedetachFields], noAdditionalProps);
+const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
 
 const Attach = Type.Object(
 	{

@@ -8,7 +8,7 @@ editor: tylerbutler
 The container is the primary unit of encapsulation in the Fluid Framework.
 It enables a group of clients to access the same set of shared objects and co-author changes on those objects.
 It is also a permission boundary ensuring visibility and access only to permitted clients.
-A container is represented by the [FluidContainer]({{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}) type and consists of a collection of shared objects and APIs to manage the life cycle of those objects.
+A container is represented by the [FluidContainer]({{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}) type and consists of a collection of shared objects and APIs to manage the life cycle of those objects.
 
 This article explains:
 
@@ -31,7 +31,7 @@ The device is a subsequent client in all future sessions.
 
 Your code creates containers using APIs provided by a service-specific client library.
 Each service-specific client library implements a common API for manipulating containers.
-For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides [these APIs]({{< relref "docs/apis/tinylicious-client.md" >}}) for the Tinylicious Fluid service.
+For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides [these APIs]({{< relref "docs/api/v1/tinylicious-client.md" >}}) for the Tinylicious Fluid service.
 These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and to connect to the container once it is created.
 
 ### Container schema
@@ -215,15 +215,15 @@ An example of a container service is the [Audience]({{< relref "audience.md" >}}
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+[fluid-framework]: {{< relref "/docs/api/v1/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/api/v1/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/api/v1/tinylicious-client.md" >}}
 
-[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< relref "/docs/api/v1/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/api/v1/tinylicious-client/TinyliciousClient-class.md" >}}
 
-[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
-[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
+[IFluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
 
 <!-- prettier-ignore-end -->
 

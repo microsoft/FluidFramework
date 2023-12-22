@@ -7,7 +7,7 @@
 
 import { assert } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
-import BTree from 'sorted-btree';
+import { BTree } from '@tylerbu/sorted-btree-es6';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
 	hasLength,

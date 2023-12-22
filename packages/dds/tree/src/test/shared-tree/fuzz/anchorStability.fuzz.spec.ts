@@ -33,6 +33,7 @@ import {
 	fuzzSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
+	deterministicIdCompressorFactory,
 } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
@@ -134,6 +135,7 @@ describe("Fuzz - anchor stability", () => {
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
 			detachedStartOptions: { enabled: false, attachProbability: 1 },
 			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
 	describe("Anchors are stable", () => {
@@ -168,6 +170,18 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
+			// Kludge: we force schematization and synchronization here to ensure that the clients all have the same
+			// starting tree as opposed to isomorphic copies.
+			// If we don't do this, then the anchors created below would be destroyed on all but one client (the client
+			// whose schematize wins the synchronization race).
+			{
+				for (const client of initialState.clients) {
+					// This is a kludge to force the invocation of schematize for each client.
+					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+					viewFromState(initialState, client, config.initialTree).checkout;
+				}
+				initialState.containerRuntimeFactory.processAllMessages();
+			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client, config.initialTree)
@@ -195,6 +209,8 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skip: [0],
 		});
 	});
 });

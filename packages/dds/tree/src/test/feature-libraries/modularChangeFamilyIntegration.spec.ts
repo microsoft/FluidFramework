@@ -13,7 +13,6 @@ import {
 	FieldKey,
 	FieldKindIdentifier,
 	makeAnonChange,
-	mintRevisionTag,
 	revisionMetadataSourceFromInfo,
 	RevisionTag,
 	tagChange,
@@ -29,7 +28,14 @@ import {
 } from "../../feature-libraries";
 
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
-import { assertDeltaEqual, defaultRevisionMetadataFromChanges, testChangeReceiver } from "../utils";
+import {
+	assertDeltaEqual,
+	defaultRevisionMetadataFromChanges,
+	failCodec,
+	mintRevisionTag,
+	testChangeReceiver,
+	testIdCompressor,
+} from "../utils";
 import {
 	intoDelta,
 	ModularChangeFamily,
@@ -38,15 +44,18 @@ import {
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
-import { RevisionTagCodec } from "../../shared-tree-core";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
+// eslint-disable-next-line import/no-internal-modules
+import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
+const family = new ModularChangeFamily(fieldKinds, testIdCompressor, failCodec, {
 	jsonValidator: typeboxValidator,
 });
 
@@ -172,7 +181,19 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldBExpected = [{ count: 1, changes: node2Expected }];
+			const fieldBExpected = purgeUnusedCellOrderingInfo([
+				{ count: 1, changes: node2Expected },
+				// The two marks below a not essential and only exist because we're currently using tombstone
+				{ count: 1 },
+				{
+					count: 1,
+					cellId: {
+						revision: tag1,
+						localId: brand(0),
+						adjacentCells: [{ id: brand(0), count: 1 }],
+					},
+				},
+			]);
 
 			const node1Expected = {
 				fieldChanges: new Map([
@@ -180,7 +201,19 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldAExpected = [{ count: 1, changes: node1Expected }];
+			const fieldAExpected = purgeUnusedCellOrderingInfo([
+				{ count: 1, changes: node1Expected },
+				// The two marks below a not essential and only exist because we're currently using tombstones
+				{ count: 1 },
+				{
+					count: 1,
+					cellId: {
+						revision: tag1,
+						localId: brand(1),
+						adjacentCells: [{ id: brand(1), count: 1 }],
+					},
+				},
+			]);
 
 			const expected: ModularChangeset = {
 				fieldChanges: new Map([
@@ -427,7 +460,13 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(1), { changes: node2Expected }),
+				MarkMaker.moveOut(1, brand(1), {
+					changes: node2Expected,
+					idOverride: {
+						type: DetachIdOverrideType.Unattach,
+						id: { revision: tag1, localId: brand(1) },
+					},
+				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 			];
@@ -439,7 +478,13 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldAExpected = [
-				MarkMaker.moveOut(1, brand(0), { changes: node1Expected }),
+				MarkMaker.moveOut(1, brand(0), {
+					changes: node1Expected,
+					idOverride: {
+						type: DetachIdOverrideType.Unattach,
+						id: { revision: tag1, localId: brand(0) },
+					},
+				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];

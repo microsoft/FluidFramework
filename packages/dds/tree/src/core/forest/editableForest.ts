@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { FieldKey } from "../schema-stored";
 import {
 	DetachedField,
@@ -19,7 +20,7 @@ import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
  * Editing APIs.
- * @alpha
+ * @internal
  */
 export interface IEditableForest extends IForestSubscription {
 	/**
@@ -45,22 +46,23 @@ export interface IEditableForest extends IForestSubscription {
 export function initializeForest(
 	forest: IEditableForest,
 	content: readonly ITreeCursorSynchronous[],
+	idCompressor: IIdCompressor,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
-	applyDelta(delta, forest, makeDetachedFieldIndex("init"));
+	applyDelta(delta, forest, makeDetachedFieldIndex("init", idCompressor));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
 
 /**
  * Ways to refer to a node in an IEditableForest.
- * @alpha
+ * @internal
  */
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 /**
- * @alpha
+ * @internal
  */
 export interface TreeLocation {
 	readonly range: FieldLocation | DetachedField;
@@ -73,7 +75,7 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
 
 /**
  * Location of a field within a tree that is not a detached/root field.
- * @alpha
+ * @internal
  */
 export interface FieldLocation {
 	readonly key: FieldKey;

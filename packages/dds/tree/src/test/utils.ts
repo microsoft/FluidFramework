@@ -32,6 +32,20 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+	OpSpaceCompressedId,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+	createIdCompressor,
+} from "@fluidframework/id-compressor";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
 	ISharedTree,
 	ITreeCheckout,
 	SharedTreeFactory,
@@ -99,10 +113,9 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
-	DeltaProtoNode,
 } from "../core";
-import { JsonCompatible, brand } from "../util";
-import { ICodecFamily, withSchemaValidation } from "../codec";
+import { JsonCompatible, brand, nestedMapFromFlatList } from "../util";
+import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import {
 	cursorToJsonObject,
@@ -138,6 +151,16 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
 		}
 	}
 }
+
+/**
+ * A {@link IJsonCodec} implementation which fails on encode and decode.
+ *
+ * Useful for testing codecs which compose over other codecs (in cases where the "inner" codec should never be called)
+ */
+export const failCodec: IJsonCodec<any, any, any, any> = {
+	encode: () => assert.fail("Unexpected encode"),
+	decode: () => assert.fail("Unexpected decode"),
+};
 
 /**
  * Recursively freezes the given object.
@@ -361,7 +384,7 @@ export class TestTreeProviderLite {
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
 	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
-	 *
+	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
 	 * @example
 	 *
 	 * ```typescript
@@ -374,13 +397,17 @@ export class TestTreeProviderLite {
 	public constructor(
 		trees = 1,
 		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+		useDeterministicSessionIds = true,
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTree[] = [];
+		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
+			const sessionId = random.uuid4() as SessionId;
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
+				idCompressor: createIdCompressor(sessionId),
 			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
 			this.runtimeFactory.createContainerRuntime(runtime);
@@ -525,16 +552,22 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	}
 }
 
-export function noRepair(): DeltaProtoNode[] {
-	assert.fail("Unexpected request for repair data");
-}
-
 export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
 }
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
+
+export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]) {
+	if (trees.length > 1) {
+		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());
+		for (const tree of trees.slice(1)) {
+			const actual = nestedMapFromFlatList(tree.getRemovedRoots());
+			assert.deepEqual(actual, baseline);
+		}
+	}
+}
 
 /**
  * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
@@ -580,8 +613,16 @@ export function validateViewConsistency(
 	idDifferentiator: string | undefined = undefined,
 ): void {
 	validateSnapshotConsistency(
-		{ tree: toJsonableTree(treeA), schema: treeA.storedSchema },
-		{ tree: toJsonableTree(treeB), schema: treeB.storedSchema },
+		{
+			tree: toJsonableTree(treeA),
+			schema: treeA.storedSchema,
+			removed: treeA.getRemovedRoots(),
+		},
+		{
+			tree: toJsonableTree(treeB),
+			schema: treeB.storedSchema,
+			removed: treeA.getRemovedRoots(),
+		},
 		idDifferentiator,
 	);
 }
@@ -594,7 +635,18 @@ export function validateSnapshotConsistency(
 	assert.deepEqual(
 		treeA.tree,
 		treeB.tree,
-		`Inconsistent json representation: ${idDifferentiator}`,
+		`Inconsistent document tree json representation: ${idDifferentiator}`,
+	);
+	// Note: removed trees are not currently GCed, which allows us to expect that all clients should share the same
+	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
+	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
+	// should be consistent about the content being stored (the third tuple entry).
+	const mapA = nestedMapFromFlatList(treeA.removed);
+	const mapB = nestedMapFromFlatList(treeB.removed);
+	assert.deepEqual(
+		mapA,
+		mapB,
+		`Inconsistent removed trees json representation: ${idDifferentiator}`,
 	);
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
@@ -621,7 +673,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout({
+	const view = createTreeCheckout(testIdCompressor, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -643,6 +695,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 			content.schema.rootFieldSchema,
 			content.initialTree,
 		),
+		testIdCompressor,
 	);
 	return forest;
 }
@@ -658,7 +711,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout({
+	const branch = createTreeCheckout(testIdCompressor, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -762,11 +815,15 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 export function expectJsonTree(
 	actual: ITreeCheckout | ITreeCheckout[],
 	expected: JsonCompatible[],
+	expectRemovedRootsAreSynchronized = true,
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {
 		const roots = toJsonTree(tree);
 		assert.deepEqual(roots, expected);
+	}
+	if (expectRemovedRootsAreSynchronized) {
+		checkRemovedRootsAreSynchronized(trees);
 	}
 }
 
@@ -817,15 +874,21 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 
 export const mockIntoDelta = (delta: DeltaRoot) => delta;
 
-export interface EncodingTestData<TDecoded, TEncoded> {
+export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	/**
 	 * Contains test cases which should round-trip successfully through all persisted formats.
 	 */
-	successes: [name: string, data: TDecoded][];
+	successes: TContext extends void
+		? [name: string, data: TDecoded][]
+		: [name: string, data: TDecoded, context: TContext][];
 	/**
 	 * Contains malformed encoded data which a particular version's codec should fail to decode.
 	 */
-	failures?: { [version: string]: [name: string, data: TEncoded][] };
+	failures?: {
+		[version: string]: TContext extends void
+			? [name: string, data: TEncoded][]
+			: [name: string, data: TEncoded, context: TContext][];
+	};
 }
 
 const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
@@ -848,9 +911,9 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
  * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
  * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded, TEncoded>(
-	family: ICodecFamily<TDecoded>,
-	encodingTestData: EncodingTestData<TDecoded, TEncoded>,
+export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
+	family: ICodecFamily<TDecoded, TContext>,
+	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 ): void {
 	for (const version of family.getSupportedFormats()) {
@@ -870,13 +933,15 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
-							for (const [name, data] of encodingTestData.successes) {
+							for (const [name, data, context] of encodingTestData.successes) {
 								it(name, () => {
-									let encoded = jsonCodec.encode(data);
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									let encoded = jsonCodec.encode(data, context!);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									const decoded = jsonCodec.decode(encoded);
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									const decoded = jsonCodec.decode(encoded, context!);
 									assertEquivalent(decoded, data);
 								});
 							}
@@ -886,10 +951,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 			});
 
 			describe("can binary roundtrip", () => {
-				for (const [name, data] of encodingTestData.successes) {
+				for (const [name, data, context] of encodingTestData.successes) {
 					it(name, () => {
-						const encoded = codec.binary.encode(data);
-						const decoded = codec.binary.decode(encoded);
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const encoded = codec.binary.encode(data, context!);
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const decoded = codec.binary.decode(encoded, context!);
 						assertEquivalent(decoded, data);
 					});
 				}
@@ -898,9 +965,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 			const failureCases = encodingTestData.failures?.[version] ?? [];
 			if (failureCases.length > 0) {
 				describe("rejects malformed data", () => {
-					for (const [name, encodedData] of failureCases) {
+					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible));
+							assert.throws(() =>
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								jsonCodec.decode(encodedData as JsonCompatible, context!),
+							);
 						});
 					}
 				});
@@ -985,7 +1055,11 @@ export function applyTestDelta(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	const rootDelta: DeltaRoot = { fields: delta };
-	applyDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	applyDelta(
+		rootDelta,
+		deltaProcessor,
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+	);
 }
 
 export function announceTestDelta(
@@ -994,7 +1068,11 @@ export function announceTestDelta(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	const rootDelta: DeltaRoot = { fields: delta };
-	announceDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	announceDelta(
+		rootDelta,
+		deltaProcessor,
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+	);
 }
 
 export function createTestUndoRedoStacks(
@@ -1016,4 +1094,57 @@ export function createTestUndoRedoStacks(
 	});
 
 	return { undoStack, redoStack, unsubscribe };
+}
+
+/**
+ * Mock IdCompressor for testing that returns an incrementing ID.
+ * Should not be used for tests that have multiple clients as doing so will generate
+ * duplicate IDs that collide.
+ */
+export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
+	private count = 0;
+	public localSessionId: SessionId = "MockLocalSessionId" as SessionId;
+
+	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
+	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
+	public serialize(hasLocalState: boolean): SerializedIdCompressor {
+		throw new Error("Method not implemented.");
+	}
+
+	public takeNextCreationRange(): IdCreationRange {
+		return undefined as unknown as IdCreationRange;
+	}
+	public finalizeCreationRange(range: IdCreationRange): void {
+		throw new Error("Method not implemented.");
+	}
+
+	public generateCompressedId(): SessionSpaceCompressedId {
+		return this.count++ as SessionSpaceCompressedId;
+	}
+	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
+		return id as unknown as OpSpaceCompressedId;
+	}
+	public normalizeToSessionSpace(
+		id: OpSpaceCompressedId,
+		originSessionId: SessionId,
+	): SessionSpaceCompressedId {
+		return id as unknown as SessionSpaceCompressedId;
+	}
+	public decompress(id: SessionSpaceCompressedId): StableId {
+		throw new Error("Method not implemented.");
+	}
+	public recompress(uncompressed: StableId): SessionSpaceCompressedId {
+		throw new Error("Method not implemented.");
+	}
+	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
+		throw new Error("Method not implemented.");
+	}
+	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
+		throw new Error("Method not implemented.");
+	}
+}
+
+export const testIdCompressor = createIdCompressor();
+export function mintRevisionTag(): RevisionTag {
+	return testIdCompressor.generateCompressedId();
 }

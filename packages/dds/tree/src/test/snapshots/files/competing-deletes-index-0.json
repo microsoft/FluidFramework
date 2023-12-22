@@ -38,90 +38,82 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000008",
-                      "sequenceNumber": 2,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
-                    },
-                    {
-                      "change": [
-                        {
-                          "data": {
-                            "changes": [
-                              {
-                                "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
-                                "change": [
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "delete": {
-                                        "id": 0
-                                      }
-                                    },
-                                    "cellId": {
-                                      "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
-                                      "revision": "beefbeef-beef-4000-8000-000000000008"
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        }
-                      ],
-                      "revision": "beefbeef-beef-4000-8000-000000000009",
-                      "sequenceNumber": 3,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000002"
-                    },
-                    {
-                      "change": [
-                        {
-                          "data": {
-                            "changes": [
-                              {
-                                "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
-                                "change": [
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "delete": {
-                                        "id": 0
-                                      }
-                                    },
-                                    "cellId": {
-                                      "localId": 0,
-                                      "adjacentCells": [
-                                        [
-                                          0,
-                                          1
-                                        ]
-                                      ],
-                                      "revision": "beefbeef-beef-4000-8000-000000000009"
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        }
-                      ],
-                      "revision": "beefbeef-beef-4000-8000-00000000000a",
+                      "revision": 3,
                       "sequenceNumber": 4,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000003"
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
+                                      }
+                                    },
+                                    "cellId": {
+                                      "atom": [
+                                        0,
+                                        3
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 515,
+                      "sequenceNumber": 6,
+                      "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "delete": {
+                                        "id": 0
+                                      }
+                                    },
+                                    "cellId": {
+                                      "atom": [
+                                        0,
+                                        515
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 1028,
+                      "sequenceNumber": 8,
+                      "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                     }
                   ],
                   "branches": [
                     [
-                      "beefbeef-beef-4000-8000-000000000002",
+                      "a0693eac-892a-4396-86f7-ad20dc1cade2",
                       {
-                        "base": "00000000-0000-4000-8000-000000000000",
+                        "base": "root",
                         "commits": [
                           {
                             "change": [
@@ -146,16 +138,16 @@
                                 }
                               }
                             ],
-                            "revision": "beefbeef-beef-4000-8000-000000000009",
-                            "sessionId": "beefbeef-beef-4000-8000-000000000002"
+                            "revision": 515,
+                            "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                           }
                         ]
                       }
                     ],
                     [
-                      "beefbeef-beef-4000-8000-000000000003",
+                      "5a126183-91e7-488a-b7e9-3342a05c25ae",
                       {
-                        "base": "00000000-0000-4000-8000-000000000000",
+                        "base": "root",
                         "commits": [
                           {
                             "change": [
@@ -180,8 +172,8 @@
                                 }
                               }
                             ],
-                            "revision": "beefbeef-beef-4000-8000-00000000000a",
-                            "sessionId": "beefbeef-beef-4000-8000-000000000003"
+                            "revision": 1028,
+                            "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
                           }
                         ]
                       }
@@ -202,12 +194,11 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": "1.0.0",
-                  "nodeSchema": [
-                    {
-                      "name": "com.fluidframework.json.array",
-                      "objectNodeFields": [
-                        {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.json.array": {
+                      "object": {
+                        "": {
                           "kind": "Sequence",
                           "types": [
                             "com.fluidframework.json.object",
@@ -216,14 +207,12 @@
                             "com.fluidframework.leaf.boolean",
                             "com.fluidframework.leaf.string",
                             "com.fluidframework.leaf.null"
-                          ],
-                          "name": ""
+                          ]
                         }
-                      ]
+                      }
                     },
-                    {
-                      "name": "com.fluidframework.json.object",
-                      "mapFields": {
+                    "com.fluidframework.json.object": {
+                      "map": {
                         "kind": "Optional",
                         "types": [
                           "com.fluidframework.json.object",
@@ -233,36 +222,25 @@
                           "com.fluidframework.leaf.string",
                           "com.fluidframework.leaf.null"
                         ]
-                      },
-                      "objectNodeFields": []
+                      }
                     },
-                    {
-                      "name": "com.fluidframework.leaf.boolean",
-                      "objectNodeFields": [],
-                      "leafValue": 2
+                    "com.fluidframework.leaf.boolean": {
+                      "leaf": 2
                     },
-                    {
-                      "name": "com.fluidframework.leaf.handle",
-                      "objectNodeFields": [],
-                      "leafValue": 3
+                    "com.fluidframework.leaf.handle": {
+                      "leaf": 3
                     },
-                    {
-                      "name": "com.fluidframework.leaf.null",
-                      "objectNodeFields": [],
-                      "leafValue": 4
+                    "com.fluidframework.leaf.null": {
+                      "leaf": 4
                     },
-                    {
-                      "name": "com.fluidframework.leaf.number",
-                      "objectNodeFields": [],
-                      "leafValue": 0
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
                     },
-                    {
-                      "name": "com.fluidframework.leaf.string",
-                      "objectNodeFields": [],
-                      "leafValue": 1
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
                     }
-                  ],
-                  "rootFieldSchema": {
+                  },
+                  "root": {
                     "kind": "Sequence",
                     "types": [
                       "com.fluidframework.json.object",
@@ -298,8 +276,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {
@@ -354,7 +331,7 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-00000000000a",
+                      1028,
                       0,
                       6
                     ]

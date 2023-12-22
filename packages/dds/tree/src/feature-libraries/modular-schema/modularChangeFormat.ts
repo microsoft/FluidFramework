@@ -4,12 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import {
-	FieldKindIdentifierSchema,
-	FieldKeySchema,
-	RevisionTagSchema,
-	ChangesetLocalId,
-} from "../../core";
+import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
@@ -19,21 +14,14 @@ import { EncodedFieldBatch } from "../chunked-forest";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
+export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>({
+	multipleOf: 1,
+});
 
-export const EncodedChangeAtomId = Type.Object(
-	{
-		/**
-		 * Uniquely identifies the changeset within which the change was made.
-		 */
-		revision: Type.Optional(RevisionTagSchema),
-		/**
-		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-		 */
-		localId: ChangesetLocalIdSchema,
-	},
-	noAdditionalProps,
-);
+export const EncodedChangeAtomId = Type.Union([
+	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
+	ChangesetLocalIdSchema,
+]);
 
 const EncodedValueChange = Type.Object(
 	{
@@ -55,8 +43,8 @@ type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
 
 const EncodedFieldChange = Type.Object(
 	{
-		fieldKey: FieldKeySchema,
-		fieldKind: FieldKindIdentifierSchema,
+		fieldKey: schemaFormat.FieldKeySchema,
+		fieldKind: schemaFormat.FieldKindIdentifierSchema,
 		// Implementation note: node and field change encoding is mutually recursive.
 		// This field marks a boundary in that recursion to avoid constructing excessively complex
 		// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.
@@ -83,9 +71,12 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
  */
 export type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
-const EncodedNodeExistsConstraint = Type.Object({
-	violated: Type.Boolean(),
-});
+const EncodedNodeExistsConstraint = Type.Object(
+	{
+		violated: Type.Boolean(),
+	},
+	noAdditionalProps,
+);
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
 export const EncodedNodeChangeset = Type.Object(
@@ -118,24 +109,37 @@ export type EncodedRevisionInfo = Static<typeof EncodedRevisionInfo>;
  */
 export const EncodedTreeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
 
-// TODO:YA6307 adopt more efficient encoding, likely based on contiguous runs of IDs
+export const CommitBuilds = Type.Array(
+	Type.Tuple([
+		// ID for first node
+		ChangesetLocalIdSchema,
+		// Index for a TreeChunk that represents all the nodes
+		EncodedTreeIndex,
+	]),
+);
+export type CommitBuilds = Static<typeof CommitBuilds>;
+
 export const EncodedBuildsArray = Type.Array(
 	Type.Union([
-		Type.Tuple([ChangesetLocalIdSchema, EncodedTreeIndex]),
-		Type.Tuple([RevisionTagSchema, ChangesetLocalIdSchema, EncodedTreeIndex]),
+		Type.Tuple([CommitBuilds, RevisionTagSchema]),
+		// Revision is omitted when undefined
+		Type.Tuple([CommitBuilds]),
 	]),
 );
 
 export type EncodedBuildsArray = Static<typeof EncodedBuildsArray>;
 
-export const EncodedBuilds = Type.Object({
-	builds: EncodedBuildsArray,
-	/**
-	 * Fields indexed by the EncodedTreeIndexes above.
-	 * TODO: Strongly typing this here may result in redundant schema validation of this data.
-	 */
-	trees: EncodedFieldBatch,
-});
+export const EncodedBuilds = Type.Object(
+	{
+		builds: EncodedBuildsArray,
+		/**
+		 * Fields indexed by the EncodedTreeIndexes above.
+		 * TODO: Strongly typing this here may result in redundant schema validation of this data.
+		 */
+		trees: EncodedFieldBatch,
+	},
+	noAdditionalProps,
+);
 
 export type EncodedBuilds = Static<typeof EncodedBuilds>;
 

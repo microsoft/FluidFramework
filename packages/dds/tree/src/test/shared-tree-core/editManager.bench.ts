@@ -11,6 +11,7 @@ import { DefaultChangeFamily } from "../../feature-libraries";
 import { noopValidator } from "../../codec";
 import { singleJsonCursor } from "../../domains";
 import { Editor, makeEditMinter } from "../editMinter";
+import { failCodec, testIdCompressor } from "../utils";
 import {
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,
@@ -44,7 +45,9 @@ describe("EditManager - Bench", () => {
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+	const defaultFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
+		jsonValidator: noopValidator,
+	});
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
@@ -62,7 +65,7 @@ describe("EditManager - Bench", () => {
 			name: "Default - Sequence Insert",
 			changeFamily: defaultFamily,
 			mintChange: makeEditMinter(defaultFamily, sequencePrepend),
-			maxEditCount: 500,
+			maxEditCount: 350,
 		},
 	];
 	for (const family of families) {

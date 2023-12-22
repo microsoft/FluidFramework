@@ -3,37 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { isStableId, StableId } from "@fluidframework/id-compressor";
-import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
+import { Type } from "@sinclair/typebox";
+import {
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+} from "@fluidframework/runtime-definitions";
+import { Brand, NestedMap, RangeMap, brandedNumberType, brandedStringType } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
  */
-export type SessionId = string;
 export const SessionIdSchema = brandedStringType<SessionId>();
 
 /**
  * A unique identifier for a commit. Commits that have been rebased, but are semantically
  * the same, will share the same revision tag.
- * @alpha
+ *
+ * The constant 'root' is reserved for the trunk base: minting a SessionSpaceCompressedId is not
+ * possible on readonly clients. These clients generally don't need ids, but  must be done at tree initialization time.
+ * @internal
  */
-// TODO: These can be compressed by an `IdCompressor` in the future
-export type RevisionTag = StableId;
-export type EncodedRevisionTag = Brand<string, "EncodedRevisionTag">;
-export const RevisionTagSchema = brandedStringType<EncodedRevisionTag>();
+export type RevisionTag = SessionSpaceCompressedId | "root";
+export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | "root";
+export const RevisionTagSchema = Type.Union([
+	Type.Literal("root"),
+	brandedNumberType<Exclude<EncodedRevisionTag, string>>(),
+]);
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
  * but they are unique when qualified by the revision of the change they are used in.
- * @alpha
+ * @internal
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
  * A globally unique ID for an atom of change, or a node associated with the atom of change.
- * @alpha
+ * @internal
  *
  * @privateRemarks
  * TODO: Rename this to be more general.
@@ -50,18 +58,15 @@ export interface ChangeAtomId {
 	readonly localId: ChangesetLocalId;
 }
 
-export interface EncodedChangeAtomId {
-	readonly revision?: EncodedRevisionTag;
-	readonly localId: ChangesetLocalId;
-}
+export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
 
 /**
- * @alpha
+ * @internal
  */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
 
 /**
- * @alpha
+ * @internal
  */
 export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 
@@ -70,28 +75,6 @@ export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
  */
 export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
 	return a.localId === b.localId && a.revision === b.revision;
-}
-
-/**
- * @returns a `RevisionTag` from the given string, or fails if the string is not a valid `RevisionTag`
- */
-export function assertIsRevisionTag(revision: string): RevisionTag {
-	assert(isRevisionTag(revision), 0x577 /* Expected revision to be valid RevisionTag */);
-	return revision;
-}
-
-/**
- * @returns true iff the given string is a valid `RevisionTag`
- */
-export function isRevisionTag(revision: string): revision is RevisionTag {
-	return isStableId(revision);
-}
-
-/**
- * @returns a random, universally unique `RevisionTag`
- */
-export function mintRevisionTag(): RevisionTag {
-	return generateStableId();
 }
 
 /**

@@ -3,69 +3,61 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/id-compressor";
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
+import { ICodecFamily, SessionAwareCodec, makeCodecFamily, unitCodec } from "../../codec";
 import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { Mutable } from "../../util";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec";
 import type { NodeChangeset } from "../modular-schema";
 import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat";
 
-export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
+export const noChangeCodecFamily: ICodecFamily<0, SessionId> = makeCodecFamily<0, SessionId>([
+	[0, unitCodec],
+]);
 
-export const makeOptionalFieldCodecFamily = (
-	childCodec: IJsonCodec<NodeChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): ICodecFamily<OptionalChangeset> =>
+export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
+	childCodec: SessionAwareCodec<TChildChange>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+): ICodecFamily<OptionalChangeset<TChildChange>, SessionId> =>
 	makeCodecFamily([[0, makeOptionalFieldCodec(childCodec, revisionTagCodec)]]);
 
 function makeRegisterIdCodec(
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): IJsonCodec<RegisterId, EncodedRegisterId> {
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+): SessionAwareCodec<RegisterId, EncodedRegisterId> {
+	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	return {
-		encode: (registerId: RegisterId) => {
+		encode: (registerId: RegisterId, originatorId: SessionId) => {
 			if (registerId === "self") {
-				return 0;
+				return null;
 			}
-
-			const encodedRegisterId: EncodedRegisterId = { localId: registerId.localId };
-			if (registerId.revision !== undefined) {
-				encodedRegisterId.revision = revisionTagCodec.encode(registerId.revision);
-			}
-
-			return encodedRegisterId;
+			return changeAtomIdCodec.encode(registerId, originatorId);
 		},
-		decode: (registerId: EncodedRegisterId) => {
-			if (registerId === 0) {
+		decode: (registerId: EncodedRegisterId, originatorId: SessionId) => {
+			if (registerId === null) {
 				return "self";
 			}
-
-			const decodedRegisterId: Mutable<RegisterId> = { localId: registerId.localId };
-			if (registerId.revision !== undefined) {
-				decodedRegisterId.revision = revisionTagCodec.decode(registerId.revision);
-			}
-
-			return decodedRegisterId;
+			return changeAtomIdCodec.decode(registerId, originatorId);
 		},
 		encodedSchema: EncodedRegisterId,
 	};
 }
 
-function makeOptionalFieldCodec(
-	childCodec: IJsonCodec<NodeChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset<TAnySchema>> {
+function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
+	childCodec: SessionAwareCodec<TChildChange>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+): SessionAwareCodec<OptionalChangeset<TChildChange>, EncodedOptionalChangeset<TAnySchema>> {
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
 	return {
-		encode: (change: OptionalChangeset) => {
+		encode: (change: OptionalChangeset<TChildChange>, originatorId: SessionId) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.moves.length > 0) {
 				encoded.m = [];
 				for (const [src, dst, type] of change.moves) {
 					encoded.m.push([
-						registerIdCodec.encode(src),
-						registerIdCodec.encode(dst),
+						registerIdCodec.encode(src, originatorId),
+						registerIdCodec.encode(dst, originatorId),
 						type === "nodeTargeting",
 					]);
 				}
@@ -74,38 +66,41 @@ function makeOptionalFieldCodec(
 			if (change.childChanges.length > 0) {
 				encoded.c = [];
 				for (const [id, childChange] of change.childChanges) {
-					encoded.c.push([registerIdCodec.encode(id), childCodec.encode(childChange)]);
+					encoded.c.push([
+						registerIdCodec.encode(id, originatorId),
+						childCodec.encode(childChange, originatorId),
+					]);
 				}
 			}
 
 			if (change.reservedDetachId !== undefined) {
-				encoded.d = registerIdCodec.encode(change.reservedDetachId);
+				encoded.d = registerIdCodec.encode(change.reservedDetachId, originatorId);
 			}
 
 			return encoded;
 		},
 
-		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
+		decode: (encoded: EncodedOptionalChangeset<TAnySchema>, originatorId: SessionId) => {
 			const moves: OptionalChangeset["moves"] =
 				encoded.m?.map(
 					([src, dst, type]) =>
 						[
-							registerIdCodec.decode(src),
-							registerIdCodec.decode(dst),
+							registerIdCodec.decode(src, originatorId),
+							registerIdCodec.decode(dst, originatorId),
 							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
 						] as const,
 				) ?? [];
-			const decoded: OptionalChangeset = {
+			const decoded: OptionalChangeset<TChildChange> = {
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id),
-						childCodec.decode(encodedChange),
+						registerIdCodec.decode(id, originatorId),
+						childCodec.decode(encodedChange, originatorId),
 					]) ?? [],
 			};
 
 			if (encoded.d !== undefined) {
-				decoded.reservedDetachId = registerIdCodec.decode(encoded.d);
+				decoded.reservedDetachId = registerIdCodec.decode(encoded.d, originatorId);
 			}
 			return decoded;
 		},

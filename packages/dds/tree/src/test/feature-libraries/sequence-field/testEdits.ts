@@ -8,8 +8,9 @@ import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
-import { ChangeAtomId, ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
+import { mintRevisionTag } from "../../utils";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -325,6 +326,14 @@ function createSkipMark(count: number): SF.CellMark<SF.NoopMark, never> {
 	return { count };
 }
 
+function createTomb(
+	revision: RevisionTag | undefined,
+	localId: ChangesetLocalId = brand(0),
+	count: number = 1,
+): SF.CellMark<SF.NoopMark, never> {
+	return { count, cellId: { revision, localId } };
+}
+
 function createAttachAndDetachMark<TChange>(
 	attach: SF.CellMark<SF.Attach, TChange>,
 	detach: SF.CellMark<SF.Detach, TChange>,
@@ -364,6 +373,7 @@ export const MarkMaker = {
 	insert: createInsertMark,
 	revive: createReviveMark,
 	skip: createSkipMark,
+	tomb: createTomb,
 	pin: createPinMark,
 	delete: createDeleteMark,
 	modify: createModifyMark,

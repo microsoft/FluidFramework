@@ -10,7 +10,6 @@ import {
 	findAncestor,
 	GraphCommit,
 	mintCommit,
-	mintRevisionTag,
 	tagChange,
 	TaggedChange,
 	rebaseBranch,
@@ -141,6 +140,29 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private readonly revertibles = new Set<Revertible>();
 	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
+	/**
+	 * After pushing a starting revision to the transaction stack, this branch might be rebased
+	 * over commits which are children of that starting revision. When the transaction is committed,
+	 * those rebased-over commits should not be included in the transaction's squash commit, even though
+	 * they exist between the starting revision and the final commit within the transaction.
+	 *
+	 * Whenever `rebaseOnto` is called during a transaction, this map is augmented with an entry from the
+	 * original merge-base to the new merge-base.
+	 *
+	 * This state need only be retained for the lifetime of the transaction.
+	 *
+	 * TODO: This strategy might need to be revisited when adding better support for async transactions.
+	 * Since:
+	 *
+	 * 1. Transactionality is guaranteed primarily by squashing at commit time
+	 * 2. Branches may be rebased with an ongoing transaction
+	 *
+	 * a rebase operation might invalidate only a portion of a transaction's commits, thus defeating the
+	 * purpose of transactionality.
+	 *
+	 * AB#6483 and children items track this work.
+	 */
+	private readonly initialTransactionRevToRebasedRev = new Map<RevisionTag, RevisionTag>();
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -150,6 +172,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -260,7 +283,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
 		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
-		const revision = mintRevisionTag();
+		const revision = this.mintRevisionTag();
 
 		const newHead = mintCommit(startCommit, {
 			revision,
@@ -307,7 +330,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
-			inverses.push(tagRollbackInverse(inverse, mintRevisionTag(), commits[i].revision));
+			inverses.push(tagRollbackInverse(inverse, this.mintRevisionTag(), commits[i].revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -332,7 +355,17 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	private popTransaction(): [GraphCommit<TChange>, GraphCommit<TChange>[]] {
-		const { startRevision } = this.transactions.pop();
+		const { startRevision: startRevisionOriginal } = this.transactions.pop();
+		let startRevision = startRevisionOriginal;
+		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision)!;
+		}
+
+		if (!this.isTransacting()) {
+			this.initialTransactionRevToRebasedRev.clear();
+		}
+
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
@@ -420,7 +453,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		return this.applyChange(
 			change,
-			mintRevisionTag(),
+			this.mintRevisionTag(),
 			revertibleKind === RevertibleKind.Default || revertibleKind === RevertibleKind.Redo
 				? RevertibleKind.Undo
 				: RevertibleKind.Redo,
@@ -435,7 +468,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public fork(): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(this.head, this.changeFamily);
+		const fork = new SharedTreeBranch(this.head, this.changeFamily, this.mintRevisionTag);
 		this.emit("fork", fork);
 		return fork;
 	}
@@ -477,6 +510,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		const newCommits = targetCommits.concat(sourceCommits);
+		if (this.isTransacting()) {
+			const src = targetCommits[0].parent?.revision;
+			const dst = targetCommits.at(-1)?.revision;
+			if (src !== undefined && dst !== undefined) {
+				this.initialTransactionRevToRebasedRev.set(src, dst);
+			}
+		}
 		const changeEvent = {
 			type: "replace",
 			get change() {
@@ -553,7 +593,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, head, upTo, onto.getHead());
+		const rebaseResult = rebaseBranch(
+			this.mintRevisionTag,
+			this.changeFamily.rebaser,
+			head,
+			upTo,
+			onto.getHead(),
+		);
 		if (this.head === rebaseResult.newSourceHead) {
 			return undefined;
 		}
