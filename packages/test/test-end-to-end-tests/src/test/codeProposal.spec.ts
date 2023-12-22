@@ -20,7 +20,7 @@ import {
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
@@ -38,7 +38,8 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 // REVIEW: enable compat testing?
-describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider) => {
+describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const packageV1: ICodeProposalTestPackage = {
 		name: "test",
 		version: 1,
