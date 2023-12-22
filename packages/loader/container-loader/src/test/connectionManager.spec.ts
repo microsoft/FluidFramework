@@ -192,7 +192,7 @@ describe("connectionManager", () => {
 		);
 	});
 
-	it.only("reconnectOnError - nack retryAfter", async () => {
+	it("reconnectOnError - nack retryAfter", async () => {
 		const connectionManager = createConnectionManager();
 		connectionManager.connect({ text: "test:reconnectOnError" });
 		let connection = await waitForConnection();
