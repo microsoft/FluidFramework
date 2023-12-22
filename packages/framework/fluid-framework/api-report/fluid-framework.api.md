@@ -9,13 +9,11 @@ import { ConnectionState } from '@fluidframework/container-loader';
 import { ContainerErrorType } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
-import { DeserializeCallback } from '@fluidframework/sequence';
 import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { FieldKind as FieldKind_2 } from './schemaTypes';
 import { FieldSchema as FieldSchema_2 } from './schemaTypes';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { Forbidden as Forbidden_2 } from '../default-schema';
-import { getTextAndMarkers } from '@fluidframework/sequence';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -23,9 +21,6 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IConnection } from '@fluidframework/fluid-static';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
-import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
@@ -35,59 +30,27 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IInterval } from '@fluidframework/sequence';
-import { IIntervalCollection } from '@fluidframework/sequence';
-import { IIntervalCollectionEvent } from '@fluidframework/sequence';
-import { IIntervalHelpers } from '@fluidframework/sequence';
-import { IJSONRunSegment } from '@fluidframework/sequence';
-import { IMapMessageLocalMetadata } from '@fluidframework/sequence';
 import { IMember } from '@fluidframework/fluid-static';
 import { InsertableObjectFromSchemaRecord as InsertableObjectFromSchemaRecord_2 } from './schemaTypes';
-import { Interval } from '@fluidframework/sequence';
-import { IntervalLocator } from '@fluidframework/sequence';
-import { intervalLocatorFromEndpoint } from '@fluidframework/sequence';
-import { IntervalType } from '@fluidframework/sequence';
-import { IRootDataObject } from '@fluidframework/fluid-static';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISequenceDeltaRange } from '@fluidframework/sequence';
-import { ISerializableInterval } from '@fluidframework/sequence';
-import { ISerializedInterval } from '@fluidframework/sequence';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { IServiceAudienceEvents } from '@fluidframework/fluid-static';
-import { ISharedIntervalCollection } from '@fluidframework/sequence';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISharedSegmentSequenceEvents } from '@fluidframework/sequence';
-import { ISharedString } from '@fluidframework/sequence';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { IValueOpEmitter } from '@fluidframework/sequence';
 import { LeafNodeSchema as LeafNodeSchema_2 } from '../feature-libraries';
 import { LoadableObjectClass } from '@fluidframework/fluid-static';
 import { LoadableObjectClassRecord } from '@fluidframework/fluid-static';
 import { LoadableObjectCtor } from '@fluidframework/fluid-static';
-import { LoadableObjectRecord } from '@fluidframework/fluid-static';
 import { MemberChangedListener } from '@fluidframework/fluid-static';
 import { ObjectFromSchemaRecord as ObjectFromSchemaRecord_2 } from './schemaTypes';
 import { SchemaLibrary as SchemaLibrary_2 } from '../feature-libraries';
-import { SequenceDeltaEvent } from '@fluidframework/sequence';
-import { SequenceEvent } from '@fluidframework/sequence';
-import { SequenceInterval } from '@fluidframework/sequence';
-import { SequenceMaintenanceEvent } from '@fluidframework/sequence';
-import { SerializedIntervalDelta } from '@fluidframework/sequence';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
-import { SharedIntervalCollection } from '@fluidframework/sequence';
-import { SharedIntervalCollectionFactory } from '@fluidframework/sequence';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SharedObjectClass } from '@fluidframework/fluid-static';
-import { SharedSegmentSequence } from '@fluidframework/sequence';
-import { SharedSequence } from '@fluidframework/sequence';
-import { SharedString } from '@fluidframework/sequence';
-import { SharedStringFactory } from '@fluidframework/sequence';
-import { SharedStringSegment } from '@fluidframework/sequence';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
-import { SubSequence } from '@fluidframework/sequence';
 import { TreeNode as TreeNode_2 } from '..';
 import { TreeNodeSchema as TreeNodeSchema_2 } from './schemaTypes';
 import { TreeNodeSchemaClass as TreeNodeSchemaClass_2 } from './schemaTypes';
@@ -467,8 +430,6 @@ export interface DeltaVisitor {
     replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey): void;
 }
 
-export { DeserializeCallback }
-
 // @internal
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
@@ -478,22 +439,6 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 
 // @internal
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
-
-// @alpha @sealed
-export class DirectoryFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
-    // (undocumented)
-    static readonly Type = "https://graph.microsoft.com/types/directory";
-    // (undocumented)
-    get type(): string;
-}
 
 // @public
 export enum DiscardResult {
@@ -936,8 +881,6 @@ export interface GenericFieldsNode<TChild> {
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
 
-export { getTextAndMarkers }
-
 // @internal (undocumented)
 export interface HasListeners<E extends Events<E>> {
     hasListeners(eventName?: keyof Events<E>): boolean;
@@ -949,12 +892,6 @@ export interface ICodecOptions {
 }
 
 export { IConnection }
-
-// @alpha
-export interface ICreateInfo {
-    ccIds: string[];
-    csn: number;
-}
 
 export { ICriticalContainerError }
 
@@ -976,98 +913,6 @@ export interface IDefaultEditBuilder {
     sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
     // (undocumented)
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
-}
-
-// @alpha
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
-    readonly absolutePath: string;
-    countSubDirectory?(): number;
-    createSubDirectory(subdirName: string): IDirectory;
-    deleteSubDirectory(subdirName: string): boolean;
-    get<T = any>(key: string): T | undefined;
-    getSubDirectory(subdirName: string): IDirectory | undefined;
-    getWorkingDirectory(relativePath: string): IDirectory | undefined;
-    hasSubDirectory(subdirName: string): boolean;
-    set<T = unknown>(key: string, value: T): this;
-    subdirectories(): IterableIterator<[string, IDirectory]>;
-}
-
-// @alpha
-export interface IDirectoryClearOperation {
-    path: string;
-    type: "clear";
-}
-
-// @alpha
-export interface IDirectoryCreateSubDirectoryOperation {
-    path: string;
-    subdirName: string;
-    type: "createSubDirectory";
-}
-
-// @alpha
-export interface IDirectoryDataObject {
-    ci?: ICreateInfo;
-    storage?: {
-        [key: string]: ISerializableValue;
-    };
-    subdirectories?: {
-        [subdirName: string]: IDirectoryDataObject;
-    };
-}
-
-// @alpha
-export interface IDirectoryDeleteOperation {
-    key: string;
-    path: string;
-    type: "delete";
-}
-
-// @alpha
-export interface IDirectoryDeleteSubDirectoryOperation {
-    path: string;
-    subdirName: string;
-    type: "deleteSubDirectory";
-}
-
-// @alpha
-export interface IDirectoryEvents extends IEvent {
-    (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
-    (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
-}
-
-// @alpha
-export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
-
-// @internal
-export interface IDirectoryNewStorageFormat {
-    blobs: string[];
-    content: IDirectoryDataObject;
-}
-
-// @alpha
-export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
-
-// @alpha
-export interface IDirectorySetOperation {
-    key: string;
-    path: string;
-    type: "set";
-    value: ISerializableValue;
-}
-
-// @alpha
-export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
-
-// @alpha
-export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
-
-// @alpha
-export interface IDirectoryValueChanged extends IValueChanged {
-    path: string;
 }
 
 // @public
@@ -1102,25 +947,6 @@ export interface IForestSubscription extends ISubscribable<ForestEvents> {
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
-
-export { IInterval }
-
-export { IIntervalCollection }
-
-export { IIntervalCollectionEvent }
-
-export { IIntervalHelpers }
-
-export { IJSONRunSegment }
-
-// @alpha
-export interface ILocalValue {
-    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
-    readonly type: string;
-    readonly value: any;
-}
-
-export { IMapMessageLocalMetadata }
 
 export { IMember }
 
@@ -1163,19 +989,9 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
-export { Interval }
-
-export { IntervalLocator }
-
-export { intervalLocatorFromEndpoint }
-
-export { IntervalType }
-
 // @internal
 export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
-
-export { IRootDataObject }
 
 // @internal
 export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
@@ -1191,48 +1007,12 @@ export interface ISchemaEditor {
 // @internal
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
-export { ISequenceDeltaRange }
-
-export { ISerializableInterval }
-
-// @alpha @deprecated
-export interface ISerializableValue {
-    type: string;
-    value: any;
-}
-
-export { ISerializedInterval }
-
-// @alpha
-export interface ISerializedValue {
-    type: string;
-    value: string | undefined;
-}
-
 export { IServiceAudience }
 
 export { IServiceAudienceEvents }
 
 // @public
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
-
-// @alpha
-export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    // (undocumented)
-    readonly [Symbol.toStringTag]: string;
-}
-
-// @alpha
-export interface ISharedDirectoryEvents extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-}
-
-export { ISharedIntervalCollection }
 
 // @public @sealed
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
@@ -1245,10 +1025,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
-
-export { ISharedSegmentSequenceEvents }
-
-export { ISharedString }
 
 // @internal
 export interface ISharedTree extends ISharedObject, ITree {
@@ -1374,8 +1150,6 @@ export interface IValueChanged {
     previousValue: any;
 }
 
-export { IValueOpEmitter }
-
 // @internal
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 }
@@ -1437,37 +1211,12 @@ export { LoadableObjectClassRecord }
 
 export { LoadableObjectCtor }
 
-export { LoadableObjectRecord }
-
 // @internal
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
 }
 
-// @alpha
-export class LocalValueMaker {
-    constructor(serializer: IFluidSerializer);
-    fromInMemory(value: unknown): ILocalValue;
-    fromSerializable(serializable: ISerializableValue): ILocalValue;
-}
-
 // @public
 export interface MakeNominal {
-}
-
-// @alpha @sealed
-export class MapFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
-    // (undocumented)
-    static readonly Type = "https://graph.microsoft.com/types/map";
-    // (undocumented)
-    get type(): string;
 }
 
 // @internal
@@ -1862,10 +1611,6 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {
 }
 
-export { SequenceDeltaEvent }
-
-export { SequenceEvent }
-
 // @internal (undocumented)
 export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
@@ -1873,66 +1618,7 @@ export interface SequenceFieldEditBuilder {
     move(sourceIndex: number, count: number, destIndex: number): void;
 }
 
-export { SequenceInterval }
-
-export { SequenceMaintenanceEvent }
-
-export { SerializedIntervalDelta }
-
-// @alpha @sealed
-export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    get absolutePath(): string;
-    // (undocumented)
-    protected applyStashedOp(op: unknown): unknown;
-    clear(): void;
-    countSubDirectory(): number;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
-    createSubDirectory(subdirName: string): IDirectory;
-    delete(key: string): boolean;
-    deleteSubDirectory(subdirName: string): boolean;
-    // (undocumented)
-    dispose(error?: Error): void;
-    // (undocumented)
-    get disposed(): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
-    getSubDirectory(subdirName: string): IDirectory | undefined;
-    getWorkingDirectory(relativePath: string): IDirectory | undefined;
-    has(key: string): boolean;
-    hasSubDirectory(subdirName: string): boolean;
-    keys(): IterableIterator<string>;
-    // (undocumented)
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    readonly localValueMaker: LocalValueMaker;
-    // (undocumented)
-    protected onDisconnect(): void;
-    protected populate(data: IDirectoryDataObject): void;
-    // (undocumented)
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    set<T = unknown>(key: string, value: T): this;
-    get size(): number;
-    subdirectories(): IterableIterator<[string, IDirectory]>;
-    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
-}
-
-export { SharedIntervalCollection }
-
-export { SharedIntervalCollectionFactory }
-
-// @public
+// @public @deprecated
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
@@ -1945,6 +1631,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
+    // @deprecated
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
@@ -1966,16 +1653,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 }
 
 export { SharedObjectClass }
-
-export { SharedSegmentSequence }
-
-export { SharedSequence }
-
-export { SharedString }
-
-export { SharedStringFactory }
-
-export { SharedStringSegment }
 
 // @public
 export class SharedTree implements ITree {
@@ -2053,8 +1730,6 @@ export function stackTreeNodeCursor<TNode>(adapter: CursorAdapter<TNode>, root: 
 export interface StoredSchemaCollection {
     readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
-
-export { SubSequence }
 
 // @internal (undocumented)
 export class test_RecursiveObject extends test_RecursiveObject_base {
