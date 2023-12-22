@@ -3,25 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { TreeValue } from "../core";
-import { RestrictiveReadonlyRecord } from "../util";
-import {
-	FieldKind,
-	FieldKinds,
-	AllowedTypes,
-	Any,
-	FieldNodeSchema,
-	TreeFieldSchema,
-	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	TreeNodeSchema,
-	AssignableFieldKinds,
-	LazyItem,
-} from "../feature-libraries";
+import { FieldNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { type, WithType } from "../class-tree/schemaTypes";
-import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
+import { IterableTreeListContent } from "./treeListNode";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -243,61 +228,6 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 }
 
 /**
- * An object which supports property-based access to fields.
- */
-export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeNode &
-	TreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
-
-/**
- * Helper for generating the properties of a {@link TreeObjectNode}.
- * @privateRemarks
- * This type is composed of four subtypes for each mutually exclusive combination of "readonly" and "optional".
- * If it were possible to map to getters and setters separately, the "readonly" cases would collapse, but this is not currently a feature in TS.
- * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
- */
-export type TreeObjectNodeFields<
-	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
-> = {
-	// Filter for properties that are both assignable and optional; mark them `-readonly` and `?`.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? TFields[key]["kind"] extends typeof FieldKinds.optional
-			? key
-			: never
-		: never]?: TreeField<TFields[key]>;
-} & {
-	// Filter for properties that are assignable but are not optional; mark them `-readonly` and `-?`.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? TFields[key]["kind"] extends typeof FieldKinds.optional
-			? never
-			: key
-		: never]-?: TreeField<TFields[key]>;
-} & {
-	// Filter for properties that are not assignable but are optional; mark them `readonly` and `?`.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? never
-		: TFields[key]["kind"] extends typeof FieldKinds.optional
-		? key
-		: never]?: TreeField<TFields[key]>;
-} & {
-	// Filter for properties that are not assignable and are not optional; mark them `readonly` and `-?`.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? never
-		: TFields[key]["kind"] extends typeof FieldKinds.optional
-		? never
-		: key]-?: TreeField<TFields[key]>;
-};
-
-/**
- * A map of string keys to tree objects.
- *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
- *
- */
-export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
-	extends TreeMapNodeBase<TreeField<TSchema["info"], "notEmpty">> {}
-
-/**
  * A map of string keys to tree objects.
  *
  * @privateRemarks
@@ -335,54 +265,7 @@ export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, T
 }
 
 /**
- * Given a field's schema, return the corresponding object in the proxy-based API.
- */
-export type TreeField<
-	TSchema extends TreeFieldSchema = TreeFieldSchema,
-	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
-	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
-> = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
-
-/**
- * Helper for implementing {@link TreeField}.
- */
-export type TreeFieldInner<
-	Kind extends FieldKind,
-	TTypes extends AllowedTypes,
-	Emptiness extends "maybeEmpty" | "notEmpty",
-> = Kind extends typeof FieldKinds.sequence
-	? never // Sequences are only supported underneath FieldNodes. See FieldNode case in `ProxyNode`.
-	: Kind extends typeof FieldKinds.required
-	? TreeNodeUnion<TTypes>
-	: Kind extends typeof FieldKinds.optional
-	? TreeNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: unknown;
-
-/**
- * Given multiple node schema types, return the corresponding object type union in the proxy-based API.
- */
-export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
-	? unknown
-	: {
-			// TODO: Is the the best way to write this type function? Can it be simplified?
-			// This first maps the tuple of AllowedTypes to a tuple of node API types.
-			// Then, it uses [number] to index arbitrarily into that tuple, effectively converting the type tuple into a type union.
-			[Index in keyof TTypes]: TTypes[Index] extends LazyItem<infer InnerType>
-				? InnerType extends TreeNodeSchema
-					? TypedNode<InnerType>
-					: never
-				: never;
-	  }[number];
-
-/**
  * Given a node's schema, return the corresponding object in the proxy-based API.
  */
-export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
-	? TreeValue<TSchema["info"]>
-	: TSchema extends MapNodeSchema
-	? TreeMapNode<TSchema>
-	: TSchema extends FieldNodeSchema
-	? TreeListNodeOld<TSchema["info"]["allowedTypes"]>
-	: TSchema extends ObjectNodeSchema
-	? TreeObjectNode<TSchema>
-	: TreeNode;
+export type TypedNode<TSchema extends ObjectNodeSchema | FieldNodeSchema | MapNodeSchema> =
+	TreeNode & WithType<TSchema["name"]>;

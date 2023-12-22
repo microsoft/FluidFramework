@@ -48,7 +48,7 @@ package for more information including tools to convert between version schemes.
 
 ## API Documentation
 
-API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/apis/cell>.
+API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/api/v1/cell>.
 
 <!-- prettier-ignore-end -->
 

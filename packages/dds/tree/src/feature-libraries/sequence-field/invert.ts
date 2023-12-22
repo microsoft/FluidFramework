@@ -19,7 +19,6 @@ import {
 	MoveIn,
 	MarkEffect,
 	CellId,
-	DetachIdOverrideType,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -36,6 +35,7 @@ import {
 	splitMark,
 	withNodeChange,
 } from "./utils";
+import { DetachIdOverrideType } from "./format";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 

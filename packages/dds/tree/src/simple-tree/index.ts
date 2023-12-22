@@ -4,21 +4,8 @@
  */
 
 export { getProxyForField } from "./proxies";
-export {
-	TreeObjectNodeFields,
-	TreeField,
-	TreeFieldInner,
-	TypedNode,
-	TreeNodeUnion,
-	TreeMapNode,
-	TreeObjectNode,
-	TreeNode,
-	Unhydrated,
-	TreeArrayNodeBase,
-	TreeMapNodeBase,
-} from "./types";
-export { TreeListNodeOld, TreeArrayNode, IterableTreeListContent, create } from "./treeListNode";
-export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
+export { TreeNode, Unhydrated, TreeArrayNodeBase, TreeMapNodeBase } from "./types";
+export { TreeArrayNode, IterableTreeListContent, create } from "./treeListNode";
 export {
 	InsertableTreeRoot,
 	InsertableTreeField,

@@ -116,12 +116,16 @@
                             "builds": {
                               "builds": [
                                 [
-                                  0,
-                                  0
-                                ],
-                                [
-                                  1,
-                                  1
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ],
+                                    [
+                                      1,
+                                      1
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -130,8 +134,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -238,8 +241,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {

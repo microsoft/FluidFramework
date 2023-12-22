@@ -42,7 +42,6 @@ import {
 	MarkEffect,
 	DetachFields,
 	IdRange,
-	DetachIdOverrideType,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -55,6 +54,7 @@ import {
 	VestigialEndpoint,
 	isVestigialEndpoint,
 } from "./helperTypes";
+import { DetachIdOverrideType } from "./format";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
