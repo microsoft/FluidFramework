@@ -187,7 +187,6 @@ declare function get_current_InterfaceDeclaration_IIntervalCollection():
 declare function use_old_InterfaceDeclaration_IIntervalCollection(
     use: TypeOnly<old.IIntervalCollection<any>>): void;
 use_old_InterfaceDeclaration_IIntervalCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIntervalCollection());
 
 /*
