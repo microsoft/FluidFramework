@@ -25,9 +25,9 @@
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "root 1 child",
@@ -49,15 +49,19 @@
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -66,8 +70,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -126,8 +129,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  3,
-                                  0
+                                  [
+                                    [
+                                      3,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -136,8 +143,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -264,16 +270,20 @@
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
-                                ],
-                                [
-                                  3,
-                                  1
-                                ],
-                                [
-                                  5,
-                                  2
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ],
+                                    [
+                                      3,
+                                      1
+                                    ],
+                                    [
+                                      5,
+                                      2
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -282,8 +292,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -374,8 +383,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -384,8 +397,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -501,8 +513,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {
@@ -598,13 +609,16 @@
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
-                      0,
-                      8
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000c",
-                      2,
-                      11
+                      [
+                        [
+                          0,
+                          8
+                        ],
+                        [
+                          2,
+                          11
+                        ]
+                      ]
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000d",

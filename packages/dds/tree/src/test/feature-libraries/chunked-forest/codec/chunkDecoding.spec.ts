@@ -336,7 +336,7 @@ describe("chunkDecoding", () => {
 			const decoders = [makeLoggingDecoder(log, localChunk)];
 			const decoder = new TreeDecoder(
 				{
-					fields: [{ shape: 0, key: 0 }],
+					fields: [[0, 0]],
 					value: false,
 				},
 				cache,

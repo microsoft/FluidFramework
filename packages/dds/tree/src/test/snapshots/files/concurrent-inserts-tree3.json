@@ -120,8 +120,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  0,
-                                  0
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -130,8 +134,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -185,8 +188,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -195,8 +202,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -253,12 +259,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  0,
-                                  0
-                                ],
-                                [
-                                  1,
-                                  1
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -267,8 +273,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -282,12 +287,7 @@
                                       "com.fluidframework.leaf.string",
                                       true,
                                       "a",
-                                      []
-                                    ]
-                                  ],
-                                  [
-                                    1,
-                                    [
+                                      [],
                                       "com.fluidframework.leaf.string",
                                       true,
                                       "c",
@@ -334,8 +334,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  2,
-                                  0
+                                  [
+                                    [
+                                      2,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -344,8 +348,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -399,8 +402,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  2,
-                                  0
+                                  [
+                                    [
+                                      2,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -409,8 +416,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -467,12 +473,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  0,
-                                  0
-                                ],
-                                [
-                                  1,
-                                  1
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -481,8 +487,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -496,12 +501,7 @@
                                       "com.fluidframework.leaf.string",
                                       true,
                                       "d",
-                                      []
-                                    ]
-                                  ],
-                                  [
-                                    1,
-                                    [
+                                      [],
                                       "com.fluidframework.leaf.string",
                                       true,
                                       "e",
@@ -548,8 +548,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  2,
-                                  0
+                                  [
+                                    [
+                                      2,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -558,8 +562,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -684,8 +687,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {

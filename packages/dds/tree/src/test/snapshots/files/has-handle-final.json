@@ -104,8 +104,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -114,8 +118,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -210,8 +213,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {

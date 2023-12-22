@@ -22,6 +22,7 @@ import {
 import { makeCodecFamily } from "../../../codec";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { library } from "../../testTrees";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -44,6 +45,13 @@ const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 };
 
 describe("SchemaIndex", () => {
+	useSnapshotDirectory();
+
+	it("SchemaIndexFormat", () => {
+		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
+		takeJsonSnapshot(Format);
+	});
+
 	it("accepts valid data", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [

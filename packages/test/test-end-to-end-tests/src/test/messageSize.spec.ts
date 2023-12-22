@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -32,7 +32,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { GenericError } from "@fluidframework/telemetry-utils";
 
-describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

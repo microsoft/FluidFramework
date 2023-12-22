@@ -14,8 +14,7 @@ import {
 	storedSchemaDecodeDispatcher,
 } from "../../core";
 import { brand, fail, fromErased } from "../../util";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { makeVersionedValidatedCodec } from "../versioned";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
 import { Format } from "./format";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {

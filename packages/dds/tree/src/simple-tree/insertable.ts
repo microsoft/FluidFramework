@@ -12,12 +12,12 @@ import {
 	Any,
 	FieldNodeSchema,
 	TreeFieldSchema,
-	InternalTypedSchemaTypes,
 	LeafNodeSchema,
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
 	FlexTreeSchema,
+	LazyItem,
 } from "../feature-libraries";
 
 /**
@@ -72,9 +72,7 @@ export type InsertableTreeNodeUnion<TTypes extends AllowedTypes> = TTypes extend
 			// TODO: Is the the best way to write this type function? Can it be simplified?
 			// This first maps the tuple of AllowedTypes to a tuple of node API types.
 			// Then, it uses [number] to index arbitrarily into that tuple, effectively converting the type tuple into a type union.
-			[Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<
-				infer InnerType
-			>
+			[Index in keyof TTypes]: TTypes[Index] extends LazyItem<infer InnerType>
 				? InnerType extends TreeNodeSchema
 					? InsertableTypedNode<InnerType>
 					: never

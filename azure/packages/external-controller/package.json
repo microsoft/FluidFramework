@@ -11,7 +11,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -37,7 +37,7 @@
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"tinylicious": "tinylicious",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
@@ -53,11 +53,11 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/build-tools": "0.29.0-225750",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/devtools": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^3.0.0-223236",
