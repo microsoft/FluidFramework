@@ -13,8 +13,10 @@
 	"type": "commonjs",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
+			"default": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
 		},
 		"./alpha": {
 			"types": "./dist/azure-local-service-alpha.d.ts",
