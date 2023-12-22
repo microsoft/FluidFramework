@@ -9892,7 +9892,7 @@ importers:
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/eslint-config-fluid': 3.2.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@fluidframework/protocol-definitions': 3.1.0-223007
