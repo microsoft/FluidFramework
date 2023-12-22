@@ -10,6 +10,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "commonjs",
 	"exports": {
 		".": {
 			"default": {
@@ -18,44 +19,20 @@
 			}
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/azure-local-service-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/azure-local-service-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/azure-local-service-alpha.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/azure-local-service-beta.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/azure-local-service-beta.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/azure-local-service-beta.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./public": {
-			"import": {
-				"types": "./lib/azure-local-service-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/azure-local-service-public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/azure-local-service-public.d.ts",
+			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
