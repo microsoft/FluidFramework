@@ -11,7 +11,6 @@ import {
 	cursorForJsonableTreeNode,
 	fieldKinds,
 } from "../../feature-libraries";
-import { typeboxValidator } from "../../external-utilities";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily";
 import {
@@ -25,12 +24,24 @@ import { leaf } from "../../domains";
 import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes";
 // eslint-disable-next-line import/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds";
-import { RevisionTagCodec } from "../../shared-tree-core";
+import { MockIdCompressor } from "../utils";
+import { ICodecOptions } from "../../codec";
+import { ajvValidator } from "../codec";
 
+const idCompressor = new MockIdCompressor();
 const dataChanges: ModularChangeset[] = [];
-const modularFamily = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
-	jsonValidator: typeboxValidator,
-});
+const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
+const fieldBatchCodec = {
+	encode: () => assert.fail("Unexpected encode"),
+	decode: () => assert.fail("Unexpected decode"),
+};
+
+const modularFamily = new ModularChangeFamily(
+	fieldKinds,
+	idCompressor,
+	fieldBatchCodec,
+	codecOptions,
+);
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
 
 const nodeX = { type: leaf.string.name, value: "X" };
@@ -65,7 +76,7 @@ const stEmptyChange: SharedTreeChange = {
 	changes: [],
 };
 
-const sharedTreeFamily = new SharedTreeChangeFamily({ jsonValidator: typeboxValidator });
+const sharedTreeFamily = new SharedTreeChangeFamily(idCompressor, fieldBatchCodec, codecOptions);
 
 describe("SharedTreeChangeFamily", () => {
 	it("composition composes runs of data changes", () => {

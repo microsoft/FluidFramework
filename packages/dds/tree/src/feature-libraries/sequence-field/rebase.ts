@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
 import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util";
 import {
 	ChangeAtomId,
@@ -258,7 +257,7 @@ export function isRedetach(effect: MarkEffect): boolean {
  */
 function generateNoOpWithCellId<T>(
 	mark: Mark<T>,
-	revision: StableId | undefined,
+	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 ): CellMark<NoopMark, T> {
 	const length = mark.count;

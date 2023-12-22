@@ -4,22 +4,23 @@
  */
 
 import { strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import { cursorForJsonableTreeNode } from "../feature-libraries";
 import {
 	makeAnonChange,
 	FieldKey,
 	tagChange,
-	mintRevisionTag,
 	deltaForSet,
 	RevisionTag,
 	TaggedChange,
 	RevisionMetadataSource,
+	ChangeEncodingContext,
 } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
-import { deepFreeze } from "./utils";
+import { deepFreeze, mintRevisionTag } from "./utils";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -98,9 +99,10 @@ describe("TestChange", () => {
 	it("can be encoded in JSON", () => {
 		const codec = TestChange.codec;
 		const empty = TestChange.emptyChange;
+		const context: ChangeEncodingContext = { originatorId: "session1" as SessionId };
 		const normal = TestChange.mint([0, 1], [2, 3]);
-		assert.deepEqual(empty, codec.decode(codec.encode(empty)));
-		assert.deepEqual(normal, codec.decode(codec.encode(normal)));
+		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
+		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));
 	});
 });
 

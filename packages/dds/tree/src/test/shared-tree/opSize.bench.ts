@@ -7,6 +7,7 @@ import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { cursorForJsonableTreeNode } from "../../feature-libraries";
 import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
@@ -435,7 +436,10 @@ describe("Op Size", () => {
 
 	describe("Insert Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"test",
+			);
 			initializeOpDataCollection(tree);
 			const view = initializeTestTree(tree);
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
@@ -464,7 +468,10 @@ describe("Op Size", () => {
 
 	describe("Delete Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"test",
+			);
 			initializeOpDataCollection(tree);
 			const childByteSize = getSuccessfulOpByteSize(
 				Operation.Delete,
@@ -498,7 +505,10 @@ describe("Op Size", () => {
 
 	describe("Edit Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"test",
+			);
 			initializeOpDataCollection(tree);
 			// Note that the child node byte size for the initial tree here should be arbitrary.
 			const view = initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
@@ -572,7 +582,10 @@ describe("Op Size", () => {
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+				const tree = factory.create(
+					new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+					"test",
+				);
 				initializeOpDataCollection(tree);
 
 				// delete
@@ -655,7 +668,10 @@ describe("Op Size", () => {
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+				const tree = factory.create(
+					new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+					"test",
+				);
 				initializeOpDataCollection(tree);
 
 				// delete
