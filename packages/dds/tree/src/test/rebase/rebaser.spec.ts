@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { assertIsStableId } from "@fluidframework/container-runtime";
 import { ChangeRebaser, RevisionTag } from "../../core";
 
 // Allow importing from these specific files which are being tested:
@@ -12,6 +11,7 @@ import { ChangeRebaser, RevisionTag } from "../../core";
 import { GraphCommit, rebaseBranch } from "../../core/rebase";
 
 import { fail } from "../../util";
+import { mintRevisionTag } from "../utils";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -19,7 +19,7 @@ function makeRevisionTag(tag: number): RevisionTag {
 		fail("Tags bigger than 15 are not supported");
 	}
 
-	return assertIsStableId(`00000000-0000-4000-8000-00000000000${tag.toString(16)}`);
+	return tag as RevisionTag;
 }
 
 const dummyChange = {};
@@ -129,6 +129,7 @@ describe("rebaser", () => {
 						: tester.main;
 
 				const { newSourceHead } = rebaseBranch(
+					mintRevisionTag,
 					new DummyChangeRebaser(),
 					tester.branch,
 					base,

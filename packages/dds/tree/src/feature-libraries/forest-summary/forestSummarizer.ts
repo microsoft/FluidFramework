@@ -9,6 +9,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
@@ -23,7 +24,6 @@ import {
 	makeDetachedFieldIndex,
 	mapCursorField,
 	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
 } from "../../core";
 import {
 	Summarizable,
@@ -33,8 +33,6 @@ import {
 import { idAllocatorFromMaxId } from "../../util";
 import { ICodecOptions, noopValidator } from "../../codec";
 import { FieldBatchCodec } from "../chunked-forest";
-import { FullSchemaPolicy } from "../modular-schema";
-import { TreeCompressionStrategy } from "../treeCompressionUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree";
 import { Format } from "./format";
@@ -50,29 +48,15 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private lazyCodec?: ReturnType<ForestCodec>;
-	private get codec(): ReturnType<ForestCodec> {
-		this.lazyCodec ??= makeForestSummarizerCodec(
-			this.options,
-			this.fieldBatchCodec,
-		)({
-			schema: { schema: this.schema, policy: this.policy },
-			encodeType: this.encodeType,
-		});
-		return this.lazyCodec;
-	}
+	private readonly codec: ForestCodec;
 
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly schema: TreeStoredSchemaSubscription,
-		private readonly policy: FullSchemaPolicy,
-		private readonly encodeType: TreeCompressionStrategy,
-		private readonly fieldBatchCodec: FieldBatchCodec,
-		private readonly options: ICodecOptions = { jsonValidator: noopValidator },
+		private readonly idCompressor: IIdCompressor,
+		fieldBatchCodec: FieldBatchCodec,
+		options: ICodecOptions = { jsonValidator: noopValidator },
 	) {
-		this.schema.on("beforeSchemaChange", () => {
-			this.lazyCodec = undefined;
-		});
+		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 	}
 
 	/**
@@ -169,7 +153,7 @@ export class ForestSummarizer implements Summarizable {
 			applyDelta(
 				{ fields: new Map(fieldChanges) },
 				this.forest,
-				makeDetachedFieldIndex("init"),
+				makeDetachedFieldIndex("init", this.idCompressor),
 			);
 		}
 	}
