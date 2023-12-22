@@ -192,6 +192,37 @@ describe("connectionManager", () => {
 		);
 	});
 
+	it.only("reconnectOnError - nack retryAfter", async () => {
+		const connectionManager = createConnectionManager();
+		connectionManager.connect({ text: "test:reconnectOnError" });
+		let connection = await waitForConnection();
+
+		const nack: Partial<INack> = {
+			content: {
+				code: 429,
+				type: NackErrorType.ThrottlingError,
+				message: "throttled",
+				retryAfter: 1, // 1 second
+			},
+		};
+		connection.emitNack("docId", [nack]);
+
+		assert(!closed, "Don't expect closeHandler to be called with retryable Nack");
+		assert(connection.disposed, "Expect connection to be disconnected");
+		assert.strictEqual(disconnectCount, 1, "Expect 1 disconnect from emitting a Nack");
+
+		// Async test we aren't connected within 800 ms
+		let checkedTimeout = false;
+		setTimeout(() => {
+			assert.strictEqual(connectionCount, 1, "Expect there to still not be a connection yet");
+			checkedTimeout = true;
+		}, 800);
+
+		connection = await waitForConnection();
+		assert.strictEqual(connectionCount, 2, "Expect there to be a connection after waiting");
+		assert(checkedTimeout);
+	});
+
 	describe("readonly", () => {
 		it("default is undefined", () => {
 			const connectionManager = createConnectionManager();
