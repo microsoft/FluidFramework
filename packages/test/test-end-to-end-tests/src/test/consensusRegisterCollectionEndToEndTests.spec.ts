@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
@@ -27,21 +27,19 @@ interface ISharedObjectConstructor<T> {
 }
 
 const mapId = "mapKey";
-const registry: ChannelFactoryRegistry = [
-	[mapId, SharedMap.getFactory()],
-	[undefined, ConsensusRegisterCollection.getFactory()],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
-const groupedBatchingContainerConfig: ITestContainerConfig = {
-	...testContainerConfig,
-	runtimeOptions: { enableGroupedBatching: true },
-};
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-	describeCompat(name, "FullCompat", (getTestObjectProvider) => {
+	describeCompat(name, "FullCompat", (getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
+		const registry: ChannelFactoryRegistry = [
+			[mapId, SharedMap.getFactory()],
+			[undefined, ConsensusRegisterCollection.getFactory()],
+		];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+		};
+
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();
@@ -296,7 +294,18 @@ generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
 describeCompat(
 	"ConsensusRegisterCollection grouped batching",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
+		const registry: ChannelFactoryRegistry = [
+			[mapId, SharedMap.getFactory()],
+			[undefined, ConsensusRegisterCollection.getFactory()],
+		];
+		const groupedBatchingContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions: { enableGroupedBatching: true },
+		};
+
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();

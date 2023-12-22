@@ -29,7 +29,6 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { SharedMap } from "@fluidframework/map";
 import {
 	manufactureHandle,
 	waitForContainerWriteModeConnectionWrite,
@@ -39,7 +38,8 @@ import {
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
-describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
 	const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
 	const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";

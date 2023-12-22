@@ -198,6 +198,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"InterfaceDeclaration_IIntervalCollection": {
+				"backCompat": false
+			},
 			"ClassDeclaration_SharedString": {
 				"backCompat": false
 			}

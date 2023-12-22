@@ -8,7 +8,6 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
@@ -35,7 +34,9 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Run in FullCompat to get coverage of DataStoreRuntime/ContainerRuntime n/n-1 compatibility
  * (skip all other compat types)
  */
-describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider) => {
+describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;

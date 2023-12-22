@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { RevisionTagCodec } from "../shared-tree-core";
 import {
 	IEditableForest,
 	initializeForest,
@@ -38,6 +39,7 @@ import {
 	SchemaBuilder,
 	leaf,
 } from "../domains";
+import { typeboxValidator } from "../external-utilities";
 import { IdAllocator, JsonCompatible, brand, idAllocatorFromMaxId, mapIterable } from "../util";
 import {
 	FieldKinds,
@@ -418,6 +420,8 @@ export function testForest(config: ForestTestConfiguration): void {
 			const detachedFieldIndex = new DetachedFieldIndex(
 				"test",
 				idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+				{ jsonValidator: typeboxValidator },
+				new RevisionTagCodec(),
 			);
 			const delta: DeltaFieldMap = new Map<FieldKey, DeltaFieldChanges>([
 				[rootFieldKey, { local: [mark] }],
