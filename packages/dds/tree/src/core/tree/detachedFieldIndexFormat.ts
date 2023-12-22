@@ -15,17 +15,11 @@ export type EncodedRoots = Static<typeof EncodedRootsForRevision>;
 export const DetachId = Type.Number({ multipleOf: 1 });
 const ForestRootIdSchema = brandedNumberType<ForestRootId>({ minimum: -1, multipleOf: 1 });
 
-export const RootRange = Type.Union([
-	Type.Tuple([
-		// ID for the first detached node
-		DetachId,
-		// ID for the first root node
-		ForestRootIdSchema,
-		// Number of nodes
-		Type.Number({ minimum: 2, multipleOf: 1 }),
-	]),
-	// Omit the number of nodes when it is 1
-	Type.Tuple([DetachId, ForestRootIdSchema]),
+export const RootRange = Type.Tuple([
+	// ID for the first detached node
+	DetachId,
+	// ID for the first root node
+	ForestRootIdSchema,
 ]);
 export type RootRange = Static<typeof RootRange>;
 

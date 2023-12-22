@@ -22,27 +22,7 @@ export function makeDetachedNodeToFieldCodec(
 			);
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
-				const rootRanges: RootRanges = [];
-				const remainder = new Map(innerMap);
-				for (const [minor, root] of remainder) {
-					remainder.delete(minor);
-					let minMinor = minor;
-					let minRoot = root;
-					while (remainder.get(minMinor - 1) === minRoot - 1) {
-						minMinor -= 1;
-						minRoot = brand(minRoot - 1);
-						remainder.delete(minMinor);
-					}
-					let maxMinor = minor;
-					let maxRoot = root;
-					while (remainder.get(maxMinor + 1) === maxRoot + 1) {
-						maxMinor += 1;
-						maxRoot = brand(maxRoot + 1);
-						remainder.delete(maxMinor);
-					}
-					const count = maxMinor - minMinor + 1;
-					rootRanges.push(count === 1 ? [minMinor, minRoot] : [minMinor, minRoot, count]);
-				}
+				const rootRanges: RootRanges = [...innerMap];
 				const rootsForRevision: EncodedRootsForRevision =
 					major === undefined
 						? [rootRanges]
@@ -67,13 +47,7 @@ export function makeDetachedNodeToFieldCodec(
 					rootsForRevision.length === 2
 						? revisionTagCodec.decode(rootsForRevision[1])
 						: undefined;
-				const innerMap = new Map();
-				for (const rootRange of rootsForRevision[0]) {
-					const [minor, root, count] = rootRange;
-					for (let iRoot = (count ?? 1) - 1; iRoot >= 0; iRoot -= 1) {
-						innerMap.set(minor + iRoot, root + iRoot);
-					}
-				}
+				const innerMap = new Map(rootsForRevision[0]);
 				map.set(major, innerMap);
 			}
 			return {

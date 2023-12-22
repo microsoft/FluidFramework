@@ -78,7 +78,7 @@ const validData: [string, Format][] = [
 			version: 1,
 			data: [
 				[[[0, brand(1)]]],
-				[[[1, brand(0), 2]], brand("beefbeef-beef-4000-8000-000000000001")],
+				[[[1, brand(0)]], brand("beefbeef-beef-4000-8000-000000000001")],
 			],
 			maxId: brand(-1),
 		},
@@ -97,13 +97,17 @@ export function generateTestCases(): { name: string; data: DetachedFieldSummaryD
 			},
 		},
 		{
-			name: "single range with single node",
+			name: "single range with single node - no revision",
 			data: {
 				maxId,
-				data: new Map([
-					[undefined, new Map([[0, 1]])],
-					[revision, new Map([[0, 1]])],
-				]),
+				data: new Map([[undefined, new Map([[0, 1]])]]),
+			},
+		},
+		{
+			name: "single range with single node - with revision",
+			data: {
+				maxId,
+				data: new Map([[revision, new Map([[0, 1]])]]),
 			},
 		},
 		{
