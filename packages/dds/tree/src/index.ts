@@ -41,6 +41,7 @@ export {
 	DeltaDetachedNodeDestruction,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
+	RevisionTag,
 	rootFieldKey,
 	rootField,
 	ITreeCursor,

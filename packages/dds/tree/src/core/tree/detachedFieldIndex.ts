@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	Brand,
 	IdAllocator,
@@ -18,7 +19,6 @@ import {
 } from "../../util";
 import { FieldKey } from "../schema-stored";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../rebase";
 import * as Delta from "./delta";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
@@ -48,19 +48,19 @@ export class DetachedFieldIndex {
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
+		private readonly idCompressor: IIdCompressor,
 		options?: ICodecOptions,
-		private readonly revisionTagCodec?: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options);
+		this.codec = makeDetachedNodeToFieldCodec(idCompressor, this.options);
 	}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+			this.idCompressor,
 			this.options,
-			this.revisionTagCodec,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
 		return clone;
@@ -162,10 +162,7 @@ export class DetachedFieldIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: JsonCompatibleReadOnly): void {
-		const detachedFieldIndex: {
-			data: NestedMap<Major, Minor, ForestRootId>;
-			maxId: number;
-		} = this.codec.decode(data as Format);
+		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data as Format);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,

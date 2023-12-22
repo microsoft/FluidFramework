@@ -144,18 +144,23 @@ export {
 	ErasedTreeNodeSchemaDataFormat,
 } from "./schema-stored";
 
-export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
+export {
+	ChangeFamily,
+	ChangeFamilyCodec,
+	ChangeEncodingContext,
+	ChangeFamilyEditor,
+	EditBuilder,
+} from "./change-family";
 
 export {
 	areEqualChangeAtomIds,
-	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
-	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
+	RevisionTagCodec,
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -167,10 +172,8 @@ export {
 	OutputType,
 	verifyChangeRebaser,
 	tagRollbackInverse,
-	SessionId,
 	SessionIdSchema,
 	mintCommit,
-	mintRevisionTag,
 	rebaseBranch,
 	BranchRebaseResult,
 	rebaseChange,
