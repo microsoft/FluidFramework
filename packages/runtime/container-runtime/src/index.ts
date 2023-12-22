@@ -24,7 +24,6 @@ export {
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
 } from "./containerRuntime";
-export { ISerializedHandle, isSerializedHandle } from "./handles";
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,

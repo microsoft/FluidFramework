@@ -512,19 +512,8 @@ export interface ISerializedElection {
     readonly electionSequenceNumber: number;
 }
 
-// @internal
-export interface ISerializedHandle {
-    // (undocumented)
-    type: "__fluid_handle__";
-    // (undocumented)
-    url: string;
-}
-
 // @internal @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
-
-// @internal
-export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
 export { isStableId }
 

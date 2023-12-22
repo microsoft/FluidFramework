@@ -33,6 +33,7 @@ import {
 	create404Response,
 	createResponseError,
 	GCDataBuilder,
+	isSerializedHandle,
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
@@ -63,7 +64,6 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
-import { isSerializedHandle } from "./handles";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -441,7 +441,7 @@ export class DataStores implements IDisposable {
 	/**
 	 * Traverse this op's contents and detect any outbound routes that were added by this op.
 	 */
-	private detectOutboundReferences(
+	public detectOutboundReferences(
 		envelope: IEnvelope,
 		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	): void {

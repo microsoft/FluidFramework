@@ -661,6 +661,7 @@ export abstract class FluidDataStoreContext
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
 		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
 		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
+			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
 			this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
 		}
 	}
