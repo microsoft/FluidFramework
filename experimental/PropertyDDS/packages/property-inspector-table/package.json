@@ -25,6 +25,7 @@
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
+		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -58,6 +59,7 @@
 		"require-from-string": "^2.0.2"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@babel/core": "^7.13.0",
 		"@fluid-experimental/property-binder": "workspace:~",
 		"@fluid-experimental/property-changeset": "workspace:~",

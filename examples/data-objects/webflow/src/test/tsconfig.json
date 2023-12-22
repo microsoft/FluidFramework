@@ -1,19 +1,18 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
-	"compilerOptions": {
-		"jsx": "react",
-		"rootDir": "./",
-		"outDir": "../../dist/test",
-		"types": ["node", "mocha", "react", "react-dom"],
-		"declaration": false,
-		"declarationMap": false,
-		"strictNullChecks": false,
-		"module": "esnext",
-	},
+	"extends": [
+		"../../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../../common/build/build-common/tsconfig.esm-only.json",
+	],
 	"include": ["./**/*"],
 	"references": [
 		{
 			"path": "../..",
 		},
 	],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../dist/test",
+		"types": ["node", "mocha", "react", "react-dom"],
+		"strictNullChecks": false,
+	},
 }

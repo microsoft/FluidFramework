@@ -37,7 +37,8 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test": "npm run test:mocha"
+		"test": "npm run test:mocha",
+		"check:are-the-types-wrong": "attw --pack"
 	},
 	"c8": {
 		"report-dir": "nyc/report",
@@ -76,6 +77,7 @@
 		"sleep-promise": "8.0.1"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-experimental/property-dds": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",

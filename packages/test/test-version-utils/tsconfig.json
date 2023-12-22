@@ -1,11 +1,16 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../common/build/build-common/tsconfig.base.json",
+		"../../../common/build/build-common/tsconfig.esm-only.json",
+	],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"composite": true,
-		"module": "esnext",
+
+		// TYLERBU: Figure out why this is needed
+		"moduleResolution": "node10",
+		"module": "ESNext",
 	},
 	"include": ["src/**/*"],
 }

@@ -1,14 +1,16 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../common/build/build-common/tsconfig.cjs.json",
+	],
+	"include": ["src/**/*"],
 	"compilerOptions": {
 		"rootDir": "src",
 		"outDir": "dist/tsc",
-		"composite": true,
 		"types": ["chai", "chrome", "mocha", "node"],
 		"jsx": "react-jsx",
 		"target": "es2018",
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 	},
-	"include": ["src/**/*"],
 }

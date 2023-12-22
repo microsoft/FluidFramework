@@ -23,6 +23,7 @@
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
+		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -67,6 +68,7 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-225750",
 		"@fluidframework/core-interfaces": "workspace:~",

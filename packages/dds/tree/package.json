@@ -11,8 +11,20 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
@@ -21,9 +33,8 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -43,10 +54,10 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:snapshots": "cross-env MOCHA_SPEC=./dist/test/snapshots mocha",
-		"test:snapshots:regen": "cross-env MOCHA_SPEC=./dist/test/snapshots mocha -- --snapshot",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\" -r @fluidframework/mocha-test-setup",
-		"tsc": "tsc",
+		"test:snapshots": "cross-env MOCHA_SPEC=./dist/test/snapshots/summary.spec.cjs mocha",
+		"test:snapshots:regen": "cross-env MOCHA_SPEC=./dist/test/snapshots/summary.spec.cjs mocha -- --snapshot",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.cjs\" -r @fluidframework/mocha-test-setup",
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -84,7 +95,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@sinclair/typebox": "^0.29.4",
 		"@ungap/structured-clone": "^1.2.0",
-		"sorted-btree": "^1.8.0",
+		"sorted-btree": "npm:@tylerbu/sorted-btree-es6@^1.8.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -124,6 +135,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

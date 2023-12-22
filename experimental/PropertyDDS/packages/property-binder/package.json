@@ -26,6 +26,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"doc": "cross-var appfw-typedoc $npm_package_name",
 		"eslint": "eslint --format stylish src",
@@ -73,6 +74,7 @@
 		"underscore": "^1.13.6"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@babel/core": "^7.13.0",
 		"@babel/eslint-parser": "^7.22.15",
 		"@babel/plugin-proposal-decorators": "^7.20.4",

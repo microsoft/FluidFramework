@@ -13,6 +13,7 @@
 	"main": "src/index.js",
 	"types": "src/index.d.ts",
 	"scripts": {
+		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob nyc",
 		"coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
 		"format": "npm run prettier:fix",
@@ -41,6 +42,7 @@
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"chai": "^4.2.0",

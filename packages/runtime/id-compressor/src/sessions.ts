@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import BTree from "sorted-btree";
 import { assert } from "@fluidframework/core-utils";
+import { BTree } from "sorted-btree";
 import { SessionId, StableId } from "./types";
 import {
 	compareBigints,

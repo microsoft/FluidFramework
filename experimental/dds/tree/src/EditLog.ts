@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
+import { BTree } from 'sorted-btree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { assert, compareArrays } from '@fluidframework/core-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';

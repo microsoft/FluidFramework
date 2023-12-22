@@ -1,0 +1,8 @@
+{
+	// This config can be used in packages that have a webpack step. Bundler is very similar to Node16, but doesn't
+	// require file extensions on imports. This is useful for packages like examples.
+	"compilerOptions": {
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+	},
+}

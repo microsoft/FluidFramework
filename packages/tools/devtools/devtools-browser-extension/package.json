@@ -17,6 +17,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:test": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "npm run webpack",
+		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -80,6 +81,7 @@
 		"tslib": "^1.10.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",

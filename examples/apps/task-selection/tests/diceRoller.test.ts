@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config";
+import { globals } from "../jest.config.cjs";
 
 // Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
 describe("diceRoller", () => {

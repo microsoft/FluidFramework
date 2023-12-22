@@ -19,6 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
 		"build:esnext": "tsc",
+		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
@@ -65,6 +66,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.29.0-225750",
