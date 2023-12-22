@@ -195,10 +195,10 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		const context = await this.getContext();
 		const repoRoot = context.repo.resolvedRoot;
 
-		const pathToMultiConfigCjs = path.resolve(
-			repoRoot,
-			"common/build/build-common/tsc-multi.cjs.json",
-		);
+		// const pathToMultiConfigCjs = path.resolve(
+		// 	repoRoot,
+		// 	"common/build/build-common/tsc-multi.cjs.json",
+		// );
 		const pathToMultiConfigEsm = path.resolve(
 			repoRoot,
 			"common/build/build-common/tsc-multi.esm.json",
@@ -224,11 +224,11 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 				json.devDependencies["tsc-multi"] = "^1.1.0";
 			}
 
-			if (Object.hasOwn(json.scripts, "tsc")) {
-				const relPath = path.relative(pkg.directory, pathToMultiConfigCjs);
-				json.scripts.tsc = `tsc-multi --config ${relPath}`;
-				json.main = "dist/index.cjs";
-			}
+			// if (Object.hasOwn(json.scripts, "tsc")) {
+			// 	const relPath = path.relative(pkg.directory, pathToMultiConfigCjs);
+			// 	json.scripts.tsc = `tsc-multi --config ${relPath}`;
+			// 	json.main = "dist/index.cjs";
+			// }
 
 			if (Object.hasOwn(json.scripts, "build:esnext")) {
 				const relPath = path.relative(pkg.directory, pathToMultiConfigEsm);
@@ -236,15 +236,15 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 				json.module = "lib/index.mjs";
 			}
 
-			const pathToTscMultiTestConfig = path.resolve(
-				repoRoot,
-				"common/build/build-common/tsc-multi.test.json",
-			);
-			const TscMultiTestContent = readFileSync(pathToTscMultiTestConfig, "utf8");
-			if (Object.hasOwn(json.scripts, "build:test")) {
-				json.scripts["build:test"] = `tsc-multi --config ./tsc-multi.test.json`;
-				writeFileSync(path.join(pkg.directory, "tsc-multi.test.json"), TscMultiTestContent);
-			}
+			// const pathToTscMultiTestConfig = path.resolve(
+			// 	repoRoot,
+			// 	"common/build/build-common/tsc-multi.test.json",
+			// );
+			// const TscMultiTestContent = readFileSync(pathToTscMultiTestConfig, "utf8");
+			// if (Object.hasOwn(json.scripts, "build:test")) {
+			// 	json.scripts["build:test"] = `tsc-multi --config ./tsc-multi.test.json`;
+			// 	writeFileSync(path.join(pkg.directory, "tsc-multi.test.json"), TscMultiTestContent);
+			// }
 
 			json.types = "dist/index.d.ts";
 			json.exports = {
@@ -255,7 +255,7 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 					},
 					require: {
 						types: "./dist/index.d.ts",
-						default: "./dist/index.cjs",
+						default: "./dist/index.js",
 					},
 				},
 			};
