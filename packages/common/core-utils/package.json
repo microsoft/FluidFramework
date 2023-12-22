@@ -103,7 +103,8 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
 		"tsc-multi": "^1.1.0",
-		"typescript": "~5.1.6"
+		"tshy": "^1.8.2",
+		"typescript": "~5.3.3"
 	},
 	"fluidBuild": {
 		"tasks": {
