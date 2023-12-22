@@ -27,16 +27,18 @@ import {
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch.js";
 import {
 	Commit,
-	SeqNumber,
 	SequenceId,
+	SummarySessionBranch,
+	SeqNumber,
+	SequencedCommit,
+} from "./editManagerFormat";
+import {
 	sequenceIdComparator,
 	equalSequenceIds,
 	minSequenceId,
-	SequencedCommit,
-	SummarySessionBranch,
 	decrementSequenceId,
 	maxSequenceId,
-} from "./editManagerFormat.js";
+} from "./sequenceIdUtils.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
