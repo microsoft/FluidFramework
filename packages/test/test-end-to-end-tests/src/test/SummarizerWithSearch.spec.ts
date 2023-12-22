@@ -21,7 +21,7 @@ import {
 	neverCancelledSummaryToken,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
@@ -31,7 +31,7 @@ import {
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
 	wrapDocumentServiceFactory,
@@ -250,8 +250,6 @@ describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObje
 	const runtimeOptions: IContainerRuntimeOptions = {
 		gcOptions: { gcAllowed: true },
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
@@ -259,7 +257,6 @@ describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObje
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory1,
 		registryEntries: registryStoreEntries,
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});
 	const logger = createChildLogger();

@@ -4,15 +4,8 @@
  */
 import { OdspClient, OdspContainerServices } from "@fluid-experimental/odsp-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedTreeFactory } from "@fluid-experimental/tree2";
+import { SharedTree } from "@fluidframework/tree";
 import { clientProps } from "./clientProps";
-
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-class SharedTree {
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();
-	}
-}
 
 const client = new OdspClient(clientProps);
 

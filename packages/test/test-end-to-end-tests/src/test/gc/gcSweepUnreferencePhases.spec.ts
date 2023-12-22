@@ -34,12 +34,13 @@ import {
 describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
-	const sweepTimeoutMs = 200; // Tombstone at 200ms
+	const tombstoneTimeoutMs = 200; // Tombstone at 200ms
 	const sweepGracePeriodMs = 100; // Sweep at 300ms
 
 	const settings = {};
 	const gcOptions: IGCRuntimeOptions = {
-		inactiveTimeoutMs: sweepTimeoutMs / 2, // Required to avoid an error
+		inactiveTimeoutMs: tombstoneTimeoutMs / 2, // Required to avoid an error
+		enableGCSweep: true,
 		sweepGracePeriodMs,
 	};
 	const testContainerConfig: ITestContainerConfig = {
@@ -85,9 +86,8 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		}
 
 		settings["Fluid.GarbageCollection.DisableAttachmentBlobSweep"] = true; // Only sweep DataStores
-		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	it("Unreferenced objects follow the sequence [unreferenced, tombstoned, deleted]", async () => {
@@ -95,8 +95,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
-		const { container: nonInteractiveContainer, summarizer } =
-			await loadSummarizer(mainContainer);
+		const { summarizer } = await loadSummarizer(mainContainer);
 
 		// create datastore
 		const dataStore =
@@ -113,10 +112,12 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		// unreference datastore handles
 		mainDataStore._root.delete("dataStore");
 
+		// Stage 1 - Referenced -> unreferenced //
+
 		// Summarize and verify datastore are unreferenced and not tombstoned
 		await provider.ensureSynchronized();
 		let summaryTree = (await summarizeNow(summarizer)).summaryTree;
-		const gcState = getGCStateFromSummary(summaryTree);
+		let gcState = getGCStateFromSummary(summaryTree);
 		assert(gcState !== undefined, "Expected GC state to be generated");
 		assert(
 			gcState.gcNodes[dataStoreHandle.absolutePath] !== undefined,
@@ -137,7 +138,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		);
 
 		// Wait half the time to Tombstone state. Nothing should change
-		await delay(sweepTimeoutMs / 2);
+		await delay(tombstoneTimeoutMs / 2);
 		// Summarize and verify datastore is unreferenced but not tombstoned
 		mainDataStore._root.set("send", "op");
 		await provider.ensureSynchronized();
@@ -149,33 +150,57 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			"GC tree should not have changed (indicated by incremental summary using the SummaryType.Handle)",
 		);
 
-		// Wait the other half of sweepTimeoutMs, triggering Tombstone
-		await delay(sweepTimeoutMs / 2);
+		// Stage 2 - Unreferenced -> Tombstone //
+
+		// Wait the other half of tombstoneTimeoutMs, triggering Tombstone
+		await delay(tombstoneTimeoutMs / 2);
 		mainDataStore._root.set("send", "op2");
+
 		await provider.ensureSynchronized();
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
 
 		const rootGCTree = summaryTree.tree[gcTreeKey];
 		assert.equal(rootGCTree?.type, SummaryType.Tree, "GC data should be a tree");
 		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
-		// After sweepTimeoutMs the object should be tombstoned.
+		// After tombstoneTimeoutMs the object should be tombstoned.
 		assert(tombstoneState !== undefined, "Should have tombstone state");
 		assert(
 			tombstoneState.includes(dataStoreHandle.absolutePath),
 			"Datastore should be tombstoned",
 		);
 
-		// Wait sweepGracePeriodMs, triggering Sweep
+		// Stage 3 - Tombstone -> SweepReady //
+
+		// Wait sweepGracePeriodMs, triggering GC op with the sweep ready nodes.
 		await delay(sweepGracePeriodMs);
 		mainDataStore._root.set("send", "op2");
+		// Close the main container before sweep so that it doesn't end up deleting local data stores which
+		// logs GC_Deleted_DataStore_Unexpected_Delete error. This error shouldn't happen outside of tests
+		// because sweep only runs after session expiry which means no local data store should be deleted.
+		mainContainer.close();
+
+		await provider.ensureSynchronized();
+		summaryTree = (await summarizeNow(summarizer)).summaryTree;
+		// GC Tombstone check
+		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
+		assert(
+			tombstoneState === undefined,
+			"Tombstone nodes should have transitioned to sweep ready",
+		);
+		deletedState = getGCDeletedStateFromSummary(summaryTree);
+		assert(deletedState === undefined, "Nothing should be deleted yet");
+
+		// Stage 4 - SweepReady -> Swept (deleted) //
+
+		// Wait for the GC op to be processed so that the sweep ready nodes are swept.
 		await provider.ensureSynchronized();
 		const summaryWithObjectDeleted = await summarizeNow(summarizer);
 		summaryTree = summaryWithObjectDeleted.summaryTree;
 		// GC graph check
-		const gcState3 = getGCStateFromSummary(summaryTree);
-		assert(gcState3 !== undefined, "Expected GC state to be generated");
+		gcState = getGCStateFromSummary(summaryTree);
+		assert(gcState !== undefined, "Expected GC state to be generated");
 		assert(
-			!(dataStoreHandle.absolutePath in gcState3.gcNodes),
+			!(dataStoreHandle.absolutePath in gcState.gcNodes),
 			"Data Store should not exist on gc graph",
 		);
 		// GC Tombstone check
@@ -193,12 +218,14 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			"Data Store should not be in the summary!",
 		);
 
-		nonInteractiveContainer.close();
-
+		// Close the current summarizer and create a new one from the latest summary.
+		summarizer.close();
 		const { summarizer: remoteSummarizer } = await loadSummarizer(
 			mainContainer,
 			summaryWithObjectDeleted.summaryVersion,
 		);
+
+		// Summarize and validate that the data store is still deleted.
 		summaryTree = (await summarizeNow(remoteSummarizer)).summaryTree;
 		assert(
 			!(await isDataStoreInSummaryTree(summaryTree, dataStoreId)),

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory, PureDataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { SharedMatrix } from "@fluidframework/matrix";
 import type { SharedMap } from "@fluidframework/map";
@@ -19,7 +19,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { pkgVersion } from "../packageVersion.js";
 
 interface ProvideSearchContent {
@@ -28,9 +28,6 @@ interface ProvideSearchContent {
 interface SearchContent extends ProvideSearchContent {
 	getSearchContent(): Promise<string | undefined>;
 }
-
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
 
 // Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
@@ -84,19 +81,19 @@ describeCompat(
 			}
 			private readonly mapKey = "SharedMap";
 			public map!: SharedMap;
-
+		
 			protected async initializingFirstTime() {
 				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
 				this.root.set(this.mapKey, sharedMap.handle);
 			}
-
+		
 			protected async hasInitialized() {
 				const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
 				assert(mapHandle !== undefined, "SharedMap not found");
 				this.map = await mapHandle.get();
 			}
 		}
-
+		
 		class TestDataObject1 extends DataObject implements SearchContent {
 			public async getSearchContent(): Promise<string | undefined> {
 				// By this time, we are in the middle of the summarization process and
@@ -108,40 +105,39 @@ describeCompat(
 				assert(dataTestDataObject2Handle, "dsFactory2 not located");
 				const dataStore2 = await dataTestDataObject2Handle.get();
 				dataStore2.map.set("mapkey", "value");
-
+		
 				return Promise.resolve("TestDataObject1 Search Blob");
 			}
-
+		
 			public get SearchContent() {
 				return this;
 			}
-
+		
 			public get _root() {
 				return this.root;
 			}
-
+		
 			public get _context() {
 				return this.context;
 			}
-
+		
 			private readonly matrixKey = "SharedMatrix";
 			public matrix!: SharedMatrix;
-
+		
 			protected async initializingFirstTime() {
 				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 				this.root.set(this.matrixKey, sharedMatrix.handle);
-
-				const dataStore =
-					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+		
+				const dataStore = await this._context.containerRuntime.createDataStore(TestDataObjectType2);
 				const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
 				this.root.set("dsFactory2", dsFactory2.handle);
 			}
-
+		
 			protected async hasInitialized() {
 				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 				assert(matrixHandle !== undefined, "SharedMatrix not found");
 				this.matrix = await matrixHandle.get();
-
+		
 				this.matrix.insertRows(0, 3);
 				this.matrix.insertCols(0, 3);
 			}
@@ -162,7 +158,7 @@ describeCompat(
 			[],
 			createDataStoreRuntime(),
 		);
-
+		
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
@@ -174,13 +170,11 @@ describeCompat(
 			{
 				defaultFactory: dataStoreFactory1,
 				registryEntries: registryStoreEntries,
-				requestHandlers: [innerRequestHandler],
 				runtimeOptions,
 			},
 		);
-
+		
 		async function createSummarizer(
-			// eslint-disable-next-line @typescript-eslint/no-shadow
 			provider: ITestObjectProvider,
 			container: IContainer,
 			summaryVersion?: string,

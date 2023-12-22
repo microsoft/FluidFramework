@@ -9,7 +9,7 @@ import { DebugReplayController } from "./fluidDebuggerController";
 import { DebuggerUI } from "./fluidDebuggerUi";
 
 /**
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FluidDebugger {
@@ -31,7 +31,7 @@ export namespace FluidDebugger {
 	}
 
 	/**
-	 * @internal
+	 * @alpha
 	 */
 	export async function createFromServiceFactory(
 		documentServiceFactory: IDocumentServiceFactory,

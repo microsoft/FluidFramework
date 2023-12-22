@@ -17,6 +17,7 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -51,8 +52,9 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		const absolutePath = "";
 
 		// Verify that the local client's ContainerRuntime has the correct absolute path.
-		const containerRuntime1 =
-			firstContainerObject1._context.containerRuntime.IFluidHandleContext;
+		const containerRuntime1 = (
+			firstContainerObject1._context.containerRuntime as ContainerRuntime
+		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime1.absolutePath,
 			absolutePath,
@@ -60,8 +62,9 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		);
 
 		// Verify that the remote client's ContainerRuntime has the correct absolute path.
-		const containerRuntime2 =
-			secondContainerObject1._context.containerRuntime.IFluidHandleContext;
+		const containerRuntime2 = (
+			secondContainerObject1._context.containerRuntime as ContainerRuntime
+		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime2.absolutePath,
 			absolutePath,

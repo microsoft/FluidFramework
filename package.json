@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-rc.1.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -96,7 +96,7 @@
 		"test:benchmark:report": "pnpm run -r --no-sort --stream --no-bail test:benchmark:report --reporterOptions reportDir=./benchmarkOutput",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
 		"test:coverage": "c8 npm test",
-		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
+		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
 		"test:jest": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --color",
 		"test:jest:bail": "assign-test-ports && pnpm run -r --no-sort --stream test:jest",
 		"test:jest:report": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --ci",
@@ -121,9 +121,9 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"**/*.d.ts",
-			"**/src/test/**/*.ts",
-			"**/dist/test/**/*.js",
+			"**/*.d.*ts",
+			"**/src/test/**/*.*ts",
+			"**/dist/test/**/*.*js",
 			"experimental/examples/**",
 			"experimental/PropertyDDS/examples/**",
 			"**/*.bundle.js",
@@ -138,11 +138,12 @@
 			".jsx"
 		],
 		"include": [
-			"packages/**/src/**/*.ts",
-			"packages/**/dist/**/*.js",
-			"experimental/**/src/**/*.ts",
-			"experimental/**/dist/**/*.js"
+			"packages/**/src/**/*.*ts",
+			"packages/**/dist/**/*.*js",
+			"experimental/**/src/**/*.*ts",
+			"experimental/**/dist/**/*.*js"
 		],
+		"merge-async": true,
 		"report-dir": "nyc/report",
 		"reporter": [
 			"cobertura",
@@ -154,17 +155,17 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "^0.28.0",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@octokit/core": "^4.0.5",
 		"auto-changelog": "^2.4.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -377,7 +378,8 @@
 		},
 		"patchedDependencies": {
 			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
-			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch"
+			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch",
+			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}
 }

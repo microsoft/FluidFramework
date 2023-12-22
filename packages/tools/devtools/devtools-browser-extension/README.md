@@ -1,6 +1,6 @@
 # @fluid-internal/devtools-browser-extension
 
-This package contains a browser (Chrome) developer tools extension for use with [@fluid-experimental/devtools][].
+This package contains a browser (Chrome) developer tools extension for use with [@fluidframework/devtools][].
 It offers visual insights into the workings of the Fluid Framework in your application.
 
 It is currently compatible with [Chromium](https://www.chromium.org/Home/)-based browsers (e.g. [Chrome](https://www.google.com/chrome/) and [Edge](https://www.microsoft.com/en-us/edge/)).
@@ -171,4 +171,4 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- Links -->
 
-[@fluid-experimental/devtools]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtoor
+[@fluidframework/devtools]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtoor

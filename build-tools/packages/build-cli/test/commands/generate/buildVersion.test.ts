@@ -4,10 +4,16 @@
  */
 import { expect, test } from "@oclif/test";
 
+/**
+ * This list of git tags is deliberately unordered since often the list provided to commands is unordered.
+ */
 const test_tags = [
 	"client_v2.0.0-internal.1.0.0",
 	"client_v1.2.4",
 	"client_v1.2.3",
+	"client_v2.0.0-rc.1.0.0",
+	"client_v2.0.0-rc.1.0.1",
+	"client_v2.0.0-rc.2.0.0",
 	"build-tools_v0.5.2002",
 	"build-tools_v0.4.2001",
 	"build-tools_v0.4.2000",
@@ -342,6 +348,70 @@ describe("generate:buildVersion", () => {
 		])
 		.it("lts test case from 2022-10-13", (ctx) => {
 			expect(ctx.stdout).to.contain("version=1.3.0-100339");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "212045",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+	})
+		.stdout()
+		.command([
+			"generate:buildVersion",
+			"--fileVersion",
+			"2.0.0-rc.3.0.0",
+			"--tag",
+			"client",
+			"--tags",
+			...test_tags,
+		])
+		.it("RC version, prerelease", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0-dev-rc.3.0.0.212045");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "212045",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "true",
+		VERSION_RELEASE: "prerelease",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+	})
+		.stdout()
+		.command([
+			"generate:buildVersion",
+			"--fileVersion",
+			"2.0.0-rc.3.0.0",
+			"--tag",
+			"client",
+			"--tags",
+			...test_tags,
+		])
+		.it("RC version, test", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.0.0-212045-test");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "212045",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "release",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+	})
+		.stdout()
+		.command([
+			"generate:buildVersion",
+			"--fileVersion",
+			"2.0.0-rc.3.0.0",
+			"--tags",
+			...test_tags,
+		])
+		.it("RC version, release", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0-rc.3.0.0");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 });

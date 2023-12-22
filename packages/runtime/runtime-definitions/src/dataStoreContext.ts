@@ -8,14 +8,11 @@ import {
 	IEventProvider,
 	ITelemetryBaseLogger,
 	IDisposable,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IProvideFluidHandleContext,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	FluidObject,
-	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -31,6 +28,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
@@ -42,7 +40,6 @@ import {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary";
-import { IIdCompressor } from "./id-compressor";
 
 /**
  * Runtime flush mode handling
@@ -160,38 +157,6 @@ export interface IDataStore {
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Requesting will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
-	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 *
-	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
-	 */
-	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
-
-	/**
-	 * Issue a request against the DataStore for a resource within it.
-	 * @param request - The request to be issued against the DataStore
-	 *
-	 * @deprecated Requesting an arbitrary URL with headers will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
@@ -208,12 +173,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * sequentially. Total size of all messages must be less than maxOpSize.
 	 */
 	orderSequentially(callback: () => void): void;
-
-	/**
-	 * Executes a request against the container runtime
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
 
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
@@ -265,11 +224,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	readonly IFluidHandleContext: IFluidHandleContext;
 }
 
 /**
@@ -375,12 +329,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
 /**

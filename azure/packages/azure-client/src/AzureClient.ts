@@ -52,7 +52,7 @@ const MAX_VERSION_COUNT = 5;
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
  * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
- * @alpha
+ * @public
  */
 export class AzureClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -305,13 +305,11 @@ export class AzureClient {
 	}
 
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> | undefined =
-			await container.getEntryPoint();
-		assert(rootDataObject !== undefined, "entryPoint must exist");
-		// ! This "if" is needed for back-compat (older instances of IRootDataObject may not have the IRootDataObject property)
-		if (rootDataObject.IRootDataObject === undefined) {
-			return rootDataObject as IRootDataObject;
-		}
+		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		assert(
+			rootDataObject.IRootDataObject !== undefined,
+			"entryPoint must be of type IRootDataObject",
+		);
 		return rootDataObject.IRootDataObject;
 	}
 	// #endregion

@@ -21,7 +21,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext";
@@ -78,7 +78,7 @@ const useStyles = makeStyles({
 
 /**
  * Container Devtools view.
- * Communicates with {@link @fluid-experimental/devtools-core#ContainerDevtools} via {@link MessageRelayContext} to get
+ * Communicates with {@link @fluidframework/devtools-core#ContainerDevtools} via {@link MessageRelayContext} to get
  * Container-level stats to display, including Container states and history, Audience state and history, and Container
  * data.
  */

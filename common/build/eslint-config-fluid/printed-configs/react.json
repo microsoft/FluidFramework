@@ -597,7 +597,12 @@
             }
         ],
         "import/no-internal-modules": [
-            "error"
+            "error",
+            {
+                "allow": [
+                    "@fluidframework/*/internal"
+                ]
+            }
         ],
         "import/no-named-as-default": [
             1

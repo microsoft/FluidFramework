@@ -20,7 +20,7 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey, gcBlobPrefix } from "@fluidframework/runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { IGarbageCollectionState } from "@fluidframework/container-runtime/dist/gc/index.js";
+import { IGarbageCollectionState } from "@fluidframework/container-runtime/test/gc";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**

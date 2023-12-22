@@ -74,7 +74,7 @@ describe("Matrix1", () => {
 				let matrix: SharedMatrix<number>;
 
 				// Test IMatrixConsumer that builds a copy of `matrix` via observed events.
-				let consumer: TestConsumer<undefined | null | number>;
+				let consumer: TestConsumer<number>;
 
 				// Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
 				// equivalent, and then returns the 2nd matrix.
@@ -1096,7 +1096,6 @@ describe("Matrix1", () => {
 			let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 			let containerRuntime1: MockContainerRuntimeForReconnection;
 			let containerRuntime2: MockContainerRuntimeForReconnection;
-			let mockHandle: MockHandle<unknown>;
 
 			const expect = async (
 				expected?: readonly (readonly any[])[],
@@ -1181,8 +1180,6 @@ describe("Matrix1", () => {
 				matrix2 = response2.matrix;
 				containerRuntime2 = response2.containerRuntime;
 				consumer2 = new TestConsumer(matrix2);
-
-				mockHandle = new MockHandle({});
 			});
 
 			afterEach(async () => {
@@ -1199,11 +1196,10 @@ describe("Matrix1", () => {
 			it("Loser gets the conflict event in case of race condition", async () => {
 				// Insert a row and a column in the first shared matrix.
 				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
-				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 2);
 
-				await expect([[undefined]]);
+				await expect([[undefined, undefined]]);
 				switchPolicy(matrix1);
-				containerRuntimeFactory.processAllMessages();
 
 				let eventRaised = false;
 				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
@@ -1222,14 +1218,15 @@ describe("Matrix1", () => {
 				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
 				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
 
+				matrix2.setCells(0, 1, 1, ["C"]);
 				containerRuntime1.connected = true;
 				containerRuntime2.connected = true;
 
-				await expect([["A"]]);
+				await expect([["A", "C"]]);
 				assert(eventRaised, "conflict event should be raised");
 			});
 
-			it("Client should behave as LWW if op refSeqNum < Policy switch op seqNum", async () => {
+			it("Client should behave as FWW if op refSeqNum < Policy switch op seqNum but locally it was changed for that client", async () => {
 				// Insert a row and a column in the first shared matrix.
 				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
 				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
@@ -1247,7 +1244,7 @@ describe("Matrix1", () => {
 				containerRuntime1.connected = true;
 				containerRuntime2.connected = true;
 
-				await expect([["B"]]);
+				await expect([["A"]]);
 			});
 
 			it("Client Should be able to overwrite", async () => {
@@ -1274,7 +1271,6 @@ describe("Matrix1", () => {
 
 				await expect([[undefined]]);
 				switchPolicy(matrix1);
-				containerRuntimeFactory.processAllMessages();
 
 				let eventRaised = false;
 				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
@@ -1340,7 +1336,6 @@ describe("Matrix1", () => {
 
 				// Now switch the Policy
 				switchPolicy(matrix1);
-				containerRuntimeFactory.processAllMessages();
 
 				// Disconnect the client.
 				containerRuntime1.connected = false;
@@ -1380,12 +1375,85 @@ describe("Matrix1", () => {
 				// Reconnect the client.
 				containerRuntime1.connected = true;
 				containerRuntime2.connected = true;
-
 				// Verify that both the matrices have expected content. Matrix2 switched the policy and also made the set op, so it should be set.
 				await expect([["4th"]]);
 			});
 
-			it("Client should send op and also apply when policy is switched to FWW but op refSeqNum < Policy switch seq number", async () => {
+			it("Client should behave correctly when policy is switched to FWW during disconnected state and cell set by other client", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertCols(0, 1);
+				matrix1.insertRows(0, 1);
+				// Verify that both the matrices have expected content.
+				await expect([[undefined]]);
+
+				let eventRaisedCount = 0;
+				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
+					assert(row === 0, "row should be correct");
+					assert(col === 0, "col should be correct");
+					assert(
+						currentVal === (eventRaisedCount === 0 ? "1st" : "3rd"),
+						"currentVal should be correct",
+					);
+					assert(
+						rejectedVal === (eventRaisedCount === 0 ? "4th" : "1st"),
+						"rejectedVal should be correct",
+					);
+					assert((instance.id = "matrix2"), "matrix should be correct");
+					eventRaisedCount++;
+				});
+
+				// Disconnect the client.
+				containerRuntime1.connected = false;
+				containerRuntime2.connected = false;
+
+				matrix1.setCell(0, 0, "1st");
+				matrix2.setCell(0, 0, "2nd");
+
+				// Now switch the Policy
+				switchPolicy(matrix1);
+
+				matrix1.setCell(0, 0, "3rd");
+				matrix2.setCell(0, 0, "4th");
+
+				// Reconnect the client.
+				containerRuntime1.connected = true;
+				containerRuntime2.connected = true;
+				// Verify that both the matrices have expected content.
+				await expect([["3rd"]]);
+				assert(eventRaisedCount === 2, "conflict event should have been raised");
+			});
+
+			it("Client should get multiple conflict till its latest pending is received", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertCols(0, 1);
+				matrix1.insertRows(0, 1);
+				// Verify that both the matrices have expected content.
+				await expect([[undefined]]);
+
+				let eventRaisedCount = 0;
+				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
+					assert(row === 0, "row should be correct");
+					assert(col === 0, "col should be correct");
+					assert((instance.id = "matrix2"), "matrix should be correct");
+					eventRaisedCount++;
+				});
+
+				// Now switch the Policy
+				switchPolicy(matrix1);
+
+				matrix1.setCell(0, 0, "1st");
+				matrix2.setCell(0, 0, "2nd");
+				matrix1.setCell(0, 0, "3rd");
+				matrix2.setCell(0, 0, "4th");
+				containerRuntimeFactory.processAllMessages();
+				matrix1.setCell(0, 0, "5th");
+
+				// Verify that both the matrices have expected content.
+				await expect([["5th"]]);
+				assert(eventRaisedCount === 2, "conflict event should have been raised");
+			});
+
+			it("Client should send op and also apply when policy is switched to FWW but no op is sent to notify", async () => {
 				// Insert a row and a column in the first shared matrix.
 				matrix1.insertCols(0, 1);
 				matrix1.insertRows(0, 1);
@@ -1396,7 +1464,7 @@ describe("Matrix1", () => {
 				containerRuntime2.connected = false;
 
 				matrix1.setCell(0, 0, "1st");
-
+				containerRuntimeFactory.processOneMessage();
 				// Disconnect the client.
 				containerRuntime1.connected = false;
 
@@ -1414,25 +1482,7 @@ describe("Matrix1", () => {
 				await expect([["4th"]]);
 			});
 
-			it("Client should behave as LWW if op refSeqNum < Policy switch op seqNum and policy is switched by same client sending the set op", async () => {
-				// Insert a row and a column in the first shared matrix.
-				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
-				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
-				await expect([[undefined]]);
-
-				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
-				containerRuntimeFactory.processAllMessages();
-				await expect([["B"]]);
-
-				switchPolicy(matrix1);
-
-				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
-
-				// Should still behave as LWW as ref seq number of ops < switch policy seq number
-				await expect([["A"]]);
-			});
-
-			it("Client should behave as LWW if op refSeqNum < Policy switch op seqNum and policy is switched by different client sending the set op", async () => {
+			it("Client should behave as LWW if op refSeqNum < Policy switch op seqNum and policy is switched by different client which didn't send op to notify", async () => {
 				// Insert a row and a column in the first shared matrix.
 				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
 				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
@@ -1467,7 +1517,7 @@ describe("Matrix1", () => {
 				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["C"]);
 
 				// Should still behave as LWW as ref seq number of ops < switch policy seq number
-				await expect([["C"]]);
+				await expect([["A"]]);
 
 				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["D"]);
 				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["E"]);
@@ -1488,7 +1538,6 @@ describe("Matrix1", () => {
 				]);
 
 				switchPolicy(matrix1);
-				containerRuntimeFactory.processAllMessages();
 
 				containerRuntime1.connected = false;
 				matrix1.setCells(/* row: */ 1, /* col: */ 1, /* colCount: */ 1, ["B"]);
@@ -1516,7 +1565,6 @@ describe("Matrix1", () => {
 				await expect([[undefined]]);
 
 				switchPolicy(matrix1);
-				containerRuntimeFactory.processAllMessages();
 				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
 				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
 				containerRuntimeFactory.processOneMessage();
@@ -1529,7 +1577,7 @@ describe("Matrix1", () => {
 				await expect([["A"]], [{ ...newClient }]);
 			});
 
-			it("New client loads from summary made in LWW mode and follow LWW for ops before switching and FWW after switching", async () => {
+			it("New client loads from summary made in LWW mode and immediately starts following the new policy when switched", async () => {
 				// Insert a row and a column in the first shared matrix.
 				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
 				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
@@ -1545,12 +1593,31 @@ describe("Matrix1", () => {
 				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
 				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["C"]);
 				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["C1"]);
-				await expect([["C1"]], [{ ...newClient }]);
+				await expect([["C"]], [{ ...newClient }]);
 
 				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["D"]);
 				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["E"]);
 
 				await expect([["D"]], [{ ...newClient }]);
+			});
+
+			it("Client switching policy should avoid changes from other client in case pending change is present, otherwise apply remote op", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 2);
+				await expect([[undefined, undefined]]);
+
+				switchPolicy(matrix1);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["C"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["C1"]);
+				await expect([["B", "C1"]]);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["D"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["E"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["D"]);
+				matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["E"]);
+				await expect([["D", "D"]]);
 			});
 		});
 	});

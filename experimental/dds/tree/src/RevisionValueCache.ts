@@ -17,7 +17,7 @@ import { fail, compareFiniteNumbers } from './Common';
  * - revision 0 corresponds to the initialRevision.
  *
  * - revision 1 corresponds to the output of editLog[0] applied to the initialRevision.
- * @internal
+ * @alpha
  */
 export type Revision = number;
 

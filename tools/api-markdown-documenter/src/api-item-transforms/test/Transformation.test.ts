@@ -5,19 +5,21 @@
 import * as Path from "node:path";
 
 import {
-	ApiFunction,
-	ApiInterface,
-	ApiItem,
+	type ApiFunction,
+	type ApiInterface,
+	type ApiItem,
 	ApiItemKind,
 	ApiModel,
-	ApiVariable,
+	type ApiNamespace,
+	type ApiVariable,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
 import {
 	CodeSpanNode,
 	DocumentNode,
-	DocumentationNode,
+	type DocumentationNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
@@ -35,10 +37,10 @@ import {
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities";
 import { apiItemToSections } from "../TransformApiItem";
 import {
-	ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration";
-import { wrapInSection } from "../helpers";
+import { betaWarningSpan, wrapInSection } from "../helpers";
 import { transformApiModel } from "../TransformApiModel";
 
 /**
@@ -360,6 +362,157 @@ describe("ApiItem to Documentation transformation tests", () => {
 					),
 				],
 				{ title: "Property Details" },
+			),
+		];
+
+		expect(result).deep.equals(expected);
+	});
+
+	it("Transform Namespace with children at different release levels", () => {
+		const model = generateModel("test-namespace.json");
+		const members = getApiItems(model);
+		const apiNamespace = findApiMember(
+			members,
+			"TestNamespace",
+			ApiItemKind.Namespace,
+		) as ApiNamespace;
+
+		const config = createConfig(
+			{
+				...defaultPartialConfig,
+				minimumReleaseLevel: ReleaseTag.Beta, // Only include `@beta` and `@public` items in generated docs
+			},
+			model,
+		);
+
+		const result = config.transformApiNamespace(apiNamespace, config, (childItem) =>
+			apiItemToSections(childItem, config),
+		);
+
+		// Note: the namespace being processed includes 3 const variables:
+		// - foo (@public)
+		// - bar (@beta)
+		// - baz (@alpha)
+		// We expect docs to be generated for `foo` and `bar`, but not `baz`, since it's @alpha, and we are filtering those out per our config above.
+		// Also note that child items are listed alphabetically, so we expect `bar` before `foo`.
+		const expected: DocumentationNode[] = [
+			// Summary section
+			wrapInSection([ParagraphNode.createFromPlainText("Test namespace")]),
+
+			// Signature section
+			wrapInSection(
+				[
+					FencedCodeBlockNode.createFromPlainText(
+						"export declare namespace TestNamespace",
+						"typescript",
+					),
+				],
+				{ title: "Signature", id: "testnamespace-signature" },
+			),
+
+			// Variables section
+			wrapInSection(
+				[
+					new TableNode(
+						[
+							// Table row for `bar`
+							new TableBodyRowNode([
+								new TableBodyCellNode([
+									LinkNode.createFromPlainText(
+										"bar",
+										"./test-package/testnamespace-namespace#bar-variable",
+									),
+								]),
+								new TableBodyCellNode([CodeSpanNode.createFromPlainText("BETA")]), // Alert
+								new TableBodyCellNode([
+									CodeSpanNode.createFromPlainText("readonly"),
+								]), // Modifier
+								TableBodyCellNode.Empty, // Description
+							]),
+							// Table row for `foo`
+							new TableBodyRowNode([
+								new TableBodyCellNode([
+									LinkNode.createFromPlainText(
+										"foo",
+										"./test-package/testnamespace-namespace#foo-variable",
+									),
+								]),
+								TableBodyCellNode.Empty, // No alert for `@public`
+								new TableBodyCellNode([
+									CodeSpanNode.createFromPlainText("readonly"),
+								]), // Modifier
+								TableBodyCellNode.Empty, // Description
+							]),
+							// No entry should be included for `baz` because it is `@alpha`
+						],
+						new TableHeaderRowNode([
+							TableHeaderCellNode.createFromPlainText("Variable"),
+							TableHeaderCellNode.createFromPlainText("Alerts"),
+							TableHeaderCellNode.createFromPlainText("Modifiers"),
+							TableHeaderCellNode.createFromPlainText("Description"),
+						]),
+					),
+				],
+				{ title: "Variables" },
+			),
+
+			// Variables details section
+			wrapInSection(
+				[
+					// Details for `bar`
+					wrapInSection(
+						[
+							// Summary
+							wrapInSection([ParagraphNode.Empty]), // No summary docs on `bar`
+							// Beta warning
+							wrapInSection([betaWarningSpan]),
+							// Signature
+							wrapInSection(
+								[
+									FencedCodeBlockNode.createFromPlainText(
+										'bar = "bar"',
+										"typescript",
+									),
+								],
+								{
+									title: "Signature",
+									id: "bar-signature",
+								},
+							),
+						],
+						{
+							title: "bar (BETA)",
+							id: "bar-variable",
+						},
+					),
+					// Details for `foo`
+					wrapInSection(
+						[
+							// Summary
+							wrapInSection([ParagraphNode.Empty]), // No summary docs on `bar`
+							// Signature
+							wrapInSection(
+								[
+									FencedCodeBlockNode.createFromPlainText(
+										'foo = "foo"',
+										"typescript",
+									),
+								],
+								{
+									title: "Signature",
+									id: "foo-signature",
+								},
+							),
+						],
+						{
+							title: "foo",
+							id: "foo-variable",
+						},
+					),
+
+					// No entry should be included for `baz` because it is `@alpha`
+				],
+				{ title: "Variable Details" },
 			),
 		];
 

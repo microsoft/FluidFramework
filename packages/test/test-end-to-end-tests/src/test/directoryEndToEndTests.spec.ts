@@ -1331,7 +1331,9 @@ describeCompat(
 			expectSubdirsOrder(sharedDirectory3, dirsInOrder, path);
 		}
 
-		it("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
+		// This test falsely assumes ops will be acked in the order they're submtited.
+		// AB#6515 tracks re-enabling.
+		it.skip("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
 			sharedDirectory1.createSubDirectory("dir2");
 			sharedDirectory2.createSubDirectory("dir1");
 			sharedDirectory2.createSubDirectory("dir2");

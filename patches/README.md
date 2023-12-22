@@ -31,3 +31,12 @@ This issue has the potential to create invalid type rollups.
 The mitigation is to simply not trim imports in the type rollups - introducing (potentially) unused type imports is benign and should have negligable impact on file sizes in most cases.
 The relevant changes can be found on this branch: https://github.com/Josmithr/rushstack/tree/dont-trim-imports
 Related github issue: https://github.com/microsoft/rushstack/issues/4425
+
+### tsc-multi
+
+This patch adds support for rewriting imports in declaration (.d.ts) files by adding an "afterDeclarations" handler to
+supplement the existing "after" handler. To enable this feature, add `"dtsExtName": ".d.mts"` to the tsc-multi target
+config. The value should be the desired file extension for declaration files. If `dtsExtName` is omitted, behavior
+should match exactly what it is today without this feature.
+
+The relevant changes can be found on this branch: <https://github.com/tylerbutler/tsc-multi/tree/dts-imports>

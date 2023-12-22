@@ -19,7 +19,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
-import { IPendingRuntimeState } from "@fluidframework/container-runtime/dist/test";
+import { type IPendingRuntimeState } from "@fluidframework/container-runtime/test/containerRuntime";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
