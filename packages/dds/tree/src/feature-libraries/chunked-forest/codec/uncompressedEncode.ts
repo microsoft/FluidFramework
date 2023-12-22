@@ -34,7 +34,6 @@ const arrayIndex: ShapeIndex = 1;
 
 const anyTreeShape: EncodedTreeShape = {
 	extraFields: arrayIndex,
-	fields: [],
 };
 
 const anyArray: EncodedNestedArray = treeIndex;

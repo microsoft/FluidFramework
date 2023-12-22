@@ -31,7 +31,7 @@ import {
 	encodeValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
-import { testTrees } from "../../../cursorTestSuite";
+import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite";
 import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities";
 import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core";
 import {
@@ -58,6 +58,7 @@ import { FieldBatch } from "../../../../feature-libraries/chunked-forest";
 import { ICodecOptions, IJsonCodec } from "../../../../codec";
 // eslint-disable-next-line import/no-internal-modules
 import { makeVersionedValidatedCodec } from "../../../../feature-libraries/versioned";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -83,8 +84,9 @@ export function makeFieldBatchCodec(
 describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
-	describe("test trees", () => {
-		for (const [name, jsonable] of testTrees) {
+	describe("schemaless test trees", () => {
+		useSnapshotDirectory("chunked-forest-compressed-schemaless");
+		for (const [name, jsonable] of schemalessTestTrees) {
 			it(name, () => {
 				const input: FieldBatch = [cursorForJsonableTreeField([jsonable])];
 				const cache = new EncoderCache(
@@ -99,6 +101,12 @@ describe("compressedEncode", () => {
 				const decoded = codec.decode(result);
 				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
+
+				// This makes it clear when the format changes.
+				// This can include compression/heuristic changes which are non breaking,
+				// but does not handle ensuring different old versions stull load (for example encoded with different heuristics).
+				// TODO: add a new test suite with a library of encoded test data which we can parse to cover that.
+				takeJsonSnapshot(result);
 			});
 		}
 	});

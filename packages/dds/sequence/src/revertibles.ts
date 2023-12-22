@@ -501,18 +501,19 @@ function revertLocalChange(
 			string,
 		)
 	) {
-		collection.change(id, {
-			start: createSequencePlace(
+		collection.change(
+			id,
+			createSequencePlace(
 				startSlidePos,
 				revertible.start.slidingPreference,
 				interval.start.slidingPreference,
 			),
-			end: createSequencePlace(
+			createSequencePlace(
 				endSlidePos,
 				revertible.end.slidingPreference,
 				interval.end.slidingPreference,
 			),
-		});
+		);
 	}
 
 	string.removeLocalReferencePosition(revertible.start);
@@ -526,7 +527,7 @@ function revertLocalPropertyChanged(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const newProps = revertible.propertyDeltas;
-	string.getIntervalCollection(label).change(id, { props: newProps });
+	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
 
 function newPosition(offset: number | undefined, restoredRanges: SortedRangeSet) {
@@ -610,10 +611,11 @@ function revertLocalSequenceRemove(
 					sharedString,
 				)
 			) {
-				intervalCollection.change(intervalId, {
-					start: createSequencePlace(start, interval.start.slidingPreference),
-					end: createSequencePlace(end, interval.end.slidingPreference),
-				});
+				intervalCollection.change(
+					intervalId,
+					createSequencePlace(start, interval.start.slidingPreference),
+					createSequencePlace(end, interval.end.slidingPreference),
+				);
 			}
 		}
 	});
