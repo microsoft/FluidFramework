@@ -14,8 +14,8 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./dist/esm-wrapper.d.mts",
-				"default": "./dist/esm-wrapper.mjs"
+				"types": "./dist/esmWrapper.d.mts",
+				"default": "./dist/esmWrapper.mjs"
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
