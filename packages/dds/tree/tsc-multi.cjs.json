@@ -1,0 +1,6 @@
+{
+	"targets": [
+		{ "extname": ".cjs", "dtsExtName": ".d.cts", "module": "CommonJS", "outDir": "./dist" }
+	],
+	"projects": ["./tsconfig.base.json"]
+}
