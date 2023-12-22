@@ -438,43 +438,6 @@ export class DataStores implements IDisposable {
 		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
 	}
 
-	/**
-	 * Traverse this op's contents and detect any outbound routes that were added by this op.
-	 */
-	public detectOutboundReferences(
-		envelope: IEnvelope,
-		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
-	): void {
-		// These will be built up as we traverse the message contents via JSON.parse and referenceFinder
-		const outboundPaths: string[] = [];
-		let ddsAddress: string | undefined;
-
-		function recursivelyFindHandles(obj: unknown) {
-			if (typeof obj === "object" && obj !== null) {
-				for (const [key, value] of Object.entries(obj)) {
-					// If 'value' is a serialized IFluidHandle, it represents a new outbound route.
-					if (isSerializedHandle(value)) {
-						outboundPaths.push(value.url);
-					}
-
-					// NOTE: This is taking a hard dependency on the fact that in our DataStore implementation,
-					// the address of the DDS is stored in a property called "address".  This is not ideal.
-					// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
-					if (key === "address" && ddsAddress === undefined) {
-						ddsAddress = value;
-					}
-
-					recursivelyFindHandles(value);
-				}
-			}
-		}
-
-		recursivelyFindHandles(envelope.contents);
-
-		const fromPath = ["", envelope.address, ddsAddress].join("/");
-		outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
-	}
-
 	public processFluidDataStoreOp(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -505,7 +468,7 @@ export class DataStores implements IDisposable {
 		// If this setting is true, then DataStoreContext would be notifying GC instead.
 		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true) {
 			// Notify GC of any outbound references that were added by this op.
-			this.detectOutboundReferences(envelope, addedOutboundReference);
+			detectOutboundReferences(envelope, addedOutboundReference);
 		}
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
@@ -995,4 +958,41 @@ export function getSummaryForDatastores(
 			trees: datastoresTrees,
 		};
 	}
+}
+
+/**
+ * Traverse this op's contents and detect any outbound routes that were added by this op.
+ */
+export function detectOutboundReferences(
+	envelope: IEnvelope,
+	addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+): void {
+	// These will be built up as we traverse the message contents via JSON.parse and referenceFinder
+	const outboundPaths: string[] = [];
+	let ddsAddress: string | undefined;
+
+	function recursivelyFindHandles(obj: unknown) {
+		if (typeof obj === "object" && obj !== null) {
+			for (const [key, value] of Object.entries(obj)) {
+				// If 'value' is a serialized IFluidHandle, it represents a new outbound route.
+				if (isSerializedHandle(value)) {
+					outboundPaths.push(value.url);
+				}
+
+				// NOTE: This is taking a hard dependency on the fact that in our DataStore implementation,
+				// the address of the DDS is stored in a property called "address".  This is not ideal.
+				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
+				if (key === "address" && ddsAddress === undefined) {
+					ddsAddress = value;
+				}
+
+				recursivelyFindHandles(value);
+			}
+		}
+	}
+
+	recursivelyFindHandles(envelope.contents);
+
+	const fromPath = ["", envelope.address, ddsAddress].join("/");
+	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
 }
