@@ -38,6 +38,7 @@ import {
 	SchemaBuilder,
 	leaf,
 } from "../domains";
+import { typeboxValidator } from "../external-utilities";
 import { IdAllocator, JsonCompatible, brand, idAllocatorFromMaxId, mapIterable } from "../util";
 import {
 	FieldKinds,
@@ -420,6 +421,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				"test",
 				idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 				testIdCompressor,
+				{ jsonValidator: typeboxValidator },
 			);
 			const delta: DeltaFieldMap = new Map<FieldKey, DeltaFieldChanges>([
 				[rootFieldKey, { local: [mark] }],

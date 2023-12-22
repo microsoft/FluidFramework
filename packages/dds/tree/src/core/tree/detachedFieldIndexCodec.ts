@@ -6,9 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
-import { forEachInNestedMap, setInNestedMap } from "../../util";
 import { EncodedRevisionTag, RevisionTagCodec } from "../rebase";
-import { Format, version } from "./detachedFieldIndexFormat";
+import { EncodedRootsForRevision, Format, RootRanges, version } from "./detachedFieldIndexFormat";
 import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes";
 
 class MajorCodec implements IJsonCodec<Major> {
@@ -21,9 +20,7 @@ class MajorCodec implements IJsonCodec<Major> {
 	}
 
 	public encode(major: Major) {
-		if (major === undefined) {
-			return null;
-		}
+		assert(major !== undefined, "Unexpected undefined revision");
 		const id = this.revisionTagCodec.encode(major);
 		/**
 		 * Preface: this codec is only used at summarization time (not for ops).
@@ -45,12 +42,7 @@ class MajorCodec implements IJsonCodec<Major> {
 		return id;
 	}
 
-	// JSON round-trips undefined values to 'null' within arrays.
-	// eslint-disable-next-line @rushstack/no-new-null
-	public decode(major: EncodedRevisionTag | null) {
-		if (major === null) {
-			return undefined;
-		}
+	public decode(major: EncodedRevisionTag) {
 		assert(
 			major === "root" || major >= 0,
 			"Expected final id on decode of detached field index revision",
@@ -66,23 +58,28 @@ export function makeDetachedNodeToFieldCodec(
 	const majorCodec = new MajorCodec(idCompressor, options);
 	return makeVersionedValidatedCodec(options, new Set([version]), Format, {
 		encode: (data: DetachedFieldSummaryData): Format => {
-			const detachedNodeToFieldData: Format["data"] = [];
-			forEachInNestedMap(data.data, (root, key1, key2) => {
-				const encodedMajor = majorCodec.encode(key1);
-				detachedNodeToFieldData.push([encodedMajor, key2, root]);
-			});
+			const rootsForRevisions: EncodedRootsForRevision[] = [];
+			for (const [major, innerMap] of data.data) {
+				const rootRanges: RootRanges = [...innerMap];
+				const rootsForRevision: EncodedRootsForRevision = [
+					rootRanges,
+					majorCodec.encode(major),
+				];
+				rootsForRevisions.push(rootsForRevision);
+			}
 			const encoded: Format = {
 				version,
-				data: detachedNodeToFieldData,
+				data: rootsForRevisions,
 				maxId: data.maxId,
 			};
 			return encoded;
 		},
 		decode: (parsed: Format): DetachedFieldSummaryData => {
 			const map = new Map();
-			for (const [encodedMajor, minor, root] of parsed.data) {
+			for (const [rootRanges, encodedMajor] of parsed.data) {
 				const major = majorCodec.decode(encodedMajor);
-				setInNestedMap(map, major, minor, root);
+				const innerMap = new Map(rootRanges);
+				map.set(major, innerMap);
 			}
 			return {
 				data: map,
