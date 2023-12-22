@@ -2268,6 +2268,7 @@ export class ContainerRuntime
 					messageWithContext.message,
 					local,
 					localOpMetadata,
+					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
 				);
 				break;
 			case ContainerMessageType.BlobAttach:

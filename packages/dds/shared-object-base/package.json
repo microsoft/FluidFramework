@@ -173,6 +173,15 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_ISerializedHandle": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_isSerializedHandle": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
