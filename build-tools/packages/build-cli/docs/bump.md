@@ -144,3 +144,5 @@ EXAMPLES
 
     $ flub bump deps server -t latest
 ```
+
+_See code: [src/commands/bump/deps.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bump/deps.ts)_

@@ -19,8 +19,9 @@ describe("fileLogger", () => {
 	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");
 
 	function verifyOutput(expectedOutputFilePath: string) {
-		// eslint-disable-next-line prefer-template
-		const actualOutput = fs.readFileSync(telemetryFile, { encoding: "utf-8" }) + "\n";
+		const actualOutput = `${fs
+			.readFileSync(telemetryFile, { encoding: "utf-8" })
+			.replace(/\r\n/g, "\n")}\n`;
 		const expectedOutput = fs.readFileSync(expectedOutputFilePath, { encoding: "utf-8" });
 		assert.strictEqual(
 			actualOutput,

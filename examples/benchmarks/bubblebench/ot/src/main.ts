@@ -9,6 +9,9 @@ import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./state";
 
+/**
+ * @internal
+ */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-ot";
 	private maybeTree?: SharedJson1 = undefined;
@@ -16,7 +19,10 @@ export class Bubblebench extends DataObject {
 
 	protected async initializingFirstTime() {
 		const tree = (this.maybeTree = SharedJson1.create(this.runtime));
-		tree.replace([], tree.get(), { clients: [] });
+		const initialTree = { clients: [] };
+		// unknown used to workaround recursive Doc type that otherwise results in
+		// "Type instantiation is excessively deep and possibly infinite" error.
+		tree.replace<unknown, typeof initialTree>([], tree.get(), initialTree);
 		this.root.set("tree", this.maybeTree.handle);
 	}
 
@@ -66,6 +72,7 @@ export class Bubblebench extends DataObject {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,

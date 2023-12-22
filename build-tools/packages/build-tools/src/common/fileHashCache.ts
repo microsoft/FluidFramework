@@ -6,21 +6,31 @@
 import { sha256 } from "./hash";
 import { readFileAsync } from "./utils";
 
+type hashFn = (buffer: Buffer) => string;
 export class FileHashCache {
-	private fileHashCache = new Map<string, Promise<string>>();
+	private fileHashCaches = new Map<hashFn, Map<string, Promise<string>>>();
 
-	public async getFileHash(path: string, hash: (buffer: Buffer) => string = sha256) {
-		const cachedHashP = this.fileHashCache.get(path);
+	private getFileHashCache(hash: hashFn) {
+		let fileHashCache = this.fileHashCaches.get(hash);
+		if (fileHashCache === undefined) {
+			fileHashCache = new Map<string, Promise<string>>();
+			this.fileHashCaches.set(hash, fileHashCache);
+		}
+		return fileHashCache;
+	}
+	public async getFileHash(path: string, hash: hashFn = sha256) {
+		const fileHashCache = this.getFileHashCache(hash);
+		const cachedHashP = fileHashCache.get(path);
 		if (cachedHashP) {
 			return cachedHashP;
 		}
 
 		const newHashP = readFileAsync(path).then(hash);
-		this.fileHashCache.set(path, newHashP);
+		fileHashCache.set(path, newHashP);
 		return newHashP;
 	}
 
 	public clear() {
-		this.fileHashCache.clear();
+		this.fileHashCaches.clear();
 	}
 }

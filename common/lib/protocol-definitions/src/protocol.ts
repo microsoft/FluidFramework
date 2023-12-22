@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @alpha
+ */
 export enum MessageType {
 	/**
 	 * Empty operation message. Used to send an updated reference sequence number.
@@ -73,6 +76,9 @@ export enum MessageType {
 	Control = "control",
 }
 
+/**
+ * @internal
+ */
 export enum SignalType {
 	/**
 	 * System signal sent to indicate a new client has joined the collaboration.
@@ -86,7 +92,8 @@ export enum SignalType {
 }
 
 /**
- * Messages to track latency trace
+ * Messages to track latency trace.
+ * @public
  */
 export interface ITrace {
 	/**
@@ -105,6 +112,9 @@ export interface ITrace {
 	timestamp: number;
 }
 
+/**
+ * @alpha
+ */
 export interface INack {
 	/**
 	 * The operation that was just nacked.
@@ -123,7 +133,8 @@ export interface INack {
 }
 
 /**
- * Document specific message
+ * Document-specific message.
+ * @public
  */
 export interface IDocumentMessage {
 	/**
@@ -170,13 +181,15 @@ export interface IDocumentMessage {
 
 /**
  * Document Message with optional system level data field.
+ * @internal
  */
 export interface IDocumentSystemMessage extends IDocumentMessage {
 	data: string;
 }
 
 /**
- * Branch origin information
+ * Branch origin information.
+ * @public
  */
 export interface IBranchOrigin {
 	/**
@@ -196,7 +209,8 @@ export interface IBranchOrigin {
 }
 
 /**
- * Sequenced message for a distributed document
+ * Sequenced message for a distributed document.
+ * @public
  */
 export interface ISequencedDocumentMessage {
 	/**
@@ -263,32 +277,62 @@ export interface ISequencedDocumentMessage {
 	 */
 	timestamp: number;
 
-	// Data provided by service. Only present in service generated messages.
+	/**
+	 * Data provided by service. Only present in service generated messages.
+	 */
 	data?: string;
 
 	/**
 	 * Experimental field for storing the rolling hash at sequence number.
-	 * @alpha
+	 *
+	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
 	 */
 	expHash1?: string;
 
 	/**
 	 * The compression algorithm that was used to compress contents of this message.
-	 * @experimental Not ready for use.
+	 *
+	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
 	 */
 	compression?: string;
 }
 
+/**
+ * {@link ISequencedDocumentAugmentedMessage} with experimental properties.
+ * @internal
+ */
+export type ISequencedDocumentMessageExperimental = Omit<
+	ISequencedDocumentMessage,
+	"expHash1" | "compression"
+> & {
+	/**
+	 * Stores the rolling hash at sequence number.
+	 */
+	expHash1?: string;
+
+	/**
+	 * The compression algorithm that was used to compress contents of this message.
+	 */
+	compression?: string;
+};
+
+/**
+ * @internal
+ */
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
 }
 
+/**
+ * @internal
+ */
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
 }
 
 /**
- * Common interface between incoming and outgoing signals
+ * Common interface between incoming and outgoing signals.
+ * @public
  */
 export interface ISignalMessageBase {
 	/**
@@ -313,7 +357,8 @@ export interface ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by the server to clients
+ * Interface for signals sent by the server to clients.
+ * @public
  */
 export interface ISignalMessage extends ISignalMessageBase {
 	/**
@@ -325,7 +370,8 @@ export interface ISignalMessage extends ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by clients to the server when submit_signals_v2 is enabled
+ * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
+ * @internal
  */
 export interface ISentSignalMessage extends ISignalMessageBase {
 	/**
@@ -334,25 +380,43 @@ export interface ISentSignalMessage extends ISignalMessageBase {
 	targetClientId?: string;
 }
 
+/**
+ * @alpha
+ */
 export interface IUploadedSummaryDetails {
-	// Indicates whether the uploaded summary contains ".protocol" tree
+	/**
+	 * Indicates whether the uploaded summary contains ".protocol" tree.
+	 */
 	includesProtocolTree?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface ISummaryContent {
-	// Handle reference to the summary data
+	/**
+	 * Handle reference to the summary data.
+	 */
 	handle: string;
 
-	// Message included as part of the summary
+	/**
+	 * Message included as part of the summary.
+	 */
 	message: string;
 
-	// Handles to parent summaries of the proposed new summary
+	/**
+	 * Handles to parent summaries of the proposed new summary.
+	 */
 	parents: string[];
 
-	// Handle to the current latest summary stored by the service
+	/**
+	 * Handle to the current latest summary stored by the service
+	 */
 	head: string;
 
-	// Details of the uploaded summary
+	/**
+	 * Details of the uploaded summary.
+	 */
 	details?: IUploadedSummaryDetails;
 
 	// TODO - need an epoch/reload bit to indicate to clients that the summary has changed and requires a reload
@@ -362,6 +426,7 @@ export interface ISummaryContent {
 /**
  * General errors returned from the server.
  * May want to add error code or something similar in the future.
+ * @internal
  */
 export interface IServerError {
 	/**
@@ -372,6 +437,7 @@ export interface IServerError {
 
 /**
  * Data about the original proposed summary message.
+ * @alpha
  */
 export interface ISummaryProposal {
 	/**
@@ -382,6 +448,7 @@ export interface ISummaryProposal {
 
 /**
  * Contents of summary ack expected from the server.
+ * @alpha
  */
 export interface ISummaryAck {
 	/**
@@ -397,6 +464,7 @@ export interface ISummaryAck {
 
 /**
  * Contents of summary nack expected from the server.
+ * @alpha
  */
 export interface ISummaryNack {
 	/**
@@ -426,6 +494,7 @@ export interface ISummaryNack {
 
 /**
  * Interface for nack content.
+ * @alpha
  */
 export interface INackContent {
 	/**
@@ -454,15 +523,27 @@ export interface INackContent {
 }
 
 /**
- * Type of the Nack.
- * InvalidScopeError: Client's token is not valid for the intended message.
- * ThrottlingError: Retriable after retryAfter number.
- * BadRequestError: Clients message is invalid and should retry immediately with a valid message.
- * LimitExceededError: Service is having issues. Client should not retry.
+ * Type of the nack.
+ * @alpha
  */
 export enum NackErrorType {
+	/**
+	 * Retriable after {@link ISummaryNack.retryAfter} seconds.
+	 */
 	ThrottlingError = "ThrottlingError",
+
+	/**
+	 * Client's token is not valid for the intended message.
+	 */
 	InvalidScopeError = "InvalidScopeError",
+
+	/**
+	 * Clients message is invalid and should retry immediately with a valid message.
+	 */
 	BadRequestError = "BadRequestError",
+
+	/**
+	 * Service is having issues. Client should not retry.
+	 */
 	LimitExceededError = "LimitExceededError",
 }

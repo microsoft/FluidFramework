@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
@@ -14,6 +15,7 @@ import {
 	MergeTreeDeltaOperationTypes,
 	MergeTreeMaintenanceType,
 	PropertySet,
+	// eslint-disable-next-line import/no-deprecated
 	SortedSegmentSet,
 } from "@fluidframework/merge-tree";
 
@@ -23,17 +25,20 @@ import {
  * The properties of this object and its sub-objects represent the state of the sequence at the
  * point in time at which the operation was applied.
  * They will not take into any future modifications performed to the underlying sequence and merge tree.
+ * @alpha
  */
 export abstract class SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
 	public readonly deltaOperation: TOperation;
+	// eslint-disable-next-line import/no-deprecated
 	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
 	constructor(
 		public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly mergeTreeClient: Client,
 	) {
 		assert(
@@ -42,7 +47,9 @@ export abstract class SequenceEvent<
 		);
 		this.deltaOperation = deltaArgs.operation;
 
+		// eslint-disable-next-line import/no-deprecated
 		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
+			// eslint-disable-next-line import/no-deprecated
 			const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
 			this.deltaArgs.deltaSegments.forEach((delta) => {
 				const newRange: ISequenceDeltaRange<TOperation> = {
@@ -105,6 +112,7 @@ export abstract class SequenceEvent<
  * For group ops, each op will get its own event, and the group op property will be set on the op args.
  *
  * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
+ * @alpha
  */
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
 	/**
@@ -115,6 +123,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);
@@ -128,11 +137,13 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  * The properties of this object and its sub-objects represent the state of the sequence at the
  * point in time at which the operation was applied.
  * They will not take into consideration any future modifications performed to the underlying sequence and merge tree.
+ * @alpha
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
 		deltaArgs: IMergeTreeMaintenanceCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);
@@ -141,6 +152,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 
 /**
  * A range that has changed corresponding to a segment modification.
+ * @alpha
  */
 export interface ISequenceDeltaRange<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,

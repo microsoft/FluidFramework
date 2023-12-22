@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ILocalDeltaConnectionServer():
     TypeOnly<old.ILocalDeltaConnectionServer>;
 declare function use_current_InterfaceDeclaration_ILocalDeltaConnectionServer(
-    use: TypeOnly<current.ILocalDeltaConnectionServer>);
+    use: TypeOnly<current.ILocalDeltaConnectionServer>): void;
 use_current_InterfaceDeclaration_ILocalDeltaConnectionServer(
     get_old_InterfaceDeclaration_ILocalDeltaConnectionServer());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ILocalDeltaConnectionServer(
 declare function get_current_InterfaceDeclaration_ILocalDeltaConnectionServer():
     TypeOnly<current.ILocalDeltaConnectionServer>;
 declare function use_old_InterfaceDeclaration_ILocalDeltaConnectionServer(
-    use: TypeOnly<old.ILocalDeltaConnectionServer>);
+    use: TypeOnly<old.ILocalDeltaConnectionServer>): void;
 use_old_InterfaceDeclaration_ILocalDeltaConnectionServer(
     get_current_InterfaceDeclaration_ILocalDeltaConnectionServer());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ILocalDeltaConnectionServer(
 declare function get_old_ClassDeclaration_LocalDeltaConnectionServer():
     TypeOnly<old.LocalDeltaConnectionServer>;
 declare function use_current_ClassDeclaration_LocalDeltaConnectionServer(
-    use: TypeOnly<current.LocalDeltaConnectionServer>);
+    use: TypeOnly<current.LocalDeltaConnectionServer>): void;
 use_current_ClassDeclaration_LocalDeltaConnectionServer(
     get_old_ClassDeclaration_LocalDeltaConnectionServer());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_LocalDeltaConnectionServer(
 declare function get_current_ClassDeclaration_LocalDeltaConnectionServer():
     TypeOnly<current.LocalDeltaConnectionServer>;
 declare function use_old_ClassDeclaration_LocalDeltaConnectionServer(
-    use: TypeOnly<old.LocalDeltaConnectionServer>);
+    use: TypeOnly<old.LocalDeltaConnectionServer>): void;
 use_old_ClassDeclaration_LocalDeltaConnectionServer(
     get_current_ClassDeclaration_LocalDeltaConnectionServer());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_LocalDeltaConnectionServer(
 declare function get_old_ClassDeclaration_LocalOrdererManager():
     TypeOnly<old.LocalOrdererManager>;
 declare function use_current_ClassDeclaration_LocalOrdererManager(
-    use: TypeOnly<current.LocalOrdererManager>);
+    use: TypeOnly<current.LocalOrdererManager>): void;
 use_current_ClassDeclaration_LocalOrdererManager(
     get_old_ClassDeclaration_LocalOrdererManager());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_LocalOrdererManager(
 declare function get_current_ClassDeclaration_LocalOrdererManager():
     TypeOnly<current.LocalOrdererManager>;
 declare function use_old_ClassDeclaration_LocalOrdererManager(
-    use: TypeOnly<old.LocalOrdererManager>);
+    use: TypeOnly<old.LocalOrdererManager>): void;
 use_old_ClassDeclaration_LocalOrdererManager(
     get_current_ClassDeclaration_LocalOrdererManager());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_LocalOrdererManager(
 declare function get_old_ClassDeclaration_LocalWebSocket():
     TypeOnly<old.LocalWebSocket>;
 declare function use_current_ClassDeclaration_LocalWebSocket(
-    use: TypeOnly<current.LocalWebSocket>);
+    use: TypeOnly<current.LocalWebSocket>): void;
 use_current_ClassDeclaration_LocalWebSocket(
     get_old_ClassDeclaration_LocalWebSocket());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_LocalWebSocket(
 declare function get_current_ClassDeclaration_LocalWebSocket():
     TypeOnly<current.LocalWebSocket>;
 declare function use_old_ClassDeclaration_LocalWebSocket(
-    use: TypeOnly<old.LocalWebSocket>);
+    use: TypeOnly<old.LocalWebSocket>): void;
 use_old_ClassDeclaration_LocalWebSocket(
     get_current_ClassDeclaration_LocalWebSocket());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_LocalWebSocket(
 declare function get_old_ClassDeclaration_LocalWebSocketServer():
     TypeOnly<old.LocalWebSocketServer>;
 declare function use_current_ClassDeclaration_LocalWebSocketServer(
-    use: TypeOnly<current.LocalWebSocketServer>);
+    use: TypeOnly<current.LocalWebSocketServer>): void;
 use_current_ClassDeclaration_LocalWebSocketServer(
     get_old_ClassDeclaration_LocalWebSocketServer());
 
@@ -137,6 +137,6 @@ use_current_ClassDeclaration_LocalWebSocketServer(
 declare function get_current_ClassDeclaration_LocalWebSocketServer():
     TypeOnly<current.LocalWebSocketServer>;
 declare function use_old_ClassDeclaration_LocalWebSocketServer(
-    use: TypeOnly<old.LocalWebSocketServer>);
+    use: TypeOnly<old.LocalWebSocketServer>): void;
 use_old_ClassDeclaration_LocalWebSocketServer(
     get_current_ClassDeclaration_LocalWebSocketServer());

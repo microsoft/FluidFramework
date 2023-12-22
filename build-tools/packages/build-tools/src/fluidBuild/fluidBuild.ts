@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 import chalk from "chalk";
-import * as path from "path";
 
 import { commonOptions } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
-import { existsSync } from "../common/utils";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { options, parseOptions } from "./options";
@@ -24,15 +22,6 @@ async function main() {
 
 	log(`Fluid Repo Root: ${resolvedRoot}`);
 
-	// Detect nohoist state mismatch and infer uninstall switch
-	if (options.install) {
-		const hasRootNodeModules = existsSync(path.join(resolvedRoot, "node_modules"));
-		if (hasRootNodeModules === options.nohoist) {
-			// We need to uninstall if nohoist doesn't match the current state of installation
-			options.uninstall = true;
-		}
-	}
-
 	// Load the package
 	const repo = new FluidRepoBuild(resolvedRoot);
 	timer.time("Package scan completed");
@@ -46,7 +35,7 @@ async function main() {
 
 	// Dependency checks
 	if (options.depcheck) {
-		repo.depcheck();
+		await repo.depcheck(false);
 		timer.time("Dependencies check completed", true);
 	}
 
@@ -77,7 +66,7 @@ async function main() {
 	// Install or check install
 	if (options.install) {
 		log("Installing packages");
-		if (!(await repo.install(options.nohoist))) {
+		if (!(await repo.install())) {
 			error(`Install failed`);
 			process.exit(-5);
 		}

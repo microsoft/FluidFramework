@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	IMessageProcessingResult,
 	OpDecompressor,
@@ -51,7 +52,14 @@ describe("RemoteMessageProcessor", () => {
 		new RemoteMessageProcessor(
 			mockSpliter as OpSplitter,
 			mockDecompressor as OpDecompressor,
-			new OpGroupingManager(false),
+			new OpGroupingManager(
+				{
+					groupedBatchingEnabled: false,
+					opCountThreshold: Infinity,
+					reentrantBatchGroupingEnabled: false,
+				},
+				new MockLogger(),
+			),
 		);
 
 	it("Invokes internal processors in order", () => {

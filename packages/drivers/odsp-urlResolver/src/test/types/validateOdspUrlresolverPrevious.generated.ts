@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_OdspUrlResolver():
     TypeOnly<old.OdspUrlResolver>;
 declare function use_current_ClassDeclaration_OdspUrlResolver(
-    use: TypeOnly<current.OdspUrlResolver>);
+    use: TypeOnly<current.OdspUrlResolver>): void;
 use_current_ClassDeclaration_OdspUrlResolver(
     get_old_ClassDeclaration_OdspUrlResolver());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_OdspUrlResolver(
 declare function get_current_ClassDeclaration_OdspUrlResolver():
     TypeOnly<current.OdspUrlResolver>;
 declare function use_old_ClassDeclaration_OdspUrlResolver(
-    use: TypeOnly<old.OdspUrlResolver>);
+    use: TypeOnly<old.OdspUrlResolver>): void;
 use_old_ClassDeclaration_OdspUrlResolver(
     get_current_ClassDeclaration_OdspUrlResolver());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_OdspUrlResolver(
 declare function get_old_VariableDeclaration_isOdspUrl():
     TypeOnly<typeof old.isOdspUrl>;
 declare function use_current_VariableDeclaration_isOdspUrl(
-    use: TypeOnly<typeof current.isOdspUrl>);
+    use: TypeOnly<typeof current.isOdspUrl>): void;
 use_current_VariableDeclaration_isOdspUrl(
     get_old_VariableDeclaration_isOdspUrl());
 
@@ -65,6 +65,6 @@ use_current_VariableDeclaration_isOdspUrl(
 declare function get_current_VariableDeclaration_isOdspUrl():
     TypeOnly<typeof current.isOdspUrl>;
 declare function use_old_VariableDeclaration_isOdspUrl(
-    use: TypeOnly<typeof old.isOdspUrl>);
+    use: TypeOnly<typeof old.isOdspUrl>): void;
 use_old_VariableDeclaration_isOdspUrl(
     get_current_VariableDeclaration_isOdspUrl());

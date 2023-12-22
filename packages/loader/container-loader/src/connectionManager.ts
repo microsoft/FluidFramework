@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -63,7 +63,8 @@ import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
-const InitialReconnectDelayInMs = 1000;
+// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+const InitialReconnectDelayInMs = 500;
 const DefaultChunkSize = 16 * 1024;
 
 const fatalConnectErrorProp = { fatalConnectError: true };
@@ -585,7 +586,23 @@ export class ConnectionManager implements IConnectionManager {
 					this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
 					connection = undefined;
 				}
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectionReceived",
+						connected: connection !== undefined && connection.disposed === false,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 			} catch (origError: any) {
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectToDeltaStreamException",
+						connected: connection !== undefined && connection.disposed === false,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
 					connection = new NoDeltaStream(origError.storageOnlyReason, {
 						text: origError.message,
@@ -631,20 +648,19 @@ export class ConnectionManager implements IConnectionManager {
 
 				const waitStartTime = performance.now();
 				const retryDelayFromError = getRetryDelayFromError(origError);
-				if (retryDelayFromError !== undefined) {
-					// If the error told us to wait, then we wait.
-					this.props.reconnectionDelayHandler(retryDelayFromError, origError);
-					await new Promise<void>((resolve) => {
-						setTimeout(resolve, retryDelayFromError);
-					});
-				} else if (globalThis.navigator?.onLine !== false) {
-					// If the error didn't tell us to wait, let's still wait a little bit before retrying.
-					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
-					await new Promise<void>((resolve) => {
-						setTimeout(resolve, delayMs);
-						delayMs = Math.min(delayMs * 2, calculateMaxWaitTime(origError));
-					});
+				// If the error told us to wait or browser signals us that we are offline, then calculate the time we
+				// want to wait for before retrying. then we wait for that time. If the error didn't tell us to wait,
+				// let's still wait a little bit before retrying. We can skip this delay if we're confident we're offline,
+				// because we probably just need to wait to come back online. But we never have strong signal of being
+				// offline, so we at least wait for sometime.
+				if (retryDelayFromError !== undefined || globalThis.navigator?.onLine !== false) {
+					delayMs = calculateMaxWaitTime(delayMs, origError);
 				}
+				// Raise event in case the delay was there.
+				this.props.reconnectionDelayHandler(delayMs, origError);
+				await new Promise<void>((resolve) => {
+					setTimeout(resolve, delayMs);
+				});
 
 				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
@@ -674,8 +690,8 @@ export class ConnectionManager implements IConnectionManager {
 			);
 		}
 
-		// Check for abort signal after while loop as well
-		if (abortSignal.aborted === true) {
+		// Check for abort signal after while loop as well or we've been disposed
+		if (abortSignal.aborted === true || this._disposed) {
 			connection.dispose();
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
@@ -1051,9 +1067,9 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any) {
+	public submitSignal(content: any, targetClientId?: string) {
 		if (this.connection !== undefined) {
-			this.connection.submitSignal(content);
+			this.connection.submitSignal(content, targetClientId);
 		} else {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
 		}

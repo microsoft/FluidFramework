@@ -11,13 +11,15 @@ List packages in a release group in topological order.
 
 ```
 USAGE
-  $ flub list -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--json] [--feed
+  $ flub list -g client|server|azure|build-tools|gitrest|historian [--json] [-v | --quiet] [--feed
     public|internal-build|internal-test|internal-dev|official|internal] [--private] [--scope <value> | --skipScope
-    <value>] [--tarball]
+    <value>] [--tarball] [--outFile <value>]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
+  --outFile=<value>            Output file to write the list of packages to. If not specified, the list will be written
+                               to stdout.
   --tarball                    Return packed tarball names (without extension) instead of package names. @-signs will be
                                removed from the name, and slashes are replaced with dashes.
 

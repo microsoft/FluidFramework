@@ -143,6 +143,7 @@ export type CachedEditingResult = AttemptedEditResultCacheEntry & {
 
 /**
  * Creates `RevisionView`s for the revisions in an `EditLog`
+ * @alpha
  */
 export interface LogViewer {
 	/**
@@ -211,7 +212,7 @@ export interface ICachingLogViewerEvents extends IEvent {
  *
  * Does so by listening for edits added to the log. If the underlying EditLog or its listeners need to be reused beyond the lifetime of
  * a CachingLogViewer instance, that instance should be disposed with `detachFromEditLog` to ensure it is garbage-collectable.
- * @internal
+ * @alpha
  */
 export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents> implements LogViewer {
 	public readonly log: EditLog<ChangeInternal>;

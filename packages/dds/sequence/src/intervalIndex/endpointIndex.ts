@@ -15,6 +15,9 @@ import {
 import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 
+/**
+ * @internal
+ */
 export interface IEndpointIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
@@ -79,6 +82,9 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 	}
 }
 
+/**
+ * @internal
+ */
 export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new EndpointIndex<SequenceInterval>(client, sequenceIntervalHelpers);

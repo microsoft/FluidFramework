@@ -10,7 +10,7 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { updatePackageJsonFile } from "../../common/npmPackage";
+import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
 import { PackageNamePolicyConfig } from "../../common/fluidRepo";
@@ -263,7 +263,6 @@ export function isFeed(str: string | undefined): str is Feed {
 	if (str === undefined) {
 		return false;
 	}
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return feeds.includes(str as any);
 }
 
@@ -368,6 +367,131 @@ function ensurePrivatePackagesComputed(): void {
 	});
 }
 
+interface ParsedArg {
+	arg: string;
+	original: string;
+}
+
+/**
+ * Parses command line string into arguments following OS quote rules.
+ *
+ * Note: no accommodation is made for a line of script where shell features are used
+ * such as redirects `>`, pipes `|`, or multiple command separators `&&` or `;`.
+ *
+ * @param commandLine - complete command line as a simple string
+ * @param onlyDoubleQuotes - only consider double quotes for grouping
+ * @returns array of ordered pairs of resolved `arg` strings (quotes and escapes resolved)
+ *  and `original` corresponding strings.
+ */
+function parseArgs(
+	commandLine: string,
+	{ onlyDoubleQuotes }: { onlyDoubleQuotes: boolean },
+): ParsedArg[] {
+	const regexArg = onlyDoubleQuotes
+		? /(?<!\S)(?:[^\s"\\]|\\\S)*(?:(").*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"\\]|\\\S)*|$))*(?!\S)/g
+		: /(?<!\S)(?:[^\s'"\\]|\\\S)*(?:(['"]).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s'"\\]|\\\S)*|$))*(?!\S)/g;
+	const regexQuotedSegment = onlyDoubleQuotes
+		? /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(")(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g
+		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(['"])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
+	const regexEscapedCharacters = onlyDoubleQuotes ? /\\([\\"])/g : /\\([\\'"])/g;
+	return [...commandLine.matchAll(regexArg)].map((matches) => ({
+		arg: matches[0].replace(regexQuotedSegment, "$2").replace(regexEscapedCharacters, "$1"),
+		original: matches[0],
+	}));
+}
+
+/**
+ * Applies universally understood grouping and escaping to form a single argument
+ * text to be used as part of a command line string.
+ *
+ * @param resolvedArg - string as it should appear to new process
+ * @returns preferred string to use within a command line string
+ */
+function quoteAndEscapeArgsForUniversalCommandLine(
+	resolvedArg: string,
+	{ forceQuote }: { forceQuote?: boolean } = {},
+) {
+	// Unix shells provide feature where arguments that can be resolved as globs
+	// are expanded before passed to new process. Detect those and group them
+	// to ensure consistent arg passing. (Grouping disables glob expansion.)
+	const regexGlob = /[*?[]|\([^)]*\)/;
+	const notAGlob = resolvedArg.startsWith("-") || !regexGlob.test(resolvedArg);
+	// Double quotes are used for grouping arguments with whitespace and must be
+	// escaped with \ and \ itself must therefore be escaped.
+	// Unix shells also use single quotes for grouping. Rather than escape those,
+	// which Windows command shell would not unescape, those args must be grouped.
+	const escapedArg = resolvedArg.replace(/([\\"])/g, "\\$1");
+	const canBeUnquoted = notAGlob && !forceQuote && !/[\s']/.test(resolvedArg);
+	return canBeUnquoted ? escapedArg : `"${escapedArg}"`;
+}
+
+/**
+ * Prepares argument to be part of command script line. It does some handling for
+ * special shell elements that parseArgs ignores.
+ *
+ * @param parsedArg - one result from parseArgs
+ * @returns preferred string to use within a command script string
+ */
+function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) {
+	// Check for exactly `&&` or `|`.
+	if (arg === "&&" || arg === "|") {
+		// Use quoting if original had any quoting.
+		return arg !== original ? `"${arg}"` : arg;
+	}
+
+	// Check for unquoted start of `&&` or `|`.
+	if (!/^['"]/.test(original)) {
+		const specialStart = /(^&&|^\|)(.+)$/.exec(arg);
+		if (specialStart) {
+			// Separate the `&&` or `|` from remainder that will be its own arg.
+			const remainder = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialStart[2],
+				original: original.substring(specialStart[1].length),
+			});
+			return `${specialStart[1]} ${remainder}`;
+		}
+	}
+
+	// Check for unquoted tail `|`.
+	if (!/['"]$/.test(original)) {
+		const specialEnd = /^(.+)\|$/.exec(arg);
+		if (specialEnd) {
+			// Separate the `|` from prior that will be its own arg.
+			const prior = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialEnd[1],
+				original: original.substring(0, original.length - 1),
+			});
+			return `${prior} |`;
+		}
+	}
+
+	// Among the special characters `>`, `|`, `;`, and `&`, check for `&` at
+	// start, pipe (with anything else), or `;`. Some common `&` uses like `2>&1`
+	// should also remain unquoted.
+	const forceQuote = /^&|[|;]/.test(arg);
+
+	return quoteAndEscapeArgsForUniversalCommandLine(arg, { forceQuote });
+}
+
+/**
+ * Parse script line as if unix shell, then form preferred script line.
+ *
+ * @param scriptLine - unparsed script line
+ * @returns preferred command line
+ */
+function getPreferredScriptLine(scriptLine: string) {
+	return parseArgs(scriptLine, { onlyDoubleQuotes: false })
+		.map(quoteAndEscapeArgsForUniversalScriptLine)
+		.join(" ");
+}
+
+/**
+ * Tests that given value is defined.
+ */
+function isDefined<T>(v: T | undefined): v is T {
+	return v !== undefined;
+}
+
 let privatePackages: Set<string>;
 
 const match = /(^|\/)package\.json/i;
@@ -375,12 +499,10 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: (file) => {
-			let jsonStr: string;
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 			try {
-				jsonStr = readFile(file);
-				json = JSON.parse(jsonStr);
+				json = JSON.parse(readFile(file));
 			} catch (err) {
 				return "Error parsing JSON file: " + file;
 			}
@@ -447,7 +569,7 @@ export const handlers: Handler[] = [
 		// If you'd like to introduce a new package scope or a new unscoped package, please discuss it first.
 		name: "npm-strange-package-name",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: { name: string };
 			try {
 				json = JSON.parse(readFile(file));
@@ -471,7 +593,7 @@ export const handlers: Handler[] = [
 		// Also verify that non-private packages don't take dependencies on private packages.
 		name: "npm-private-packages",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: { name: string; private?: boolean; dependencies: Record<string, string> };
 			try {
 				json = JSON.parse(readFile(file));
@@ -508,8 +630,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-readmes",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -537,7 +659,7 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -584,8 +706,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-folder-name",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -612,8 +734,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-license",
 		match,
-		handler: (file, root) => {
-			let json;
+		handler: async (file, root) => {
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -657,8 +779,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-prettier",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -756,8 +878,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-clean",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -785,14 +907,14 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-dep",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			const manifest = getFluidBuildConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
 				return;
 			}
 			const commandDep = new Map(commandPackages);
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -805,7 +927,9 @@ export const handlers: Handler[] = [
 
 			if (hasScriptsField) {
 				const commands = new Set(
-					Object.values(json.scripts as string[]).map((s) => s.split(" ")[0]),
+					Object.values(json.scripts)
+						.filter(isDefined)
+						.map((s) => s.split(" ")[0]),
 				);
 				for (const command of commands.values()) {
 					const dep = commandDep.get(command);
@@ -827,13 +951,57 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		name: "npm-package-json-scripts-args",
+		match,
+		handler: async (file) => {
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			if (!hasScriptsField) {
+				return undefined;
+			}
+
+			const scriptsUsingInconsistentArgs = Object.entries(json.scripts)
+				.filter(([, scriptContent]) => {
+					const commandLine = scriptContent as string;
+					const preferredCommandLine = getPreferredScriptLine(commandLine);
+					return commandLine !== preferredCommandLine;
+				})
+				.map(([scriptName]) => scriptName);
+
+			return scriptsUsingInconsistentArgs.length > 0
+				? `${file} using inconsistent arguments in the following scripts:\n\t${scriptsUsingInconsistentArgs.join(
+						"\n\t",
+				  )}`
+				: undefined;
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				Object.entries(json.scripts).forEach(([scriptName, scriptContent]) => {
+					if (scriptContent) {
+						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
+					}
+				});
+			});
+
+			return result;
+		},
+	},
+	{
 		name: "npm-package-json-test-scripts",
 		match,
-		handler: (file, root) => {
+		handler: async (file) => {
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -879,11 +1047,11 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts-split",
 		match,
-		handler: (file, root) => {
+		handler: async (file) => {
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -927,9 +1095,9 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-mocha-config",
 		match,
-		handler: (file, root) => {
+		handler: async (file) => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -965,9 +1133,9 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-jest-config",
 		match,
-		handler: (file, root) => {
+		handler: async (file) => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -996,6 +1164,7 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const config = require(path.resolve(jestConfigFile));
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
@@ -1024,10 +1193,10 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-esm",
 		match,
-		handler: (file, root) => {
+		handler: async (file) => {
 			// This rule enforces that we have a module field in the package iff we have a ESM build
 			// So that tools like webpack will pack up the right version.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1061,9 +1230,9 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-clean-script",
 		match,
-		handler: (file, root) => {
+		handler: async (file) => {
 			// This rule enforces the "clean" script will delete all the build and test output
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1079,7 +1248,7 @@ export const handlers: Handler[] = [
 			const cleanScript = scripts.clean;
 			if (cleanScript) {
 				// Ignore clean scripts that are root of the release group
-				if (cleanScript.startsWith("pnpm")) {
+				if (cleanScript.startsWith("pnpm") || cleanScript.startsWith("fluid-build")) {
 					return undefined;
 				}
 
@@ -1097,31 +1266,154 @@ export const handlers: Handler[] = [
 					.join("")}`;
 			}
 
-			const clean = scripts["clean"];
-			if (clean && clean.startsWith("rimraf ")) {
-				if (clean.includes('"')) {
-					return "'clean' script using double quotes instead of single quotes";
-				}
-
-				if (!clean.includes("'")) {
-					return "'clean' script rimraf argument should have single quotes";
+			if (cleanScript) {
+				if (cleanScript !== getPreferredScriptLine(cleanScript)) {
+					return "'clean' script should double quote the globs and only the globs";
 				}
 			}
 		},
-		resolver: (file, root) => {
+		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
-				const clean = json.scripts["clean"] ?? "rimraf --glob";
-				if (clean.startsWith("rimraf --glob")) {
+				let clean: string = json.scripts["clean"] ?? "rimraf --glob";
+				if (!clean.startsWith("rimraf --glob")) {
 					result.resolved = false;
 					result.message =
 						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
-				}
-				if (missing.length === 0) {
 					return;
 				}
-				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+				if (missing.length > 0) {
+					clean += ` ${missing.join(" ")}`;
+				}
+				// clean up for grouping
+				json.scripts["clean"] = getPreferredScriptLine(clean);
+			});
+
+			return result;
+		},
+	},
+	{
+		name: "npm-package-types-field",
+		match,
+		handler: async (file) => {
+			// This rule enforces each package has a types field in its package.json
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (
+				// Ignore private packages...
+				json.private === true ||
+				// and those without main/module defined
+				(json.main === undefined && json.module === undefined) ||
+				// and packages without a tsconfig
+				!fs.existsSync(path.join(path.dirname(file), "tsconfig.json"))
+			) {
+				return;
+			}
+
+			if (json.types === undefined) {
+				return "Missing 'types' field in package.json.";
+			}
+		},
+	},
+	{
+		// This rule enforces each package has an exports field in its package.json. It also verifies that the values in the
+		// exports["."] field match the ones in the main/module/types fields.
+		name: "npm-package-exports-field",
+		match,
+		handler: async (file) => {
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (!shouldCheckExportsField(json)) {
+				return;
+			}
+
+			const exportsField = json.exports;
+			if (exportsField === undefined) {
+				return "Missing 'exports' field in package.json.";
+			}
+
+			const exportsRoot = exportsField?.["."];
+			if (exportsRoot === undefined) {
+				return "Missing '.' entry in 'exports' field in package.json.";
+			}
+
+			if (json.main === undefined) {
+				return "Missing 'main' entry in package.json.";
+			}
+
+			const isCJSOnly = json.module === undefined || json.type === "commonjs";
+			const isESMOnly = json.type === "module";
+
+			// CJS- and ESM-only packages should use default, not import or require.
+			const defaultField =
+				exportsRoot?.default?.default === undefined
+					? undefined
+					: normalizePathField(exportsRoot?.default?.default);
+
+			// CJS-only packages should use default, not import or require.
+			if (isCJSOnly) {
+				const mainField = normalizePathField(json.main);
+				if (defaultField !== mainField) {
+					return `${json.name} is a CJS-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+				}
+			}
+
+			// ESM-only packages should use default, not import or require.
+			if (isESMOnly) {
+				const mainField = normalizePathField(json.main);
+				if (defaultField !== mainField) {
+					return `${json.name} is an ESM-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+				}
+			}
+
+			if (!isESMOnly && !isCJSOnly) {
+				// ESM exports in import field
+				const importField =
+					exportsRoot?.import?.default === undefined
+						? undefined
+						: normalizePathField(exportsRoot?.import?.default);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const moduleField = normalizePathField(json.module!);
+				if (importField !== moduleField) {
+					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
+				}
+
+				// CJS exports in require field
+				const requireField =
+					exportsRoot?.require?.default === undefined
+						? undefined
+						: normalizePathField(exportsRoot?.require?.default);
+				const mainField = normalizePathField(json.main);
+				if (requireField !== mainField) {
+					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+				}
+			}
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				if (shouldCheckExportsField(json)) {
+					try {
+						const exportsField = generateExportsField(json);
+						json.exports = exportsField;
+					} catch (error: unknown) {
+						result.resolved = false;
+						result.message = (error as Error).message;
+					}
+				}
 			});
 
 			return result;
@@ -1157,4 +1449,111 @@ function missingCleanDirectories(scripts: any) {
 		expectedClean.push("nyc");
 	}
 	return expectedClean.filter((name) => !scripts.clean?.includes(name));
+}
+
+/**
+ * Generates an 'exports' field for a package based on the value of other fields in package.json.
+ */
+function generateExportsField(json: PackageJson) {
+	if (json.types === undefined && json.typings === undefined) {
+		throw new Error(
+			"The 'types' and 'typings' field are both undefined. At least one must be defined (types is preferred).",
+		);
+	}
+
+	if (json.main === undefined) {
+		throw new Error("The 'main' field is undefined. It must have a value.");
+	}
+
+	// One of the values is guaranteed to be defined because of earlier checks
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const cjsTypes = normalizePathField((json.types ?? json.typings)!);
+
+	const isCJSOnly = json.module === undefined || json.type === "commonjs";
+	const isESMOnly = json.type === "module";
+
+	if (isESMOnly) {
+		const exports = {
+			".": {
+				default: {
+					// Assume the types field is the ESM types since this is an ESM-only package.
+					types: cjsTypes,
+					default: normalizePathField(json.main),
+				},
+			},
+		};
+		return exports;
+	}
+
+	if (isCJSOnly) {
+		// This logic is the same as the ESM-only case, but it's separate intentionally to make it easier to refactor
+		// as we learn more about what our exports field should look like for different package types.
+		const exports = {
+			".": {
+				default: {
+					types: cjsTypes,
+					default: normalizePathField(json.main),
+				},
+			},
+		};
+		return exports;
+	}
+
+	// Package has both CJS and ESM
+
+	// Assume esm types are the same name as cjs, but in a different path.
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- an earlier check guarantees module is defined
+	const esmDir = path.dirname(json.module!);
+	const typesFile = path.basename(cjsTypes.toString());
+	const esmTypes = normalizePathField(path.join(esmDir, typesFile));
+
+	const exports = {
+		".": {
+			import: {
+				types: esmTypes,
+				default: normalizePathField(json.module ?? json.main),
+			},
+			require: {
+				types: cjsTypes,
+				default: normalizePathField(json.main),
+			},
+		},
+	};
+	return exports;
+}
+
+/**
+ * Returns true if the package should be checked for an exports field.
+ */
+function shouldCheckExportsField(json: PackageJson): boolean {
+	if (
+		// skip private packages
+		json.private === true ||
+		// and those with no main entrypoint
+		json.main === undefined ||
+		// packages with browser entrypoints require special attention, so ignoring here.
+		json.browser !== undefined ||
+		// skip if both the types/typings fields are missing
+		(json.types === undefined && json.typings === undefined)
+	) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Normalizes a relative path value so it has a leading './'
+ *
+ * @remarks
+ *
+ * Does not work with absolute paths.
+ */
+function normalizePathField(pathIn: string) {
+	if (pathIn === "" || pathIn === undefined) {
+		throw new Error(`Invalid path!`);
+	}
+	if (pathIn.startsWith("./")) {
+		return pathIn;
+	}
+	return `./${pathIn}`;
 }

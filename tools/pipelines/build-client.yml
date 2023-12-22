@@ -14,6 +14,19 @@ parameters:
     - none
     - prerelease
     - release
+# Parameter for modifying the 'types' field in the package.json.
+# If the value `none` is provided, the 'types' field in package.json will remain unchanged.
+- name: packageTypesOverride
+  displayName: Change package types (default = none)
+  type: string
+  default: none
+  values:
+    - none
+    - alpha
+    - beta
+    # 'public' and 'untrimmed' options have not been fully developed yet
+    # - public
+    # - untrimmed
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
@@ -37,11 +50,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default:
-  - fluid-framework
 
 trigger:
   branches:
@@ -52,6 +60,7 @@ trigger:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -83,6 +92,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -108,20 +118,28 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    nonScopedPackages: ${{ parameters.nonScopedPackages }}
+    packageTypesOverride: ${{ parameters.packageTypesOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
     tagName: client
+    isReleaseGroup: true
     poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    taskLint: false
-    taskBuildDocs: false
+    taskLint: false # Linting is captured by `ci:build` via fluid-build
+    taskBuildDocs: true
     publishDocs: true
+    # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
+    # one. And since we don't batch commits for CI pipeline runs, the only reason we see for automated runs is IndividualCI.
+    telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
+    # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
+    # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
+    # packages twice.
+    - check:are-the-types-wrong
     - webpack
     - ci:test:mocha
     - ci:test:jest
@@ -139,30 +157,26 @@ extends:
     - nyc/experimental
     - nyc/packages
     checks:
-    - syncpack:deps
-    - syncpack:versions
-    - check:versions
-    - generate:packageList
-    - prettier
+    - checks
     additionalBuildSteps:
-      - task: Bash@3
-        displayName: Inject devtools telemetry logger token
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo Generating .env
-            echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
+    - task: Bash@3
+      displayName: Inject devtools telemetry logger token
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo Generating .env
+          echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
 
-      - task: Npm@1
-        displayName: Build devtools
-        inputs:
-          command: 'custom'
-          workingDir: ./packages/tools/devtools/devtools-browser-extension/
-          customCommand: 'run webpack'
+    - task: Npm@1
+      displayName: Build devtools
+      inputs:
+        command: 'custom'
+        workingDir: ./packages/tools/devtools/devtools-browser-extension/
+        customCommand: 'run webpack'
 
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Artifact - Devtools Browser Extension
-        inputs:
-          targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-          artifactName: 'devtools-extension-bundle'
-          publishLocation: 'pipeline'
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Artifact - Devtools Browser Extension
+      inputs:
+        targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+        artifactName: 'devtools-extension-bundle'
+        publishLocation: 'pipeline'

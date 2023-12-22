@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+const { PackageName } = require("@rushstack/node-core-library");
+
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
-	getShortPackageName,
 	resolveRelativePackageJsonPath,
 } = require("../utilities.cjs");
 
@@ -18,8 +19,8 @@ const {
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateApiDocsLinkSection = (packageName, includeHeading) => {
-	const shortName = getShortPackageName(packageName);
-	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
+	const shortName = PackageName.getUnscopedName(packageName);
+	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/api/v1/${shortName}>.`;
 	return formattedSectionText(sectionBody, includeHeading ? "API Documentation" : undefined);
 };
 

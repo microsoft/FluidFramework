@@ -4,16 +4,12 @@
  */
 
 import {
-	ICombiningOp,
-	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
 	Marker,
 	PropertySet,
-	ReferencePosition,
 	ReferenceType,
 	refHasTileLabel,
 	TextSegment,
@@ -24,6 +20,7 @@ import { SharedStringFactory } from "./sequenceFactory";
 
 /**
  * Fluid object interface describing access methods on a SharedString
+ * @alpha
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
 	/**
@@ -40,11 +37,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	 * @param refType - The reference type of the marker
 	 * @param props - The properties of the marker
 	 */
-	insertMarker(
-		pos: number,
-		refType: ReferenceType,
-		props?: PropertySet,
-	): IMergeTreeInsertMsg | undefined;
+	insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
 
 	/**
 	 * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
@@ -52,6 +45,9 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
+/**
+ * @alpha
+ */
 export type SharedStringSegment = TextSegment | Marker;
 
 /**
@@ -62,7 +58,7 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- *
+ * @alpha
  */
 export class SharedString
 	extends SharedSegmentSequence<SharedStringSegment>
@@ -111,7 +107,7 @@ export class SharedString
 		relativePos1: IRelativePosition,
 		refType: ReferenceType,
 		props?: PropertySet,
-	) {
+	): void {
 		const segment = new Marker(refType);
 		if (props) {
 			segment.addProperties(props);
@@ -124,17 +120,13 @@ export class SharedString
 	/**
 	 * {@inheritDoc ISharedString.insertMarker}
 	 */
-	public insertMarker(
-		pos: number,
-		refType: ReferenceType,
-		props?: PropertySet,
-	): IMergeTreeInsertMsg | undefined {
+	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
 		const segment = new Marker(refType);
 		if (props) {
 			segment.addProperties(props);
 		}
 
-		return this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -143,7 +135,11 @@ export class SharedString
 	 * @param text - The text to insert
 	 * @param props - The properties of text
 	 */
-	public insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet) {
+	public insertTextRelative(
+		relativePos1: IRelativePosition,
+		text: string,
+		props?: PropertySet,
+	): void {
 		const segment = new TextSegment(text);
 		if (props) {
 			segment.addProperties(props);
@@ -156,7 +152,7 @@ export class SharedString
 	/**
 	 * {@inheritDoc ISharedString.insertText}
 	 */
-	public insertText(pos: number, text: string, props?: PropertySet) {
+	public insertText(pos: number, text: string, props?: PropertySet): void {
 		const segment = new TextSegment(text);
 		if (props) {
 			segment.addProperties(props);
@@ -172,7 +168,7 @@ export class SharedString
 	 * @param text - The text to replace the range with
 	 * @param props - Optional. The properties of the replacement text
 	 */
-	public replaceText(start: number, end: number, text: string, props?: PropertySet) {
+	public replaceText(start: number, end: number, text: string, props?: PropertySet): void {
 		this.replaceRange(start, end, TextSegment.make(text, props));
 	}
 
@@ -182,55 +178,33 @@ export class SharedString
 	 * @param end - The exclusive end of the range to replace
 	 * @returns the message sent.
 	 */
-	public removeText(start: number, end: number): IMergeTreeRemoveMsg {
-		return this.removeRange(start, end);
-	}
-
-	/**
-	 * Annotates the marker with the provided properties and calls the callback on consensus.
-	 * @param marker - The marker to annotate
-	 * @param props - The properties to annotate the marker with
-	 * @param consensusCallback - The callback called when consensus is reached
-	 */
-	public annotateMarkerNotifyConsensus(
-		marker: Marker,
-		props: PropertySet,
-		callback: (m: Marker) => void,
-	) {
-		this.guardReentrancy(() =>
-			this.client.annotateMarkerNotifyConsensus(marker, props, callback),
-		);
+	public removeText(start: number, end: number): void {
+		this.removeRange(start, end);
 	}
 
 	/**
 	 * Annotates the marker with the provided properties.
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
-		this.guardReentrancy(() => this.client.annotateMarker(marker, props, combiningOp));
+	public annotateMarker(marker: Marker, props: PropertySet) {
+		this.guardReentrancy(() => this.client.annotateMarker(marker, props));
 	}
 
 	/**
-	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * Note that Markers receive `ReferenceType.Tile` by default.
+	 * Searches a string for the nearest marker in either direction to a given start position.
+	 * The search will include the start position, so markers at the start position are valid
+	 * results of the search.
 	 * @param startPos - Position at which to start the search
-	 * @param clientId - clientId dictating the perspective to search from
-	 * @param tileLabel - Label of the tile to search for
-	 * @param preceding - Whether the desired tile comes before (true) or after (false) `startPos`
+	 * @param markerLabel - Label of the marker to search for
+	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
-	public findTile(
-		startPos: number | undefined,
-		tileLabel: string,
-		preceding = true,
-	):
-		| {
-				tile: ReferencePosition;
-				pos: number;
-		  }
-		| undefined {
-		return this.client.findTile(startPos ?? 0, tileLabel, preceding);
+	public searchForMarker(
+		startPos: number,
+		markerLabel: string,
+		forwards = true,
+	): Marker | undefined {
+		return this.client.searchForMarker(startPos, markerLabel, forwards);
 	}
 
 	/**
@@ -309,7 +283,6 @@ interface ITextAndMarkerAccumulator {
  * @param sharedString - String to retrieve text and markers from
  * @param label - label to split on
  * @returns Two parallel lists of text and markers, split by markers with the provided `label`.
- *
  * For example:
  * ```typescript
  * // Say sharedstring has contents "hello<paragraph marker 1>world<paragraph marker 2>missing".
@@ -318,6 +291,7 @@ interface ITextAndMarkerAccumulator {
  * // parallelMarkers === [<paragraph marker 1 object>, <paragraph marker 2 object>]
  * // Note parallelText does not include "missing".
  * ```
+ * @internal
  */
 export function getTextAndMarkers(
 	sharedString: SharedString,
@@ -405,10 +379,8 @@ const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
 	} else {
 		if (placeholder && placeholder.length > 0) {
 			const placeholderText =
-				placeholder === "*"
-					? // eslint-disable-next-line @typescript-eslint/no-base-to-string
-					  `\n${segment.toString()}`
-					: placeholder.repeat(segment.cachedLength);
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
+				placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
 			textSegment.text += placeholderText;
 		} else {
 			const marker = segment as Marker;

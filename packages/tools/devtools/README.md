@@ -40,5 +40,5 @@ The bulk of the logic is instead dedicated to recording state information and br
 
 ### API Documentation
 
--   [@fluid-experimental/devtools-core](https://fluidframework.com/docs/apis/devtools-core)
--   [@fluid-experimental/devtools](https://fluidframework.com/docs/apis/devtools)
+-   [@fluidframework/devtools-core](https://fluidframework.com/docs/api/v1/devtools-core)
+-   [@fluidframework/devtools](https://fluidframework.com/docs/api/v1/devtools)

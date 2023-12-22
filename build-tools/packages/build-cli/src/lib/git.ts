@@ -87,6 +87,8 @@ export class Repository {
 	}
 
 	/**
+	 * Get the merge base between the current HEAD and the remote branch.
+	 *
 	 * @param branch - The branch to compare against.
 	 * @param remote - The remote to compare against.
 	 * @param localRef - The local ref to compare against. Defaults to HEAD.
@@ -104,6 +106,8 @@ export class Repository {
 	}
 
 	/**
+	 * Get the merge base between two refs.
+	 *
 	 * @param ref1 - The first ref to compare.
 	 * @param ref2 - The ref to compare against.
 	 * @returns The ref of the merge base between the two refs.

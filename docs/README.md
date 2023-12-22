@@ -64,7 +64,7 @@ npm run build:repo-docs
 
 ### Drafts
 
-Work-in-progress documents that are not ready for public consumption can be safely added by annotatting them with the `draft` flag in their frontmatter.
+Work-in-progress documents that are not ready for public consumption can be safely added by annotating them with the `draft` flag in their frontmatter.
 
 Example:
 
@@ -300,7 +300,7 @@ This has a few of benefits:
 The shortcode accepts a single argument: the name of the API item being referenced.
 
 > Note that this will only work correctly for `package`, `class`, `interface`, and `namespace`/`module` items, as they are the only items for which individual `.md` files are generated for.
-> Contents like `paramters`, `methods`, etc. are rendered as sub-headings in their parent item's documents.
+> Contents like `parameters`, `methods`, etc. are rendered as sub-headings in their parent item's documents.
 
 This shortcode can be found in `layouts/shortcodes/apiref.html`.
 
@@ -315,7 +315,7 @@ The {{< apiref "FluidContainer" "class" >}} class can be used to...
 will generate something like:
 
 ```markdown
-The <a href="{{ relref /docs/apis/fluid-static/fluidcontainer-class.md }}"><code>FluidContainer</code></a> class can be used to...
+The <a href="{{ relref /docs/api/v1/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
 ```
 
 ## Working on the template
@@ -336,10 +336,14 @@ The following npm scripts are supported in this directory:
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api` | `npm run build:api-rollup && npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
+| `build:api-documentation:multi-version` | `node ./api-markdown-documenter/index.js true` |
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
+| `build:api-rollup:multi-version` | Runs `node ./rollup-api-json-helper.js true` while passing true to the optional parameter to produce rolled-up API data for all versions specified in data/versions.json. |
+| `build:api:multi-version` | `npm run build:api-rollup:multi-version && npm run build:api-documentation:multi-version` |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
 | `build:md-magic:website` | `node markdown-magic-website.js` |
+| `build:multi-version` | Build the site; outputs to `public/` by default. Includes API content from all major release branches. |
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
@@ -348,6 +352,7 @@ The following npm scripts are supported in this directory:
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
+| `download:api:multi` | Download API for all documentation versions and extract the API JSON files locally. |
 | `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |

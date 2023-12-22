@@ -15,6 +15,7 @@ const constellationName = "@fluid-example/constellation";
 
 /**
  * The Constellation is our implementation of the IConstellation interface.
+ * @internal
  */
 export class Constellation extends DataObject implements IConstellation {
 	private _stars: ICoordinate[] = [];

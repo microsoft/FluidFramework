@@ -5,10 +5,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ReferencePosition } from "../referencePositions";
 import { ReferenceType } from "../ops";
-import { SlidingPreference } from "../localReference";
+import { setValidateRefCount, SlidingPreference } from "../localReference";
 import {
 	IMergeTreeOperationRunnerConfig,
 	removeRange,
@@ -19,11 +19,12 @@ import {
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
+import { validateRefCount } from "./testUtils";
 
 const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
 	{
-		initLen: { min: 2, max: 4 },
-		modLen: { min: 1, max: 8 },
+		initLen: { min: 2, max: 256 },
+		modLen: { min: 1, max: 256 },
 		opsPerRoundRange: { min: 10, max: 10 },
 		rounds: 10,
 		operations: [removeRange],
@@ -31,6 +32,14 @@ const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOpe
 	};
 
 describe("MergeTree.Client", () => {
+	beforeEach(() => {
+		setValidateRefCount(validateRefCount);
+	});
+
+	afterEach(() => {
+		setValidateRefCount(undefined);
+	});
+
 	// Generate a list of single character client names, support up to 69 clients
 	const clientNames = generateClientNames();
 

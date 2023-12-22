@@ -17,6 +17,7 @@ import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-serv
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
+ * @internal
  */
 export class DocumentManager implements IDocumentManager {
 	constructor(
@@ -59,7 +60,7 @@ export class DocumentManager implements IDocumentManager {
 	): Promise<IDocumentStaticProperties | undefined> {
 		// If the cache is undefined, fetch the document from the database
 		if (!this.documentStaticDataCache) {
-			Lumberjack.info(
+			Lumberjack.verbose(
 				"Falling back to database after attempting to read cached static document data, because the DocumentManager cache is undefined.",
 				getLumberBaseProperties(documentId, tenantId),
 			);
@@ -73,7 +74,7 @@ export class DocumentManager implements IDocumentManager {
 
 		// If there are no cached static document props, fetch the document from the database
 		if (!staticPropsStr) {
-			Lumberjack.info(
+			Lumberjack.verbose(
 				"Falling back to database after attempting to read cached static document data.",
 				getLumberBaseProperties(documentId, tenantId),
 			);

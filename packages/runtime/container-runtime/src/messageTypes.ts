@@ -8,12 +8,15 @@ import {
 	IEnvelope,
 	InboundAttachMessage,
 	IAttachMessage,
-	IdCreationRangeWithStashedState,
-	IdCreationRange,
 } from "@fluidframework/runtime-definitions";
+import type { IdCreationRange } from "@fluidframework/id-compressor";
 import { IDataStoreAliasMessage } from "./dataStore";
+import { GarbageCollectionMessage } from "./gc";
 import { IChunkedOp } from "./opLifecycle";
 
+/**
+ * @alpha
+ */
 export enum ContainerMessageType {
 	// An op to be delivered to store
 	FluidDataStoreOp = "component",
@@ -39,6 +42,12 @@ export enum ContainerMessageType {
 	 * See the [IdCompressor README](./id-compressor/README.md) for more details.
 	 */
 	IdAllocation = "idAllocation",
+
+	/**
+	 * Garbage collection specific op. This is sent by the summarizer client when GC runs. It's used to synchronize GC
+	 * state across all clients.
+	 */
+	GC = "GC",
 }
 
 /**
@@ -69,7 +78,8 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents>
+	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
@@ -113,13 +123,13 @@ export type ContainerRuntimeAliasMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Alias,
 	IDataStoreAliasMessage
 >;
-export type LocalContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.IdAllocation,
-	IdCreationRangeWithStashedState
->;
 export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.IdAllocation,
-	IdCreationRange & { stashedState?: never }
+	IdCreationRange
+>;
+export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.GC,
+	GarbageCollectionMessage
 >;
 
 /**
@@ -149,6 +159,7 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeGCMessage
 	// Inbound messages may include unknown types from other clients, so we include that as a special case here
 	| UnknownContainerRuntimeMessage;
 
@@ -160,7 +171,8 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
-	| LocalContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeGCMessage
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
 	| UnknownContainerRuntimeMessage;
 
@@ -172,7 +184,8 @@ export type OutboundContainerRuntimeMessage =
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
-	| ContainerRuntimeIdAllocationMessage;
+	| ContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeGCMessage;
 
 /**
  * An unpacked ISequencedDocumentMessage with the inner TypedContainerRuntimeMessage type/contents/etc
@@ -210,7 +223,7 @@ export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDoc
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  *
- * @deprecated - this is an internal type which should not be used outside of the package.
+ * @deprecated this is an internal type which should not be used outside of the package.
  * Internally, it is superseded by `TypedContainerRuntimeMessage`.
  *
  * @internal

@@ -10,6 +10,16 @@ services:
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+  nexus:
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
+    ports:
+      - "3002:3000"
+    command: node packages/routerlicious/dist/nexus/www.js
+    environment:
+      - DEBUG=fluid:*
+      - NODE_ENV=development
+      - IS_FLUID_SERVER=true
+    restart: always
   deli:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
@@ -97,8 +107,6 @@ services:
     image: "redis:alpine"
   mongodb:
     image: "mongo:4"
-  rabbitmq:
-    image: "rabbitmq:alpine"
 volumes:
   git:
     driver: local

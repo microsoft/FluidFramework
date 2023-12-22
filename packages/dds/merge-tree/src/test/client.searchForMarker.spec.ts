@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { UniversalSequenceNumber } from "../constants";
 import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";

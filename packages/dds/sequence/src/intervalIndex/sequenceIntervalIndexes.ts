@@ -10,6 +10,7 @@ import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 /**
  * This namespace contains specialiazations of indexes which support spatial queries
  * specifically for `SequenceInterval`s.
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SequenceIntervalIndexes {
@@ -17,6 +18,7 @@ export namespace SequenceIntervalIndexes {
 	 * Collection of intervals.
 	 *
 	 * Provides additional APIs to support efficiently querying a collection of intervals based on segments and offset.
+	 * @internal
 	 */
 	export interface Overlapping extends IOverlappingIntervalsIndex<SequenceInterval> {
 		/**

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/benchmark",
-	"version": "0.49.0",
+	"version": "0.50.0",
 	"description": "Benchmarking tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,18 +16,18 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "npm run tsc && npm run build:test",
-		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
+		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",
+		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"perf": "mocha --config ./.mocharc.js --v8-expose-gc --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
-		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"dist/test/**/*.js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
@@ -43,11 +43,10 @@
 		"moment": "^2.21.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
-		"@microsoft/api-extractor": "^7.22.2",
-		"@rushstack/eslint-config": "^2.5.1",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/benchmark": "^2.1.0",
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^9.1.1",
@@ -58,7 +57,7 @@
 		"eslint": "~8.6.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^2.6.2",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267"
 }

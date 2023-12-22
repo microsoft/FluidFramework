@@ -15,6 +15,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
+/**
+ * @internal
+ */
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeTimeout: number;
 	consumeLoopTimeoutDelay: number;
@@ -41,6 +44,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 
 /**
  * Kafka consumer using the node-rdkafka library
+ * @internal
  */
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly consumerOptions: IKafkaConsumerOptions;

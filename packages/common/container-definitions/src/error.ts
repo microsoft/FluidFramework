@@ -7,6 +7,7 @@ import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
 
 /**
  * Different error types the ClientSession may report out to the Host.
+ * @alpha
  */
 export const ContainerErrorTypes = {
 	...FluidErrorTypes,
@@ -16,12 +17,17 @@ export const ContainerErrorTypes = {
 	 */
 	clientSessionExpiredError: "clientSessionExpiredError",
 } as const;
+
+/**
+ * @alpha
+ */
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 /**
  * Different error types the Container may report out to the Host.
  *
  * @deprecated ContainerErrorType is being deprecated as a public export. Please use {@link ContainerErrorTypes#clientSessionExpiredError} instead.
+ * @internal
  */
 export enum ContainerErrorType {
 	/**
@@ -58,6 +64,7 @@ export enum ContainerErrorType {
 
 /**
  * Represents warnings raised on container.
+ * @alpha
  */
 export interface ContainerWarning extends IErrorBase {
 	/**
@@ -82,6 +89,6 @@ export interface ContainerWarning extends IErrorBase {
  * - {@link @fluidframework/odsp-driver-definitions#OdspErrorType}
  *
  * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
- *
+ * @public
  */
 export type ICriticalContainerError = IErrorBase;

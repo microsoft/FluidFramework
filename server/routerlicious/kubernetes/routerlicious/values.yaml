@@ -57,7 +57,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
-  checkpointsTTLInSeconds: 864000
+  checkpointsTTLInSeconds: -1
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -130,9 +130,6 @@ mongodb:
   permanentDeletionEnabled: false
   deletionIntervalMs: 3600000
 
-rabbitmq:
-  connectionString: ""
-
 redis:
   url: redis_url
   port: 6379
@@ -171,3 +168,14 @@ error:
 lumberjack:
   options:
     enableGlobalTelemetryContext: true
+    enableSanitization: false
+
+config:
+  configDumpEnabled: false
+  secretNamesToRedactInConfigDump:
+    - mongo.globalDbEndpoint
+    - mongo.operationsDbEndpoint
+    - redis.pass
+    - redisForTenantCache.pass
+    - redis2.pass
+    - redisForThrottling.pass

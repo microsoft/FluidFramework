@@ -155,6 +155,7 @@ const snapshotFileName = "header";
  *     console.log(`New value was accepted for key: ${ key }, value: ${ pactMap.get(key) }`);
  * });
  * ```
+ * @internal
  */
 export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
 	/**
@@ -412,7 +413,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 * Create a summary for the PactMap
 	 *
 	 * @returns the summary of the current state of the PactMap
-	 * @internal
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const allEntries = [...this.values.entries()];
@@ -421,7 +421,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 * @internal
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, Pact<T>][]>(storage, snapshotFileName);
@@ -432,19 +431,16 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.initializeLocalCore}
-	 * @internal
 	 */
 	protected initializeLocalCore(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
-	 * @internal
 	 */
 	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
-	 * @internal
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const pactMapOp = content as IPactMapOperation<T>;
@@ -476,7 +472,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 * @param local - whether the message was sent by the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,

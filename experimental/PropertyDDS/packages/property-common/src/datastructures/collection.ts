@@ -17,6 +17,9 @@ const MSGS = {
 	KEY_NOT_VALID: "Key must be of type String or Number",
 };
 
+/**
+ * @internal
+ */
 export class Collection<T> {
 	protected _items: { [key: string]: T } = {};
 	protected _order: (string | number)[] = [];

@@ -104,7 +104,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 					isEphemeral = staticProps?.isEphemeralContainer ?? false;
 					await cache?.set(isEphemeralKey, isEphemeral); // Cache the value from the static data
 				} catch (e) {
-					Lumberjack.error(
+					Lumberjack.verbose(
 						`Failed to retrieve static data from document when checking isEphemeral flag.`,
 						getLumberBaseProperties(documentId, tenantId),
 					);
@@ -113,10 +113,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 			}
 		}
 	}
-	Lumberjack.info(
-		`Document is ephemeral? ${isEphemeral}`,
-		getLumberBaseProperties(documentId, tenantId),
-	);
+	if (isEphemeral) {
+		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
+	}
 
 	const calculatedStorageName =
 		initialUpload && storageName

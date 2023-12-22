@@ -1,5 +1,53 @@
 # @fluidframework/container-loader
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-loader: Removed request(...) and IFluidRouter from ILoader and Loader [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request(...)` method and `IFluidRouter` property have been removed from `ILoader` and `Loader`. Instead, after
+    calling `ILoader.resolve(...)`, call the `getEntryPoint()` method on the returned `IContainer`.
+
+    See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+-   container-definitions: Fix ISnapshotTreeWithBlobContents and mark internal [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    `ISnapshotTreeWithBlobContents` is an internal type that should not be used externally. Additionally, the type didn't
+    match the usage, specifically in runtime-utils where an `any` cast was used to work around undefined blobContents. The
+    type has been updated to reflect that blobContents can be undefined.
+
+-   container-loader: Removed requestResolvedObjectFromContainer [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The helper function `requestResolvedObjectFromContainer` has been removed. Please remove all calls to it and instead use
+    the new `entryPoint` pattern. See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   Move `location-redirection-utils` APIs to `container-loader` ([#17554](https://github.com/microsoft/FluidFramework/issues/17554)) [17acf10a71](https://github.com/microsoft/FluidFramework/commits/17acf10a71e51e2490d1df57c89430c1be04c345)
+
+    Moves the 2 package exports of `location-redirection-utils` to the `container-loader` package.
+
+    Exports from `location-redirection-utils` are now deprecated, and the package itself will be removed in an upcoming release.
+
 ## 2.0.0-internal.7.0.0
 
 ### Major Changes

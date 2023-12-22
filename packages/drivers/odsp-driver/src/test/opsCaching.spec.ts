@@ -103,6 +103,7 @@ async function runTestNoTimer(
 	mockData: MyDataInput[],
 	expected: { [key: number]: (MyDataInput | undefined)[] },
 	initialWritesExpected: number,
+	totalOpsWritten?: number,
 ) {
 	const mockCache = new MockCache();
 	const logger = new MockLogger();
@@ -118,7 +119,7 @@ async function runTestNoTimer(
 	cache.addOps(mockData);
 
 	const writes = mockCache.writeCount;
-	assert.equal(writes, initialWritesExpected);
+	assert.equal(writes, initialWritesExpected, "initialWrites should match");
 
 	// Validate that writing same ops is not going to change anything
 	cache.addOps(mockData);
@@ -128,12 +129,16 @@ async function runTestNoTimer(
 
 	// ensure all ops are flushed properly
 	cache.flushOps();
-	assert.equal(mockCache.opsWritten, mockData.length);
+	assert.equal(mockCache.opsWritten, totalOpsWritten ?? mockData.length);
 
 	// ensure adding same ops and flushing again is doing nothing
 	cache.addOps(mockData);
 	cache.flushOps();
-	assert.equal(mockCache.opsWritten, mockData.length);
+	assert.equal(
+		mockCache.opsWritten,
+		totalOpsWritten ?? mockData.length,
+		"ops written does not match",
+	);
 	logger.assertMatchNone([{ category: "error" }]);
 }
 
@@ -144,6 +149,7 @@ export async function runTestWithTimer(
 	expected: { [key: number]: (MyDataInput | undefined)[] },
 	initialWritesExpected: number,
 	totalWritesExpected: number,
+	totalOpsWritten?: number,
 ) {
 	const mockCache = new MockCache();
 	const logger = new MockLogger();
@@ -164,7 +170,7 @@ export async function runTestWithTimer(
 		await delay(1);
 	}
 	assert.equal(mockCache.writeCount, totalWritesExpected);
-	assert.equal(mockCache.opsWritten, mockData.length);
+	assert.equal(mockCache.opsWritten, totalOpsWritten ?? mockData.length);
 	logger.assertMatchNone([{ category: "error" }]);
 }
 
@@ -175,8 +181,16 @@ export async function runTest(
 	expected: { [key: string]: (MyDataInput | undefined)[] },
 	initialWritesExpected: number,
 	totalWritesExpected: number,
+	totalOpsWritten?: number,
 ) {
-	await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected);
+	await runTestNoTimer(
+		batchSize,
+		initialSeq,
+		mockData,
+		expected,
+		initialWritesExpected,
+		totalOpsWritten,
+	);
 	await runTestWithTimer(
 		batchSize,
 		initialSeq,
@@ -184,6 +198,7 @@ export async function runTest(
 		expected,
 		initialWritesExpected,
 		totalWritesExpected,
+		totalOpsWritten,
 	);
 }
 
@@ -205,7 +220,7 @@ describe("OpsCache", () => {
 	});
 
 	it("2 element in each batch of 10 should not commit", async () => {
-		await runTest(10, 100, mockData1, {}, 0, 5);
+		await runTest(10, 100, mockData1, {}, 0, 4, 8);
 	});
 
 	it("6 sequential elements with batch of 5 should commit 1 batch", async () => {
@@ -230,6 +245,47 @@ describe("OpsCache", () => {
 			},
 			1,
 			2,
+		);
+	});
+
+	it("Epmty ops at beginning and end of batch should cause the batch to not be cached", async () => {
+		await runTest(
+			5,
+			100,
+			[
+				{ sequenceNumber: 101, data: "101" },
+				{ sequenceNumber: 102, data: "102" },
+				{ sequenceNumber: 103, data: "103" },
+			],
+			{},
+			0,
+			0,
+			0,
+		);
+	});
+
+	it("Epmty ops at just the beginning should still cause the batch to be cached", async () => {
+		await runTest(
+			5,
+			100,
+			[
+				{ sequenceNumber: 101, data: "101" },
+				{ sequenceNumber: 102, data: "102" },
+				{ sequenceNumber: 103, data: "103" },
+				{ sequenceNumber: 104, data: "104" },
+			],
+			{
+				"5_20": [
+					undefined,
+					{ sequenceNumber: 101, data: "101" },
+					{ sequenceNumber: 102, data: "102" },
+					{ sequenceNumber: 103, data: "103" },
+					{ sequenceNumber: 104, data: "104" },
+				],
+			},
+			1,
+			1,
+			4,
 		);
 	});
 

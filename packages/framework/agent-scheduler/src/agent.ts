@@ -5,12 +5,22 @@
 
 import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 
+/**
+ * @alpha
+ */
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
 
+/**
+ * @alpha
+ */
 export interface IProvideAgentScheduler {
 	readonly IAgentScheduler: IAgentScheduler;
 }
 
+/**
+ * Events emitted by {@link (IAgentScheduler:interface)}.
+ * @alpha
+ */
 export interface IAgentSchedulerEvents extends IEvent {
 	/**
 	 * Event when ownership of task changes
@@ -34,6 +44,7 @@ export interface IAgentSchedulerEvents extends IEvent {
 
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
+ * @alpha
  */
 export interface IAgentScheduler
 	extends IProvideAgentScheduler,

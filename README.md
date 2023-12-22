@@ -80,6 +80,8 @@ Dependencies between packages in various layers of the system are enforced via a
 [layer-check](./build-tools/packages/build-tools/src/layerCheck). You can view the full list of packages and layers in
 [PACKAGES.md](./PACKAGES.md).
 
+-   Note: to update the contents of `PACKAGES.md` for local package changes, run `pnpm layer-check --md .`.
+
 ## Setup and Building
 
 Install the required tools:
@@ -216,12 +218,17 @@ _This will use an in-memory implementation of the Fluid server to sync between t
 _This will run the local Fluid server implementation we call "Tinylicious", so you can sync between multiple browser
 instances._
 
-First, start Tinylicious by running these commands from `/server/tinylicious`:
+First, start Tinylicious by running these commands from `/server/routerlicious/`:
 
 ```shell
-npm install
-npm run build
-npm run start
+pnpm install
+```
+
+Then these commands from `/server/routerlicious/packages/tinylicious`:
+
+```shell
+pnpm run build
+pnpm run start
 ```
 
 Then:

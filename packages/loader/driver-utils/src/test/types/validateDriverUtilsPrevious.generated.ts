@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_AttachmentTreeEntry():
     TypeOnly<old.AttachmentTreeEntry>;
 declare function use_current_ClassDeclaration_AttachmentTreeEntry(
-    use: TypeOnly<current.AttachmentTreeEntry>);
+    use: TypeOnly<current.AttachmentTreeEntry>): void;
 use_current_ClassDeclaration_AttachmentTreeEntry(
     get_old_ClassDeclaration_AttachmentTreeEntry());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_AttachmentTreeEntry(
 declare function get_current_ClassDeclaration_AttachmentTreeEntry():
     TypeOnly<current.AttachmentTreeEntry>;
 declare function use_old_ClassDeclaration_AttachmentTreeEntry(
-    use: TypeOnly<old.AttachmentTreeEntry>);
+    use: TypeOnly<old.AttachmentTreeEntry>): void;
 use_old_ClassDeclaration_AttachmentTreeEntry(
     get_current_ClassDeclaration_AttachmentTreeEntry());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_AttachmentTreeEntry(
 declare function get_old_ClassDeclaration_AuthorizationError():
     TypeOnly<old.AuthorizationError>;
 declare function use_current_ClassDeclaration_AuthorizationError(
-    use: TypeOnly<current.AuthorizationError>);
+    use: TypeOnly<current.AuthorizationError>): void;
 use_current_ClassDeclaration_AuthorizationError(
     get_old_ClassDeclaration_AuthorizationError());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_AuthorizationError(
 declare function get_current_ClassDeclaration_AuthorizationError():
     TypeOnly<current.AuthorizationError>;
 declare function use_old_ClassDeclaration_AuthorizationError(
-    use: TypeOnly<old.AuthorizationError>);
+    use: TypeOnly<old.AuthorizationError>): void;
 use_old_ClassDeclaration_AuthorizationError(
     get_current_ClassDeclaration_AuthorizationError());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_AuthorizationError(
 declare function get_old_ClassDeclaration_BlobTreeEntry():
     TypeOnly<old.BlobTreeEntry>;
 declare function use_current_ClassDeclaration_BlobTreeEntry(
-    use: TypeOnly<current.BlobTreeEntry>);
+    use: TypeOnly<current.BlobTreeEntry>): void;
 use_current_ClassDeclaration_BlobTreeEntry(
     get_old_ClassDeclaration_BlobTreeEntry());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_BlobTreeEntry(
 declare function get_current_ClassDeclaration_BlobTreeEntry():
     TypeOnly<current.BlobTreeEntry>;
 declare function use_old_ClassDeclaration_BlobTreeEntry(
-    use: TypeOnly<old.BlobTreeEntry>);
+    use: TypeOnly<old.BlobTreeEntry>): void;
 use_old_ClassDeclaration_BlobTreeEntry(
     get_current_ClassDeclaration_BlobTreeEntry());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_BlobTreeEntry(
 declare function get_old_InterfaceDeclaration_CombinedAppAndProtocolSummary():
     TypeOnly<old.CombinedAppAndProtocolSummary>;
 declare function use_current_InterfaceDeclaration_CombinedAppAndProtocolSummary(
-    use: TypeOnly<current.CombinedAppAndProtocolSummary>);
+    use: TypeOnly<current.CombinedAppAndProtocolSummary>): void;
 use_current_InterfaceDeclaration_CombinedAppAndProtocolSummary(
     get_old_InterfaceDeclaration_CombinedAppAndProtocolSummary());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_CombinedAppAndProtocolSummary(
 declare function get_current_InterfaceDeclaration_CombinedAppAndProtocolSummary():
     TypeOnly<current.CombinedAppAndProtocolSummary>;
 declare function use_old_InterfaceDeclaration_CombinedAppAndProtocolSummary(
-    use: TypeOnly<old.CombinedAppAndProtocolSummary>);
+    use: TypeOnly<old.CombinedAppAndProtocolSummary>): void;
 use_old_InterfaceDeclaration_CombinedAppAndProtocolSummary(
     get_current_InterfaceDeclaration_CombinedAppAndProtocolSummary());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_CombinedAppAndProtocolSummary(
 declare function get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError():
     TypeOnly<old.DeltaStreamConnectionForbiddenError>;
 declare function use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
-    use: TypeOnly<current.DeltaStreamConnectionForbiddenError>);
+    use: TypeOnly<current.DeltaStreamConnectionForbiddenError>): void;
 use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
     get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_DeltaStreamConnectionForbiddenError(
 declare function get_current_ClassDeclaration_DeltaStreamConnectionForbiddenError():
     TypeOnly<current.DeltaStreamConnectionForbiddenError>;
 declare function use_old_ClassDeclaration_DeltaStreamConnectionForbiddenError(
-    use: TypeOnly<old.DeltaStreamConnectionForbiddenError>);
+    use: TypeOnly<old.DeltaStreamConnectionForbiddenError>): void;
 use_old_ClassDeclaration_DeltaStreamConnectionForbiddenError(
     get_current_ClassDeclaration_DeltaStreamConnectionForbiddenError());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_DeltaStreamConnectionForbiddenError(
 declare function get_old_ClassDeclaration_DocumentStorageServiceProxy():
     TypeOnly<old.DocumentStorageServiceProxy>;
 declare function use_current_ClassDeclaration_DocumentStorageServiceProxy(
-    use: TypeOnly<current.DocumentStorageServiceProxy>);
+    use: TypeOnly<current.DocumentStorageServiceProxy>): void;
 use_current_ClassDeclaration_DocumentStorageServiceProxy(
     get_old_ClassDeclaration_DocumentStorageServiceProxy());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_DocumentStorageServiceProxy(
 declare function get_current_ClassDeclaration_DocumentStorageServiceProxy():
     TypeOnly<current.DocumentStorageServiceProxy>;
 declare function use_old_ClassDeclaration_DocumentStorageServiceProxy(
-    use: TypeOnly<old.DocumentStorageServiceProxy>);
+    use: TypeOnly<old.DocumentStorageServiceProxy>): void;
 use_old_ClassDeclaration_DocumentStorageServiceProxy(
     get_current_ClassDeclaration_DocumentStorageServiceProxy());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_DocumentStorageServiceProxy(
 declare function get_old_TypeAliasDeclaration_DriverErrorTelemetryProps():
     TypeOnly<old.DriverErrorTelemetryProps>;
 declare function use_current_TypeAliasDeclaration_DriverErrorTelemetryProps(
-    use: TypeOnly<current.DriverErrorTelemetryProps>);
+    use: TypeOnly<current.DriverErrorTelemetryProps>): void;
 use_current_TypeAliasDeclaration_DriverErrorTelemetryProps(
     get_old_TypeAliasDeclaration_DriverErrorTelemetryProps());
 
@@ -185,7 +185,7 @@ use_current_TypeAliasDeclaration_DriverErrorTelemetryProps(
 declare function get_current_TypeAliasDeclaration_DriverErrorTelemetryProps():
     TypeOnly<current.DriverErrorTelemetryProps>;
 declare function use_old_TypeAliasDeclaration_DriverErrorTelemetryProps(
-    use: TypeOnly<old.DriverErrorTelemetryProps>);
+    use: TypeOnly<old.DriverErrorTelemetryProps>): void;
 use_old_TypeAliasDeclaration_DriverErrorTelemetryProps(
     get_current_TypeAliasDeclaration_DriverErrorTelemetryProps());
 
@@ -197,7 +197,7 @@ use_old_TypeAliasDeclaration_DriverErrorTelemetryProps(
 declare function get_old_ClassDeclaration_FluidInvalidSchemaError():
     TypeOnly<old.FluidInvalidSchemaError>;
 declare function use_current_ClassDeclaration_FluidInvalidSchemaError(
-    use: TypeOnly<current.FluidInvalidSchemaError>);
+    use: TypeOnly<current.FluidInvalidSchemaError>): void;
 use_current_ClassDeclaration_FluidInvalidSchemaError(
     get_old_ClassDeclaration_FluidInvalidSchemaError());
 
@@ -209,7 +209,7 @@ use_current_ClassDeclaration_FluidInvalidSchemaError(
 declare function get_current_ClassDeclaration_FluidInvalidSchemaError():
     TypeOnly<current.FluidInvalidSchemaError>;
 declare function use_old_ClassDeclaration_FluidInvalidSchemaError(
-    use: TypeOnly<old.FluidInvalidSchemaError>);
+    use: TypeOnly<old.FluidInvalidSchemaError>): void;
 use_old_ClassDeclaration_FluidInvalidSchemaError(
     get_current_ClassDeclaration_FluidInvalidSchemaError());
 
@@ -221,7 +221,7 @@ use_old_ClassDeclaration_FluidInvalidSchemaError(
 declare function get_old_ClassDeclaration_GenericNetworkError():
     TypeOnly<old.GenericNetworkError>;
 declare function use_current_ClassDeclaration_GenericNetworkError(
-    use: TypeOnly<current.GenericNetworkError>);
+    use: TypeOnly<current.GenericNetworkError>): void;
 use_current_ClassDeclaration_GenericNetworkError(
     get_old_ClassDeclaration_GenericNetworkError());
 
@@ -233,7 +233,7 @@ use_current_ClassDeclaration_GenericNetworkError(
 declare function get_current_ClassDeclaration_GenericNetworkError():
     TypeOnly<current.GenericNetworkError>;
 declare function use_old_ClassDeclaration_GenericNetworkError(
-    use: TypeOnly<old.GenericNetworkError>);
+    use: TypeOnly<old.GenericNetworkError>): void;
 use_old_ClassDeclaration_GenericNetworkError(
     get_current_ClassDeclaration_GenericNetworkError());
 
@@ -245,7 +245,7 @@ use_old_ClassDeclaration_GenericNetworkError(
 declare function get_old_InterfaceDeclaration_ICompressionStorageConfig():
     TypeOnly<old.ICompressionStorageConfig>;
 declare function use_current_InterfaceDeclaration_ICompressionStorageConfig(
-    use: TypeOnly<current.ICompressionStorageConfig>);
+    use: TypeOnly<current.ICompressionStorageConfig>): void;
 use_current_InterfaceDeclaration_ICompressionStorageConfig(
     get_old_InterfaceDeclaration_ICompressionStorageConfig());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_ICompressionStorageConfig(
 declare function get_current_InterfaceDeclaration_ICompressionStorageConfig():
     TypeOnly<current.ICompressionStorageConfig>;
 declare function use_old_InterfaceDeclaration_ICompressionStorageConfig(
-    use: TypeOnly<old.ICompressionStorageConfig>);
+    use: TypeOnly<old.ICompressionStorageConfig>): void;
 use_old_InterfaceDeclaration_ICompressionStorageConfig(
     get_current_InterfaceDeclaration_ICompressionStorageConfig());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_ICompressionStorageConfig(
 declare function get_old_InterfaceDeclaration_IProgress():
     TypeOnly<old.IProgress>;
 declare function use_current_InterfaceDeclaration_IProgress(
-    use: TypeOnly<current.IProgress>);
+    use: TypeOnly<current.IProgress>): void;
 use_current_InterfaceDeclaration_IProgress(
     get_old_InterfaceDeclaration_IProgress());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_IProgress(
 declare function get_current_InterfaceDeclaration_IProgress():
     TypeOnly<current.IProgress>;
 declare function use_old_InterfaceDeclaration_IProgress(
-    use: TypeOnly<old.IProgress>);
+    use: TypeOnly<old.IProgress>): void;
 use_old_InterfaceDeclaration_IProgress(
     get_current_InterfaceDeclaration_IProgress());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_IProgress(
 declare function get_old_ClassDeclaration_InsecureUrlResolver():
     TypeOnly<old.InsecureUrlResolver>;
 declare function use_current_ClassDeclaration_InsecureUrlResolver(
-    use: TypeOnly<current.InsecureUrlResolver>);
+    use: TypeOnly<current.InsecureUrlResolver>): void;
 use_current_ClassDeclaration_InsecureUrlResolver(
     get_old_ClassDeclaration_InsecureUrlResolver());
 
@@ -305,7 +305,7 @@ use_current_ClassDeclaration_InsecureUrlResolver(
 declare function get_current_ClassDeclaration_InsecureUrlResolver():
     TypeOnly<current.InsecureUrlResolver>;
 declare function use_old_ClassDeclaration_InsecureUrlResolver(
-    use: TypeOnly<old.InsecureUrlResolver>);
+    use: TypeOnly<old.InsecureUrlResolver>): void;
 use_old_ClassDeclaration_InsecureUrlResolver(
     get_current_ClassDeclaration_InsecureUrlResolver());
 
@@ -317,7 +317,7 @@ use_old_ClassDeclaration_InsecureUrlResolver(
 declare function get_old_ClassDeclaration_LocationRedirectionError():
     TypeOnly<old.LocationRedirectionError>;
 declare function use_current_ClassDeclaration_LocationRedirectionError(
-    use: TypeOnly<current.LocationRedirectionError>);
+    use: TypeOnly<current.LocationRedirectionError>): void;
 use_current_ClassDeclaration_LocationRedirectionError(
     get_old_ClassDeclaration_LocationRedirectionError());
 
@@ -329,7 +329,7 @@ use_current_ClassDeclaration_LocationRedirectionError(
 declare function get_current_ClassDeclaration_LocationRedirectionError():
     TypeOnly<current.LocationRedirectionError>;
 declare function use_old_ClassDeclaration_LocationRedirectionError(
-    use: TypeOnly<old.LocationRedirectionError>);
+    use: TypeOnly<old.LocationRedirectionError>): void;
 use_old_ClassDeclaration_LocationRedirectionError(
     get_current_ClassDeclaration_LocationRedirectionError());
 
@@ -341,7 +341,7 @@ use_old_ClassDeclaration_LocationRedirectionError(
 declare function get_old_EnumDeclaration_MessageType2():
     TypeOnly<old.MessageType2>;
 declare function use_current_EnumDeclaration_MessageType2(
-    use: TypeOnly<current.MessageType2>);
+    use: TypeOnly<current.MessageType2>): void;
 use_current_EnumDeclaration_MessageType2(
     get_old_EnumDeclaration_MessageType2());
 
@@ -353,7 +353,7 @@ use_current_EnumDeclaration_MessageType2(
 declare function get_current_EnumDeclaration_MessageType2():
     TypeOnly<current.MessageType2>;
 declare function use_old_EnumDeclaration_MessageType2(
-    use: TypeOnly<old.MessageType2>);
+    use: TypeOnly<old.MessageType2>): void;
 use_old_EnumDeclaration_MessageType2(
     get_current_EnumDeclaration_MessageType2());
 
@@ -365,7 +365,7 @@ use_old_EnumDeclaration_MessageType2(
 declare function get_old_ClassDeclaration_NetworkErrorBasic():
     TypeOnly<old.NetworkErrorBasic<any>>;
 declare function use_current_ClassDeclaration_NetworkErrorBasic(
-    use: TypeOnly<current.NetworkErrorBasic<any>>);
+    use: TypeOnly<current.NetworkErrorBasic<any>>): void;
 use_current_ClassDeclaration_NetworkErrorBasic(
     get_old_ClassDeclaration_NetworkErrorBasic());
 
@@ -377,7 +377,7 @@ use_current_ClassDeclaration_NetworkErrorBasic(
 declare function get_current_ClassDeclaration_NetworkErrorBasic():
     TypeOnly<current.NetworkErrorBasic<any>>;
 declare function use_old_ClassDeclaration_NetworkErrorBasic(
-    use: TypeOnly<old.NetworkErrorBasic<any>>);
+    use: TypeOnly<old.NetworkErrorBasic<any>>): void;
 use_old_ClassDeclaration_NetworkErrorBasic(
     get_current_ClassDeclaration_NetworkErrorBasic());
 
@@ -389,7 +389,7 @@ use_old_ClassDeclaration_NetworkErrorBasic(
 declare function get_old_ClassDeclaration_NonRetryableError():
     TypeOnly<old.NonRetryableError<any>>;
 declare function use_current_ClassDeclaration_NonRetryableError(
-    use: TypeOnly<current.NonRetryableError<any>>);
+    use: TypeOnly<current.NonRetryableError<any>>): void;
 use_current_ClassDeclaration_NonRetryableError(
     get_old_ClassDeclaration_NonRetryableError());
 
@@ -401,7 +401,7 @@ use_current_ClassDeclaration_NonRetryableError(
 declare function get_current_ClassDeclaration_NonRetryableError():
     TypeOnly<current.NonRetryableError<any>>;
 declare function use_old_ClassDeclaration_NonRetryableError(
-    use: TypeOnly<old.NonRetryableError<any>>);
+    use: TypeOnly<old.NonRetryableError<any>>): void;
 use_old_ClassDeclaration_NonRetryableError(
     get_current_ClassDeclaration_NonRetryableError());
 
@@ -413,7 +413,7 @@ use_old_ClassDeclaration_NonRetryableError(
 declare function get_old_EnumDeclaration_OnlineStatus():
     TypeOnly<old.OnlineStatus>;
 declare function use_current_EnumDeclaration_OnlineStatus(
-    use: TypeOnly<current.OnlineStatus>);
+    use: TypeOnly<current.OnlineStatus>): void;
 use_current_EnumDeclaration_OnlineStatus(
     get_old_EnumDeclaration_OnlineStatus());
 
@@ -425,7 +425,7 @@ use_current_EnumDeclaration_OnlineStatus(
 declare function get_current_EnumDeclaration_OnlineStatus():
     TypeOnly<current.OnlineStatus>;
 declare function use_old_EnumDeclaration_OnlineStatus(
-    use: TypeOnly<old.OnlineStatus>);
+    use: TypeOnly<old.OnlineStatus>): void;
 use_old_EnumDeclaration_OnlineStatus(
     get_current_EnumDeclaration_OnlineStatus());
 
@@ -437,7 +437,7 @@ use_old_EnumDeclaration_OnlineStatus(
 declare function get_old_ClassDeclaration_ParallelRequests():
     TypeOnly<old.ParallelRequests<any>>;
 declare function use_current_ClassDeclaration_ParallelRequests(
-    use: TypeOnly<current.ParallelRequests<any>>);
+    use: TypeOnly<current.ParallelRequests<any>>): void;
 use_current_ClassDeclaration_ParallelRequests(
     get_old_ClassDeclaration_ParallelRequests());
 
@@ -449,7 +449,7 @@ use_current_ClassDeclaration_ParallelRequests(
 declare function get_current_ClassDeclaration_ParallelRequests():
     TypeOnly<current.ParallelRequests<any>>;
 declare function use_old_ClassDeclaration_ParallelRequests(
-    use: TypeOnly<old.ParallelRequests<any>>);
+    use: TypeOnly<old.ParallelRequests<any>>): void;
 use_old_ClassDeclaration_ParallelRequests(
     get_current_ClassDeclaration_ParallelRequests());
 
@@ -461,7 +461,7 @@ use_old_ClassDeclaration_ParallelRequests(
 declare function get_old_ClassDeclaration_PrefetchDocumentStorageService():
     TypeOnly<old.PrefetchDocumentStorageService>;
 declare function use_current_ClassDeclaration_PrefetchDocumentStorageService(
-    use: TypeOnly<current.PrefetchDocumentStorageService>);
+    use: TypeOnly<current.PrefetchDocumentStorageService>): void;
 use_current_ClassDeclaration_PrefetchDocumentStorageService(
     get_old_ClassDeclaration_PrefetchDocumentStorageService());
 
@@ -473,7 +473,7 @@ use_current_ClassDeclaration_PrefetchDocumentStorageService(
 declare function get_current_ClassDeclaration_PrefetchDocumentStorageService():
     TypeOnly<current.PrefetchDocumentStorageService>;
 declare function use_old_ClassDeclaration_PrefetchDocumentStorageService(
-    use: TypeOnly<old.PrefetchDocumentStorageService>);
+    use: TypeOnly<old.PrefetchDocumentStorageService>): void;
 use_old_ClassDeclaration_PrefetchDocumentStorageService(
     get_current_ClassDeclaration_PrefetchDocumentStorageService());
 
@@ -485,7 +485,7 @@ use_old_ClassDeclaration_PrefetchDocumentStorageService(
 declare function get_old_ClassDeclaration_Queue():
     TypeOnly<old.Queue<any>>;
 declare function use_current_ClassDeclaration_Queue(
-    use: TypeOnly<current.Queue<any>>);
+    use: TypeOnly<current.Queue<any>>): void;
 use_current_ClassDeclaration_Queue(
     get_old_ClassDeclaration_Queue());
 
@@ -497,7 +497,7 @@ use_current_ClassDeclaration_Queue(
 declare function get_current_ClassDeclaration_Queue():
     TypeOnly<current.Queue<any>>;
 declare function use_old_ClassDeclaration_Queue(
-    use: TypeOnly<old.Queue<any>>);
+    use: TypeOnly<old.Queue<any>>): void;
 use_old_ClassDeclaration_Queue(
     get_current_ClassDeclaration_Queue());
 
@@ -509,7 +509,7 @@ use_old_ClassDeclaration_Queue(
 declare function get_old_ClassDeclaration_RateLimiter():
     TypeOnly<old.RateLimiter>;
 declare function use_current_ClassDeclaration_RateLimiter(
-    use: TypeOnly<current.RateLimiter>);
+    use: TypeOnly<current.RateLimiter>): void;
 use_current_ClassDeclaration_RateLimiter(
     get_old_ClassDeclaration_RateLimiter());
 
@@ -521,7 +521,7 @@ use_current_ClassDeclaration_RateLimiter(
 declare function get_current_ClassDeclaration_RateLimiter():
     TypeOnly<current.RateLimiter>;
 declare function use_old_ClassDeclaration_RateLimiter(
-    use: TypeOnly<old.RateLimiter>);
+    use: TypeOnly<old.RateLimiter>): void;
 use_old_ClassDeclaration_RateLimiter(
     get_current_ClassDeclaration_RateLimiter());
 
@@ -533,7 +533,7 @@ use_old_ClassDeclaration_RateLimiter(
 declare function get_old_ClassDeclaration_RetryableError():
     TypeOnly<old.RetryableError<any>>;
 declare function use_current_ClassDeclaration_RetryableError(
-    use: TypeOnly<current.RetryableError<any>>);
+    use: TypeOnly<current.RetryableError<any>>): void;
 use_current_ClassDeclaration_RetryableError(
     get_old_ClassDeclaration_RetryableError());
 
@@ -545,9 +545,33 @@ use_current_ClassDeclaration_RetryableError(
 declare function get_current_ClassDeclaration_RetryableError():
     TypeOnly<current.RetryableError<any>>;
 declare function use_old_ClassDeclaration_RetryableError(
-    use: TypeOnly<old.RetryableError<any>>);
+    use: TypeOnly<old.RetryableError<any>>): void;
 use_old_ClassDeclaration_RetryableError(
     get_current_ClassDeclaration_RetryableError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SummaryCompressionAlgorithm": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SummaryCompressionAlgorithm():
+    TypeOnly<old.SummaryCompressionAlgorithm>;
+declare function use_current_EnumDeclaration_SummaryCompressionAlgorithm(
+    use: TypeOnly<current.SummaryCompressionAlgorithm>): void;
+use_current_EnumDeclaration_SummaryCompressionAlgorithm(
+    get_old_EnumDeclaration_SummaryCompressionAlgorithm());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SummaryCompressionAlgorithm": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SummaryCompressionAlgorithm():
+    TypeOnly<current.SummaryCompressionAlgorithm>;
+declare function use_old_EnumDeclaration_SummaryCompressionAlgorithm(
+    use: TypeOnly<old.SummaryCompressionAlgorithm>): void;
+use_old_EnumDeclaration_SummaryCompressionAlgorithm(
+    get_current_EnumDeclaration_SummaryCompressionAlgorithm());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -557,7 +581,7 @@ use_old_ClassDeclaration_RetryableError(
 declare function get_old_ClassDeclaration_ThrottlingError():
     TypeOnly<old.ThrottlingError>;
 declare function use_current_ClassDeclaration_ThrottlingError(
-    use: TypeOnly<current.ThrottlingError>);
+    use: TypeOnly<current.ThrottlingError>): void;
 use_current_ClassDeclaration_ThrottlingError(
     get_old_ClassDeclaration_ThrottlingError());
 
@@ -569,7 +593,7 @@ use_current_ClassDeclaration_ThrottlingError(
 declare function get_current_ClassDeclaration_ThrottlingError():
     TypeOnly<current.ThrottlingError>;
 declare function use_old_ClassDeclaration_ThrottlingError(
-    use: TypeOnly<old.ThrottlingError>);
+    use: TypeOnly<old.ThrottlingError>): void;
 use_old_ClassDeclaration_ThrottlingError(
     get_current_ClassDeclaration_ThrottlingError());
 
@@ -581,7 +605,7 @@ use_old_ClassDeclaration_ThrottlingError(
 declare function get_old_ClassDeclaration_TreeTreeEntry():
     TypeOnly<old.TreeTreeEntry>;
 declare function use_current_ClassDeclaration_TreeTreeEntry(
-    use: TypeOnly<current.TreeTreeEntry>);
+    use: TypeOnly<current.TreeTreeEntry>): void;
 use_current_ClassDeclaration_TreeTreeEntry(
     get_old_ClassDeclaration_TreeTreeEntry());
 
@@ -593,7 +617,7 @@ use_current_ClassDeclaration_TreeTreeEntry(
 declare function get_current_ClassDeclaration_TreeTreeEntry():
     TypeOnly<current.TreeTreeEntry>;
 declare function use_old_ClassDeclaration_TreeTreeEntry(
-    use: TypeOnly<old.TreeTreeEntry>);
+    use: TypeOnly<old.TreeTreeEntry>): void;
 use_old_ClassDeclaration_TreeTreeEntry(
     get_current_ClassDeclaration_TreeTreeEntry());
 
@@ -605,7 +629,7 @@ use_old_ClassDeclaration_TreeTreeEntry(
 declare function get_old_ClassDeclaration_UsageError():
     TypeOnly<old.UsageError>;
 declare function use_current_ClassDeclaration_UsageError(
-    use: TypeOnly<current.UsageError>);
+    use: TypeOnly<current.UsageError>): void;
 use_current_ClassDeclaration_UsageError(
     get_old_ClassDeclaration_UsageError());
 
@@ -617,7 +641,7 @@ use_current_ClassDeclaration_UsageError(
 declare function get_current_ClassDeclaration_UsageError():
     TypeOnly<current.UsageError>;
 declare function use_old_ClassDeclaration_UsageError(
-    use: TypeOnly<old.UsageError>);
+    use: TypeOnly<old.UsageError>): void;
 use_old_ClassDeclaration_UsageError(
     get_current_ClassDeclaration_UsageError());
 
@@ -629,7 +653,7 @@ use_old_ClassDeclaration_UsageError(
 declare function get_old_FunctionDeclaration_applyStorageCompression():
     TypeOnly<typeof old.applyStorageCompression>;
 declare function use_current_FunctionDeclaration_applyStorageCompression(
-    use: TypeOnly<typeof current.applyStorageCompression>);
+    use: TypeOnly<typeof current.applyStorageCompression>): void;
 use_current_FunctionDeclaration_applyStorageCompression(
     get_old_FunctionDeclaration_applyStorageCompression());
 
@@ -641,7 +665,7 @@ use_current_FunctionDeclaration_applyStorageCompression(
 declare function get_current_FunctionDeclaration_applyStorageCompression():
     TypeOnly<typeof current.applyStorageCompression>;
 declare function use_old_FunctionDeclaration_applyStorageCompression(
-    use: TypeOnly<typeof old.applyStorageCompression>);
+    use: TypeOnly<typeof old.applyStorageCompression>): void;
 use_old_FunctionDeclaration_applyStorageCompression(
     get_current_FunctionDeclaration_applyStorageCompression());
 
@@ -653,7 +677,7 @@ use_old_FunctionDeclaration_applyStorageCompression(
 declare function get_old_VariableDeclaration_blobHeadersBlobName():
     TypeOnly<typeof old.blobHeadersBlobName>;
 declare function use_current_VariableDeclaration_blobHeadersBlobName(
-    use: TypeOnly<typeof current.blobHeadersBlobName>);
+    use: TypeOnly<typeof current.blobHeadersBlobName>): void;
 use_current_VariableDeclaration_blobHeadersBlobName(
     get_old_VariableDeclaration_blobHeadersBlobName());
 
@@ -665,7 +689,7 @@ use_current_VariableDeclaration_blobHeadersBlobName(
 declare function get_current_VariableDeclaration_blobHeadersBlobName():
     TypeOnly<typeof current.blobHeadersBlobName>;
 declare function use_old_VariableDeclaration_blobHeadersBlobName(
-    use: TypeOnly<typeof old.blobHeadersBlobName>);
+    use: TypeOnly<typeof old.blobHeadersBlobName>): void;
 use_old_VariableDeclaration_blobHeadersBlobName(
     get_current_VariableDeclaration_blobHeadersBlobName());
 
@@ -677,7 +701,7 @@ use_old_VariableDeclaration_blobHeadersBlobName(
 declare function get_old_FunctionDeclaration_buildSnapshotTree():
     TypeOnly<typeof old.buildSnapshotTree>;
 declare function use_current_FunctionDeclaration_buildSnapshotTree(
-    use: TypeOnly<typeof current.buildSnapshotTree>);
+    use: TypeOnly<typeof current.buildSnapshotTree>): void;
 use_current_FunctionDeclaration_buildSnapshotTree(
     get_old_FunctionDeclaration_buildSnapshotTree());
 
@@ -689,7 +713,7 @@ use_current_FunctionDeclaration_buildSnapshotTree(
 declare function get_current_FunctionDeclaration_buildSnapshotTree():
     TypeOnly<typeof current.buildSnapshotTree>;
 declare function use_old_FunctionDeclaration_buildSnapshotTree(
-    use: TypeOnly<typeof old.buildSnapshotTree>);
+    use: TypeOnly<typeof old.buildSnapshotTree>): void;
 use_old_FunctionDeclaration_buildSnapshotTree(
     get_current_FunctionDeclaration_buildSnapshotTree());
 
@@ -701,7 +725,7 @@ use_old_FunctionDeclaration_buildSnapshotTree(
 declare function get_old_FunctionDeclaration_calculateMaxWaitTime():
     TypeOnly<typeof old.calculateMaxWaitTime>;
 declare function use_current_FunctionDeclaration_calculateMaxWaitTime(
-    use: TypeOnly<typeof current.calculateMaxWaitTime>);
+    use: TypeOnly<typeof current.calculateMaxWaitTime>): void;
 use_current_FunctionDeclaration_calculateMaxWaitTime(
     get_old_FunctionDeclaration_calculateMaxWaitTime());
 
@@ -713,7 +737,7 @@ use_current_FunctionDeclaration_calculateMaxWaitTime(
 declare function get_current_FunctionDeclaration_calculateMaxWaitTime():
     TypeOnly<typeof current.calculateMaxWaitTime>;
 declare function use_old_FunctionDeclaration_calculateMaxWaitTime(
-    use: TypeOnly<typeof old.calculateMaxWaitTime>);
+    use: TypeOnly<typeof old.calculateMaxWaitTime>): void;
 use_old_FunctionDeclaration_calculateMaxWaitTime(
     get_current_FunctionDeclaration_calculateMaxWaitTime());
 
@@ -725,7 +749,7 @@ use_old_FunctionDeclaration_calculateMaxWaitTime(
 declare function get_old_FunctionDeclaration_canBeCoalescedByService():
     TypeOnly<typeof old.canBeCoalescedByService>;
 declare function use_current_FunctionDeclaration_canBeCoalescedByService(
-    use: TypeOnly<typeof current.canBeCoalescedByService>);
+    use: TypeOnly<typeof current.canBeCoalescedByService>): void;
 use_current_FunctionDeclaration_canBeCoalescedByService(
     get_old_FunctionDeclaration_canBeCoalescedByService());
 
@@ -737,7 +761,7 @@ use_current_FunctionDeclaration_canBeCoalescedByService(
 declare function get_current_FunctionDeclaration_canBeCoalescedByService():
     TypeOnly<typeof current.canBeCoalescedByService>;
 declare function use_old_FunctionDeclaration_canBeCoalescedByService(
-    use: TypeOnly<typeof old.canBeCoalescedByService>);
+    use: TypeOnly<typeof old.canBeCoalescedByService>): void;
 use_old_FunctionDeclaration_canBeCoalescedByService(
     get_current_FunctionDeclaration_canBeCoalescedByService());
 
@@ -749,7 +773,7 @@ use_old_FunctionDeclaration_canBeCoalescedByService(
 declare function get_old_VariableDeclaration_canRetryOnError():
     TypeOnly<typeof old.canRetryOnError>;
 declare function use_current_VariableDeclaration_canRetryOnError(
-    use: TypeOnly<typeof current.canRetryOnError>);
+    use: TypeOnly<typeof current.canRetryOnError>): void;
 use_current_VariableDeclaration_canRetryOnError(
     get_old_VariableDeclaration_canRetryOnError());
 
@@ -761,7 +785,7 @@ use_current_VariableDeclaration_canRetryOnError(
 declare function get_current_VariableDeclaration_canRetryOnError():
     TypeOnly<typeof current.canRetryOnError>;
 declare function use_old_VariableDeclaration_canRetryOnError(
-    use: TypeOnly<typeof old.canRetryOnError>);
+    use: TypeOnly<typeof old.canRetryOnError>): void;
 use_old_VariableDeclaration_canRetryOnError(
     get_current_VariableDeclaration_canRetryOnError());
 
@@ -773,7 +797,7 @@ use_old_VariableDeclaration_canRetryOnError(
 declare function get_old_FunctionDeclaration_convertSummaryTreeToSnapshotITree():
     TypeOnly<typeof old.convertSummaryTreeToSnapshotITree>;
 declare function use_current_FunctionDeclaration_convertSummaryTreeToSnapshotITree(
-    use: TypeOnly<typeof current.convertSummaryTreeToSnapshotITree>);
+    use: TypeOnly<typeof current.convertSummaryTreeToSnapshotITree>): void;
 use_current_FunctionDeclaration_convertSummaryTreeToSnapshotITree(
     get_old_FunctionDeclaration_convertSummaryTreeToSnapshotITree());
 
@@ -785,7 +809,7 @@ use_current_FunctionDeclaration_convertSummaryTreeToSnapshotITree(
 declare function get_current_FunctionDeclaration_convertSummaryTreeToSnapshotITree():
     TypeOnly<typeof current.convertSummaryTreeToSnapshotITree>;
 declare function use_old_FunctionDeclaration_convertSummaryTreeToSnapshotITree(
-    use: TypeOnly<typeof old.convertSummaryTreeToSnapshotITree>);
+    use: TypeOnly<typeof old.convertSummaryTreeToSnapshotITree>): void;
 use_old_FunctionDeclaration_convertSummaryTreeToSnapshotITree(
     get_current_FunctionDeclaration_convertSummaryTreeToSnapshotITree());
 
@@ -797,7 +821,7 @@ use_old_FunctionDeclaration_convertSummaryTreeToSnapshotITree(
 declare function get_old_FunctionDeclaration_createGenericNetworkError():
     TypeOnly<typeof old.createGenericNetworkError>;
 declare function use_current_FunctionDeclaration_createGenericNetworkError(
-    use: TypeOnly<typeof current.createGenericNetworkError>);
+    use: TypeOnly<typeof current.createGenericNetworkError>): void;
 use_current_FunctionDeclaration_createGenericNetworkError(
     get_old_FunctionDeclaration_createGenericNetworkError());
 
@@ -809,7 +833,7 @@ use_current_FunctionDeclaration_createGenericNetworkError(
 declare function get_current_FunctionDeclaration_createGenericNetworkError():
     TypeOnly<typeof current.createGenericNetworkError>;
 declare function use_old_FunctionDeclaration_createGenericNetworkError(
-    use: TypeOnly<typeof old.createGenericNetworkError>);
+    use: TypeOnly<typeof old.createGenericNetworkError>): void;
 use_old_FunctionDeclaration_createGenericNetworkError(
     get_current_FunctionDeclaration_createGenericNetworkError());
 
@@ -821,7 +845,7 @@ use_old_FunctionDeclaration_createGenericNetworkError(
 declare function get_old_VariableDeclaration_createWriteError():
     TypeOnly<typeof old.createWriteError>;
 declare function use_current_VariableDeclaration_createWriteError(
-    use: TypeOnly<typeof current.createWriteError>);
+    use: TypeOnly<typeof current.createWriteError>): void;
 use_current_VariableDeclaration_createWriteError(
     get_old_VariableDeclaration_createWriteError());
 
@@ -833,7 +857,7 @@ use_current_VariableDeclaration_createWriteError(
 declare function get_current_VariableDeclaration_createWriteError():
     TypeOnly<typeof current.createWriteError>;
 declare function use_old_VariableDeclaration_createWriteError(
-    use: TypeOnly<typeof old.createWriteError>);
+    use: TypeOnly<typeof old.createWriteError>): void;
 use_old_VariableDeclaration_createWriteError(
     get_current_VariableDeclaration_createWriteError());
 
@@ -845,7 +869,7 @@ use_old_VariableDeclaration_createWriteError(
 declare function get_old_VariableDeclaration_emptyMessageStream():
     TypeOnly<typeof old.emptyMessageStream>;
 declare function use_current_VariableDeclaration_emptyMessageStream(
-    use: TypeOnly<typeof current.emptyMessageStream>);
+    use: TypeOnly<typeof current.emptyMessageStream>): void;
 use_current_VariableDeclaration_emptyMessageStream(
     get_old_VariableDeclaration_emptyMessageStream());
 
@@ -857,7 +881,7 @@ use_current_VariableDeclaration_emptyMessageStream(
 declare function get_current_VariableDeclaration_emptyMessageStream():
     TypeOnly<typeof current.emptyMessageStream>;
 declare function use_old_VariableDeclaration_emptyMessageStream(
-    use: TypeOnly<typeof old.emptyMessageStream>);
+    use: TypeOnly<typeof old.emptyMessageStream>): void;
 use_old_VariableDeclaration_emptyMessageStream(
     get_current_VariableDeclaration_emptyMessageStream());
 
@@ -869,7 +893,7 @@ use_old_VariableDeclaration_emptyMessageStream(
 declare function get_old_FunctionDeclaration_getDocAttributesFromProtocolSummary():
     TypeOnly<typeof old.getDocAttributesFromProtocolSummary>;
 declare function use_current_FunctionDeclaration_getDocAttributesFromProtocolSummary(
-    use: TypeOnly<typeof current.getDocAttributesFromProtocolSummary>);
+    use: TypeOnly<typeof current.getDocAttributesFromProtocolSummary>): void;
 use_current_FunctionDeclaration_getDocAttributesFromProtocolSummary(
     get_old_FunctionDeclaration_getDocAttributesFromProtocolSummary());
 
@@ -881,7 +905,7 @@ use_current_FunctionDeclaration_getDocAttributesFromProtocolSummary(
 declare function get_current_FunctionDeclaration_getDocAttributesFromProtocolSummary():
     TypeOnly<typeof current.getDocAttributesFromProtocolSummary>;
 declare function use_old_FunctionDeclaration_getDocAttributesFromProtocolSummary(
-    use: TypeOnly<typeof old.getDocAttributesFromProtocolSummary>);
+    use: TypeOnly<typeof old.getDocAttributesFromProtocolSummary>): void;
 use_old_FunctionDeclaration_getDocAttributesFromProtocolSummary(
     get_current_FunctionDeclaration_getDocAttributesFromProtocolSummary());
 
@@ -893,7 +917,7 @@ use_old_FunctionDeclaration_getDocAttributesFromProtocolSummary(
 declare function get_old_FunctionDeclaration_getQuorumValuesFromProtocolSummary():
     TypeOnly<typeof old.getQuorumValuesFromProtocolSummary>;
 declare function use_current_FunctionDeclaration_getQuorumValuesFromProtocolSummary(
-    use: TypeOnly<typeof current.getQuorumValuesFromProtocolSummary>);
+    use: TypeOnly<typeof current.getQuorumValuesFromProtocolSummary>): void;
 use_current_FunctionDeclaration_getQuorumValuesFromProtocolSummary(
     get_old_FunctionDeclaration_getQuorumValuesFromProtocolSummary());
 
@@ -905,7 +929,7 @@ use_current_FunctionDeclaration_getQuorumValuesFromProtocolSummary(
 declare function get_current_FunctionDeclaration_getQuorumValuesFromProtocolSummary():
     TypeOnly<typeof current.getQuorumValuesFromProtocolSummary>;
 declare function use_old_FunctionDeclaration_getQuorumValuesFromProtocolSummary(
-    use: TypeOnly<typeof old.getQuorumValuesFromProtocolSummary>);
+    use: TypeOnly<typeof old.getQuorumValuesFromProtocolSummary>): void;
 use_old_FunctionDeclaration_getQuorumValuesFromProtocolSummary(
     get_current_FunctionDeclaration_getQuorumValuesFromProtocolSummary());
 
@@ -917,7 +941,7 @@ use_old_FunctionDeclaration_getQuorumValuesFromProtocolSummary(
 declare function get_old_VariableDeclaration_getRetryDelayFromError():
     TypeOnly<typeof old.getRetryDelayFromError>;
 declare function use_current_VariableDeclaration_getRetryDelayFromError(
-    use: TypeOnly<typeof current.getRetryDelayFromError>);
+    use: TypeOnly<typeof current.getRetryDelayFromError>): void;
 use_current_VariableDeclaration_getRetryDelayFromError(
     get_old_VariableDeclaration_getRetryDelayFromError());
 
@@ -929,7 +953,7 @@ use_current_VariableDeclaration_getRetryDelayFromError(
 declare function get_current_VariableDeclaration_getRetryDelayFromError():
     TypeOnly<typeof current.getRetryDelayFromError>;
 declare function use_old_VariableDeclaration_getRetryDelayFromError(
-    use: TypeOnly<typeof old.getRetryDelayFromError>);
+    use: TypeOnly<typeof old.getRetryDelayFromError>): void;
 use_old_VariableDeclaration_getRetryDelayFromError(
     get_current_VariableDeclaration_getRetryDelayFromError());
 
@@ -941,7 +965,7 @@ use_old_VariableDeclaration_getRetryDelayFromError(
 declare function get_old_VariableDeclaration_getRetryDelaySecondsFromError():
     TypeOnly<typeof old.getRetryDelaySecondsFromError>;
 declare function use_current_VariableDeclaration_getRetryDelaySecondsFromError(
-    use: TypeOnly<typeof current.getRetryDelaySecondsFromError>);
+    use: TypeOnly<typeof current.getRetryDelaySecondsFromError>): void;
 use_current_VariableDeclaration_getRetryDelaySecondsFromError(
     get_old_VariableDeclaration_getRetryDelaySecondsFromError());
 
@@ -953,7 +977,7 @@ use_current_VariableDeclaration_getRetryDelaySecondsFromError(
 declare function get_current_VariableDeclaration_getRetryDelaySecondsFromError():
     TypeOnly<typeof current.getRetryDelaySecondsFromError>;
 declare function use_old_VariableDeclaration_getRetryDelaySecondsFromError(
-    use: TypeOnly<typeof old.getRetryDelaySecondsFromError>);
+    use: TypeOnly<typeof old.getRetryDelaySecondsFromError>): void;
 use_old_VariableDeclaration_getRetryDelaySecondsFromError(
     get_current_VariableDeclaration_getRetryDelaySecondsFromError());
 
@@ -965,7 +989,7 @@ use_old_VariableDeclaration_getRetryDelaySecondsFromError(
 declare function get_old_FunctionDeclaration_isCombinedAppAndProtocolSummary():
     TypeOnly<typeof old.isCombinedAppAndProtocolSummary>;
 declare function use_current_FunctionDeclaration_isCombinedAppAndProtocolSummary(
-    use: TypeOnly<typeof current.isCombinedAppAndProtocolSummary>);
+    use: TypeOnly<typeof current.isCombinedAppAndProtocolSummary>): void;
 use_current_FunctionDeclaration_isCombinedAppAndProtocolSummary(
     get_old_FunctionDeclaration_isCombinedAppAndProtocolSummary());
 
@@ -977,7 +1001,7 @@ use_current_FunctionDeclaration_isCombinedAppAndProtocolSummary(
 declare function get_current_FunctionDeclaration_isCombinedAppAndProtocolSummary():
     TypeOnly<typeof current.isCombinedAppAndProtocolSummary>;
 declare function use_old_FunctionDeclaration_isCombinedAppAndProtocolSummary(
-    use: TypeOnly<typeof old.isCombinedAppAndProtocolSummary>);
+    use: TypeOnly<typeof old.isCombinedAppAndProtocolSummary>): void;
 use_old_FunctionDeclaration_isCombinedAppAndProtocolSummary(
     get_current_FunctionDeclaration_isCombinedAppAndProtocolSummary());
 
@@ -989,7 +1013,7 @@ use_old_FunctionDeclaration_isCombinedAppAndProtocolSummary(
 declare function get_old_FunctionDeclaration_isOnline():
     TypeOnly<typeof old.isOnline>;
 declare function use_current_FunctionDeclaration_isOnline(
-    use: TypeOnly<typeof current.isOnline>);
+    use: TypeOnly<typeof current.isOnline>): void;
 use_current_FunctionDeclaration_isOnline(
     get_old_FunctionDeclaration_isOnline());
 
@@ -1001,7 +1025,7 @@ use_current_FunctionDeclaration_isOnline(
 declare function get_current_FunctionDeclaration_isOnline():
     TypeOnly<typeof current.isOnline>;
 declare function use_old_FunctionDeclaration_isOnline(
-    use: TypeOnly<typeof old.isOnline>);
+    use: TypeOnly<typeof old.isOnline>): void;
 use_old_FunctionDeclaration_isOnline(
     get_current_FunctionDeclaration_isOnline());
 
@@ -1013,7 +1037,7 @@ use_old_FunctionDeclaration_isOnline(
 declare function get_old_FunctionDeclaration_isRuntimeMessage():
     TypeOnly<typeof old.isRuntimeMessage>;
 declare function use_current_FunctionDeclaration_isRuntimeMessage(
-    use: TypeOnly<typeof current.isRuntimeMessage>);
+    use: TypeOnly<typeof current.isRuntimeMessage>): void;
 use_current_FunctionDeclaration_isRuntimeMessage(
     get_old_FunctionDeclaration_isRuntimeMessage());
 
@@ -1025,7 +1049,7 @@ use_current_FunctionDeclaration_isRuntimeMessage(
 declare function get_current_FunctionDeclaration_isRuntimeMessage():
     TypeOnly<typeof current.isRuntimeMessage>;
 declare function use_old_FunctionDeclaration_isRuntimeMessage(
-    use: TypeOnly<typeof old.isRuntimeMessage>);
+    use: TypeOnly<typeof old.isRuntimeMessage>): void;
 use_old_FunctionDeclaration_isRuntimeMessage(
     get_current_FunctionDeclaration_isRuntimeMessage());
 
@@ -1037,7 +1061,7 @@ use_old_FunctionDeclaration_isRuntimeMessage(
 declare function get_old_FunctionDeclaration_logNetworkFailure():
     TypeOnly<typeof old.logNetworkFailure>;
 declare function use_current_FunctionDeclaration_logNetworkFailure(
-    use: TypeOnly<typeof current.logNetworkFailure>);
+    use: TypeOnly<typeof current.logNetworkFailure>): void;
 use_current_FunctionDeclaration_logNetworkFailure(
     get_old_FunctionDeclaration_logNetworkFailure());
 
@@ -1049,7 +1073,7 @@ use_current_FunctionDeclaration_logNetworkFailure(
 declare function get_current_FunctionDeclaration_logNetworkFailure():
     TypeOnly<typeof current.logNetworkFailure>;
 declare function use_old_FunctionDeclaration_logNetworkFailure(
-    use: TypeOnly<typeof old.logNetworkFailure>);
+    use: TypeOnly<typeof old.logNetworkFailure>): void;
 use_old_FunctionDeclaration_logNetworkFailure(
     get_current_FunctionDeclaration_logNetworkFailure());
 
@@ -1061,7 +1085,7 @@ use_old_FunctionDeclaration_logNetworkFailure(
 declare function get_old_FunctionDeclaration_readAndParse():
     TypeOnly<typeof old.readAndParse>;
 declare function use_current_FunctionDeclaration_readAndParse(
-    use: TypeOnly<typeof current.readAndParse>);
+    use: TypeOnly<typeof current.readAndParse>): void;
 use_current_FunctionDeclaration_readAndParse(
     get_old_FunctionDeclaration_readAndParse());
 
@@ -1073,7 +1097,7 @@ use_current_FunctionDeclaration_readAndParse(
 declare function get_current_FunctionDeclaration_readAndParse():
     TypeOnly<typeof current.readAndParse>;
 declare function use_old_FunctionDeclaration_readAndParse(
-    use: TypeOnly<typeof old.readAndParse>);
+    use: TypeOnly<typeof old.readAndParse>): void;
 use_old_FunctionDeclaration_readAndParse(
     get_current_FunctionDeclaration_readAndParse());
 
@@ -1085,7 +1109,7 @@ use_old_FunctionDeclaration_readAndParse(
 declare function get_old_FunctionDeclaration_requestOps():
     TypeOnly<typeof old.requestOps>;
 declare function use_current_FunctionDeclaration_requestOps(
-    use: TypeOnly<typeof current.requestOps>);
+    use: TypeOnly<typeof current.requestOps>): void;
 use_current_FunctionDeclaration_requestOps(
     get_old_FunctionDeclaration_requestOps());
 
@@ -1097,7 +1121,7 @@ use_current_FunctionDeclaration_requestOps(
 declare function get_current_FunctionDeclaration_requestOps():
     TypeOnly<typeof current.requestOps>;
 declare function use_old_FunctionDeclaration_requestOps(
-    use: TypeOnly<typeof old.requestOps>);
+    use: TypeOnly<typeof old.requestOps>): void;
 use_old_FunctionDeclaration_requestOps(
     get_current_FunctionDeclaration_requestOps());
 
@@ -1109,7 +1133,7 @@ use_old_FunctionDeclaration_requestOps(
 declare function get_old_FunctionDeclaration_runWithRetry():
     TypeOnly<typeof old.runWithRetry>;
 declare function use_current_FunctionDeclaration_runWithRetry(
-    use: TypeOnly<typeof current.runWithRetry>);
+    use: TypeOnly<typeof current.runWithRetry>): void;
 use_current_FunctionDeclaration_runWithRetry(
     get_old_FunctionDeclaration_runWithRetry());
 
@@ -1121,7 +1145,7 @@ use_current_FunctionDeclaration_runWithRetry(
 declare function get_current_FunctionDeclaration_runWithRetry():
     TypeOnly<typeof current.runWithRetry>;
 declare function use_old_FunctionDeclaration_runWithRetry(
-    use: TypeOnly<typeof old.runWithRetry>);
+    use: TypeOnly<typeof old.runWithRetry>): void;
 use_old_FunctionDeclaration_runWithRetry(
     get_current_FunctionDeclaration_runWithRetry());
 
@@ -1133,7 +1157,7 @@ use_old_FunctionDeclaration_runWithRetry(
 declare function get_old_FunctionDeclaration_streamFromMessages():
     TypeOnly<typeof old.streamFromMessages>;
 declare function use_current_FunctionDeclaration_streamFromMessages(
-    use: TypeOnly<typeof current.streamFromMessages>);
+    use: TypeOnly<typeof current.streamFromMessages>): void;
 use_current_FunctionDeclaration_streamFromMessages(
     get_old_FunctionDeclaration_streamFromMessages());
 
@@ -1145,7 +1169,7 @@ use_current_FunctionDeclaration_streamFromMessages(
 declare function get_current_FunctionDeclaration_streamFromMessages():
     TypeOnly<typeof current.streamFromMessages>;
 declare function use_old_FunctionDeclaration_streamFromMessages(
-    use: TypeOnly<typeof old.streamFromMessages>);
+    use: TypeOnly<typeof old.streamFromMessages>): void;
 use_old_FunctionDeclaration_streamFromMessages(
     get_current_FunctionDeclaration_streamFromMessages());
 
@@ -1157,7 +1181,7 @@ use_old_FunctionDeclaration_streamFromMessages(
 declare function get_old_FunctionDeclaration_streamObserver():
     TypeOnly<typeof old.streamObserver>;
 declare function use_current_FunctionDeclaration_streamObserver(
-    use: TypeOnly<typeof current.streamObserver>);
+    use: TypeOnly<typeof current.streamObserver>): void;
 use_current_FunctionDeclaration_streamObserver(
     get_old_FunctionDeclaration_streamObserver());
 
@@ -1169,6 +1193,6 @@ use_current_FunctionDeclaration_streamObserver(
 declare function get_current_FunctionDeclaration_streamObserver():
     TypeOnly<typeof current.streamObserver>;
 declare function use_old_FunctionDeclaration_streamObserver(
-    use: TypeOnly<typeof old.streamObserver>);
+    use: TypeOnly<typeof old.streamObserver>): void;
 use_old_FunctionDeclaration_streamObserver(
     get_current_FunctionDeclaration_streamObserver());

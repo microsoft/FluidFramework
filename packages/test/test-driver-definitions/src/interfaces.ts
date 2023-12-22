@@ -9,14 +9,34 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 
+/**
+ * Types of test drivers.
+ * @internal
+ */
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
+/**
+ * Types of Routerlicious endpoints.
+ * @internal
+ */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
+/**
+ * Types of Odsp endpoints.
+ * @internal
+ */
 export type OdspEndpoint = "odsp" | "odsp-df";
 
+/**
+ * Types of Driver endpoints.
+ * @internal
+ */
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
 
+/**
+ * Base interface for test drivers.
+ * @internal
+ */
 export interface ITestDriver {
 	/**
 	 * The type of server the test driver executes against
@@ -92,6 +112,7 @@ export interface ITestDriver {
 /**
  * Extension of ITelemetryBaseLogger with support for flushing
  * all buffered logs that have not yet been fully processed (e.g. uploaded)
+ * @internal
  */
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
 	/**

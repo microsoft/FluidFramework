@@ -5,6 +5,7 @@
 
 /**
  * Interface for a comparer.
+ * @internal
  */
 export interface IComparer<T> {
 	/**
@@ -22,6 +23,7 @@ export interface IComparer<T> {
 
 /**
  * A comparer for numbers.
+ * @internal
  */
 export const NumberComparer: IComparer<number> = {
 	/**
@@ -38,6 +40,7 @@ export const NumberComparer: IComparer<number> = {
 
 /**
  * Interface to a node in {@link Heap}.
+ * @internal
  */
 export interface IHeapNode<T> {
 	value: T;
@@ -46,6 +49,7 @@ export interface IHeapNode<T> {
 
 /**
  * Ordered {@link https://en.wikipedia.org/wiki/Heap_(data_structure) | Heap} data structure implementation.
+ * @internal
  */
 export class Heap<T> {
 	private L: IHeapNode<T>[];
@@ -63,7 +67,7 @@ export class Heap<T> {
 	 *
 	 * @returns Heap node containing the smallest element
 	 */
-	public peek(): IHeapNode<T> {
+	public peek(): IHeapNode<T> | undefined {
 		return this.L[1];
 	}
 
@@ -72,7 +76,11 @@ export class Heap<T> {
 	 *
 	 * @returns The smallest value in the heap
 	 */
-	public get(): T {
+	public get(): T | undefined {
+		if (this.L.length === 0) {
+			return undefined;
+		}
+
 		this.swap(1, this.count());
 		const x = this.L.pop();
 		this.fixdown(1);

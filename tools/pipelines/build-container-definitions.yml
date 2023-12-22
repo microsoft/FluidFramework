@@ -33,6 +33,7 @@ trigger:
     - release/0.*
   paths:
     include:
+    - .prettierignore
     - common/lib/container-definitions
     - tools/pipelines/build-container-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -53,6 +54,7 @@ pr:
     - release/0.*
   paths:
     include:
+    - .prettierignore
     - common/lib/container-definitions
     - tools/pipelines/build-container-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml

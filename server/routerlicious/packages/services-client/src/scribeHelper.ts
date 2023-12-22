@@ -12,6 +12,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 
+/**
+ * @internal
+ */
 export function getQuorumTreeEntries(
 	minimumSequenceNumber: number,
 	sequenceNumber: number,
@@ -63,6 +66,9 @@ export function getQuorumTreeEntries(
 	return entries;
 }
 
+/**
+ * @internal
+ */
 export function mergeAppAndProtocolTree(
 	appSummaryTree: ITree,
 	protocolTree: ITree,
@@ -87,6 +93,9 @@ export function mergeAppAndProtocolTree(
 	return newTreeEntries;
 }
 
+/**
+ * @internal
+ */
 export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[] {
 	const serviceProtocolEntries: ITreeEntry[] = [
 		{

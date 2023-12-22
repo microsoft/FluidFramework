@@ -15,13 +15,13 @@ import { PackageCommand } from "../BasePackageCommand";
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
 > {
-	static description = `Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+	static readonly description = `Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
 
     Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during configuration. This is useful when resetting the type tests to a clean state, such as after a release.
 
     To learn more about how to configure type tests, see the detailed documentation at <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md>.`;
 
-	static flags = {
+	static readonly flags = {
 		reset: Flags.boolean({
 			description: "Resets the broken type test settings in package.json.",
 		}),
@@ -66,7 +66,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		...PackageCommand.flags,
 	};
 
-	static examples = [
+	static readonly examples = [
 		{
 			description:
 				"Update type test configuration in package.json for all packages in the client. This is what would be run for client minor releases on both the release branch and the main branch after the version bump and publishing of the first point release of that minor.",

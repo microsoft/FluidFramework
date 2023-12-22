@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import {
-	MockDocumentDeltaConnection,
-	MockDocumentService,
-} from "@fluid-internal/test-loader-utils";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -518,10 +515,7 @@ describe("Loader", () => {
 									};
 								});
 
-								throw new Error(
-									// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
-									(abortSignal as AbortSignal & { reason: any }).reason,
-								);
+								throw new Error(abortSignal?.reason);
 							},
 						};
 					},

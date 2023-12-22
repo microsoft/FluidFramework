@@ -13,6 +13,9 @@ import {
 	getOdspUrlParts,
 } from "@fluidframework/odsp-driver";
 
+/**
+ * @internal
+ */
 export class OdspUrlResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
 		if (isOdspUrl(request.url)) {
@@ -36,6 +39,11 @@ export class OdspUrlResolver implements IUrlResolver {
 	}
 }
 
+/**
+ * Returns true if the given string is a valid SPO/ODB or ODC URL.
+ *
+ * @internal
+ */
 export const isOdspUrl = (url: string): boolean => {
 	return isSpoUrl(url) || isOdcUrl(url);
 };

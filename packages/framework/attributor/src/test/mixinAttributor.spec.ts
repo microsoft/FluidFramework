@@ -10,14 +10,10 @@ import {
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
-	MockLogger,
-	sessionStorageConfigProvider,
-	ConfigTypes,
-} from "@fluidframework/telemetry-utils";
+import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -88,13 +84,13 @@ describe("mixinAttributor", () => {
 	it("Attributes ops", async () => {
 		setEnableOnNew(true);
 		const context = getMockContext() as IContainerContext;
-		const containerRuntime = await AttributingContainerRuntime.load(
+		const containerRuntime = await AttributingContainerRuntime.loadRuntime({
 			context,
-			[],
-			undefined, // requestHandler
-			{}, // runtimeOptions
-			getScope(),
-		);
+			registryEntries: [],
+			containerScope: getScope(),
+			provideEntryPoint: async () => ({}),
+			existing: false,
+		});
 
 		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
 			containerRuntime.scope;
@@ -119,13 +115,13 @@ describe("mixinAttributor", () => {
 	it("includes attribution association data in the summary tree", async () => {
 		setEnableOnNew(true);
 		const context = getMockContext() as IContainerContext;
-		const containerRuntime = await AttributingContainerRuntime.load(
+		const containerRuntime = await AttributingContainerRuntime.loadRuntime({
 			context,
-			[],
-			undefined, // requestHandler
-			{}, // runtimeOptions
-			getScope(),
-		);
+			registryEntries: [],
+			containerScope: getScope(),
+			provideEntryPoint: async () => ({}),
+			existing: false,
+		});
 
 		const op: Partial<ISequencedDocumentMessage> = {
 			type: "op",
@@ -199,13 +195,13 @@ describe("mixinAttributor", () => {
 		};
 		context.baseSnapshot = snapshot;
 		context.storage = mockStorage;
-		const containerRuntime = await AttributingContainerRuntime.load(
+		const containerRuntime = await AttributingContainerRuntime.loadRuntime({
 			context,
-			[],
-			undefined, // requestHandler
-			{}, // runtimeOptions
-			getScope(),
-		);
+			registryEntries: [],
+			containerScope: getScope(),
+			provideEntryPoint: async () => ({}),
+			existing: false,
+		});
 
 		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
 			containerRuntime.scope;
@@ -257,13 +253,13 @@ describe("mixinAttributor", () => {
 		for (const { getContext, testName } of testCases) {
 			it(testName, async () => {
 				const context = getContext();
-				const containerRuntime = await AttributingContainerRuntime.load(
+				const containerRuntime = await AttributingContainerRuntime.loadRuntime({
 					context,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-					getScope(),
-				);
+					registryEntries: [],
+					containerScope: getScope(),
+					provideEntryPoint: async () => ({}),
+					existing: false,
+				});
 
 				const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
 					containerRuntime.scope;

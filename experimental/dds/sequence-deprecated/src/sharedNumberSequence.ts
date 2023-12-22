@@ -14,7 +14,8 @@ import { SharedSequence } from "./sharedSequence";
  * for details on working with sequences.
  *
  * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
- * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+ * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
+ * @internal
  */
 export class SharedNumberSequence extends SharedSequence<number> {
 	/**
@@ -25,7 +26,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
 	 * @returns newly create shared number sequence (but not attached yet)
 	 *
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
 	 */
 	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
 		return runtime.createChannel(id, SharedNumberSequenceFactory.Type) as SharedNumberSequence;
@@ -37,7 +38,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
 	 * @returns a factory that creates and load SharedNumberSequence
 	 *
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
 	 */
 	public static getFactory() {
 		return new SharedNumberSequenceFactory();
@@ -45,7 +46,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
 	 */
 	constructor(
 		document: IFluidDataStoreRuntime,
@@ -63,7 +64,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
 	 */
 	public getRange(start: number, end?: number) {
 		return this.getItems(start, end);

@@ -60,7 +60,7 @@ function getAssertMessageParams(sourceFile: SourceFile): Node[] {
 export const handler: Handler = {
 	name: "assert-short-codes",
 	match: /^(packages|experimental|(common\/lib\/common-utils)|(server\/routerlicious\/packages\/protocol-base)).*\/tsconfig\.json/i,
-	handler: (tsconfigPath) => {
+	handler: async (tsconfigPath) => {
 		if (tsconfigPath.includes("test")) {
 			return;
 		}
@@ -93,6 +93,7 @@ export const handler: Handler = {
 							return `Duplicate shortcode 0x${numLitValue.toString(
 								16,
 							)} detected\n\t${getCallsiteString(
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								shortCodes.get(numLitValue)!,
 							)}\n\t${getCallsiteString(numLit)}`;
 						}

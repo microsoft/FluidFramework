@@ -9,7 +9,7 @@ import {
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
-import { debug as registerDebug, IDebugger } from "debug";
+
 import {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,
@@ -17,6 +17,12 @@ import {
 	eventNamespaceSeparator,
 	formatTick,
 } from "@fluidframework/telemetry-utils";
+
+// This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
+import debugPkg from "debug";
+const { debug: registerDebug } = debugPkg;
+
+import type { IDebugger } from "debug";
 
 /**
  * Implementation of debug logger

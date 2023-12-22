@@ -139,7 +139,7 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-		const { selected, filtered } = selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
 
 		expect(names).to.be.containingAllOf([
@@ -165,7 +165,7 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-		const { selected, filtered } = selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
@@ -178,7 +178,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-internal/getkeys",
 			"@fluidframework/test-tools",
-			"tinylicious",
 		]);
 	});
 
@@ -196,7 +195,7 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-		const { selected, filtered } = selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
 
 		expect(names).to.be.equalTo([

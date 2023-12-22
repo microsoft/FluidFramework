@@ -8,7 +8,6 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -16,18 +15,19 @@ import {
 } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
-} from "@fluid-internal/test-version-utils";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
+} from "@fluid-private/test-version-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
@@ -198,7 +198,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			configProvider: configProvider(featureGates),
 		});
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
 		await this.ensureContainerConnectedWriteMode(this._mainContainer);

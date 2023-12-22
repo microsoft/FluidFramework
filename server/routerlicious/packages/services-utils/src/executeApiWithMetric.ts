@@ -6,6 +6,9 @@
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export async function executeApiWithMetric<U>(
 	api: () => Promise<U>,
 	metricName: string,

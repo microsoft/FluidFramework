@@ -12,9 +12,8 @@ import { RuntimeRequestHandler } from "./requestHandlers";
 /**
  * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
  * The provided handlers sequentially applied until one is able to satisfy the request.
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
-export class RuntimeRequestHandlerBuilder {
+class RuntimeRequestHandlerBuilder {
 	// eslint-disable-next-line import/no-deprecated
 	private readonly handlers: RuntimeRequestHandler[] = [];
 
@@ -37,7 +36,11 @@ export class RuntimeRequestHandlerBuilder {
 	}
 }
 
-/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+/**
+ * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ *
+ * @internal
+ */
 // eslint-disable-next-line import/no-deprecated
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]) {
 	const builder = new RuntimeRequestHandlerBuilder();

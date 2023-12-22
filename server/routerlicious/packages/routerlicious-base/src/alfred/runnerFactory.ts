@@ -50,6 +50,9 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class OrdererManager implements core.IOrdererManager {
 	constructor(
 		private readonly globalDbEnabled: boolean,
@@ -83,6 +86,9 @@ export class OrdererManager implements core.IOrdererManager {
 	}
 }
 
+/**
+ * @internal
+ */
 export class AlfredResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
 
@@ -117,6 +123,7 @@ export class AlfredResources implements core.IResources {
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -147,10 +154,21 @@ export class AlfredResources implements core.IResources {
 		const tokenRevocationManagerP = this.tokenRevocationManager
 			? this.tokenRevocationManager.close()
 			: Promise.resolve();
-		await Promise.all([producerClosedP, mongoClosedP, tokenRevocationManagerP]);
+		const serviceMessageManagerP = this.serviceMessageResourceManager
+			? this.serviceMessageResourceManager.close()
+			: Promise.resolve();
+		await Promise.all([
+			producerClosedP,
+			mongoClosedP,
+			tokenRevocationManagerP,
+			serviceMessageManagerP,
+		]);
 	}
 }
 
+/**
+ * @internal
+ */
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
 	public async create(
 		config: Provider,
@@ -553,6 +571,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const documentDeleteService =
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
+		// Service Message setup
+		const serviceMessageResourceManager = customizations?.serviceMessageResourceManager;
+
 		// Set up token revocation if enabled
 		/**
 		 * Always have a revoked token checker,
@@ -607,10 +628,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			tokenRevocationManager,
 			revokedTokenChecker,
 			collaborationSessionEvents,
+			serviceMessageResourceManager,
 		);
 	}
 }
 
+/**
+ * @internal
+ */
 export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
 	public async create(resources: AlfredResources): Promise<core.IRunner> {
 		return new AlfredRunner(

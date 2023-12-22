@@ -6,22 +6,27 @@ import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
-	// eslint-disable-next-line import/no-deprecated
-	defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
 	ContainerSchema,
-	DataObjectClass,
 	IRootDataObject,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectRecord,
 	SharedObjectClass,
 } from "./types";
-import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
+import {
+	InternalDataObjectClass,
+	isDataObjectClass,
+	isSharedObjectClass,
+	parseDataObjectsFromSharedObjects,
+} from "./utils";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -39,12 +44,15 @@ export interface RootDataObjectProps {
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class RootDataObject
+class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
 	implements IRootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
 	private readonly _initialObjects: LoadableObjectRecord = {};
+	public get IRootDataObject() {
+		return this;
+	}
 
 	private get initialObjectsDir() {
 		const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
@@ -119,7 +127,7 @@ export class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectClass<T>,
+		dataObjectClass: InternalDataObjectClass<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
@@ -140,14 +148,25 @@ export class RootDataObject
 const rootDataStoreId = "rootDOId";
 
 /**
+ * @internal
+ */
+export function createDOProviderContainerRuntimeFactory(props: {
+	schema: ContainerSchema;
+}): IRuntimeFactory {
+	return new DOProviderContainerRuntimeFactory(props.schema);
+}
+
+/**
  * Container code that provides a single {@link IRootDataObject}.
  *
  * @remarks
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
+ *
+ * @internal
  */
-export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
 		RootDataObject,
 		{
@@ -166,21 +185,36 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			{},
 			registryEntries,
 		);
+		const provideEntryPoint = async (containerRuntime: IContainerRuntime) => {
+			const entryPoint =
+				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			if (entryPoint === undefined) {
+				throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
+			}
+			return entryPoint.get();
+		};
+		const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+			const parser = RequestParser.create(request);
+			if (parser.pathParts.length === 0) {
+				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
+				return (runtime as ContainerRuntime).resolveHandle({
+					url: `/${rootDataStoreId}${parser.query}`,
+					headers: request.headers,
+				});
+			}
+			return undefined; // continue search
+		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			// eslint-disable-next-line import/no-deprecated
-			requestHandlers: [defaultRouteRequestHandler(rootDataStoreId)],
-			// temporary workaround to disable message batching until the message batch size issue is resolved
-			// resolution progress is tracked by the Feature 465 work item in AzDO
-			runtimeOptions: { flushMode: FlushMode.Immediate },
-			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
-				const entryPoint =
-					await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
-				if (entryPoint === undefined) {
-					throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
-				}
-				return entryPoint.get();
+			requestHandlers: [getDefaultObject],
+			runtimeOptions: {
+				// temporary workaround to disable message batching until the message batch size issue is resolved
+				// resolution progress is tracked by the Feature 465 work item in AzDO
+				flushMode: FlushMode.Immediate,
+				// The runtime compressor is required to be on to use @fluidframework/tree.
+				enableRuntimeIdCompressor: true,
 			},
+			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

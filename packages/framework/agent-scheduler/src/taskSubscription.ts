@@ -7,12 +7,17 @@ import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IAgentScheduler } from "./agent";
 
+/**
+ * Events emitted by {@link TaskSubscription}.
+ * @alpha
+ */
 export interface ITaskSubscriptionEvents extends IEvent {
 	(event: "gotTask" | "lostTask", listener: () => void);
 }
 
 /**
  * TaskSubscription works with an AgentScheduler to make it easier to monitor a specific task ownership.
+ * @alpha
  */
 export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {
 	private subscribed: boolean = false;

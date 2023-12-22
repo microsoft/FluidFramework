@@ -295,7 +295,7 @@ export class ReferenceVersionBag extends VersionBag {
 	}
 	public needRelease(name: string) {
 		if (this.needBump(name)) {
-			const data = this.referenceData.get(name)!;
+			const data = this.referenceData.get(name);
 			return !data || !data.published;
 		}
 		return false;

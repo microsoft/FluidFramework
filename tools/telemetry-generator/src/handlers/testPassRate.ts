@@ -11,7 +11,7 @@
  * @param logger - An ITelemetryBufferedLogger. Call its send() method to write the output telemetry events.
  */
 module.exports = function handler(fileData, logger) {
-	if (fileData.resultSummary == null ) {
+	if (fileData.resultSummary == null) {
 		console.log(`Could not locate test result info.`);
 		return;
 	}

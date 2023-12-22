@@ -1,5 +1,33 @@
 # @fluid-experimental/property-shared-tree-interop
 
+## 2.0.0-internal.8.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   Rename SchemaCollection.treeSchema to nodeSchema ([#18067](https://github.com/microsoft/FluidFramework/issues/18067)) [be7ee4b383](https://github.com/microsoft/FluidFramework/commits/be7ee4b383c86fbcb60e92b606bbd305d0157acb)
+
+    This breaks all existing documents, as well as any users of SchemaCollection.treeSchema.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   tree2: Rename "Value" Multiplicity and FieldKind ([#17622](https://github.com/microsoft/FluidFramework/issues/17622)) [bb68aeb30c](https://github.com/microsoft/FluidFramework/commits/bb68aeb30cfb3d4e0e82f04f1771ad4cb69e23af)
+
+    `Multiplicity.Value` has been renamed to `Multiplicity.Single` and `FieldKinds.value` has been renamed to `FieldKinds.required`.
+
 ## 2.0.0-internal.7.0.0
 
 ### Major Changes

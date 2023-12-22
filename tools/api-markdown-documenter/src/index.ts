@@ -123,7 +123,7 @@ export {
 // Convenience re-exports
 export {
 	type ApiItem,
-	type ApiItemKind,
+	ApiItemKind,
 	type ApiModel,
 	type ApiPackage,
 	ReleaseTag,

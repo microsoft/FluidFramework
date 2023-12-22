@@ -3,22 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaBuilder, TypedField, TypedNode, leaf } from "@fluid-experimental/tree2";
+import { TreeConfiguration, SchemaFactory } from "@fluidframework/tree";
 
-const builder = new SchemaBuilder({ scope: "inventory app", libraries: [leaf.library] });
+const builder = new SchemaFactory("com.contoso.app.inventory");
 
-export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: SchemaBuilder.fieldRequired(leaf.string),
-	quantity: SchemaBuilder.fieldRequired(leaf.number),
-});
+export class Part extends builder.object("Part", {
+	name: builder.string,
+	quantity: builder.number,
+}) {}
+export class Inventory extends builder.object("Inventory", {
+	parts: builder.array(Part),
+}) {}
 
-export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: SchemaBuilder.fieldSequence(part),
-});
-
-export const inventoryField = SchemaBuilder.fieldRequired(inventory);
-export type InventoryField = TypedField<typeof inventoryField>;
-
-export const schema = builder.toDocumentSchema(inventoryField);
-
-export type Inventory = TypedNode<typeof inventory>;
+export const treeConfiguration = new TreeConfiguration(
+	Inventory,
+	() =>
+		new Inventory({
+			parts: [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		}),
+);

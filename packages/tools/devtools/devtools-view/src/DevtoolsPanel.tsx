@@ -4,17 +4,18 @@
  */
 import React from "react";
 
-import { type IMessageRelay } from "@fluid-experimental/devtools-core";
+import { type IMessageRelay } from "@fluidframework/devtools-core";
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
  * {@link DevtoolsPanel} input props.
+ * @internal
  */
 export interface DevtoolsPanelProps {
 	/**
-	 * An instance of {@link @fluid-experimental/devtools-core#IMessageRelay} that can handle message passing between the
+	 * An instance of {@link @fluidframework/devtools-core#IMessageRelay} that can handle message passing between the
 	 * devtools's "brain" and its UI, in whatever context the latter is being rendered (e.g. in the same page as the
 	 * application, or in the browser's Devtools panel).
 	 */
@@ -40,9 +41,8 @@ export interface DevtoolsPanelProps {
 /**
  * Top-level view for the Fluid Devtools.
  *
- * @remarks
- *
- * Initializes the message relay context required by internal components.
+ * @remarks Initializes the message relay context required by internal components.
+ * @internal
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
 	const { usageTelemetryLogger, messageRelay, unloadCallback } = props;

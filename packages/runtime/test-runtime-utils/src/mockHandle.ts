@@ -8,6 +8,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 
 /**
  * Mock implementation of IFluidHandle.
+ * @alpha
  */
 export class MockHandle<T> implements IFluidHandle {
 	private graphAttachState: AttachState = AttachState.Detached;

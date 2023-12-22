@@ -9,12 +9,8 @@ import {
 	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IFluidHandle,
 	FluidObject,
-	IRequest,
-	IResponse,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -27,13 +23,14 @@ import {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	IIdCompressor,
-	IInboundSignalMessage,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
-import { IChannel } from ".";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
+import { IChannel } from "./channel";
 
+/**
+ * Events emitted by {@link IFluidDataStoreRuntime}.
+ * @public
+ */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
@@ -43,11 +40,11 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
+ * @public
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
-		IDisposable,
-		Partial<IProvideFluidDataStoreRegistry> {
+		IDisposable {
 	readonly id: string;
 
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -112,8 +109,9 @@ export interface IFluidDataStoreRuntime
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * Returns the current quorum.
@@ -135,15 +133,4 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
