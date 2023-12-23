@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TreeValue } from "../core";
-import { RestrictiveReadonlyRecord } from "../util";
+import { TreeValue } from "../core/index.js";
+import { RestrictiveReadonlyRecord } from "../util/index.js";
 import {
 	FieldKind,
 	FieldKinds,
@@ -18,7 +18,7 @@ import {
 	TreeNodeSchema,
 	FlexTreeSchema,
 	LazyItem,
-} from "../feature-libraries";
+} from "../feature-libraries/index.js";
 
 /**
  * Data from which a {@link TreeObjectNode} can be built.

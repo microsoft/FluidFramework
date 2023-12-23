@@ -9,7 +9,13 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/runtime-definitions";
-import { Brand, NestedMap, RangeMap, brandedNumberType, brandedStringType } from "../../util";
+import {
+	Brand,
+	NestedMap,
+	RangeMap,
+	brandedNumberType,
+	brandedStringType,
+} from "../../util/index.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s

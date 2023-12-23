@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { mintRevisionTag } from "../../utils";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { ChangeAtomId, RevisionTag, tagChange } from "../../../core";
-import { TestChange } from "../../testChange";
-import { brand } from "../../../util";
+import { mintRevisionTag } from "../../utils.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { ChangeAtomId, RevisionTag, tagChange } from "../../../core/index.js";
+import { TestChange } from "../../testChange.js";
+import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	checkDeltaEquality,
 	rebaseTagged,
@@ -21,8 +21,8 @@ import {
 	assertChangesetsEqual,
 	withoutTombstones,
 	withOrderingMethod,
-} from "./utils";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "./utils.js";
+import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { brand, fail, isReadonlyArray } from "../util";
+import { brand, fail, isReadonlyArray } from "../util/index.js";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -30,20 +30,20 @@ import {
 	typeNameSymbol,
 	isFluidHandle,
 	FlexTreeField,
-} from "../feature-libraries";
-import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core";
+} from "../feature-libraries/index.js";
+import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
-import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
+import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
+import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeKind, TreeMapNode } from "../class-tree/schemaTypes";
-import { IterableTreeListContent, TreeArrayNode } from "./treeListNode";
-import { Unhydrated, TreeNode, TypedNode } from "./types";
-import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
-import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
-import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
-import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode";
+import { NodeKind, TreeMapNode } from "../class-tree/schemaTypes.js";
+import { IterableTreeListContent, TreeArrayNode } from "./treeListNode.js";
+import { Unhydrated, TreeNode, TypedNode } from "./types.js";
+import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
+import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable.js";
+import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
+import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 
 /**
  * Retrieve the associated proxy for the given field.

@@ -5,17 +5,22 @@
 
 import { strict as assert } from "assert";
 import { IIdCompressor, SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-import { DetachedFieldIndex, ForestRootId } from "../../core";
+import { DetachedFieldIndex, ForestRootId } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes";
-import { IdAllocator, JsonCompatibleReadOnly, brand, idAllocatorFromMaxId } from "../../util";
-import { typeboxValidator } from "../../external-utilities";
+import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
+import {
+	IdAllocator,
+	JsonCompatibleReadOnly,
+	brand,
+	idAllocatorFromMaxId,
+} from "../../util/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Format } from "../../core/tree/detachedFieldIndexFormat";
+import { Format } from "../../core/tree/detachedFieldIndexFormat.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots";
-import { MockIdCompressor } from "../utils";
+import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
+import { MockIdCompressor } from "../utils.js";
 
 const wellFormedIdCompressor = createIdCompressor();
 const mintedTag = wellFormedIdCompressor.generateCompressedId();

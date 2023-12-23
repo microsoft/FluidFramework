@@ -24,9 +24,9 @@ import {
 	FieldNodeSchema,
 	MapNodeSchema,
 	TreeNodeSchemaBase,
-} from "../feature-libraries";
-import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
-import { leaf } from "./leafDomain";
+} from "../feature-libraries/index.js";
+import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util/index.js";
+import { leaf } from "./leafDomain.js";
 
 /**
  * Builds schema libraries, and the schema within them.

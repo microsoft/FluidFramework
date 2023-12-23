@@ -4,8 +4,13 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { SessionAwareCodec } from "../codec";
-import { RevisionTag, EncodedRevisionTag, ChangeAtomId, EncodedChangeAtomId } from "../core";
+import { SessionAwareCodec } from "../codec/index.js";
+import {
+	RevisionTag,
+	EncodedRevisionTag,
+	ChangeAtomId,
+	EncodedChangeAtomId,
+} from "../core/index.js";
 
 export function makeChangeAtomIdCodec(
 	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,

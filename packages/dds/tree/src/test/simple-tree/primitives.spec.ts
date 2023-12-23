@@ -4,8 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema, InsertableTreeFieldFromImplicitField } from "../../class-tree";
-import { getRoot, makeSchema, pretty } from "./utils";
+import {
+	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
+} from "../../class-tree/index.js";
+import { getRoot, makeSchema, pretty } from "./utils.js";
 
 // Construct a SharedTree with each of the above primitives as the root and then
 // 'deepEquals' compares the proxy with the original primitive value.

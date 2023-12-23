@@ -24,8 +24,8 @@ import {
 	TreeStoredSchemaSubscription,
 	JsonableTree,
 	RevisionTagCodec,
-} from "../core";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
+} from "../core/index.js";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
 	buildForest,
 	intoDelta,
@@ -33,13 +33,13 @@ import {
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 	TreeCompressionStrategy,
-} from "../feature-libraries";
-import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
-import { TransactionResult, fail } from "../util";
-import { noopValidator } from "../codec";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
-import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+} from "../feature-libraries/index.js";
+import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
+import { TransactionResult, fail } from "../util/index.js";
+import { noopValidator } from "../codec/index.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link TreeView}.

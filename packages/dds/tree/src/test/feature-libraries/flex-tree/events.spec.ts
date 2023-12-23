@@ -6,14 +6,14 @@ import { strict as assert } from "assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createIdCompressor } from "@fluidframework/id-compressor";
-import { FieldKinds } from "../../../feature-libraries";
-import { ForestType, SharedTreeFactory } from "../../../shared-tree";
-import { typeboxValidator } from "../../../external-utilities";
-import { SchemaBuilder, leaf } from "../../../domains";
-import { flexTreeViewWithContent } from "../../utils";
+import { FieldKinds } from "../../../feature-libraries/index.js";
+import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import { flexTreeViewWithContent } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes";
-import { AllowedUpdateType } from "../../../core";
+import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
+import { AllowedUpdateType } from "../../../core/index.js";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({

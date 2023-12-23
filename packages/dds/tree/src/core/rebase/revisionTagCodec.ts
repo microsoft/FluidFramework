@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { SessionAwareCodec } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "./types";
+import { SessionAwareCodec } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "./types.js";
 
 export class RevisionTagCodec implements SessionAwareCodec<RevisionTag, EncodedRevisionTag> {
 	public constructor(private readonly idCompressor: IIdCompressor) {}

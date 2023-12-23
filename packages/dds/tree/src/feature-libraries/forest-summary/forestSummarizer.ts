@@ -24,19 +24,19 @@ import {
 	makeDetachedFieldIndex,
 	mapCursorField,
 	TreeNavigationResult,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
-} from "../../shared-tree-core";
-import { idAllocatorFromMaxId } from "../../util";
-import { ICodecOptions, noopValidator } from "../../codec";
-import { FieldBatchCodec } from "../chunked-forest";
+} from "../../shared-tree-core/index.js";
+import { idAllocatorFromMaxId } from "../../util/index.js";
+import { ICodecOptions, noopValidator } from "../../codec/index.js";
+import { FieldBatchCodec } from "../chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree";
-import { Format } from "./format";
-import { ForestCodec, makeForestSummarizerCodec } from "./codec";
+import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import { Format } from "./format.js";
+import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 /**
  * The storage key for the blob in the summary containing tree data
  */

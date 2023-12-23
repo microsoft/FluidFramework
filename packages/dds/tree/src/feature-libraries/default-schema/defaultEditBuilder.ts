@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { OptionalChangeset } from "../optional-field";
-import { ICodecFamily, ICodecOptions } from "../../codec";
+import { OptionalChangeset } from "../optional-field/index.js";
+import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -21,8 +21,8 @@ import {
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
-} from "../../core";
-import { brand, isReadonlyArray } from "../../util";
+} from "../../core/index.js";
+import { brand, isReadonlyArray } from "../../util/index.js";
 import {
 	ModularChangeFamily,
 	ModularEditBuilder,
@@ -32,9 +32,9 @@ import {
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 	EditDescription,
-} from "../modular-schema";
-import { FieldBatchCodec } from "../chunked-forest";
-import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
+} from "../modular-schema/index.js";
+import { FieldBatchCodec } from "../chunked-forest/index.js";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 

@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util";
+import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 import {
 	FlexTreeNode,
 	LeafNodeSchema as FlexLeafNodeSchema,
@@ -15,9 +15,9 @@ import {
 	MapNodeSchema,
 	FieldNodeSchema,
 	isFluidHandle,
-} from "../feature-libraries";
-import { leaf } from "../domains";
-import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
+} from "../feature-libraries/index.js";
+import { leaf } from "../domains/index.js";
+import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
@@ -26,9 +26,9 @@ import {
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../simple-tree/proxies";
-import { TreeArrayNode, TreeNode } from "../simple-tree";
-import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema";
+} from "../simple-tree/proxies.js";
+import { TreeArrayNode, TreeNode } from "../simple-tree/index.js";
+import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -48,7 +48,7 @@ import {
 	TreeNodeSchemaNonClass,
 	WithType,
 	type,
-} from "./schemaTypes";
+} from "./schemaTypes.js";
 
 /**
  * Instances of this class are schema for leaf nodes.

@@ -57,7 +57,7 @@ import {
 	runSynchronous,
 	SharedTreeContentSnapshot,
 	CheckoutFlexTreeView,
-} from "../shared-tree";
+} from "../shared-tree/index.js";
 import {
 	Any,
 	buildForest,
@@ -78,7 +78,7 @@ import {
 	ContextuallyTypedNodeData,
 	mapRootChanges,
 	intoStoredSchema,
-} from "../feature-libraries";
+} from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
 	mapCursorField,
@@ -113,10 +113,10 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
-} from "../core";
-import { JsonCompatible, brand, nestedMapFromFlatList } from "../util";
-import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec";
-import { typeboxValidator } from "../external-utilities";
+} from "../core/index.js";
+import { JsonCompatible, brand, nestedMapFromFlatList } from "../util/index.js";
+import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorToJsonObject,
 	jsonRoot,
@@ -124,10 +124,10 @@ import {
 	singleJsonCursor,
 	SchemaBuilder,
 	leaf,
-} from "../domains";
-import { HasListeners, IEmitter, ISubscribable } from "../events";
+} from "../domains/index.js";
+import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeSchemaCodec } from "../feature-libraries/schema-index/codec";
+import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 
 // Testing utilities
 

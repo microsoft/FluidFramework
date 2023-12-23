@@ -19,10 +19,16 @@ import {
 	SharedTreeFactory,
 	TreeContent,
 	ITreeViewFork,
-} from "../../../shared-tree";
-import { brand, fail, getOrCreate } from "../../../util";
-import { AllowedUpdateType, FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
-import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries";
+} from "../../../shared-tree/index.js";
+import { brand, fail, getOrCreate } from "../../../util/index.js";
+import {
+	AllowedUpdateType,
+	FieldKey,
+	FieldUpPath,
+	JsonableTree,
+	UpPath,
+} from "../../../core/index.js";
+import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -39,8 +45,8 @@ import {
 	TreeEdit,
 	UndoOp,
 	UndoRedo,
-} from "./operationTypes";
-import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils";
+} from "./operationTypes.js";
+import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	/**

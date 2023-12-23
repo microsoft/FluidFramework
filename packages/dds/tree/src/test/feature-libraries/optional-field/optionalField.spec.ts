@@ -8,7 +8,7 @@ import {
 	CrossFieldManager,
 	NodeChangeset,
 	RelevantRemovedRootsFromChild,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	TaggedChange,
@@ -18,8 +18,8 @@ import {
 	FieldKey,
 	DeltaFieldChanges,
 	DeltaFieldMap,
-} from "../../../core";
-import { brand, fakeIdAllocator } from "../../../util";
+} from "../../../core/index.js";
+import { brand, fakeIdAllocator } from "../../../util/index.js";
 import {
 	optionalChangeHandler,
 	optionalChangeRebaser,
@@ -27,17 +27,17 @@ import {
 	optionalFieldIntoDelta,
 	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/optional-field";
+} from "../../../feature-libraries/optional-field/index.js";
 import {
 	assertFieldChangesEqual,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	mintRevisionTag,
-} from "../../utils";
-import { changesetForChild, fooKey, testTreeCursor } from "../fieldKindTestUtils";
+} from "../../utils.js";
+import { changesetForChild, fooKey, testTreeCursor } from "../fieldKindTestUtils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
-import { assertEqual } from "./optionalFieldUtils";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { assertEqual } from "./optionalFieldUtils.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

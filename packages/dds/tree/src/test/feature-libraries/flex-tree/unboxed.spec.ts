@@ -12,23 +12,23 @@ import {
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
-} from "../../../core";
-import { SchemaBuilder, leaf as leafDomain } from "../../../domains";
+} from "../../../core/index.js";
+import { SchemaBuilder, leaf as leafDomain } from "../../../domains/index.js";
 import {
 	AllowedTypes,
 	Any,
 	FieldKind,
 	FieldKinds,
 	TreeFieldSchema,
-} from "../../../feature-libraries";
-import { Context } from "../../../feature-libraries/flex-tree/context";
+} from "../../../feature-libraries/index.js";
+import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	unboxedField,
 	unboxedTree,
 	unboxedUnion,
-} from "../../../feature-libraries/flex-tree/unboxed";
-import { type TreeContent } from "../../../shared-tree";
-import { contextWithContentReadonly } from "./utils";
+} from "../../../feature-libraries/flex-tree/unboxed.js";
+import { type TreeContent } from "../../../shared-tree/index.js";
+import { contextWithContentReadonly } from "./utils.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 

@@ -5,14 +5,14 @@
 
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { brand } from "../../util";
+import { brand } from "../../util/index.js";
 import {
 	ISharedTree,
 	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
 	runSynchronous,
-} from "../../shared-tree";
+} from "../../shared-tree/index.js";
 import {
 	Any,
 	FieldKinds,
@@ -23,8 +23,8 @@ import {
 	TreeNodeSchema,
 	InsertableFlexNode,
 	intoStoredSchema,
-} from "../../feature-libraries";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../feature-libraries/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	TestTreeProviderLite,
 	emptyJsonSequenceConfig,
@@ -32,7 +32,7 @@ import {
 	insert,
 	jsonSequenceRootSchema,
 	remove,
-} from "../utils";
+} from "../utils.js";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -41,8 +41,8 @@ import {
 	JsonableTree,
 	UpPath,
 	rootFieldKey,
-} from "../../core";
-import { leaf, SchemaBuilder } from "../../domains";
+} from "../../core/index.js";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {

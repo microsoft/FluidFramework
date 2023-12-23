@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { getProxyForField } from "./proxies";
-export { TreeNode, Unhydrated, TreeArrayNodeBase, TreeMapNodeBase } from "./types";
-export { TreeArrayNode, IterableTreeListContent, create } from "./treeListNode";
+export { getProxyForField } from "./proxies.js";
+export { TreeNode, Unhydrated, TreeArrayNodeBase, TreeMapNodeBase } from "./types.js";
+export { TreeArrayNode, IterableTreeListContent, create } from "./treeListNode.js";
 export {
 	InsertableTreeRoot,
 	InsertableTreeField,
@@ -14,4 +14,4 @@ export {
 	InsertableTreeObjectNode,
 	InsertableTreeObjectNodeFields,
 	InsertableTypedNode,
-} from "./insertable";
+} from "./insertable.js";

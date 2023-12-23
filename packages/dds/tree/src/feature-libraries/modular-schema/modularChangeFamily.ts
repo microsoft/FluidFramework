@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec";
+import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -37,7 +37,7 @@ import {
 	ChangeEncodingContext,
 	RevisionTagCodec,
 	mapCursorField,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	brand,
 	deleteFromNestedMap,
@@ -51,15 +51,19 @@ import {
 	isReadonlyArray,
 	Mutable,
 	tryGetFromNestedMap,
-} from "../../util";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
+} from "../../util/index.js";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import {
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 	FieldBatchCodec,
-} from "../chunked-forest";
-import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor";
+} from "../chunked-forest/index.js";
+import {
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
+	mapTreeFromCursor,
+} from "../mapTreeCursor.js";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -68,15 +72,15 @@ import {
 	addCrossFieldQuery,
 	getFirstFromCrossFieldMap,
 	setInCrossFieldMap,
-} from "./crossFieldQueries";
+} from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
 	NodeExistenceState,
 	RebaseRevisionMetadata,
-} from "./fieldChangeHandler";
-import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
-import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
-import { GenericChangeset } from "./genericFieldKindTypes";
+} from "./fieldChangeHandler.js";
+import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind.js";
+import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
+import { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -84,8 +88,8 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 	NodeExistsConstraint,
-} from "./modularChangeTypes";
-import { makeV0Codec } from "./modularChangeCodecs";
+} from "./modularChangeTypes.js";
+import { makeV0Codec } from "./modularChangeCodecs.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind

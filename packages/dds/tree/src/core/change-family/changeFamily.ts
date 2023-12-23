@@ -4,9 +4,9 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { ICodecFamily, IJsonCodec } from "../../codec";
-import { ChangeRebaser } from "../rebase";
-import { JsonCompatibleReadOnly } from "../../util";
+import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import { ChangeRebaser } from "../rebase/index.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;

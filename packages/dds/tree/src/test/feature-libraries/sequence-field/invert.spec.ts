@@ -9,20 +9,20 @@ import {
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-} from "../../../core";
+} from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellId } from "../../../feature-libraries/sequence-field";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { TestChange } from "../../testChange";
-import { mintRevisionTag } from "../../utils";
-import { brand } from "../../../util";
+import { CellId } from "../../../feature-libraries/sequence-field/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { TestChange } from "../../testChange.js";
+import { mintRevisionTag } from "../../utils.js";
+import { brand } from "../../../util/index.js";
 import {
 	invert as invertChange,
 	describeForBothConfigs,
 	withOrderingMethod,
 	assertChangesetsEqual,
-} from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "./utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 function invert(change: TestChangeset, tag?: RevisionTag): TestChangeset {
 	return invertChange(tagChange(change, tag ?? tag1));

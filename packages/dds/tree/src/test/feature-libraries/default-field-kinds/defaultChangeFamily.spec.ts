@@ -17,8 +17,8 @@ import {
 	applyDelta,
 	makeDetachedFieldIndex,
 	DeltaRoot,
-} from "../../../core";
-import { leaf, jsonObject } from "../../../domains";
+} from "../../../core/index.js";
+import { leaf, jsonObject } from "../../../domains/index.js";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
@@ -27,10 +27,10 @@ import {
 	cursorForJsonableTreeNode,
 	intoDelta,
 	jsonableTreeFromCursor,
-} from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { assertDeltaEqual, failCodec, mintRevisionTag, testIdCompressor } from "../../utils";
-import { noopValidator } from "../../../codec";
+} from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { assertDeltaEqual, failCodec, mintRevisionTag, testIdCompressor } from "../../utils.js";
+import { noopValidator } from "../../../codec/index.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
 	jsonValidator: noopValidator,

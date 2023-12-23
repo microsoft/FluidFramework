@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId } from "../../core";
+import { ChangeAtomId } from "../../core/index.js";
 import {
 	CellId,
 	HasMarkFields,
@@ -13,7 +13,7 @@ import {
 	AttachAndDetach,
 	MoveIn,
 	MoveOut,
-} from "./types";
+} from "./types.js";
 
 export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
 

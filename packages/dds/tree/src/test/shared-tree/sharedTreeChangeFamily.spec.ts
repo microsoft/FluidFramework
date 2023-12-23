@@ -10,23 +10,23 @@ import {
 	ModularChangeset,
 	cursorForJsonableTreeNode,
 	fieldKinds,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily";
+import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily.js";
 import {
 	TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
-} from "../../core";
-import { leaf } from "../../domains";
+} from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes";
+import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
-import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds";
-import { MockIdCompressor } from "../utils";
-import { ICodecOptions } from "../../codec";
-import { ajvValidator } from "../codec";
+import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+import { MockIdCompressor } from "../utils.js";
+import { ICodecOptions } from "../../codec/index.js";
+import { ajvValidator } from "../codec/index.js";
 
 const idCompressor = new MockIdCompressor();
 const dataChanges: ModularChangeset[] = [];

@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { Versioned } from "./format";
-export { makeVersionedCodec, makeVersionedValidatedCodec } from "./codec";
+export { Versioned } from "./format.js";
+export { makeVersionedCodec, makeVersionedValidatedCodec } from "./codec.js";

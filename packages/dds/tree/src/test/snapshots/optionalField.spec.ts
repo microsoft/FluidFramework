@@ -4,16 +4,16 @@
  */
 
 import { IIdCompressor, createIdCompressor } from "@fluidframework/id-compressor";
-import { ChangesetLocalId, RevisionTagCodec } from "../../core";
+import { ChangesetLocalId, RevisionTagCodec } from "../../core/index.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/optional-field";
-import { brand } from "../../util";
-import { TestChange } from "../testChange";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
-import { sessionId } from "./testTrees";
+} from "../../feature-libraries/optional-field/index.js";
+import { brand } from "../../util/index.js";
+import { TestChange } from "../testChange.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
+import { sessionId } from "./testTrees.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,

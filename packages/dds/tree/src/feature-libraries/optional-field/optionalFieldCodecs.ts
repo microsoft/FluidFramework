@@ -5,12 +5,12 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { ICodecFamily, SessionAwareCodec, makeCodecFamily, unitCodec } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { makeChangeAtomIdCodec } from "../changeAtomIdCodec";
-import type { NodeChangeset } from "../modular-schema";
-import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
-import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat";
+import { ICodecFamily, SessionAwareCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
+import type { NodeChangeset } from "../modular-schema/index.js";
+import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
 export const noChangeCodecFamily: ICodecFamily<0, SessionId> = makeCodecFamily<0, SessionId>([
 	[0, unitCodec],

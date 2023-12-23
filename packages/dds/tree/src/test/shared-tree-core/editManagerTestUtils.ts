@@ -5,11 +5,11 @@
 
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { SessionId } from "@fluidframework/runtime-definitions";
-import { ChangeFamily, ChangeRebaser, ChangeFamilyEditor } from "../../core";
-import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange";
-import { Commit, EditManager } from "../../shared-tree-core";
-import { brand, makeArray } from "../../util";
-import { mintRevisionTag } from "../utils";
+import { ChangeFamily, ChangeRebaser, ChangeFamilyEditor } from "../../core/index.js";
+import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange.js";
+import { Commit, EditManager } from "../../shared-tree-core/index.js";
+import { brand, makeArray } from "../../util/index.js";
+import { mintRevisionTag } from "../utils.js";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 export function testChangeEditManagerFactory(options: {
