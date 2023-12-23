@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IdAllocator, idAllocatorFromMaxId } from "../../util";
 import { FieldKey } from "../schema-stored";
 import { ICodecOptions } from "../../codec";
@@ -13,11 +14,13 @@ import { ProtoNodes, Root } from "./delta";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
+	idCompressor: IIdCompressor,
 	options?: ICodecOptions,
 ): DetachedFieldIndex {
 	return new DetachedFieldIndex(
 		prefix,
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+		idCompressor,
 		options,
 	);
 }

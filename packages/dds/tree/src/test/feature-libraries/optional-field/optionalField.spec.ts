@@ -12,7 +12,6 @@ import {
 import {
 	makeAnonChange,
 	TaggedChange,
-	mintRevisionTag,
 	tagChange,
 	tagRollbackInverse,
 	makeDetachedNodeId,
@@ -33,6 +32,7 @@ import {
 	assertFieldChangesEqual,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
+	mintRevisionTag,
 } from "../../utils";
 import { changesetForChild, fooKey, testTreeCursor } from "../fieldKindTestUtils";
 // eslint-disable-next-line import/no-internal-modules

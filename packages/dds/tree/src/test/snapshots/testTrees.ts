@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand } from "../../util";
 import {
@@ -64,8 +65,13 @@ function generateCompleteTree(
 	height: number,
 	nodesPerField: number,
 ): ISharedTree {
+	const idCompressor = createIdCompressor(sessionId);
 	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+		new MockFluidDataStoreRuntime({
+			clientId: "test-client",
+			id: "test",
+			idCompressor,
+		}),
 		"test",
 	);
 	const view = tree.schematizeInternal({
@@ -74,6 +80,7 @@ function generateCompleteTree(
 		initialTree: [],
 	}).checkout;
 	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
+	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 	return tree;
 }
 
@@ -122,6 +129,15 @@ function generateTreeRecursively(
 		}
 	}
 }
+
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+// Note: trees which simulate attach scenarios using the mocks should finalize ids created
+// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
+// finalization when messages are processed.
+export const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees() {
@@ -313,10 +329,13 @@ export function generateTestTrees() {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				const baseTree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
-					"test",
-				);
+				const idCompressor = createIdCompressor(sessionId);
+				const runtime = new MockFluidDataStoreRuntime({
+					clientId: "test-client",
+					id: "test",
+					idCompressor,
+				});
+				const baseTree = factory.create(runtime, "test");
 
 				const tree1 = baseTree.schematizeInternal({
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -334,6 +353,7 @@ export function generateTestTrees() {
 				tree2.rebaseOnto(tree1);
 				tree1.merge(tree2);
 
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, "tree2");
 
 				const expected = ["x", "y", "a", "b", "c"];
@@ -346,6 +366,7 @@ export function generateTestTrees() {
 				tree3.rebaseOnto(tree1);
 				tree1.merge(tree3);
 
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, "tree3");
 			},
 		},
@@ -375,8 +396,13 @@ export function generateTestTrees() {
 					schema: docSchema,
 					initialTree: undefined,
 				};
+				const idCompressor = createIdCompressor(sessionId);
 				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor,
+					}),
 					"test",
 				);
 				const view = tree.schematizeInternal(config).checkout;
@@ -389,6 +415,8 @@ export function generateTestTrees() {
 					cursorForJsonableTreeNode({ type: leaf.handle.name, value: tree.handle }),
 					true,
 				);
+
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");
 			},
 		},
@@ -410,8 +438,13 @@ export function generateTestTrees() {
 					initialTree: [],
 				};
 
+				const idCompressor = createIdCompressor(sessionId);
 				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor,
+					}),
 					"test",
 				);
 				const view = tree.schematizeInternal(config).checkout;
@@ -436,6 +469,7 @@ export function generateTestTrees() {
 					})
 					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
 				view.transaction.commit();
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");
 			},
 		},

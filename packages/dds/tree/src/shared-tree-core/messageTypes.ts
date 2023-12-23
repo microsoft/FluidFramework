@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { GraphCommit, SessionId } from "../core";
+import { SessionId } from "@fluidframework/id-compressor";
+import { GraphCommit } from "../core";
 
 export interface DecodedMessage<TChange> {
 	commit: GraphCommit<TChange>;

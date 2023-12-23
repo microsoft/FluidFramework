@@ -6,9 +6,10 @@
 	"include": ["src/**/*"],
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"outDir": "./dist",
 		"rootDir": "./src",
+		"outDir": "./dist",
 		"downlevelIteration": true,
-		"noUnusedLocals": false
+		"noUnusedLocals": false,
+		"types": ["mocha"]
 	}
 }

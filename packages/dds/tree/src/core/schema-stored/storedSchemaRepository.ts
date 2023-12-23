@@ -4,7 +4,7 @@
  */
 
 import { BTree } from "sorted-btree";
-import { createEmitter, ISubscribable } from "../../events";
+import { createEmitter, HasListeners, IEmitter, ISubscribable } from "../../events";
 import { compareStrings } from "../../util";
 import {
 	StoredSchemaCollection,
@@ -54,13 +54,17 @@ export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	apply(newSchema: TreeStoredSchema): void;
 }
 
+type eventsEmitterType = ISubscribable<SchemaEvents> &
+	IEmitter<SchemaEvents> &
+	HasListeners<SchemaEvents>;
+
 /**
  * Mutable TreeStoredSchema repository.
  */
 export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
-	protected readonly events = createEmitter<SchemaEvents>();
+	protected readonly events: eventsEmitterType = createEmitter<SchemaEvents>();
 
 	/**
 	 * Copies in the provided schema. If `data` is an TreeStoredSchemaRepository, it will be cheap-cloned.
