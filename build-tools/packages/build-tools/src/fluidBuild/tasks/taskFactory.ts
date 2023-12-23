@@ -28,6 +28,7 @@ import { RenameTypesTask } from "./leaf/renamerTask";
 const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
+	"ts2esm": TscTask, // Assume if tsc is out of date, ts2esm is out of date. This is insufficient and not good enough for test.
 	"tsc": TscTask,
 	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
