@@ -238,7 +238,7 @@ _See code: [src/commands/release/report-unreleased.ts](https://github.com/micros
 
 ## `flub release setPackageTypesField`
 
-Updates which .d.ts file is referenced by the `types` field in package.json. This command is used during package publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.
+Updates which .d.ts file is referenced by the `types` or `exports` fields in package.json. This command is used during package publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.
 
 ```
 USAGE
@@ -282,8 +282,8 @@ PACKAGE FILTER FLAGS
                           excluded. Cannot be used with --scope.
 
 DESCRIPTION
-  Updates which .d.ts file is referenced by the `types` field in package.json. This command is used during package
-  publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.
+  Updates which .d.ts file is referenced by the `types` or `exports` fields in package.json. This command is used during
+  package publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.
 ```
 
 _See code: [src/commands/release/setPackageTypesField.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/setPackageTypesField.ts)_
