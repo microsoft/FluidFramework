@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { GenericChangeset } from "../../feature-libraries";
+import { GenericChangeset } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeGenericChangeCodec } from "../../feature-libraries/modular-schema/genericFieldKindCodecs";
-import { TestChange } from "../testChange";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
-import { sessionId } from "./testTrees";
+import { makeGenericChangeCodec } from "../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
+import { TestChange } from "../testChange.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
+import { sessionId } from "./testTrees.js";
 
 const nodeChange = TestChange.mint([], 1);
 const testChangesets: { name: string; change: GenericChangeset<TestChange> }[] = [

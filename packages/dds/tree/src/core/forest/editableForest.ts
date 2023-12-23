@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { FieldKey } from "../schema-stored";
+import { FieldKey } from "../schema-stored/index.js";
 import {
 	DetachedField,
 	Anchor,
@@ -15,8 +15,8 @@ import {
 	makeDetachedFieldIndex,
 	deltaForRootInitialization,
 	DeltaRoot,
-} from "../tree";
-import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
+} from "../tree/index.js";
+import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
 
 /**
  * Editing APIs.

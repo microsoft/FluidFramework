@@ -89,7 +89,7 @@ export {
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
-} from "./core";
+} from "./core/index.js";
 
 export {
 	Brand,
@@ -112,7 +112,7 @@ export {
 	oneFromSet,
 	disposeSymbol,
 	IDisposable,
-} from "./util";
+} from "./util/index.js";
 
 export {
 	Events,
@@ -122,9 +122,9 @@ export {
 	IEmitter,
 	NoListenersCallback,
 	HasListeners,
-} from "./events";
+} from "./events/index.js";
 
-export { leaf } from "./domains";
+export { leaf } from "./domains/index.js";
 
 export {
 	FieldKind as FlexFieldKind,
@@ -225,7 +225,7 @@ export {
 	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
-} from "./feature-libraries";
+} from "./feature-libraries/index.js";
 
 export {
 	TreeArrayNode,
@@ -235,7 +235,7 @@ export {
 	TreeNode,
 	TreeArrayNodeBase,
 	create,
-} from "./simple-tree";
+} from "./simple-tree/index.js";
 
 export {
 	ISharedTree,
@@ -257,7 +257,7 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
-} from "./shared-tree";
+} from "./shared-tree/index.js";
 
 export {
 	ITree,
@@ -301,12 +301,12 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
-} from "./class-tree";
-export { SharedTree, TreeFactory } from "./treeFactory";
+} from "./class-tree/index.js";
+export { SharedTree, TreeFactory } from "./treeFactory.js";
 
-export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
-export { noopValidator } from "./codec";
-export { typeboxValidator } from "./external-utilities";
+export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
+export { noopValidator } from "./codec/index.js";
+export { typeboxValidator } from "./external-utilities/index.js";
 
 // TODO: When previously tagged '@internal', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
 export {
@@ -329,7 +329,7 @@ export {
 	Erased,
 	RestrictiveReadonlyRecord,
 	MakeNominal,
-} from "./util";
+} from "./util/index.js";
 
 export {
 	NormalizeField,
@@ -360,4 +360,4 @@ export {
 	NodeKeyFieldKind,
 	Forbidden,
 	Sequence,
-} from "./feature-libraries";
+} from "./feature-libraries/index.js";

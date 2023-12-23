@@ -11,9 +11,13 @@ import {
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { DetachedFieldIndex } from "../core";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { JsonCompatibleReadOnly } from "../util";
+import { DetachedFieldIndex } from "../core/index.js";
+import {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "../shared-tree-core/index.js";
+import { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * The storage key for the blob in the summary containing schema data

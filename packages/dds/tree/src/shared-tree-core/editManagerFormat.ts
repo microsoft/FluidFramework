@@ -5,8 +5,13 @@
 
 import { TSchema, Type, ObjectOptions, Static } from "@sinclair/typebox";
 import { SessionId } from "@fluidframework/id-compressor";
-import { Brand, brandedNumberType } from "../util";
-import { SessionIdSchema, RevisionTag, RevisionTagSchema, EncodedRevisionTag } from "../core";
+import { Brand, brandedNumberType } from "../util/index.js";
+import {
+	SessionIdSchema,
+	RevisionTag,
+	RevisionTagSchema,
+	EncodedRevisionTag,
+} from "../core/index.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.

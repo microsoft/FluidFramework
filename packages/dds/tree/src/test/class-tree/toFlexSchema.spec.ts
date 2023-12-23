@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../class-tree/toFlexSchema";
-import { SchemaFactory } from "../../class-tree";
+import { toFlexSchema } from "../../class-tree/toFlexSchema.js";
+import { SchemaFactory } from "../../class-tree/index.js";
 
 describe("toFlexSchema", () => {
 	it("minimal", () => {

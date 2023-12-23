@@ -12,11 +12,11 @@ import {
 	FlexTreeNode,
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
-} from "../../../feature-libraries";
-import { fail } from "../../../util";
-import { validateTreeConsistency } from "../../utils";
-import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { Revertible } from "../../../core";
+} from "../../../feature-libraries/index.js";
+import { fail } from "../../../util/index.js";
+import { validateTreeConsistency } from "../../utils.js";
+import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { Revertible } from "../../../core/index.js";
 import {
 	FieldEdit,
 	FuzzDelete,
@@ -25,9 +25,9 @@ import {
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
-} from "./operationTypes";
-import { fuzzNode, fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
-import { FuzzTestState, viewFromState } from "./fuzzEditGenerators";
+} from "./operationTypes.js";
+import { fuzzNode, fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import { FuzzTestState, viewFromState } from "./fuzzEditGenerators.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {

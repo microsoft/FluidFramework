@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { brand } from "../util";
-import { SequenceId } from "./editManagerFormat";
+import { brand } from "../util/index.js";
+import { SequenceId } from "./editManagerFormat.js";
 
 export const sequenceIdComparator = (a: SequenceId, b: SequenceId) =>
 	a.sequenceNumber !== b.sequenceNumber

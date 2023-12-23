@@ -26,20 +26,25 @@ import {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
-} from "../../shared-tree-core";
-import { AllowedUpdateType, ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
+} from "../../shared-tree-core/index.js";
+import {
+	AllowedUpdateType,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	rootFieldKey,
+} from "../../core/index.js";
 import {
 	DefaultEditBuilder,
 	FieldKinds,
 	TreeFieldSchema,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
-} from "../../feature-libraries";
-import { brand } from "../../util";
-import { SharedTreeTestFactory } from "../utils";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
-import { leaf, SchemaBuilder } from "../../domains";
-import { TestSharedTreeCore } from "./utils";
+} from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
+import { SharedTreeTestFactory } from "../utils.js";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { TestSharedTreeCore } from "./utils.js";
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {

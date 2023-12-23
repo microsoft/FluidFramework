@@ -17,17 +17,17 @@ import {
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-} from "../../core";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultEditBuilder,
 	FieldKinds,
 	FieldKindWithEditor,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 
-import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
+import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
@@ -35,21 +35,21 @@ import {
 	mintRevisionTag,
 	testChangeReceiver,
 	testIdCompressor,
-} from "../utils";
+} from "../utils.js";
 import {
 	intoDelta,
 	ModularChangeFamily,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeFamily";
-import { leaf } from "../../domains";
+} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachIdOverrideType } from "../../feature-libraries/sequence-field";
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { MarkMaker } from "./sequence-field/testEdits";
+import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
-import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils";
+import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[sequence].map((f) => [f.identifier, f]),

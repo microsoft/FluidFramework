@@ -11,9 +11,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedTree, SharedTreeFactory } from "../../shared-tree";
-import { typeboxValidator } from "../../external-utilities";
-import { SchemaFactory, TreeConfiguration } from "../../class-tree";
+import { SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree/index.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {

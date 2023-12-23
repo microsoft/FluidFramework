@@ -18,11 +18,11 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 	ChangeFamilyCodec,
-} from "../core";
-import { SessionAwareCodec, makeCodecFamily } from "../codec";
-import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util";
-import { cursorForJsonableTreeNode } from "../feature-libraries";
-import { deepFreeze } from "./utils";
+} from "../core/index.js";
+import { SessionAwareCodec, makeCodecFamily } from "../codec/index.js";
+import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
+import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
+import { deepFreeze } from "./utils.js";
 
 export interface NonEmptyTestChange {
 	/**

@@ -4,16 +4,16 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { CursorLocationType, StoredSchemaCollection } from "../../../core";
-import { JsonCompatibleReadOnly } from "../../../util";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec";
-import { FullSchemaPolicy } from "../../modular-schema";
-import { TreeCompressionStrategy } from "../../treeCompressionUtils";
-import { EncodedFieldBatch, validVersions } from "./format";
-import { decode } from "./chunkDecoding";
-import { schemaCompressedEncode } from "./schemaBasedEncoding";
-import { FieldBatch } from "./fieldBatch";
-import { uncompressedEncode } from "./uncompressedEncode";
+import { CursorLocationType, StoredSchemaCollection } from "../../../core/index.js";
+import { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
+import { FullSchemaPolicy } from "../../modular-schema/index.js";
+import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
+import { EncodedFieldBatch, validVersions } from "./format.js";
+import { decode } from "./chunkDecoding.js";
+import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
+import { FieldBatch } from "./fieldBatch.js";
+import { uncompressedEncode } from "./uncompressedEncode.js";
 
 export interface Context {
 	readonly encodeType: TreeCompressionStrategy;

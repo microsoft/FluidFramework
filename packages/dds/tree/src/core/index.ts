@@ -98,7 +98,7 @@ export {
 	DeltaDetachedNodeDestruction,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
-} from "./tree";
+} from "./tree/index.js";
 
 export {
 	TreeNavigationResult,
@@ -113,7 +113,7 @@ export {
 	FieldAnchor,
 	moveToDetachedField,
 	ForestEvents,
-} from "./forest";
+} from "./forest/index.js";
 
 export {
 	FieldKey,
@@ -142,7 +142,7 @@ export {
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
-} from "./schema-stored";
+} from "./schema-stored/index.js";
 
 export {
 	ChangeFamily,
@@ -150,7 +150,7 @@ export {
 	ChangeEncodingContext,
 	ChangeFamilyEditor,
 	EditBuilder,
-} from "./change-family";
+} from "./change-family/index.js";
 
 export {
 	areEqualChangeAtomIds,
@@ -183,7 +183,7 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
-} from "./rebase";
+} from "./rebase/index.js";
 
 export {
 	Adapters,
@@ -191,6 +191,6 @@ export {
 	Compatibility,
 	TreeAdapter,
 	AllowedUpdateType,
-} from "./schema-view";
+} from "./schema-view/index.js";
 
-export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible/index.js";

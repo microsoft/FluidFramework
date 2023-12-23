@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag } from "../../utils";
-import { ChangesetLocalId, RevisionTag } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { mintRevisionTag } from "../../utils.js";
+import { ChangesetLocalId, RevisionTag } from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	CellOrderingMethod,
 	sequenceConfig,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/config";
-import { brand } from "../../../util";
-import { MarkMaker as Mark } from "./testEdits";
-import { describeForBothConfigs, withOrderingMethod } from "./utils";
+} from "../../../feature-libraries/sequence-field/config.js";
+import { brand } from "../../../util/index.js";
+import { MarkMaker as Mark } from "./testEdits.js";
+import { describeForBothConfigs, withOrderingMethod } from "./utils.js";
 
 const dummyMark = Mark.delete(1, brand(0));
 const detachedBy: RevisionTag = mintRevisionTag();

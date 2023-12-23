@@ -18,7 +18,7 @@ import {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	MakeNominal,
 	Named,
@@ -27,11 +27,11 @@ import {
 	oneFromSet,
 	Assume,
 	mapIterable,
-} from "../../util";
-import { FieldKinds } from "../default-schema";
-import { FieldKind, FullSchemaPolicy } from "../modular-schema";
-import { LazyItem } from "./flexList";
-import { ObjectToMap, objectToMapTyped } from "./typeUtils";
+} from "../../util/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import { FieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
+import { LazyItem } from "./flexList.js";
+import { ObjectToMap, objectToMapTyped } from "./typeUtils.js";
 
 /**
  * @internal

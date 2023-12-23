@@ -10,9 +10,14 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import { AllowedTypes, FieldKinds, SchemaBuilderBase, TreeFieldSchema } from "../feature-libraries";
-import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
-import { leaf } from "./leafDomain";
+import {
+	AllowedTypes,
+	FieldKinds,
+	SchemaBuilderBase,
+	TreeFieldSchema,
+} from "../feature-libraries/index.js";
+import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util/index.js";
+import { leaf } from "./leafDomain.js";
 
 const builder = new SchemaBuilderBase(FieldKinds.optional, { scope: "Test Recursive Domain" });
 

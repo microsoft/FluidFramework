@@ -11,10 +11,10 @@ import {
 	RevisionMetadataSource,
 	tagChange,
 	TaggedChange,
-} from "../../core";
-import { fail, IdAllocator } from "../../util";
-import { Multiplicity } from "../multiplicity";
-import { CrossFieldManager } from "./crossFieldQueries";
+} from "../../core/index.js";
+import { fail, IdAllocator } from "../../util/index.js";
+import { Multiplicity } from "../multiplicity.js";
+import { CrossFieldManager } from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
 	ToDelta,
@@ -23,11 +23,11 @@ import {
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
-} from "./fieldChangeHandler";
-import { FieldKindWithEditor } from "./fieldKind";
-import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
-import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
-import { NodeChangeset } from "./modularChangeTypes";
+} from "./fieldChangeHandler.js";
+import { FieldKindWithEditor } from "./fieldKind.js";
+import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
+import { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+import { NodeChangeset } from "./modularChangeTypes.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.

@@ -9,17 +9,21 @@ import {
 	IMultiFormatCodec,
 	SessionAwareCodec,
 	makeVersionedValidatedCodec,
-} from "../codec";
-import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core";
-import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
-import { SummaryData } from "./editManager";
+} from "../codec/index.js";
+import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlySchema,
+	mapIterable,
+} from "../util/index.js";
+import { SummaryData } from "./editManager.js";
 import {
 	Commit,
 	EncodedCommit,
 	EncodedEditManager,
 	SequencedCommit,
 	version,
-} from "./editManagerFormat";
+} from "./editManagerFormat.js";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<

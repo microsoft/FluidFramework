@@ -4,13 +4,13 @@
  */
 
 import { createIdCompressor } from "@fluidframework/id-compressor";
-import { RevisionTagCodec } from "../../core";
-import { SequenceField } from "../../feature-libraries";
+import { RevisionTagCodec } from "../../core/index.js";
+import { SequenceField } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { generatePopulatedMarks } from "../feature-libraries/sequence-field/populatedMarks";
-import { TestChange } from "../testChange";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
-import { sessionId } from "./testTrees";
+import { generatePopulatedMarks } from "../feature-libraries/sequence-field/populatedMarks.js";
+import { TestChange } from "../testChange.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
+import { sessionId } from "./testTrees.js";
 
 describe("SequenceField - Snapshots", () => {
 	useSnapshotDirectory("sequence-field");

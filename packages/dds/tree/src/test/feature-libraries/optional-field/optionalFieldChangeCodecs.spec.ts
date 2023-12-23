@@ -5,18 +5,18 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
-import { NodeChangeset } from "../../../feature-libraries";
-import { JsonCompatibleReadOnly, brand } from "../../../util";
-import { EncodingTestData, MockIdCompressor, makeEncodingTestSuite } from "../../utils";
+import { NodeChangeset } from "../../../feature-libraries/index.js";
+import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
+import { EncodingTestData, MockIdCompressor, makeEncodingTestSuite } from "../../utils.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/optional-field";
-import { SessionAwareCodec } from "../../../codec";
-import { RevisionTagCodec } from "../../../core";
-import { changesetForChild } from "../fieldKindTestUtils";
+} from "../../../feature-libraries/optional-field/index.js";
+import { SessionAwareCodec } from "../../../codec/index.js";
+import { RevisionTagCodec } from "../../../core/index.js";
+import { changesetForChild } from "../fieldKindTestUtils.js";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 

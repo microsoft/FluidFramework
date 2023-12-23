@@ -15,8 +15,8 @@ export {
 	ChangeAtomId,
 	ChangeAtomIdMap,
 	SessionIdSchema,
-} from "./types";
-export { RevisionTagCodec } from "./revisionTagCodec";
+} from "./types.js";
+export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {
 	ChangeRebaser,
 	FinalChange,
@@ -28,7 +28,7 @@ export {
 	TaggedChange,
 	RevisionMetadataSource,
 	RevisionInfo,
-} from "./changeRebaser";
+} from "./changeRebaser.js";
 export {
 	Exception,
 	Failure,
@@ -36,7 +36,7 @@ export {
 	OutputType,
 	verifyChangeRebaser,
 	Violation,
-} from "./verifyChangeRebaser";
+} from "./verifyChangeRebaser.js";
 export {
 	findAncestor,
 	findCommonAncestor,
@@ -45,4 +45,4 @@ export {
 	rebaseChange,
 	rebaseChangeOverChanges,
 	revisionMetadataSourceFromInfo,
-} from "./utils";
+} from "./utils.js";

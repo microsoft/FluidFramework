@@ -11,7 +11,7 @@ import {
 	nodeKeyField,
 	nodeKeySchema,
 	nodeKeyTreeSchema,
-} from "../../../domains";
+} from "../../../domains/index.js";
 import {
 	FieldKinds,
 	NodeKeyIndex,
@@ -23,11 +23,11 @@ import {
 	createMockNodeKeyManager,
 	TreeFieldSchema,
 	InsertableFlexField,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys";
-import { SummarizeType, TestTreeProvider, flexTreeWithContent } from "../../utils";
-import { AllowedUpdateType } from "../../../core";
+import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys.js";
+import { SummarizeType, TestTreeProvider, flexTreeWithContent } from "../../utils.js";
+import { AllowedUpdateType } from "../../../core/index.js";
 
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
 const nodeSchema = builder.objectRecursive("node", {

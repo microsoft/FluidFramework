@@ -4,7 +4,7 @@
  */
 import { ObjectOptions } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import { _InlineTrick, fail, objectToMap } from "../util";
+import { _InlineTrick, fail, objectToMap } from "../util/index.js";
 
 /**
  * This module contains utilities for an encoding of a discriminated union that is efficient to validate using

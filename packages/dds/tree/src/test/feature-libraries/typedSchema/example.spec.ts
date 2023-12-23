@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { leaf, SchemaBuilder } from "../../../domains";
-import { FieldKinds, TreeFieldSchema } from "../../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../../domains/index.js";
+import { FieldKinds, TreeFieldSchema } from "../../../feature-libraries/index.js";
 
 const builder = new SchemaBuilder({ scope: "example" });
 

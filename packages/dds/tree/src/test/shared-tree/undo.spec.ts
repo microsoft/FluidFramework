@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { cursorForJsonableTreeNode } from "../../feature-libraries";
-import { leaf, singleJsonCursor } from "../../domains";
-import { rootFieldKey, UpPath } from "../../core";
-import { ITreeCheckout } from "../../shared-tree";
-import { brand, JsonCompatible } from "../../util";
-import { createTestUndoRedoStacks, expectJsonTree, makeTreeFromJson } from "../utils";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import { leaf, singleJsonCursor } from "../../domains/index.js";
+import { rootFieldKey, UpPath } from "../../core/index.js";
+import { ITreeCheckout } from "../../shared-tree/index.js";
+import { brand, JsonCompatible } from "../../util/index.js";
+import { createTestUndoRedoStacks, expectJsonTree, makeTreeFromJson } from "../utils.js";
 
 const rootPath: UpPath = {
 	parent: undefined,

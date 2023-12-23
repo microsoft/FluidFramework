@@ -4,21 +4,21 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Changeset } from "../../../feature-libraries/sequence-field";
-import { RevisionTagCodec } from "../../../core";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
+import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import { RevisionTagCodec } from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import {
 	EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	MockIdCompressor,
 	testIdCompressor,
-} from "../../utils";
-import { generatePopulatedMarks } from "./populatedMarks";
-import { ChangeMaker as Change, cases } from "./testEdits";
+} from "../../utils.js";
+import { generatePopulatedMarks } from "./populatedMarks.js";
+import { ChangeMaker as Change, cases } from "./testEdits.js";
 
 type TestCase = [string, Changeset<TestChange>, SessionId];
 

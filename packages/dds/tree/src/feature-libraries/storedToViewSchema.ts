@@ -11,9 +11,9 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-} from "../core";
-import { fail } from "../util";
-import { defaultSchemaPolicy } from "./default-schema";
+} from "../core/index.js";
+import { fail } from "../util/index.js";
+import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	FlexTreeSchema,
 	TreeNodeSchema,
@@ -24,7 +24,7 @@ import {
 	LeafNodeSchema,
 	MapNodeSchema,
 	ObjectNodeSchema,
-} from "./typed-schema";
+} from "./typed-schema/index.js";
 
 /**
  * Creates a new view schema using the stored schema.
