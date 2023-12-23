@@ -37,7 +37,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import type { SharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -1272,9 +1272,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	/**
 	 * These tests validate cases where we saw unexpected tombstone behavior in the past - tombstone revived
-	 * events were logged to data stores were un-tombstoned unexpectedly, etc.
+	 * events were logged, data stores were un-tombstoned unexpectedly, etc.
 	 */
-	describe("No unexpected tombstone behavior", () => {
+	describe("No unexpected tombstone revival in unreachable subtrees", () => {
 		beforeEach(() => {
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
@@ -1282,7 +1282,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		/**
 		 * In interactive clients, when a tombstoned data store is loaded that has reference to another tombstoned
 		 * data store, revived events should not be logged.
-		 * Note: This behavior is incorrect today, i.e., revived event is logged.
 		 */
 		itExpects(
 			"Should not log tombstone revived events when data store is not revived in interactive clients",
@@ -1290,11 +1289,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					clientType: "interactive",
-				},
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
 					clientType: "interactive",
 				},
 			],
@@ -1340,21 +1334,11 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					async () => resolveHandleHelper(containerRuntime2, dataStore2._context.id),
 					`Should be able to request a tombstoned datastore.`,
 				);
-				mockLogger.assertMatch(
+				mockLogger.assertMatchNone(
 					[
 						{
 							eventName:
-								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-							clientType: "interactive",
-							...tagCodeArtifacts({ id: `/${dataStore2._context.id}` }),
-						},
-						// This is unexpected. Revived error is seen today because dataStore2 has a handle to dataStore3
-						// which results in this event.
-						{
-							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
-							clientType: "interactive",
-							...tagCodeArtifacts({ id: `/${dataStore3._context.id}` }),
 						},
 					],
 					"Events not found as expected",
@@ -1365,12 +1349,15 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		/**
 		 * In summarizer client, when a tombstoned data store is loaded that has a reference to another data store,
 		 * this should not result in the second data store getting un-tombstoned.
-		 * Note: This behavior is incorrect today, i.e., the second data store is un-tombstoned and its unreferenced
-		 * timestamp is reset.
 		 */
 		itExpects(
 			"Should not un-tombstone data store when it is not revived in summarizer client",
 			[
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+				},
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
@@ -1460,14 +1447,13 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// Summarize again. This should not result in any of the data stores getting un-tombstoned.
 				const { summaryVersion: summaryVersion2 } = await summarize(summarizer2);
 				// There shouldn't be any revived event for dataStore3 because it is not revived.
-				// This is unexpected. Revived error is seen today because dataStore2 has a handle to dataStore3
-				// which results in this event.
-				mockLogger.assertMatch(
+				// In the past, the DDS in dataStore2 was loaded and the handle to dataStore3 was parsed resulting
+				// in a notification to GC of reference to dataStore3 and this event would be logged in error.
+				mockLogger.assertMatchNone(
 					[
 						{
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
-							...tagCodeArtifacts({ id: `/${dataStore3._context.id}` }),
 						},
 					],
 					"Revived event not as expected",
@@ -1487,9 +1473,15 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					},
 					`Should not be able to request dataStore2 which is tombstoned - 2`,
 				);
-				// This is unexpected. dataStore3 should still be tombstoned.
-				await assert.doesNotReject(
+				// dataStore3 should still be tombstoned.
+				await assert.rejects(
 					async () => resolveHandleHelper(containerRuntime3, dataStore3._context.id),
+					(error: any) => {
+						const correctErrorType = error.code === 404;
+						const correctErrorMessage =
+							error.message === `DataStore was tombstoned: ${dataStore3._context.id}`;
+						return correctErrorType && correctErrorMessage;
+					},
 					`Should not be able to request dataStore3 which is tombstoned - 2`,
 				);
 			},
@@ -1498,12 +1490,21 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		/**
 		 * In summarizer client, when a tombstoned data store is loaded that has internal references (among DDS),
 		 * this should not result in the data store getting un-tombstoned.
-		 * Note: This behavior is incorrect today, i.e., the data store is un-tombstoned and its unreferenced
-		 * timestamp is reset.
 		 */
 		itExpects(
 			"Should not un-tombstone data store due to internal references in summarizer client",
 			[
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+				},
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "noninteractive/summarizer",
+					category: "generic",
+				},
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
@@ -1550,9 +1551,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					`Should not be able to request dataStore2 which is tombstoned`,
 				);
 
-				// Load a new summarizer from the last summary. This is done so that dataStore2 is loaded again
-				// and results in notifying GC of the reference between DDSes. This will not happen in summarizer1
-				// because the handles in DDSes have already need parsed.
+				// Load a new summarizer from the last summary. This is done so that dataStore2 is loaded again.
+				// It should NOT result in notifying GC of the reference between DDSes, since addedOutboundReference
+				// is no longer called during DDS parse
 				summarizer1.close();
 				const mockLogger = new MockLogger();
 				const { summarizer: summarizer2 } = await loadSummarizer(
@@ -1576,14 +1577,13 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// Summarize again. This should not result in any of the data stores getting un-tombstoned.
 				const { summaryVersion: summaryVersion2 } = await summarize(summarizer2);
 				// There shouldn't be any revived event for dataStore2 because it is not revived.
-				// This is unexpected. Revived error is seen today because of the internal reference from root to
-				// dds2 in dataStore2.
-				mockLogger.assertMatch(
+				// In the past, the handle to dataStore2 was parsed again resulting
+				// in a notification to GC of reference to dataStore2 and this event would be logged in error.
+				mockLogger.assertMatchNone(
 					[
 						{
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_SubDataStore_Revived",
-							...tagCodeArtifacts({ id: `/${dataStore2._context.id}/${dds2.id}` }),
 						},
 					],
 					"Revived event not as expected",
@@ -1593,8 +1593,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const container3 = await loadContainer(summaryVersion2);
 				const entryPoint3 = (await container3.getEntryPoint()) as ITestDataObject;
 				const containerRuntime3 = entryPoint3._context.containerRuntime as ContainerRuntime;
-				// This is unexpected. dataStore2 should still be tombstoned.
-				await assert.doesNotReject(
+				await assert.rejects(
 					async () => resolveHandleHelper(containerRuntime3, dataStore2._context.id),
 					`Should not be able to request dataStore2 which is tombstoned - 2`,
 				);
