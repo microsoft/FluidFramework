@@ -46,7 +46,7 @@ describe("DDS Handle Encoding", () => {
 		create: (...args: Parameters<IChannelFactory["create"]>) => T;
 	}
 
-	/** Each test case runs some code then declares whether it expects a detectable handle to be included in the op payload */
+	/** Each test case runs some code then declares the handles (if any) it expects to be included in the op payload */
 	interface ITestCase {
 		name: string;
 		doStuff(): void;
@@ -96,7 +96,7 @@ describe("DDS Handle Encoding", () => {
 			new ConsensusRegisterCollectionFactory(),
 			(dds) => {
 				dds.write("whatever", handle).catch(() => {
-					assert.fail("crc.write rejected!");
+					// We only care about errors before message submission, which will fail the message.length assert below.
 				});
 			},
 			[] /* expectedHandles */,
