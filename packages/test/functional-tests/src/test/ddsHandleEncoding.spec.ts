@@ -10,7 +10,7 @@ import {
 	MockDeltaConnection,
 	MockHandle,
 } from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, IDirectory } from "@fluidframework/map";
+import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
 import { detectOutboundReferences } from "@fluidframework/container-runtime";
@@ -85,6 +85,13 @@ describe("DDS Handle Encoding", () => {
 	}
 
 	const testCases: ITestCase[] = [
+		createTestCase(
+			new MapFactory(),
+			(dds: Map<string, any>) => {
+				dds.set("whatever", handle);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
 		createTestCase(
 			new DirectoryFactory(),
 			(dds: IDirectory) => {
