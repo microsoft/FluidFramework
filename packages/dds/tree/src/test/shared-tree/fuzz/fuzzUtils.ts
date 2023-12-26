@@ -4,6 +4,13 @@
  */
 import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	createIdCompressor,
+	deserializeIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SessionId,
+} from "@fluidframework/id-compressor";
 import {
 	moveToDetachedField,
 	Anchor,
@@ -13,16 +20,16 @@ import {
 	forEachNodeInSubtree,
 	Revertible,
 	TreeNavigationResult,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	FieldKinds,
 	TreeFieldSchema,
 	FlexTreeObjectNodeTyped,
 	intoStoredSchema,
-} from "../../../feature-libraries";
-import { SharedTree, ITreeCheckout } from "../../../shared-tree";
-import { SchemaBuilder, leaf } from "../../../domains";
-import { expectEqualPaths } from "../../utils";
+} from "../../../feature-libraries/index.js";
+import { SharedTree, ITreeCheckout } from "../../../shared-tree/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import { expectEqualPaths } from "../../utils.js";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.objectRecursive("node", {
@@ -100,3 +107,24 @@ export const failureDirectory = pathJoin(
 	__dirname,
 	"../../../../src/test/shared-tree/fuzz/failures",
 );
+
+export const createOrDeserializeCompressor = (
+	sessionId: SessionId,
+	summary?: SerializedIdCompressorWithNoSession,
+) => {
+	return summary === undefined
+		? createIdCompressor(sessionId)
+		: deserializeIdCompressor(summary, sessionId);
+};
+
+export const deterministicIdCompressorFactory: (
+	seed: number,
+) => (summary?: SerializedIdCompressorWithNoSession) => ReturnType<typeof createIdCompressor> = (
+	seed,
+) => {
+	const random = makeRandom(seed);
+	return (summary?: SerializedIdCompressorWithNoSession) => {
+		const sessionId = random.uuid4() as SessionId;
+		return createOrDeserializeCompressor(sessionId, summary);
+	};
+};

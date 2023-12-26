@@ -4,22 +4,21 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
-import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util";
+import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
 	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 	getIntention,
-} from "../modular-schema";
+} from "../modular-schema/index.js";
 import {
 	isDetach,
 	cloneMark,
@@ -45,7 +44,7 @@ import {
 	CellOrder,
 	getDetachIdForLineage,
 	getDetachOutputId,
-} from "./utils";
+} from "./utils.js";
 import {
 	Changeset,
 	Mark,
@@ -61,8 +60,8 @@ import {
 	MoveOut,
 	MoveIn,
 	LineageEvent,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
 import {
 	getMoveEffect,
 	setMoveEffect,
@@ -71,11 +70,11 @@ import {
 	MoveEffectTable,
 	isMoveOut,
 	isMoveIn,
-} from "./moveEffectTable";
-import { MarkQueue } from "./markQueue";
-import { EmptyInputCellMark } from "./helperTypes";
-import { CellOrderingMethod, sequenceConfig } from "./config";
-import { DetachIdOverrideType } from "./format";
+} from "./moveEffectTable.js";
+import { MarkQueue } from "./markQueue.js";
+import { EmptyInputCellMark } from "./helperTypes.js";
+import { CellOrderingMethod, sequenceConfig } from "./config.js";
+import { DetachIdOverrideType } from "./format.js";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -258,7 +257,7 @@ export function isRedetach(effect: MarkEffect): boolean {
  */
 function generateNoOpWithCellId<T>(
 	mark: Mark<T>,
-	revision: StableId | undefined,
+	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 ): CellMark<NoopMark, T> {
 	const length = mark.count;

@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeNodeSchemaIdentifier } from "../core";
-import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
+import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
 import {
 	SchemaLibraryData,
 	SchemaLintConfiguration,
@@ -24,9 +24,9 @@ import {
 	MapNodeSchema,
 	FieldNodeSchema,
 	TreeNodeSchemaBase,
-} from "./typed-schema";
-import { FieldKind } from "./modular-schema";
-import { defaultSchemaPolicy } from "./default-schema";
+} from "./typed-schema/index.js";
+import { FieldKind } from "./modular-schema/index.js";
+import { defaultSchemaPolicy } from "./default-schema/index.js";
 
 /**
  * Configuration for a SchemaBuilder.

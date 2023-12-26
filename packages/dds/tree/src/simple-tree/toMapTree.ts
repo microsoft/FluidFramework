@@ -7,10 +7,10 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { EmptyKey, type FieldKey, type MapTree } from "../core";
+import { EmptyKey, type FieldKey, type MapTree } from "../core/index.js";
 // Drilling into `domains` to reduce the magnitude of cycles introduced here
 // eslint-disable-next-line import/no-internal-modules
-import { leaf } from "../domains/leafDomain";
+import { leaf } from "../domains/leafDomain.js";
 import {
 	allowsValue,
 	cursorForMapTreeField,
@@ -29,9 +29,9 @@ import {
 	MapNodeSchema,
 	getAllowedTypes,
 	typeNameSymbol,
-} from "../feature-libraries";
-import { brand, isReadonlyArray } from "../util";
-import { InsertableTreeField, InsertableTypedNode } from "./insertable";
+} from "../feature-libraries/index.js";
+import { brand, isReadonlyArray } from "../util/index.js";
+import { InsertableTreeField, InsertableTypedNode } from "./insertable.js";
 
 /**
  * Module notes:

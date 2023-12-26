@@ -4,9 +4,9 @@
  */
 
 import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
-import { RevisionTagSchema } from "../../core";
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema";
-import { unionOptions } from "../../codec";
+import { RevisionTagSchema } from "../../core/index.js";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
+import { unionOptions } from "../../codec/index.js";
 
 export enum DetachIdOverrideType {
 	/**
@@ -51,9 +51,11 @@ const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 const CellId = Type.Composite(
 	[
-		EncodedChangeAtomId,
 		HasLineage,
-		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+		Type.Object({
+			atom: EncodedChangeAtomId,
+			adjacentCells: Type.Optional(Type.Array(IdRange)),
+		}),
 	],
 	noAdditionalProps,
 );

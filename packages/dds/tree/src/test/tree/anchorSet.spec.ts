@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { cursorForJsonableTreeNode } from "../../feature-libraries";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import {
 	Anchor,
 	AnchorNode,
@@ -29,10 +29,10 @@ import {
 	DeltaFieldChanges,
 	ProtoNodes,
 	DeltaFieldMap,
-} from "../../core";
-import { brand } from "../../util";
-import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils";
-import { leaf } from "../../domains";
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils.js";
+import { leaf } from "../../domains/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");

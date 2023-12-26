@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail, isReadonlyArray } from "../util";
+import { fail, isReadonlyArray } from "../util/index.js";
 import {
 	EmptyKey,
 	FieldKey,
@@ -13,12 +13,12 @@ import {
 	ITreeCursorSynchronous,
 	isCursor,
 	TreeValue,
-} from "../core";
+} from "../core/index.js";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
-import { fieldKinds } from "./default-schema";
-import { FieldKind } from "./modular-schema";
+import { fieldKinds } from "./default-schema/index.js";
+import { FieldKind } from "./modular-schema/index.js";
 import {
 	AllowedTypeSet,
 	AllowedTypes,
@@ -31,16 +31,16 @@ import {
 	TreeFieldSchema,
 	TreeNodeSchema,
 	allowedTypesSchemaSet,
-} from "./typed-schema";
-import { cursorForMapTreeNode } from "./mapTreeCursor";
+} from "./typed-schema/index.js";
+import { cursorForMapTreeNode } from "./mapTreeCursor.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
 	InsertableFlexNode,
-} from "./schema-aware";
-import { isFluidHandle, allowsValue } from "./valueUtilities";
-import { TreeDataContext } from "./fieldGenerator";
-import { Multiplicity } from "./multiplicity";
+} from "./schema-aware/index.js";
+import { isFluidHandle, allowsValue } from "./valueUtilities.js";
+import { TreeDataContext } from "./fieldGenerator.js";
+import { Multiplicity } from "./multiplicity.js";
 
 /**
  * This library defines a tree data format that can infer its types from context.

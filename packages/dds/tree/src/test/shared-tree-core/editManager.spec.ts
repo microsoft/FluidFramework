@@ -4,44 +4,43 @@
  */
 
 import { fail, strict as assert } from "assert";
+import { SessionId } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeFamily,
-	SessionId,
 	ChangeRebaser,
 	TaggedChange,
 	emptyDelta,
-	mintRevisionTag,
 	ChangeFamilyEditor,
 	GraphCommit,
 	DeltaRoot,
-} from "../../core";
-import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
-import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+} from "../../core/index.js";
+import { brand, clone, makeArray, RecursiveReadonly } from "../../util/index.js";
+import { Commit, EditManager, SeqNumber } from "../../shared-tree-core/index.js";
 import {
 	TestChange,
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
 	asDelta,
 	NoOpChangeRebaser,
-} from "../testChange";
-import { createTestUndoRedoStacks } from "../utils";
+} from "../testChange.js";
+import { createTestUndoRedoStacks, mintRevisionTag } from "../utils.js";
 import {
 	TestEditManager,
 	testChangeEditManagerFactory,
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
-} from "./editManagerTestUtils";
+} from "./editManagerTestUtils.js";
 
-const localSessionId: SessionId = "0";
-const peer1: SessionId = "1";
-const peer2: SessionId = "2";
+const localSessionId: SessionId = "0" as SessionId;
+const peer1: SessionId = "1" as SessionId;
+const peer2: SessionId = "2" as SessionId;
 
 // TODO:#4557: Change the number of steps back to 5 once the way these tests are run changes
 const NUM_STEPS = 4;
 const NUM_PEERS = 2;
-const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
+const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 
 type TestCommit = Commit<TestChange> & {
 	seqNumber: SeqNumber;
@@ -484,7 +483,7 @@ describe("EditManager", () => {
 					{
 						change: TestChange.mint([0], [1]),
 						revision,
-						sessionId: "0",
+						sessionId: "0" as SessionId,
 						sequenceNumber: brand(1),
 					},
 				],
@@ -494,7 +493,7 @@ describe("EditManager", () => {
 				{
 					change: TestChange.mint([0, 1], [2]),
 					revision: mintRevisionTag(),
-					sessionId: "1",
+					sessionId: "1" as SessionId,
 				},
 				brand(2),
 				brand(1),
@@ -915,7 +914,7 @@ describe("EditManager", () => {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
-								sessionId: "peer",
+								sessionId: "peer" as SessionId,
 							},
 							brand(T + P + 1),
 							brand(T),
@@ -997,7 +996,7 @@ describe("EditManager", () => {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
-								sessionId: "peer",
+								sessionId: "peer" as SessionId,
 							},
 							brand(T + P + 2),
 							brand(T),
@@ -1174,7 +1173,7 @@ function runUnitTestScenario(
 		 */
 		const summarizer = testChangeEditManagerFactory({
 			rebaser,
-			sessionId: "Summarizer",
+			sessionId: "Summarizer" as SessionId,
 		}).manager;
 		/**
 		 * A set of `EditManager`s spun-up based on summaries produced by `summarizer`.
@@ -1388,7 +1387,7 @@ function runUnitTestScenario(
 			if (step.type !== "Push") {
 				const joiner = testChangeEditManagerFactory({
 					rebaser,
-					sessionId: `Join${joiners.length}`,
+					sessionId: `Join${joiners.length}` as SessionId,
 				}).manager;
 				const summary = clone(summarizer.getSummaryData());
 				joiner.loadSummaryData(summary);

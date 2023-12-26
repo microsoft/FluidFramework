@@ -33,6 +33,7 @@ import {
 	create404Response,
 	createResponseError,
 	GCDataBuilder,
+	isSerializedHandle,
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
@@ -61,7 +62,7 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, disableDatastoreSweepKey } from "./gc";
+import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
@@ -441,6 +442,7 @@ export class DataStores implements IDisposable {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localMessageMetadata: unknown,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	) {
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
@@ -461,6 +463,13 @@ export class DataStores implements IDisposable {
 
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
+
+		// By default, we use the new behavior of detecting outbound routes here.
+		// If this setting is true, then DataStoreContext would be notifying GC instead.
+		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true) {
+			// Notify GC of any outbound references that were added by this op.
+			detectOutboundReferences(envelope, addedOutboundReference);
+		}
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
@@ -951,23 +960,8 @@ export function getSummaryForDatastores(
 	}
 }
 
-//* ACCEPT ALL CURRENT CHANGES FROM MAIN FOR THIS FILE
-
-//* These will be imported properly after merging
-interface ISerializedHandle {
-	// Marker to indicate to JSON.parse that the object is a Fluid handle
-	type: "__fluid_handle__";
-
-	// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
-	url: string;
-}
-const isSerializedHandle = (value: any): value is ISerializedHandle =>
-	value?.type === "__fluid_handle__";
-
 /**
  * Traverse this op's contents and detect any outbound routes that were added by this op.
- *
- * @internal
  */
 export function detectOutboundReferences(
 	envelope: IEnvelope,

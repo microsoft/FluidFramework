@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
-import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { decodeChangeAtomId, encodeChangeAtomId } from "../utils";
+import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	SessionAwareCodec,
+	makeCodecFamily,
+} from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	Attach,
 	AttachAndDetach,
@@ -22,20 +27,24 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
-} from "./types";
-import { Changeset as ChangesetSchema, Encoded } from "./format";
-import { isNoopMark } from "./utils";
+} from "./types.js";
+import { Changeset as ChangesetSchema, Encoded } from "./format.js";
+import { isNoopMark } from "./utils.js";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(
-	childCodec: IJsonCodec<TNodeChange>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-) => makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec, revisionTagCodec)]]);
+	childCodec: SessionAwareCodec<TNodeChange>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+) =>
+	makeCodecFamily<Changeset<TNodeChange>, SessionId>([
+		[0, makeV0Codec(childCodec, revisionTagCodec)],
+	]);
 function makeV0Codec<TNodeChange>(
-	childCodec: IJsonCodec<TNodeChange>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): IJsonCodec<Changeset<TNodeChange>> {
-	const markEffectCodec: IJsonCodec<MarkEffect, Encoded.MarkEffect> = {
-		encode(effect: MarkEffect): Encoded.MarkEffect {
+	childCodec: SessionAwareCodec<TNodeChange>,
+	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+): SessionAwareCodec<Changeset<TNodeChange>> {
+	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
+	const markEffectCodec: SessionAwareCodec<MarkEffect, Encoded.MarkEffect> = {
+		encode(effect: MarkEffect, originatorId: SessionId): Encoded.MarkEffect {
 			const type = effect.type;
 			switch (type) {
 				case "MoveIn":
@@ -44,11 +53,11 @@ function makeV0Codec<TNodeChange>(
 							revision:
 								effect.revision === undefined
 									? undefined
-									: revisionTagCodec.encode(effect.revision),
+									: revisionTagCodec.encode(effect.revision, originatorId),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
-									: encodeChangeAtomId(revisionTagCodec, effect.finalEndpoint),
+									: changeAtomIdCodec.encode(effect.finalEndpoint, originatorId),
 							id: effect.id,
 						},
 					};
@@ -58,7 +67,7 @@ function makeV0Codec<TNodeChange>(
 							revision:
 								effect.revision === undefined
 									? undefined
-									: revisionTagCodec.encode(effect.revision),
+									: revisionTagCodec.encode(effect.revision, originatorId),
 							id: effect.id,
 						},
 					};
@@ -68,13 +77,16 @@ function makeV0Codec<TNodeChange>(
 							revision:
 								effect.revision === undefined
 									? undefined
-									: revisionTagCodec.encode(effect.revision),
+									: revisionTagCodec.encode(effect.revision, originatorId),
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
 									: {
 											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id),
+											id: cellIdCodec.encode(
+												effect.idOverride.id,
+												originatorId,
+											),
 									  },
 							id: effect.id,
 						},
@@ -85,17 +97,20 @@ function makeV0Codec<TNodeChange>(
 							revision:
 								effect.revision === undefined
 									? undefined
-									: revisionTagCodec.encode(effect.revision),
+									: revisionTagCodec.encode(effect.revision, originatorId),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
-									: encodeChangeAtomId(revisionTagCodec, effect.finalEndpoint),
+									: changeAtomIdCodec.encode(effect.finalEndpoint, originatorId),
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
 									: {
 											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id),
+											id: cellIdCodec.encode(
+												effect.idOverride.id,
+												originatorId,
+											),
 									  },
 							id: effect.id,
 						},
@@ -103,8 +118,14 @@ function makeV0Codec<TNodeChange>(
 				case "AttachAndDetach":
 					return {
 						attachAndDetach: {
-							attach: markEffectCodec.encode(effect.attach) as Encoded.Attach,
-							detach: markEffectCodec.encode(effect.detach) as Encoded.Detach,
+							attach: markEffectCodec.encode(
+								effect.attach,
+								originatorId,
+							) as Encoded.Attach,
+							detach: markEffectCodec.encode(
+								effect.detach,
+								originatorId,
+							) as Encoded.Detach,
 						},
 					};
 				case NoopMarkType:
@@ -113,113 +134,120 @@ function makeV0Codec<TNodeChange>(
 					unreachableCase(type);
 			}
 		},
-		decode(encoded: Encoded.MarkEffect): MarkEffect {
-			return decoderLibrary.dispatch(encoded);
+		decode(encoded: Encoded.MarkEffect, originatorId: SessionId): MarkEffect {
+			return decoderLibrary.dispatch(encoded, originatorId);
 		},
 	};
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
-		/* args */ [],
+		/* args */ [originatorId: SessionId],
 		MarkEffect
 	>({
-		moveIn(encoded: Encoded.MoveIn): MoveIn {
+		moveIn(encoded: Encoded.MoveIn, originatorId: SessionId): MoveIn {
 			const { id, finalEndpoint, revision } = encoded;
 			const mark: MoveIn = {
 				type: "MoveIn",
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			if (finalEndpoint !== undefined) {
-				mark.finalEndpoint = decodeChangeAtomId(revisionTagCodec, finalEndpoint);
+				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, originatorId);
 			}
 			return mark;
 		},
-		insert(encoded: Encoded.Insert): Insert {
+		insert(encoded: Encoded.Insert, originatorId: SessionId): Insert {
 			const { id, revision } = encoded;
 			const mark: Insert = {
 				type: "Insert",
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			return mark;
 		},
-		delete(encoded: Encoded.Delete): Delete {
+		delete(encoded: Encoded.Delete, originatorId: SessionId): Delete {
 			const { id, revision, idOverride } = encoded;
 			const mark: Mutable<Delete> = {
 				type: "Delete",
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			if (idOverride !== undefined) {
 				mark.idOverride = {
 					type: idOverride.type,
-					id: cellIdCodec.decode(idOverride.id),
+					id: cellIdCodec.decode(idOverride.id, originatorId),
 				};
 			}
 			return mark;
 		},
-		moveOut(encoded: Encoded.MoveOut): MoveOut {
+		moveOut(encoded: Encoded.MoveOut, originatorId: SessionId): MoveOut {
 			const { id, finalEndpoint, idOverride, revision } = encoded;
 			const mark: Mutable<MoveOut> = {
 				type: "MoveOut",
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			if (finalEndpoint !== undefined) {
-				mark.finalEndpoint = decodeChangeAtomId(revisionTagCodec, finalEndpoint);
+				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, originatorId);
 			}
 			if (idOverride !== undefined) {
 				mark.idOverride = {
 					type: idOverride.type,
-					id: cellIdCodec.decode(idOverride.id),
+					id: cellIdCodec.decode(idOverride.id, originatorId),
 				};
 			}
 
 			return mark;
 		},
-		attachAndDetach(encoded: Encoded.AttachAndDetach): AttachAndDetach {
+		attachAndDetach(
+			encoded: Encoded.AttachAndDetach,
+			originatorId: SessionId,
+		): AttachAndDetach {
 			return {
 				type: "AttachAndDetach",
-				attach: decoderLibrary.dispatch(encoded.attach) as Attach,
-				detach: decoderLibrary.dispatch(encoded.detach) as Detach,
+				attach: decoderLibrary.dispatch(encoded.attach, originatorId) as Attach,
+				detach: decoderLibrary.dispatch(encoded.detach, originatorId) as Detach,
 			};
 		},
 	});
 
-	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId> = {
-		encode: ({ localId, adjacentCells, lineage, revision }: CellId): Encoded.CellId => {
+	const cellIdCodec: SessionAwareCodec<CellId, Encoded.CellId> = {
+		encode: (
+			{ localId, adjacentCells, lineage, revision }: CellId,
+			originatorId: SessionId,
+		): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
-				localId,
+				atom: changeAtomIdCodec.encode({ localId, revision }, originatorId),
 				adjacentCells: adjacentCells?.map(({ id, count }) => [id, count]),
 				// eslint-disable-next-line @typescript-eslint/no-shadow
 				lineage: lineage?.map(({ revision, id, count, offset }) => [
-					revisionTagCodec.encode(revision),
+					revisionTagCodec.encode(revision, originatorId),
 					id,
 					count,
 					offset,
 				]),
-				revision: revision === undefined ? revision : revisionTagCodec.encode(revision),
 			};
 			return encoded;
 		},
-		decode: ({ localId, adjacentCells, lineage, revision }: Encoded.CellId): CellId => {
+		decode: (
+			{ atom, adjacentCells, lineage }: Encoded.CellId,
+			originatorId: SessionId,
+		): CellId => {
+			const { localId, revision } = changeAtomIdCodec.decode(atom, originatorId);
 			// Note: this isn't inlined on decode so that round-tripping changes compare as deep-equal works,
 			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
 			// explicit undefined properties.
-			const decoded: Mutable<CellId> = {
-				localId,
-			};
+			const decoded: Mutable<CellId> = { localId };
 			if (revision !== undefined) {
-				decoded.revision = revisionTagCodec.decode(revision);
+				decoded.revision = revision;
 			}
 			if (adjacentCells !== undefined) {
 				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({
@@ -230,7 +258,7 @@ function makeV0Codec<TNodeChange>(
 			if (lineage !== undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-shadow
 				decoded.lineage = lineage.map(([revision, id, count, offset]) => ({
-					revision: revisionTagCodec.decode(revision),
+					revision: revisionTagCodec.decode(revision, originatorId),
 					id,
 					count,
 					offset,
@@ -249,6 +277,7 @@ function makeV0Codec<TNodeChange>(
 	return {
 		encode: (
 			changeset: Changeset<TNodeChange>,
+			originatorId: SessionId,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
@@ -256,19 +285,22 @@ function makeV0Codec<TNodeChange>(
 					count: mark.count,
 				};
 				if (!isNoopMark(mark)) {
-					encodedMark.effect = markEffectCodec.encode(mark);
+					encodedMark.effect = markEffectCodec.encode(mark, originatorId);
 				}
 				if (mark.cellId !== undefined) {
-					encodedMark.cellId = cellIdCodec.encode(mark.cellId);
+					encodedMark.cellId = cellIdCodec.encode(mark.cellId, originatorId);
 				}
 				if (mark.changes !== undefined) {
-					encodedMark.changes = childCodec.encode(mark.changes);
+					encodedMark.changes = childCodec.encode(mark.changes, originatorId);
 				}
 				jsonMarks.push(encodedMark);
 			}
 			return jsonMarks;
 		},
-		decode: (changeset: Encoded.Changeset<NodeChangeSchema>): Changeset<TNodeChange> => {
+		decode: (
+			changeset: Encoded.Changeset<NodeChangeSchema>,
+			originatorId: SessionId,
+		): Changeset<TNodeChange> => {
 			const marks: Changeset<TNodeChange> = [];
 			for (const mark of changeset) {
 				const decodedMark: Mark<TNodeChange> = {
@@ -276,13 +308,13 @@ function makeV0Codec<TNodeChange>(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect));
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, originatorId));
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = cellIdCodec.decode(mark.cellId);
+					decodedMark.cellId = cellIdCodec.decode(mark.cellId, originatorId);
 				}
 				if (mark.changes !== undefined) {
-					decodedMark.changes = childCodec.decode(mark.changes);
+					decodedMark.changes = childCodec.decode(mark.changes, originatorId);
 				}
 				marks.push(decodedMark);
 			}

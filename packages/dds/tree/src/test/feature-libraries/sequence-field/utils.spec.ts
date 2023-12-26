@@ -4,28 +4,34 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeAtomId, mintRevisionTag } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { ChangeAtomId } from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	areInputCellsEmpty,
 	splitMark,
 	tryMergeMarks,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/utils";
-import { brand } from "../../../util";
-import { deepFreeze } from "../../utils";
-import { TestChange } from "../../testChange";
-import { generatePopulatedMarks } from "./populatedMarks";
-import { describeForBothConfigs, withOrderingMethod } from "./utils";
+} from "../../../feature-libraries/sequence-field/utils.js";
+import { brand } from "../../../util/index.js";
+import { deepFreeze } from "../../utils.js";
+import { TestChange } from "../../testChange.js";
+import { generatePopulatedMarks } from "./populatedMarks.js";
+import { describeForBothConfigs, withOrderingMethod } from "./utils.js";
 
-const vestigialEndpoint: ChangeAtomId = { revision: mintRevisionTag(), localId: brand(42) };
+const idCompressor = createIdCompressor("ca239bfe-7ce4-49dc-93a5-5e72ce8f089c" as SessionId);
+const vestigialEndpoint: ChangeAtomId = {
+	revision: idCompressor.generateCompressedId(),
+	localId: brand(42),
+};
 
 describeForBothConfigs("SequenceField - Utils", (config) => {
 	const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
 	describe("round-trip splitMark and tryMergeMarks", () => {
+		const marks = generatePopulatedMarks(idCompressor);
 		[
-			...generatePopulatedMarks(),
-			generatePopulatedMarks()
+			...marks,
+			...marks
 				.filter((mark) => !areInputCellsEmpty(mark))
 				.map((mark) => ({ ...mark, vestigialEndpoint })),
 		].forEach((mark, index) => {

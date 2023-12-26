@@ -7,7 +7,6 @@ import { fail, strict as assert } from "assert";
 import {
 	RevisionTag,
 	FieldKey,
-	mintRevisionTag,
 	ChangesetLocalId,
 	makeAnonChange,
 	tagChange,
@@ -16,18 +15,18 @@ import {
 	DeltaFieldChanges,
 	DeltaMark,
 	DeltaFieldMap,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	FieldChange,
 	FieldKinds,
 	NodeChangeset,
 	SequenceField as SF,
-} from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
-import { assertFieldChangesEqual, deepFreeze } from "../../utils";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { toDelta } from "./utils";
+} from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { assertFieldChangesEqual, deepFreeze, mintRevisionTag } from "../../utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { toDelta } from "./utils.js";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);

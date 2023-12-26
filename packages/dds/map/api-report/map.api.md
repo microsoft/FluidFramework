@@ -261,7 +261,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     values(): IterableIterator<any>;
 }
 
-// @public
+// @public @deprecated
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;

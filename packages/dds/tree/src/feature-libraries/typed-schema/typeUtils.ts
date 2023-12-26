@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { objectToMap } from "../../util";
+import { objectToMap } from "../../util/index.js";
 
 /**
  * Utilities for manipulating types.

@@ -13,7 +13,7 @@ import {
 	SizedNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
-} from "../../util";
+} from "../../util/index.js";
 
 describe("NestedMap unit tests", () => {
 	describe("tryAddToNestedMap", () => {

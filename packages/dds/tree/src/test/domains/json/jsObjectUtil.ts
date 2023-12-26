@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonCompatible, JsonCompatibleObject } from "../../../util";
+import { JsonCompatible, JsonCompatibleObject } from "../../../util/index.js";
 
 function cloneObject(obj: JsonCompatibleObject | JsonCompatible[]): JsonCompatible {
 	if (Array.isArray(obj)) {

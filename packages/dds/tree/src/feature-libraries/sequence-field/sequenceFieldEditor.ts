@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangesetLocalId } from "../../core";
-import { FieldEditor } from "../modular-schema";
-import { brand } from "../../util";
+import { ChangesetLocalId } from "../../core/index.js";
+import { FieldEditor } from "../modular-schema/index.js";
+import { brand } from "../../util/index.js";
 import {
 	CellId,
 	CellMark,
@@ -18,9 +18,9 @@ import {
 	MoveOut,
 	MoveIn,
 	MarkList,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
-import { splitMark } from "./utils";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
+import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset<never>;

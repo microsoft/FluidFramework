@@ -3,36 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { mintRevisionTag } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SessionId } from "@fluidframework/id-compressor";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Changeset } from "../../../feature-libraries/sequence-field";
-import { RevisionTagCodec } from "../../../shared-tree-core";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
-import { generatePopulatedMarks } from "./populatedMarks";
-import { ChangeMaker as Change, cases } from "./testEdits";
+import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import { RevisionTagCodec } from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import {
+	EncodingTestData,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+	MockIdCompressor,
+	testIdCompressor,
+} from "../../utils.js";
+import { generatePopulatedMarks } from "./populatedMarks.js";
+import { ChangeMaker as Change, cases } from "./testEdits.js";
 
-const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
+type TestCase = [string, Changeset<TestChange>, SessionId];
+
+const sessionId = "session1" as SessionId;
+const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, SessionId> = {
 	successes: [
-		["with child change", Change.modify(1, TestChange.mint([], 1))],
-		["without child change", Change.delete(2, 2)],
+		["with child change", Change.modify(1, TestChange.mint([], 1)), sessionId],
+		["without child change", Change.delete(2, 2), sessionId],
 		[
 			"with repair data",
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
+			sessionId,
 		],
-		...Object.entries(cases),
-		...generatePopulatedMarks().map((mark): [string, Changeset<TestChange>] => [
+		...Object.entries(cases).map<TestCase>(([name, change]) => [name, change, sessionId]),
+		...generatePopulatedMarks(testIdCompressor).map<TestCase>((mark) => [
 			"type" in mark ? mark.type : "NoOp",
 			[mark],
+			sessionId,
 		]),
 	],
 };
 
 describe("SequenceField encoding", () => {
 	makeEncodingTestSuite(
-		SF.sequenceFieldChangeCodecFactory(TestChange.codec, new RevisionTagCodec()),
+		SF.sequenceFieldChangeCodecFactory(
+			TestChange.codec,
+			new RevisionTagCodec(new MockIdCompressor()),
+		),
 		encodingTestData,
 	);
 });

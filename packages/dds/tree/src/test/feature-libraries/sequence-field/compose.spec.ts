@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+import { mintRevisionTag } from "../../utils.js";
 import {
 	RevisionTag,
 	makeAnonChange,
 	tagChange,
 	TreeNodeSchemaIdentifier,
-	mintRevisionTag,
 	tagRollbackInverse,
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionInfo,
 	TaggedChange,
-} from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import {
 	assertChangesetsEqual,
 	compose,
@@ -28,7 +28,7 @@ import {
 	shallowCompose,
 	skipOnLineageMethod,
 	withOrderingMethod,
-} from "./utils";
+} from "./utils.js";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();

@@ -11,21 +11,21 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value } from "../../../core";
-import { TreeContent } from "../../../shared-tree";
+import { UpPath, Anchor, Value } from "../../../core/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
 import {
 	cursorsFromContextualData,
 	jsonableTreeFromCursor,
 	typeNameSymbol,
-} from "../../../feature-libraries";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
+} from "../../../feature-libraries/index.js";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
 	viewFromState,
-} from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
+} from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createAnchors,
 	validateAnchors,
@@ -33,8 +33,9 @@ import {
 	fuzzSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
-} from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+	deterministicIdCompressorFactory,
+} from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
@@ -134,6 +135,7 @@ describe("Fuzz - anchor stability", () => {
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
 			detachedStartOptions: { enabled: false, attachProbability: 1 },
 			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
 	describe("Anchors are stable", () => {
@@ -207,6 +209,7 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			skip: [0],
 		});
 	});
