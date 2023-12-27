@@ -5,7 +5,6 @@
 
 import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangesetLocalId,
 	ChangeEncodingContext,
