@@ -20,7 +20,7 @@ FLAGS
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.

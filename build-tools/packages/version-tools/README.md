@@ -98,7 +98,7 @@ USAGE
 
 ## `fluv autocomplete [SHELL]`
 
-display autocomplete installation instructions
+Display autocomplete installation instructions.
 
 ```
 USAGE
@@ -111,7 +111,7 @@ FLAGS
   -r, --refresh-cache  Refresh cache (ignores displaying instructions)
 
 DESCRIPTION
-  display autocomplete installation instructions
+  Display autocomplete installation instructions.
 
 EXAMPLES
   $ fluv autocomplete
@@ -125,7 +125,7 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.3.10/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.0.4/src/commands/autocomplete/index.ts)_
 
 ## `fluv help [COMMANDS]`
 
@@ -145,7 +145,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.4/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.9/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -159,9 +159,9 @@ ARGUMENTS
   VERSION  The version to convert.
 
 FLAGS
-  -t, --type=<option>      bump type
-                           <options: major|minor|patch|current>
-  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
+  -t, --type=<option>          bump type
+                               <options: major|minor|patch|current>
+      --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -205,7 +205,7 @@ FLAGS
   -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
                              multiple versions, or a space-delimited list of versions can be provided using a single
                              argument.
-  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
+      --prerelease           Include prerelease versions. By default, prerelease versions are excluded.
 
 GLOBAL FLAGS
   --json  Format output as json.

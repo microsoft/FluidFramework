@@ -39,12 +39,14 @@ Adds commands to README.md in current directory.
 
 ```
 USAGE
-  $ fluid-readme generate readme --dir <value> [--aliases] [--multi] [--repository-prefix <value>] [--version <value>]
+  $ fluid-readme generate readme --dir <value> --readme-path <value> [--aliases] [--multi] [--repository-prefix
+    <value>] [--version <value>]
 
 FLAGS
   --[no-]aliases               include aliases in the command list
   --dir=<value>                (required) [default: docs] output directory for multi docs
   --multi                      create a different markdown page for each topic
+  --readme-path=<value>        (required) [default: README.md] Path to the README file.
   --repository-prefix=<value>  a template string used to build links to the source code
   --version=<value>            version to use in readme links. defaults to the version in package.json
 

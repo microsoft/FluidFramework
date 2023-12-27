@@ -27,15 +27,15 @@ FLAGS
   -t, --bumpType=<option>      Version bump type.
                                <options: major|minor|patch>
   -x, --skipChecks             Skip all checks.
-  --[no-]branchCheck           Check that the current branch is correct.
-  --[no-]commit                Commit changes to a new branch.
-  --[no-]install               Update lockfiles by running 'npm install' automatically.
-  --[no-]policyCheck           Check that the local repo complies with all policy.
-  --[no-]updateCheck           Check that the local repo is up to date with the remote.
+      --[no-]branchCheck       Check that the current branch is correct.
+      --[no-]commit            Commit changes to a new branch.
+      --[no-]install           Update lockfiles by running 'npm install' automatically.
+      --[no-]policyCheck       Check that the local repo complies with all policy.
+      --[no-]updateCheck       Check that the local repo is up to date with the remote.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 DESCRIPTION
   Releases a package or release group.
@@ -67,7 +67,7 @@ ARGUMENTS
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -108,7 +108,7 @@ FLAGS
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -168,7 +168,7 @@ FLAGS
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -224,7 +224,7 @@ FLAGS
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 DESCRIPTION
   Creates a release report for the most recent build of the client release group published to an internal ADO feed. It
@@ -252,24 +252,24 @@ FLAGS
   --types=<value>         (required) Which .d.ts types to include in the published package.
 
 PACKAGE SELECTION FLAGS
-  -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
-                                  release group root packages. To include those, use the --releaseGroupRoot argument.
-                                  Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
-  --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
-                                  --releaseGroup, or --releaseGroupRoot.
-  --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
-                                  --releaseGroup, or --releaseGroupRoot.
-  --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
-                                  --releaseGroup, or --releaseGroupRoot.
-  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
-                                  child packages within the release group. To include those, use the --releaseGroup
-                                  argument. Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.

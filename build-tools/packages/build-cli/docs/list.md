@@ -18,14 +18,14 @@ USAGE
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  --outFile=<value>            Output file to write the list of packages to. If not specified, the list will be written
+      --outFile=<value>        Output file to write the list of packages to. If not specified, the list will be written
                                to stdout.
-  --tarball                    Return packed tarball names (without extension) instead of package names. @-signs will be
+      --tarball                Return packed tarball names (without extension) instead of package names. @-signs will be
                                removed from the name, and slashes are replaced with dashes.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 PACKAGE FILTER FLAGS
   --feed=<option>         Filter the resulting packages to those that should be published to a particular npm feed. Use
