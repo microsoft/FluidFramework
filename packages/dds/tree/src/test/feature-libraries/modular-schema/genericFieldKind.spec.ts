@@ -22,14 +22,14 @@ import {
 	DeltaFieldChanges,
 	RevisionTagCodec,
 } from "../../../core/index.js";
-import { fakeIdAllocator, brand } from "../../../util/index.js";
+import { fakeIdAllocator, brand, JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
 	EncodingTestData,
 	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils.js";
-import { SessionAwareCodec } from "../../../codec/index.js";
+import { IJsonCodec } from "../../../codec/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
@@ -400,7 +400,11 @@ describe("Generic FieldKind", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<GenericChangeset, unknown, SessionId> = {
+		const encodingTestData: EncodingTestData<
+			GenericChangeset,
+			unknown,
+			{ originatorId: SessionId }
+		> = {
 			successes: [
 				[
 					"Misc",
@@ -414,12 +418,17 @@ describe("Generic FieldKind", () => {
 							nodeChange: nodeChange1To2,
 						},
 					],
-					"session1" as SessionId,
+					{ originatorId: "session1" as SessionId },
 				],
 			],
 		};
 
-		const throwCodec: SessionAwareCodec<any> = {
+		const throwCodec: IJsonCodec<
+			any,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			{ originatorId: SessionId }
+		> = {
 			encode: unexpectedDelegate,
 			decode: unexpectedDelegate,
 		};
@@ -427,10 +436,15 @@ describe("Generic FieldKind", () => {
 		const leafCodec = valueHandler
 			.codecsFactory(throwCodec, new RevisionTagCodec(new MockIdCompressor()))
 			.resolve(0).json;
-		const childCodec: SessionAwareCodec<NodeChangeset> = {
-			encode: (nodeChange, originatorId) => {
+		const childCodec: IJsonCodec<
+			NodeChangeset,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			{ originatorId: SessionId }
+		> = {
+			encode: (nodeChange, context) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
-				return leafCodec.encode(valueChange, originatorId);
+				return leafCodec.encode(valueChange, context);
 			},
 			decode: (nodeChange, originatorId) => {
 				const valueChange = leafCodec.decode(nodeChange, originatorId);

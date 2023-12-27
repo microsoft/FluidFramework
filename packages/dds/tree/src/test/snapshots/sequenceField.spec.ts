@@ -27,7 +27,9 @@ describe("SequenceField - Snapshots", () => {
 			marks.forEach((mark, index) => {
 				it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
 					const changeset = [mark];
-					const encoded = codec.json.encode(changeset, idCompressor.localSessionId);
+					const encoded = codec.json.encode(changeset, {
+						originatorId: idCompressor.localSessionId,
+					});
 					takeJsonSnapshot(encoded);
 				});
 			});

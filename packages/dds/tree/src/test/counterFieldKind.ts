@@ -23,9 +23,8 @@ import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from ".
 import { leaf } from "../domains/index.js";
 import { makeValueCodec } from "./codec/index.js";
 
-export const counterCodecFamily: ICodecFamily<number, SessionId> = makeCodecFamily([
-	[0, makeValueCodec(Type.Number())],
-]);
+export const counterCodecFamily: ICodecFamily<number, { originatorId: SessionId }> =
+	makeCodecFamily([[0, makeValueCodec(Type.Number())]]);
 
 /**
  * @returns a ChangeRebaser that assumes all the changes commute, meaning that order does not matter.

@@ -20,10 +20,14 @@ import {
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases } from "./testEdits.js";
 
-type TestCase = [string, Changeset<TestChange>, SessionId];
+type TestCase = [string, Changeset<TestChange>, { originatorId: SessionId }];
 
-const sessionId = "session1" as SessionId;
-const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, SessionId> = {
+const sessionId = { originatorId: "session1" as SessionId };
+const encodingTestData: EncodingTestData<
+	Changeset<TestChange>,
+	unknown,
+	{ originatorId: SessionId }
+> = {
 	successes: [
 		["with child change", Change.modify(1, TestChange.mint([], 1)), sessionId],
 		["without child change", Change.delete(2, 2), sessionId],

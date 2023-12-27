@@ -19,7 +19,7 @@ import {
 	DeltaRoot,
 	ChangeFamilyCodec,
 } from "../core/index.js";
-import { SessionAwareCodec, makeCodecFamily } from "../codec/index.js";
+import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
 import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
 import { deepFreeze } from "./utils.js";
@@ -196,7 +196,13 @@ export interface AnchorRebaseData {
 }
 
 const emptyChange: TestChange = { intentions: [] };
-const codec: SessionAwareCodec<TestChange> & ChangeFamilyCodec<TestChange> = {
+const codec: IJsonCodec<
+	TestChange,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	{ originatorId: SessionId }
+> &
+	ChangeFamilyCodec<TestChange> = {
 	encode: (x) => x as unknown as JsonCompatibleReadOnly,
 	decode: (x) => x as unknown as TestChange,
 };

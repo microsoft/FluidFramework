@@ -4,31 +4,39 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { SessionAwareCodec } from "../codec/index.js";
 import {
 	RevisionTag,
 	EncodedRevisionTag,
 	ChangeAtomId,
 	EncodedChangeAtomId,
 } from "../core/index.js";
+import { IJsonCodec } from "../codec/index.js";
 
 export function makeChangeAtomIdCodec(
-	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
-): SessionAwareCodec<ChangeAtomId, EncodedChangeAtomId> {
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		{ originatorId: SessionId }
+	>,
+): IJsonCodec<ChangeAtomId, EncodedChangeAtomId, EncodedChangeAtomId, { originatorId: SessionId }> {
 	return {
-		encode(changeAtomId: ChangeAtomId, originatorId: SessionId): EncodedChangeAtomId {
+		encode(
+			changeAtomId: ChangeAtomId,
+			context: { originatorId: SessionId },
+		): EncodedChangeAtomId {
 			return changeAtomId.revision === undefined
 				? changeAtomId.localId
-				: [
-						changeAtomId.localId,
-						revisionTagCodec.encode(changeAtomId.revision, originatorId),
-				  ];
+				: [changeAtomId.localId, revisionTagCodec.encode(changeAtomId.revision, context)];
 		},
-		decode(changeAtomId: EncodedChangeAtomId, originatorId: SessionId): ChangeAtomId {
+		decode(
+			changeAtomId: EncodedChangeAtomId,
+			context: { originatorId: SessionId },
+		): ChangeAtomId {
 			return Array.isArray(changeAtomId)
 				? {
 						localId: changeAtomId[0],
-						revision: revisionTagCodec.decode(changeAtomId[1], originatorId),
+						revision: revisionTagCodec.decode(changeAtomId[1], context),
 				  }
 				: { localId: changeAtomId };
 		},

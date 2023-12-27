@@ -38,7 +38,7 @@ describe("GenericField - Snapshots", () => {
 			const codec = family.resolve(version);
 			for (const { name, change } of testChangesets) {
 				it(name, () => {
-					const encoded = codec.json.encode(change, sessionId);
+					const encoded = codec.json.encode(change, { originatorId: sessionId });
 					takeJsonSnapshot(encoded);
 				});
 			}

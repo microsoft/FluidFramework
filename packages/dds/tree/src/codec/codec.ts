@@ -112,21 +112,6 @@ export interface IJsonCodec<
 }
 
 /**
- * Specialization of {@link IJsonCodec} for codecs requiring the originator ID as context.
- *
- * @privateRemarks -
- * TODO: This type is likely better placed nearer to editing code, where knowledge of the session id is
- * a common concern for encoding revision tags using id compressor.
- * TODO: Rename; it's not so much 'aware' as 'requiring' the session id to function, which is generally how
- * context should be used for codecs.
- */
-export type SessionAwareCodec<
-	TDecoded,
-	TEncoded = JsonCompatibleReadOnly,
-	TValidate = TEncoded,
-> = IJsonCodec<TDecoded, TEncoded, TValidate, SessionId>;
-
-/**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
  */
 export interface IBinaryCodec<TDecoded, TContext = void>

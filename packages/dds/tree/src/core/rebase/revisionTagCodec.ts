@@ -5,10 +5,18 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { SessionAwareCodec } from "../../codec/index.js";
+import { IJsonCodec } from "../../codec/index.js";
 import { EncodedRevisionTag, RevisionTag } from "./types.js";
 
-export class RevisionTagCodec implements SessionAwareCodec<RevisionTag, EncodedRevisionTag> {
+export class RevisionTagCodec
+	implements
+		IJsonCodec<
+			RevisionTag,
+			EncodedRevisionTag,
+			EncodedRevisionTag,
+			{ originatorId: SessionId }
+		>
+{
 	public constructor(private readonly idCompressor: IIdCompressor) {}
 
 	public encode(tag: RevisionTag): EncodedRevisionTag {
@@ -16,11 +24,11 @@ export class RevisionTagCodec implements SessionAwareCodec<RevisionTag, EncodedR
 			? tag
 			: (this.idCompressor.normalizeToOpSpace(tag) as EncodedRevisionTag);
 	}
-	public decode(tag: EncodedRevisionTag, originatorId: SessionId): RevisionTag {
+	public decode(tag: EncodedRevisionTag, context: { originatorId: SessionId }): RevisionTag {
 		if (tag === "root") {
 			return tag;
 		}
 		assert(typeof tag === "number", "String revision tag must be the literal 'root'");
-		return this.idCompressor.normalizeToSessionSpace(tag, originatorId);
+		return this.idCompressor.normalizeToSessionSpace(tag, context.originatorId);
 	}
 }

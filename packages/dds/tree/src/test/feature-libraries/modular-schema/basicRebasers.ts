@@ -80,7 +80,9 @@ export type ValueChangeset = ReplaceOp<number>;
 export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>, SessionId>(Type.Any())]]),
+		makeCodecFamily([
+			[0, makeValueCodec<TUnsafe<ValueChangeset>, { originatorId: SessionId }>(Type.Any())],
+		]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: ({ change, revision }): DeltaFieldChanges => {

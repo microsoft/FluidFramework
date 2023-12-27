@@ -85,7 +85,9 @@ describe("OptionalField - Snapshots", () => {
 			const codec = family.resolve(version);
 			for (const { name, change } of changesets) {
 				it(name, () => {
-					const encoded = codec.json.encode(change, idCompressor.localSessionId);
+					const encoded = codec.json.encode(change, {
+						originatorId: idCompressor.localSessionId,
+					});
 					takeJsonSnapshot(encoded);
 				});
 			}
