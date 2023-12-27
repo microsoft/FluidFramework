@@ -93,6 +93,28 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IClient": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IClientJoin": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IConnect": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IConnected": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISequencedClient": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISignalClient": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IProtocolState": {
+				"backCompat": false
+			}
+		}
 	}
 }
