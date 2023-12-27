@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
-import { EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	Attach,
@@ -32,16 +31,16 @@ export const sequenceFieldChangeCodecFactory = <TNodeChange>(
 		TNodeChange,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 ) =>
-	makeCodecFamily<Changeset<TNodeChange>, { originatorId: SessionId }>([
+	makeCodecFamily<Changeset<TNodeChange>, ChangeEncodingContext>([
 		[0, makeV0Codec(childCodec, revisionTagCodec)],
 	]);
 function makeV0Codec<TNodeChange>(
@@ -49,28 +48,28 @@ function makeV0Codec<TNodeChange>(
 		TNodeChange,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 ): IJsonCodec<
 	Changeset<TNodeChange>,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	{ originatorId: SessionId }
+	ChangeEncodingContext
 > {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	const markEffectCodec: IJsonCodec<
 		MarkEffect,
 		Encoded.MarkEffect,
 		Encoded.MarkEffect,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	> = {
-		encode(effect: MarkEffect, context: { originatorId: SessionId }): Encoded.MarkEffect {
+		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
 			const type = effect.type;
 			switch (type) {
 				case "MoveIn":
@@ -154,17 +153,17 @@ function makeV0Codec<TNodeChange>(
 					unreachableCase(type);
 			}
 		},
-		decode(encoded: Encoded.MarkEffect, context: { originatorId: SessionId }): MarkEffect {
+		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {
 			return decoderLibrary.dispatch(encoded, context);
 		},
 	};
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
-		/* args */ [context: { originatorId: SessionId }],
+		/* args */ [context: ChangeEncodingContext],
 		MarkEffect
 	>({
-		moveIn(encoded: Encoded.MoveIn, context: { originatorId: SessionId }): MoveIn {
+		moveIn(encoded: Encoded.MoveIn, context: ChangeEncodingContext): MoveIn {
 			const { id, finalEndpoint, revision } = encoded;
 			const mark: MoveIn = {
 				type: "MoveIn",
@@ -178,7 +177,7 @@ function makeV0Codec<TNodeChange>(
 			}
 			return mark;
 		},
-		insert(encoded: Encoded.Insert, context: { originatorId: SessionId }): Insert {
+		insert(encoded: Encoded.Insert, context: ChangeEncodingContext): Insert {
 			const { id, revision } = encoded;
 			const mark: Insert = {
 				type: "Insert",
@@ -189,7 +188,7 @@ function makeV0Codec<TNodeChange>(
 			}
 			return mark;
 		},
-		delete(encoded: Encoded.Delete, context: { originatorId: SessionId }): Delete {
+		delete(encoded: Encoded.Delete, context: ChangeEncodingContext): Delete {
 			const { id, revision, idOverride } = encoded;
 			const mark: Mutable<Delete> = {
 				type: "Delete",
@@ -206,7 +205,7 @@ function makeV0Codec<TNodeChange>(
 			}
 			return mark;
 		},
-		moveOut(encoded: Encoded.MoveOut, context: { originatorId: SessionId }): MoveOut {
+		moveOut(encoded: Encoded.MoveOut, context: ChangeEncodingContext): MoveOut {
 			const { id, finalEndpoint, idOverride, revision } = encoded;
 			const mark: Mutable<MoveOut> = {
 				type: "MoveOut",
@@ -229,7 +228,7 @@ function makeV0Codec<TNodeChange>(
 		},
 		attachAndDetach(
 			encoded: Encoded.AttachAndDetach,
-			context: { originatorId: SessionId },
+			context: ChangeEncodingContext,
 		): AttachAndDetach {
 			return {
 				type: "AttachAndDetach",
@@ -239,15 +238,10 @@ function makeV0Codec<TNodeChange>(
 		},
 	});
 
-	const cellIdCodec: IJsonCodec<
-		CellId,
-		Encoded.CellId,
-		Encoded.CellId,
-		{ originatorId: SessionId }
-	> = {
+	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
 		encode: (
 			{ localId, adjacentCells, lineage, revision }: CellId,
-			context: { originatorId: SessionId },
+			context: ChangeEncodingContext,
 		): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
 				atom: changeAtomIdCodec.encode({ localId, revision }, context),
@@ -264,7 +258,7 @@ function makeV0Codec<TNodeChange>(
 		},
 		decode: (
 			{ atom, adjacentCells, lineage }: Encoded.CellId,
-			context: { originatorId: SessionId },
+			context: ChangeEncodingContext,
 		): CellId => {
 			const { localId, revision } = changeAtomIdCodec.decode(atom, context);
 			// Note: this isn't inlined on decode so that round-tripping changes compare as deep-equal works,
@@ -302,7 +296,7 @@ function makeV0Codec<TNodeChange>(
 	return {
 		encode: (
 			changeset: Changeset<TNodeChange>,
-			context: { originatorId: SessionId },
+			context: ChangeEncodingContext,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
@@ -324,7 +318,7 @@ function makeV0Codec<TNodeChange>(
 		},
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
-			context: { originatorId: SessionId },
+			context: ChangeEncodingContext,
 		): Changeset<TNodeChange> => {
 			const marks: Changeset<TNodeChange> = [];
 			for (const mark of changeset) {

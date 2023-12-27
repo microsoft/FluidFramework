@@ -15,7 +15,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { IJsonCodec } from "../../../codec/index.js";
-import { RevisionTagCodec } from "../../../core/index.js";
+import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";
 
 const nodeChange1 = changesetForChild("nodeChange1");
@@ -26,7 +26,7 @@ const childCodec1: IJsonCodec<
 	NodeChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	{ originatorId: SessionId }
+	ChangeEncodingContext
 > = {
 	encode: (change: NodeChangeset) => {
 		assert.deepEqual(change, nodeChange1);
@@ -73,7 +73,7 @@ describe("defaultFieldChangeCodecs", () => {
 		const encodingTestData: EncodingTestData<
 			OptionalChangeset,
 			unknown,
-			{ originatorId: SessionId }
+			ChangeEncodingContext
 		> = {
 			successes: [
 				["set from empty", change1, sessionId],

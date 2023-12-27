@@ -53,7 +53,7 @@ export function makeV0Codec(
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
 	{ jsonValidator: validator }: ICodecOptions,
@@ -67,7 +67,7 @@ export function makeV0Codec(
 		NodeChangeset,
 		EncodedNodeChangeset,
 		EncodedNodeChangeset,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
@@ -90,7 +90,7 @@ export function makeV0Codec(
 		FieldChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>;
 
 	const fieldChangesetCodecs: Map<
@@ -118,7 +118,7 @@ export function makeV0Codec(
 
 	function encodeFieldChangesForJson(
 		change: FieldChangeMap,
-		context: { originatorId: SessionId },
+		context: ChangeEncodingContext,
 	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
 		for (const [field, fieldChange] of change) {
@@ -143,7 +143,7 @@ export function makeV0Codec(
 
 	function encodeNodeChangesForJson(
 		change: NodeChangeset,
-		context: { originatorId: SessionId },
+		context: ChangeEncodingContext,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = change;
@@ -161,7 +161,7 @@ export function makeV0Codec(
 
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
-		context: { originatorId: SessionId },
+		context: ChangeEncodingContext,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -184,7 +184,7 @@ export function makeV0Codec(
 
 	function decodeNodeChangesetFromJson(
 		encodedChange: EncodedNodeChangeset,
-		context: { originatorId: SessionId },
+		context: ChangeEncodingContext,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
@@ -258,7 +258,7 @@ export function makeV0Codec(
 
 	function encodeRevisionInfos(
 		revisions: readonly RevisionInfo[],
-		context: { originatorId: SessionId },
+		context: ChangeEncodingContext,
 	): EncodedRevisionInfo[] {
 		const encodedRevisions = [];
 		for (const revision of revisions) {
@@ -278,7 +278,7 @@ export function makeV0Codec(
 
 	function decodeRevisionInfos(
 		revisions: readonly EncodedRevisionInfo[],
-		context: { originatorId: SessionId },
+		context: ChangeEncodingContext,
 	): RevisionInfo[] {
 		const decodedRevisions = [];
 		for (const revision of revisions) {

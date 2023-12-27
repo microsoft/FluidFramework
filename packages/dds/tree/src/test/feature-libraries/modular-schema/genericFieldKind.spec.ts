@@ -21,6 +21,7 @@ import {
 	DeltaFieldMap,
 	DeltaFieldChanges,
 	RevisionTagCodec,
+	ChangeEncodingContext,
 } from "../../../core/index.js";
 import { fakeIdAllocator, brand, JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
@@ -400,34 +401,31 @@ describe("Generic FieldKind", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<
-			GenericChangeset,
-			unknown,
-			{ originatorId: SessionId }
-		> = {
-			successes: [
-				[
-					"Misc",
+		const encodingTestData: EncodingTestData<GenericChangeset, unknown, ChangeEncodingContext> =
+			{
+				successes: [
 					[
-						{
-							index: 0,
-							nodeChange: nodeChange0To1,
-						},
-						{
-							index: 2,
-							nodeChange: nodeChange1To2,
-						},
+						"Misc",
+						[
+							{
+								index: 0,
+								nodeChange: nodeChange0To1,
+							},
+							{
+								index: 2,
+								nodeChange: nodeChange1To2,
+							},
+						],
+						{ originatorId: "session1" as SessionId },
 					],
-					{ originatorId: "session1" as SessionId },
 				],
-			],
-		};
+			};
 
 		const throwCodec: IJsonCodec<
 			any,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			{ originatorId: SessionId }
+			ChangeEncodingContext
 		> = {
 			encode: unexpectedDelegate,
 			decode: unexpectedDelegate,
@@ -440,7 +438,7 @@ describe("Generic FieldKind", () => {
 			NodeChangeset,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			{ originatorId: SessionId }
+			ChangeEncodingContext
 		> = {
 			encode: (nodeChange, context) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);

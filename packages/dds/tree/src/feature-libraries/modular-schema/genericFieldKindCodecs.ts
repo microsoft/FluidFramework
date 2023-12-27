@@ -4,9 +4,9 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { SessionId } from "@fluidframework/id-compressor";
 import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { JsonCompatibleReadOnly } from "../../util/utils.js";
+import { ChangeEncodingContext } from "../../core/index.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
@@ -16,9 +16,9 @@ export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
 		TChildChange,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
-): ICodecFamily<GenericChangeset<TChildChange>, { originatorId: SessionId }> {
+): ICodecFamily<GenericChangeset<TChildChange>, ChangeEncodingContext> {
 	return makeCodecFamily([[0, makeV0Codec(childCodec)]]);
 }
 
@@ -27,18 +27,18 @@ function makeV0Codec<TChildChange = NodeChangeset>(
 		TChildChange,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 ): IJsonCodec<
 	GenericChangeset<TChildChange>,
 	EncodedGenericChangeset,
 	EncodedGenericChangeset,
-	{ originatorId: SessionId }
+	ChangeEncodingContext
 > {
 	return {
 		encode: (
 			change: GenericChangeset<TChildChange>,
-			context: { originatorId: SessionId },
+			context: ChangeEncodingContext,
 		): EncodedGenericChangeset => {
 			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => [
 				index,
@@ -48,7 +48,7 @@ function makeV0Codec<TChildChange = NodeChangeset>(
 		},
 		decode: (
 			encoded: EncodedGenericChangeset,
-			context: { originatorId: SessionId },
+			context: ChangeEncodingContext,
 		): GenericChangeset<TChildChange> => {
 			return encoded.map(
 				([index, nodeChange]: EncodedGenericChange): GenericChange<TChildChange> => ({

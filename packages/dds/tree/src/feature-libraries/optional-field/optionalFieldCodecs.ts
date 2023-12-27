@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
-import { EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../util/utils.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
 import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
-export const noChangeCodecFamily: ICodecFamily<0, { originatorId: SessionId }> = makeCodecFamily<
+export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
 	0,
-	{ originatorId: SessionId }
+	ChangeEncodingContext
 >([[0, unitCodec]]);
 
 export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
@@ -23,15 +22,15 @@ export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
 		TChildChange,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
-): ICodecFamily<OptionalChangeset<TChildChange>, { originatorId: SessionId }> =>
+): ICodecFamily<OptionalChangeset<TChildChange>, ChangeEncodingContext> =>
 	makeCodecFamily([[0, makeOptionalFieldCodec(childCodec, revisionTagCodec)]]);
 
 function makeRegisterIdCodec(
@@ -39,18 +38,18 @@ function makeRegisterIdCodec(
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
-): IJsonCodec<RegisterId, EncodedRegisterId, EncodedRegisterId, { originatorId: SessionId }> {
+): IJsonCodec<RegisterId, EncodedRegisterId, EncodedRegisterId, ChangeEncodingContext> {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	return {
-		encode: (registerId: RegisterId, context: { originatorId: SessionId }) => {
+		encode: (registerId: RegisterId, context: ChangeEncodingContext) => {
 			if (registerId === "self") {
 				return null;
 			}
 			return changeAtomIdCodec.encode(registerId, context);
 		},
-		decode: (registerId: EncodedRegisterId, context: { originatorId: SessionId }) => {
+		decode: (registerId: EncodedRegisterId, context: ChangeEncodingContext) => {
 			if (registerId === null) {
 				return "self";
 			}
@@ -65,24 +64,24 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 		TChildChange,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 ): IJsonCodec<
 	OptionalChangeset<TChildChange>,
 	EncodedOptionalChangeset<TAnySchema>,
 	EncodedOptionalChangeset<TAnySchema>,
-	{ originatorId: SessionId }
+	ChangeEncodingContext
 > {
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
 	return {
-		encode: (change: OptionalChangeset<TChildChange>, context: { originatorId: SessionId }) => {
+		encode: (change: OptionalChangeset<TChildChange>, context: ChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.moves.length > 0) {
 				encoded.m = [];
@@ -112,10 +111,7 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 			return encoded;
 		},
 
-		decode: (
-			encoded: EncodedOptionalChangeset<TAnySchema>,
-			context: { originatorId: SessionId },
-		) => {
+		decode: (encoded: EncodedOptionalChangeset<TAnySchema>, context: ChangeEncodingContext) => {
 			const moves: OptionalChangeset["moves"] =
 				encoded.m?.map(
 					([src, dst, type]) =>

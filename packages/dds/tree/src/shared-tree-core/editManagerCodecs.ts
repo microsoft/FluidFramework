@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ICodecOptions,
 	IJsonCodec,
@@ -36,7 +35,7 @@ export function makeEditManagerCodec<TChangeset>(
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>> {

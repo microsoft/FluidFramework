@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly } from "../util/index.js";
 import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec/index.js";
-import { ChangeFamilyCodec, EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import {
+	ChangeEncodingContext,
+	ChangeFamilyCodec,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../core/index.js";
 import { DecodedMessage } from "./messageTypes.js";
 import { Message } from "./messageFormat.js";
 
@@ -17,7 +21,7 @@ export function makeMessageCodec<TChangeset>(
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		{ originatorId: SessionId }
+		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
 ): IJsonCodec<DecodedMessage<TChangeset>> {

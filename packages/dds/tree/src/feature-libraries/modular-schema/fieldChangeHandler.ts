@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import {
 	TaggedChange,
 	RevisionTag,
@@ -12,6 +11,7 @@ import {
 	DeltaFieldChanges,
 	DeltaDetachedNodeId,
 	EncodedRevisionTag,
+	ChangeEncodingContext,
 } from "../../core/index.js";
 import { fail, IdAllocator, Invariant, JsonCompatibleReadOnly } from "../../util/index.js";
 import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
@@ -34,15 +34,15 @@ export interface FieldChangeHandler<
 			NodeChangeset,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			{ originatorId: SessionId }
+			ChangeEncodingContext
 		>,
 		revisionTagCodec: IJsonCodec<
 			RevisionTag,
 			EncodedRevisionTag,
 			EncodedRevisionTag,
-			{ originatorId: SessionId }
+			ChangeEncodingContext
 		>,
-	) => ICodecFamily<TChangeset, { originatorId: SessionId }>;
+	) => ICodecFamily<TChangeset, ChangeEncodingContext>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,

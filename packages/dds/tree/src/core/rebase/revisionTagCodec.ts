@@ -4,18 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IJsonCodec } from "../../codec/index.js";
+import { ChangeEncodingContext } from "../change-family/index.js";
 import { EncodedRevisionTag, RevisionTag } from "./types.js";
 
 export class RevisionTagCodec
 	implements
-		IJsonCodec<
-			RevisionTag,
-			EncodedRevisionTag,
-			EncodedRevisionTag,
-			{ originatorId: SessionId }
-		>
+		IJsonCodec<RevisionTag, EncodedRevisionTag, EncodedRevisionTag, ChangeEncodingContext>
 {
 	public constructor(private readonly idCompressor: IIdCompressor) {}
 
@@ -24,7 +20,7 @@ export class RevisionTagCodec
 			? tag
 			: (this.idCompressor.normalizeToOpSpace(tag) as EncodedRevisionTag);
 	}
-	public decode(tag: EncodedRevisionTag, context: { originatorId: SessionId }): RevisionTag {
+	public decode(tag: EncodedRevisionTag, context: ChangeEncodingContext): RevisionTag {
 		if (tag === "root") {
 			return tag;
 		}
