@@ -51,7 +51,6 @@ import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
-	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -3000,7 +2999,6 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
 		// We close the summarizer and download a new snapshot and reload the container
-		let latestSnapshotVersionId: string | undefined;
 		if (refreshLatestAck === true) {
 			return this.prefetchLatestSummaryThenClose(
 				createChildLogger({
@@ -3216,34 +3214,18 @@ export class ContainerRuntime
 				return { stage: "generate", ...generateSummaryData, error: continueResult.error };
 			}
 
-			// It may happen that the lastAck it not correct due to missing summaryAck in case of single commit
-			// summary. So if the previous summarizer closes just after submitting the summary and before
-			// submitting the summaryOp then we can't rely on summaryAck. So in case we have
-			// latestSnapshotVersionId from storage and it does not match with the lastAck ackHandle, then use
-			// the one fetched from storage as parent as that is the latest.
-			let summaryContext: ISummaryContext;
-			if (
-				lastAck?.summaryAck.contents.handle !== latestSnapshotVersionId &&
-				latestSnapshotVersionId !== undefined
-			) {
-				summaryContext = {
-					proposalHandle: undefined,
-					ackHandle: latestSnapshotVersionId,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			} else if (lastAck === undefined) {
-				summaryContext = {
-					proposalHandle: undefined,
-					ackHandle: this.loadedFromVersionId,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			} else {
-				summaryContext = {
-					proposalHandle: lastAck.summaryOp.contents.handle,
-					ackHandle: lastAck.summaryAck.contents.handle,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			}
+			const summaryContext =
+				lastAck === undefined
+					? {
+							proposalHandle: undefined,
+							ackHandle: this.loadedFromVersionId,
+							referenceSequenceNumber: summaryRefSeqNum,
+					  }
+					: {
+							proposalHandle: lastAck.summaryOp.contents.handle,
+							ackHandle: lastAck.summaryAck.contents.handle,
+							referenceSequenceNumber: summaryRefSeqNum,
+					  };
 
 			let handle: string;
 			try {
@@ -3771,7 +3753,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(
+			await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3781,32 +3763,7 @@ export class ContainerRuntime
 				readAndParseBlob,
 			);
 
-			/**
-			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
-			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
-			 * However, there are couple of scenarios where it's possible:
-			 * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
-			 * the document being unusable and we should not proceed.
-			 * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
-			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
-			 * state.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				const error = DataProcessingError.create(
-					"Fetched snapshot is older than the received ack",
-					"RefreshLatestSummaryAck",
-					undefined /* sequencedMessage */,
-					{
-						ackHandle,
-						summaryRefSeq,
-						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-					},
-				);
-				this.disposeFn(error);
-				throw error;
-			}
-
-			await this.closeStaleSummarizer("RefreshLatestSummaryAckFetch");
+			await this.closeStaleSummarizer();
 			return;
 		}
 
@@ -3835,7 +3792,7 @@ export class ContainerRuntime
 			readAndParseBlob,
 		);
 
-		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
+		await this.closeStaleSummarizer();
 
 		return {
 			stage: "base",
@@ -3845,7 +3802,7 @@ export class ContainerRuntime
 		};
 	}
 
-	private async closeStaleSummarizer(codePath: string): Promise<void> {
+	private async closeStaleSummarizer(): Promise<void> {
 		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");
