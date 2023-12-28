@@ -32,6 +32,7 @@ import {
 import {
 	ISequencedDocumentMessage,
 	MessageType,
+	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -245,8 +246,6 @@ interface ICreateTreeNodeOp {
 	type: "treeOp";
 }
 
-const rootNodeName = "rootNode";
-
 // Creates trees that can be incrementally summarized
 // Each op creates a new child node for any node in the tree.
 // The data of the tree is stored in the node's header blob
@@ -257,9 +256,11 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 	static getFactory(): IChannelFactory {
 		return new TestTreeDDSFactory();
 	}
+
+	public readonly rootNodeName = "rootNode";
 	private readonly root: ITreeNode = {
 		children: [],
-		name: rootNodeName,
+		name: this.rootNodeName,
 		seqNumber: 0,
 	};
 
@@ -337,7 +338,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 
 	// Loads the root node from storage
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const loadedRoot = await this.loadTreeNode(storage, rootNodeName);
+		const loadedRoot = await this.loadTreeNode(storage, this.rootNodeName);
 		this.root.children = loadedRoot.children;
 		this.root.name = loadedRoot.name;
 		this.root.seqNumber = loadedRoot.seqNumber;
@@ -500,6 +501,20 @@ describeCompat(
 			return createSummarizerResult.summarizer;
 		}
 
+		function validateHandle(
+			summaryObject: SummaryObject,
+			dataStoreId: string,
+			ddsId: string,
+			subDDSId: string,
+			message: string,
+		) {
+			// The handle id for sub-DDS should be under ".channels/<dataStoreId>/.channels/<ddsId>" as that is where
+			// the summary tree for a sub-DDS is.
+			const expectedHandleId = `/.channels/${dataStoreId}/.channels/${ddsId}/${subDDSId}`;
+			assert.strictEqual(summaryObject.type, SummaryType.Handle, message);
+			assert.strictEqual(summaryObject.handle, expectedHandleId, message);
+		}
+
 		beforeEach(async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 		});
@@ -543,9 +558,27 @@ describeCompat(
 			);
 			const ddsTree = dataObjectChannelsTree.tree[dds.id];
 			assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
-			assert(ddsTree.tree["0"].type === SummaryType.Handle, "Blob 0 should be a handle");
-			assert(ddsTree.tree["1"].type === SummaryType.Handle, "Blob 1 should be a handle");
-			assert(ddsTree.tree["2"].type === SummaryType.Handle, "Blob 2 should be a handle");
+			validateHandle(
+				ddsTree.tree["0"],
+				datastore.context.id,
+				dds.id,
+				"0",
+				"Blob 0 handle is incorrect",
+			);
+			validateHandle(
+				ddsTree.tree["1"],
+				datastore.context.id,
+				dds.id,
+				"1",
+				"Blob 1 handle is incorrect",
+			);
+			validateHandle(
+				ddsTree.tree["2"],
+				datastore.context.id,
+				dds.id,
+				"2",
+				"Blob 2 handle is incorrect",
+			);
 			assert(ddsTree.tree["3"].type === SummaryType.Blob, "Blob 3 should be a blob");
 		});
 
@@ -560,9 +593,9 @@ describeCompat(
 			//   root
 			//   / | \
 			//  a  b  c
-			dds.createTreeOp([rootNodeName], "a");
-			dds.createTreeOp([rootNodeName], "b");
-			dds.createTreeOp([rootNodeName], "c");
+			dds.createTreeOp([dds.rootNodeName], "a");
+			dds.createTreeOp([dds.rootNodeName], "b");
+			dds.createTreeOp([dds.rootNodeName], "c");
 
 			const summarizer = await createSummarizer(container);
 			await provider.ensureSynchronized();
@@ -575,7 +608,7 @@ describeCompat(
 			//     |
 			//     f
 			// a and c should be handles, and the root -> b -> f should be trees
-			dds.createTreeOp([rootNodeName, "b"], "f");
+			dds.createTreeOp([dds.rootNodeName, "b"], "f");
 
 			await provider.ensureSynchronized();
 			const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
@@ -598,14 +631,17 @@ describeCompat(
 			);
 			const ddsTree = dataObjectChannelsTree.tree[dds.id];
 			assert(ddsTree.type === SummaryType.Tree, "Summary1 tree not created for tree dds");
-			const rootNode = ddsTree.tree[rootNodeName];
+			const rootNode = ddsTree.tree[dds.rootNodeName];
 			assert(
 				rootNode.type === SummaryType.Tree,
 				"Summary1 - 'rootNode' should be a summary tree",
 			);
-			assert(
-				rootNode.tree.a.type === SummaryType.Handle,
-				"Summary1 - 'a' should be a summary Handle",
+			validateHandle(
+				rootNode.tree.a,
+				datastore.context.id,
+				dds.id,
+				`${dds.rootNodeName}/a`,
+				"Summary1 - 'a' summary Handle is incorrect",
 			);
 			assert(
 				rootNode.tree.b.type === SummaryType.Tree,
@@ -615,9 +651,12 @@ describeCompat(
 				rootNode.tree.b.tree.f.type === SummaryType.Tree,
 				"Summary1 - 'f' should be a summary tree",
 			);
-			assert(
-				rootNode.tree.c.type === SummaryType.Handle,
-				"Summary1 - 'c' should be a summary Handle",
+			validateHandle(
+				rootNode.tree.c,
+				datastore.context.id,
+				dds.id,
+				`${dds.rootNodeName}/c`,
+				"Summary1 - 'c' summary Handle is incorrect",
 			);
 
 			// Test that we can load from multiple containers
@@ -634,7 +673,7 @@ describeCompat(
 			//     |   \
 			//     f    g
 			// a and c should be handles, and the root -> b -> f should be trees
-			dds2.createTreeOp([rootNodeName, "c"], "g");
+			dds2.createTreeOp([dds.rootNodeName, "c"], "g");
 
 			await provider.ensureSynchronized();
 			const { summaryTree: summaryTree2 } = await summarizeNow(summarizer);
@@ -657,18 +696,24 @@ describeCompat(
 			);
 			const ddsTree2 = dataObjectChannelsTree2.tree[dds2.id];
 			assert(ddsTree2.type === SummaryType.Tree, "Summary2 tree not created for tree dds");
-			const rootNode2 = ddsTree2.tree[rootNodeName];
+			const rootNode2 = ddsTree2.tree[dds.rootNodeName];
 			assert(
 				rootNode2.type === SummaryType.Tree,
 				"Summary2 - 'rootNode' should be a summary tree",
 			);
-			assert(
-				rootNode2.tree.a.type === SummaryType.Handle,
-				"Summary2 - 'a' should be a summary handle",
+			validateHandle(
+				rootNode2.tree.a,
+				datastore.context.id,
+				dds.id,
+				`${dds.rootNodeName}/a`,
+				"Summary2 - 'a' summary Handle is incorrect",
 			);
-			assert(
-				rootNode2.tree.b.type === SummaryType.Handle,
-				"Summary2 - 'a' should be a summary handle",
+			validateHandle(
+				rootNode2.tree.b,
+				datastore.context.id,
+				dds.id,
+				`${dds.rootNodeName}/b`,
+				"Summary1 - 'b' summary Handle is incorrect",
 			);
 			assert(
 				rootNode2.tree.c.type === SummaryType.Tree,
