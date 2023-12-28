@@ -309,18 +309,9 @@ export const makeEditGenerator = (
 		const { content: field } = fieldInfo;
 		assert(field.length > 0, "Sequence must have at least one element to perform a move");
 
-		// This can be done in O(1) but it's more clear this way:
-		// Valid move indices are any index before or equal to the start of the sequence
-		// and after the end of the sequence.
 		const start = state.random.integer(0, field.length - 1);
 		const count = state.random.integer(1, field.length - start);
-		const validMoveIndices: number[] = [];
-		for (let i = 0; i < field.length; i++) {
-			if (i <= start || i > start + count) {
-				validMoveIndices.push(i);
-			}
-		}
-		const moveIndex = state.random.pick(validMoveIndices);
+		const dstIndex = state.random.integer(0, field.length);
 		const node = field.at(start);
 		assert(node !== undefined, "Node should be defined at chosen index");
 
@@ -328,7 +319,7 @@ export const makeEditGenerator = (
 			type: "sequence",
 			edit: {
 				type: "move",
-				dstIndex: moveIndex,
+				dstIndex,
 				count,
 				firstNode: downPathFromNode(node),
 			},
