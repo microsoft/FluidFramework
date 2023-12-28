@@ -1114,6 +1114,10 @@ describe("SharedTree", () => {
 				});
 			}
 		});
+
+		describe("resubmit", () => {
+			// todoj
+		});
 	});
 
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
