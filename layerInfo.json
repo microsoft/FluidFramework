@@ -152,7 +152,7 @@
 				]
 			},
 			"AzureClient": {
-				"dirs": ["azure/packages/"],
+				"dirs": ["packages/service-clients/azure-client"],
 				"deps": [
 					"Container-Definitions",
 					"Framework",
