@@ -74,7 +74,7 @@ export interface ShareLinkInfoType {
 		/**
 		 * Share link created when the file is created for the first time with /snapshot api call.
 		 */
-		link?: string | ISharingLink;
+		link?: ISharingLink;
 
 		/**
 		 * Error message if creation of sharing link fails with /snapshot api call

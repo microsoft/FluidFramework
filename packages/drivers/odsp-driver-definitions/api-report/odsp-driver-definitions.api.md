@@ -244,14 +244,14 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @alpha
 export interface ShareLinkInfoType {
     createLink?: {
-        link?: string | ISharingLink;
+        link?: ISharingLink;
         error?: any;
         shareId?: string;
     };
     sharingLinkToRedeem?: string;
 }
 
-// @internal
+// @alpha
 export enum SharingLinkRole {
     // (undocumented)
     edit = "edit",
