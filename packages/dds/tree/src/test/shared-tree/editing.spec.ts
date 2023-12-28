@@ -514,13 +514,62 @@ describe("Editing", () => {
 			// Move B before A.
 			tree1.editor.move(rootField, 1, 1, rootField, 0);
 
-			const editor = tree1.editor.valueField({ parent: rootNode, field: brand("foo") });
+			const editor = tree2.editor.valueField({
+				parent: {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 1,
+				},
+				field: brand("foo"),
+			});
 			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 
 			const expectedState: JsonCompatible = [{ foo: "C" }, "A"];
+			expectJsonTree(tree1, expectedState);
+			expectJsonTree(tree2, expectedState);
+		});
+
+		it.skip("can concurrently edit and move a subtree (Move first) in a list under a node", () => {
+			const tree1 = makeTreeFromJson([{ seq: [{ foo: "A" }, "B"] }]);
+			const tree2 = tree1.fork();
+
+			const seqList: UpPath = { parent: rootNode, parentField: brand("seq"), parentIndex: 0 };
+			const seqField: FieldUpPath = { parent: seqList, field: brand("") };
+			const fooField: FieldUpPath = {
+				parent: { parent: seqList, parentField: brand(""), parentIndex: 0 },
+				field: brand("foo"),
+			};
+			tree1.editor.move(seqField, 0, 1, seqField, 1);
+
+			tree2.editor.valueField(fooField).set(singleJsonCursor("a"));
+
+			// During this rebase, the net changes applied to tree2 are the result of [set"A" ○ move ○ set"a"]
+			// This composition loses the effect of set"a" change.
+			// First, the composition for [set"A" ○ move] is run as part of composing the generic field changes one at a time.
+			// That composition leads to srcDependents being populated with a query for the move source.
+			// The value associated with that dependency is that of the output of this first composition.
+			// The second composition for [prior composition ○ set"a"] is then invoked.
+			// That composition sends a modify effect to the move source.
+			// As part of adding the modify effect, the table is queried for srcDependents, in which the entry from the first composition is found.
+			// This leads to the result of the first composition being marked as invalidated.
+			// Also as part of adding the modify effect, the srcQueries table is queried to see if the field already has a query for the effect.
+			// In this case it does (because the move source resides to the left of the modify) which leads to the current composition being marked as invalidated.
+			// This puts us in a position where the same field is marked as invalidated twice, but with different "values".
+			// Here, "value" refers to the result of the composition output that needs amending.
+			// We will therefore amend the composition twice:
+			// The first time we amend it, we receive and apply (and consume) the modify effect.
+			// The second time we amend it, that modify effect is no longer present, leading to the wrong result.
+			// That second amend pass is what we retain.
+			// Possible solutions to explore:
+			// - Change the compose contract in such a way that dependencies from [A ○ B] are not retained when composing [AB ○ C].
+			// - Ensure that when the same field is marked as invalidated multiple times, we only retain the information for the most recent invalidation.
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2, false);
+
+			const expectedState: JsonCompatible = [{ seq: [{ foo: "a" }, "B"] }];
 			expectJsonTree(tree1, expectedState);
 			expectJsonTree(tree2, expectedState);
 		});
