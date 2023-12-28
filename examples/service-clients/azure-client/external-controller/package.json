@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "azure/packages/external-controller"
+		"directory": "examples/service-clients/azure-client/external-controller"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
