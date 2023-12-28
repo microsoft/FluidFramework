@@ -43,6 +43,7 @@ import {
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
+const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -931,6 +932,52 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 			assertChangesetsEqual(sandwichParts1to6, []);
 		}),
 	);
+	it.skip("[move, move, modify, move] ↷ [del]", () =>
+		withConfig(() => {
+			const [mo1, mi1] = Mark.move(1, brand(1));
+			const move1 = tagChange([mi1, mo1], tag1);
+			const [mo2, mi2] = Mark.move(1, brand(2));
+			const move2 = tagChange([mi2, mo2], tag2);
+			const mod = tagChange([Mark.modify(TestChange.mint([], 1))], tag3);
+			const [mo3, mi3] = Mark.move(1, brand(3));
+			const move3 = tagChange([mi3, mo3], tag4);
+			const del = tagChange([Mark.delete(1, brand(0))], tag0);
+			const return1 = tagRollbackInverse(invert(move1), tag5, move1.revision);
+			const return2 = tagRollbackInverse(invert(move2), tag6, move2.revision);
+			const unMod = tagRollbackInverse(invert(mod), tag7, mod.revision);
+			const return3 = tagRollbackInverse(invert(move3), tag8, move3.revision);
+			const move1Rebased = rebaseTagged(move1, del);
+			const changes = [
+				return3,
+				unMod,
+				return2,
+				return1,
+				del,
+				move1Rebased,
+				move2,
+				mod,
+				move3,
+			];
+			// Ret3: RF3 -> RT3
+			// -Mod:        Mod
+			// Ret2:        RF2 -> RT2
+			// Ret1:               RF1 -> RT1
+			//  Del:                      Del
+			// Mov1:               MI1 <- MO1
+			// Mov2:        MI2 <- MO2        // MO2 is made to point to RT3, which causes RT3 to be made to point to RF2
+			// +Mod:        Mod
+			// Mov3: MI3 -> MO3
+			// When +Mod is composed, its effect is sent to RF2 instead of RF3.
+			// This happens because, during the composition of RT2 and MO2,
+			// we send effects endpoint updating effects to bridge the temporary location, but MO2 has a finalEndpoint set to RT3,
+			// so we send to RT3 a new finalEndpoint that points to RF2.
+			// This happens because, during the composition of (RT3 + RF2) and MI2,
+			// MO2 gets sent a new finalEndpoint that points to RT3.
+			const sandwich = compose(changes);
+			const pruned = prune(sandwich);
+			const noTombstones = withoutTombstones(pruned);
+			assertChangesetsEqual(noTombstones, []);
+		}));
 });
 
 describeForBothConfigs("SequenceField - Composed sandwich rebasing", (config) => {
