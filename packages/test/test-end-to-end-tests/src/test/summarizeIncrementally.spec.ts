@@ -45,7 +45,7 @@ function validateDataStoreStateInSummary(
 
 	// The handle id for data store should be under ".channels" as that is where the summary tree
 	// for a data store is.
-	const expectedHandleId = `/.channels/${dataStoreId}`;
+	const expectedHandleId = `/${channelsTreeName}/${dataStoreId}`;
 	assert.strictEqual(
 		dataStoreSummaryObject.type,
 		SummaryType.Handle,
@@ -87,7 +87,7 @@ function validateDDSStateInSummary(
 
 	// The handle id for DDS should be under ".channels/<dataStoreId>/.channels" as that is where the summary tree
 	// for a DDS is.
-	const expectedHandleId = `/.channels/${dataStoreId}/.channels/${ddsId}`;
+	const expectedHandleId = `/${channelsTreeName}/${dataStoreId}/${channelsTreeName}/${ddsId}`;
 	assert.strictEqual(ddsSummaryObject.type, SummaryType.Handle, "DDS summary should be a handle");
 	assert.strictEqual(ddsSummaryObject.handle, expectedHandleId, "DDS handle is incorrect");
 }

@@ -11,6 +11,7 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -510,7 +511,7 @@ describeCompat(
 		) {
 			// The handle id for sub-DDS should be under ".channels/<dataStoreId>/.channels/<ddsId>" as that is where
 			// the summary tree for a sub-DDS is.
-			const expectedHandleId = `/.channels/${dataStoreId}/.channels/${ddsId}/${subDDSId}`;
+			const expectedHandleId = `/${channelsTreeName}/${dataStoreId}/${channelsTreeName}/${ddsId}/${subDDSId}`;
 			assert.strictEqual(summaryObject.type, SummaryType.Handle, message);
 			assert.strictEqual(summaryObject.handle, expectedHandleId, message);
 		}
