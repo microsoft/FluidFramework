@@ -41,7 +41,7 @@ describe("Fuzz - Top-Level", () => {
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 5,
-		delete: 5,
+		remove: 5,
 		move: 5,
 		start: 1,
 		commit: 1,

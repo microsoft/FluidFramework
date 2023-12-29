@@ -339,13 +339,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					brand((firstId as number) + length - 1),
 				);
 			},
-			delete: (index: number, count: number): void => {
+			remove: (index: number, count: number): void => {
 				if (count === 0) {
 					return;
 				}
 				const id = this.modularBuilder.generateId(count);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.delete(index, count, id),
+					sequence.changeHandler.editor.remove(index, count, id),
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
@@ -400,11 +400,11 @@ export interface SequenceFieldEditBuilder {
 	insert(index: number, newContent: ITreeCursorSynchronous): void;
 
 	/**
-	 * Issues a change which deletes `count` elements starting at the given `index`.
-	 * @param index - The index of the first deleted element.
-	 * @param count - The number of elements to delete.
+	 * Issues a change which removes `count` elements starting at the given `index`.
+	 * @param index - The index of the first removed element.
+	 * @param count - The number of elements to remove.
 	 */
-	delete(index: number, count: number): void;
+	remove(index: number, count: number): void;
 
 	/**
 	 * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.

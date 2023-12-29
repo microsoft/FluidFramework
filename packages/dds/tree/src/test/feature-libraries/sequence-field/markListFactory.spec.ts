@@ -16,7 +16,7 @@ import { brand } from "../../../util/index.js";
 import { MarkMaker as Mark } from "./testEdits.js";
 import { describeForBothConfigs, withOrderingMethod } from "./utils.js";
 
-const dummyMark = Mark.delete(1, brand(0));
+const dummyMark = Mark.remove(1, brand(0));
 const detachedBy: RevisionTag = mintRevisionTag();
 
 describeForBothConfigs("SequenceField - MarkListFactory", (config) => {
@@ -79,25 +79,25 @@ describeForBothConfigs("SequenceField - MarkListFactory", (config) => {
 			assert.deepStrictEqual(factory.list, [Mark.insert(2, id1)]);
 		}));
 
-	it("Can merge consecutive deletes", () =>
+	it("Can merge consecutive removes", () =>
 		withConfig(() => {
 			const factory = new SF.MarkListFactory();
-			const delete1 = Mark.delete(1, brand(0), {
+			const remove1 = Mark.remove(1, brand(0), {
 				idOverride: {
 					type: SF.DetachIdOverrideType.Redetach,
 					id: { revision: detachedBy, localId: brand(10) },
 				},
 			});
-			const delete2 = Mark.delete(1, brand(1), {
+			const remove2 = Mark.remove(1, brand(1), {
 				idOverride: {
 					type: SF.DetachIdOverrideType.Redetach,
 					id: { revision: detachedBy, localId: brand(11) },
 				},
 			});
-			factory.pushContent(delete1);
-			factory.pushContent(delete2);
+			factory.pushContent(remove1);
+			factory.pushContent(remove2);
 			assert.deepStrictEqual(factory.list, [
-				Mark.delete(2, brand(0), {
+				Mark.remove(2, brand(0), {
 					idOverride: {
 						type: SF.DetachIdOverrideType.Redetach,
 						id: { revision: detachedBy, localId: brand(10) },
@@ -106,24 +106,24 @@ describeForBothConfigs("SequenceField - MarkListFactory", (config) => {
 			]);
 		}));
 
-	it("Does not merge consecutive deletes with discontinuous detach overrides", () =>
+	it("Does not merge consecutive removes with discontinuous detach overrides", () =>
 		withConfig(() => {
 			const factory = new SF.MarkListFactory();
-			const delete1 = Mark.delete(1, brand(0), {
+			const remove1 = Mark.remove(1, brand(0), {
 				idOverride: {
 					type: SF.DetachIdOverrideType.Redetach,
 					id: { revision: detachedBy, localId: brand(10) },
 				},
 			});
-			const delete2 = Mark.delete(1, brand(1), {
+			const remove2 = Mark.remove(1, brand(1), {
 				idOverride: {
 					type: SF.DetachIdOverrideType.Redetach,
 					id: { revision: detachedBy, localId: brand(42) },
 				},
 			});
-			factory.pushContent(delete1);
-			factory.pushContent(delete2);
-			assert.deepStrictEqual(factory.list, [delete1, delete2]);
+			factory.pushContent(remove1);
+			factory.pushContent(remove2);
+			assert.deepStrictEqual(factory.list, [remove1, remove2]);
 		}));
 
 	it("Can merge adjacent moves", () =>
