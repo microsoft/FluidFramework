@@ -693,7 +693,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 		content.schema.rootFieldSchema,
 		content.initialTree,
 	);
-	// TODO:AB6712 Made the delta format accept a single cursor in Field mode.
+	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
 	);
