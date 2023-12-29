@@ -1748,6 +1748,54 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
+		it("throws when moved under child node", () => {
+			const tree = makeTreeFromJson({ foo: { bar: "A" } });
+			const fooPath: UpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			assert.throws(() =>
+				tree.editor.move(
+					{ parent: rootNode, field: brand("foo") },
+					0,
+					1,
+					{ parent: fooPath, field: brand("bar") },
+					0,
+				),
+			);
+		});
+
+		it.skip("concurrent cycle creating move", () => {
+			const tree = makeTreeFromJson([["foo"], ["bar"]]);
+			const tree2 = tree.fork();
+
+			const fooList: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			const barList: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 1,
+			};
+
+			const fooSequence: FieldUpPath = { field: brand(""), parent: fooList };
+			const barSequence: FieldUpPath = { field: brand(""), parent: barList };
+
+			tree.editor.move(rootField, 0, 1, barSequence, 0);
+			expectJsonTree(tree, [[["foo"], "bar"]]);
+			tree2.editor.move(rootField, 1, 1, fooSequence, 0);
+			expectJsonTree(tree2, [[["bar"], "foo"]]);
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			// This fails because the trees disagree on who detached the content
+			expectJsonTree([tree, tree2], []);
+		});
+
 		it("rebase insert within revive", () => {
 			const tree = makeTreeFromJson(["y"]);
 			const tree1 = tree.fork();
