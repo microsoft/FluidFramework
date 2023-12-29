@@ -24,6 +24,7 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	schemaDataIsEmpty,
+	RevisionTagCodec,
 } from "../core/index.js";
 import { SharedTreeCore } from "../shared-tree-core/index.js";
 import {
@@ -188,7 +189,13 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedRoots = makeDetachedFieldIndex("repair", runtime.idCompressor, options);
+		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const removedRoots = makeDetachedFieldIndex(
+			"repair",
+			revisionTagCodec,
+			runtime.idCompressor.localSessionId,
+			options,
+		);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
@@ -202,13 +209,14 @@ export class SharedTree
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			runtime.idCompressor,
+			revisionTagCodec,
+			runtime.idCompressor.localSessionId,
 			fieldBatchCodec,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
-			runtime.idCompressor,
+			revisionTagCodec,
 			fieldBatchCodec,
 			options,
 		);
@@ -245,15 +253,20 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.view = createTreeCheckout(runtime.idCompressor, {
-			branch: localBranch,
-			changeFamily,
-			schema,
-			forest,
-			fieldBatchCodec,
-			events: this._events,
-			removedRoots,
-		});
+		this.view = createTreeCheckout(
+			runtime.idCompressor,
+			revisionTagCodec,
+			runtime.idCompressor.localSessionId,
+			{
+				branch: localBranch,
+				changeFamily,
+				schema,
+				forest,
+				fieldBatchCodec,
+				events: this._events,
+				removedRoots,
+			},
+		);
 	}
 
 	public requireSchema<TRoot extends TreeFieldSchema>(

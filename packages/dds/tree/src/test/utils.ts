@@ -113,6 +113,7 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
+	RevisionTagCodec,
 } from "../core/index.js";
 import { JsonCompatible, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
@@ -673,11 +674,16 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const view = createTreeCheckout(
+		testIdCompressor,
+		testRevisionTagCodec,
+		testIdCompressor.localSessionId,
+		{
+			...args,
+			forest,
+			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+		},
+	);
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
@@ -695,7 +701,8 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 			content.schema.rootFieldSchema,
 			content.initialTree,
 		),
-		testIdCompressor,
+		testRevisionTagCodec,
+		testIdCompressor.localSessionId,
 	);
 	return forest;
 }
@@ -711,11 +718,16 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout(testIdCompressor, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const branch = createTreeCheckout(
+		testIdCompressor,
+		testRevisionTagCodec,
+		testIdCompressor.localSessionId,
+		{
+			...args,
+			forest,
+			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+		},
+	);
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(
 		branch,
@@ -1058,7 +1070,12 @@ export function applyTestDelta(
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ??
+			makeDetachedFieldIndex(
+				undefined,
+				testRevisionTagCodec,
+				testIdCompressor.localSessionId,
+			),
 	);
 }
 
@@ -1071,7 +1088,12 @@ export function announceTestDelta(
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ??
+			makeDetachedFieldIndex(
+				undefined,
+				testRevisionTagCodec,
+				testIdCompressor.localSessionId,
+			),
 	);
 }
 
@@ -1148,3 +1170,5 @@ export const testIdCompressor = createIdCompressor();
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
 }
+
+export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);

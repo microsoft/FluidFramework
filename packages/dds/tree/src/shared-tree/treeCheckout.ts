@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/runtime-definitions";
+import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	AnchorLocator,
 	IForestSubscription,
@@ -174,6 +174,8 @@ export interface ITreeCheckout extends AnchorLocator {
  */
 export function createTreeCheckout(
 	idCompressor: IIdCompressor,
+	revisionTagCodec: RevisionTagCodec,
+	sessionId: SessionId,
 	args?: {
 		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
 		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
@@ -192,7 +194,7 @@ export function createTreeCheckout(
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
-			idCompressor,
+			revisionTagCodec,
 			args?.fieldBatchCodec ??
 				makeFieldBatchCodec(defaultCodecOptions, {
 					// TODO: provide schema here to enable schema based compression.
@@ -221,7 +223,8 @@ export function createTreeCheckout(
 		schema,
 		forest,
 		events,
-		idCompressor,
+		revisionTagCodec,
+		sessionId,
 		args?.removedRoots,
 	);
 }
@@ -322,10 +325,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
-		private readonly idCompressor: IIdCompressor,
+		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly sessionId: SessionId,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
-			idCompressor,
+			revisionTagCodec,
+			sessionId,
 		),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
@@ -399,7 +404,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			storedSchema,
 			forest,
 			createEmitter(),
-			this.idCompressor,
+			this.revisionTagCodec,
+			this.sessionId,
 			this.removedRoots.clone(),
 		);
 	}
@@ -441,7 +447,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
-		const revisionTagCodec = new RevisionTagCodec(this.idCompressor);
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
 		const cursor = this.forest.allocateCursor();
 		for (const { id, root } of this.removedRoots.entries()) {
@@ -454,7 +459,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			if (tree !== undefined) {
 				// This method is used for tree consistency comparison.
 				const { major, minor } = id;
-				const finalizedMajor = major !== undefined ? revisionTagCodec.encode(major) : major;
+				const finalizedMajor =
+					major !== undefined ? this.revisionTagCodec.encode(major) : major;
 				trees.push([finalizedMajor, minor, tree]);
 			}
 		}

@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor";
+import { RevisionTagCodec } from "../rebase/revisionTagCodec.js";
 import { FieldKey } from "../schema-stored/index.js";
 import {
 	DetachedField,
@@ -46,11 +47,12 @@ export interface IEditableForest extends IForestSubscription {
 export function initializeForest(
 	forest: IEditableForest,
 	content: readonly ITreeCursorSynchronous[],
-	idCompressor: IIdCompressor,
+	revisionTagCodec: RevisionTagCodec,
+	sessionId: SessionId,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
-	applyDelta(delta, forest, makeDetachedFieldIndex("init", idCompressor));
+	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec, sessionId));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

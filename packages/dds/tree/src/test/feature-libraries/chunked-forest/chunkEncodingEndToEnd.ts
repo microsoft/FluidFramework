@@ -7,6 +7,7 @@ import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import {
 	ChangesetLocalId,
 	IEditableForest,
+	RevisionTagCodec,
 	TreeStoredSchemaRepository,
 	mapCursorField,
 } from "../../../core";
@@ -58,6 +59,7 @@ const context = {
 const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
+const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 // TODO: Currently we split up a uniform chunk into several individual basicChunks for each node during op creation.
 // Therefore, there is currently no way for us to retrieve a uniform chunk from the tree for us to make the proper checks,
@@ -88,7 +90,7 @@ describe.skip("End to End chunked encoding", () => {
 				changeLog.push(change);
 			};
 			const dummyEditor = new DefaultEditBuilder(
-				new DefaultChangeFamily(idCompressor, fieldBatchCodec, {
+				new DefaultChangeFamily(revisionTagCodec, fieldBatchCodec, {
 					jsonValidator: typeboxValidator,
 				}),
 				changeReceiver,
@@ -130,7 +132,8 @@ describe.skip("End to End chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
-			idCompressor,
+			revisionTagCodec,
+			idCompressor.localSessionId,
 			fieldBatchCodec,
 			options,
 		);
@@ -162,7 +165,8 @@ describe.skip("End to End chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
-			idCompressor,
+			revisionTagCodec,
+			idCompressor.localSessionId,
 			fieldBatchCodec,
 			options,
 		);

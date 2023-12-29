@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	Brand,
 	IdAllocator,
@@ -19,6 +19,7 @@ import {
 } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
+import { RevisionTagCodec } from "../rebase/revisionTagCodec.js";
 import * as Delta from "./delta.js";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
@@ -48,18 +49,20 @@ export class DetachedFieldIndex {
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
-		private readonly idCompressor: IIdCompressor,
+		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly sessionId: SessionId,
 		options?: ICodecOptions,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(idCompressor, this.options);
+		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, sessionId, this.options);
 	}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
-			this.idCompressor,
+			this.revisionTagCodec,
+			this.sessionId,
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
