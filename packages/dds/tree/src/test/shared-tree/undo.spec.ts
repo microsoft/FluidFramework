@@ -2,12 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
-import { leaf, singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor } from "../../domains/index.js";
 import { rootFieldKey, UpPath } from "../../core/index.js";
 import { ITreeCheckout } from "../../shared-tree/index.js";
 import { brand, JsonCompatible } from "../../util/index.js";
-import { createTestUndoRedoStacks, expectJsonTree, makeTreeFromJson } from "../utils.js";
+import {
+	createTestUndoRedoStacks,
+	expectJsonTree,
+	insert,
+	makeTreeFromJson,
+	remove,
+} from "../utils.js";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -363,25 +368,3 @@ describe("Undo and redo", () => {
 		unsubscribe();
 	});
 });
-
-// TODO: Dedupe with the helpers in editing.spec.ts
-
-/**
- * Helper function to insert node at a given index.
- *
- * @param tree - The tree on which to perform the insert.
- * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
- */
-function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField(rootField);
-	const nodes = values.map((value) =>
-		cursorForJsonableTreeNode({ type: leaf.string.name, value }),
-	);
-	field.insert(index, nodes);
-}
-
-function remove(tree: ITreeCheckout, index: number, count: number): void {
-	const field = tree.editor.sequenceField(rootField);
-	field.delete(index, count);
-}

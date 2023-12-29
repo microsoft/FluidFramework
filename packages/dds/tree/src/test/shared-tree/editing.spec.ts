@@ -1743,7 +1743,7 @@ describe("Editing", () => {
 				parent: rootNode,
 				field: brand("foo"),
 			});
-			field.insert(1, [cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" })]);
+			field.insert(1, cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 			assert.equal(valueAfterInsert, "C");
 			unsubscribePathVisitor();
 		});

@@ -63,7 +63,7 @@ import {
 	buildForest,
 	createMockNodeKeyManager,
 	TreeFieldSchema,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	mapFieldChanges,
 	mapFieldsChanges,
 	mapMarkList,
@@ -78,6 +78,8 @@ import {
 	ContextuallyTypedNodeData,
 	mapRootChanges,
 	intoStoredSchema,
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
@@ -583,11 +585,9 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
-	return normalizeNewFieldContent(
-		content,
-		content.schema.rootFieldSchema,
-		content.initialTree,
-	).map(jsonableTreeFromCursor);
+	return jsonableTreeFromFieldCursor(
+		normalizeNewFieldContent(content, content.schema.rootFieldSchema, content.initialTree),
+	);
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
@@ -688,15 +688,16 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 
 export function forestWithContent(content: TreeContent): IEditableForest {
 	const forest = buildForest();
-	initializeForest(
-		forest,
-		normalizeNewFieldContent(
-			{ schema: content.schema },
-			content.schema.rootFieldSchema,
-			content.initialTree,
-		),
-		testIdCompressor,
+	const fieldCursor = normalizeNewFieldContent(
+		{ schema: content.schema },
+		content.schema.rootFieldSchema,
+		content.initialTree,
 	);
+	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
+	const nodeCursors = mapCursorField(fieldCursor, (c) =>
+		cursorForMapTreeNode(mapTreeFromCursor(c)),
+	);
+	initializeForest(forest, nodeCursors, testIdCompressor);
 	return forest;
 }
 
@@ -848,12 +849,15 @@ export function initializeTestTree(
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {
-			const writeCursors = state.map(cursorForJsonableTreeNode);
+			const mapTrees = state.map((jsonable) =>
+				mapTreeFromCursor(cursorForJsonableTreeNode(jsonable)),
+			);
+			const fieldCursor = cursorForMapTreeField(mapTrees);
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKey,
 			});
-			field.insert(0, writeCursors);
+			field.insert(0, fieldCursor);
 		});
 	}
 }

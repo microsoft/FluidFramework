@@ -300,7 +300,7 @@ describe("SharedTree benchmarks", () => {
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
 							editor.delete(nodeIndex, 1);
-							editor.insert(nodeIndex, [singleJsonCursor(value)]);
+							editor.insert(nodeIndex, singleJsonCursor(value));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
