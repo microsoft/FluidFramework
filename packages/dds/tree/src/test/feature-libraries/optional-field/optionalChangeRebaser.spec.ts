@@ -453,25 +453,27 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 }
 
-describe("OptionalField - Rebaser Axioms", () => {
-	describe("Using valid edits from an undefined field", () => {
-		runSingleEditRebaseAxiomSuite({ content: undefined });
-	});
+export function testRebaserAxioms() {
+	describe("OptionalField - Rebaser Axioms", () => {
+		describe("Using valid edits from an undefined field", () => {
+			runSingleEditRebaseAxiomSuite({ content: undefined });
+		});
 
-	describe("Using valid edits from a field with content", () => {
-		runSingleEditRebaseAxiomSuite({ content: "A" });
-	});
+		describe("Using valid edits from a field with content", () => {
+			runSingleEditRebaseAxiomSuite({ content: "A" });
+		});
 
-	describe("Exhaustive", () => {
-		runExhaustiveComposeRebaseSuite(
-			[{ content: undefined }, { content: "A" }],
-			generateChildStates,
-			{ rebase, rebaseComposed, compose, invert, assertEqual },
-			{
-				numberOfEditsToRebase: 3,
-				numberOfEditsToRebaseOver: 3,
-				numberOfEditsToVerifyAssociativity: 4,
-			},
-		);
+		describe("Exhaustive", () => {
+			runExhaustiveComposeRebaseSuite(
+				[{ content: undefined }, { content: "A" }],
+				generateChildStates,
+				{ rebase, rebaseComposed, compose, invert, assertEqual },
+				{
+					numberOfEditsToRebase: 3,
+					numberOfEditsToRebaseOver: 3,
+					numberOfEditsToVerifyAssociativity: 4,
+				},
+			);
+		});
 	});
-});
+}

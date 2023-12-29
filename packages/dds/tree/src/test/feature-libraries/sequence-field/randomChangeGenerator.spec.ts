@@ -25,22 +25,24 @@ const childGen = (seed: number): NodeChangeset => ({
 	]),
 });
 
-describe("SequenceField - generateRandomChange", () => {
-	it("generates the same change given the same seed", () => {
-		const change1 = generateRandomChange(testSeed, maxIndex, childGen);
-		const change2 = generateRandomChange(testSeed, maxIndex, childGen);
-		assert.deepStrictEqual(change1, change2);
-	});
+export function testGenerateRandomChange() {
+	describe("SequenceField - generateRandomChange", () => {
+		it("generates the same change given the same seed", () => {
+			const change1 = generateRandomChange(testSeed, maxIndex, childGen);
+			const change2 = generateRandomChange(testSeed, maxIndex, childGen);
+			assert.deepStrictEqual(change1, change2);
+		});
 
-	it("generates different changes given the different seeds", () => {
-		const change1 = generateRandomChange(testSeed, maxIndex, childGen);
-		const change2 = generateRandomChange(testSeed + 1, maxIndex, childGen);
-		assert.notDeepStrictEqual(change1, change2);
-	});
+		it("generates different changes given the different seeds", () => {
+			const change1 = generateRandomChange(testSeed, maxIndex, childGen);
+			const change2 = generateRandomChange(testSeed + 1, maxIndex, childGen);
+			assert.notDeepStrictEqual(change1, change2);
+		});
 
-	it("Generates a change", () => {
-		const change = generateRandomChange(testSeed, maxIndex, childGen);
-		const expected = [{ count: 2 }, Mark.remove(5, brand(0))];
-		assert.deepStrictEqual(change, expected);
+		it("Generates a change", () => {
+			const change = generateRandomChange(testSeed, maxIndex, childGen);
+			const expected = [{ count: 2 }, Mark.remove(5, brand(0))];
+			assert.deepStrictEqual(change, expected);
+		});
 	});
-});
+}
