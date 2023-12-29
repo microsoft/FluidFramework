@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory } from "../../class-tree";
+import { SchemaFactory } from "../../class-tree/index.js";
 
 import {
 	InsertableTreeFieldFromImplicitField,
@@ -14,16 +14,22 @@ import {
 	TreeLeafValue,
 	TreeNodeFromImplicitAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaTypes";
-import { TreeValue } from "../../core";
-import { TreeFactory } from "../../treeFactory";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
+} from "../../class-tree/schemaTypes.js";
+import { TreeValue } from "../../core/index.js";
+import { TreeNode } from "../../simple-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
 
 const factory = new TreeFactory({});
 
 describe("schemaTypes", () => {
+	it("TreeNode", () => {
+		// @ts-expect-error TreeNode should not allow non-node objects.
+		const n: TreeNode = {};
+	});
+
 	describe("insertable", () => {
 		it("Lists", () => {
 			const List = schema.array(schema.number);
@@ -98,6 +104,17 @@ describe("schemaTypes", () => {
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
+
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a2: NodeFromSchema<typeof A> = 0;
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a3: InsertableTypedNode<typeof A> = 0;
+
+			// @ts-expect-error empty nodes should not allow non-node.
+			const a4: NodeFromSchema<typeof A> = {};
+
+			// Insertable nodes allow non-node objects.
+			const a5: InsertableTypedNode<typeof A> = {};
 		});
 
 		it("Customized Objects", () => {

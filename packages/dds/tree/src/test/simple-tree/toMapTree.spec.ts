@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 
-import { EmptyKey, type FieldKey, type MapTree } from "../../core";
-import { SchemaBuilder, leaf } from "../../domains";
+import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { nodeDataToMapTree } from "../../simple-tree/toMapTree";
-import { brand } from "../../util";
-import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries";
+import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
+import { brand } from "../../util/index.js";
+import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries/index.js";
 
 describe("toMapTree", () => {
 	it("string", () => {

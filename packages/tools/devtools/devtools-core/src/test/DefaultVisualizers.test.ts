@@ -16,7 +16,8 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaFactory, TreeConfiguration, TreeFactory } from "@fluidframework/tree";
+import { SchemaFactory, TreeConfiguration, SharedTree, type ITree } from "@fluidframework/tree";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces";
 import {
@@ -394,10 +395,13 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedTree", async () => {
-		const factory = new TreeFactory({});
+		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
-		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		) as ITree;
 
 		class ChildSchema extends builder.object("child-item", {
 			childField: [builder.boolean, builder.handle, builder.string],
@@ -478,7 +482,7 @@ describe("DefaultVisualizers unit tests", () => {
 												"0": {
 													children: {
 														type: {
-															value: 'DefaultVisualizer_SharedTree_Test.List<["DefaultVisualizer_SharedTree_Test.child-item"]>',
+															value: 'DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.child-item"]>',
 															typeMetadata: "string",
 															nodeKind: "ValueNode",
 														},
@@ -729,7 +733,7 @@ describe("DefaultVisualizers unit tests", () => {
 									nodeKind: "TreeNode",
 									typeMetadata: "object",
 								},
-								'DefaultVisualizer_SharedTree_Test.List<["DefaultVisualizer_SharedTree_Test.child-item"]>':
+								'DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.child-item"]>':
 									{
 										children: {
 											object: {
@@ -844,7 +848,7 @@ describe("DefaultVisualizers unit tests", () => {
 														types: {
 															children: {
 																"0": {
-																	value: 'DefaultVisualizer_SharedTree_Test.List<["DefaultVisualizer_SharedTree_Test.child-item"]>',
+																	value: 'DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.child-item"]>',
 																	typeMetadata: "string",
 																	nodeKind: "ValueNode",
 																},

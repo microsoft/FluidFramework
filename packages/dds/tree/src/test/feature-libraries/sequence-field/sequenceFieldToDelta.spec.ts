@@ -7,7 +7,6 @@ import { fail, strict as assert } from "assert";
 import {
 	RevisionTag,
 	FieldKey,
-	mintRevisionTag,
 	ChangesetLocalId,
 	makeAnonChange,
 	tagChange,
@@ -16,18 +15,18 @@ import {
 	DeltaFieldChanges,
 	DeltaMark,
 	DeltaFieldMap,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	FieldChange,
 	FieldKinds,
 	NodeChangeset,
 	SequenceField as SF,
-} from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
-import { assertFieldChangesEqual, deepFreeze } from "../../utils";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { toDelta } from "./utils";
+} from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { assertFieldChangesEqual, deepFreeze, mintRevisionTag } from "../../utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { toDelta } from "./utils.js";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
@@ -131,8 +130,8 @@ describe("SequenceField - toDelta", () => {
 		assertFieldChangesEqual(actual, expected);
 	});
 
-	it("delete", () => {
-		const changeset = [Mark.delete(10, brand(42))];
+	it("remove", () => {
+		const changeset = [Mark.remove(10, brand(42))];
 		const expected: DeltaFieldChanges = {
 			local: [
 				{
@@ -145,10 +144,12 @@ describe("SequenceField - toDelta", () => {
 		assert.deepStrictEqual(actual, expected);
 	});
 
-	it("delete with override", () => {
-		const changeset = [
-			Mark.delete(10, brand(42), { redetachId: { revision: tag2, localId: brand(1) } }),
-		];
+	it("remove with override", () => {
+		const detachIdOverride: SF.DetachIdOverride = {
+			type: SF.DetachIdOverrideType.Redetach,
+			id: { revision: tag2, localId: brand(1) },
+		};
+		const changeset = [Mark.remove(10, brand(42), { idOverride: detachIdOverride })];
 		const expected: DeltaFieldChanges = {
 			local: [
 				{
@@ -223,7 +224,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("multiple changes", () => {
 		const changeset: TestChangeset = [
-			Mark.delete(10, brand(42)),
+			Mark.remove(10, brand(42)),
 			{ count: 3 },
 			Mark.insert(1, brand(52)),
 			{ count: 1 },
@@ -262,8 +263,8 @@ describe("SequenceField - toDelta", () => {
 		assertFieldChangesEqual(actual, expected);
 	});
 
-	it("modify and delete => delete", () => {
-		const changeset = [Mark.delete(1, brand(42), { changes: childChange1 })];
+	it("modify and remove => remove", () => {
+		const changeset = [Mark.remove(1, brand(42), { changes: childChange1 })];
 		const expected: DeltaFieldChanges = {
 			local: [{ count: 1, detach: detachId, fields: childChange1Delta }],
 		};
@@ -307,9 +308,9 @@ describe("SequenceField - toDelta", () => {
 
 	describe("Transient changes", () => {
 		// TODO: Should test revives and returns in addition to inserts and moves
-		it("insert & delete", () => {
+		it("insert & remove", () => {
 			const changeset = [
-				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.remove(2, brand(2))),
 			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
@@ -335,11 +336,11 @@ describe("SequenceField - toDelta", () => {
 			assertFieldChangesEqual(delta, expected);
 		});
 
-		it("move & delete", () => {
+		it("move & remove", () => {
 			const changeset = [
 				Mark.moveOut(2, brand(0)),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(0)), Mark.remove(2, brand(2))),
 			];
 			const delta = toDelta(changeset);
 
@@ -351,11 +352,11 @@ describe("SequenceField - toDelta", () => {
 			assertFieldChangesEqual(delta, expected);
 		});
 
-		it("insert & move & delete", () => {
+		it("insert & move & remove", () => {
 			const changeset = [
 				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.remove(2, brand(4))),
 			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
@@ -410,8 +411,8 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	describe("Idempotent changes", () => {
-		it("delete", () => {
-			const deletion = [Mark.delete(1, brand(0), { cellId })];
+		it("remove", () => {
+			const deletion = [Mark.remove(1, brand(0), { cellId })];
 			const actual = toDelta(deletion, tag);
 			const expected: DeltaFieldChanges = {
 				rename: [
@@ -425,8 +426,8 @@ describe("SequenceField - toDelta", () => {
 			assertFieldChangesEqual(actual, expected);
 		});
 
-		it("modify and delete", () => {
-			const deletion = [Mark.delete(1, brand(0), { cellId, changes: childChange1 })];
+		it("modify and remove", () => {
+			const deletion = [Mark.remove(1, brand(0), { cellId, changes: childChange1 })];
 			const actual = toDelta(deletion, tag);
 			const expected: DeltaFieldChanges = {
 				rename: [

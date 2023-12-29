@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	ITree,
@@ -11,10 +12,10 @@ import {
 	SchemaFactoryRecursive,
 	TreeConfiguration,
 	TreeView,
-} from "../../class-tree";
-import { TreeFactory } from "../../treeFactory";
-import { areSafelyAssignable, disposeSymbol, requireTrue } from "../../util";
-import { ListRecursive, MapRecursive } from "./testRecursiveSchema";
+} from "../../class-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { areSafelyAssignable, disposeSymbol, requireTrue } from "../../util/index.js";
+import { ListRecursive, MapRecursive } from "./testRecursiveSchema.js";
 
 describe("Recursive Class based end to end example", () => {
 	it("test", () => {
@@ -24,7 +25,7 @@ describe("Recursive Class based end to end example", () => {
 		const BoxRef = () => Box;
 		schema.fixRecursiveReference(BoxRef);
 
-		class Box extends schema.object("Box", {
+		class Box extends schema.objectRecursive("Box", {
 			/**
 			 * Doc comment on a schema based field. Intellisense should work when referencing the field.
 			 */
@@ -44,13 +45,19 @@ describe("Recursive Class based end to end example", () => {
 		}
 
 		const factory = new TreeFactory({});
-		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const theTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		setup(theTree);
 	});
 
 	it("lists", () => {
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		// Explicit constructor call
 		{
@@ -87,7 +94,10 @@ describe("Recursive Class based end to end example", () => {
 
 	it("maps", () => {
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		const view: TreeView<MapRecursive> = tree.schematize(
 			new TreeConfiguration(MapRecursive, () => new MapRecursive(undefined)),

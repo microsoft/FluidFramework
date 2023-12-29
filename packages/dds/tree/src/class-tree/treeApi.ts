@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TreeValue } from "../core";
+import { assert } from "@fluidframework/core-utils";
+import { TreeValue } from "../core/index.js";
 import {
 	EditableTreeEvents,
 	LeafNodeSchema,
@@ -11,15 +12,15 @@ import {
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
-} from "../feature-libraries";
-import { TreeNode } from "../simple-tree";
+} from "../feature-libraries/index.js";
+import { TreeNode } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexNode, tryGetFlexNode } from "../simple-tree/flexNode";
+import { getFlexNode, tryGetFlexNode } from "../simple-tree/flexNode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getClassSchema, getOrCreateNodeProxy } from "../simple-tree/proxies";
-import { schemaFromValue } from "./schemaFactory";
-import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes";
-import { getFlexSchema } from "./toFlexSchema";
+import { getClassSchema, getOrCreateNodeProxy } from "../simple-tree/proxies.js";
+import { schemaFromValue } from "./schemaFactory.js";
+import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes.js";
+import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -28,7 +29,7 @@ import { getFlexSchema } from "./toFlexSchema";
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
  * https://github.com/microsoft/rushstack/issues/1958.
- * @beta
+ * @public
  */
 export interface TreeApi {
 	/**
@@ -79,16 +80,18 @@ export interface TreeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- * @beta
+ * @public
  */
 export const nodeApi: TreeApi = {
-	parent: (node: TreeNode) => {
+	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
-		if (editNode !== undefined) {
-			return getOrCreateNodeProxy(editNode);
+		if (editNode === undefined) {
+			return undefined;
 		}
 
-		return undefined;
+		const output = getOrCreateNodeProxy(editNode);
+		assert(!isTreeValue(output), "Parent can't be a leaf, so it should be a node not a value");
+		return output;
 	},
 	key: (node: TreeNode) => {
 		const parentField = getFlexNode(node).parentField;
@@ -137,7 +140,7 @@ export const nodeApi: TreeApi = {
 
 /**
  * A collection of events that can be raised by a {@link TreeNode}.
- * @beta
+ * @public
  */
 export interface TreeNodeEvents {
 	/**

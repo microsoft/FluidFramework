@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "./typeCheck";
-import { getOrCreate } from "./utils";
+import { Invariant } from "./typeCheck.js";
+import { getOrCreate } from "./utils.js";
 
 /**
  * Key in a {@link BrandedMapSubset}.

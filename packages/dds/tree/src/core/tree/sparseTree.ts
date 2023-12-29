@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey } from "../schema-stored";
-import { topDownPath, UpPath } from "./pathTree";
+import { FieldKey } from "../schema-stored/index.js";
+import { topDownPath, UpPath } from "./pathTree.js";
 
 /**
  * Sparse Tree of nodes.

@@ -14,13 +14,13 @@ import {
 	detachedFieldAsKey,
 	rootField,
 	aboveRootPlaceholder,
-} from "../core";
+} from "../core/index.js";
 import {
 	CursorAdapter,
 	CursorWithNode,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
-} from "./treeCursorUtils";
+} from "./treeCursorUtils.js";
 
 /**
  * @returns An {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.

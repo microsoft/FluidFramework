@@ -10,20 +10,20 @@ import {
 	TreeShape,
 	ChunkShape,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/uniformChunk";
-import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite";
-import { cursorToJsonObject, singleJsonCursor } from "../../../domains";
-import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core";
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
+import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { sum } from "../../domains/json/benchmarks";
+import { sum } from "../../domains/json/benchmarks.js";
 import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 	cursorForMapTreeNode,
 	cursorForJsonableTreeNode,
 	TreeChunk,
-} from "../../../feature-libraries";
-import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData";
+} from "../../../feature-libraries/index.js";
+import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {

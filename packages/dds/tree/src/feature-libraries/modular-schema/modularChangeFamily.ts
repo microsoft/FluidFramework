@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions, IJsonCodec, makeCodecFamily } from "../../codec";
+import { IIdCompressor } from "@fluidframework/id-compressor";
+import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
 	ChangeFamily,
 	EditBuilder,
@@ -25,18 +26,22 @@ import {
 	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
 	makeDetachedNodeId,
-	ITreeCursor,
 	emptyDelta,
 	DeltaFieldMap,
 	DeltaFieldChanges,
 	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
 	DeltaRoot,
-	ITreeCursorSynchronous,
 	DeltaDetachedNodeId,
-	EncodedRevisionTag,
-} from "../../core";
+	ChangeEncodingContext,
+	RevisionTagCodec,
+	mapCursorField,
+	ITreeCursorSynchronous,
+	CursorLocationType,
+} from "../../core/index.js";
 import {
 	brand,
+	deleteFromNestedMap,
 	forEachInNestedMap,
 	getOrAddEmptyToMap,
 	getOrAddInMap,
@@ -44,11 +49,18 @@ import {
 	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	isReadonlyArray,
 	Mutable,
-} from "../../util";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import { TreeChunk, chunkTree, defaultChunkPolicy, makeFieldBatchCodec } from "../chunked-forest";
+	tryGetFromNestedMap,
+} from "../../util/index.js";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
+import {
+	TreeChunk,
+	chunkFieldSingle,
+	defaultChunkPolicy,
+	FieldBatchCodec,
+	chunkTree,
+} from "../chunked-forest/index.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -57,15 +69,15 @@ import {
 	addCrossFieldQuery,
 	getFirstFromCrossFieldMap,
 	setInCrossFieldMap,
-} from "./crossFieldQueries";
+} from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
 	NodeExistenceState,
 	RebaseRevisionMetadata,
-} from "./fieldChangeHandler";
-import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
-import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
-import { GenericChangeset } from "./genericFieldKindTypes";
+} from "./fieldChangeHandler.js";
+import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind.js";
+import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
+import { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -73,9 +85,8 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 	NodeExistsConstraint,
-} from "./modularChangeTypes";
-import { makeV0Codec } from "./modularChangeCodecs";
-import { EncodedModularChangeset } from "./modularChangeFormat";
+} from "./modularChangeTypes.js";
+import { makeV0Codec } from "./modularChangeCodecs.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -86,19 +97,20 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly latestCodec: IJsonCodec<ModularChangeset, EncodedModularChangeset>;
+	public readonly latestCodec: ReturnType<typeof makeV0Codec>;
 
-	public readonly codecs: ICodecFamily<ModularChangeset>;
+	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+		idCompressor: IIdCompressor,
+		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 	) {
 		this.latestCodec = makeV0Codec(
 			fieldKinds,
-			revisionTagCodec,
-			makeFieldBatchCodec(codecOptions),
+			new RevisionTagCodec(idCompressor),
+			fieldBatchCodec,
 			codecOptions,
 		);
 		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
@@ -160,13 +172,14 @@ export class ModularChangeFamily
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		if (changes.length === 1) {
-			const { fieldChanges, builds, constraintViolationCount } = changes[0].change;
+			const { fieldChanges, builds, destroys, constraintViolationCount } = changes[0].change;
 			return makeModularChangeset(
 				fieldChanges,
 				maxId,
 				revInfos,
 				constraintViolationCount,
 				builds,
+				destroys,
 			);
 		}
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
@@ -210,42 +223,18 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
-		for (const taggedChange of changes) {
-			const revision = revisionFromTaggedChange(taggedChange);
-			const change = taggedChange.change;
-			if (change.builds) {
-				for (const [revisionKey, innerMap] of change.builds) {
-					const setRevisionKey = revisionKey ?? revision;
-					const innerDstMap = getOrAddInMap(allBuilds, setRevisionKey, new Map());
-					for (const [id, tree] of innerMap) {
-						// Check for duplicate builds and prefer earlier ones.
-						// There are two scenarios where we might get duplicate builds:
-						// - In compositions of rebase sandwiches:
-						// In that case, the trees are identical and it doesn't matter which one we pick.
-						// - In compositions of commits that needed to include repair data refreshers (e.g., undos):
-						// In that case, it's possible for the refreshers to contain different trees because the latter
-						// refresher may already reflect the changes made by the commit that includes the earlier
-						// refresher. This composition includes the changes made by the commit that includes the
-						// earlier refresher, so we need to include the build for the earlier refresher, otherwise
-						// the produced changeset will build a tree one which those changes have already been applied
-						// and also try to apply the changes again, effectively applying them twice.
-						// Note that it would in principle be possible to adopt the later build and exclude from the
-						// composition all the changes already reflected on the tree, but that is not something we
-						// care to support at this time.
-						if (!innerDstMap.has(id)) {
-							innerDstMap.set(id, tree);
-						}
-					}
-				}
-			}
-		}
+
+		const { allBuilds, allDestroys } = composeBuildsAndDestroys(
+			changesWithoutConstraintViolations,
+		);
+
 		return makeModularChangeset(
 			this.pruneFieldMap(composedFields),
 			idState.maxId,
 			revInfos,
 			undefined,
 			allBuilds,
+			allDestroys,
 		);
 	}
 
@@ -414,6 +403,14 @@ export class ModularChangeFamily
 			// running a third pass would produce the same results.
 		}
 
+		// Rollback changesets destroy the nodes created by the change being rolled back.
+		const destroys = isRollback
+			? invertBuilds(change.change.builds, change.revision)
+			: undefined;
+
+		// Destroys only occur in rollback changesets, which are never inverted.
+		assert(change.change.destroys === undefined, "Unexpected destroys in change to invert");
+
 		const revInfo = change.change.revisions;
 		return makeModularChangeset(
 			invertedFields,
@@ -425,6 +422,8 @@ export class ModularChangeFamily
 						: Array.from(revInfo)
 				  ).reverse(),
 			change.change.constraintViolationCount,
+			undefined,
+			destroys,
 		);
 	}
 
@@ -561,6 +560,7 @@ export class ModularChangeFamily
 			change.revisions,
 			constraintState.violationCount,
 			change.builds,
+			change.destroys,
 		);
 	}
 
@@ -728,7 +728,7 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
-		// If there's a node exists constraint and we deleted or revived the node, update constraint state
+		// If there's a node exists constraint and we removed or revived the node, update constraint state
 		if (rebasedChange.nodeExistsConstraint !== undefined) {
 			const violatedAfter = existenceState === NodeExistenceState.Dead;
 
@@ -778,6 +778,100 @@ export class ModularChangeFamily
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver);
 	}
+}
+
+function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
+	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
+	const allDestroys: ChangeAtomIdMap<number> = new Map();
+	for (const taggedChange of changes) {
+		const revision = revisionFromTaggedChange(taggedChange);
+		const change = taggedChange.change;
+		if (change.builds) {
+			for (const [revisionKey, innerMap] of change.builds) {
+				const setRevisionKey = revisionKey ?? revision;
+				const innerDstMap = getOrAddInMap(
+					allBuilds,
+					setRevisionKey,
+					new Map<ChangesetLocalId, TreeChunk>(),
+				);
+				for (const [id, chunk] of innerMap) {
+					// Check for duplicate builds and prefer earlier ones.
+					// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
+					// In that case, it's possible for the refreshers to contain different trees because the latter
+					// refresher may already reflect the changes made by the commit that includes the earlier
+					// refresher. This composition includes the changes made by the commit that includes the
+					// earlier refresher, so we need to include the build for the earlier refresher, otherwise
+					// the produced changeset will build a tree one which those changes have already been applied
+					// and also try to apply the changes again, effectively applying them twice.
+					// Note that it would in principle be possible to adopt the later build and exclude from the
+					// composition all the changes already reflected on the tree, but that is not something we
+					// care to support at this time.
+					if (!innerDstMap.has(id)) {
+						// Check for earlier destroys that this build might cancel-out with.
+						const destroyCount = tryGetFromNestedMap(allDestroys, setRevisionKey, id);
+						if (destroyCount === undefined) {
+							innerDstMap.set(id, chunk);
+						} else {
+							assert(
+								destroyCount === chunk.topLevelLength,
+								"Expected build and destroy to have the same length",
+							);
+							deleteFromNestedMap(allDestroys, setRevisionKey, id);
+						}
+					}
+				}
+				if (innerDstMap.size === 0) {
+					allBuilds.delete(setRevisionKey);
+				}
+			}
+		}
+		if (change.destroys !== undefined) {
+			for (const [revisionKey, innerMap] of change.destroys) {
+				const setRevisionKey = revisionKey ?? revision;
+				const innerDstMap = getOrAddInMap(
+					allDestroys,
+					setRevisionKey,
+					new Map<ChangesetLocalId, number>(),
+				);
+				for (const [id, count] of innerMap) {
+					// Check for earlier builds that this destroy might cancel-out with.
+					const chunk = tryGetFromNestedMap(allBuilds, setRevisionKey, id);
+					if (chunk === undefined) {
+						innerDstMap.set(id, count);
+					} else {
+						assert(
+							count === chunk.topLevelLength,
+							"Expected build and destroy to have the same length",
+						);
+						deleteFromNestedMap(allBuilds, setRevisionKey, id);
+					}
+				}
+				if (innerDstMap.size === 0) {
+					allDestroys.delete(setRevisionKey);
+				}
+			}
+		}
+	}
+	return { allBuilds, allDestroys };
+}
+
+function invertBuilds(
+	builds: ChangeAtomIdMap<TreeChunk> | undefined,
+	fallbackRevision: RevisionTag | undefined,
+): ChangeAtomIdMap<number> | undefined {
+	if (builds !== undefined) {
+		const destroys: ChangeAtomIdMap<number> = new Map();
+		for (const [revision, innerBuildMap] of builds) {
+			const initializedRevision = revision ?? fallbackRevision;
+			const innerDestroyMap: Map<ChangesetLocalId, number> = new Map();
+			for (const [id, chunk] of innerBuildMap) {
+				innerDestroyMap.set(id, chunk.topLevelLength);
+			}
+			destroys.set(initializedRevision, innerDestroyMap);
+		}
+		return destroys;
+	}
+	return undefined;
 }
 
 /**
@@ -842,19 +936,28 @@ export function intoDelta(
 	}
 	if (change.builds && change.builds.size > 0) {
 		const builds: DeltaDetachedNodeBuild[] = [];
-		forEachInNestedMap(change.builds, (tree, major, minor) => {
-			const cursor = tree.cursor();
-			assert(
-				cursor.getFieldLength() === 1,
-				0x853 /* each encoded chunk should only contain 1 node. */,
-			);
-			cursor.enterNode(0);
-			builds.push({
-				id: makeDetachedNodeId(major ?? revision, minor),
-				trees: [cursor],
-			});
+		forEachInNestedMap(change.builds, (chunk, major, minor) => {
+			if (chunk.topLevelLength > 0) {
+				const trees = mapCursorField(chunk.cursor(), (c) =>
+					cursorForMapTreeNode(mapTreeFromCursor(c)),
+				);
+				builds.push({
+					id: makeDetachedNodeId(major ?? revision, minor),
+					trees,
+				});
+			}
 		});
 		rootDelta.build = builds;
+	}
+	if (change.destroys !== undefined && change.destroys.size > 0) {
+		const destroys: DeltaDetachedNodeDestruction[] = [];
+		forEachInNestedMap(change.destroys, (count, major, minor) => {
+			destroys.push({
+				id: makeDetachedNodeId(major ?? revision, minor),
+				count,
+			});
+		});
+		rootDelta.destroy = destroys;
 	}
 	return rootDelta;
 }
@@ -1119,6 +1222,7 @@ function makeModularChangeset(
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
 	builds?: ChangeAtomIdMap<TreeChunk>,
+	destroys?: ChangeAtomIdMap<number>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1132,6 +1236,9 @@ function makeModularChangeset(
 	}
 	if (builds !== undefined && builds.size > 0) {
 		changeset.builds = builds;
+	}
+	if (destroys !== undefined && destroys.size > 0) {
+		changeset.destroys = destroys;
 	}
 	return changeset;
 }
@@ -1163,26 +1270,27 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 	}
 
+	/**
+	 * @param firstId - The ID to associate with the first node
+	 * @param content - The node(s) to build. Can be in either Field or Node mode.
+	 * @returns A description of the edit that can be passed to `submitChanges`.
+	 */
 	public buildTrees(
 		firstId: ChangesetLocalId,
-		newContent: ITreeCursor | readonly ITreeCursor[],
+		content: ITreeCursorSynchronous,
 	): GlobalEditDescription {
-		const content = isReadonlyArray(newContent) ? newContent : [newContent];
-		const length = content.length;
-		if (length === 0) {
+		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
 			return { type: "global" };
 		}
 		const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
-		let id = firstId;
+		const chunk =
+			content.mode === CursorLocationType.Fields
+				? chunkFieldSingle(content, defaultChunkPolicy)
+				: chunkTree(content, defaultChunkPolicy);
+		innerMap.set(firstId, chunk);
 
-		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const cursor of content) {
-			assert(!innerMap.has(id), 0x854 /* Unexpected duplicate build ID */);
-			innerMap.set(id, chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy));
-			id = brand((id as number) + 1);
-		}
 		return {
 			type: "global",
 			builds,

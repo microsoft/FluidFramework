@@ -5,15 +5,15 @@
 
 /* eslint-disable no-inner-declarations */
 
-import { SchemaBuilder } from "../../../domains";
+import { SchemaBuilder } from "../../../domains/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	FieldKinds,
 	InsertableFlexNode,
 	TreeFieldSchema,
 	TreeNodeSchema,
-} from "../../../feature-libraries";
-import { requireAssignableTo } from "../../../util";
+} from "../../../feature-libraries/index.js";
+import { requireAssignableTo } from "../../../util/index.js";
 
 const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 

@@ -19,26 +19,65 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/counter-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/counter-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/counter-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/counter-beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/counter-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/counter-public.d.ts",
+				"default": "./dist/index.js"
 			}
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
-		"build:test": "tsc-multi --config ./tsc-multi.test.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -53,7 +92,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -88,17 +127,17 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/build-tools": "0.29.0-225750",
 		"@fluidframework/counter-previous": "npm:@fluidframework/counter@2.0.0-internal.8.0.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
@@ -107,7 +146,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
-		"renamer": "^4.0.0",
 		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
 		"tsc-multi": "^1.1.0",

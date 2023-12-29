@@ -156,7 +156,7 @@ export function calculateMaxWaitTime(delayMs: number, error: unknown): number {
 	const retryDelayFromError = getRetryDelayFromError(error);
 	let newDelayMs = Math.max(retryDelayFromError ?? 0, delayMs * 2);
 	newDelayMs = Math.min(
-		delayMs,
+		newDelayMs,
 		isFluidError(error) && error.getTelemetryProperties().endpointReached === true
 			? MaxReconnectDelayInMsWhenEndpointIsReachable
 			: MaxReconnectDelayInMsWhenEndpointIsNotReachable,

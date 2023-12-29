@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core";
-import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core/index.js";
+import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -16,9 +16,9 @@ import {
 	MapNodeSchema,
 	FlexListToUnion,
 	LazyItem,
-} from "../typed-schema";
-import { Assume, FlattenKeys, _InlineTrick } from "../../util";
-import { Multiplicity } from "../multiplicity";
+} from "../typed-schema/index.js";
+import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
+import { Multiplicity } from "../multiplicity.js";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.

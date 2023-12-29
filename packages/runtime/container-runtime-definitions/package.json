@@ -16,6 +16,22 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./alpha": {
+			"types": "./dist/container-runtime-definitions-alpha.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./beta": {
+			"types": "./dist/container-runtime-definitions-beta.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./internal": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./public": {
+			"types": "./dist/container-runtime-definitions-public.d.ts",
+			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
@@ -27,7 +43,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
@@ -51,11 +67,11 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/build-tools": "0.29.0-225750",
 		"@fluidframework/container-runtime-definitions-previous": "npm:@fluidframework/container-runtime-definitions@2.0.0-internal.8.0.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",

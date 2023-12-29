@@ -14,4 +14,4 @@ export {
 	TypedFields,
 	UnbrandedName,
 	EmptyObject,
-} from "./schemaAware";
+} from "./schemaAware.js";
