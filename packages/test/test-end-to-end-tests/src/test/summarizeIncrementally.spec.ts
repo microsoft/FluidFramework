@@ -92,6 +92,10 @@ function validateDDSStateInSummary(
 	assert.strictEqual(ddsSummaryObject.handle, expectedHandleId, "DDS handle is incorrect");
 }
 
+/**
+ * These tests validate that data stores and DDSes do incremental summaries correctly, i.e., if the data
+ * in it does not change, it summaries using a SummaryHandle and not a SummaryTree.
+ */
 describeCompat(
 	"Incremental summaries for data store and DDS",
 	"FullCompat",

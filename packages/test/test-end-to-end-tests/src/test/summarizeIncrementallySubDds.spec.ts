@@ -458,7 +458,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
  * contents incrementally.
  */
 describeCompat(
-	"Incremental summaries can be generated for DDSes",
+	"Incremental summaries can be generated for DDS content",
 	"NoCompat",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
