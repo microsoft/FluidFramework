@@ -810,7 +810,7 @@ export function insert(
 
 export function remove(tree: ITreeCheckout, index: number, count: number): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.delete(index, count);
+	field.remove(index, count);
 }
 
 export function expectJsonTree(

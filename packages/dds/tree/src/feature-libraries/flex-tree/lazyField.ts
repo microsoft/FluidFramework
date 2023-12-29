@@ -328,7 +328,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 	public removeAt(index: number): void {
 		const fieldEditor = this.sequenceEditor();
-		fieldEditor.delete(index, 1);
+		fieldEditor.remove(index, 1);
 	}
 
 	public removeRange(start?: number, end?: number): void {
@@ -337,7 +337,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		const removeStart = start ?? 0;
 		const removeEnd = Math.min(length, end ?? length);
 		assertValidRangeIndices(removeStart, removeEnd, this);
-		fieldEditor.delete(removeStart, removeEnd - removeStart);
+		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 
 	public moveToStart(sourceIndex: number): void;

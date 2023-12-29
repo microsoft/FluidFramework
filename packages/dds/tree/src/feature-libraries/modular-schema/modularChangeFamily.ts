@@ -728,7 +728,7 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
-		// If there's a node exists constraint and we deleted or revived the node, update constraint state
+		// If there's a node exists constraint and we removed or revived the node, update constraint state
 		if (rebasedChange.nodeExistsConstraint !== undefined) {
 			const violatedAfter = existenceState === NodeExistenceState.Dead;
 

@@ -26,7 +26,7 @@ const sessionId = "session1" as SessionId;
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, SessionId> = {
 	successes: [
 		["with child change", Change.modify(1, TestChange.mint([], 1)), sessionId],
-		["without child change", Change.delete(2, 2), sessionId],
+		["without child change", Change.remove(2, 2), sessionId],
 		[
 			"with repair data",
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),

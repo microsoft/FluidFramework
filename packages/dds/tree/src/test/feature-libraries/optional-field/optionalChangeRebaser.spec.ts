@@ -281,7 +281,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
-				description: "Delete",
+				description: "Remove",
 			},
 			parent: state,
 		};
@@ -297,7 +297,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
-				description: "Delete",
+				description: "Remove",
 			},
 			parent: state,
 		};

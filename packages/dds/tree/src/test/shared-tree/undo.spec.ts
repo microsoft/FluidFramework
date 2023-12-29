@@ -57,7 +57,7 @@ const testCases: {
 		undoState: ["A", "y", "B"],
 	},
 	{
-		name: "the delete of a node",
+		name: "the remove of a node",
 		edit: (actedOn) => {
 			remove(actedOn, 0, 2);
 		},
@@ -65,7 +65,7 @@ const testCases: {
 		editedState: ["C", "D"],
 	},
 	{
-		name: "nested deletes",
+		name: "nested removes",
 		edit: (actedOn) => {
 			const listNode: UpPath = {
 				parent: rootPath,
@@ -78,7 +78,7 @@ const testCases: {
 				parent: listNode,
 				field: brand(""),
 			});
-			listField.delete(0, 1);
+			listField.remove(0, 1);
 			remove(actedOn, 0, 1);
 			actedOn.transaction.commit();
 		},
@@ -86,7 +86,7 @@ const testCases: {
 		editedState: [],
 	},
 	{
-		name: "move out under delete",
+		name: "move out under remove",
 		edit: (actedOn) => {
 			const listNode: UpPath = {
 				parent: rootPath,
@@ -126,10 +126,10 @@ const testCases: {
 		undoState: ["A", "x", "B", "C", "D"],
 	},
 	{
-		name: "a delete of content that is concurrently edited",
+		name: "a remove of content that is concurrently edited",
 		edit: (actedOn, other) => {
-			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).delete(0, 1);
-			actedOn.editor.sequenceField(rootField).delete(0, 1);
+			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).remove(0, 1);
+			actedOn.editor.sequenceField(rootField).remove(0, 1);
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
@@ -274,8 +274,8 @@ describe("Undo and redo", () => {
 		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
 			tree1.events,
 		);
-		tree1.editor.sequenceField(rootField).delete(0, 1);
-		tree1.editor.sequenceField(rootField).delete(1, 1);
+		tree1.editor.sequenceField(rootField).remove(0, 1);
+		tree1.editor.sequenceField(rootField).remove(1, 1);
 
 		const tree2 = tree1.fork();
 		const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
@@ -321,7 +321,7 @@ describe("Undo and redo", () => {
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 		tree.transaction.start();
 		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-		tree.editor.sequenceField(rootField).delete(0, 1);
+		tree.editor.sequenceField(rootField).remove(0, 1);
 		tree.transaction.commit();
 
 		expectJsonTree(tree, ["B", "C"]);
