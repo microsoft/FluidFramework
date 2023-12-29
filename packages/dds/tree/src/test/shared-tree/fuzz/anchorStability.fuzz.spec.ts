@@ -76,7 +76,7 @@ describe("Fuzz - anchor stability", () => {
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 1,
-			delete: 2,
+			remove: 2,
 			move: 2,
 			fieldSelection: {
 				optional: 1,
@@ -139,7 +139,7 @@ describe("Fuzz - anchor stability", () => {
 	describe("Anchors are stable", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 2,
-			delete: 2,
+			remove: 2,
 			move: 2,
 			undo: 1,
 			redo: 1,

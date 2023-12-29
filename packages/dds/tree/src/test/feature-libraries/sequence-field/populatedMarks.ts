@@ -89,7 +89,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 			idOverride: unattachIdOverride,
 		},
 		{
-			type: "Delete",
+			type: "Remove",
 			count: 1,
 			cellId,
 			changes,

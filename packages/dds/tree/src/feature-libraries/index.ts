@@ -28,7 +28,7 @@ export {
 	BindingContextType,
 	BindingContext,
 	VisitorBindingContext,
-	DeleteBindingContext,
+	RemoveBindingContext,
 	InsertBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,

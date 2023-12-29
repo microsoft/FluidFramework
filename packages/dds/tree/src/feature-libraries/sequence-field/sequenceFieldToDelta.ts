@@ -106,7 +106,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					});
 					break;
 				}
-				case "Delete": {
+				case "Remove": {
 					const newDetachId = getDetachOutputId(mark, revision, undefined);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
