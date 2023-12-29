@@ -15,7 +15,7 @@ import { UpPath, Anchor, Value } from "../../../core/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import {
 	cursorsFromContextualData,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
@@ -59,11 +59,9 @@ const config = {
 	},
 } satisfies TreeContent;
 
-const initialTreeJson = cursorsFromContextualData(
-	config,
-	config.schema.rootFieldSchema,
-	config.initialTree,
-).map(jsonableTreeFromCursor);
+const initialTreeJson = jsonableTreeFromFieldCursor(
+	cursorsFromContextualData(config, config.schema.rootFieldSchema, config.initialTree),
+);
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.

@@ -456,7 +456,7 @@ export function generateTestTrees() {
 						parent: undefined,
 						field: rootFieldKey,
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				// The nested change
 				view.editor
 					.sequenceField({
@@ -467,7 +467,7 @@ export function generateTestTrees() {
 						},
 						field: brand("foo"),
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				view.transaction.commit();
 				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");
