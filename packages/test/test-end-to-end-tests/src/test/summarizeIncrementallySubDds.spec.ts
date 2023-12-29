@@ -454,7 +454,8 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 }
 
 /**
- * Validates that incremental summaries can be created at the sub DDS level
+ * Validates that incremental summaries can be performed at the sub DDS level, i.e., a DDS can summarizer its
+ * contents incrementally.
  */
 describeCompat(
 	"Incremental summaries can be generated for DDSes",
@@ -502,18 +503,29 @@ describeCompat(
 			return createSummarizerResult.summarizer;
 		}
 
+		/**
+		 * Validates that the passed summaryObject is a summary handle. Also, the handle id is correct.
+		 */
 		function validateHandle(
 			summaryObject: SummaryObject,
 			dataStoreId: string,
 			ddsId: string,
 			subDDSId: string,
-			message: string,
+			messagePrefix: string,
 		) {
 			// The handle id for sub-DDS should be under ".channels/<dataStoreId>/.channels/<ddsId>" as that is where
 			// the summary tree for a sub-DDS is.
 			const expectedHandleId = `/${channelsTreeName}/${dataStoreId}/${channelsTreeName}/${ddsId}/${subDDSId}`;
-			assert.strictEqual(summaryObject.type, SummaryType.Handle, message);
-			assert.strictEqual(summaryObject.handle, expectedHandleId, message);
+			assert.strictEqual(
+				summaryObject.type,
+				SummaryType.Handle,
+				`${messagePrefix} should be a handle`,
+			);
+			assert.strictEqual(
+				summaryObject.handle,
+				expectedHandleId,
+				`${messagePrefix}'s handle id is incorrect`,
+			);
 		}
 
 		beforeEach(async () => {
@@ -559,27 +571,9 @@ describeCompat(
 			);
 			const ddsTree = dataObjectChannelsTree.tree[dds.id];
 			assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
-			validateHandle(
-				ddsTree.tree["0"],
-				datastore.context.id,
-				dds.id,
-				"0",
-				"Blob 0 handle is incorrect",
-			);
-			validateHandle(
-				ddsTree.tree["1"],
-				datastore.context.id,
-				dds.id,
-				"1",
-				"Blob 1 handle is incorrect",
-			);
-			validateHandle(
-				ddsTree.tree["2"],
-				datastore.context.id,
-				dds.id,
-				"2",
-				"Blob 2 handle is incorrect",
-			);
+			validateHandle(ddsTree.tree["0"], datastore.context.id, dds.id, "0", "Blob 0");
+			validateHandle(ddsTree.tree["1"], datastore.context.id, dds.id, "1", "Blob 1");
+			validateHandle(ddsTree.tree["2"], datastore.context.id, dds.id, "2", "Blob 2");
 			assert(ddsTree.tree["3"].type === SummaryType.Blob, "Blob 3 should be a blob");
 		});
 
@@ -642,7 +636,7 @@ describeCompat(
 				datastore.context.id,
 				dds.id,
 				`${dds.rootNodeName}/a`,
-				"Summary1 - 'a' summary Handle is incorrect",
+				"Summary1 - 'a'",
 			);
 			assert(
 				rootNode.tree.b.type === SummaryType.Tree,
@@ -657,7 +651,7 @@ describeCompat(
 				datastore.context.id,
 				dds.id,
 				`${dds.rootNodeName}/c`,
-				"Summary1 - 'c' summary Handle is incorrect",
+				"Summary1 - 'c'",
 			);
 
 			// Test that we can load from multiple containers
@@ -707,14 +701,14 @@ describeCompat(
 				datastore.context.id,
 				dds.id,
 				`${dds.rootNodeName}/a`,
-				"Summary2 - 'a' summary Handle is incorrect",
+				"Summary2 - 'a'",
 			);
 			validateHandle(
 				rootNode2.tree.b,
 				datastore.context.id,
 				dds.id,
 				`${dds.rootNodeName}/b`,
-				"Summary1 - 'b' summary Handle is incorrect",
+				"Summary1 - 'b'",
 			);
 			assert(
 				rootNode2.tree.c.type === SummaryType.Tree,

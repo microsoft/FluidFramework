@@ -81,7 +81,7 @@ async function createSummarizerCore(
 	// Old loaders will not have getEntryPoint API on the container. So, use getSummarizerBackCompat which
 	// will use request pattern to get the summarizer in these old loaders.
 	const fluidObject = await getSummarizerBackCompat(summarizerContainer);
-	if (fluidObject?.ISummarizer === undefined) {
+	if (fluidObject.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
 
