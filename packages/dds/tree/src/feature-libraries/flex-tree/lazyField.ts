@@ -307,7 +307,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 	public insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void {
 		assertValidIndex(index, this, true);
 		const content: ITreeCursorSynchronous = isCursor(value)
-			? value
+			? prepareFieldCursorForInsert(value)
 			: cursorForMapTreeField(
 					Array.from(value, (item) =>
 						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
@@ -582,6 +582,16 @@ const builderList: [FieldKind, Builder][] = [
 ];
 
 const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
+
+/**
+ * Prepare a fields cursor (holding a sequence of nodes) for inserting.
+ */
+function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
+	// TODO: optionally validate content against schema.
+
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	return cursor;
+}
 
 /**
  * Prepare a node cursor (holding a single node) for inserting.
