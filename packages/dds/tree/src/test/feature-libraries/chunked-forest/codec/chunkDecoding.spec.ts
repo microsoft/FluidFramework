@@ -16,31 +16,31 @@ import {
 	anyDecoder,
 	TreeDecoder,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import {
 	emptyChunk,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/emptyChunk";
+} from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
 import {
 	EncodedChunkShape,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format";
+} from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
 	ChunkDecoder,
 	StreamCursor,
 	readStream,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
-import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk";
-import { ReferenceCountedBase, brand } from "../../../../util";
+import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
+import { ReferenceCountedBase, brand } from "../../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk";
-import { TreeChunk } from "../../../../feature-libraries";
+import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
+import { TreeChunk } from "../../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric";
-import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
+import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
@@ -336,7 +336,7 @@ describe("chunkDecoding", () => {
 			const decoders = [makeLoggingDecoder(log, localChunk)];
 			const decoder = new TreeDecoder(
 				{
-					fields: [{ shape: 0, key: 0 }],
+					fields: [[0, 0]],
 					value: false,
 				},
 				cache,

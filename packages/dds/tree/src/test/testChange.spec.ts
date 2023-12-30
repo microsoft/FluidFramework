@@ -4,22 +4,23 @@
  */
 
 import { strict as assert } from "assert";
-import { cursorForJsonableTreeNode } from "../feature-libraries";
+import { SessionId } from "@fluidframework/id-compressor";
+import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	FieldKey,
 	tagChange,
-	mintRevisionTag,
 	deltaForSet,
 	RevisionTag,
 	TaggedChange,
 	RevisionMetadataSource,
-} from "../core";
-import { brand } from "../util";
-import { TestChange } from "./testChange";
-import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
-import { deepFreeze } from "./utils";
+	ChangeEncodingContext,
+} from "../core/index.js";
+import { brand } from "../util/index.js";
+import { TestChange } from "./testChange.js";
+import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
+import { deepFreeze, mintRevisionTag } from "./utils.js";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -98,9 +99,10 @@ describe("TestChange", () => {
 	it("can be encoded in JSON", () => {
 		const codec = TestChange.codec;
 		const empty = TestChange.emptyChange;
+		const context: ChangeEncodingContext = { originatorId: "session1" as SessionId };
 		const normal = TestChange.mint([0, 1], [2, 3]);
-		assert.deepEqual(empty, codec.decode(codec.encode(empty)));
-		assert.deepEqual(normal, codec.decode(codec.encode(normal)));
+		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
+		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));
 	});
 });
 

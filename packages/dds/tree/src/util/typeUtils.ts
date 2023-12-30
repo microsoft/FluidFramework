@@ -161,7 +161,7 @@ export type _RecursiveTrick = never;
  * @privateRemarks
  * `number` is not allowed as a key here since doing so causes the compiler to reject recursive schema.
  * The cause for this is unclear, but empirically it was the case when this comment was written.
- * @beta
+ * @public
  */
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 	readonly [P in symbol | string]: P extends K ? T : never;

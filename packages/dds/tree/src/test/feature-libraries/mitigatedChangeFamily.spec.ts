@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeFamily, ChangeFamilyEditor, TaggedChange } from "../../core";
-import { makeMitigatedChangeFamily } from "../../feature-libraries";
+import { ChangeFamily, ChangeFamilyEditor, TaggedChange } from "../../core/index.js";
+import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 
 const fallback = "Fallback";
 const arg1: any = "arg1";

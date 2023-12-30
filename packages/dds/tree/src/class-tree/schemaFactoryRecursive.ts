@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries";
-import { TreeArrayNode } from "../simple-tree";
-import { RestrictiveReadonlyRecord } from "../util";
+import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
+import { TreeArrayNode } from "../simple-tree/index.js";
+import { RestrictiveReadonlyRecord } from "../util/index.js";
 import {
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
@@ -15,8 +15,9 @@ import {
 	ObjectFromSchemaRecord,
 	TreeMapNode,
 	TreeNodeSchemaClass,
-} from "./schemaTypes";
-import { SchemaFactory } from "./schemaFactory";
+	WithType,
+} from "./schemaTypes.js";
+import { SchemaFactory } from "./schemaFactory.js";
 
 /**
  * Extends SchemaFactory with utilities for recursive types.
@@ -45,7 +46,7 @@ export class SchemaFactoryRecursive<
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Object,
-		ObjectFromSchemaRecord<T>,
+		ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>,
 		InsertableObjectFromSchemaRecord<T>,
 		true
 	> {
@@ -81,7 +82,7 @@ export class SchemaFactoryRecursive<
 		return RecursiveArray as unknown as TreeNodeSchemaClass<
 			`${TScope}.${string}`,
 			NodeKind.Array,
-			TreeArrayNode<T>,
+			TreeArrayNode<T> & WithType<`${TScope}.${string}`>,
 			{ x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> },
 			false
 		>;
@@ -114,7 +115,7 @@ export class SchemaFactoryRecursive<
 		return MapSchema as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.Map,
-			TreeMapNode<T>,
+			TreeMapNode<T> & WithType<`${TScope}.${Name}`>,
 			undefined,
 			false
 		>;

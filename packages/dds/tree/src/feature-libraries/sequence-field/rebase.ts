@@ -4,22 +4,21 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
-import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util";
+import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
 	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 	getIntention,
-} from "../modular-schema";
+} from "../modular-schema/index.js";
 import {
 	isDetach,
 	cloneMark,
@@ -45,7 +44,7 @@ import {
 	CellOrder,
 	getDetachIdForLineage,
 	getDetachOutputId,
-} from "./utils";
+} from "./utils.js";
 import {
 	Changeset,
 	Mark,
@@ -61,9 +60,8 @@ import {
 	MoveOut,
 	MoveIn,
 	LineageEvent,
-	DetachIdOverrideType,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
 import {
 	getMoveEffect,
 	setMoveEffect,
@@ -72,25 +70,17 @@ import {
 	MoveEffectTable,
 	isMoveOut,
 	isMoveIn,
-} from "./moveEffectTable";
-import { MarkQueue } from "./markQueue";
-import { EmptyInputCellMark } from "./helperTypes";
-import { CellOrderingMethod, sequenceConfig } from "./config";
+} from "./moveEffectTable.js";
+import { MarkQueue } from "./markQueue.js";
+import { EmptyInputCellMark } from "./helperTypes.js";
+import { CellOrderingMethod, sequenceConfig } from "./config.js";
+import { DetachIdOverrideType } from "./format.js";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
  * @param change - The changeset to rebase.
  * @param base - The changeset to rebase over.
  * @returns A changeset that performs the changes in `change` but does so assuming `base` has been applied first.
- *
- * WARNING! This implementation is incomplete:
- * - Some marks that affect existing content are removed instead of marked as conflicted when rebased over the deletion
- * of that content. This prevents us from then reinstating the mark when rebasing over the revive.
- * - Tombs are not added when rebasing an insert over a gap that is immediately left of deleted content.
- * This prevents us from being able to accurately track the position of the insert.
- * - Tiebreak ordering is not respected.
- * - Support for moves is not implemented.
- * - Support for slices is not implemented.
  */
 export function rebase<TNodeChange>(
 	change: Changeset<TNodeChange>,
@@ -240,7 +230,7 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 
 export function isRedetach(effect: MarkEffect): boolean {
 	switch (effect.type) {
-		case "Delete":
+		case "Remove":
 		case "MoveOut":
 			return effect.idOverride?.type === DetachIdOverrideType.Redetach;
 		case "AttachAndDetach":
@@ -258,7 +248,7 @@ export function isRedetach(effect: MarkEffect): boolean {
  */
 function generateNoOpWithCellId<T>(
 	mark: Mark<T>,
-	revision: StableId | undefined,
+	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 ): CellMark<NoopMark, T> {
 	const length = mark.count;
@@ -560,7 +550,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follows?: MarkEffect } {
 	const type = mark.type;
 	switch (type) {
-		case "Delete":
+		case "Remove":
 		case "MoveOut":
 			return { follows: mark };
 		case "AttachAndDetach":

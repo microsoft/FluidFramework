@@ -1,9 +1,11 @@
 {
 	"params": {
-		"currentVersion": "2.0",
-		"ltsVersion": "1.0",
-		"previousVersions": [
-			"1.0"
-		]
+		"currentVersion": "v1",
+		"ltsVersion": "v1",
+		"previousVersions": []
+	},
+	"apiDocsDirectory": "/docs/api/",
+	"apiVersionOptionName": {
+		"Fluid Framework 1.0": "v1"
 	}
 }

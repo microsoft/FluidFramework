@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	FluidSerializer,
-	IFluidSerializer,
-	ISerializedHandle,
-	isSerializedHandle,
-} from "./serializer";
+export { FluidSerializer, IFluidSerializer } from "./serializer";
 export { SharedObject, SharedObjectCore } from "./sharedObject";
 export { SummarySerializer } from "./summarySerializer";
 export { ISharedObject, ISharedObjectEvents } from "./types";

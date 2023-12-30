@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangesetLocalId } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { deepFreeze } from "../../utils";
-import { TestChange } from "../../testChange";
-import { TestChangeset, MarkMaker as Mark } from "./testEdits";
+import { ChangesetLocalId } from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { deepFreeze } from "../../utils.js";
+import { TestChange } from "../../testChange.js";
+import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
 
 const id: ChangesetLocalId = brand(0);
 
@@ -34,9 +34,9 @@ describe("SequenceField - Editor", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("delete", () => {
-		const actual = SF.sequenceFieldEditor.delete(42, 3, id);
-		const expected: SF.Changeset = [{ count: 42 }, Mark.delete(3, id)];
+	it("remove", () => {
+		const actual = SF.sequenceFieldEditor.remove(42, 3, id);
+		const expected: SF.Changeset = [{ count: 42 }, Mark.remove(3, id)];
 		assert.deepEqual(actual, expected);
 	});
 });

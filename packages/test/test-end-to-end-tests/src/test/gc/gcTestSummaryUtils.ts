@@ -17,6 +17,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/test/gc";
 import { IContainer } from "@fluidframework/container-definitions";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.
@@ -131,3 +133,21 @@ export const waitForContainerWriteModeConnectionWrite = async (container: IConta
 		});
 	}
 };
+
+/**
+ * We manufacture a handle to simulate a bug where an object is unreferenced in GC's view
+ * (and reminder, interactive clients never update their GC data after loading),
+ * but someone still has a handle to it.
+ *
+ * It's possible to achieve this truly with multiple clients where one revives it mid-session
+ * after it was unreferenced for the inactive timeout, but that's more complex to implement
+ * in a test and is no better than this approach
+ */
+export function manufactureHandle<T>(
+	handleContext: IFluidHandleContext,
+	url: string,
+): IFluidHandle<T> {
+	const serializer = new FluidSerializer(handleContext, () => {});
+	const handle: IFluidHandle<T> = parseHandles({ type: "__fluid_handle__", url }, serializer);
+	return handle;
+}

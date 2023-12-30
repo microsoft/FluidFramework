@@ -28,7 +28,7 @@ export function createSingleBlobSummary(key: string, content: string | Uint8Arra
 
 // @internal
 export class FluidSerializer implements IFluidSerializer {
-    constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
+    constructor(context: IFluidHandleContext, handleParsedCb?: (handle: IFluidHandle) => void);
     decode(input: any): any;
     encode(input: any, bind: IFluidHandle): any;
     // (undocumented)
@@ -52,14 +52,6 @@ export interface IFluidSerializer {
     stringify(value: any, bind: IFluidHandle): string;
 }
 
-// @internal
-export interface ISerializedHandle {
-    // (undocumented)
-    type: "__fluid_handle__";
-    // (undocumented)
-    url: string;
-}
-
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
@@ -73,9 +65,6 @@ export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
-
-// @internal (undocumented)
-export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
 // @alpha
 export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;

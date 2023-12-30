@@ -5,7 +5,14 @@
 
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { jsonArray, jsonObject, jsonRoot, jsonSchema, leaf, SchemaBuilder } from "../../../domains";
+import {
+	jsonArray,
+	jsonObject,
+	jsonRoot,
+	jsonSchema,
+	leaf,
+	SchemaBuilder,
+} from "../../../domains/index.js";
 
 import {
 	FlexTreeSequenceField,
@@ -22,15 +29,15 @@ import {
 	IsArrayOfOne,
 	FlexTreeUnknownUnboxed,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-tree/flexTreeTypes";
+} from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
 	areSafelyAssignable,
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
-} from "../../../util";
-import { EmptyKey, FieldKey } from "../../../core";
+} from "../../../util/index.js";
+import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
 	FieldKinds,
 	Any,
@@ -41,10 +48,10 @@ import {
 	TreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
-	InternalTypedSchemaTypes,
-} from "../../../feature-libraries";
+	ArrayToUnion,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
+import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
 
 describe("editableTreeTypes", () => {
 	/**
@@ -334,7 +341,7 @@ describe("editableTreeTypes", () => {
 				areSafelyAssignable<FlexTreeTypedNodeUnion<AllowedTypes>, FlexTreeNode>
 			>;
 
-			type z = InternalTypedSchemaTypes.ArrayToUnion<[FlexTreeNode]>;
+			type z = ArrayToUnion<[FlexTreeNode]>;
 		}
 	}
 

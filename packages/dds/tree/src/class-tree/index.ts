@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeConfiguration, WrapperTreeView } from "./tree";
+export { ITree, TreeView, TreeConfiguration, WrapperTreeView } from "./tree.js";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,
@@ -18,26 +18,33 @@ export {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeMapNode,
 	TreeLeafValue,
-} from "./schemaTypes";
-export { SchemaFactory } from "./schemaFactory";
-export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi";
-export { toFlexConfig } from "./toFlexSchema";
-export { SchemaFactoryRecursive } from "./schemaFactoryRecursive";
+	type,
+	WithType,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTypedNode,
+	NodeBuilderData,
+	ObjectFromSchemaRecord,
+} from "./schemaTypes.js";
+export { SchemaFactory } from "./schemaFactory.js";
+export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
+export { toFlexConfig } from "./toFlexSchema.js";
+export { SchemaFactoryRecursive } from "./schemaFactoryRecursive.js";
 
 export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-} from "./schemaCreationUtilities";
-
-// Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalClassTreeTypes from "./internal";
-export { InternalClassTreeTypes };
+} from "./schemaCreationUtilities.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
 export {
 	RecursiveObject as test_RecursiveObject,
 	base as test_RecursiveObject_base,
-} from "./testRecursiveDomain";
+} from "./testRecursiveDomain.js";

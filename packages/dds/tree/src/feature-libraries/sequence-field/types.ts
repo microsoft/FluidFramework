@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core";
-import { NodeChangeset } from "../modular-schema";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import { NodeChangeset } from "../modular-schema/index.js";
+import { DetachIdOverrideType } from "./format.js";
 
 export type CellCount = number;
 
@@ -143,27 +144,6 @@ export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
 
-export enum DetachIdOverrideType {
-	/**
-	 * The detach effect is the inverse of the prior attach characterized by the accompanying `CellId`'s revision and
-	 * local ID.
-	 *
-	 * An override is needed in such a case to ensure that rollbacks and undos return tree content to the appropriate
-	 * detached root. It is also needed to ensure that cell comparisons work properly for undos.
-	 */
-	Unattach = 0,
-	/**
-	 * The detach effect is reapplying a prior detach.
-	 *
-	 * The accompanying cell ID is used in two ways:
-	 * - It indicates the location of the cell (including adjacent cell information) so that rebasing over this detach
-	 * can contribute the correct lineage information to the rebased mark.
-	 * - It specifies the revision and local ID that should be used to characterize the cell in the output context of
-	 * detach.
-	 */
-	Redetach = 1,
-}
-
 export interface DetachIdOverride {
 	readonly type: DetachIdOverrideType;
 	/**
@@ -187,8 +167,8 @@ export interface DetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Delete extends HasRevisionTag, DetachFields {
-	type: "Delete";
+export interface Remove extends HasRevisionTag, DetachFields {
+	type: "Remove";
 	id: ChangesetLocalId;
 }
 
@@ -206,7 +186,7 @@ export interface MoveOut extends HasMoveFields, DetachFields {
 
 export type Attach = Insert | MoveIn;
 
-export type Detach = Delete | MoveOut;
+export type Detach = Remove | MoveOut;
 
 /**
  * Fills then empties cells.

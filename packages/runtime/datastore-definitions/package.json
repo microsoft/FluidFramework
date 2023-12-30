@@ -18,44 +18,20 @@
 			"default": "./dist/index.js"
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/datastore-definitions-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/datastore-definitions-alpha.d.ts",
-				"default": "./dist/index.cjs"
-			}
+			"types": "./dist/datastore-definitions-alpha.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/datastore-definitions-beta.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/datastore-definitions-beta.d.ts",
-				"default": "./dist/index.cjs"
-			}
+			"types": "./dist/datastore-definitions-beta.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
-			}
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./public": {
-			"import": {
-				"types": "./lib/datastore-definitions-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/datastore-definitions-public.d.ts",
-				"default": "./dist/index.cjs"
-			}
+			"types": "./dist/datastore-definitions-public.d.ts",
+			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
@@ -91,11 +67,11 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/build-tools": "0.29.0-225750",
 		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-internal.8.0.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",

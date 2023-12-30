@@ -9,11 +9,11 @@ import {
 	InsertableFlexNode,
 	TreeFieldSchema,
 	typeNameSymbol,
-} from "../feature-libraries";
-import { leaf, jsonSchema, SchemaBuilder } from "../domains";
-import { brand, requireAssignableTo } from "../util";
-import { FlexTreeView, TreeContent } from "../shared-tree";
-import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
+} from "../feature-libraries/index.js";
+import { leaf, jsonSchema, SchemaBuilder } from "../domains/index.js";
+import { brand, requireAssignableTo } from "../util/index.js";
+import { FlexTreeView, TreeContent } from "../shared-tree/index.js";
+import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core/index.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.

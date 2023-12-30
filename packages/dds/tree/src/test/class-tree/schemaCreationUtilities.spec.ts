@@ -7,14 +7,20 @@ import { strict as assert } from "node:assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { NodeFromSchema, SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
-import { TreeFactory } from "../../treeFactory";
+import {
+	NodeFromSchema,
+	SchemaFactory,
+	TreeConfiguration,
+	TreeView,
+} from "../../class-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
 import {
 	enumFromStrings,
 	typedObjectValues,
 	adaptEnum,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaCreationUtilities";
+} from "../../class-tree/schemaCreationUtilities.js";
+import { testIdCompressor } from "../utils.js";
 
 const schema = new SchemaFactory("test");
 
@@ -31,7 +37,10 @@ describe("schemaCreationUtilities", () => {
 		);
 
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 		const view: TreeView<Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (true) {
@@ -84,6 +93,10 @@ describe("schemaCreationUtilities", () => {
 		class Parent extends schemaFactory.object("Parent", {
 			mode: typedObjectValues(ModeNodes),
 		}) {}
+
+		const _test1: InstanceType<typeof ModeNodes.a> = new ModeNodes.a();
+		// @ts-expect-error Incompatible enums types should not be assignable.
+		const _test2: InstanceType<typeof ModeNodes.a> = new ModeNodes.b();
 	});
 
 	it("enum value switch", () => {
@@ -98,7 +111,10 @@ describe("schemaCreationUtilities", () => {
 		);
 
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 		const view: TreeView<Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (mode.value) {
@@ -127,7 +143,10 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = enumFromStrings(schema, typedObjectValues(Day));
 
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 
 		const day = Day.Today;
 
@@ -158,7 +177,10 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = adaptEnum(schema, Day);
 
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 
 		// Can convert enum to unhydrated node:
 		const x = DayNodes(Day.Today);

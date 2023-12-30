@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { encodeTreeSchema, intoStoredSchema } from "../../feature-libraries";
-import { testTrees } from "../testTrees";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools";
+import { encodeTreeSchema, intoStoredSchema } from "../../feature-libraries/index.js";
+import { testTrees } from "../testTrees.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 
 describe("schema snapshots", () => {
 	useSnapshotDirectory("schema-files");
