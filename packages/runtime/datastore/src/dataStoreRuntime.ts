@@ -52,6 +52,7 @@ import {
 	VisibilityState,
 	ITelemetryContext,
 	IIdCompressor,
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -804,7 +805,14 @@ export class FluidDataStoreRuntime
 						trackState,
 						telemetryContext,
 					);
-					summaryBuilder.addWithStats(contextId, contextSummary);
+					// Add the context's summary to the summary tree. Also, prefix all handles in its summary tree with
+					// "channelsTreeName" name and its id since that is where its previous summary would be. The context
+					// only adds the handle id relative to its path.
+					summaryBuilder.addWithStatsAndPrefixHandles(
+						`${channelsTreeName}/${contextId}`,
+						contextId,
+						contextSummary,
+					);
 				}),
 		);
 

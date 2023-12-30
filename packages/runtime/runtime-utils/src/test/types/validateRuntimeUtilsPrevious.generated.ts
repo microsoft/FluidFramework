@@ -175,6 +175,7 @@ declare function get_old_ClassDeclaration_SummaryTreeBuilder():
 declare function use_current_ClassDeclaration_SummaryTreeBuilder(
     use: TypeOnly<current.SummaryTreeBuilder>): void;
 use_current_ClassDeclaration_SummaryTreeBuilder(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SummaryTreeBuilder());
 
 /*
