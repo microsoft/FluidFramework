@@ -91,15 +91,11 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			runtime,
 		);
 
-		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
-		// this summarizer catches up, let's refresh state before proceeding with the summarization.
-		const lastAckRefSeq = await summarizer.handleSummaryAck();
-
 		await summarizer.waitStart();
 
 		// Handle summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
-		summarizer.processIncomingSummaryAcks(lastAckRefSeq).catch((error) => {
+		summarizer.processIncomingSummaryAcks().catch((error) => {
 			createChildLogger({ logger }).sendErrorEvent(
 				{ eventName: "HandleSummaryAckFatalError" },
 				error,
@@ -272,95 +268,74 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				: defaultMaxAttemptsForSubmitFailures;
 	}
 
-	private async handleSummaryAck(): Promise<number> {
-		const lastAck: IAckedSummary | undefined = this.summaryCollection.latestAck;
-		let refSequenceNumber = -1;
-		// In case we haven't received the lastestAck yet, just return.
-		if (lastAck !== undefined) {
-			refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
-			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
-			const summaryOpHandle = lastAck.summaryOp.contents.handle;
-			const summaryAckHandle = lastAck.summaryAck.contents.handle;
-			while (this.summarizingLock !== undefined) {
-				summaryLogger.sendTelemetryEvent({
-					eventName: "RefreshAttemptWithSummarizerRunning",
-					referenceSequenceNumber: refSequenceNumber,
-					proposalHandle: summaryOpHandle,
-					ackHandle: summaryAckHandle,
-				});
-				await this.summarizingLock;
-			}
-
-			// Make sure we block any summarizer from being executed/enqueued while
-			// executing the refreshLatestSummaryAck.
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
-			await this.lockedSummaryAction(
-				() => {},
-				async () =>
-					this.refreshLatestSummaryAckCallback({
-						proposalHandle: summaryOpHandle,
-						ackHandle: summaryAckHandle,
-						summaryRefSeq: refSequenceNumber,
-						summaryLogger,
-					}).catch(async (error) => {
-						// If the error is 404, so maybe the fetched version no longer exists on server. We just
-						// ignore this error in that case, as that means we will have another summaryAck for the
-						// latest version with which we will refresh the state. However in case of single commit
-						// summary, we might me missing a summary ack, so in that case we are still fine as the
-						// code in `submitSummary` function in container runtime, will refresh the latest state
-						// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
-						// updated state and be fine.
-						const isIgnoredError =
-							isFluidError(error) &&
-							error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
-
-						summaryLogger.sendTelemetryEvent(
-							{
-								eventName: isIgnoredError
-									? "HandleSummaryAckErrorIgnored"
-									: "HandleLastSummaryAckError",
-								referenceSequenceNumber: refSequenceNumber,
-								proposalHandle: summaryOpHandle,
-								ackHandle: summaryAckHandle,
-							},
-							error,
-						);
-					}),
-				() => {},
-			);
-			refSequenceNumber++;
-		}
-		return refSequenceNumber;
-	}
-
 	/**
 	 * Responsible for receiving and processing all the summaryAcks.
-	 * In case there was a summary ack processed by the running summarizer before processIncomingSummaryAcks is called,
-	 * it will wait for the summary ack that is newer than the one indicated by the lastAckRefSeq.
-	 * @param lastAckRefSeq - Identifies the minimum reference sequence number the summarizer needs to wait for.
-	 * In case of a negative number, the summarizer will wait for ANY summary ack that is greater than the deltaManager's initial sequence number,
-	 * and, in case of a positive one, it will wait for a summary ack that is greater than this current reference sequence number.
+	 * It starts processing ACKs after the one for the summary this client loaded from (initialSequenceNumber). Any
+	 * ACK before that is not interesting as it will simply be ignored.
 	 */
-	private async processIncomingSummaryAcks(lastAckRefSeq: number) {
-		let refSequenceNumber =
-			lastAckRefSeq > 0 ? lastAckRefSeq : this.runtime.deltaManager.initialSequenceNumber;
+	private async processIncomingSummaryAcks() {
+		// Start waiting for acks that are for summaries newer that the one this client loaded from.
+		let referenceSequenceNumber = this.runtime.deltaManager.initialSequenceNumber + 1;
 		while (!this.disposed) {
-			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
-
-			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
-			// we record undefined, not previous handles.
-			await this.summaryCollection.waitSummaryAck(refSequenceNumber);
-
-			summaryLogger.sendTelemetryEvent({
-				eventName: "processIncomingSummaryAcks",
-				referenceSequenceNumber: refSequenceNumber,
-				lastAckRefSeq,
-			});
-
-			refSequenceNumber = await this.handleSummaryAck();
-			// A valid Summary Ack must have been processed.
-			assert(refSequenceNumber >= 0, 0x58f /* Invalid ref sequence number */);
+			const ackedSummary =
+				await this.summaryCollection.waitSummaryAck(referenceSequenceNumber);
+			await this.handleSummaryAck(ackedSummary);
+			referenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
 		}
+	}
+
+	private async handleSummaryAck(lastAck: IAckedSummary) {
+		const refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
+		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
+		const summaryOpHandle = lastAck.summaryOp.contents.handle;
+		const summaryAckHandle = lastAck.summaryAck.contents.handle;
+		while (this.summarizingLock !== undefined) {
+			summaryLogger.sendTelemetryEvent({
+				eventName: "RefreshAttemptWithSummarizerRunning",
+				referenceSequenceNumber: refSequenceNumber,
+				proposalHandle: summaryOpHandle,
+				ackHandle: summaryAckHandle,
+			});
+			await this.summarizingLock;
+		}
+
+		// Make sure we block any summarizer from being executed/enqueued while
+		// executing the refreshLatestSummaryAck.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
+		await this.lockedSummaryAction(
+			() => {},
+			async () =>
+				this.refreshLatestSummaryAckCallback({
+					proposalHandle: summaryOpHandle,
+					ackHandle: summaryAckHandle,
+					summaryRefSeq: refSequenceNumber,
+					summaryLogger,
+				}).catch(async (error) => {
+					// If the error is 404, so maybe the fetched version no longer exists on server. We just
+					// ignore this error in that case, as that means we will have another summaryAck for the
+					// latest version with which we will refresh the state. However in case of single commit
+					// summary, we might me missing a summary ack, so in that case we are still fine as the
+					// code in `submitSummary` function in container runtime, will refresh the latest state
+					// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
+					// updated state and be fine.
+					const isIgnoredError =
+						isFluidError(error) &&
+						error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
+
+					summaryLogger.sendTelemetryEvent(
+						{
+							eventName: isIgnoredError
+								? "HandleSummaryAckErrorIgnored"
+								: "HandleLastSummaryAckError",
+							referenceSequenceNumber: refSequenceNumber,
+							proposalHandle: summaryOpHandle,
+							ackHandle: summaryAckHandle,
+						},
+						error,
+					);
+				}),
+			() => {},
+		);
 	}
 
 	public dispose(): void {
