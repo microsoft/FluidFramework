@@ -20,13 +20,9 @@ import {
 	CompatApis,
 	getDriverApi,
 } from "./testApi.js";
+import { getAllFluidVersions, getRequestedVersion } from "./versionUtils.js";
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
-
-/**
- * @internal
- */
-export type CompatVersionKind = "FullCompat" | "NoCompat" | "LoaderCompat";
 
 /*
  * Mocha Utils for test to generate the compat variants.
@@ -38,14 +34,37 @@ function createCompatSuite(
 		apis: CompatApis,
 	) => void,
 	compatFilter?: CompatKind[],
+	minVersion?: string,
 ): (this: Mocha.Suite) => void {
 	return function (this: Mocha.Suite) {
 		let configs = configList.value;
 		if (compatFilter !== undefined) {
 			configs = configs.filter((value) => compatFilter.includes(value.kind));
 		}
-
+		const versionsMap = getAllFluidVersions();
 		for (const config of configs) {
+			const compatVersion = config.compatVersion;
+			const stringVersion = getRequestedVersion(
+				testBaseVersion(compatVersion),
+				compatVersion,
+			);
+			if (minVersion !== undefined) {
+				if (!versionsMap.has(minVersion)) {
+					console.log(minVersion, " not found");
+					throw new Error("Specified minimun version not found in versions map");
+				}
+				if (!versionsMap.has(stringVersion)) {
+					console.log(stringVersion, " not found");
+					throw new Error("Compat version not found in versions map");
+				}
+
+				const minVersionIndex: number = versionsMap.get(minVersion) ?? Infinity;
+				const stringVersionIndex: number = versionsMap.get(stringVersion) ?? -1;
+				// skip config if related version is lower than speficed
+				if (stringVersionIndex < minVersionIndex) {
+					continue;
+				}
+			}
 			describe(config.name, function () {
 				let provider: ITestObjectProvider;
 				let resetAfterEach: boolean;
@@ -204,7 +223,7 @@ export interface ITestObjectProviderOptions {
  */
 export type DescribeCompatSuite = (
 	name: string,
-	compatVersionKind: CompatVersionKind,
+	compatVersion: string,
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
@@ -221,9 +240,9 @@ export type DescribeCompat = DescribeCompatSuite &
 function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
 		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
-		compatVersionKind: CompatVersionKind,
+		compatVersion: string,
 	) => {
-		switch (compatVersionKind) {
+		switch (compatVersion) {
 			case "FullCompat":
 				return createCompatSuite(tests, undefined);
 			case "NoCompat":
@@ -231,27 +250,26 @@ function createCompatDescribe(): DescribeCompat {
 			case "LoaderCompat":
 				return createCompatSuite(tests, [CompatKind.None, CompatKind.Loader]);
 			default:
-				// TODO: support min version
-				throw new Error("Option not supported");
+				return createCompatSuite(tests, undefined, compatVersion);
 		}
 	};
-	const d: DescribeCompat = (name: string, compatVersionKind: CompatVersionKind, tests) =>
-		describe(name, createCompatSuiteWithDefault(tests, compatVersionKind));
-	d.skip = (name, compatVersionKind, tests) =>
-		describe.skip(name, createCompatSuiteWithDefault(tests, compatVersionKind));
+	const d: DescribeCompat = (name: string, compatVersion: string, tests) =>
+		describe(name, createCompatSuiteWithDefault(tests, compatVersion));
+	d.skip = (name, compatVersion, tests) =>
+		describe.skip(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.only = (name, compatVersionKind, tests) =>
-		describe.only(name, createCompatSuiteWithDefault(tests, compatVersionKind));
+	d.only = (name, compatVersion, tests) =>
+		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.noCompat = (name, compatVersionKind, tests) =>
+	d.noCompat = (name, compatVersion, tests) =>
 		describe(name, createCompatSuiteWithDefault(tests, "NoCompat"));
 
 	return d;
 }
 
 /**
- * `describeCompat` expects 3 arguments (name: string, compatVersionKind: CompatVersionKind, tests).
- * There are three compatVersionKind options to generate different combinations, depending of the need of the tests:
+ * `describeCompat` expects 3 arguments (name: string, compatVersion: string, tests).
+ * There are three compatVersion options to generate different combinations, depending of the need of the tests:
  * `FullCompat`: generate test variants with compat combinations that varies the version for all layers.
  * `LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
  * `NoCompat` - generate one test variant that doesn't varies version of any layers.

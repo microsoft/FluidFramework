@@ -182,6 +182,7 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 };
 
 const genFullBackCompatConfig = (): CompatConfig[] => {
+	// not working with new rc version
 	const _configList: CompatConfig[] = [];
 
 	const [, semverInternal] = fromInternalScheme(codeVersion, true, true);

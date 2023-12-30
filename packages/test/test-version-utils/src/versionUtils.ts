@@ -160,6 +160,19 @@ export function resolveVersion(requested: string, installed: boolean) {
 	}
 }
 
+export function getAllFluidVersions(): Map<string, number> {
+	const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
+		encoding: "utf-8",
+	});
+	const allVersions: string[] = JSON.parse(allVersionsFromNpm).sort(semver.compare);
+	const allVersionsMap = new Map<string, number>();
+	allVersions.forEach((value, index) => {
+		allVersionsMap.set(value, index);
+	});
+	allVersionsMap.set("2.0.0-rc.1.0.0", allVersionsMap.size);
+	return allVersionsMap;
+}
+
 async function ensureModulePath(version: string, modulePath: string) {
 	const release = await lock(baseModulePath, { retries: { forever: true } });
 	try {
@@ -360,7 +373,7 @@ export function getRequestedVersion(
 		return baseVersion;
 	}
 	if (typeof requested === "string") {
-		return requested;
+		return resolveVersion(requested, false);
 	}
 	if (requested > 0) {
 		throw new Error("Only negative values are supported for `requested` param.");

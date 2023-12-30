@@ -74,7 +74,7 @@ const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type:
 	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
 
-describeCompat("Detached Container", "FullCompat", (getTestObjectProvider) => {
+describeCompat("Detached Container", "2.0.0-internal.8.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;
