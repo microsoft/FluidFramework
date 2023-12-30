@@ -329,12 +329,13 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	 */
 	private async processIncomingSummaryAcks() {
 		// Start waiting for acks that are for summaries newer that the one this client loaded from.
-		let referenceSequenceNumber = this.runtime.deltaManager.initialSequenceNumber + 1;
+		let nextReferenceSequenceNumber = this.runtime.deltaManager.initialSequenceNumber + 1;
 		while (!this.disposed) {
-			const ackedSummary =
-				await this.summaryCollection.waitSummaryAck(referenceSequenceNumber);
+			const ackedSummary = await this.summaryCollection.waitSummaryAck(
+				nextReferenceSequenceNumber,
+			);
 			await this.handleSummaryAck(ackedSummary);
-			referenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
+			nextReferenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
 		}
 	}
 
