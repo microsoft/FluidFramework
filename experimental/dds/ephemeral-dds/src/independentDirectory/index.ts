@@ -5,17 +5,16 @@
 
 export type {
 	ClientId,
-	IndependentDatastore,
 	IndependentDirectory,
 	IndependentDirectoryNode,
 	IndependentDirectoryNodeSchema,
 	IndependentDirectoryPaths,
 	IndependentDirectoryMethods,
+	ManagerFactory,
 	RoundTrippable,
 	ValueElement,
-	ValueElementDirectory,
 	ValueManager,
 	ValueState,
-} from "./types";
+} from "./types.js";
 
-export { EphemeralIndependentDirectory } from "./ephemeralIndependentDirectory";
+export { EphemeralIndependentDirectory } from "./ephemeralIndependentDirectory.js";

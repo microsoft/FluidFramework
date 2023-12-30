@@ -6,8 +6,9 @@
 import type { ValueManager } from "./independentDirectory";
 
 /**
- * Brand to ensure independent values are given without revealing their internal details
- * (or maybe internal?)
+ * Brand to ensure independent values internal type safety without revealing
+ * internals that are subject to change.
+ *
  * @alpha
  */
 declare class IndependentValueBrand<T> {
@@ -15,7 +16,13 @@ declare class IndependentValueBrand<T> {
 }
 
 /**
- * (or maybe internal?)
+ * This type provides no additional functionality over the type it wraps.
+ * It is used to ensure type safety within package.
+ * Users may find it convenient to just use the type it wraps directly.
+ *
+ * @privateRemarks
+ * Checkout filtering omitting unknown from T (`Omit<T,unknown> &`).
+ *
  * @alpha
  */
 export type IndependentValue<T> = T & IndependentValueBrand<T>;
@@ -23,13 +30,17 @@ export type IndependentValue<T> = T & IndependentValueBrand<T>;
 /**
  * @internal
  */
-export function brandIVM<T, M extends ValueManager<T>>(value: M) {
-	return value as unknown as IndependentValue<T>;
+export function brandIVM<TManagerInterface, TValue>(
+	manager: TManagerInterface & ValueManager<TValue>,
+): IndependentValue<TManagerInterface> {
+	return manager as TManagerInterface as IndependentValue<TManagerInterface>;
 }
 
 /**
  * @internal
  */
-export function unbrandIVM<T>(branded: IndependentValue<T>): ValueManager<T> {
-	return branded as unknown as ValueManager<T>;
+export function unbrandIVM<TManagerInterface, TValue>(
+	branded: IndependentValue<TManagerInterface>,
+): ValueManager<TValue> {
+	return branded as unknown as ValueManager<TValue>;
 }

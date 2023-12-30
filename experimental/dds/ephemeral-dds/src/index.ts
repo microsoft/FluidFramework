@@ -4,13 +4,21 @@
  */
 
 export {
-	ClientId,
-	IndependentDirectory,
-	IndependentDirectoryNode,
-	IndependentDirectoryNodeSchema,
-	IndependentDirectoryPaths,
-	IndependentDirectoryMethods,
-	RoundTrippable,
-} from "./independentDirectory";
+	type ClientId,
+	EphemeralIndependentDirectory,
+	type IndependentDirectory,
+	type IndependentDirectoryNode,
+	type IndependentDirectoryNodeSchema,
+	type IndependentDirectoryPaths,
+	type IndependentDirectoryMethods,
+	type RoundTrippable,
+} from "./independentDirectory/index.js";
 
-export type { IndependentValue as IndependentValueManager } from "./independentValue";
+export type { IndependentDatastoreHandle } from "./independentDatastore.js";
+export type { IndependentValue } from "./independentValue.js";
+
+export {
+	Latest,
+	type LatestValueManagerEvents,
+	type LatestValueManager,
+} from "./latestValueManager.js";

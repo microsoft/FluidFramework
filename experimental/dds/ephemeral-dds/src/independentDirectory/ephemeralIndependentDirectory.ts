@@ -15,6 +15,9 @@ import type { IndependentDirectory } from "./types";
 // eslint-disable-next-line @typescript-eslint/ban-types
 type EmptyIndependentDirectory = IndependentDirectory<{}>;
 
+/**
+ * @alpha
+ */
 export class EphemeralIndependentDirectory extends PureDataObject {
 	public static readonly Name = "@fluidframework/ephemeral-independent-directory";
 
