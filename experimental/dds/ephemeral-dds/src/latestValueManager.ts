@@ -7,19 +7,14 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
-import type {
-	ClientId,
-	ManagerFactory,
-	RoundTrippable,
-	ValueState,
-	ValueManager,
-} from "./independentDirectory/index.js";
 import {
 	IndependentDatastore,
 	IndependentDatastoreHandle,
 	datastoreFromHandle,
 } from "./independentDatastore.js";
 import { brandIVM } from "./independentValue.js";
+import type { ValueState, ValueManager } from "./internalTypes.js";
+import type { ClientId, ManagerFactory, RoundTrippable } from "./types.js";
 
 /**
  * @alpha

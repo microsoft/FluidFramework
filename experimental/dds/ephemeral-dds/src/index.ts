@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-export {
-	type ClientId,
-	EphemeralIndependentDirectory,
-	type IndependentDirectory,
-	type IndependentDirectoryNode,
-	type IndependentDirectoryNodeSchema,
-	type IndependentDirectoryPaths,
-	type IndependentDirectoryMethods,
-	type RoundTrippable,
-} from "./independentDirectory/index.js";
+export type {
+	ClientId,
+	IndependentDirectory,
+	IndependentDirectoryMethods,
+	IndependentDirectoryNode,
+	IndependentDirectoryNodeSchema,
+	IndependentDirectoryPaths,
+	ManagerFactory,
+	RoundTrippable,
+} from "./types.js";
+
+export { EphemeralIndependentDirectory } from "./independentDirectory/index.js";
 
 export type { IndependentDatastoreHandle } from "./independentDatastore.js";
 export type { IndependentValue } from "./independentValue.js";

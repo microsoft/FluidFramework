@@ -24,15 +24,9 @@ const directoryInferred = createEphemeralIndependentDirectory(
 // Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 const directory: typeof directoryInferred = directoryInferred;
 
-const initialCaret = { id: "", pos: 0 };
-directory.add("caret", Latest(initialCaret));
+directory.add("caret", Latest({ id: "", pos: 0 }));
 
 const fakeAdd = directory.caret.local.pos + directory.camera.local.z + directory.cursor.local.x;
-
-// If initial value is given directly, the exact type with any constants is preserved.
-directory.add("immutableCaret", Latest({ id: "", pos: 0 }));
-directory.immutableCaret.local = { id: "foo", pos: 1 }; // error
-directory.immutableCaret.local = { id: "", pos: 0 }; // no error
 
 // TODO: make direct write to local an error. The object returned by local should be readonly.
 directory.caret.local.pos = 0; // error

@@ -9,8 +9,9 @@ import {
 	PureDataObjectFactory,
 } from "@fluidframework/aqueduct";
 
-import { createEphemeralIndependentDirectory } from "./independentDirectory";
-import type { IndependentDirectory } from "./types";
+import type { IndependentDirectory } from "../types.js";
+
+import { createEphemeralIndependentDirectory } from "./independentDirectory.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type EmptyIndependentDirectory = IndependentDirectory<{}>;

@@ -4,8 +4,9 @@
  */
 
 import type { Serializable } from "@fluidframework/datastore-definitions";
-import type { IndependentDatastoreHandle } from "../independentDatastore.js";
-import type { IndependentValue } from "../independentValue.js";
+
+import type { IndependentDatastoreHandle } from "./independentDatastore.js";
+import type { IndependentValue } from "./independentValue.js";
 
 /**
  * @alpha
@@ -93,26 +94,3 @@ export type IndependentDirectory<TSchema extends IndependentDirectoryNodeSchema>
 // TODO: RoundTrippable needs revised to be the consistent pre and post serialization
 //       and get a better name.
 export type RoundTrippable<T> = Serializable<T>;
-
-/**
- * @internal
- */
-export interface ValueState<TValue> {
-	rev: number;
-	value: RoundTrippable<TValue>;
-}
-
-/**
- * @internal
- */
-export interface ValueElement<TValue> {
-	[id: string]: ValueState<TValue>;
-}
-
-/**
- * @internal
- */
-export interface ValueManager<TValue> {
-	get value(): ValueState<TValue>;
-	update(clientId: ClientId, rev: number, value: RoundTrippable<TValue>): void;
-}

@@ -6,8 +6,9 @@
 import { assert } from "@fluidframework/core-utils";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
-import { IndependentDatastore, handleFromDatastore } from "../independentDatastore.js";
+import { type IndependentDatastore, handleFromDatastore } from "../independentDatastore.js";
 import { unbrandIVM } from "../independentValue.js";
+import type { ValueElement, ValueState } from "../internalTypes.js";
 import type {
 	ClientId,
 	IndependentDirectory,
@@ -15,9 +16,7 @@ import type {
 	IndependentDirectoryNodeSchema,
 	ManagerFactory,
 	RoundTrippable,
-	ValueElement,
-	ValueState,
-} from "./types";
+} from "../types.js";
 
 interface IndependentDirectoryValueUpdate extends ValueState<unknown> {
 	path: string;

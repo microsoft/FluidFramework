@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ValueManager } from "./independentDirectory";
+import type { ValueManager } from "./internalTypes.js";
 
 /**
  * Brand to ensure independent values internal type safety without revealing

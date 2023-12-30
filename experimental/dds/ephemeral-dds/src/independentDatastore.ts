@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ValueElement } from "./independentDirectory/types.js";
+import type { ValueElement } from "./internalTypes.js";
 import type { ClientId, RoundTrippable } from "./index.js";
 
 /**
