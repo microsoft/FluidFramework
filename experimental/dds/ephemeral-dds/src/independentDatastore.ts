@@ -4,14 +4,7 @@
  */
 
 import type { ValueElement } from "./internalTypes.js";
-import type { ClientId, RoundTrippable } from "./index.js";
-
-/**
- * @alpha
- */
-export declare class IndependentDatastoreHandle<TPath, TValue> {
-	private readonly IndependentDirectoryHandle: IndependentDatastoreHandle<TPath, TValue>;
-}
+import type { ClientId, IndependentDatastoreHandle, RoundTrippable } from "./types.js";
 
 // type IndependentDatastoreSchemaNode<
 // 	TValue = unknown,

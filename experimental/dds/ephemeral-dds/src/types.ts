@@ -5,13 +5,46 @@
 
 import type { Serializable } from "@fluidframework/datastore-definitions";
 
-import type { IndependentDatastoreHandle } from "./independentDatastore.js";
-import type { IndependentValue } from "./independentValue.js";
-
 /**
  * @alpha
  */
 export type ClientId = string;
+
+/**
+ * @alpha
+ */
+// TODO: RoundTrippable needs revised to be the consistent pre and post serialization
+//       and get a better name.
+export type RoundTrippable<T> = Serializable<T>;
+
+/**
+ * Brand to ensure independent values internal type safety without revealing
+ * internals that are subject to change.
+ *
+ * @alpha
+ */
+export declare class IndependentValueBrand<T> {
+	private readonly IndependentValue: IndependentValue<T>;
+}
+
+/**
+ * This type provides no additional functionality over the type it wraps.
+ * It is used to ensure type safety within package.
+ * Users may find it convenient to just use the type it wraps directly.
+ *
+ * @privateRemarks
+ * Checkout filtering omitting unknown from T (`Omit<T,unknown> &`).
+ *
+ * @alpha
+ */
+export type IndependentValue<T> = T & IndependentValueBrand<T>;
+
+/**
+ * @alpha
+ */
+export declare class IndependentDatastoreHandle<TPath, TValue> {
+	private readonly IndependentDirectoryHandle: IndependentDatastoreHandle<TPath, TValue>;
+}
 
 /**
  * Package internal function declaration for value manager instantiation.
@@ -87,10 +120,3 @@ export interface IndependentDirectoryMethods<TSchema extends IndependentDirector
  */
 export type IndependentDirectory<TSchema extends IndependentDirectoryNodeSchema> =
 	IndependentDirectoryPaths<TSchema> & IndependentDirectoryMethods<TSchema>;
-
-/**
- * @alpha
- */
-// TODO: RoundTrippable needs revised to be the consistent pre and post serialization
-//       and get a better name.
-export type RoundTrippable<T> = Serializable<T>;

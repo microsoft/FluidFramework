@@ -4,28 +4,7 @@
  */
 
 import type { ValueManager } from "./internalTypes.js";
-
-/**
- * Brand to ensure independent values internal type safety without revealing
- * internals that are subject to change.
- *
- * @alpha
- */
-declare class IndependentValueBrand<T> {
-	private readonly IndependentValue: IndependentValue<T>;
-}
-
-/**
- * This type provides no additional functionality over the type it wraps.
- * It is used to ensure type safety within package.
- * Users may find it convenient to just use the type it wraps directly.
- *
- * @privateRemarks
- * Checkout filtering omitting unknown from T (`Omit<T,unknown> &`).
- *
- * @alpha
- */
-export type IndependentValue<T> = T & IndependentValueBrand<T>;
+import type { IndependentValue } from "./types.js";
 
 /**
  * @internal
