@@ -948,8 +948,7 @@ export abstract class FluidDataStoreContext
 				summarizeInternal,
 				id,
 				createParam,
-				// DDS will not create failure summaries
-				{ throwOnFailure: true },
+				undefined /* config */,
 				getGCDataFn,
 			);
 	}
