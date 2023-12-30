@@ -268,22 +268,6 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				: defaultMaxAttemptsForSubmitFailures;
 	}
 
-	/**
-	 * Responsible for receiving and processing all the summaryAcks.
-	 * It starts processing ACKs after the one for the summary this client loaded from (initialSequenceNumber). Any
-	 * ACK before that is not interesting as it will simply be ignored.
-	 */
-	private async processIncomingSummaryAcks() {
-		// Start waiting for acks that are for summaries newer that the one this client loaded from.
-		let referenceSequenceNumber = this.runtime.deltaManager.initialSequenceNumber + 1;
-		while (!this.disposed) {
-			const ackedSummary =
-				await this.summaryCollection.waitSummaryAck(referenceSequenceNumber);
-			await this.handleSummaryAck(ackedSummary);
-			referenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
-		}
-	}
-
 	private async handleSummaryAck(lastAck: IAckedSummary) {
 		const refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
 		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
@@ -336,6 +320,22 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				}),
 			() => {},
 		);
+	}
+
+	/**
+	 * Responsible for receiving and processing all the summaryAcks.
+	 * It starts processing ACKs after the one for the summary this client loaded from (initialSequenceNumber). Any
+	 * ACK before that is not interesting as it will simply be ignored.
+	 */
+	private async processIncomingSummaryAcks() {
+		// Start waiting for acks that are for summaries newer that the one this client loaded from.
+		let referenceSequenceNumber = this.runtime.deltaManager.initialSequenceNumber + 1;
+		while (!this.disposed) {
+			const ackedSummary =
+				await this.summaryCollection.waitSummaryAck(referenceSequenceNumber);
+			await this.handleSummaryAck(ackedSummary);
+			referenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
+		}
 	}
 
 	public dispose(): void {
