@@ -139,6 +139,7 @@ export class SummaryNode {
  * Represents the details needed to create a child summarizer node.
  */
 export interface ICreateChildDetails {
+	summaryHandleId: string;
 	/** Latest summary from server node data */
 	latestSummary: SummaryNode | undefined;
 	/** Sequence number of latest known change to the node */

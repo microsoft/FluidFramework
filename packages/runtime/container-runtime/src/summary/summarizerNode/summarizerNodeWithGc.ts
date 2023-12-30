@@ -108,6 +108,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		) => Promise<ISummarizeInternalResult>,
 		config: ISummarizerNodeConfigWithGC,
 		changeSequenceNumber: number,
+		summaryHandleId: string,
 		/** Undefined means created without summary */
 		latestSummary?: SummaryNode,
 		wipSummaryLogger?: ITelemetryBaseLogger,
@@ -132,6 +133,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				),
 			config,
 			changeSequenceNumber,
+			summaryHandleId,
 			latestSummary,
 			wipSummaryLogger,
 			telemetryId,
@@ -387,6 +389,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		summarizeInternalFn: SummarizeInternalFn,
 		/** Initial id or path part of this node */
 		id: string,
+		summaryHandlePrefix: string,
 		/**
 		 * Information needed to create the node.
 		 * If it is from a base summary, it will assert that a summary has been seen.
@@ -408,7 +411,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			return childNodesBaseGCDetails.get(id) ?? {};
 		};
 
-		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(
+			id,
+			summaryHandlePrefix,
+			createParam,
+		);
 		const child = new SummarizerNodeWithGC(
 			this.logger,
 			summarizeInternalFn,
@@ -418,6 +425,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				gcDisabled: config.gcDisabled ?? this.gcDisabled,
 			},
 			createDetails.changeSequenceNumber,
+			createDetails.summaryHandleId,
 			createDetails.latestSummary,
 			this.wipSummaryLogger,
 			getGCDataFn,
@@ -555,6 +563,7 @@ export const createRootSummarizerNodeWithGC = (
 		summarizeInternalFn,
 		config,
 		changeSequenceNumber,
+		"" /* summaryHandleId */,
 		referenceSequenceNumber === undefined
 			? undefined
 			: SummaryNode.createForRoot(referenceSequenceNumber),

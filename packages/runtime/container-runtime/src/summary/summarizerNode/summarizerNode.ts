@@ -80,6 +80,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		private readonly summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfig,
 		private _changeSequenceNumber: number,
+		private readonly summaryHandleId: string,
 		/** Undefined means created without summary */
 		private _latestSummary?: SummaryNode,
 		protected wipSummaryLogger?: ITelemetryBaseLogger,
@@ -142,7 +143,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				return {
 					summary: {
 						type: SummaryType.Handle,
-						handle: latestSummary.fullPath.path,
+						handle: this.summaryHandleId,
 						handleType: SummaryType.Tree,
 					},
 					stats,
@@ -499,6 +500,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		summarizeInternalFn: SummarizeInternalFn,
 		/** Initial id or path part of this node */
 		id: string,
+		summaryHandlePrefix: string,
 		/**
 		 * Information needed to create the node.
 		 * If it is from a base summary, it will assert that a summary has been seen.
@@ -509,12 +511,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 	): ISummarizerNode {
 		assert(!this.children.has(id), 0x1ab /* "Create SummarizerNode child already exists" */);
 
-		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(
+			id,
+			summaryHandlePrefix,
+			createParam,
+		);
 		const child = new SummarizerNode(
 			this.logger,
 			summarizeInternalFn,
 			config,
 			createDetails.changeSequenceNumber,
+			createDetails.summaryHandleId,
 			createDetails.latestSummary,
 			this.wipSummaryLogger,
 			createDetails.telemetryNodeId,
@@ -541,6 +548,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 */
 	protected getCreateDetailsForChild(
 		id: string,
+		summaryHandlePrefix: string,
 		createParam: CreateChildSummarizerNodeParam,
 	): ICreateChildDetails {
 		let latestSummary: SummaryNode | undefined;
@@ -572,8 +580,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
+		const childSummaryHandleId = this.summaryHandleId.concat("/", summaryHandlePrefix, "/", id);
 
 		return {
+			summaryHandleId: childSummaryHandleId,
 			latestSummary,
 			changeSequenceNumber,
 			telemetryNodeId: childTelemetryNodeId,
@@ -657,6 +667,7 @@ export const createRootSummarizerNode = (
 		summarizeInternalFn,
 		config,
 		changeSequenceNumber,
+		"" /* summaryHandleId */,
 		referenceSequenceNumber === undefined
 			? undefined
 			: SummaryNode.createForRoot(referenceSequenceNumber),

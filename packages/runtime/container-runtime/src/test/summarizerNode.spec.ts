@@ -83,6 +83,7 @@ describe("Runtime", () => {
 				midNode = rootNode.createChild(
 					getSummarizeInternalFn(1),
 					ids[1],
+					channelsTreeName,
 					createParam,
 					config,
 				);
@@ -95,6 +96,7 @@ describe("Runtime", () => {
 				leafNode = midNode?.createChild(
 					getSummarizeInternalFn(2),
 					ids[2],
+					channelsTreeName,
 					createParam,
 					config,
 				);

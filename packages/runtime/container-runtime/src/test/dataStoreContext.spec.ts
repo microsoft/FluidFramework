@@ -119,6 +119,7 @@ describe("Data Store Context Tests", () => {
 				summarizerNode.createChild(
 					summarizeInternal,
 					dataStoreId,
+					channelsTreeName,
 					{ type: CreateSummarizerNodeSource.Local },
 					undefined,
 					getGCDataFn,
@@ -618,6 +619,7 @@ describe("Data Store Context Tests", () => {
 					summarizerNode.createChild(
 						summarizeInternal,
 						dataStoreId,
+						channelsTreeName,
 						{ type: CreateSummarizerNodeSource.FromSummary },
 						// Disable GC for initialization tests.
 						{ gcDisabled: true },
@@ -766,6 +768,7 @@ describe("Data Store Context Tests", () => {
 					summarizerNode.createChild(
 						summarizeInternal,
 						dataStoreId,
+						channelsTreeName,
 						{ type: CreateSummarizerNodeSource.FromSummary },
 						undefined,
 						getGCDataFn,
@@ -1069,6 +1072,7 @@ describe("Data Store Context Tests", () => {
 				summarizerNode.createChild(
 					summarizeInternal,
 					dataStoreId,
+					channelsTreeName,
 					{ type: CreateSummarizerNodeSource.Local },
 					undefined,
 					getGCDataFn,

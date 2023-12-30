@@ -211,6 +211,10 @@ export interface ISummarizerNode {
 		 */
 		id: string,
 		/**
+		 * The prefix to be added to this node's SummaryHandle.
+		 */
+		summaryHandlePrefix: string,
+		/**
 		 * Information needed to create the node.
 		 * If it is from a base summary, it will assert that a summary has been seen.
 		 * Attach information if it is created from an attach op.
@@ -262,6 +266,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 		 * Initial id or path part of this node
 		 */
 		id: string,
+		summaryHandlePrefix: string,
 		/**
 		 * Information needed to create the node.
 		 * If it is from a base summary, it will assert that a summary has been seen.
