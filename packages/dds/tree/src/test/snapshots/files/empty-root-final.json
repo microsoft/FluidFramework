@@ -58,12 +58,13 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000003",
+                      "revision": 1,
                       "sequenceNumber": -9007199254740990,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     }
                   ],
-                  "branches": []
+                  "branches": [],
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -127,8 +128,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {

@@ -4,9 +4,17 @@
  */
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import { typeboxValidator } from "../../external-utilities";
-import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
+import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import {
+	DefaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
+	TreeCompressionStrategy,
+	makeFieldBatchCodec,
+} from "../../feature-libraries/index.js";
+import { testIdCompressor } from "../utils.js";
+import { ICodecOptions } from "../../codec/index.js";
 
 /**
  * A `SharedTreeCore` with
@@ -25,10 +33,17 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		id = "TestSharedTreeCore",
 		summarizables: readonly Summarizable[] = [],
 	) {
+		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 		super(
 			summarizables,
-			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
-			{ jsonValidator: typeboxValidator },
+			new DefaultChangeFamily(
+				testIdCompressor,
+				makeFieldBatchCodec(codecOptions, {
+					encodeType: TreeCompressionStrategy.Uncompressed,
+				}),
+				codecOptions,
+			),
+			codecOptions,
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

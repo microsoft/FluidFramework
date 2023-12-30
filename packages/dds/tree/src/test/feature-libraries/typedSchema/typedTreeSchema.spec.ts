@@ -4,8 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonArray, jsonObject, jsonSchema, leaf, SchemaBuilder } from "../../../domains";
-import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
+import { jsonArray, jsonObject, jsonSchema, leaf, SchemaBuilder } from "../../../domains/index.js";
+import {
+	isAssignableTo,
+	requireAssignableTo,
+	requireFalse,
+	requireTrue,
+} from "../../../util/index.js";
 import {
 	Any,
 	FieldNodeSchema,
@@ -19,8 +24,8 @@ import {
 	LeafNodeSchema,
 	MapNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/typed-schema/typedTreeSchema";
-import { FieldKinds } from "../../../feature-libraries";
+} from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
 
 describe("typedTreeSchema", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });

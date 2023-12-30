@@ -4,27 +4,26 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
-	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
 	RevisionInfo,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,
 	FieldStateTree,
-} from "../../exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
-import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
-import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util";
+} from "../../exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
+import { TestChange } from "../../testChange.js";
+import { deepFreeze, mintRevisionTag } from "../../utils.js";
+import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	compose,
 	invert,
@@ -40,10 +39,11 @@ import {
 	assertChangesetsEqual,
 	withoutTombstones,
 	skipOnLineageMethod,
-} from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "./utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
+const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -117,10 +117,10 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"TransientInsert",
 		(i) => [
 			...(i > 0 ? [Mark.skip(i)] : []),
-			Mark.delete(1, brand(0), { cellId: { localId: brand(0) } }),
+			Mark.remove(1, brand(0), { cellId: { localId: brand(0) } }),
 		],
 	],
-	["Delete", (i) => Change.delete(i, 2)],
+	["Remove", (i) => Change.remove(i, 2)],
 	[
 		"Revive",
 		(i, max) => [
@@ -138,7 +138,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"TransientRevive",
 		(i) => [
 			...(i > 0 ? [Mark.skip(i)] : []),
-			Mark.delete(1, brand(0), {
+			Mark.remove(1, brand(0), {
 				cellId: {
 					revision: tag1,
 					localId: brand(0),
@@ -472,7 +472,7 @@ interface TestConfig {
 	maxLength: number;
 	/**
 	 * An array of node counts to operate on. For instance, passing [1, 3] would generate inserts, moves, and
-	 * deletes that operate on one node at a time and then 3 nodes at a time.
+	 * removes that operate on one node at a time and then 3 nodes at a time.
 	 */
 	numNodes: number[];
 	allocator: IdAllocator;
@@ -540,12 +540,12 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 
 		const maxDetachIndex = currentState.length - nodeCount;
 
-		// Delete nodeCount nodes
+		// Remove nodeCount nodes
 		for (let iSrc = 0; iSrc <= maxDetachIndex; iSrc += 1) {
 			const stateWithoutDetached = [...currentState];
 			const detached = stateWithoutDetached.splice(iSrc, nodeCount);
 			const detachedString = detached.map((n) => n.id).join(",");
-			const deleteIntention = mintIntention();
+			const removeIntention = mintIntention();
 			yield {
 				content: {
 					currentState: stateWithoutDetached,
@@ -553,10 +553,10 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 				},
 				mostRecentEdit: {
 					changeset: tagChange(
-						Change.delete(iSrc, nodeCount),
-						tagFromIntention(deleteIntention),
+						Change.remove(iSrc, nodeCount),
+						tagFromIntention(removeIntention),
 					),
-					intention: deleteIntention,
+					intention: removeIntention,
 					description: `Del(${detachedString})`,
 				},
 				parent: state,
@@ -566,7 +566,15 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 			for (let iDst = 0; iDst <= currentState.length; iDst += 1) {
 				const moveInIntention = mintIntention();
 				const newState = [...stateWithoutDetached];
-				newState.splice(iDst - iDst < iSrc ? 0 : nodeCount, 0, ...detached);
+				let adjustedDst = iDst;
+				if (adjustedDst > iSrc) {
+					if (adjustedDst > iSrc + nodeCount) {
+						adjustedDst -= nodeCount;
+					} else {
+						adjustedDst = iSrc;
+					}
+				}
+				newState.splice(adjustedDst, 0, ...detached);
 				yield {
 					content: {
 						currentState: newState,
@@ -701,15 +709,15 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			assertChangesetsEqual(withoutLineage(insertB3.change), insertB.change);
 		}));
 
-	it("(Insert, delete) ↷ adjacent insert", () =>
+	it("(Insert, remove) ↷ adjacent insert", () =>
 		withConfig(() => {
 			const insertT = tagChange(Change.insert(0, 1), tag1);
 			const insertA = tagChange(Change.insert(0, 1), tag2);
-			const deleteB = tagChange(Change.delete(0, 1), tag3);
+			const removeB = tagChange(Change.remove(0, 1), tag3);
 			const insertA2 = rebaseTagged(insertA, insertT);
 			const inverseA = tagRollbackInverse(invert(insertA), tag4, insertA.revision);
-			const deleteB2 = rebaseOverChanges(deleteB, [inverseA, insertT, insertA2]);
-			assertChangesetsEqual(deleteB2.change, deleteB.change);
+			const removeB2 = rebaseOverChanges(removeB, [inverseA, insertT, insertA2]);
+			assertChangesetsEqual(removeB2.change, removeB.change);
 		}));
 
 	it("Nested inserts composition", () =>
@@ -736,10 +744,10 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			assertChangesetsEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
 		}));
 
-	it("[Delete AC, Revive AC] ↷ Insert B", () =>
+	it("[Remove AC, Revive AC] ↷ Insert B", () =>
 		withConfig(() => {
 			const addB = tagChange(Change.insert(1, 1), tag1);
-			const delAC = tagChange(Change.delete(0, 2), tag2);
+			const delAC = tagChange(Change.remove(0, 2), tag2);
 			const revAC = tagChange(Change.revive(0, 2, { revision: tag2, localId: id0 }), tag4);
 			const delAC2 = rebaseTagged(delAC, addB);
 			const invDelAC = invert(delAC);
@@ -762,15 +770,15 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 			assertChangesetsEqual(rebasedUndo.change, undo.change);
 		}));
 
-	it("delete ↷ two inverse inserts", () =>
+	it("remove ↷ two inverse inserts", () =>
 		withConfig(() => {
 			// Given a branch with three changes:
 			// A: Insert x at index 0
 			// B: Insert y at index 0
-			// C: Delete y
+			// C: Remove y
 			// This test simulates rebasing C back to the trunk.
 
-			const changeC = tagChange([Mark.delete(1, brand(0))], tag3);
+			const changeC = tagChange([Mark.remove(1, brand(0))], tag3);
 
 			const rollbackTag2 = mintRevisionTag();
 			const changeB = tagChange([Mark.insert(1, brand(0))], tag2);
@@ -789,7 +797,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 
 			const cRebasedToTrunk = rebaseOverChanges(changeC, [inverseB, inverseA], revInfos);
 			const expected = [
-				Mark.delete(1, brand(0), {
+				Mark.remove(1, brand(0), {
 					cellId: {
 						revision: tag2,
 						localId: brand(0),
@@ -838,7 +846,7 @@ describeForBothConfigs("SequenceField - Sandwich Rebasing", (config) => {
 describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 	const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
 
-	it("insert ↷ redundant delete", () =>
+	it("insert ↷ redundant remove", () =>
 		withConfig(() => {
 			const insertA = tagChange(
 				[
@@ -850,15 +858,15 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 				tag3,
 			);
 			const uninsertA = tagRollbackInverse(invert(insertA), tag4, tag3);
-			const redundantDeleteT = tagChange(
-				[Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
+			const redundantRemoveT = tagChange(
+				[Mark.remove(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
 				tag2,
 			);
 
-			const composed = compose([uninsertA, redundantDeleteT, insertA]);
+			const composed = compose([uninsertA, redundantRemoveT, insertA]);
 			const expected = [
 				Mark.skip(1),
-				Mark.delete(
+				Mark.remove(
 					1,
 					{ revision: tag2, localId: brand(0) },
 					{ cellId: { revision: tag1, localId: brand(0) } },
@@ -868,15 +876,15 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 			assertChangesetsEqual(composed, expected);
 		}));
 
-	it("[insert, insert] ↷ adjacent delete", () =>
+	it("[insert, insert] ↷ adjacent remove", () =>
 		withConfig(() => {
-			const deleteT = tagChange([Mark.delete(1, brand(0))], tag1);
+			const removeT = tagChange([Mark.remove(1, brand(0))], tag1);
 			const insertA = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
-			const insertA2 = rebaseTagged(insertA, deleteT);
+			const insertA2 = rebaseTagged(insertA, removeT);
 			const inverseA = tagRollbackInverse(invert(insertA), tag4, tag2);
 			const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
-			const insertB2 = rebaseOverChanges(insertB, [inverseA, deleteT, insertA2]);
-			const TAB = compose([deleteT, insertA2, insertB2]);
+			const insertB2 = rebaseOverChanges(insertB, [inverseA, removeT, insertA2]);
+			const TAB = compose([removeT, insertA2, insertB2]);
 			const AiTAB = compose(
 				[inverseA, makeAnonChange(TAB)],
 				[
@@ -888,7 +896,7 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 			);
 
 			const expected = [
-				Mark.delete(1, { revision: tag1, localId: brand(0) }),
+				Mark.remove(1, { revision: tag1, localId: brand(0) }),
 				Mark.insert(1, {
 					revision: tag3,
 					localId: brand(0),
@@ -903,7 +911,7 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 	skipOnLineageMethod(config, "[removeB, reviveB, reviveA] ↷ []", () =>
 		withConfig(() => {
 			// Note: this test presupposes the existence of a cell A, located before cell B, emptied by tag1
-			const removeB = tagChange([Mark.delete(1, brand(1))], tag2);
+			const removeB = tagChange([Mark.remove(1, brand(1))], tag2);
 			const reviveB = tagChange(
 				[Mark.revive(1, { revision: tag2, localId: brand(1) })],
 				tag3,
@@ -924,6 +932,52 @@ describeForBothConfigs("SequenceField - Sandwich composing", (config) => {
 			assertChangesetsEqual(sandwichParts1to6, []);
 		}),
 	);
+	it.skip("[move, move, modify, move] ↷ [del]", () =>
+		withConfig(() => {
+			const [mo1, mi1] = Mark.move(1, brand(1));
+			const move1 = tagChange([mi1, mo1], tag1);
+			const [mo2, mi2] = Mark.move(1, brand(2));
+			const move2 = tagChange([mi2, mo2], tag2);
+			const mod = tagChange([Mark.modify(TestChange.mint([], 1))], tag3);
+			const [mo3, mi3] = Mark.move(1, brand(3));
+			const move3 = tagChange([mi3, mo3], tag4);
+			const del = tagChange([Mark.remove(1, brand(0))], tag0);
+			const return1 = tagRollbackInverse(invert(move1), tag5, move1.revision);
+			const return2 = tagRollbackInverse(invert(move2), tag6, move2.revision);
+			const unMod = tagRollbackInverse(invert(mod), tag7, mod.revision);
+			const return3 = tagRollbackInverse(invert(move3), tag8, move3.revision);
+			const move1Rebased = rebaseTagged(move1, del);
+			const changes = [
+				return3,
+				unMod,
+				return2,
+				return1,
+				del,
+				move1Rebased,
+				move2,
+				mod,
+				move3,
+			];
+			// Ret3: RF3 -> RT3
+			// -Mod:        Mod
+			// Ret2:        RF2 -> RT2
+			// Ret1:               RF1 -> RT1
+			//  Del:                      Del
+			// Mov1:               MI1 <- MO1
+			// Mov2:        MI2 <- MO2        // MO2 is made to point to RT3, which causes RT3 to be made to point to RF2
+			// +Mod:        Mod
+			// Mov3: MI3 -> MO3
+			// When +Mod is composed, its effect is sent to RF2 instead of RF3.
+			// This happens because, during the composition of RT2 and MO2,
+			// we send effects endpoint updating effects to bridge the temporary location, but MO2 has a finalEndpoint set to RT3,
+			// so we send to RT3 a new finalEndpoint that points to RF2.
+			// This happens because, during the composition of (RT3 + RF2) and MI2,
+			// MO2 gets sent a new finalEndpoint that points to RT3.
+			const sandwich = compose(changes);
+			const pruned = prune(sandwich);
+			const noTombstones = withoutTombstones(pruned);
+			assertChangesetsEqual(noTombstones, []);
+		}));
 });
 
 describeForBothConfigs("SequenceField - Composed sandwich rebasing", (config) => {
@@ -944,11 +998,11 @@ describeForBothConfigs("SequenceField - Examples", (config) => {
 	it("a detach can end up with a redetachId that contains lineage", () =>
 		withConfig(() => {
 			const revive = tagChange([Mark.revive(1, { revision: tag1, localId: brand(0) })], tag3);
-			const concurrentRemove = tagChange([Mark.delete(1, brand(42))], tag2);
+			const concurrentRemove = tagChange([Mark.remove(1, brand(42))], tag2);
 			const rebasedRevive = rebaseTagged(revive, concurrentRemove);
 			const redetach = invert(rebasedRevive);
 			const expected = [
-				Mark.delete(1, brand(0), {
+				Mark.remove(1, brand(0), {
 					idOverride: {
 						type: SF.DetachIdOverrideType.Redetach,
 						id: {

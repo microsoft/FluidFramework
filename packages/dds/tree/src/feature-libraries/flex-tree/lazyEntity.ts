@@ -8,16 +8,16 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-} from "../../core";
-import { fail, disposeSymbol, IDisposable } from "../../util";
-import { Context } from "./context";
+} from "../../core/index.js";
+import { fail, disposeSymbol, IDisposable } from "../../util/index.js";
+import { Context } from "./context.js";
 import {
 	FlexTreeEntity,
 	FlexTreeEntityKind,
 	TreeStatus,
 	boxedIterator,
 	flexTreeMarker,
-} from "./flexTreeTypes";
+} from "./flexTreeTypes.js";
 
 /**
  * Declare an enumerable own property on `T` under the key `key` using the implementation of one on `from`.

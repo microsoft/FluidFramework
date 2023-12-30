@@ -25,9 +25,9 @@
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "index": 0,
-                                    "nodeChange": {
+                                  [
+                                    0,
+                                    {
                                       "fieldChanges": [
                                         {
                                           "fieldKey": "root 1 child",
@@ -35,29 +35,29 @@
                                           "change": {
                                             "m": [
                                               [
-                                                {
-                                                  "localId": 1
-                                                },
-                                                0,
+                                                1,
+                                                null,
                                                 true
                                               ]
                                             ],
-                                            "d": {
-                                              "localId": 0
-                                            }
+                                            "d": 0
                                           }
                                         }
                                       ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -66,8 +66,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -90,9 +89,9 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000007",
-                      "sequenceNumber": 3,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000002"
+                      "revision": 515,
+                      "sequenceNumber": 6,
+                      "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                     },
                     {
                       "change": [
@@ -106,17 +105,13 @@
                                 "change": {
                                   "m": [
                                     [
-                                      {
-                                        "localId": 3
-                                      },
-                                      0,
+                                      3,
+                                      null,
                                       true
                                     ],
                                     [
-                                      0,
-                                      {
-                                        "localId": 2
-                                      },
+                                      null,
+                                      2,
                                       false
                                     ]
                                   ]
@@ -126,8 +121,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  3,
-                                  0
+                                  [
+                                    [
+                                      3,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -136,8 +135,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -167,9 +165,9 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000008",
-                      "sequenceNumber": 4,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000002"
+                      "revision": 516,
+                      "sequenceNumber": 8,
+                      "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
                     },
                     {
                       "change": [
@@ -183,26 +181,22 @@
                                 "change": {
                                   "m": [
                                     [
-                                      {
-                                        "localId": 3
-                                      },
-                                      0,
+                                      3,
+                                      null,
                                       true
                                     ],
                                     [
-                                      0,
-                                      {
-                                        "localId": 2
-                                      },
+                                      null,
+                                      2,
                                       false
                                     ]
                                   ],
                                   "c": [
                                     [
-                                      {
-                                        "localId": 2,
-                                        "revision": "beefbeef-beef-4000-8000-000000000008"
-                                      },
+                                      [
+                                        2,
+                                        516
+                                      ],
                                       {
                                         "fieldChanges": [
                                           {
@@ -211,17 +205,13 @@
                                             "change": {
                                               "m": [
                                                 [
-                                                  {
-                                                    "localId": 1
-                                                  },
-                                                  0,
+                                                  1,
+                                                  null,
                                                   true
                                                 ],
                                                 [
+                                                  null,
                                                   0,
-                                                  {
-                                                    "localId": 0
-                                                  },
                                                   false
                                                 ]
                                               ]
@@ -231,9 +221,7 @@
                                       }
                                     ],
                                     [
-                                      {
-                                        "localId": 3
-                                      },
+                                      3,
                                       {
                                         "fieldChanges": [
                                           {
@@ -242,16 +230,12 @@
                                             "change": {
                                               "m": [
                                                 [
-                                                  {
-                                                    "localId": 5
-                                                  },
-                                                  0,
+                                                  5,
+                                                  null,
                                                   true
                                                 ]
                                               ],
-                                              "d": {
-                                                "localId": 4
-                                              }
+                                              "d": 4
                                             }
                                           }
                                         ]
@@ -264,16 +248,20 @@
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
-                                ],
-                                [
-                                  3,
-                                  1
-                                ],
-                                [
-                                  5,
-                                  2
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ],
+                                    [
+                                      3,
+                                      1
+                                    ],
+                                    [
+                                      5,
+                                      2
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -282,8 +270,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -323,9 +310,9 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-00000000000c",
-                      "sequenceNumber": 5,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "revision": 7,
+                      "sequenceNumber": 10,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
                     {
                       "change": [
@@ -339,7 +326,7 @@
                                 "change": {
                                   "c": [
                                     [
-                                      0,
+                                      null,
                                       {
                                         "fieldChanges": [
                                           {
@@ -348,17 +335,13 @@
                                             "change": {
                                               "m": [
                                                 [
-                                                  {
-                                                    "localId": 1
-                                                  },
-                                                  0,
+                                                  1,
+                                                  null,
                                                   true
                                                 ],
                                                 [
+                                                  null,
                                                   0,
-                                                  {
-                                                    "localId": 0
-                                                  },
                                                   false
                                                 ]
                                               ]
@@ -374,8 +357,12 @@
                             "builds": {
                               "builds": [
                                 [
-                                  1,
-                                  0
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
                                 ]
                               ],
                               "trees": {
@@ -384,8 +371,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -408,20 +394,21 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-00000000000d",
-                      "sequenceNumber": 6,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "revision": 8,
+                      "sequenceNumber": 12,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],
                   "branches": [
                     [
-                      "beefbeef-beef-4000-8000-000000000002",
+                      "a0693eac-892a-4396-86f7-ad20dc1cade2",
                       {
-                        "base": "beefbeef-beef-4000-8000-000000000008",
+                        "base": 516,
                         "commits": []
                       }
                     ]
-                  ]
+                  ],
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -501,8 +488,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {
@@ -597,22 +583,25 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-00000000000c",
-                      0,
-                      8
+                      7,
+                      [
+                        [
+                          0,
+                          8
+                        ],
+                        [
+                          2,
+                          11
+                        ]
+                      ]
                     ],
                     [
-                      "beefbeef-beef-4000-8000-00000000000c",
-                      2,
-                      11
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000d",
+                      8,
                       0,
                       6
                     ],
                     [
-                      "beefbeef-beef-4000-8000-000000000008",
+                      516,
                       2,
                       10
                     ]

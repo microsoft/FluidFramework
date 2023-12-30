@@ -11,8 +11,13 @@ import {
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { DetachedFieldIndex } from "../core";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
+import { DetachedFieldIndex } from "../core/index.js";
+import {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "../shared-tree-core/index.js";
+import { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -33,7 +38,8 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		return createSingleBlobSummary(detachedFieldIndexBlobKey, this.detachedFieldIndex.encode());
+		const data = this.detachedFieldIndex.encode();
+		return createSingleBlobSummary(detachedFieldIndexBlobKey, stringify(data));
 	}
 
 	public async summarize(
@@ -42,7 +48,7 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		return createSingleBlobSummary(detachedFieldIndexBlobKey, this.detachedFieldIndex.encode());
+		return this.getAttachSummary(stringify, fullTree, trackState, telemetryContext);
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -62,7 +68,8 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		if (await services.contains(detachedFieldIndexBlobKey)) {
 			const detachedFieldIndexBuffer = await services.readBlob(detachedFieldIndexBlobKey);
 			const treeBufferString = bufferToString(detachedFieldIndexBuffer, "utf8");
-			this.detachedFieldIndex.loadData(treeBufferString);
+			const parsed = parse(treeBufferString) as JsonCompatibleReadOnly;
+			this.detachedFieldIndex.loadData(parsed);
 		}
 	}
 }

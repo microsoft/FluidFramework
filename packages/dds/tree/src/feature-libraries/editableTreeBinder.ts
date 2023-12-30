@@ -14,10 +14,10 @@ import {
 	RangeUpPath,
 	UpPath,
 	topDownPath,
-} from "../core";
-import { Events, ISubscribable } from "../events";
-import { brand, getOrCreate } from "../util";
-import { FlexTreeNode } from "./flex-tree";
+} from "../core/index.js";
+import { Events, ISubscribable } from "../events/index.js";
+import { brand, getOrCreate } from "../util/index.js";
+import { FlexTreeNode } from "./flex-tree/index.js";
 
 // TODO:
 // Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.
@@ -28,7 +28,7 @@ import { FlexTreeNode } from "./flex-tree";
  * @internal
  */
 export interface OperationBinderEvents {
-	delete(context: DeleteBindingContext): void;
+	remove(context: RemoveBindingContext): void;
 	insert(context: InsertBindingContext): void;
 	batch(context: BatchBindingContext): void;
 }
@@ -242,7 +242,7 @@ export type BindPath = DownPath;
  *
  * @internal
  */
-export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
+export type VisitorBindingContext = RemoveBindingContext | InsertBindingContext;
 
 /**
  * Enumeration of binding categories
@@ -250,7 +250,7 @@ export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
  * @internal
  */
 export const BindingType = {
-	Delete: "delete",
+	Remove: "remove",
 	Insert: "insert",
 	Invalidation: "invalidation",
 	Batch: "batch",
@@ -273,12 +273,12 @@ export interface BindingContext {
 }
 
 /**
- * The binding context for a delete event
+ * The binding context for a remove event
  *
  * @internal
  */
-export interface DeleteBindingContext extends BindingContext {
-	readonly type: typeof BindingType.Delete;
+export interface RemoveBindingContext extends BindingContext {
+	readonly type: typeof BindingType.Remove;
 	readonly path: UpPath;
 	readonly count: number;
 }
@@ -352,7 +352,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	}
 	public beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
 	public afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {
-		this.onDelete(
+		this.onRemove(
 			{
 				parent: source.parent,
 				parentField: source.field,
@@ -371,7 +371,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		newContent: RangeUpPath,
 		oldContent: DetachedRangeUpPath,
 	): void {
-		this.onDelete(
+		this.onRemove(
 			{
 				parent: newContent.parent,
 				parentField: newContent.field,
@@ -393,7 +393,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		return [];
 	}
 
-	public abstract onDelete(path: UpPath, count: number): void;
+	public abstract onRemove(path: UpPath, count: number): void;
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
 	public registerListener(
 		contextType: BindingContextType,
@@ -569,10 +569,10 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		}
 	}
 
-	public onDelete(path: UpPath, count: number): void {
-		this.processRegisteredPaths(path, BindingType.Delete, {
+	public onRemove(path: UpPath, count: number): void {
+		this.processRegisteredPaths(path, BindingType.Remove, {
 			count,
-			type: BindingType.Delete,
+			type: BindingType.Remove,
 		});
 	}
 
@@ -603,7 +603,7 @@ class InvalidatingPathVisitor
 		}
 	}
 
-	public onDelete(path: UpPath, count: number): void {
+	public onRemove(path: UpPath, count: number): void {
 		this.processRegisteredPaths(path);
 	}
 
@@ -638,14 +638,14 @@ type CallableBindingContext = VisitorBindingContext & {
 class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
 	private readonly eventQueue: CallableBindingContext[] = [];
 
-	public onDelete(path: UpPath, count: number): void {
+	public onRemove(path: UpPath, count: number): void {
 		const current = toDownPath(path);
-		const listeners = this.getListeners(BindingType.Delete, current);
+		const listeners = this.getListeners(BindingType.Remove, current);
 		if (listeners !== undefined) {
 			this.eventQueue.push({
 				path,
 				count,
-				type: BindingType.Delete,
+				type: BindingType.Remove,
 				listeners,
 			});
 		}

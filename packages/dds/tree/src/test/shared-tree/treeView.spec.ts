@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { emptyStringSequenceConfig, flexTreeViewWithContent } from "../utils";
+import { emptyStringSequenceConfig, flexTreeViewWithContent } from "../utils.js";
 
 describe("sharedTreeView", () => {
 	it("reads only one node", () => {

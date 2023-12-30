@@ -9,8 +9,8 @@ import {
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
-} from "../../core";
-import { fail } from "../../util";
+} from "../../core/index.js";
+import { fail } from "../../util/index.js";
 import {
 	FieldKind,
 	allowsTreeSchemaIdentifierSuperset,
@@ -19,15 +19,15 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	FieldKindWithEditor,
-} from "../modular-schema";
-import { sequenceFieldChangeHandler } from "../sequence-field";
+} from "../modular-schema/index.js";
+import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
 import {
 	noChangeCodecFamily,
 	OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
-} from "../optional-field";
-import { Multiplicity } from "../multiplicity";
+} from "../optional-field/index.js";
+import { Multiplicity } from "../multiplicity.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.

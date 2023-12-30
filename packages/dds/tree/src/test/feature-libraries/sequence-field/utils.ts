@@ -5,7 +5,7 @@
 
 import { strict } from "assert";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -16,32 +16,38 @@ import {
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
-} from "../../../core";
-import { TestChange } from "../../testChange";
+} from "../../../core/index.js";
+import { TestChange } from "../../testChange.js";
 import {
 	assertFieldChangesEqual,
 	deepFreeze,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
-} from "../../utils";
-import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../../util";
+} from "../../utils.js";
+import {
+	brand,
+	fakeIdAllocator,
+	IdAllocator,
+	idAllocatorFromMaxId,
+	Mutable,
+} from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	isAttachAndDetachEffect,
 	isDetach,
 	isTombstone,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/utils";
+} from "../../../feature-libraries/sequence-field/utils.js";
 import {
 	CellOrderingMethod,
 	SequenceConfig,
 	sequenceConfig,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/config";
+} from "../../../feature-libraries/sequence-field/config.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
-import { TestChangeset } from "./testEdits";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { TestChangeset } from "./testEdits.js";
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
 	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
@@ -350,9 +356,7 @@ export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 		if (isDetach(cloned) || isAttachAndDetachEffect(cloned)) {
 			const detach = isAttachAndDetachEffect(cloned) ? cloned.detach : cloned;
 			if (detach.idOverride !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				delete detach.idOverride.id.lineage;
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				delete detach.idOverride.id.adjacentCells;
 			}
 		}

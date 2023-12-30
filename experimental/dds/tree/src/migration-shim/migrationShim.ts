@@ -15,6 +15,8 @@ import {
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
+	IIdCompressorCore,
+	SessionId,
 } from '@fluidframework/runtime-definitions';
 import { type ITree } from '@fluidframework/tree';
 import { assert } from '@fluidframework/core-utils';
@@ -60,6 +62,8 @@ export interface IMigrationOp {
 	newAttributes: IChannelAttributes;
 }
 
+const ghostSessionId = '3692b242-46c0-4076-abea-c2ac1e896dee' as SessionId;
+
 /**
  * The MigrationShim loads in place of the legacy SharedTree.  It provides API surface for migrating it to the new SharedTree, while also providing access to the current SharedTree for usage.
  *
@@ -100,7 +104,14 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		const newTree = this.newTreeFactory.create(this.runtime, this.id) as ITree;
 		assert(this.preMigrationDeltaConnection !== undefined, 0x82f /* Should be in v1 state */);
 		this.preMigrationDeltaConnection.disableSubmit();
-		this.populateNewSharedObjectFn(this.legacyTree, newTree);
+		const { idCompressor } = this.runtime;
+		if (idCompressor !== undefined) {
+			(idCompressor as unknown as IIdCompressorCore).beginGhostSession(ghostSessionId, () =>
+				this.populateNewSharedObjectFn(this.legacyTree, newTree)
+			);
+		} else {
+			this.populateNewSharedObjectFn(this.legacyTree, newTree);
+		}
 		this.newTree = newTree;
 		this.reconnect();
 		this.emit('migrated');

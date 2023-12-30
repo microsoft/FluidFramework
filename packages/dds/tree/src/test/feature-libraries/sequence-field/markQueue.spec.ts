@@ -5,17 +5,18 @@
 
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
-import { MarkQueue } from "../../../feature-libraries/sequence-field/markQueue";
+import { MarkQueue } from "../../../feature-libraries/sequence-field/markQueue.js";
 // eslint-disable-next-line import/no-internal-modules
-import { MoveEffect, MoveEffectTable } from "../../../feature-libraries/sequence-field";
+import { MoveEffect, MoveEffectTable } from "../../../feature-libraries/sequence-field/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { MoveId } from "../../../feature-libraries/sequence-field/types";
+import { MoveId } from "../../../feature-libraries/sequence-field/types.js";
 // eslint-disable-next-line import/no-internal-modules
-import { VestigialEndpointMark } from "../../../feature-libraries/sequence-field/helperTypes";
-import { CrossFieldTarget, SequenceField as SF } from "../../../feature-libraries";
-import { brand, idAllocatorFromMaxId } from "../../../util";
-import { TestChange } from "../../testChange";
-import { TaggedChange, mintRevisionTag, tagChange } from "../../../core";
+import { VestigialEndpointMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+import { CrossFieldTarget, SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TaggedChange, tagChange } from "../../../core/index.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag1 = mintRevisionTag();
 const tag2 = mintRevisionTag();

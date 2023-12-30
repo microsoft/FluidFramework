@@ -12,11 +12,11 @@ import {
 	ObjectNodeStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
-} from "../../../core";
-import { FullSchemaPolicy } from "../../modular-schema";
-import { fail } from "../../../util";
-import { Multiplicity } from "../../multiplicity";
-import { EncodedFieldBatch, EncodedValueShape } from "./format";
+} from "../../../core/index.js";
+import { FullSchemaPolicy } from "../../modular-schema/index.js";
+import { fail } from "../../../util/index.js";
+import { Multiplicity } from "../../multiplicity.js";
+import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
 import {
 	EncoderCache,
 	FieldEncoder,
@@ -26,9 +26,9 @@ import {
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
-} from "./compressedEncode";
-import { NodeShape } from "./nodeShape";
-import { FieldBatch } from "./fieldBatch";
+} from "./compressedEncode.js";
+import { NodeShape } from "./nodeShape.js";
+import { FieldBatch } from "./fieldBatch.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.

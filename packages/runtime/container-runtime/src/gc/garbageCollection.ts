@@ -20,7 +20,9 @@ import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
+import { BlobManager } from "../blobManager";
 import {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
@@ -408,6 +410,7 @@ export class GarbageCollector implements IGarbageCollector {
 					{
 						eventName: "GCInitializationOrUpdateFailed",
 						gcConfigs: JSON.stringify(this.configs),
+						clientId,
 					},
 					error,
 				);
@@ -489,8 +492,11 @@ export class GarbageCollector implements IGarbageCollector {
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({
 					...gcStats,
-					timestamp: currentReferenceTimestampMs,
-					sweep: this.configs.shouldRunSweep,
+					details: {
+						timestamp: currentReferenceTimestampMs,
+						sweep: this.configs.shouldRunSweep,
+						tombstone: this.configs.throwOnTombstoneLoad,
+					},
 				});
 
 				/** Post-GC steps */
@@ -1001,6 +1007,18 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
+		if (!toNodePath.startsWith("/")) {
+			// A long time ago we stored handles with relatives paths. We don't expect to see these cases though
+			// because GC was enabled only after we made the switch to always using absolute paths.
+			this.mc.logger.sendErrorEvent({
+				eventName: "InvalidRelativeOutboundRoute",
+				...tagCodeArtifacts({ fromId: fromNodePath, id: toNodePath }),
+			});
+			return;
+		}
+
+		assert(fromNodePath.startsWith("/"), "fromNodePath must be an absolute path");
+
 		const outboundRoutes = this.newReferencesSinceLastRun.get(fromNodePath) ?? [];
 		outboundRoutes.push(toNodePath);
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
@@ -1116,9 +1134,25 @@ export class GarbageCollector implements IGarbageCollector {
 			deletedAttachmentBlobCount: 0,
 		};
 
+		// The runtime can't reliably identify the type of deleted nodes. So, get the type here. This should
+		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
+		const getDeletedNodeType = (nodeId: string): GCNodeType => {
+			const pathParts = nodeId.split("/");
+			if (pathParts[1] === BlobManager.basePath) {
+				return GCNodeType.Blob;
+			}
+			if (pathParts.length === 2) {
+				return GCNodeType.DataStore;
+			}
+			if (pathParts.length === 3) {
+				return GCNodeType.SubDataStore;
+			}
+			return GCNodeType.Other;
+		};
+
 		for (const nodeId of deletedNodes) {
 			sweepPhaseStats.deletedNodeCount++;
-			const nodeType = this.runtime.getNodeType(nodeId);
+			const nodeType = getDeletedNodeType(nodeId);
 			if (nodeType === GCNodeType.DataStore) {
 				sweepPhaseStats.deletedDataStoreCount++;
 			} else if (nodeType === GCNodeType.Blob) {

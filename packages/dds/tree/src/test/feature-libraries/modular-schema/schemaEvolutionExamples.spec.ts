@@ -12,7 +12,7 @@ import {
 	FieldKinds,
 	defaultSchemaPolicy,
 	FlexTreeSchema,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
@@ -22,10 +22,13 @@ import {
 	Compatibility,
 	storedEmptyFieldSchema,
 	TreeStoredSchema,
-} from "../../../core";
+} from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
-import { SchemaBuilder, leaf } from "../../../domains";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+} from "../../../feature-libraries/modular-schema/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
 
 class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(

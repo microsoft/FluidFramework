@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -104,6 +105,13 @@ export interface IMockContainerRuntimePendingMessage {
 	localOpMetadata: unknown;
 }
 
+interface IMockContainerRuntimeIdAllocationMessage {
+	contents: {
+		type: "idAllocation";
+		contents: IdCreationRange;
+	};
+}
+
 /**
  * Options for the container runtime mock.
  * @alpha
@@ -200,6 +208,19 @@ export class MockContainerRuntime {
 		return deltaConnection;
 	}
 
+	public getGeneratedIdRange(): IdCreationRange | undefined {
+		const range = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		return range?.ids === undefined ? undefined : range;
+	}
+
+	public finalizeIdRange(range: IdCreationRange) {
+		assert(
+			this.dataStoreRuntime.idCompressor !== undefined,
+			"Shouldn't try to finalize IdRanges without an IdCompressor",
+		);
+		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
+	}
+
 	public submit(messageContent: any, localOpMetadata: unknown): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
 		const message = {
@@ -278,6 +299,22 @@ export class MockContainerRuntime {
 	}
 
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
+		// and sticking it in front of any op that might rely on that Id. It differs slightly in that
+		// in the actual runtime it would get put in its own separate batch
+		const idRange = this.getGeneratedIdRange();
+		if (idRange !== undefined) {
+			const idAllocationMessage = { type: "idAllocation", contents: idRange };
+			this.factory.pushMessage({
+				clientId: this.clientId,
+				clientSequenceNumber,
+				contents: idAllocationMessage,
+				referenceSequenceNumber: this.referenceSequenceNumber,
+				type: MessageType.Operation,
+			});
+			this.addPendingMessage(idAllocationMessage, undefined, clientSequenceNumber);
+		}
+
 		this.factory.pushMessage({
 			clientId: this.clientId,
 			clientSequenceNumber,
@@ -293,7 +330,14 @@ export class MockContainerRuntime {
 		this.deltaManager.lastMessage = message;
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
-		this.dataStoreRuntime.process(message, local, localOpMetadata);
+
+		if (
+			(message as IMockContainerRuntimeIdAllocationMessage).contents.type === "idAllocation"
+		) {
+			this.finalizeIdRange((message as any).contents.contents as IdCreationRange);
+		} else {
+			this.dataStoreRuntime.process(message, local, localOpMetadata);
+		}
 	}
 
 	protected addPendingMessage(
@@ -402,6 +446,17 @@ export class MockContainerRuntimeFactory {
 		);
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
+	}
+
+	public synchronizeIdCompressors() {
+		for (const runtime of this.runtimes) {
+			const range = runtime.getGeneratedIdRange();
+			if (range !== undefined) {
+				for (const nestedRuntime of this.runtimes) {
+					nestedRuntime.finalizeIdRange(range);
+				}
+			}
+		}
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
@@ -590,6 +645,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryLoggerExt;
+		idCompressor?: IIdCompressor & IIdCompressorCore;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -599,6 +655,7 @@ export class MockFluidDataStoreRuntime
 			logger: overrides?.logger,
 			namespace: "fluid:MockFluidDataStoreRuntime",
 		});
+		this.idCompressor = overrides?.idCompressor;
 	}
 
 	public readonly entryPoint: IFluidHandle<FluidObject>;
@@ -628,6 +685,7 @@ export class MockFluidDataStoreRuntime
 	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
+	public idCompressor?: IIdCompressor & IIdCompressorCore;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
@@ -780,6 +838,10 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
+	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 */
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
 	public async summarize(

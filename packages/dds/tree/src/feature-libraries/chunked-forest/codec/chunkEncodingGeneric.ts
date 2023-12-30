@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { TreeValue } from "../../../core";
-import { fail } from "../../../util";
-import { FluidSerializableReadOnly } from "../../valueUtilities";
-import { EncodedFieldBatchGeneric } from "./formatGeneric";
+import { TreeValue } from "../../../core/index.js";
+import { fail } from "../../../util/index.js";
+import { FluidSerializableReadOnly } from "../../valueUtilities.js";
+import { EncodedFieldBatchGeneric } from "./formatGeneric.js";
 import {
 	Counter,
 	CounterFilter,
 	DeduplicationTable,
 	jsonMinimizingFilter,
-} from "./chunkCodecUtilities";
+} from "./chunkCodecUtilities.js";
 
 /**
  * An identifier which can be compressed using {@link Counter}.

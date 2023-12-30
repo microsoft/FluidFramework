@@ -14,10 +14,10 @@ import {
 	TypedFields,
 	UnbrandedName,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/schema-aware/schemaAware";
+} from "../../../feature-libraries/schema-aware/schemaAware.js";
 
-import { TreeNodeSchemaIdentifier } from "../../../core";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
+import { TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
 import {
 	valueSymbol,
 	FieldKinds,
@@ -26,11 +26,13 @@ import {
 	TreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
-	InternalTypedSchemaTypes,
-} from "../../../feature-libraries";
-import { leaf, SchemaBuilder } from "../../../domains";
+} from "../../../feature-libraries/index.js";
+import { leaf, SchemaBuilder } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { FlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
+import {
+	FlexList,
+	FlexListToNonLazyArray,
+} from "../../../feature-libraries/typed-schema/flexList.js";
 
 // Test UnbrandedName
 {
@@ -211,10 +213,7 @@ import { FlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/
 			type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 			type BoolChild = ChildSchemaTypes[1];
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-			type _check4 = requireAssignableTo<
-				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
-			>;
+			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeNodeSchema>>;
 			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
 			type ChildTypes = AllowedTypesToFlexInsertableTree<ChildSchemaTypes>;
 		}
@@ -297,10 +296,7 @@ import { FlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/
 			type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 			type BoxChild = ChildSchemaTypes[1];
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-			type _check4 = requireAssignableTo<
-				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
-			>;
+			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeNodeSchema>>;
 			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
 			{
 				{

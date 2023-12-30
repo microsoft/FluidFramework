@@ -10,9 +10,9 @@ import {
 	FieldKindIdentifier,
 	RevisionInfo,
 	RevisionTag,
-} from "../../core";
-import { Brand } from "../../util";
-import { TreeChunk } from "../chunked-forest";
+} from "../../core/index.js";
+import { Brand } from "../../util/index.js";
+import { TreeChunk } from "../chunked-forest/index.js";
 
 /**
  * @internal
@@ -31,10 +31,8 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly revisions?: readonly RevisionInfo[];
 	fieldChanges: FieldChangeMap;
 	constraintViolationCount?: number;
-	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
-	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-	readonly destroys?: ChangeAtomIdMap<undefined>;
+	readonly destroys?: ChangeAtomIdMap<number>;
 }
 
 /**

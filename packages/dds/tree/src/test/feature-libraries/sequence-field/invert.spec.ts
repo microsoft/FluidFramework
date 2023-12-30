@@ -6,23 +6,23 @@
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-} from "../../../core";
+} from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellId } from "../../../feature-libraries/sequence-field";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { TestChange } from "../../testChange";
-import { brand } from "../../../util";
+import { CellId } from "../../../feature-libraries/sequence-field/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { TestChange } from "../../testChange.js";
+import { mintRevisionTag } from "../../utils.js";
+import { brand } from "../../../util/index.js";
 import {
 	invert as invertChange,
 	describeForBothConfigs,
 	withOrderingMethod,
 	assertChangesetsEqual,
-} from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "./utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 function invert(change: TestChangeset, tag?: RevisionTag): TestChangeset {
 	return invertChange(tagChange(change, tag ?? tag1));
@@ -71,19 +71,19 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("insert => delete", () =>
+	it("insert => remove", () =>
 		withConfig(() => {
 			const idOverride: SF.DetachIdOverride = {
 				type: SF.DetachIdOverrideType.Unattach,
 				id: { revision: tag1, localId: brand(0) },
 			};
 			const input = Change.insert(0, 2);
-			const expected = [Mark.delete(2, brand(0), { idOverride })];
+			const expected = [Mark.remove(2, brand(0), { idOverride })];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("insert & modify => modify & delete", () =>
+	it("insert & modify => modify & remove", () =>
 		withConfig(() => {
 			const idOverride: SF.DetachIdOverride = {
 				type: SF.DetachIdOverrideType.Unattach,
@@ -91,7 +91,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			};
 			const input = [Mark.insert(1, brand(0), { changes: childChange1 })];
 			const expected = [
-				Mark.delete(1, brand(0), {
+				Mark.remove(1, brand(0), {
 					changes: inverseChildChange1,
 					idOverride,
 				}),
@@ -100,11 +100,11 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete => revive", () =>
+	it("remove => revive", () =>
 		withConfig(() => {
 			const input = [
-				Mark.delete(1, brand(0), { changes: childChange1 }),
-				Mark.delete(1, brand(1)),
+				Mark.remove(1, brand(0), { changes: childChange1 }),
+				Mark.remove(1, brand(1)),
 			];
 			const expected = [
 				Mark.revive(
@@ -118,28 +118,28 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete => revive (with rollback ID)", () =>
+	it("remove => revive (with rollback ID)", () =>
 		withConfig(() => {
 			const detachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
-			const input = tagRollbackInverse([Mark.delete(2, brand(0))], tag1, tag2);
+			const input = tagRollbackInverse([Mark.remove(2, brand(0))], tag1, tag2);
 			const expected = [Mark.revive(2, detachId)];
 			const actual = invertChange(input);
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete => revive (with override ID)", () =>
+	it("remove => revive (with override ID)", () =>
 		withConfig(() => {
 			const idOverride: SF.DetachIdOverride = {
 				type: SF.DetachIdOverrideType.Redetach,
 				id: { revision: tag2, localId: brand(0) },
 			};
-			const input: TestChangeset = [Mark.delete(2, brand(5), { idOverride })];
+			const input: TestChangeset = [Mark.remove(2, brand(5), { idOverride })];
 			const expected = [Mark.revive(2, idOverride.id, { id: brand(5) })];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("active revive => delete", () =>
+	it("active revive => remove", () =>
 		withConfig(() => {
 			const cellId: CellId = {
 				revision: tag1,
@@ -151,7 +151,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				type: SF.DetachIdOverrideType.Redetach,
 				id: cellId,
 			};
-			const expected: TestChangeset = [Mark.delete(2, brand(0), { idOverride })];
+			const expected: TestChangeset = [Mark.remove(2, brand(0), { idOverride })];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
 		}));
@@ -244,7 +244,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 			const input = [Mark.pin(1, brand(0), { cellId, changes: childChange1 })];
 			const expected: TestChangeset = [
-				Mark.delete(1, brand(0), {
+				Mark.remove(1, brand(0), {
 					idOverride: {
 						type: SF.DetachIdOverrideType.Redetach,
 						id: cellId,
@@ -256,10 +256,10 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("insert & delete => revive & delete", () =>
+	it("insert & remove => revive & remove", () =>
 		withConfig(() => {
 			const transient = [
-				Mark.attachAndDetach(Mark.insert(1, brand(1)), Mark.delete(1, brand(0)), {
+				Mark.attachAndDetach(Mark.insert(1, brand(1)), Mark.remove(1, brand(0)), {
 					changes: childChange1,
 				}),
 			];
@@ -270,7 +270,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				id: { revision: tag1, localId: brand(1) },
 			};
 			const expected = [
-				Mark.delete(1, brand(1), {
+				Mark.remove(1, brand(1), {
 					cellId: { revision: tag1, localId: brand(0) },
 					changes: inverseChildChange1,
 					idOverride,
@@ -280,12 +280,12 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(inverse, expected);
 		}));
 
-	it("revive & delete => revive & delete", () =>
+	it("revive & remove => revive & remove", () =>
 		withConfig(() => {
 			const startId: ChangeAtomId = { revision: tag1, localId: brand(1) };
 			const detachId: ChangeAtomId = { revision: tag1, localId: brand(2) };
 			const transient = [
-				Mark.delete(1, detachId.localId, {
+				Mark.remove(1, detachId.localId, {
 					cellId: { localId: startId.localId },
 					changes: childChange1,
 				}),
@@ -293,7 +293,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 
 			const inverse = invertChange(tagChange(transient, startId.revision));
 			const expected = [
-				Mark.delete(1, detachId.localId, {
+				Mark.remove(1, detachId.localId, {
 					cellId: detachId,
 					changes: inverseChildChange1,
 					idOverride: {
@@ -305,7 +305,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(inverse, expected);
 		}));
 
-	it("Insert and move => move and delete", () =>
+	it("Insert and move => move and remove", () =>
 		withConfig(() => {
 			const insertAndMove = [
 				Mark.attachAndDetach(Mark.insert(1, brand(0)), Mark.moveOut(1, brand(1)), {
@@ -319,7 +319,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const expected = [
 				Mark.attachAndDetach(
 					Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
-					Mark.delete(1, brand(0), {
+					Mark.remove(1, brand(0), {
 						idOverride: {
 							type: SF.DetachIdOverrideType.Unattach,
 							id: { revision: tag1, localId: brand(0) },
@@ -339,7 +339,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(inverse, expected);
 		}));
 
-	it("revive & move => return & delete", () =>
+	it("revive & move => return & remove", () =>
 		withConfig(() => {
 			const startId: ChangeAtomId = { revision: tag1, localId: brand(1) };
 			const detachId: ChangeAtomId = { revision: tag1, localId: brand(2) };
@@ -356,7 +356,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			const expected = [
 				Mark.attachAndDetach(
 					Mark.returnTo(1, detachId.localId, detachId),
-					Mark.delete(1, detachId.localId, {
+					Mark.remove(1, detachId.localId, {
 						idOverride: {
 							type: SF.DetachIdOverrideType.Redetach,
 							id: startId,
@@ -375,15 +375,15 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 			assertChangesetsEqual(inverse, expected);
 		}));
 
-	it("Move and delete => revive and return", () =>
+	it("Move and remove => revive and return", () =>
 		withConfig(() => {
-			const moveAndDelete = [
+			const moveAndRemove = [
 				Mark.moveOut(1, brand(0), { changes: childChange1 }),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 			];
 
-			const inverse = invert(moveAndDelete);
+			const inverse = invert(moveAndRemove);
 			const expected = [
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 				{ count: 1 },
@@ -446,11 +446,11 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 		}));
 
 	describe("Redundant changes", () => {
-		it("delete (same detach ID)", () =>
+		it("remove (same detach ID)", () =>
 			withConfig(() => {
 				const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 				const input = [
-					Mark.onEmptyCell(cellId, Mark.delete(1, brand(0), { changes: childChange1 })),
+					Mark.onEmptyCell(cellId, Mark.remove(1, brand(0), { changes: childChange1 })),
 				];
 
 				const actual = invert(input, tag1);
@@ -458,11 +458,11 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				assertChangesetsEqual(actual, expected);
 			}));
 
-		it("delete (same detach ID through metadata)", () =>
+		it("remove (same detach ID through metadata)", () =>
 			withConfig(() => {
 				const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 				const input = [
-					Mark.onEmptyCell(cellId, Mark.delete(1, brand(0), { changes: childChange1 })),
+					Mark.onEmptyCell(cellId, Mark.remove(1, brand(0), { changes: childChange1 })),
 				];
 
 				const actual = invertChange(tagRollbackInverse(input, tag2, tag1));
@@ -470,12 +470,12 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 				assertChangesetsEqual(actual, expected);
 			}));
 
-		it("delete (different detach ID)", () =>
+		it("remove (different detach ID)", () =>
 			withConfig(() => {
 				const startId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 				const endId: ChangeAtomId = { revision: tag2, localId: brand(0) };
 				const input = [
-					Mark.delete(1, endId, {
+					Mark.remove(1, endId, {
 						changes: childChange1,
 						cellId: startId,
 					}),
@@ -483,7 +483,7 @@ describeForBothConfigs("SequenceField - Invert", (config) => {
 
 				const actual = invert(input, tag2);
 				const expected = [
-					Mark.delete(1, brand(0), {
+					Mark.remove(1, brand(0), {
 						changes: inverseChildChange1,
 						cellId: endId,
 						idOverride: {
