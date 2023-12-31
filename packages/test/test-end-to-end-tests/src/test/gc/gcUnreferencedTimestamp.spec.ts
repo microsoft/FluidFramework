@@ -23,8 +23,6 @@ import {
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-internal-modules
-import { detectOutboundRoutesViaDDSKey } from "@fluidframework/container-runtime/test/gc";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -35,7 +33,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Run in FullCompat to get coverage of DataStoreRuntime/ContainerRuntime n/n-1 compatibility
  * (skip all other compat types)
  */
-describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	let provider: ITestObjectProvider;
@@ -70,9 +68,9 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 		}
 
 		// We only want to do compat testing for Container Runtime and Data Runtime compat
-		//* if (!this.test?.parent?.title.includes("runtime")) {
-		//* 	this.skip();
-		//* }
+		if (!this.test?.parent?.title.includes("runtime")) {
+			this.skip();
+		}
 
 		settings = {};
 		const testContainerConfig = {
