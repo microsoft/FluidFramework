@@ -553,7 +553,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 				async () => {
 					// Disable new Reference Detection behavior for now
 					// The re-referencing happens via attach op which we don't detect yet.
-					settings[detectOutboundRoutesViaDDSKey] = true;
+					//* settings[detectOutboundRoutesViaDDSKey] = true;
 
 					const { summarizer } = await createSummarizer(provider, mainContainer, {
 						loaderProps: { configProvider: mockConfigProvider(settings) },

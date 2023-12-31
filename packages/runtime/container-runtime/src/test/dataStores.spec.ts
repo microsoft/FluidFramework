@@ -194,13 +194,39 @@ describe("Runtime", () => {
 						["/dataStore1/dds1", "routeC"],
 						["/dataStore1/dds1", "routeD"],
 					],
-					"Should find both handles",
+					"Should find all handles",
 				);
 			});
 			it("null contents", () => {
 				detectOutboundReferences({ address: "foo", contents: null }, () => {
 					assert.fail("Should not be called");
 				});
+			});
+			it("Can find handles in JSON.stringify'd value", () => {
+				const outboundReferences: [string, string][] = [];
+				const stringified = JSON.stringify({
+					foo: {
+						hiddenHandle: {
+							type: "__fluid_handle__",
+							url: "routeA",
+						},
+					},
+				});
+				detectOutboundReferences(
+					{
+						address: "dataStore1",
+						contents: { path: "dds1", stuff: stringified }, //* Note: This test fails if contents is string directly, since detectOutboundReferences checks for object at the top
+					},
+					(from, to) => {
+						outboundReferences.push([from, to]);
+					},
+					/* ddsIdKey: */ "path",
+				);
+				assert.deepEqual(
+					outboundReferences,
+					[["/dataStore1/dds1", "routeA"]],
+					"Should find the hidden handle",
+				);
 			});
 		});
 	});

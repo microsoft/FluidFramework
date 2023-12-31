@@ -194,7 +194,11 @@ export class DataStores implements IDisposable {
 		return pendingAliasPromise ?? "Success";
 	}
 
-	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
+	public processAttachMessage(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+	) {
 		const attachMessage = message.contents as InboundAttachMessage;
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
@@ -248,6 +252,18 @@ export class DataStores implements IDisposable {
 			}),
 			pkg,
 		});
+
+		//* This (and ddsIdKey param "path" below) may need some work to make it appropriately generic.
+		//* Or maybe it's the same as the plain op case where we take a dependency on what
+		//* we know to expect from our own DataStoreRuntime implementation.
+		const channelsObject = attachMessage.snapshot?.entries.find((e) => e.path === ".channels")
+			?.value;
+		detectOutboundReferences(
+			{ address: attachMessage.id, contents: channelsObject },
+			//* () => {}, // Pass this to simulate old behavior
+			addedOutboundReference,
+			/* ddsIdKey: */ "path",
+		);
 
 		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
 	}
@@ -434,8 +450,12 @@ export class DataStores implements IDisposable {
 
 	public async applyStashedAttachOp(message: IAttachMessage) {
 		this.pendingAttach.set(message.id, message);
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
+		this.processAttachMessage(
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			{ contents: message } as ISequencedDocumentMessage,
+			false,
+			() => {}, //* ???
+		);
 	}
 
 	public processFluidDataStoreOp(
@@ -966,6 +986,7 @@ export function getSummaryForDatastores(
 export function detectOutboundReferences(
 	envelope: IEnvelope,
 	addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+	ddsIdKey: string = "address",
 ): void {
 	// These will be built up as we traverse the envelope contents
 	const outboundPaths: string[] = [];
@@ -977,13 +998,30 @@ export function detectOutboundReferences(
 				// If 'value' is a serialized IFluidHandle, it represents a new outbound route.
 				if (isSerializedHandle(value)) {
 					outboundPaths.push(value.url);
+					//* continue; // (since we don't need to look for handles inside its string value)
 				}
 
 				// NOTE: This is taking a hard dependency on the fact that in our DataStore implementation,
 				// the address of the DDS is stored in a property called "address".  This is not ideal.
 				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
-				if (key === "address" && ddsAddress === undefined) {
+				if (key === ddsIdKey && ddsAddress === undefined) {
 					ddsAddress = value;
+					//* continue; // (since we don't need to look for handles inside its string value)
+				}
+
+				// We know sometimes an intermediate object is stringified before being
+				// wrapped by the next layer.  If we think this may be the case then parse
+				// and recurse.
+				if (typeof value === "string" && value.includes("__fluid_handle__")) {
+					const parsed = (() => {
+						try {
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+							return JSON.parse(value);
+						} catch {
+							return undefined;
+						}
+					})();
+					recursivelyFindHandles(parsed);
 				}
 
 				recursivelyFindHandles(value);
