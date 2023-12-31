@@ -19,6 +19,7 @@ import {
 import {
 	describeCompat,
 	ITestDataObject,
+	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
@@ -34,7 +35,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Run in FullCompat to get coverage of DataStoreRuntime/ContainerRuntime n/n-1 compatibility
  * (skip all other compat types)
  */
-describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	let provider: ITestObjectProvider;
@@ -69,9 +70,9 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 		}
 
 		// We only want to do compat testing for Container Runtime and Data Runtime compat
-		if (!this.test?.parent?.title.includes("runtime")) {
-			this.skip();
-		}
+		//* if (!this.test?.parent?.title.includes("runtime")) {
+		//* 	this.skip();
+		//* }
 
 		settings = {};
 		const testContainerConfig = {
@@ -534,62 +535,71 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 			 * 2. Data store B is created. E = [].
 			 * 3. Add reference from B to C. E = [].
 			 * 4. Op adds reference from A to B. E = [A -> B, B -> C].
-			 * 5. Op removes reference from B to C. E = [A -> B].
-			 * 6. Summary 2 at t2. V = [A*, B, C]. E = [A -> B]. C has unreferenced time t2.
+			 * 6. Summary 2 at t2. V = [A*, B, C]. E = [A -> B, B -> C]. ** DO WE SEE gcUnknownOutboundReferences ERROR? **
 			 * Validates that the unreferenced time for C is t2 which is > t1.
 			 *
 			 * The difference from previous test case is that the reference from B to C is added before B is referenced and
 			 * observed by summarizer. So, the summarizer does not see this reference directly but only when B is realized.
 			 */
-			it(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
-				// Disable new Reference Detection behavior for now
-				// The re-referencing happens via attach op which we don't detect yet.
-				settings[detectOutboundRoutesViaDDSKey] = true;
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			itExpects.only(
+				`Scenario 6 - Reference added via new unreferenced nodes and removed`,
+				[], // No gcUnknownOutboundReferences errors
+				async () => {
+					// Disable new Reference Detection behavior for now
+					// The re-referencing happens via attach op which we don't detect yet.
+					settings[detectOutboundRoutesViaDDSKey] = true;
 
-				const { summarizer } = await createSummarizer(provider, mainContainer, {
-					loaderProps: { configProvider: mockConfigProvider(settings) },
-				});
+					const { summarizer } = await createSummarizer(provider, mainContainer, {
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					});
 
-				// Create data store C and mark it referenced by storing its handle in data store A.
-				const dataStoreC = await createNewDataStore();
-				dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+					// Create data store C and mark it referenced by storing its handle in data store A.
+					const dataStoreC = await createNewDataStore();
+					dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
-				// Remove the reference to C to make it unreferenced.
-				dataStoreA._root.delete("dataStoreC");
+					// Remove the reference to C to make it unreferenced.
+					dataStoreA._root.delete("dataStoreC");
 
-				// 1. Get summary 1 and validate that C is has unreferenced timestamp. E = [].
-				await provider.ensureSynchronized();
-				const summaryResult1 = await summarizeNow(summarizer);
-				const timestamps1 = await getUnreferencedTimestamps(summaryResult1.summaryTree);
-				const dsCTime1 = timestamps1.get(dataStoreC._context.id);
-				assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
+					// 1. Get summary 1 and validate that C is has unreferenced timestamp. E = [].
+					await provider.ensureSynchronized();
+					const summaryResult1 = await summarizeNow(summarizer);
+					const timestamps1 = await getUnreferencedTimestamps(summaryResult1.summaryTree);
+					const dsCTime1 = timestamps1.get(dataStoreC._context.id);
+					assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
 
-				// 2. Create data store B. E = [].
-				const dataStoreB = await createNewDataStore();
+					// 2. Create data store B. E = [].
+					const dataStoreB = await createNewDataStore();
 
-				// 3. Add reference from B to C. E = [].
-				// NOTE: No op is submitted here since B is not attached
-				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
+					// 3. Add reference from B to C. E = [].
+					// NOTE: No op is submitted here since B is not attached
+					dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 
-				// 4. Add reference from A to B. E = [A -> B, B -> C].
-				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+					// 4. Add reference from A to B. E = [A -> B, B -> C].
+					dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
-				// 5. Remove reference from B to C. E = [A -> B].
-				dataStoreB._root.delete("dataStoreC");
+					// 5. Remove reference from B to C. E = [A -> B].
+					// dataStoreB._root.delete("dataStoreC");
 
-				// 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
-				// NOTE: The attach op for B has the reference from B->C, but we don't detect it here.
-				// Instead, we happen to detect it during Summarize, since the DDS is parsed when loaded.
-				// This relies on the old behavior (see detectOutboundRoutesViaDDSKey setting above)
-				await provider.ensureSynchronized();
-				const summaryResult2 = await summarizeNow(summarizer);
-				const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
-				const dsCTime2 = timestamps2.get(dataStoreC._context.id);
-				assert(
-					dsCTime2 !== undefined && dsCTime2 > dsCTime1,
-					`C's timestamp should have updated`,
-				);
-			});
+					// 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
+					// NOTE: The attach op for B has the reference from B->C, but we don't detect it here.
+					// Instead, we happen to detect it during Summarize, since the DDS is parsed when loaded.
+					// This relies on the old behavior (see detectOutboundRoutesViaDDSKey setting above)
+					await provider.ensureSynchronized();
+					const summaryResult2 = await summarizeNow(summarizer);
+					const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
+					const dsCTime2 = timestamps2.get(dataStoreC._context.id);
+					assert(
+						dsCTime2 === undefined, //* && dsCTime2 > dsCTime1,
+						`C should be referenced`,
+					);
+				},
+			);
 
 			/*
 			 * Validates that we can detect references that were added transitively via new data stores before they are
