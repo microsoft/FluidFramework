@@ -541,13 +541,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			 * The difference from previous test case is that the reference from B to C is added before B is referenced and
 			 * observed by summarizer. So, the summarizer does not see this reference directly but only when B is realized.
 			 */
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			itExpects.only(
+			itExpects(
 				`Scenario 6 - Reference added via new unreferenced nodes and removed`,
 				[], // No gcUnknownOutboundReferences errors
 				async () => {
@@ -619,7 +613,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			it(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
 				// Disable new Reference Detection behavior for now
 				// Same reason as Scenario 6 - The re-referencing happens via attach op which we don't detect yet.
-				settings[detectOutboundRoutesViaDDSKey] = true;
+				//* settings[detectOutboundRoutesViaDDSKey] = true;
 
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider: mockConfigProvider(settings) },
