@@ -293,7 +293,7 @@ describe("optionalField", () => {
 				);
 			});
 
-			it("can rebase a child change over a delete and revive of target node", () => {
+			it("can rebase a child change over a remove and revive of target node", () => {
 				const tag1 = mintRevisionTag();
 				const tag2 = mintRevisionTag();
 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeChange1);
