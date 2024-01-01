@@ -8,7 +8,7 @@
 import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { assertNotUndefined, compareFiniteNumbers } from '../Common';
+import { assertNotUndefined, getIdentityStableComparators } from '../Common';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
 
 function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
@@ -133,7 +133,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 	it('can calculate the indexOf a search element', () => {
 		const elements: number[] = [0, 0, 2, 0, 3, 0];
 		const comparator = (search: number, key: number, value: number): number => {
-			return compareFiniteNumbers(search, key);
+			return getIdentityStableComparators().compareFiniteNumbers(search, key);
 		};
 		expect(AppendOnlySortedMap.keyIndexOf(elements, 0, comparator)).to.equal(0);
 		expect(AppendOnlySortedMap.keyIndexOf(elements, 2, comparator)).to.equal(2);
@@ -182,15 +182,15 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 }
 
 describe('AppendOnlySortedMap', () => {
-	runAppendOnlyMapTests(() => new AppendOnlySortedMap(compareFiniteNumbers));
+	runAppendOnlyMapTests(() => new AppendOnlySortedMap(getIdentityStableComparators().compareFiniteNumbers));
 });
 
 describe('AppendOnlyDoublySortedMap', () => {
 	const mapBuilder = () =>
 		new AppendOnlyDoublySortedMap<number, number, number>(
-			compareFiniteNumbers,
+			getIdentityStableComparators().compareFiniteNumbers,
 			(value) => value,
-			compareFiniteNumbers
+			getIdentityStableComparators().compareFiniteNumbers
 		);
 	runAppendOnlyMapTests(mapBuilder);
 
@@ -237,9 +237,9 @@ describe('AppendOnlyDoublySortedMap', () => {
 
 	it('validity assertion detects out-of-order keys', () => {
 		const map = new AppendOnlyDoublySortedMap<[number], [number], number>(
-			(a, b) => compareFiniteNumbers(a[0], b[0]),
+			(a, b) => getIdentityStableComparators().compareFiniteNumbers(a[0], b[0]),
 			(value) => value[0],
-			compareFiniteNumbers
+			getIdentityStableComparators().compareFiniteNumbers
 		);
 		map.append([0], [0]);
 		map.append([1], [1]);

@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
 import { assert } from '@fluidframework/core-utils';
-import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from '../Common';
+import { fail, getIdentityStableComparators, Mutable } from '../Common';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers';
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';
 import { SerializedSessionIdNormalizer } from './persisted-types';
@@ -56,7 +56,7 @@ export class SessionIdNormalizer<TRangeObject> {
 		[lastLocal: LocalCompressedId, finalRanges: FinalRanges<TRangeObject> | undefined],
 		FinalCompressedId
 	> = new AppendOnlyDoublySortedMap(
-		compareFiniteNumbersReversed,
+		getIdentityStableComparators().compareFiniteNumbersReversed,
 		([_, finalRanges]) => {
 			if (finalRanges !== undefined) {
 				const first = getFirstRange(finalRanges);
@@ -64,7 +64,7 @@ export class SessionIdNormalizer<TRangeObject> {
 			}
 			return Number.POSITIVE_INFINITY as FinalCompressedId;
 		},
-		compareFiniteNumbers
+		getIdentityStableComparators().compareFiniteNumbers
 	);
 
 	public constructor(private readonly expensiveAsserts = false) {}
@@ -166,9 +166,9 @@ export class SessionIdNormalizer<TRangeObject> {
 
 	private static makeFinalRangesMap<TRangeObject>(): FinalRangesMap<TRangeObject> {
 		return new AppendOnlyDoublySortedMap(
-			compareFiniteNumbersReversed,
+			getIdentityStableComparators().compareFiniteNumbersReversed,
 			extractFirstFinalFromRange,
-			compareFiniteNumbers
+			getIdentityStableComparators().compareFiniteNumbers
 		);
 	}
 

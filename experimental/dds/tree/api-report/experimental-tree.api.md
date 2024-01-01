@@ -467,6 +467,9 @@ export interface GenericTransactionPolicy {
     validateOnClose(state: SucceedingTransactionState): ChangeResult;
 }
 
+// @public
+export function getIdentityStableComparators(): IdentityStableComparators;
+
 // @internal @deprecated
 function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string>;
 export { getSerializedUploadedEditChunkContents }
@@ -493,6 +496,16 @@ export interface HasVariadicTraits<TChild> {
 export interface ICheckoutEvents extends IErrorEvent {
     // (undocumented)
     (event: 'viewChange', listener: (before: TreeView, after: TreeView) => void): any;
+}
+
+// @public
+export interface IdentityStableComparators {
+    // (undocumented)
+    compareFiniteNumbers<T extends number>(this: void, a: T, b: T): number;
+    // (undocumented)
+    compareFiniteNumbersReversed<T extends number>(this: void, a: T, b: T): number;
+    // (undocumented)
+    compareStrings<T extends string>(this: void, a: T, b: T): number;
 }
 
 // @internal
@@ -860,6 +873,9 @@ export interface SessionUnique {
     // (undocumented)
     readonly SessionUnique: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
 }
+
+// @public
+export function setIdentityStableComparators(identityStableComparators: IdentityStableComparators): void;
 
 // @internal
 export function setTrait(trait: TraitLocation, nodes: BuildNode | TreeNodeSequence<BuildNode>): Change[];

@@ -6,7 +6,7 @@
 import { assert } from '@fluidframework/core-utils';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 import LRU from 'lru-cache';
-import { fail, compareFiniteNumbers } from './Common';
+import { fail, getIdentityStableComparators } from './Common';
 
 /**
  * A revision corresponds to an index in an `EditLog`.
@@ -40,7 +40,10 @@ export class RevisionValueCache<TValue> {
 	 * This is sorted to allow efficient access to the nearest preceding entry (see getClosestEntry).
 	 * Contains all cached values, regardless of why they are cached (retained, LRU or window).
 	 */
-	private readonly sortedEntries = new BTree<Revision, TValue>(undefined, compareFiniteNumbers);
+	private readonly sortedEntries = new BTree<Revision, TValue>(
+		undefined,
+		getIdentityStableComparators().compareFiniteNumbers
+	);
 
 	/**
 	 * Cache of most recently used evictable entries.

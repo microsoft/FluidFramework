@@ -31,7 +31,14 @@ export {
 	StableRange,
 } from './ChangeTypes';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
-export { isSharedTreeEvent, sharedTreeAssertionErrorType, Result } from './Common';
+export {
+	getIdentityStableComparators,
+	IdentityStableComparators,
+	isSharedTreeEvent,
+	setIdentityStableComparators,
+	sharedTreeAssertionErrorType,
+	Result,
+} from './Common';
 export { EagerCheckout } from './EagerCheckout';
 export type { OrderedEditSet, EditHandle } from './EditLog';
 export {

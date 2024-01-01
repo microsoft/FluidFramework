@@ -46,30 +46,74 @@ class SharedTreeAssertionError extends Error {
 		Error.captureStackTrace?.(this);
 	}
 }
+/**
+ * A set of standard comparitor functions which must have stable identity in
+ * order for SharedTree to work.  Allowing this set to be swapped out at the
+ * module level solves a problem in which a SharedTree instance is shared across
+ * a JS execution context boundary, which can happen with a sourced iframe.
+ * In this scenario, two versions of this module exist, one in each execution
+ * context, which will cause the BTree diffAgainst function to fail when it finds
+ * non-identical comparators. By letting these functions be swappable, we can solve
+ * the problem by overwriting the functions belonging to one module with those from
+ * the other.
+ *
+ * @public
+ */
+export interface IdentityStableComparators {
+	compareFiniteNumbers<T extends number>(this: void, a: T, b: T): number;
+	compareFiniteNumbersReversed<T extends number>(this: void, a: T, b: T): number;
+	compareStrings<T extends string>(this: void, a: T, b: T): number;
+}
+
+class IdentityStableComparatorsImpl implements IdentityStableComparators {
+	/**
+	 * A numeric comparator used for sorting in ascending order.
+	 *
+	 * Handles +/-0 like Map: -0 is equal to +0.
+	 */
+	public compareFiniteNumbers<T extends number>(this: void, a: T, b: T): number {
+		return a - b;
+	}
+
+	/**
+	 * A numeric comparator used for sorting in descending order.
+	 *
+	 * Handles +/-0 like Map: -0 is equal to +0.
+	 */
+	public compareFiniteNumbersReversed<T extends number>(this: void, a: T, b: T): number {
+		return b - a;
+	}
+
+	/**
+	 * Compares strings lexically to form a strict partial ordering.
+	 */
+	public compareStrings<T extends string>(this: void, a: T, b: T): number {
+		return a > b ? 1 : a === b ? 0 : -1;
+	}
+}
+
+let identityStableComparatorsI: IdentityStableComparators = new IdentityStableComparatorsImpl();
 
 /**
- * A numeric comparator used for sorting in ascending order.
+ * Get set of comparison functions which must have stable identities
  *
- * Handles +/-0 like Map: -0 is equal to +0.
+ * @returns set of comparison functions which must have stable identities
+ *
+ * @public
  */
-export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
-	return a - b;
+export function getIdentityStableComparators(): IdentityStableComparators {
+	return identityStableComparatorsI;
 }
 
 /**
- * A numeric comparator used for sorting in descending order.
+ * Set the set of comparison functions which must have stable identities
  *
- * Handles +/-0 like Map: -0 is equal to +0.
+ * @param identityStableComparators - set of comparison functions which must have stable identities
+ *
+ * @public
  */
-export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
-	return b - a;
-}
-
-/**
- * Compares strings lexically to form a strict partial ordering.
- */
-export function compareStrings<T extends string>(a: T, b: T): number {
-	return a > b ? 1 : a === b ? 0 : -1;
+export function setIdentityStableComparators(identityStableComparators: IdentityStableComparators): void {
+	identityStableComparatorsI = identityStableComparators;
 }
 
 /**

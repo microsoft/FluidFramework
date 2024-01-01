@@ -9,7 +9,7 @@ import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { makeRandom } from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { compareStrings } from '../Common';
+import { getIdentityStableComparators } from '../Common';
 import {
 	numericUuidEquals,
 	createSessionId,
@@ -206,7 +206,7 @@ describe('NumericUuid', () => {
 				const numericA = numericUuidFromStableId(stableIdA);
 				const numericB = numericUuidFromStableId(stableIdB);
 				const comparedNumeric = numericUuidEquals(numericA, numericB);
-				const comparedStrings = compareStrings(stableIdA, stableIdB);
+				const comparedStrings = getIdentityStableComparators().compareStrings(stableIdA, stableIdB);
 				expect(comparedNumeric).to.equal(comparedStrings === 0);
 			});
 		});

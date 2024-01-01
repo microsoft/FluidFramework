@@ -5,7 +5,7 @@
 
 import { BTree } from '@tylerbu/sorted-btree-es6';
 import { assert } from '@fluidframework/core-utils';
-import { fail, copyPropertyIfDefined, compareBtrees, compareFiniteNumbers } from './Common';
+import { fail, copyPropertyIfDefined, compareBtrees, getIdentityStableComparators } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { comparePayloads } from './PayloadUtilities';
 import { NodeData, Payload } from './persisted-types';
@@ -104,7 +104,7 @@ export class Forest {
 			this.nodes = data.nodes;
 			this.expensiveValidation = data.expensiveValidation;
 		} else {
-			this.nodes = new BTree<NodeId, ForestNode>(undefined, compareFiniteNumbers);
+			this.nodes = new BTree<NodeId, ForestNode>(undefined, getIdentityStableComparators().compareFiniteNumbers);
 			this.expensiveValidation = data ?? false;
 		}
 		if (this.expensiveValidation) {

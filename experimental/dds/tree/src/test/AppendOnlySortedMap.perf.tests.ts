@@ -5,7 +5,7 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { IRandom, makeRandom } from '@fluid-private/stochastic-test-utils';
-import { compareFiniteNumbers } from '../Common';
+import { getIdentityStableComparators } from '../Common';
 import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
 
 function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
@@ -49,5 +49,5 @@ function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number,
 }
 
 describe('AppendOnlySortedMap Perf', () => {
-	runAppendOnlyMapPerfTests(() => new AppendOnlySortedMap(compareFiniteNumbers));
+	runAppendOnlyMapPerfTests(() => new AppendOnlySortedMap(getIdentityStableComparators().compareFiniteNumbers));
 });

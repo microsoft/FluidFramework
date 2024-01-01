@@ -12,11 +12,9 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
 	hasLength,
 	assertNotUndefined,
-	compareFiniteNumbers,
-	compareFiniteNumbersReversed,
 	compareMaps,
-	compareStrings,
 	fail,
+	getIdentityStableComparators,
 	getOrCreate,
 	Mutable,
 	setPropertyIfDefined,
@@ -343,7 +341,9 @@ export class IdCompressor {
 	 * Maps local IDs to override strings. This will contain an entry for every override assigned to a local ID generated during
 	 * the current session, and retains entries for the lifetime of this compressor.
 	 */
-	private readonly localOverrides = new AppendOnlySortedMap<LocalCompressedId, string>(compareFiniteNumbersReversed);
+	private readonly localOverrides = new AppendOnlySortedMap<LocalCompressedId, string>(
+		getIdentityStableComparators().compareFiniteNumbersReversed
+	);
 
 	/**
 	 * Maps local IDs to the final ID they are associated with (if any), and maps final IDs to the corresponding local ID (if any).
@@ -372,7 +372,7 @@ export class IdCompressor {
 	 */
 	private readonly clustersAndOverridesInversion: BTree<InversionKey, CompressionMapping> = new BTree(
 		undefined,
-		compareStrings
+		getIdentityStableComparators().compareStrings
 	);
 
 	/**
@@ -380,7 +380,7 @@ export class IdCompressor {
 	 * Can be searched in O(log n) to determine clusters for any final ID.
 	 */
 	private readonly finalIdToCluster: AppendOnlySortedMap<FinalCompressedId, IdCluster> = new AppendOnlySortedMap(
-		compareFiniteNumbers
+		getIdentityStableComparators().compareFiniteNumbers
 	);
 
 	private readonly logger: ITelemetryLoggerExt;
