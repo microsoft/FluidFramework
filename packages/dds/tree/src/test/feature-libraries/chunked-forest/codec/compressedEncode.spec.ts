@@ -11,11 +11,11 @@ import {
 	decode,
 	readValue,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import {
 	NodeShape,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
+} from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
 import {
 	EncoderCache,
 	FieldEncoder,
@@ -30,10 +30,10 @@ import {
 	compressedEncode,
 	encodeValue,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
-import { testTrees } from "../../../cursorTestSuite";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities";
-import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core";
+} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
+import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core/index.js";
 import {
 	EncodedChunkShape,
 	EncodedFieldBatch,
@@ -41,24 +41,23 @@ import {
 	validVersions,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format";
+} from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
 	BufferFormat,
 	IdentifierToken,
 	handleShapesAndIdentifiers,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-import { JsonCompatibleReadOnly, brand } from "../../../../util";
-import { typeboxValidator } from "../../../../external-utilities";
-import { cursorForJsonableTreeField } from "../../../../feature-libraries";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { typeboxValidator } from "../../../../external-utilities/index.js";
+import { cursorForJsonableTreeField } from "../../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema";
+import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { FieldBatch } from "../../../../feature-libraries/chunked-forest";
-import { ICodecOptions, IJsonCodec } from "../../../../codec";
-// eslint-disable-next-line import/no-internal-modules
-import { makeVersionedValidatedCodec } from "../../../../feature-libraries/versioned";
-import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
+import { FieldBatch } from "../../../../feature-libraries/chunked-forest/index.js";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
@@ -83,8 +82,9 @@ export function makeFieldBatchCodec(
 describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
-	describe("test trees", () => {
-		for (const [name, jsonable] of testTrees) {
+	describe("schemaless test trees", () => {
+		useSnapshotDirectory("chunked-forest-compressed-schemaless");
+		for (const [name, jsonable] of schemalessTestTrees) {
 			it(name, () => {
 				const input: FieldBatch = [cursorForJsonableTreeField([jsonable])];
 				const cache = new EncoderCache(
@@ -99,6 +99,12 @@ describe("compressedEncode", () => {
 				const decoded = codec.decode(result);
 				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
+
+				// This makes it clear when the format changes.
+				// This can include compression/heuristic changes which are non breaking,
+				// but does not handle ensuring different old versions stull load (for example encoded with different heuristics).
+				// TODO: add a new test suite with a library of encoded test data which we can parse to cover that.
+				takeJsonSnapshot(result);
 			});
 		}
 	});

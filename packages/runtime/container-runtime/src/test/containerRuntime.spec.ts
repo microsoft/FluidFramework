@@ -790,12 +790,8 @@ describe("Runtime", () => {
 			const getMockDataStores = (): DataStores => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processFluidDataStoreOp: (
-						_message: ISequencedDocumentMessage,
-						_local: boolean,
-						_localMessageMetadata: unknown,
-					) => {},
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					processFluidDataStoreOp: (..._args) => {},
+					setConnectionState: (..._args) => {},
 				} as DataStores;
 			};
 

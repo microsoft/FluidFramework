@@ -509,33 +509,40 @@ export class TscMultiTask extends TscDependentTask {
 		if (this._tsBuildInfo === undefined) {
 			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
 			// the command string to determine which file to use.
-			const tsBuildInfoFileFullPath = this.getPackageFileFullPath(
-				this.command.includes("esnext")
+			const tsbuildinfoPath = this.getPackageFileFullPath(
+				command.includes("tsc-multi.esm.json")
 					? "tsconfig.mjs.tsbuildinfo"
 					: "tsconfig.cjs.tsbuildinfo",
 			);
-
-			if (existsSync(tsBuildInfoFileFullPath)) {
-				try {
-					const tsBuildInfo = JSON.parse(
-						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
-					);
-					if (
-						tsBuildInfo.program &&
-						tsBuildInfo.program.fileNames &&
-						tsBuildInfo.program.fileInfos &&
-						tsBuildInfo.program.options
-					) {
-						this._tsBuildInfo = tsBuildInfo;
-					} else {
-						this.traceError(`Invalid format ${tsBuildInfoFileFullPath}`);
-					}
-				} catch {
-					this.traceError(`Unable to load ${tsBuildInfoFileFullPath}`);
-				}
-			} else {
-				this.traceError(`${tsBuildInfoFileFullPath} file not found`);
+			if (!existsSync(tsbuildinfoPath)) {
+				// No tsbuildinfo file, so we need to build
+				throw new Error(`no tsbuildinfo file found: ${tsbuildinfoPath}`);
 			}
+
+			const files = [...commonFiles];
+
+			// Add src files
+			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
+
+			// Calculate hashes of all the files; only the hashes will be stored in the donefile.
+			const hashesP = files.map(async (name) => {
+				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+					this.getPackageFileFullPath(name),
+				);
+				return { name, hash };
+			});
+
+			const buildInfo = readFileSync(tsbuildinfoPath).toString();
+			const version = await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
+			const hashes = await Promise.all(hashesP);
+			const result = JSON.stringify({
+				version,
+				buildInfo,
+				hashes,
+			});
+			return result;
+		} catch (e) {
+			this.traceError(`error generating done file content: ${e}`);
 		}
 		return this._tsBuildInfo;
 	}

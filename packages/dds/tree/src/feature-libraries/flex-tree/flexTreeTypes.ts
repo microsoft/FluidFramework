@@ -3,13 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware";
-import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
-import { Assume, FlattenKeys } from "../../util";
-import { LocalNodeKey, StableNodeKey } from "../node-key";
+import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
+import {
+	FieldKey,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+} from "../../core/index.js";
+import { Assume, FlattenKeys } from "../../util/index.js";
+import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import {
 	TreeFieldSchema,
-	InternalTypedSchemaTypes,
+	LazyItem,
 	TreeNodeSchema,
 	AllowedTypes,
 	FieldNodeSchema,
@@ -20,11 +25,11 @@ import {
 	Fields,
 	FlexListToUnion,
 	FlexList,
-} from "../typed-schema";
-import { FieldKinds } from "../default-schema";
-import { FieldKind } from "../modular-schema";
-import { EditableTreeEvents } from "./treeEvents";
-import { FlexTreeContext } from "./context";
+} from "../typed-schema/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import { FieldKind } from "../modular-schema/index.js";
+import { EditableTreeEvents } from "./treeEvents.js";
+import { FlexTreeContext } from "./context.js";
 
 /**
  * Indicates that an object is a flex tree.
@@ -50,6 +55,7 @@ export enum FlexTreeEntityKind {
 
 /**
  * Allows boxed iteration of a tree/field
+ * @internal
  */
 export const boxedIterator = Symbol();
 
@@ -106,7 +112,7 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 
 /**
  * Status of the tree that a particular node belongs to.
- * @beta
+ * @public
  */
 export enum TreeStatus {
 	/**
@@ -127,6 +133,7 @@ export enum TreeStatus {
 
 /**
  * {@inheritdoc TreeNode.[onNextChange]}
+ * @internal
  */
 export const onNextChange = Symbol("onNextChange");
 
@@ -985,7 +992,7 @@ export type FlexTreeUnboxFieldInner<
  * @internal
  */
 export type FlexTreeUnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
-	InternalTypedSchemaTypes.LazyItem<infer InnerType>,
+	LazyItem<infer InnerType>,
 ]
 	? InnerType extends TreeNodeSchema
 		? FlexTreeUnboxNode<InnerType>

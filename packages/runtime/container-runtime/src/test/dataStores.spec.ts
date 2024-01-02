@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { getSummaryForDatastores } from "../dataStores";
+import { detectOutboundReferences, getSummaryForDatastores } from "../dataStores";
 import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summary";
 
 describe("Runtime", () => {
@@ -146,6 +146,61 @@ describe("Runtime", () => {
 					"lower-datastore-2",
 					"Should have lower datastore 2",
 				);
+			});
+		});
+		describe("detectOutboundReferences", () => {
+			it("Can find handles", () => {
+				const outboundReferences: [string, string][] = [];
+				detectOutboundReferences(
+					{
+						address: "dataStore1",
+						contents: {
+							address: "dds1",
+							someHandle: {
+								type: "__fluid_handle__",
+								url: "routeA",
+							},
+							nested: {
+								anotherHandle: {
+									type: "__fluid_handle__",
+									url: "routeB",
+								},
+								address: "ignored",
+							},
+							array: [
+								{
+									type: "__fluid_handle__",
+									url: "routeC",
+								},
+								{
+									type: "__fluid_handle__",
+									url: "routeD",
+								},
+							],
+							deadEnd: null,
+							number: 1,
+							nothing: undefined,
+						},
+					},
+					(from, to) => {
+						outboundReferences.push([from, to]);
+					},
+				);
+				assert.deepEqual(
+					outboundReferences,
+					[
+						["/dataStore1/dds1", "routeA"],
+						["/dataStore1/dds1", "routeB"],
+						["/dataStore1/dds1", "routeC"],
+						["/dataStore1/dds1", "routeD"],
+					],
+					"Should find both handles",
+				);
+			});
+			it("null contents", () => {
+				detectOutboundReferences({ address: "foo", contents: null }, () => {
+					assert.fail("Should not be called");
+				});
 			});
 		});
 	});

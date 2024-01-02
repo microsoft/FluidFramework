@@ -29,6 +29,7 @@ export function generateStableId(): StableId;
 
 // @alpha @deprecated
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
+    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
     // @deprecated (undocumented)
     static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
     // @deprecated (undocumented)
@@ -90,6 +91,7 @@ export interface IIdCompressor {
 
 // @alpha (undocumented)
 export interface IIdCompressorCore {
+    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): any;
     finalizeCreationRange(range: IdCreationRange): void;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;

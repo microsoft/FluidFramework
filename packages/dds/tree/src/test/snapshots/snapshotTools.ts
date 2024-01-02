@@ -6,7 +6,7 @@
 import path from "path";
 import { strict as assert } from "assert";
 import { existsSync, rmSync, mkdirSync, writeFileSync, readFileSync } from "fs";
-import { JsonCompatibleReadOnly } from "../../util";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
@@ -35,7 +35,7 @@ export function takeSnapshot(data: string, suffix: string): void {
 		assert(exists === false, "snapshot should not already exist: possible name collision.");
 		writeFileSync(fullFile, data);
 	} else {
-		assert(exists, `test schema snapshot file does not exist: "${fullFile}"`);
+		assert(exists, `test snapshot file does not exist: "${fullFile}"`);
 		const pastData = readFileSync(fullFile, "utf-8");
 		assert.equal(data, pastData, `snapshot different for "${currentTestName}"`);
 	}
@@ -47,7 +47,7 @@ let currentTestFile: string | undefined;
 // Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
 const nameCheck = new RegExp(/^[^"/\\]+$/);
 
-assert(__dirname.endsWith("dist/test/snapshots"));
+assert(__dirname.match(/dist[/\\]test[/\\]snapshots$/));
 const snapshotsFolder = path.join(__dirname, `../../../src/test/snapshots`);
 assert(existsSync(snapshotsFolder));
 

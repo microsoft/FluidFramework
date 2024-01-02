@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { SchemaSummarizer, encodeTreeSchema } from "./schemaSummarizer";
-export { makeSchemaCodec } from "./codec";
-export { Format } from "./format";
+export { SchemaSummarizer, encodeTreeSchema } from "./schemaSummarizer.js";
+export { makeSchemaCodec } from "./codec.js";
+export { Format } from "./format.js";

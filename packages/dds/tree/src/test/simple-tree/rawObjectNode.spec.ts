@@ -7,12 +7,12 @@
 /* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../domains";
-import { boxedIterator } from "../../feature-libraries/flex-tree";
-import { brand } from "../../util";
-import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils";
-import { createRawNode, extractRawNodeContent } from "../../simple-tree/rawNode";
-import { ObjectNodeSchema } from "../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { boxedIterator } from "../../feature-libraries/flex-tree/index.js";
+import { brand } from "../../util/index.js";
+import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
+import { createRawNode, extractRawNodeContent } from "../../simple-tree/rawNode.js";
+import { ObjectNodeSchema } from "../../feature-libraries/index.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {

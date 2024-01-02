@@ -4,8 +4,8 @@
  */
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { ITreeCheckout, TreeContent } from "../../shared-tree";
-import { leaf, SchemaBuilder } from "../../domains";
+import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
 import {
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
@@ -15,7 +15,7 @@ import {
 	flexTreeViewWithContent,
 	checkoutWithContent,
 	requiredBooleanRootSchema,
-} from "../utils";
+} from "../utils.js";
 import {
 	AllowedUpdateType,
 	TreeNodeSchemaIdentifier,
@@ -25,8 +25,8 @@ import {
 	Value,
 	moveToDetachedField,
 	storedEmptyFieldSchema,
-} from "../../core";
-import { ContextuallyTypedNodeData, FieldKinds } from "../../feature-libraries";
+} from "../../core/index.js";
+import { ContextuallyTypedNodeData, FieldKinds } from "../../feature-libraries/index.js";
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {

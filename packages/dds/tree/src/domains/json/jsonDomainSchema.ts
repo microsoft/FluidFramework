@@ -8,16 +8,16 @@
 // which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
 // TODO: Understand and/or remove the need for this workaround.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-import { ValueSchema } from "../../core";
+import { ValueSchema } from "../../core/index.js";
 
 import {
 	AllowedTypes,
 	FieldKinds,
 	TreeFieldSchema,
 	SchemaBuilderInternal,
-} from "../../feature-libraries";
-import { requireAssignableTo } from "../../util";
-import { leaf } from "../leafDomain";
+} from "../../feature-libraries/index.js";
+import { requireAssignableTo } from "../../util/index.js";
+import { leaf } from "../leafDomain.js";
 
 const builder = new SchemaBuilderInternal({
 	scope: "com.fluidframework.json",

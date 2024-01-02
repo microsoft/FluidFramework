@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -15,47 +15,47 @@ import {
 	TaggedChange,
 	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
-} from "../../../core";
+} from "../../../core/index.js";
 // TODO: Throughout this file, we use TestChange as the child change type.
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
-import { TestChange } from "../../testChange";
+import { TestChange } from "../../testChange.js";
 import {
 	deepFreeze,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
-} from "../../utils";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util";
+} from "../../utils.js";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
 	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/optional-field";
+} from "../../../feature-libraries/optional-field/index.js";
 import {
 	FieldStateTree,
 	getSequentialEdits,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
 	getSequentialStates,
-} from "../../exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
+} from "../../exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import {
 	RebaseRevisionMetadata,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema";
-import { assertEqual } from "./optionalFieldUtils";
+} from "../../../feature-libraries/modular-schema/index.js";
+import { assertEqual } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
 function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
 	// Rather than use UUIDs, allocate these sequentially for an easier time debugging tests.
 	let currentRevision = 0;
-	return () => `${prefix}${currentRevision++}` as RevisionTag;
+	return () => `${prefix}${currentRevision++}` as unknown as RevisionTag;
 }
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
@@ -281,7 +281,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
-				description: "Delete",
+				description: "Remove",
 			},
 			parent: state,
 		};
@@ -297,7 +297,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
-				description: "Delete",
+				description: "Remove",
 			},
 			parent: state,
 		};

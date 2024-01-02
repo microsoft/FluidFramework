@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Named, fail } from "../../util";
+import { Named, fail } from "../../util/index.js";
 import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
@@ -12,9 +12,9 @@ import {
 	Adapters,
 	AdaptedViewSchema,
 	Compatibility,
-} from "../../core";
-import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema";
-import { FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema";
+} from "../../core/index.js";
+import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema/index.js";
+import { FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema.js";
 
 /**
  * A collection of View information for schema, including policy.

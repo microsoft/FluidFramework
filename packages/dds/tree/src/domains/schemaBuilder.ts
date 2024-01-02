@@ -18,44 +18,15 @@ import {
 	normalizeField,
 	SchemaBuilderBase,
 	ImplicitFieldSchema,
-	Required,
 	ObjectNodeSchema,
 	Unenforced,
 	AllowedTypes,
 	FieldNodeSchema,
 	MapNodeSchema,
 	TreeNodeSchemaBase,
-} from "../feature-libraries";
-import { FactoryTreeSchema, addFactory } from "../simple-tree";
-import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
-import { leaf } from "./leafDomain";
-
-/**
- * A {@link ObjectNodeSchema} that satisfies the {@link TreeObjectFactory} and therefore can create {@link TreeObjectNode}s.
- * @privateRemarks
- * This type exists because TypeScript is not able to correlate the two places where it is used if the body of this type is inlined.
- */
-export type FactoryObjectNodeSchema<
-	TScope extends string,
-	Name extends number | string,
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = FactoryTreeSchema<
-	ObjectNodeSchema<`${TScope}.${Name}`, { [key in keyof T]: NormalizeField<T[key], Required> }>
->;
-
-/**
- * Same as `FactoryObjectNodeSchema` but with less type safety and works for recursive objects.
- * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
- *
- * See {@link Unenforced} for details.
- *
- * TODO: Make this work with ImplicitFieldSchema.
- */
-export type FactoryObjectNodeSchemaRecursive<
-	TScope extends string,
-	Name extends number | string,
-	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-> = FactoryTreeSchema<ObjectNodeSchema<`${TScope}.${Name}`, T>>;
+} from "../feature-libraries/index.js";
+import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util/index.js";
+import { leaf } from "./leafDomain.js";
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -92,22 +63,14 @@ export class SchemaBuilder<
 		});
 	}
 
-	public override object<
-		const Name extends TName,
-		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, t: T): FactoryObjectNodeSchema<TScope, Name, T> {
-		const schema = super.object(name, t);
-		return addFactory(schema) as unknown as FactoryObjectNodeSchema<TScope, Name, T>;
-	}
-
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-	>(name: Name, t: T): FactoryObjectNodeSchemaRecursive<TScope, Name, T> {
+	>(name: Name, t: T) {
 		return this.object(
 			name,
 			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-		) as unknown as FactoryObjectNodeSchemaRecursive<TScope, Name, T>;
+		) as unknown as ObjectNodeSchema<`${TScope}.${Name}`, T>;
 	}
 
 	/**
