@@ -152,10 +152,9 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		await timeoutPromise((resolve) => {
 			if (container2.disposed) {
 				resolve();
+				return;
 			}
-			container2.on("disposed", () => {
-				resolve();
-			});
+			container2.on("disposed", () => resolve());
 		});
 		assert(
 			container2.disposed === true,

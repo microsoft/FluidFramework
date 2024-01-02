@@ -91,8 +91,6 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			runtime,
 		);
 
-		await summarizer.waitStart();
-
 		// Handle summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
 		summarizer.processIncomingSummaryAcks().catch((error) => {
@@ -101,6 +99,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				error,
 			);
 		});
+
+		await summarizer.waitStart();
 
 		// Update heuristic counts
 		// By the time we get here, there are potentially ops missing from the heuristic summary counts
@@ -268,11 +268,11 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				: defaultMaxAttemptsForSubmitFailures;
 	}
 
-	private async handleSummaryAck(lastAck: IAckedSummary) {
-		const refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
+	private async handleSummaryAck(ack: IAckedSummary) {
+		const refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
-		const summaryOpHandle = lastAck.summaryOp.contents.handle;
-		const summaryAckHandle = lastAck.summaryAck.contents.handle;
+		const summaryOpHandle = ack.summaryOp.contents.handle;
+		const summaryAckHandle = ack.summaryAck.contents.handle;
 		while (this.summarizingLock !== undefined) {
 			summaryLogger.sendTelemetryEvent({
 				eventName: "RefreshAttemptWithSummarizerRunning",
