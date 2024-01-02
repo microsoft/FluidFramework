@@ -19,7 +19,7 @@ import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tr
 import { Revertible } from "../../../core/index.js";
 import {
 	FieldEdit,
-	FuzzDelete,
+	FuzzRemove,
 	FuzzFieldChange,
 	FuzzSet,
 	FuzzTransactionType,
@@ -112,7 +112,7 @@ function applySequenceFieldEdit(
 			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
 			break;
 		}
-		case "delete": {
+		case "remove": {
 			const firstNode = navigateToNode(tree, change.firstNode);
 			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
 			const { parent: field, index } = firstNode.parentField;
@@ -197,7 +197,7 @@ function navigateToNode(
 
 function applyOptionalFieldEdit(
 	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzSet | FuzzDelete,
+	change: FuzzSet | FuzzRemove,
 ): void {
 	switch (change.type) {
 		case "set": {
@@ -211,7 +211,7 @@ function applyOptionalFieldEdit(
 			}
 			break;
 		}
-		case "delete": {
+		case "remove": {
 			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
 			assert(field?.is(fuzzNode.objectNodeFieldsObject.optionalChild));
 			field.content = undefined;

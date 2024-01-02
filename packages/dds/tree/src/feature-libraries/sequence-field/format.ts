@@ -84,7 +84,7 @@ const DetachFields = Type.Object({
 	idOverride: Type.Optional(DetachIdOverride),
 });
 
-const Delete = Type.Composite(
+const Remove = Type.Composite(
 	[
 		Type.Object({
 			id: ChangesetLocalIdSchema,
@@ -107,7 +107,8 @@ const Attach = Type.Object(
 
 const Detach = Type.Object(
 	{
-		delete: Type.Optional(Delete),
+		// TODO:AB6715 rename to `remove`
+		delete: Type.Optional(Remove),
 		moveOut: Type.Optional(MoveOut),
 	},
 	unionOptions,
@@ -123,7 +124,8 @@ const MarkEffect = Type.Object(
 		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
 		insert: Type.Optional(Insert),
 		moveIn: Type.Optional(MoveIn),
-		delete: Type.Optional(Delete),
+		// TODO:AB6715 rename to `remove`
+		delete: Type.Optional(Remove),
 		moveOut: Type.Optional(MoveOut),
 		attachAndDetach: Type.Optional(AttachAndDetach),
 	},
@@ -164,7 +166,7 @@ export namespace Encoded {
 
 	export type Insert = Static<typeof Insert>;
 	export type MoveIn = Static<typeof MoveIn>;
-	export type Delete = Static<typeof Delete>;
+	export type Remove = Static<typeof Remove>;
 	export type MoveOut = Static<typeof MoveOut>;
 	export type Attach = Static<typeof Attach>;
 	export type Detach = Static<typeof Detach>;

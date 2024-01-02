@@ -980,7 +980,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 enum Status {
 	/**
 	 * Indicates the `NodePath` is being maintained and corresponds to a valid
-	 * (i.e., not deleted) node in the document.
+	 * (i.e., not removed) node in the document.
 	 */
 	Alive,
 	/**
@@ -992,7 +992,7 @@ enum Status {
 	 */
 	Disposed,
 	/**
-	 * Indicates the `NodePath` corresponds to a deleted node in the document.
+	 * Indicates the `NodePath` corresponds to a removed node in the document.
 	 * Such `NodePath`s are not maintained by the `AnchorSet` (other than updating
 	 * their status to `Disposed` when appropriate).
 	 *

@@ -86,7 +86,7 @@ describe("Fuzz - composed vs individual changes", () => {
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 2,
+		remove: 2,
 		move: 2,
 		fieldSelection: {
 			optional: 1,

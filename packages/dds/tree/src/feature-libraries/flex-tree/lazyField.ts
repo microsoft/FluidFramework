@@ -17,11 +17,10 @@ import {
 	iterateCursorField,
 	isCursor,
 	ITreeCursorSynchronous,
-	mapCursorField,
 } from "../../core/index.js";
 import { FieldKind } from "../modular-schema/index.js";
 // TODO: stop depending on contextuallyTyped
-import { cursorFromContextualData } from "../contextuallyTyped.js";
+import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
 	OptionalFieldEditBuilder,
@@ -37,7 +36,7 @@ import {
 } from "../../util/index.js";
 import { AllowedTypes, TreeFieldSchema } from "../typed-schema/index.js";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
-import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import { Context } from "./context.js";
 import {
 	FlexibleNodeContent,
@@ -307,11 +306,14 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 	public insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void {
 		assertValidIndex(index, this, true);
-		const content: ITreeCursorSynchronous[] = isCursor(value)
+		const content: ITreeCursorSynchronous = isCursor(value)
 			? prepareFieldCursorForInsert(value)
-			: Array.from(value, (item) =>
-					cursorFromContextualData(this.context, this.schema.allowedTypeSet, item),
+			: cursorForMapTreeField(
+					Array.from(value, (item) =>
+						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
+					),
 			  );
+
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
 	}
@@ -326,7 +328,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 	public removeAt(index: number): void {
 		const fieldEditor = this.sequenceEditor();
-		fieldEditor.delete(index, 1);
+		fieldEditor.remove(index, 1);
 	}
 
 	public removeRange(start?: number, end?: number): void {
@@ -335,7 +337,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		const removeStart = start ?? 0;
 		const removeEnd = Math.min(length, end ?? length);
 		assertValidRangeIndices(removeStart, removeEnd, this);
-		fieldEditor.delete(removeStart, removeEnd - removeStart);
+		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 
 	public moveToStart(sourceIndex: number): void;
@@ -584,13 +586,11 @@ const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
 /**
  * Prepare a fields cursor (holding a sequence of nodes) for inserting.
  */
-function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
+function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	// Convert from the desired API (single field cursor) to the currently required API (array of node cursors).
-	// This is inefficient, and particularly bad if the data was efficiently chunked using uniform chunks.
-	// TODO: update editing APIs to take in field cursors not arrays of node cursors, then remove this copying conversion.
-	return mapCursorField(cursor, () => cursorForMapTreeNode(mapTreeFromCursor(cursor)));
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	return cursor;
 }
 
 /**

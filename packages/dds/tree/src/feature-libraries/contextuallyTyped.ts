@@ -13,6 +13,7 @@ import {
 	ITreeCursorSynchronous,
 	isCursor,
 	TreeValue,
+	CursorLocationType,
 } from "../core/index.js";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
@@ -32,7 +33,7 @@ import {
 	TreeNodeSchema,
 	allowedTypesSchemaSet,
 } from "./typed-schema/index.js";
-import { cursorForMapTreeNode } from "./mapTreeCursor.js";
+import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
@@ -368,17 +369,17 @@ export function cursorForTypedData<T extends AllowedTypes>(
 
 /**
  * Construct a tree from ContextuallyTypedNodeData.
+ * Returns a cursor in Field mode.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
- * TODO: migrate APIs which take arrays of cursors to take cursors in fields mode.
  */
 export function cursorsFromContextualData(
 	context: TreeDataContext,
 	field: TreeFieldSchema,
 	data: ContextuallyTypedNodeData | undefined,
-): ITreeCursorSynchronous[] {
+): ITreeCursorSynchronous {
 	const mapTrees = applyFieldTypesFromContext(context, field, data);
-	return mapTrees.map(cursorForMapTreeNode);
+	return cursorForMapTreeField(mapTrees);
 }
 
 /**
@@ -389,7 +390,7 @@ export function cursorsForTypedFieldData<T extends TreeFieldSchema>(
 	context: TreeDataContext,
 	schema: T,
 	data: InsertableFlexField<T>,
-): ITreeCursorSynchronous[] {
+): ITreeCursorSynchronous {
 	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }
 
@@ -556,27 +557,29 @@ export type NewFieldContent =
 	| ContextuallyTypedFieldData;
 
 /**
- * Convert NewFieldContent into ITreeCursor array.
+ * Convert NewFieldContent into ITreeCursorSynchronous.
+ * The returned cursor will be in Field mode.
  */
 export function normalizeNewFieldContent(
 	context: TreeDataContext,
 	schema: TreeFieldSchema,
 	content: NewFieldContent,
-): readonly ITreeCursorSynchronous[] {
+): ITreeCursorSynchronous {
 	if (areCursors(content)) {
-		if (getFieldKind(schema).multiplicity === Multiplicity.Sequence) {
-			assert(isReadonlyArray(content), 0x6b7 /* sequence fields require array content */);
-			return content;
-		} else {
-			if (isReadonlyArray(content)) {
-				assert(
-					content.length === 1,
-					0x6b8 /* non-sequence fields can not be provided content that is multiple cursors */,
-				);
-				return content;
-			}
-			return [content];
+		if (isReadonlyArray(content)) {
+			assert(
+				getFieldKind(schema).multiplicity === Multiplicity.Sequence || content.length === 1,
+				0x6b8 /* non-sequence fields can not be provided content that is multiple cursors */,
+			);
+			// TODO: is there a better way to get a field cursor from an array of node cursors?
+			const mapTrees = content.map((c) => mapTreeFromCursor(c));
+			return cursorForMapTreeField(mapTrees);
 		}
+		if (content.mode === CursorLocationType.Fields) {
+			return content;
+		}
+		// TODO: is there a better way to get a field cursor from a node cursor?
+		return cursorForMapTreeField([mapTreeFromCursor(content)]);
 	}
 
 	return cursorsFromContextualData(context, schema, content);

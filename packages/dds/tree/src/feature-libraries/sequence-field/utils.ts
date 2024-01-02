@@ -40,7 +40,7 @@ import {
 	NoopMark,
 	Changeset,
 	MoveId,
-	Delete,
+	Remove,
 	NoopMarkType,
 	HasMarkFields,
 	CellId,
@@ -493,7 +493,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	switch (type) {
 		case NoopMarkType:
 			return mark.cellId !== undefined;
-		case "Delete":
+		case "Remove":
 		case "MoveOut":
 		case "AttachAndDetach":
 			return true;
@@ -539,13 +539,13 @@ export function isImpactful(
 	switch (type) {
 		case NoopMarkType:
 			return false;
-		case "Delete": {
+		case "Remove": {
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
 			if (inputId === undefined) {
 				return true;
 			}
 			const outputId = getOutputCellId(mark, revision, revisionMetadata);
-			assert(outputId !== undefined, 0x824 /* Delete marks must have an output cell ID */);
+			assert(outputId !== undefined, 0x824 /* Remove marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(inputId, outputId);
 		}
 		case "AttachAndDetach":
@@ -645,13 +645,13 @@ function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLo
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
-	return type === "Delete" || type === "MoveOut";
+	return type === "Remove" || type === "MoveOut";
 }
 
-export function isDeleteMark<TNodeChange>(
+export function isRemoveMark<TNodeChange>(
 	mark: Mark<TNodeChange> | undefined,
-): mark is CellMark<Delete, TNodeChange> {
-	return mark?.type === "Delete";
+): mark is CellMark<Remove, TNodeChange> {
+	return mark?.type === "Remove";
 }
 
 function areMergeableChangeAtoms(
@@ -785,8 +785,8 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		case "Delete": {
-			const lhsDetach = lhs as Delete;
+		case "Remove": {
+			const lhsDetach = lhs as Remove;
 			if (
 				(lhsDetach.id as number) + lhsCount === rhs.id &&
 				haveMergeableIdOverrides(lhsDetach, lhsCount, rhs)
@@ -1223,15 +1223,15 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			}
 			return [effect, effect2];
 		}
-		case "Delete": {
+		case "Remove": {
 			const effect1 = { ...effect };
 			const id2: ChangesetLocalId = brand((effect.id as number) + length);
 			const effect2 = { ...effect, id: id2 };
-			const effect2Delete = effect2 as Mutable<Delete>;
-			if (effect2Delete.idOverride !== undefined) {
-				effect2Delete.idOverride = {
-					...effect2Delete.idOverride,
-					id: splitDetachEvent(effect2Delete.idOverride.id, length),
+			const effect2Remove = effect2 as Mutable<Remove>;
+			if (effect2Remove.idOverride !== undefined) {
+				effect2Remove.idOverride = {
+					...effect2Remove.idOverride,
+					id: splitDetachEvent(effect2Remove.idOverride.id, length),
 				};
 			}
 			return [effect1, effect2];
