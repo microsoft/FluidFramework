@@ -16,11 +16,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import {
-	IIdCompressor,
-	SessionSpaceCompressedId,
-	StableId,
-} from "@fluidframework/runtime-definitions";
+import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";

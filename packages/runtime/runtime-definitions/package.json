@@ -94,10 +94,48 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IIdCompressorCore": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"ClassDeclaration_IdCompressor": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_OpSpaceCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SerializedIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SerializedIdCompressorWithNoSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SessionId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SessionSpaceCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_StableId": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
