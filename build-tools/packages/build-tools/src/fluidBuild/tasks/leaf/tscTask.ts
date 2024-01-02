@@ -8,9 +8,9 @@ import path from "path";
 import * as tsTypes from "typescript";
 import isEqual from "lodash.isequal";
 
-// import { readFileSync } from "fs-extra";
+import { readFileSync } from "fs-extra";
 import { existsSync, readFileAsync } from "../../../common/utils";
-import { getInstalledPackageVersion } from "../../../common/taskUtils";
+import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
 import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -42,7 +42,7 @@ export class TscTask extends LeafTask {
 	}
 
 	protected get isIncremental() {
-		if (this.executable === "tsc-multi") {
+if (this.executable === "tsc-multi") {
 			return true;
 		}
 		const config = this.readTsConfig();
@@ -319,7 +319,7 @@ export class TscTask extends LeafTask {
 		return path.join(directory, fileName);
 	}
 
-	protected get tsBuildInfoFileFullPath() {
+	private get tsBuildInfoFileFullPath() {
 		if (this._tsBuildInfoFullPath === undefined) {
 			const infoFile = this.getTsBuildInfoFileFromConfig();
 			if (infoFile) {
@@ -347,7 +347,6 @@ export class TscTask extends LeafTask {
 	public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
 		if (this._tsBuildInfo === undefined) {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
-
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
 					const tsBuildInfo = JSON.parse(
@@ -486,16 +485,16 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 export class TscMultiTask extends TscDependentTask {
 	private _tsBuildInfo: ITsBuildInfo | undefined;
 
-	/**
-	 * A list of files that should be considered part of the cache input, if they exist
-	 */
-	private readonly commonFiles = [
-		"package.json",
-		"tsconfig.json",
-		"src/test/tsconfig.json",
-		"tsc-multi.json",
-		"tsc-multi.test.json",
-	];
+		/**
+		 * A list of files that should be considered part of the cache input, if they exist
+		 */
+		private readonly commonFiles = [
+      "package.json",
+			"tsconfig.json",
+			"src/test/tsconfig.json",
+			"tsc-multi.json",
+			"tsc-multi.test.json",
+		];
 
 	protected get configFileFullPaths() {
 		return this.commonFiles.map((file) => this.getPackageFileFullPath(file));
@@ -510,7 +509,7 @@ export class TscMultiTask extends TscDependentTask {
 			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
 			// the command string to determine which file to use.
 			const tsbuildinfoPath = this.getPackageFileFullPath(
-				command.includes("tsc-multi.esm.json")
+				this.command.includes("tsc-multi.esm.json")
 					? "tsconfig.mjs.tsbuildinfo"
 					: "tsconfig.cjs.tsbuildinfo",
 			);
@@ -519,7 +518,7 @@ export class TscMultiTask extends TscDependentTask {
 				throw new Error(`no tsbuildinfo file found: ${tsbuildinfoPath}`);
 			}
 
-			const files = [...commonFiles];
+			const files = [...this.commonFiles];
 
 			// Add src files
 			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
