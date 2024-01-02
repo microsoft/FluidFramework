@@ -8,7 +8,7 @@
 
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { IConfigProviderBase as IConfigProviderBase_2 } from '@fluidframework/core-interfaces';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -29,9 +29,6 @@ import { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
-// @alpha @deprecated
-export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @internal (undocumented)
 export const connectedEventName = "connected";
@@ -127,7 +124,7 @@ export const hasErrorInstanceId: (x: unknown) => x is {
 };
 
 // @internal
-export interface IConfigProvider extends IConfigProviderBase_2 {
+export interface IConfigProvider extends IConfigProviderBase {
     // (undocumented)
     getBoolean(name: string): boolean | undefined;
     // (undocumented)
@@ -140,12 +137,6 @@ export interface IConfigProvider extends IConfigProviderBase_2 {
     getString(name: string): string | undefined;
     // (undocumented)
     getStringArray(name: string): string[] | undefined;
-}
-
-// @alpha @deprecated
-export interface IConfigProviderBase {
-    // (undocumented)
-    getRawConfig(name: string): ConfigTypes;
 }
 
 // @internal
@@ -282,7 +273,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 export function logIfFalse(condition: unknown, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
 // @internal
-export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase_2 | undefined)[]): MonitoringContext<L>;
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
 // @internal
 export class MockLogger implements ITelemetryBaseLogger {
@@ -336,19 +327,19 @@ export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: str
 
 // @internal
 export class PerformanceEvent {
-    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean);
+    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean);
     // (undocumented)
-    cancel(props?: ITelemetryProperties, error?: unknown): void;
+    cancel(props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
     get duration(): number;
     // (undocumented)
-    end(props?: ITelemetryProperties): void;
-    reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: unknown): void;
+    end(props?: ITelemetryPropertiesExt): void;
+    reportEvent(eventNameSuffix: string, props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
-    reportProgress(props?: ITelemetryProperties, eventNameSuffix?: string): void;
-    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean): PerformanceEvent;
-    static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers, sampleThreshold?: number): T;
-    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, sampleThreshold?: number): Promise<T>;
+    reportProgress(props?: ITelemetryPropertiesExt, eventNameSuffix?: string): void;
+    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean): PerformanceEvent;
+    static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers, sampleThreshold?: number): T;
+    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, sampleThreshold?: number): Promise<T>;
 }
 
 // @internal
@@ -368,7 +359,7 @@ export class SampledTelemetryHelper implements IDisposable {
 }
 
 // @internal
-export const sessionStorageConfigProvider: Lazy<IConfigProviderBase_2>;
+export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @internal
 export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {

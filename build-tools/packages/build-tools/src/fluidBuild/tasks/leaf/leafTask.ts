@@ -490,14 +490,16 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
-				this.traceTrigger("mismatched compare file");
+				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
 				traceTaskTrigger(doneFileExpectedContent);
 				traceTaskTrigger(doneFileContent);
 			} else {
-				this.traceTrigger("unable to generate done file expected content");
+				this.traceTrigger(
+					"unable to generate done file expected content (getDoneFileContent returned undefined)",
+				);
 			}
 		} catch {
-			this.traceTrigger("unable to read compare file");
+			this.traceTrigger(`unable to read compare file: ${doneFileFullPath}`);
 		}
 		return false;
 	}
@@ -542,8 +544,15 @@ export class UnknownLeafTask extends LeafTask {
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	protected abstract getInputFiles(): Promise<string[]>;
 	protected abstract getOutputFiles(): Promise<string[]>;
+	protected get useHashes(): boolean {
+		return false;
+	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
+		if (this.useHashes) {
+			return this.getHashDoneFileContent();
+		}
+
 		// Gather the file information
 		try {
 			const srcFiles = await this.getInputFiles();
@@ -562,6 +571,33 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
+			return undefined;
+		}
+	}
+
+	private async getHashDoneFileContent(): Promise<string | undefined> {
+		const mapHash = async (name: string) => {
+			const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				this.getPackageFileFullPath(name),
+			);
+			return { name, hash };
+		};
+
+		try {
+			const srcFiles = await this.getInputFiles();
+			const dstFiles = await this.getOutputFiles();
+			const srcHashesP = Promise.all(srcFiles.map(mapHash));
+			const dstHashesP = Promise.all(dstFiles.map(mapHash));
+
+			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+			const output = JSON.stringify({
+				srcHashes,
+				dstHashes,
+			});
+			return output;
+		} catch (e: any) {
+			this.traceError(`error calculating file hashes: ${e.message}`);
+			this.traceTrigger("failed to get file hash");
 			return undefined;
 		}
 	}

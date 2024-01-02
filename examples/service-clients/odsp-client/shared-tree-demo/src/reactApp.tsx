@@ -5,8 +5,7 @@
 /* eslint-disable prefer-template */
 
 import React, { ReactNode, useEffect, useState } from "react";
-import { TreeView, Tree } from "@fluid-experimental/tree2";
-import { IFluidContainer } from "@fluidframework/fluid-static";
+import { TreeView, Tree, IFluidContainer } from "fluid-framework";
 import { App, Letter } from "./schema";
 
 export function Explanation(): JSX.Element {

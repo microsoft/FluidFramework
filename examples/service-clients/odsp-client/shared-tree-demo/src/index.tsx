@@ -5,8 +5,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { ITree } from "@fluid-experimental/tree2";
-import { IFluidContainer } from "@fluidframework/fluid-static";
+import { ITree, IFluidContainer } from "fluid-framework";
 import { loadFluidData, containerSchema, createFluidData } from "./fluid";
 import { treeConfiguration, Letter } from "./schema";
 // eslint-disable-next-line import/no-unassigned-import

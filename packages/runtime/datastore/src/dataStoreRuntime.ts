@@ -764,6 +764,10 @@ export class FluidDataStoreRuntime
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+		// Note: This is deprecated on IFluidDataStoreContext, and in an n/n-1 scenario where the
+		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
+		// will be the one to call addedGCOutboundReference directly.
+		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}
 

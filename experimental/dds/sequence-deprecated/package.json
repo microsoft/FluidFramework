@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/sequence-deprecated",
-	"version": "2.0.0-internal.9.0.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "Deprecated distributed sequences",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -44,13 +44,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -70,17 +70,17 @@
 	},
 	"devDependencies": {
 		"@fluid-private/test-dds-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.28.0",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
 		"eslint": "~8.50.0",

@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { Tree } from "@fluid-experimental/tree2";
+import { Tree } from "@fluidframework/tree";
 import { Inventory } from "../schema";
 import { Counter } from "./counter";
 

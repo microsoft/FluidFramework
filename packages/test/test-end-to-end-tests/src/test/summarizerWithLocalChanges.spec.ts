@@ -40,7 +40,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/summary/index.js";
+} from "@fluidframework/container-runtime/test/summary";
 
 /**
  * Data object that creates another data object during initialization. This is used to create a scenario
@@ -452,12 +452,6 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 
 	const dynamicSummarizationRetries = [true, false];
 	for (const tryDynamicRetry of dynamicSummarizationRetries) {
-		/**
-		 * This test results in gcUnknownOutboundReferences error - A data store is created in summarizer and its handle
-		 * is stored in the root data store's DDS. This results in a reference to the new data store but it is not
-		 * explicitly notified to GC. The notification to GC happens when op containing handle is processed and the
-		 * handle is parsed in remote clients. Local clients do not parse handle as its not serialized in it.
-		 */
 		itExpects(
 			`ValidateSummaryBeforeUpload = true. TryDynamicRetires = ${tryDynamicRetry}. ` +
 				`Heuristic based summaries should pass on retry when NodeDidNotRunGC is hit`,
@@ -466,10 +460,6 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 					clientType: "noninteractive/summarizer",
 					error: "NodeDidNotRunGC",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences",
-					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
