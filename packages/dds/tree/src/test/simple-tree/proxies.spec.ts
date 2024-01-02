@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree";
-import { TreeArrayNode } from "../../simple-tree";
-import { getRoot, pretty } from "./utils";
+import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree/index.js";
+import { TreeArrayNode } from "../../simple-tree/index.js";
+import { getRoot, pretty } from "./utils.js";
 
 describe("SharedTree proxies", () => {
 	const sb = new SchemaFactory("test");

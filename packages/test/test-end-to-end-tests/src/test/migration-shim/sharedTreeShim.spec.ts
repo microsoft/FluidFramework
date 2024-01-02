@@ -66,6 +66,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V2 of the registry (the migration registry) -----------------------------------------

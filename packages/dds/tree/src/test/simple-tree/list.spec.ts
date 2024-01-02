@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { getRoot, pretty } from "./utils";
+import { getRoot, pretty } from "./utils.js";
 
 describe("List", () => {
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */

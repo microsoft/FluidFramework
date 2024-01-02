@@ -206,6 +206,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 // @alpha
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
+    // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     readonly attachState: AttachState;
     // (undocumented)
@@ -368,7 +369,6 @@ export interface ISummarizerNode {
 // @alpha (undocumented)
 export interface ISummarizerNodeConfig {
     readonly canReuseHandle?: boolean;
-    readonly throwOnFailure?: true;
 }
 
 // @alpha (undocumented)

@@ -10,10 +10,10 @@ import {
 	TreeStoredSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
-} from "../../core";
-import { Multiplicity } from "../multiplicity";
-import { isNeverField } from "./comparison";
-import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
+} from "../../core/index.js";
+import { Multiplicity } from "../multiplicity.js";
+import { isNeverField } from "./comparison.js";
+import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
 
 /**
  * Functionality for FieldKinds that is stable,

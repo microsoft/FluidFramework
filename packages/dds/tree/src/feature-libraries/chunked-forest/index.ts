@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { uniformChunk, ChunkShape } from "./uniformChunk";
-export { TreeChunk, dummyRoot } from "./chunk";
+export { uniformChunk, ChunkShape } from "./uniformChunk.js";
+export { TreeChunk, dummyRoot } from "./chunk.js";
 export {
 	chunkTree,
 	defaultChunkPolicy,
@@ -12,12 +12,11 @@ export {
 	IChunker,
 	chunkFieldSingle,
 	chunkField,
-} from "./chunkTree";
-export { buildChunkedForest } from "./chunkedForest";
+} from "./chunkTree.js";
+export { buildChunkedForest } from "./chunkedForest.js";
 export {
 	EncodedFieldBatch,
 	FieldBatch,
 	FieldBatchCodec,
 	makeFieldBatchCodec,
-	FieldBatchEncoder,
-} from "./codec";
+} from "./codec/index.js";

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { NestedMap } from "../../util";
-import { ForestRootId } from "./detachedFieldIndex";
+import { NestedMap } from "../../util/index.js";
+import { RevisionTag } from "../rebase/index.js";
+import { ForestRootId } from "./detachedFieldIndex.js";
 
-export type Major = string | number | undefined;
+export type Major = RevisionTag | undefined;
 export type Minor = number;
 
 export interface DetachedFieldSummaryData {

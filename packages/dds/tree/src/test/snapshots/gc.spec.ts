@@ -4,24 +4,24 @@
  */
 
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedTree, SharedTreeFactory } from "../../shared-tree";
-import { typeboxValidator } from "../../external-utilities";
-import { SchemaFactory, TreeConfiguration } from "../../class-tree";
+import { SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree/index.js";
 
 const builder = new SchemaFactory("test");
+class Bar extends builder.object("bar", {
+	nestedHandles: builder.array(builder.handle),
+}) {}
 class SomeType extends builder.object("foo", {
 	handles: builder.array(builder.handle),
-	nested: builder.optional(
-		builder.object("bar", {
-			nestedHandles: builder.array(builder.handle),
-		}),
-	),
+	nested: builder.optional(Bar),
 	bump: builder.optional(builder.number),
 }) {}
 
@@ -32,7 +32,9 @@ const config = new TreeConfiguration(SomeType, () => ({
 }));
 
 function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory) {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
+	});
 	const tree = new SharedTree(
 		id,
 		dataStoreRuntime,
@@ -52,7 +54,10 @@ function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFac
 
 function createLocalTree(id: string) {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		id,
+	);
 }
 
 describe("Garbage Collection", () => {
@@ -126,9 +131,9 @@ describe("Garbage Collection", () => {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			this.tree1View.nested = {
-				nestedHandles: [subtree1.handle, subtree2.handle] as any,
-			};
+			this.tree1View.nested = new Bar({
+				nestedHandles: [subtree1.handle, subtree2.handle],
+			});
 
 			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();

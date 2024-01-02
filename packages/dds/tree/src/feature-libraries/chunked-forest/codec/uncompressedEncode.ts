@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core";
-import { FluidSerializableReadOnly } from "../../valueUtilities";
-import { FieldBatch } from "./fieldBatch";
-import { version, EncodedTreeShape, EncodedNestedArray, EncodedFieldBatch } from "./format";
-import { ShapeIndex } from "./formatGeneric";
+import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core/index.js";
+import { FluidSerializableReadOnly } from "../../valueUtilities.js";
+import { FieldBatch } from "./fieldBatch.js";
+import { version, EncodedTreeShape, EncodedNestedArray, EncodedFieldBatch } from "./format.js";
+import { ShapeIndex } from "./formatGeneric.js";
 
 /**
  * Encode data from `cursor` in the simplest way supported by `EncodedChunk`.
@@ -34,7 +34,6 @@ const arrayIndex: ShapeIndex = 1;
 
 const anyTreeShape: EncodedTreeShape = {
 	extraFields: arrayIndex,
-	fields: [],
 };
 
 const anyArray: EncodedNestedArray = treeIndex;

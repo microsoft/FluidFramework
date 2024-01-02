@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { compareSets, fail } from "../../util";
+import { compareSets, fail } from "../../util/index.js";
 import {
 	TreeNodeStoredSchema,
 	ValueSchema,
@@ -15,9 +15,9 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-} from "../../core";
-import { Multiplicity } from "../multiplicity";
-import { FullSchemaPolicy, withEditor } from "./fieldKind";
+} from "../../core/index.js";
+import { Multiplicity } from "../multiplicity.js";
+import { FullSchemaPolicy, withEditor } from "./fieldKind.js";
 
 /**
  * @returns true iff `superset` is a superset of `original`.

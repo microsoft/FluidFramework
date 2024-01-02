@@ -14,7 +14,7 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import type { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -51,29 +51,31 @@ const sharedMatrixId = "smatrix1Key";
 const sharedInkId = "sink1Key";
 const sparseMatrixId = "sparsematrixKey";
 
-const registry: ChannelFactoryRegistry = [
-	[sharedStringId, SharedString.getFactory()],
-	[sharedMapId, SharedMap.getFactory()],
-	[crcId, ConsensusRegisterCollection.getFactory()],
-	[sharedDirectoryId, SharedDirectory.getFactory()],
-	[sharedCellId, SharedCell.getFactory()],
-	[sharedInkId, Ink.getFactory()],
-	[sharedMatrixId, SharedMatrix.getFactory()],
-	[cocId, ConsensusQueue.getFactory()],
-	[sparseMatrixId, SparseMatrix.getFactory()],
-];
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
-
 const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
 	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
 
-describeCompat("Detached Container", "FullCompat", (getTestObjectProvider) => {
+describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [
+		[sharedStringId, SharedString.getFactory()],
+		[sharedMapId, SharedMap.getFactory()],
+		[crcId, ConsensusRegisterCollection.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
+		[sharedCellId, SharedCell.getFactory()],
+		[sharedInkId, Ink.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[cocId, ConsensusQueue.getFactory()],
+		[sparseMatrixId, SparseMatrix.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;
@@ -887,7 +889,26 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider) => {
 });
 
 // Review: Run with Full Compat?
-describeCompat("Detached Container", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [
+		[sharedStringId, SharedString.getFactory()],
+		[sharedMapId, SharedMap.getFactory()],
+		[crcId, ConsensusRegisterCollection.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
+		[sharedCellId, SharedCell.getFactory()],
+		[sharedInkId, Ink.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[cocId, ConsensusQueue.getFactory()],
+		[sparseMatrixId, SparseMatrix.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;

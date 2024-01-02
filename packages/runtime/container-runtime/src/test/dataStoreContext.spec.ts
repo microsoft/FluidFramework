@@ -120,8 +120,7 @@ describe("Data Store Context Tests", () => {
 					summarizeInternal,
 					dataStoreId,
 					{ type: CreateSummarizerNodeSource.Local },
-					// DDS will not create failure summaries
-					{ throwOnFailure: true },
+					undefined,
 					getGCDataFn,
 				);
 			containerRuntime = createContainerRuntime();
@@ -1071,8 +1070,7 @@ describe("Data Store Context Tests", () => {
 					summarizeInternal,
 					dataStoreId,
 					{ type: CreateSummarizerNodeSource.Local },
-					// DDS will not create failure summaries
-					{ throwOnFailure: true },
+					undefined,
 					getGCDataFn,
 				);
 

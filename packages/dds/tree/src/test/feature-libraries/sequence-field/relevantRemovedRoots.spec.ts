@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { mintRevisionTag } from "../../utils.js";
 import {
 	ChangeAtomId,
 	DeltaDetachedNodeId,
 	makeAnonChange,
-	mintRevisionTag,
 	tagChange,
-} from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
-import { TestChangeset, MarkMaker as Mark } from "./testEdits";
+} from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
 
 const tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };
@@ -51,13 +51,13 @@ describe("SequenceField - relevantRemovedRoots", () => {
 			assert.deepEqual(array, []);
 		});
 		it("a tree being removed", () => {
-			const input: TestChangeset = [Mark.delete(1, atomId)];
+			const input: TestChangeset = [Mark.remove(1, atomId)];
 			const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, []);
 		});
 		it("a tree with child changes being removed", () => {
-			const input: TestChangeset = [Mark.delete(1, atomId, { changes: childChange })];
+			const input: TestChangeset = [Mark.remove(1, atomId, { changes: childChange })];
 			const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, []);
@@ -93,7 +93,7 @@ describe("SequenceField - relevantRemovedRoots", () => {
 		});
 		it("a tree being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId)),
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.remove(1, atomId)),
 			];
 			const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
 			const array = Array.from(actual);
@@ -138,7 +138,7 @@ describe("SequenceField - relevantRemovedRoots", () => {
 			assert.deepEqual(array, [deltaId]);
 		});
 		it("a tree being transiently restored", () => {
-			const input: TestChangeset = [Mark.delete(1, brand(0), { cellId: atomId })];
+			const input: TestChangeset = [Mark.remove(1, brand(0), { cellId: atomId })];
 			const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId]);
@@ -158,7 +158,7 @@ describe("SequenceField - relevantRemovedRoots", () => {
 			assert.deepEqual(array, [deltaId, relevantNestedTree]);
 		});
 		it("relevant roots from nested changes under a tree being removed", () => {
-			const input: TestChangeset = [Mark.delete(1, atomId, { changes: childChange })];
+			const input: TestChangeset = [Mark.remove(1, atomId, { changes: childChange })];
 			const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [relevantNestedTree]);
@@ -180,7 +180,7 @@ describe("SequenceField - relevantRemovedRoots", () => {
 		});
 		it("relevant roots from nested changes under a tree being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.remove(1, atomId), {
 					changes: childChange,
 				}),
 			];
@@ -190,7 +190,7 @@ describe("SequenceField - relevantRemovedRoots", () => {
 		});
 		it("relevant roots from nested changes under a tree being transiently restored", () => {
 			const input: TestChangeset = [
-				Mark.delete(1, brand(0), { cellId: atomId, changes: childChange }),
+				Mark.remove(1, brand(0), { cellId: atomId, changes: childChange }),
 			];
 			const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
 			const array = Array.from(actual);

@@ -9,7 +9,7 @@ import {
 	ChangeRebaser,
 	RevisionMetadataSource,
 	TaggedChange,
-} from "../core";
+} from "../core/index.js";
 
 /**
  * Makes a given `ChangeFamily` safer to use by wrapping some of its functions in try-catch blocks.

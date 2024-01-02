@@ -490,14 +490,16 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
-				this.traceTrigger("mismatched compare file");
+				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
 				traceTaskTrigger(doneFileExpectedContent);
 				traceTaskTrigger(doneFileContent);
 			} else {
-				this.traceTrigger("unable to generate done file expected content");
+				this.traceTrigger(
+					"unable to generate done file expected content (getDoneFileContent returned undefined)",
+				);
 			}
 		} catch {
-			this.traceTrigger("unable to read compare file");
+			this.traceTrigger(`unable to read compare file: ${doneFileFullPath}`);
 		}
 		return false;
 	}

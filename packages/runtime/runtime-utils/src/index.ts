@@ -12,6 +12,7 @@ export {
 	Factory,
 	responseToException,
 } from "./dataStoreHelpers";
+export { ISerializedHandle, isSerializedHandle } from "./handles";
 export { ObjectStoragePartition } from "./objectstoragepartition";
 export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils";
 export { RequestParser } from "./requestParser";

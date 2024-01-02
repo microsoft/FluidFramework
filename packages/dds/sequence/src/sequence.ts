@@ -730,7 +730,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(parseHandles(content, this.serializer));
+		const parsedContent = parseHandles(content, this.serializer);
+		const metadata =
+			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
+			this.client.applyStashedOp(parsedContent);
+		assert(!!metadata, "Metadata is undefined");
+		return metadata;
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
