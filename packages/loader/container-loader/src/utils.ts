@@ -240,7 +240,7 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
  * @param protocolSummaryTree - Protocol Summary Tree
  * @param appSummaryTree - App Summary Tree
  */
-export function convertProtocolAndAppSummaryToSnapshotAndBlobs(
+function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
 ): [ISnapshotTree, ISerializableBlobContents] {
