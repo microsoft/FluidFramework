@@ -24,6 +24,8 @@ import {
 	typeNameSymbol,
 	FlexTreeSchema,
 	intoStoredSchema,
+	cursorForMapTreeField,
+	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -42,7 +44,6 @@ import {
 	createTestUndoRedoStacks,
 	emptyStringSequenceConfig,
 	expectSchemaEqual,
-	initializeTestTree,
 	jsonSequenceRootSchema,
 	stringSequenceRootSchema,
 	validateTreeConsistency,
@@ -71,6 +72,7 @@ import {
 	moveToDetachedField,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
+	TreeStoredSchema,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
@@ -611,7 +613,7 @@ describe("SharedTree", () => {
 				],
 			},
 		};
-		initializeTestTree(summarizingTree.view, initialState);
+		initializeTestTree(summarizingTree.view, initialState, intoStoredSchema(wrongSchema));
 
 		await provider.ensureSynchronized();
 		await provider.summarize();
@@ -659,7 +661,7 @@ describe("SharedTree", () => {
 				],
 			},
 		};
-		initializeTestTree(summarizingTree.view, initialState);
+		initializeTestTree(summarizingTree.view, initialState, intoStoredSchema(wrongSchema));
 
 		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
 
@@ -1313,7 +1315,7 @@ describe("SharedTree", () => {
 					],
 				},
 			};
-			initializeTestTree(tree, initialState);
+			initializeTestTree(tree, initialState, intoStoredSchema(wrongSchema));
 
 			const cursor = tree.forest.allocateCursor();
 			moveToDetachedField(tree.forest, cursor);
@@ -1710,4 +1712,54 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	it(`${title} (reference forked view)`, () => {
 		fn(checkoutWithContent(content).fork());
 	});
+}
+
+/**
+ * Document Schema which is not correct.
+ * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
+ * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
+ * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
+ *
+ * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
+ */
+// TODO: remove all usages of this.
+const wrongSchema = new SchemaBuilder({
+	scope: "Wrong Schema",
+	lint: {
+		rejectEmpty: false,
+	},
+}).intoSchema(SchemaBuilder.sequence(Any));
+
+/**
+ * Updates the given `tree` to the given `schema` and inserts `state` as its root.
+ */
+// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
+function initializeTestTree(
+	tree: ITreeCheckout,
+	state: JsonableTree | JsonableTree[] | undefined,
+	schema: TreeStoredSchema,
+): void {
+	if (state === undefined) {
+		tree.updateSchema(schema);
+		return;
+	}
+
+	if (!Array.isArray(state)) {
+		initializeTestTree(tree, [state], schema);
+	} else {
+		tree.updateSchema(schema);
+
+		// Apply an edit to the tree which inserts a node with a value
+		runSynchronous(tree, () => {
+			const mapTrees = state.map((jsonable) =>
+				mapTreeFromCursor(cursorForJsonableTreeNode(jsonable)),
+			);
+			const fieldCursor = cursorForMapTreeField(mapTrees);
+			const field = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKey,
+			});
+			field.insert(0, fieldCursor);
+		});
+	}
 }
