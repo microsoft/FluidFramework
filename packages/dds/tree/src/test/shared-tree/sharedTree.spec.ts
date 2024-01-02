@@ -49,7 +49,7 @@ import {
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
-	checkoutWithContent,
+	numberSequenceRootSchema,
 } from "../utils.js";
 import {
 	ForestType,
@@ -59,7 +59,6 @@ import {
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
 	SharedTreeFactory,
-	TreeContent,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 import {
@@ -603,121 +602,73 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 
-		const initialState: JsonableTree = {
-			type: brand("Node"),
-			fields: {
-				foo: [
-					{ type: brand("Node"), value: "a" },
-					{ type: brand("Node"), value: "b" },
-					{ type: brand("Node"), value: "c" },
-				],
-			},
-		};
-		initializeTestTree(summarizingTree.view, initialState, intoStoredSchema(wrongSchema));
+		summarizingTree.schematizeInternal({
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: ["a", "b", "c"],
+		});
 
 		await provider.ensureSynchronized();
 		await provider.summarize();
 
-		const loadingTree = (await provider.createTree()).view;
-		const fooField: FieldKey = brand("foo");
+		const loadingTree = await provider.createTree();
 
-		runSynchronous(summarizingTree.view, () => {
-			const rootPath = {
+		summarizingTree.editor
+			.sequenceField({
+				field: rootFieldKey,
 				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-			summarizingTree.editor
-				.sequenceField({ parent: rootPath, field: fooField })
-				.remove(0, 1);
-		});
+			})
+			.remove(0, 1);
 
 		await provider.ensureSynchronized();
 
-		const cursor = loadingTree.forest.allocateCursor();
-		moveToDetachedField(loadingTree.forest, cursor);
-		assert.equal(cursor.firstNode(), true);
-		cursor.enterField(fooField);
-		assert.equal(cursor.firstNode(), true);
-		// An error may occur earlier in the test but may be swallowed up. If so, this line will fail
-		// due to the remove edit above not being able to be applied to loadingTree.
-		assert.equal(cursor.value, "b");
-		assert.equal(cursor.nextNode(), true);
-		assert.equal(cursor.value, "c");
-		assert.equal(cursor.nextNode(), false);
+		validateTreeContent(loadingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["b", "c"],
+		});
 	});
 
 	it("can load a summary from a tree and receive edits that require repair data", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 
-		const initialState: JsonableTree = {
-			type: brand("Node"),
-			fields: {
-				foo: [
-					{ type: brand("Node"), value: "a" },
-					{ type: brand("Node"), value: "b" },
-					{ type: brand("Node"), value: "c" },
-				],
-			},
-		};
-		initializeTestTree(summarizingTree.view, initialState, intoStoredSchema(wrongSchema));
+		summarizingTree.schematizeInternal({
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: ["a", "b", "c"],
+		});
 
 		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
 
-		const fooField: FieldKey = brand("foo");
-		runSynchronous(summarizingTree.view, () => {
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-			summarizingTree.editor
-				.sequenceField({ parent: rootPath, field: fooField })
-				.remove(0, 1);
-		});
+		summarizingTree.editor
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.remove(0, 1);
 
-		const cursor = summarizingTree.view.forest.allocateCursor();
-		moveToDetachedField(summarizingTree.view.forest, cursor);
-		assert.equal(cursor.firstNode(), true);
-		cursor.enterField(fooField);
-		assert.equal(cursor.firstNode(), true);
-		assert.equal(cursor.value, "b");
-		cursor.free();
+		validateTreeContent(summarizingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["b", "c"],
+		});
 
 		await provider.ensureSynchronized();
 		await provider.summarize();
 
-		const loadingTree = (await provider.createTree()).view;
+		const loadingTree = await provider.createTree();
 
 		const revertible = undoStack.pop();
 		assert(revertible !== undefined, "expected undo stack to have an entry");
 		revertible.revert();
 
-		const cursor2 = summarizingTree.view.forest.allocateCursor();
-		moveToDetachedField(summarizingTree.view.forest, cursor2);
-		assert.equal(cursor2.firstNode(), true);
-		cursor2.enterField(fooField);
-		assert.equal(cursor2.firstNode(), true);
-		assert.equal(cursor2.value, "a");
-		cursor2.free();
+		validateTreeContent(summarizingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["a", "b", "c"],
+		});
 
 		await provider.ensureSynchronized();
 
-		const cursor3 = loadingTree.forest.allocateCursor();
-		moveToDetachedField(loadingTree.forest, cursor3);
-		assert.equal(cursor3.firstNode(), true);
-		cursor3.enterField(fooField);
-		assert.equal(cursor3.firstNode(), true);
-		// An error may occur earlier in the test but may be swallowed up. If so, this line will fail
-		// due to the undo edit above not being able to be applied to loadingTree.
-		assert.equal(cursor3.value, "a");
-		assert.equal(cursor3.nextNode(), true);
-		assert.equal(cursor3.value, "b");
-		assert.equal(cursor3.nextNode(), true);
-		assert.equal(cursor3.value, "c");
-		assert.equal(cursor3.nextNode(), false);
-		cursor3.free();
+		validateTreeContent(loadingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["a", "b", "c"],
+		});
 		unsubscribe();
 	});
 
@@ -1303,36 +1254,26 @@ describe("SharedTree", () => {
 	describe("Anchors", () => {
 		it("Anchors can be created and dereferenced", () => {
 			const provider = new TestTreeProviderLite();
-			const tree = provider.trees[0].view;
 
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(tree, initialState, intoStoredSchema(wrongSchema));
+			provider.trees[0].schematizeInternal({
+				schema: numberSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [0, 1, 2],
+			});
+
+			const tree = provider.trees[0].view;
 
 			const cursor = tree.forest.allocateCursor();
 			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			cursor.enterField(brand("foo"));
+
 			cursor.enterNode(0);
 			cursor.seekNodes(1);
 			const anchor = cursor.buildAnchor();
 			cursor.free();
 			const childPath = tree.locate(anchor);
 			const expected: UpPath = {
-				parent: {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 0,
-				},
-				parentField: brand("foo"),
+				parent: undefined,
+				parentField: rootFieldKey,
 				parentIndex: 1,
 			};
 			assert(compareUpPaths(childPath, expected));
@@ -1676,59 +1617,6 @@ function assertSchema<TRoot extends TreeFieldSchema>(
 ): FlexTreeView<TRoot> {
 	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
 }
-
-/**
- * Runs the given test function as two tests,
- * one where `view` is the root SharedTree view and the other where `view` is a fork.
- * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
- *
- * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
- * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
- */
-function itView(title: string, fn: (view: ITreeCheckout) => void): void {
-	const content: TreeContent = {
-		schema: jsonSequenceRootSchema,
-		initialTree: [],
-	};
-	const config = {
-		...content,
-		allowedSchemaModifications: AllowedUpdateType.None,
-	};
-	it(`${title} (root view)`, () => {
-		const provider = new TestTreeProviderLite();
-		// Test an actual SharedTree.
-		fn(provider.trees[0].schematizeInternal(config).checkout);
-	});
-
-	it(`${title} (reference view)`, () => {
-		fn(checkoutWithContent(content));
-	});
-
-	it(`${title} (forked view)`, () => {
-		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematizeInternal(config).checkout.fork());
-	});
-
-	it(`${title} (reference forked view)`, () => {
-		fn(checkoutWithContent(content).fork());
-	});
-}
-
-/**
- * Document Schema which is not correct.
- * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
- * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
- * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
- *
- * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
- */
-// TODO: remove all usages of this.
-const wrongSchema = new SchemaBuilder({
-	scope: "Wrong Schema",
-	lint: {
-		rejectEmpty: false,
-	},
-}).intoSchema(SchemaBuilder.sequence(Any));
 
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
