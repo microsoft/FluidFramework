@@ -9,6 +9,7 @@ import { take } from "@fluid-private/stochastic-test-utils";
 import { OpSpaceCompressedId, SessionId, SessionSpaceCompressedId, StableId } from "../";
 import { IdCompressor } from "../idCompressor";
 import { createSessionId } from "../utilities";
+import { ghostClusterInitialSize } from "../types";
 import {
 	performFuzzActions,
 	sessionIds,
@@ -352,6 +353,49 @@ describe("IdCompressor", () => {
 					opIds.forEach((id) => assert.equal(isFinalId(id), true));
 				}
 			}
+		});
+	});
+
+	describe("Ghost sessions", () => {
+		it("prevents non-allocation mutations during a ghost session", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			const range = compressor.takeNextCreationRange();
+			compressor.beginGhostSession(createSessionId(), () => {
+				assert.throws(
+					() => compressor.takeNextCreationRange(),
+					(e: Error) =>
+						e.message ===
+						"IdCompressor should not be operated normally when in a ghost session",
+				);
+				assert.throws(
+					() => compressor.finalizeCreationRange(range),
+					(e: Error) =>
+						e.message ===
+						"IdCompressor should not be operated normally when in a ghost session",
+				);
+				assert.throws(
+					() => compressor.serialize(false),
+					(e: Error) =>
+						e.message ===
+						"IdCompressor should not be operated normally when in a ghost session",
+				);
+			});
+		});
+
+		it("can generate IDs during a ghost session", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			const idCount = ghostClusterInitialSize * 2;
+			const ids = new Set<SessionSpaceCompressedId>();
+			const ghostSession = createSessionId();
+			compressor.beginGhostSession(ghostSession, () => {
+				for (let i = 0; i < idCount; i++) {
+					const id = compressor.generateCompressedId();
+					assert(isFinalId(id));
+					assert(compressor.decompress(id) === incrementStableId(ghostSession, i));
+					ids.add(id);
+				}
+			});
+			assert.equal(ids.size, idCount);
 		});
 	});
 
