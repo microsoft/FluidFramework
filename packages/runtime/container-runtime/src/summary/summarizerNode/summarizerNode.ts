@@ -163,7 +163,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 						summarySequenceNumber: this.wipReferenceSequenceNumber,
 						latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
 						// TODO: remove summaryPath
-						summaryPath: this._latestSummary.fullPath.path,
+						summaryPath: this.summaryHandleId,
 				  }
 				: undefined;
 
