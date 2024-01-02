@@ -20,7 +20,7 @@ import {
 	editManagerFactory,
 } from "./editManagerTestUtils.js";
 
-describe("Benchmark", () => {
+describe("EditManager - Bench", () => {
 	interface Scenario {
 		readonly type: BenchmarkType;
 		readonly rebasedEditCount: number;
