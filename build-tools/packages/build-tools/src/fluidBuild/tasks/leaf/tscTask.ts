@@ -42,9 +42,6 @@ export class TscTask extends LeafTask {
 	}
 
 	protected get isIncremental() {
-if (this.executable === "tsc-multi") {
-			return true;
-		}
 		const config = this.readTsConfig();
 		return config?.options.incremental;
 	}
@@ -427,7 +424,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
 			const tscTasks = [...this.getDependentLeafTasks()].filter(
-				(task) => task.executable === "tsc" || task.executable === "tsc-multi",
+				(task) => task.executable === "tsc",
 			);
 			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
 
@@ -438,10 +435,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			);
 
 			for (const dep of tasks) {
-				const tsBuildInfo =
-					dep.executable === "tsc-multi"
-						? await (dep as TscMultiTask).readTsBuildInfo()
-						: await (dep as TscTask).readTsBuildInfo();
+				const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
 				if (tsBuildInfo === undefined) {
 					// If any of the tsc task don't have build info, we can't track
 					return undefined;
@@ -482,34 +476,31 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
  * Source files are also considered for incremental purposes. However, config files outside the package (e.g. shared
  * config files) are not considered. Thus, changes to those files will not trigger a rebuild of downstream packages.
  */
-export class TscMultiTask extends TscDependentTask {
-	private _tsBuildInfo: ITsBuildInfo | undefined;
-
-		/**
-		 * A list of files that should be considered part of the cache input, if they exist
-		 */
-		private readonly commonFiles = [
-      "package.json",
-			"tsconfig.json",
-			"src/test/tsconfig.json",
-			"tsc-multi.json",
-			"tsc-multi.test.json",
-		];
-
-	protected get configFileFullPaths() {
-		return this.commonFiles.map((file) => this.getPackageFileFullPath(file));
-	}
-
+export class TscMultiTask extends LeafWithDoneFileTask {
 	protected async getToolVersion() {
 		return getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
 	}
 
-	public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
-		if (this._tsBuildInfo === undefined) {
+	protected async getDoneFileContent(): Promise<string | undefined> {
+		const command = this.command;
+
+		/**
+		 * A list of files that should be considered part of the cache input, if they exist
+		 */
+		const commonFiles = [
+			"tsconfig.json",
+			"src/test/tsconfig.json",
+			"tsc-multi.json",
+			"tsc-multi.test.json",
+		]
+			.map((file) => path.resolve(this.package.directory, file))
+			.filter((file) => existsSync(file));
+
+		try {
 			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
 			// the command string to determine which file to use.
 			const tsbuildinfoPath = this.getPackageFileFullPath(
-				this.command.includes("tsc-multi.esm.json")
+				command.includes("tsc-multi.esm.json")
 					? "tsconfig.mjs.tsbuildinfo"
 					: "tsconfig.cjs.tsbuildinfo",
 			);
@@ -518,7 +509,7 @@ export class TscMultiTask extends TscDependentTask {
 				throw new Error(`no tsbuildinfo file found: ${tsbuildinfoPath}`);
 			}
 
-			const files = [...this.commonFiles];
+			const files = [...commonFiles];
 
 			// Add src files
 			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
@@ -543,6 +534,6 @@ export class TscMultiTask extends TscDependentTask {
 		} catch (e) {
 			this.traceError(`error generating done file content: ${e}`);
 		}
-		return this._tsBuildInfo;
+		return undefined;
 	}
 }
