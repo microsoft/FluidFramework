@@ -4,12 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-import {
-	ChangesetLocalId,
-	IEditableForest,
-	TreeStoredSchemaRepository,
-	mapCursorField,
-} from "../../../core";
+import { ChangesetLocalId, IEditableForest, TreeStoredSchemaRepository } from "../../../core";
 import { leaf } from "../../../domains";
 import { typeboxValidator } from "../../../external-utilities";
 import {
@@ -22,15 +17,12 @@ import {
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	createMockNodeKeyManager,
-	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	getTreeContext,
 	intoStoredSchema,
 	makeFieldBatchCodec,
-	mapTreeFromCursor,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
 import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { ForestType } from "../../../shared-tree";
 import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils";
@@ -39,9 +31,7 @@ import {
 	Chunker,
 	defaultChunkPolicy,
 	tryShapeFromSchema,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
-// eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 
 const options = {
@@ -59,10 +49,7 @@ const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator },
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 
-// TODO: Currently we split up a uniform chunk into several individual basicChunks for each node during op creation.
-// Therefore, there is currently no way for us to retrieve a uniform chunk from the tree for us to make the proper checks,
-// and the tests are expected to fail. The tests can be unskipped once uniform chunks can be inserted into the tree.
-describe.skip("End to End chunked encoding", () => {
+describe("End to end chunked encoding", () => {
 	it(`insert ops shares reference with the original chunk.`, () => {
 		const treeSchema = new TreeStoredSchemaRepository(
 			intoStoredSchema(numberSequenceRootSchema),
@@ -110,14 +97,12 @@ describe.skip("End to End chunked encoding", () => {
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const insertedChange = changeLog[0];
 		assert(insertedChange.builds !== undefined);
-		// TODO: This chunk is actually a BasicChunk which was split from the original UniformChunk split up.
-		// This is expected to fail currently, but should eventually pass once we have the ability to insert UniformChunk.
 		const insertedChunk = insertedChange.builds.get(undefined)?.get(0 as ChangesetLocalId);
 		assert.equal(insertedChunk, chunk);
 		assert(chunk.isShared());
 	});
 
-	it(`summary values are correct, and shares reference with the original chunk when inserting content.`, () => {
+	it.skip(`summary values are correct, and shares reference with the original chunk when inserting content.`, () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
@@ -145,19 +130,14 @@ describe.skip("End to End chunked encoding", () => {
 		forestSummarizer.getAttachSummary(stringifier);
 	});
 
-	it(`summary values are correct, and shares reference with the original chunk when initializing with content.`, () => {
+	it.skip(`summary values are correct, and shares reference with the original chunk when initializing with content.`, () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 
 		const flexTree = flexTreeViewWithContent({
 			schema: numberSequenceRootSchema,
-			// TODO: Replace mapping of 'fieldCursor' to 'nodeCursors' with 'chunk.cursor()'
-			// once 'NewFieldContent' in 'contextuallyTyped.ts' supports 'fieldCursor'.
-			// Current implementation is a workaround for type limitations.
-			initialTree: mapCursorField(chunk.cursor(), (cursor) =>
-				cursorForMapTreeNode(mapTreeFromCursor(cursor)),
-			),
+			initialTree: chunk.cursor(),
 		});
 
 		const forestSummarizer = new ForestSummarizer(
