@@ -41,12 +41,14 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, ChangeE
 	],
 };
 
-describe("SequenceField encoding", () => {
-	makeEncodingTestSuite(
-		SF.sequenceFieldChangeCodecFactory(
-			TestChange.codec,
-			new RevisionTagCodec(new MockIdCompressor()),
-		),
-		encodingTestData,
-	);
-});
+export function testCodecs() {
+	describe("Codecs", () => {
+		makeEncodingTestSuite(
+			SF.sequenceFieldChangeCodecFactory(
+				TestChange.codec,
+				new RevisionTagCodec(new MockIdCompressor()),
+			),
+			encodingTestData,
+		);
+	});
+}
