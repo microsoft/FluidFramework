@@ -331,6 +331,7 @@ module.exports = {
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
 				["renamer", "renamer"],
+				["ts2esm", "ts2esm"],
 				["tsc-multi", "tsc-multi"],
 				["attw", "@arethetypeswrong/cli"],
 			],

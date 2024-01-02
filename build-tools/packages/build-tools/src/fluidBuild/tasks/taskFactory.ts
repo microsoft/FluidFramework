@@ -23,12 +23,13 @@ import { GroupTask } from "./groupTask";
 import { Task } from "./task";
 import { FlubListTask, FlubCheckLayerTask, FlubCheckPolicyTask } from "./leaf/flubTasks";
 import { RenameTypesTask } from "./leaf/renamerTask";
+import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
-	"ts2esm": TscTask, // Assume if tsc is out of date, ts2esm is out of date. This is insufficient and not good enough for test.
+	"ts2esm": Ts2EsmTask, // Assume if tsc is out of date, ts2esm is out of date. This is insufficient and not good enough for test.
 	"tsc": TscTask,
 	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
