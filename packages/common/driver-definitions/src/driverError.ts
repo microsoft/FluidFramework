@@ -13,7 +13,7 @@ const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTy
 
 /**
  * Different error types the Driver may report out to the Host.
- * @internal
+ * @alpha
  */
 export const DriverErrorTypes = {
 	// Inherit base error types
@@ -106,7 +106,7 @@ export const DriverErrorTypes = {
 	outOfStorageError: "outOfStorageError",
 } as const;
 /**
- * @internal
+ * @alpha
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 

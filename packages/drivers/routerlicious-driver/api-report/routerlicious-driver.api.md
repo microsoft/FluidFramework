@@ -71,6 +71,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 
+// @internal
 export const RouterliciousErrorTypes: {
     readonly sslCertError: "sslCertError";
     readonly genericNetworkError: "genericNetworkError";

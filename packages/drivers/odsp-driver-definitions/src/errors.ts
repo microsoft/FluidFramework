@@ -66,6 +66,9 @@ export const OdspErrorTypes = {
  */
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
+/**
+ * @internal
+ */
 export interface IOdspErrorAugmentations {
 	/**
 	 * Server epoch indicates when the file was last modified.

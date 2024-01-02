@@ -202,6 +202,7 @@ export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) =>
 // @internal (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
+// @internal
 export const OdspErrorTypes: {
     readonly invalidFileNameError: "invalidFileNameError";
     readonly snapshotTooBig: "snapshotTooBig";
@@ -219,9 +220,7 @@ export const OdspErrorTypes: {
     readonly fetchFailure: "fetchFailure";
     readonly fetchTokenError: "fetchTokenError";
     readonly incorrectServerResponse: "incorrectServerResponse";
-    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage"; /**
-    * It is array of error codes included in error response from server.
-    */
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
     readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
     readonly locationRedirection: "locationRedirection";
     readonly fluidInvalidSchema: "fluidInvalidSchema";

@@ -52,6 +52,7 @@ export namespace ConnectionState {
 // @alpha
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
+// @internal
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
     readonly genericError: "genericError";

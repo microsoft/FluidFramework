@@ -27,6 +27,7 @@ import { IVersion } from '@fluidframework/protocol-definitions';
 // @internal (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
+// @alpha
 export const DriverErrorTypes: {
     readonly genericNetworkError: "genericNetworkError";
     readonly authorizationError: "authorizationError";
@@ -48,7 +49,7 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @internal
