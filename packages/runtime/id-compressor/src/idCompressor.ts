@@ -49,6 +49,7 @@ import {
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
+import { ghostClusterInitialSize } from "./types";
 
 /**
  * The version of IdCompressor that is currently persisted.
@@ -104,6 +105,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private telemetryLocalIdCount = 0;
 	// The number of eager final IDs generated since the last telemetry was sent.
 	private telemetryEagerFinalIdCount = 0;
+	// The cluster for an ongoing ghost session, if one exists.
+	private ongoingGhostSession: IdCluster | undefined = undefined;
 
 	// #endregion
 
@@ -165,6 +168,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	public generateCompressedId(): SessionSpaceCompressedId {
 		if (this.ongoingGhostSession) {
+			// This code should not be changed without a version bump (it is performed at a consensus point)
 			this.ongoingGhostSession.capacity++;
 			this.ongoingGhostSession.count++;
 			return lastFinalizedFinal(
@@ -196,17 +200,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	private ongoingGhostSession: IdCluster | undefined = undefined;
-	// todo move this to persisted state file
-	private readonly ghostClusterInitialSize = 512;
-
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
 		this.ongoingGhostSession = this.addEmptyCluster(
 			this.sessions.getOrCreate(ghostSessionId),
-			this.ghostClusterInitialSize,
+			ghostClusterInitialSize,
 		);
 		try {
 			ghostSessionCallback();
