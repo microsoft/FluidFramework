@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as JSON5 from "json5";
 import { lstatSync, readFileSync } from "node:fs";
 import type { TsConfigJson } from "type-fest";
