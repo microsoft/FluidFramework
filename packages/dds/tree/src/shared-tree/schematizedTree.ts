@@ -10,7 +10,7 @@ import {
 	TreeStoredSchema,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
-} from "../core";
+} from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
@@ -20,10 +20,10 @@ import {
 	ViewSchema,
 	InsertableFlexField,
 	intoStoredSchema,
-} from "../feature-libraries";
-import { fail } from "../util";
-import { ISubscribable } from "../events";
-import { CheckoutEvents, ITreeCheckout } from "./treeCheckout";
+} from "../feature-libraries/index.js";
+import { fail } from "../util/index.js";
+import { ISubscribable } from "../events/index.js";
+import { CheckoutEvents, ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.

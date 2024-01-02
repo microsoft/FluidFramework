@@ -7,8 +7,8 @@ import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-} from "../class-tree";
-import { TreeArrayNodeBase, TreeNode } from "./types";
+} from "../class-tree/index.js";
+import { TreeArrayNodeBase, TreeNode } from "./types.js";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.

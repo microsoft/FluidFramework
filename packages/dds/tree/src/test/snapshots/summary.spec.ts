@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { useAsyncDeterministicStableId } from "../../util";
-import { takeSummarySnapshot } from "./utils";
-import { generateTestTrees } from "./testTrees";
-import { useSnapshotDirectory } from "./snapshotTools";
+import { takeSummarySnapshot } from "./utils.js";
+import { generateTestTrees } from "./testTrees.js";
+import { useSnapshotDirectory } from "./snapshotTools.js";
 
 describe("snapshot tests", () => {
 	useSnapshotDirectory();
@@ -17,11 +16,9 @@ describe("snapshot tests", () => {
 		const itFn = only ? it.only : skip ? it.skip : it;
 
 		itFn(testName, async () => {
-			await useAsyncDeterministicStableId(async () => {
-				return runScenario(async (tree, innerName) => {
-					const { summary } = await tree.summarize(true);
-					takeSummarySnapshot(summary, `-${innerName}`);
-				});
+			return runScenario(async (tree, innerName) => {
+				const { summary } = await tree.summarize(true);
+				takeSummarySnapshot(summary, `-${innerName}`);
 			});
 		});
 	}

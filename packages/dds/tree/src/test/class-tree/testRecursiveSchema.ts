@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactoryRecursive } from "../../class-tree";
+import { SchemaFactoryRecursive } from "../../class-tree/index.js";
 
 const sf = new SchemaFactoryRecursive("recursive");
 

@@ -4,13 +4,13 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { assertValidIndex } from "../../../util";
-import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core";
-import { DiscriminatedUnionDispatcher } from "../../../codec";
-import { TreeChunk } from "../chunk";
-import { BasicChunk } from "../basicChunk";
-import { SequenceChunk } from "../sequenceChunk";
-import { emptyChunk } from "../emptyChunk";
+import { assertValidIndex } from "../../../util/index.js";
+import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
+import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
+import { TreeChunk } from "../chunk.js";
+import { BasicChunk } from "../basicChunk.js";
+import { SequenceChunk } from "../sequenceChunk.js";
+import { emptyChunk } from "../emptyChunk.js";
 import {
 	EncodedAnyShape,
 	EncodedChunkShape,
@@ -19,7 +19,7 @@ import {
 	EncodedNestedArray,
 	EncodedTreeShape,
 	EncodedValueShape,
-} from "./format";
+} from "./format.js";
 import {
 	ChunkDecoder,
 	StreamCursor,
@@ -29,12 +29,12 @@ import {
 	readStreamNumber,
 	readStreamStream,
 	readStreamValue,
-} from "./chunkCodecUtilities";
+} from "./chunkCodecUtilities.js";
 import {
 	DecoderContext,
 	decode as genericDecode,
 	readStreamIdentifier,
-} from "./chunkDecodingGeneric";
+} from "./chunkDecodingGeneric.js";
 
 /**
  * Decode `chunk` into a TreeChunk.
@@ -230,9 +230,9 @@ export class TreeDecoder implements ChunkDecoder {
 		this.type = shape.type === undefined ? undefined : cache.identifier(shape.type);
 
 		const fieldDecoders: BasicFieldDecoder[] = [];
-		for (const field of shape.fields) {
-			const key: FieldKey = cache.identifier(field.key);
-			fieldDecoders.push(fieldDecoder(cache, key, field.shape));
+		for (const [fieldKey, fieldShape] of shape.fields ?? []) {
+			const key: FieldKey = cache.identifier(fieldKey);
+			fieldDecoders.push(fieldDecoder(cache, key, fieldShape));
 		}
 		this.fieldDecoders = fieldDecoders;
 	}

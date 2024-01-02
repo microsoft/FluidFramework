@@ -3368,16 +3368,11 @@ importers:
       '@fluid-tools/build-cli': 0.29.0-225750
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.29.0-225750
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-runtime-definitions': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.2.0
-      '@fluidframework/fluid-static': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
-      '@fluidframework/tree': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/node': ^18.19.0
       '@types/puppeteer': 1.3.0
@@ -3386,6 +3381,7 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.50.0
+      fluid-framework: workspace:~
       html-webpack-plugin: ^5.5.0
       prettier: ~3.0.3
       process: ^0.11.10
@@ -3404,14 +3400,10 @@ importers:
     dependencies:
       '@azure/msal-browser': 2.38.3
       '@fluid-experimental/odsp-client': link:../../../../packages/service-clients/odsp-client
-      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
-      '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
-      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
       '@fluidframework/odsp-doclib-utils': link:../../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../../../../packages/drivers/odsp-driver-definitions
-      '@fluidframework/tree': link:../../../../packages/dds/tree
       css-loader: 1.0.1_webpack@5.89.0
+      fluid-framework: link:../../../../packages/framework/fluid-framework
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.89.0
@@ -3540,6 +3532,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -3566,6 +3559,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.29.0-225750_mhw3tufvtaceew37hrkkevjcli
@@ -5635,6 +5629,7 @@ importers:
       '@fluidframework/tree': workspace:~
       '@fluidframework/undo-redo': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/chai': ^4.0.0
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^9.1.1
@@ -5655,7 +5650,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sorted-btree: ^1.8.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -5669,10 +5663,10 @@ importers:
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tree': link:../../../packages/dds/tree
+      '@tylerbu/sorted-btree-es6': 1.8.0
       buffer: 6.0.3
       denque: 1.5.1
       lru-cache: 6.0.0
-      sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
@@ -7188,6 +7182,7 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@sinclair/typebox': ^0.29.4
+      '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
@@ -7210,7 +7205,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sorted-btree: ^1.8.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7226,8 +7220,8 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@sinclair/typebox': 0.29.6
+      '@tylerbu/sorted-btree-es6': 1.8.0
       '@ungap/structured-clone': 1.2.0
-      sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9203,6 +9197,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/double-ended-queue': ^2.1.0
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
@@ -9222,7 +9217,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      sorted-btree: ^1.8.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9240,10 +9234,10 @@ importers:
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@tylerbu/sorted-btree-es6': 1.8.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lz4js: 0.2.0
-      sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9451,6 +9445,7 @@ importers:
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/mocha': ^9.1.1
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
@@ -9463,7 +9458,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sorted-btree: ^1.8.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9472,7 +9466,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      sorted-btree: 1.8.1
+      '@tylerbu/sorted-btree-es6': 1.8.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -21702,6 +21696,10 @@ packages:
       - supports-color
     dev: true
 
+  /@tylerbu/sorted-btree-es6/1.8.0:
+    resolution: {integrity: sha512-qkwgE0G5OGn7F+1fMkFZLwyjc99xCy4kmQ8p7N0Jj540HD6xU0jTPjcqELogH4f5YGMPXLqd8sQ7uOYC0QRBeg==}
+    dev: false
+
   /@types/argparse/1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
 
@@ -25689,7 +25687,6 @@ packages:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
-    dev: true
 
   /clone-buffer/1.0.0:
     resolution: {integrity: sha512-KLLTJWrvwIP+OPfMn0x2PheDEP20RPUcGXj/ERegTgdmPEZylALQldygiqrPPu8P45uNuPs7ckmReLY6v/iA5g==}
@@ -30079,7 +30076,6 @@ packages:
   /get-stdin/8.0.0:
     resolution: {integrity: sha512-sY22aA6xchAzprjyqmSEQv4UbAAzRN0L2dQB0NlN5acTTK9Don6nhoc3eAbUnpZiCANAMfd/+40kVdKfFygohg==}
     engines: {node: '>=10'}
-    dev: true
 
   /get-stream/3.0.0:
     resolution: {integrity: sha512-GlhdIUuVakc8SJ6kK0zAFbiGzRFzNnY4jUuEbV9UROo4Y+0Ny4fjvcZFVTeDA4odpFyOQzaw6hXukJSq/f28sQ==}
@@ -36899,7 +36895,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       p-map: 4.0.0
-    dev: true
 
   /p-cancelable/1.1.0:
     resolution: {integrity: sha512-s73XxOZ4zpt1edZYZzvhqFa6uvQc1vwUa0K0BdtIZgQMAJj9IbebH+JkgKZc9h+B05PKHLOTl4ajG1BmNrVZlw==}
@@ -40713,6 +40708,7 @@ packages:
 
   /sorted-btree/1.8.1:
     resolution: {integrity: sha512-395+XIP+wqNn3USkFSrNz7G3Ss/MXlZEqesxvzCRFwL14h6e8LukDHdLBePn5pwbm5OQ9vGu8mDyz2lLDIqamQ==}
+    dev: true
 
   /source-list-map/2.0.1:
     resolution: {integrity: sha512-qnQ7gVMxGNxsiL4lEuJwe/To8UnK7fAnmbGEEH8RpLouuKbeEm0lhbQVFIrNSuB+G7tVrAlVsZgETT5nljf+Iw==}
@@ -41145,7 +41141,6 @@ packages:
     resolution: {integrity: sha512-Hl092MV3USJuUCC6mfl9sPzGloA3K5VwdIeJjYIkXY/8K+mUvaeEabWJgArp+xXrsWxCajeT2pc4axbVhIZJyg==}
     dependencies:
       readable-stream: 3.6.2
-    dev: true
 
   /string-width/1.0.2:
     resolution: {integrity: sha512-0XsVpQLnVCXHJfyEs8tC0zpTVIr5PKKsQtkT29IwupnPTjtPmQ3xT/4yCREF9hYkV/3M3kzcUTSAZT6a6h81tw==}
@@ -41444,7 +41439,6 @@ packages:
   /superstruct/1.0.3:
     resolution: {integrity: sha512-8iTn3oSS8nRGn+C2pgXSKPI3jmpm6FExNazNpjvqS6ZUJQCej3PUXEKM8NjHBOs54ExM+LPW/FBRhymrdcCiSg==}
     engines: {node: '>=14.0.0'}
-    dev: true
 
   /supertest/3.4.2:
     resolution: {integrity: sha512-WZWbwceHUo2P36RoEIdXvmqfs47idNNZjCuJOqDz6rvtkk8ym56aU5oglORCpPeXGxT7l9rkJ41+O1lffQXYSA==}
@@ -42426,7 +42420,6 @@ packages:
       yargs: 17.7.2
     transitivePeerDependencies:
       - supports-color
-    dev: true
     patched: true
 
   /tsconfck/2.1.2_typescript@5.1.6:
@@ -44782,7 +44775,6 @@ packages:
   /yargs-parser/21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
-    dev: true
 
   /yargs-parser/7.0.0:
     resolution: {integrity: sha512-WhzC+xgstid9MbVUktco/bf+KJG+Uu6vMX0LN1sLJvwmbCQVxb4D8LzogobonKycNasCZLdOzTAk1SK7+K7swg==}
@@ -44877,7 +44869,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-    dev: true
 
   /yargs/3.32.0:
     resolution: {integrity: sha512-ONJZiimStfZzhKamYvR/xvmgW3uEkAUFSP91y2caTEPhzF6uP2JfPiVZcq66b/YR0C3uitxSV7+T1x8p5bkmMg==}

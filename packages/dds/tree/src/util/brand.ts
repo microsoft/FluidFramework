@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TUnsafe, Type } from "@sinclair/typebox";
-import { Covariant, isAny } from "./typeCheck";
-import { Assume } from "./utils";
+import { NumericOptions, TUnsafe, Type } from "@sinclair/typebox";
+import { Covariant, isAny } from "./typeCheck.js";
+import { Assume } from "./utils.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -242,7 +242,9 @@ export function brandedStringType<T extends string>(): TUnsafe<T> {
 	return Type.String() as unknown as TUnsafe<T>;
 }
 
-export function brandedNumberType<T extends number>(): TUnsafe<T> {
+export function brandedNumberType<T extends number>(
+	options?: NumericOptions<number> | undefined,
+): TUnsafe<T> {
 	// See comments on `brandedStringType`.
-	return Type.Number() as unknown as TUnsafe<T>;
+	return Type.Number(options) as unknown as TUnsafe<T>;
 }

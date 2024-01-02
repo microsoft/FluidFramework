@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries";
-import { TreeArrayNode } from "../simple-tree";
-import { RestrictiveReadonlyRecord } from "../util";
+import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
+import { TreeArrayNode } from "../simple-tree/index.js";
+import { RestrictiveReadonlyRecord } from "../util/index.js";
 import {
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
@@ -16,8 +16,8 @@ import {
 	TreeMapNode,
 	TreeNodeSchemaClass,
 	WithType,
-} from "./schemaTypes";
-import { SchemaFactory } from "./schemaFactory";
+} from "./schemaTypes.js";
+import { SchemaFactory } from "./schemaFactory.js";
 
 /**
  * Extends SchemaFactory with utilities for recursive types.

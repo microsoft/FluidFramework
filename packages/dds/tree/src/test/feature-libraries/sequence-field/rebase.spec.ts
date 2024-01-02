@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF } from "../../../feature-libraries";
-import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
-import { TestChange } from "../../testChange";
-import { brand } from "../../../util";
+import { mintRevisionTag } from "../../utils.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { ChangeAtomId, RevisionTag, tagChange } from "../../../core/index.js";
+import { TestChange } from "../../testChange.js";
+import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	checkDeltaEquality,
 	rebaseTagged,
@@ -20,8 +21,8 @@ import {
 	assertChangesetsEqual,
 	withoutTombstones,
 	withOrderingMethod,
-} from "./utils";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "./utils.js";
+import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -84,10 +85,10 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(actual, cases.modify_insert);
 		}));
 
-	it("delete ↷ modify", () =>
+	it("remove ↷ modify", () =>
 		withConfig(() => {
-			const actual = rebase(cases.delete, cases.modify);
-			assertChangesetsEqual(actual, cases.delete);
+			const actual = rebase(cases.remove, cases.modify);
+			assertChangesetsEqual(actual, cases.remove);
 		}));
 
 	it("revive ↷ modify", () =>
@@ -110,7 +111,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(actual, revive);
 		}));
 
-	it("modify ↷ delete", () =>
+	it("modify ↷ remove", () =>
 		withConfig(() => {
 			const mods = [
 				Mark.modify(TestChange.mint([0], 1)),
@@ -119,7 +120,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 				{ count: 2 },
 				Mark.modify(TestChange.mint([0], 3)),
 			];
-			const deletion = [{ count: 2 }, Mark.delete(3, brand(0))];
+			const deletion = [{ count: 2 }, Mark.remove(3, brand(0))];
 			const actual = rebase(mods, deletion, tag1);
 			const expected = [
 				Mark.modify(TestChange.mint([0], 1)),
@@ -131,7 +132,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			checkDeltaEquality(actual, expected);
 		}));
 
-	it("insert ↷ delete", () =>
+	it("insert ↷ remove", () =>
 		withConfig(() => {
 			const insert = [
 				Mark.insert(1, brand(1)),
@@ -140,7 +141,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 				Mark.skip(6),
 				Mark.insert(1, brand(3)),
 			];
-			const deletion = Change.delete(1, 3);
+			const deletion = Change.remove(1, 3);
 			const actual = rebase(insert, deletion);
 			const expected = [
 				Mark.insert(1, brand(1)),
@@ -152,7 +153,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			checkDeltaEquality(actual, expected);
 		}));
 
-	it("revive ↷ delete", () =>
+	it("revive ↷ remove", () =>
 		withConfig(() => {
 			const revive = [
 				Mark.revive(1, { revision: tag1, localId: brand(0) }),
@@ -161,7 +162,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 				Mark.skip(4),
 				Mark.revive(1, { revision: tag1, localId: brand(2) }),
 			];
-			const deletion = Change.delete(1, 3);
+			const deletion = Change.remove(1, 3);
 			const actual = rebase(revive, deletion, tag2);
 			const expected = [
 				Mark.revive(1, { revision: tag1, localId: brand(0) }),
@@ -179,10 +180,10 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("pin ↷ related delete", () =>
+	it("pin ↷ related remove", () =>
 		withConfig(() => {
 			const pin = [Mark.pin(3, brand(0))];
-			const deletion = Change.delete(1, 1);
+			const deletion = Change.remove(1, 1);
 			const actual = rebase(pin, deletion, tag2);
 			const expected = [
 				// Earlier revive is unaffected
@@ -203,22 +204,22 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ↷ overlapping delete", () =>
+	it("remove ↷ overlapping remove", () =>
 		withConfig(() => {
-			// Deletes ---DEFGH--
-			const deleteA = [{ count: 3 }, Mark.delete(5, brand(0))];
-			// Deletes --CD-F-HI
-			const deleteB = [
+			// Removes ---DEFGH--
+			const removeA = [{ count: 3 }, Mark.remove(5, brand(0))];
+			// Removes --CD-F-HI
+			const removeB = [
 				{ count: 2 },
-				Mark.delete(2, brand(0)),
+				Mark.remove(2, brand(0)),
 				{ count: 1 },
-				Mark.delete(1, brand(2)),
+				Mark.remove(1, brand(2)),
 				{ count: 1 },
-				Mark.delete(2, brand(3)),
+				Mark.remove(2, brand(3)),
 			];
-			const actual = rebase(deleteA, deleteB, tag1);
-			// Deletes --dEfGh--
-			// Where lowercase letters denote nodes that are already deleted
+			const actual = rebase(removeA, removeB, tag1);
+			// Removes --dEfGh--
+			// Where lowercase letters denote nodes that are already removed
 			const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
 			const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
 			const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
@@ -227,62 +228,62 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 				Mark.tomb(tag1, brand(0), 1),
 				Mark.onEmptyCell(
 					{ revision: tag1, localId: brand(1), adjacentCells: cellsCD },
-					Mark.delete(1, brand(0)),
+					Mark.remove(1, brand(0)),
 				),
-				Mark.delete(1, brand(1)),
+				Mark.remove(1, brand(1)),
 				Mark.onEmptyCell(
 					{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
-					Mark.delete(1, brand(2)),
+					Mark.remove(1, brand(2)),
 				),
-				Mark.delete(1, brand(3)),
+				Mark.remove(1, brand(3)),
 				Mark.onEmptyCell(
 					{ revision: tag1, localId: brand(3), adjacentCells: cellsHI },
-					Mark.delete(1, brand(4)),
+					Mark.remove(1, brand(4)),
 				),
 				Mark.tomb(tag1, brand(4), 1),
 			];
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ↷ earlier delete", () =>
+	it("remove ↷ earlier remove", () =>
 		withConfig(() => {
-			// Deletes ---DE
-			const deleteA = Change.delete(3, 2);
-			// Deletes AB--
-			const deleteB = Change.delete(0, 2);
-			const actual = rebase(deleteA, deleteB);
-			// Deletes -DE
-			const expected = [Mark.tomb(tag1, brand(0), 2), Mark.skip(1), Mark.delete(2, brand(0))];
+			// Removes ---DE
+			const removeA = Change.remove(3, 2);
+			// Removes AB--
+			const removeB = Change.remove(0, 2);
+			const actual = rebase(removeA, removeB);
+			// Removes -DE
+			const expected = [Mark.tomb(tag1, brand(0), 2), Mark.skip(1), Mark.remove(2, brand(0))];
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ↷ later delete", () =>
+	it("remove ↷ later remove", () =>
 		withConfig(() => {
-			// Deletes AB--
-			const deleteA = Change.delete(0, 2);
-			// Deletes ---DE
-			const deleteB = Change.delete(3, 2);
-			const actual = rebase(deleteA, deleteB);
-			const expected = [Mark.delete(2, brand(0)), Mark.skip(1), Mark.tomb(tag1, brand(0), 2)];
+			// Removes AB--
+			const removeA = Change.remove(0, 2);
+			// Removes ---DE
+			const removeB = Change.remove(3, 2);
+			const actual = rebase(removeA, removeB);
+			const expected = [Mark.remove(2, brand(0)), Mark.skip(1), Mark.tomb(tag1, brand(0), 2)];
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("move ↷ overlapping delete", () =>
+	it("move ↷ overlapping remove", () =>
 		withConfig(() => {
 			// Moves ---DEFGH--
 			const move = [Mark.moveIn(5, brand(0)), { count: 3 }, Mark.moveOut(5, brand(0))];
-			// Deletes --CD-F-HI
+			// Removes --CD-F-HI
 			const deletion = [
 				{ count: 2 },
-				Mark.delete(2, brand(0)),
+				Mark.remove(2, brand(0)),
 				{ count: 1 },
-				Mark.delete(1, brand(2)),
+				Mark.remove(1, brand(2)),
 				{ count: 1 },
-				Mark.delete(2, brand(3)),
+				Mark.remove(2, brand(3)),
 			];
 			const actual = rebase(move, deletion, tag1);
 			// Moves --dEfGh--
-			// Where lowercase letters denote nodes that are deleted
+			// Where lowercase letters denote nodes that are removed
 			const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
 			const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
 			const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
@@ -334,26 +335,26 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ↷ insert", () =>
+	it("remove ↷ insert", () =>
 		withConfig(() => {
-			// Deletes A-CD-E
+			// Removes A-CD-E
 			const deletion = [
-				Mark.delete(1, brand(0)),
+				Mark.remove(1, brand(0)),
 				Mark.skip(1),
-				Mark.delete(2, brand(1)),
+				Mark.remove(2, brand(1)),
 				Mark.skip(1),
-				Mark.delete(1, brand(3)),
+				Mark.remove(1, brand(3)),
 			];
 			// Inserts between C and D
 			const insert = Change.insert(3, 1, brand(2));
 			const expected = [
-				Mark.delete(1, brand(0)),
+				Mark.remove(1, brand(0)),
 				Mark.skip(1),
-				Mark.delete(1, brand(1)),
+				Mark.remove(1, brand(1)),
 				Mark.skip(1), // <- insert
-				Mark.delete(1, brand(2)),
+				Mark.remove(1, brand(2)),
 				Mark.skip(1),
-				Mark.delete(1, brand(3)),
+				Mark.remove(1, brand(3)),
 			];
 			const actual = rebase(deletion, insert);
 			assertChangesetsEqual(actual, expected);
@@ -414,26 +415,26 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ↷ revive", () =>
+	it("remove ↷ revive", () =>
 		withConfig(() => {
-			// Deletes A-CD-E
+			// Removes A-CD-E
 			const deletion = [
-				Mark.delete(1, brand(0)),
+				Mark.remove(1, brand(0)),
 				Mark.skip(1),
-				Mark.delete(2, brand(1)),
+				Mark.remove(2, brand(1)),
 				Mark.skip(1),
-				Mark.delete(1, brand(3)),
+				Mark.remove(1, brand(3)),
 			];
 			// Revives content between C and D
 			const revive = Change.revive(3, 1, { revision: tag1, localId: brand(0) });
 			const expected = [
-				Mark.delete(1, brand(0)),
+				Mark.remove(1, brand(0)),
 				Mark.skip(1),
-				Mark.delete(1, brand(1)),
+				Mark.remove(1, brand(1)),
 				Mark.skip(1),
-				Mark.delete(1, brand(2)),
+				Mark.remove(1, brand(2)),
 				Mark.skip(1),
-				Mark.delete(1, brand(3)),
+				Mark.remove(1, brand(3)),
 			];
 			const actual = rebase(deletion, revive);
 			assertChangesetsEqual(actual, expected);
@@ -587,9 +588,9 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("concurrent inserts ↷ delete", () =>
+	it("concurrent inserts ↷ remove", () =>
 		withConfig(() => {
-			const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
+			const delA = tagChange(Change.remove(0, 1), mintRevisionTag());
 			const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 			const insertC = tagChange(Change.insert(1, 1), mintRevisionTag());
 			const insertB2 = rebaseTagged(insertB, delA);
@@ -598,11 +599,11 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			checkDeltaEquality(insertC2.change, expected);
 		}));
 
-	it("concurrent inserts ↷ connected delete", () =>
+	it("concurrent inserts ↷ connected remove", () =>
 		withConfig(() => {
-			const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
-			const delB = tagChange(Change.delete(1, 1), mintRevisionTag());
-			const delC = tagChange(Change.delete(0, 1), mintRevisionTag());
+			const delA = tagChange(Change.remove(0, 1), mintRevisionTag());
+			const delB = tagChange(Change.remove(1, 1), mintRevisionTag());
+			const delC = tagChange(Change.remove(0, 1), mintRevisionTag());
 
 			const insertD = tagChange(Change.insert(0, 1), mintRevisionTag());
 			const insertE = tagChange(Change.insert(3, 1), mintRevisionTag());
@@ -612,9 +613,9 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			checkDeltaEquality(insertE2.change, expected);
 		}));
 
-	it("concurrent insert and move ↷ delete", () =>
+	it("concurrent insert and move ↷ remove", () =>
 		withConfig(() => {
-			const delA = tagChange(Change.delete(0, 1), mintRevisionTag());
+			const delA = tagChange(Change.remove(0, 1), mintRevisionTag());
 			const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 			const moveC = tagChange(Change.move(2, 1, 1), mintRevisionTag());
 			const insertB2 = rebaseTagged(insertB, delA);
@@ -633,13 +634,13 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("delete ↷ move", () =>
+	it("remove ↷ move", () =>
 		withConfig(() => {
-			const deletion = [Mark.skip(2), Mark.delete(2, brand(0))];
+			const deletion = [Mark.skip(2), Mark.remove(2, brand(0))];
 			const move = Change.move(1, 3, 0);
 			const expected = [
 				Mark.skip(1),
-				Mark.delete(2, brand(0)),
+				Mark.remove(2, brand(0)),
 				Mark.skip(1),
 				Mark.tomb(tag1, brand(0), 3),
 			];
@@ -745,7 +746,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("delete ↷ composite move", () =>
+	it("remove ↷ composite move", () =>
 		withConfig(() => {
 			const [mo1, mi1] = Mark.move(1, brand(0));
 			const [mo2, mi2] = Mark.move(1, brand(1));
@@ -759,7 +760,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 				Mark.skip(1),
 				mi3,
 			];
-			const del = [Mark.delete(1, brand(0))];
+			const del = [Mark.remove(1, brand(0))];
 			const rebased = rebase(del, move);
 			const expected = [
 				Mark.tomb(tag1, brand(0)),
@@ -768,7 +769,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 				Mark.skip(1),
 				Mark.tomb(tag1, brand(2)),
 				Mark.skip(1),
-				Mark.delete(1, brand(0)),
+				Mark.remove(1, brand(0)),
 			];
 			assertChangesetsEqual(rebased, expected);
 		}));
@@ -782,7 +783,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			});
 
 			const revive = [
-				Mark.delete(1, brand(2), { cellId: { revision: tag1, localId: brand(0) } }),
+				Mark.remove(1, brand(2), { cellId: { revision: tag1, localId: brand(0) } }),
 			];
 
 			const rebased = rebase(modify, revive, tag2);
@@ -798,7 +799,7 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 		withConfig(() => {
 			const insert = Change.insert(0, 1);
 			const transient = [
-				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.remove(2, brand(2))),
 			];
 			const rebased = rebase(insert, transient);
 			const expected = [
@@ -812,20 +813,20 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("delete ↷ [move, delete]", () =>
+	it("remove ↷ [move, remove]", () =>
 		withConfig(() => {
-			const moveAndDelete = [
+			const moveAndRemove = [
 				Mark.moveOut(1, brand(0)),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 			];
 
-			const del = Change.delete(0, 1);
-			const rebased = rebase(del, moveAndDelete);
+			const del = Change.remove(0, 1);
+			const rebased = rebase(del, moveAndRemove);
 			const expected = [
 				Mark.tomb(tag1, brand(0)),
 				{ count: 1 },
-				Mark.delete(1, brand(0), {
+				Mark.remove(1, brand(0), {
 					cellId: {
 						revision: tag1,
 						localId: brand(1),
@@ -837,18 +838,18 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("delete ↷ [move, delete] (reverse move direction)", () =>
+	it("remove ↷ [move, remove] (reverse move direction)", () =>
 		withConfig(() => {
-			const moveAndDelete = [
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			const moveAndRemove = [
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 				{ count: 1 },
 				Mark.moveOut(1, brand(0)),
 			];
 
-			const del = Change.delete(1, 1);
-			const rebased = rebase(del, moveAndDelete);
+			const del = Change.remove(1, 1);
+			const rebased = rebase(del, moveAndRemove);
 			const expected = [
-				Mark.delete(1, brand(0), {
+				Mark.remove(1, brand(0), {
 					cellId: {
 						revision: tag1,
 						localId: brand(1),
@@ -862,17 +863,17 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("move ↷ move and delete", () =>
+	it("move ↷ move and remove", () =>
 		withConfig(() => {
-			const moveAndDelete = [
+			const moveAndRemove = [
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 				{ count: 1 },
 				Mark.moveOut(1, brand(0)),
 			];
 
 			const move = Change.move(2, 1, 0);
-			const rebased = rebase(move, moveAndDelete);
+			const rebased = rebase(move, moveAndRemove);
 			const expected = [
 				Mark.moveIn(1, brand(0)),
 				{ count: 1 },
@@ -912,16 +913,16 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("revive ↷ [revive, move, delete]", () =>
+	it("revive ↷ [revive, move, remove]", () =>
 		withConfig(() => {
 			const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
-			const reviveMoveDelete = [
+			const reviveMoveRemove = [
 				Mark.moveOut(1, brand(1), { cellId }),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(1)), Mark.remove(1, brand(2))),
 			];
 			const revive = [Mark.revive(1, cellId)];
-			const rebased = rebase(revive, reviveMoveDelete, tag2);
+			const rebased = rebase(revive, reviveMoveRemove, tag2);
 			const expected = [
 				Mark.returnTo(1, brand(0), {
 					revision: tag2,
@@ -941,9 +942,9 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("move chain ↷ delete", () =>
+	it("move chain ↷ remove", () =>
 		withConfig(() => {
-			const del = Change.delete(0, 1);
+			const del = Change.remove(0, 1);
 			const move = [
 				Mark.moveOut(1, brand(0), {
 					finalEndpoint: { localId: brand(1) },
@@ -1039,9 +1040,9 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("delete ↷ move with multiple destinations", () =>
+	it("remove ↷ move with multiple destinations", () =>
 		withConfig(() => {
-			const del = [Mark.delete(2, brand(0))];
+			const del = [Mark.remove(2, brand(0))];
 			const move = [
 				Mark.moveOut(2, brand(0)),
 				{ count: 1 },
@@ -1054,24 +1055,24 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			const expected = [
 				Mark.tomb(tag1, brand(0), 2),
 				{ count: 1 },
-				Mark.delete(1, brand(0)),
+				Mark.remove(1, brand(0)),
 				{ count: 1 },
-				Mark.delete(1, brand(1)),
+				Mark.remove(1, brand(1)),
 			];
 			assertChangesetsEqual(rebased, expected);
 		}));
 
 	// Tests that lineage is only added for detaches which are contiguous in the output context of the base changeset.
-	it("insert ↷ insert within delete", () =>
+	it("insert ↷ insert within remove", () =>
 		withConfig(() => {
-			const insertAndDelete = [
-				Mark.delete(1, brand(0)),
+			const insertAndRemove = [
+				Mark.remove(1, brand(0)),
 				Mark.insert(1, brand(1)),
-				Mark.delete(1, brand(2)),
+				Mark.remove(1, brand(2)),
 			];
 
 			const insert = [{ count: 1 }, Mark.insert(1, brand(0))];
-			const rebased = rebase(insert, insertAndDelete);
+			const rebased = rebase(insert, insertAndRemove);
 			const expected = [
 				Mark.tomb(tag1, brand(0)),
 				Mark.insert(1, {
@@ -1084,21 +1085,21 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 			assertChangesetsEqual(rebased, expected);
 		}));
 
-	it("insert ↷ [delete, insert]", () =>
+	it("insert ↷ [remove, insert]", () =>
 		withConfig(() => {
 			// Because B does not have lineage for A, we should use B's insertion's tiebreak policy
 			// and consider the cell it inserts into to be before the cell emptied by A
 			// Although B and C's inserts appear to be at adjacent positions when rebasing C over B,
 			// we should use C's lineage to deduce that it must come after B.
-			const deleteA = [Mark.delete(1, brand(0))];
+			const removeA = [Mark.remove(1, brand(0))];
 			const insertB = [Mark.insert(1, brand(0))];
 			const insertC = [{ count: 1 }, Mark.insert(1, brand(0))];
 
-			const c2 = rebase(insertC, deleteA, tag1);
+			const c2 = rebase(insertC, removeA, tag1);
 			const c3 = rebase(c2, insertB, tag2);
 			const expected = [
 				{ count: 1 }, // Insert B
-				Mark.tomb(tag1), // Delete A
+				Mark.tomb(tag1), // Remove A
 				Mark.insert(1, {
 					localId: brand(0),
 					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
@@ -1108,17 +1109,17 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 		}));
 
 	describe("Over composition", () => {
-		it("insert ↷ [delete, delete]", () =>
+		it("insert ↷ [remove, remove]", () =>
 			withConfig(() => {
-				const deletes: TestChangeset = shallowCompose([
-					tagChange(Change.delete(1, 2), tag1),
-					tagChange(Change.delete(0, 2), tag2),
+				const removes: TestChangeset = shallowCompose([
+					tagChange(Change.remove(1, 2), tag1),
+					tagChange(Change.remove(0, 2), tag2),
 				]);
 
 				const insert = Change.insert(3, 1);
 				const rebased = rebaseOverComposition(
 					insert,
-					deletes,
+					removes,
 					rebaseRevisionMetadataFromInfo(
 						[{ revision: tag1 }, { revision: tag2 }],
 						[tag1, tag2],
@@ -1141,18 +1142,18 @@ describeForBothConfigs("SequenceField - Rebase", (config) => {
 				assertChangesetsEqual(rebased, expected);
 			}));
 
-		it("modify ↷ [delete, delete]", () =>
+		it("modify ↷ [remove, remove]", () =>
 			withConfig(() => {
-				const deletes: TestChangeset = shallowCompose([
-					tagChange(Change.delete(1, 3), tag1),
-					tagChange(Change.delete(0, 2), tag2),
+				const removes: TestChangeset = shallowCompose([
+					tagChange(Change.remove(1, 3), tag1),
+					tagChange(Change.remove(0, 2), tag2),
 				]);
 
 				const nodeChange = TestChange.mint([], 0);
 				const modify = Change.modify(3, nodeChange);
 				const rebased = rebaseOverComposition(
 					modify,
-					deletes,
+					removes,
 					rebaseRevisionMetadataFromInfo(
 						[{ revision: tag1 }, { revision: tag2 }],
 						[tag1, tag2],

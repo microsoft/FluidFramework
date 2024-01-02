@@ -20,46 +20,6 @@
 		"./test/utils": {
 			"types": "./dist/test/utils.d.ts",
 			"default": "./dist/test/utils.js"
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/stochastic-test-utils-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/stochastic-test-utils-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./beta": {
-			"import": {
-				"types": "./lib/stochastic-test-utils-beta.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/stochastic-test-utils-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./internal": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/stochastic-test-utils-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/stochastic-test-utils-public.d.ts",
-				"default": "./dist/index.js"
-			}
 		}
 	},
 	"main": "dist/index.js",

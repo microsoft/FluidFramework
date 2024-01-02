@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+import { mintRevisionTag } from "../../utils.js";
 import {
 	RevisionTag,
 	makeAnonChange,
 	tagChange,
 	TreeNodeSchemaIdentifier,
-	mintRevisionTag,
 	tagRollbackInverse,
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionInfo,
 	TaggedChange,
-} from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+} from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import {
 	assertChangesetsEqual,
 	compose,
@@ -28,7 +28,7 @@ import {
 	shallowCompose,
 	skipOnLineageMethod,
 	withOrderingMethod,
-} from "./utils";
+} from "./utils.js";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -60,7 +60,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 					const taggedC = tagChange(c[1], tag3);
 					const title = `((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`;
 					if (
-						title.startsWith("((delete, insert), revive)") ||
+						title.startsWith("((remove, insert), revive)") ||
 						title.startsWith("((move, insert), revive)") ||
 						!SF.areComposable([taggedA, taggedB, taggedC])
 					) {
@@ -69,7 +69,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 						title.startsWith("((transient_insert, insert), revive)") ||
 						title.startsWith("((transient_insert, modify_insert), revive)") ||
 						title.startsWith("((move, modify_insert), revive)") ||
-						title.startsWith("((delete, modify_insert), revive)")
+						title.startsWith("((remove, modify_insert), revive)")
 					) {
 						it.skip(title, () => {
 							// This test fails due to the revive lacking lineage about a detach in one of the prior edits
@@ -119,8 +119,8 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			const edit = [
 				Mark.modify(changes),
 				Mark.modify(changes, { revision: tag1, localId: brand(0) }),
-				Mark.delete(1, { localId: brand(0) }, { changes }),
-				Mark.delete(
+				Mark.remove(1, { localId: brand(0) }, { changes }),
+				Mark.remove(
 					1,
 					{ localId: brand(1) },
 					{ changes, cellId: { revision: tag1, localId: brand(0) } },
@@ -138,7 +138,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				Mark.moveIn(1, { localId: brand(3) }),
 				Mark.attachAndDetach(
 					Mark.insert(1, { localId: brand(6) }),
-					Mark.delete(1, { localId: brand(0) }),
+					Mark.remove(1, { localId: brand(0) }),
 					{ changes },
 				),
 			];
@@ -151,9 +151,9 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assert.equal(callCount, 10);
 		}));
 
-	it("delete ○ revive => Noop", () =>
+	it("remove ○ revive => Noop", () =>
 		withConfig(() => {
-			const deletion = tagChange(Change.delete(0, 1), tag1);
+			const deletion = tagChange(Change.remove(0, 1), tag1);
 			const insertion = tagRollbackInverse(
 				Change.revive(0, 1, { revision: tag1, localId: brand(0) }),
 				tag2,
@@ -175,12 +175,12 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("insert ○ delete ○ modify", () =>
+	it("insert ○ remove ○ modify", () =>
 		withConfig(() => {
 			const changes = TestChange.mint([], 42);
 			const insertMark = Mark.insert(2, brand(0));
 			const insert = tagChange([insertMark], tag1);
-			const del = tagChange([Mark.delete(2, brand(1))], tag2);
+			const del = tagChange([Mark.remove(2, brand(1))], tag2);
 			const modify = tagChange(
 				[Mark.modify(changes, { revision: tag2, localId: brand(1) })],
 				tag3,
@@ -189,12 +189,12 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			const expected = [
 				Mark.attachAndDetach(
 					Mark.insert(1, { revision: tag1, localId: brand(0) }),
-					Mark.delete(1, brand(1), { revision: tag2 }),
+					Mark.remove(1, brand(1), { revision: tag2 }),
 					{ changes },
 				),
 				Mark.attachAndDetach(
 					Mark.insert(1, { revision: tag1, localId: brand(1) }),
-					Mark.delete(1, brand(2), { revision: tag2 }),
+					Mark.remove(1, brand(2), { revision: tag2 }),
 				),
 			];
 			assertChangesetsEqual(actual, expected);
@@ -211,9 +211,9 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				localId: brand(1),
 			};
 			const changes = TestChange.mint([], 42);
-			const transientRevive = [Mark.delete(1, outputId, { cellId: inputId })];
+			const transientRevive = [Mark.remove(1, outputId, { cellId: inputId })];
 			const modify = [Mark.modify(changes, outputId)];
-			const expected = [Mark.delete(1, outputId, { cellId: inputId, changes })];
+			const expected = [Mark.remove(1, outputId, { cellId: inputId, changes })];
 			const actual = compose(
 				[makeAnonChange(transientRevive), makeAnonChange(modify)],
 				revInfos,
@@ -231,7 +231,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			const insert = [
 				Mark.attachAndDetach(
 					Mark.insert(1, { revision: tag1, localId: brand(0) }),
-					Mark.delete(1, brand(1), { revision: tag2 }),
+					Mark.remove(1, brand(1), { revision: tag2 }),
 				),
 			];
 			const revive = [Mark.revive(1, transientDetach, { changes })];
@@ -267,12 +267,12 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ○ modify", () =>
+	it("remove ○ modify", () =>
 		withConfig(() => {
-			const deletion = Change.delete(0, 3);
+			const deletion = Change.remove(0, 3);
 			const childChange = TestChange.mint([0, 1], 2);
 			const modify = Change.modify(0, childChange);
-			const expected = [Mark.delete(3, brand(0)), Mark.modify(childChange)];
+			const expected = [Mark.remove(3, brand(0)), Mark.modify(childChange)];
 			const actual = shallowCompose([makeAnonChange(deletion), makeAnonChange(modify)]);
 			assertChangesetsEqual(actual, expected);
 		}));
@@ -324,27 +324,27 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("Delete and modify ○ transient revive", () =>
+	it("Remove and modify ○ transient revive", () =>
 		withConfig(() => {
 			const changes = TestChange.mint([0], 1);
 			const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
-			const del = tagChange([Mark.delete(1, cellId, { changes })], tag1);
-			const transient = tagChange([Mark.delete(1, brand(1), { cellId })], tag2);
+			const del = tagChange([Mark.remove(1, cellId, { changes })], tag1);
+			const transient = tagChange([Mark.remove(1, brand(1), { cellId })], tag2);
 
 			const composed = compose([del, transient]);
-			const expected = [Mark.delete(1, { revision: tag2, localId: brand(1) }, { changes })];
+			const expected = [Mark.remove(1, { revision: tag2, localId: brand(1) }, { changes })];
 			assertChangesetsEqual(composed, expected);
 		}));
 
 	it("Transient insert ○ transient revive", () =>
 		withConfig(() => {
 			const insert = tagChange(
-				[Mark.attachAndDetach(Mark.insert(1, brand(0)), Mark.delete(1, brand(1)))],
+				[Mark.attachAndDetach(Mark.insert(1, brand(0)), Mark.remove(1, brand(1)))],
 				tag1,
 			);
 
 			const revive = tagChange(
-				[Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(1) } })],
+				[Mark.remove(1, brand(0), { cellId: { revision: tag1, localId: brand(1) } })],
 				tag2,
 			);
 
@@ -352,23 +352,23 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			const expected = [
 				Mark.attachAndDetach(
 					Mark.insert(1, { revision: tag1, localId: brand(0) }, { revision: tag1 }),
-					Mark.delete(1, brand(0), { revision: tag2 }),
+					Mark.remove(1, brand(0), { revision: tag2 }),
 				),
 			];
 
 			assertChangesetsEqual(composed, expected);
 		}));
 
-	it("insert ○ delete (within insert)", () =>
+	it("insert ○ remove (within insert)", () =>
 		withConfig(() => {
 			const insert = tagChange(Change.insert(0, 3, brand(1)), tag1);
-			const deletion = tagChange(Change.delete(1, 1), tag2);
+			const deletion = tagChange(Change.remove(1, 1), tag2);
 			const actual = shallowCompose([insert, deletion]);
 			const expected = [
 				Mark.insert(1, { localId: brand(1), revision: tag1 }),
 				Mark.attachAndDetach(
 					Mark.insert(1, { localId: brand(2), revision: tag1 }),
-					Mark.delete(1, brand(0), { revision: tag2 }),
+					Mark.remove(1, brand(0), { revision: tag2 }),
 				),
 				Mark.insert(1, { localId: brand(3), revision: tag1 }),
 			];
@@ -392,28 +392,28 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("insert ○ delete (across inserts)", () =>
+	it("insert ○ remove (across inserts)", () =>
 		withConfig(() => {
 			const insert = [
 				Mark.insert(2, { localId: brand(1), revision: tag1 }),
 				Mark.insert(2, { localId: brand(3), revision: tag2 }),
 				Mark.insert(2, { localId: brand(5), revision: tag1 }),
 			];
-			const deletion = tagChange(Change.delete(1, 4), tag2);
+			const deletion = tagChange(Change.remove(1, 4), tag2);
 			const actual = shallowCompose([makeAnonChange(insert), deletion], revInfos);
 			const expected = [
 				Mark.insert(1, { localId: brand(1), revision: tag1 }),
 				Mark.attachAndDetach(
 					Mark.insert(1, { localId: brand(2), revision: tag1 }),
-					Mark.delete(1, brand(0), { revision: tag2 }),
+					Mark.remove(1, brand(0), { revision: tag2 }),
 				),
 				Mark.attachAndDetach(
 					Mark.insert(2, { localId: brand(3), revision: tag2 }),
-					Mark.delete(2, brand(1), { revision: tag2 }),
+					Mark.remove(2, brand(1), { revision: tag2 }),
 				),
 				Mark.attachAndDetach(
 					Mark.insert(1, { localId: brand(5), revision: tag1 }),
-					Mark.delete(1, brand(3), { revision: tag2 }),
+					Mark.remove(1, brand(3), { revision: tag2 }),
 				),
 				Mark.insert(1, { localId: brand(6), revision: tag1 }),
 			];
@@ -450,79 +450,79 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("modify ○ delete", () =>
+	it("modify ○ remove", () =>
 		withConfig(() => {
 			const changes = TestChange.mint([0, 1], 2);
 			const modify = Change.modify(0, changes);
-			const deletion = Change.delete(0, 1);
+			const deletion = Change.remove(0, 1);
 			const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(deletion)]);
-			const expected = [Mark.delete(1, brand(0), { changes })];
+			const expected = [Mark.remove(1, brand(0), { changes })];
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ○ delete", () =>
+	it("remove ○ remove", () =>
 		withConfig(() => {
-			// Deletes ABC-----IJKLM
-			const deleteA = [Mark.delete(3, brand(0)), { count: 5 }, Mark.delete(5, brand(3))];
-			// Deletes DEFG--OP
-			const deleteB = [Mark.delete(4, brand(0)), { count: 2 }, Mark.delete(2, brand(4))];
-			const actual = shallowCompose([tagChange(deleteA, tag1), tagChange(deleteB, tag2)]);
-			// Deletes ABCDEFG-IJKLM-OP
+			// Removes ABC-----IJKLM
+			const removeA = [Mark.remove(3, brand(0)), { count: 5 }, Mark.remove(5, brand(3))];
+			// Removes DEFG--OP
+			const removeB = [Mark.remove(4, brand(0)), { count: 2 }, Mark.remove(2, brand(4))];
+			const actual = shallowCompose([tagChange(removeA, tag1), tagChange(removeB, tag2)]);
+			// Removes ABCDEFG-IJKLM-OP
 			const expected = [
-				Mark.delete(3, brand(0), { revision: tag1 }),
-				Mark.delete(4, brand(0), { revision: tag2 }),
+				Mark.remove(3, brand(0), { revision: tag1 }),
+				Mark.remove(4, brand(0), { revision: tag2 }),
 				{ count: 1 },
-				Mark.delete(5, brand(3), { revision: tag1 }),
+				Mark.remove(5, brand(3), { revision: tag1 }),
 				{ count: 1 },
-				Mark.delete(2, brand(4), { revision: tag2 }),
+				Mark.remove(2, brand(4), { revision: tag2 }),
 			];
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("revive ○ delete", () =>
+	it("revive ○ remove", () =>
 		withConfig(() => {
 			// Revive ABCDE
 			const revive = Change.revive(0, 5, { revision: tag1, localId: brand(0) });
-			// Delete _B_DEF
+			// Remove _B_DEF
 			const deletion = [
 				{ count: 1 },
-				Mark.delete(1, brand(0)),
+				Mark.remove(1, brand(0)),
 				{ count: 1 },
-				Mark.delete(3, brand(1)),
+				Mark.remove(3, brand(1)),
 			];
 			const actual = shallowCompose([makeAnonChange(revive), tagChange(deletion, tag2)]);
 			const expected = [
 				Mark.revive(1, { revision: tag1, localId: brand(0) }),
-				Mark.delete(
+				Mark.remove(
 					1,
 					{ revision: tag2, localId: brand(0) },
 					{ cellId: { revision: tag1, localId: brand(1) } },
 				),
 				Mark.revive(1, { revision: tag1, localId: brand(2) }),
-				Mark.delete(
+				Mark.remove(
 					2,
 					{ revision: tag2, localId: brand(1) },
 					{ cellId: { revision: tag1, localId: brand(3) } },
 				),
-				Mark.delete(1, brand(3), { revision: tag2 }),
+				Mark.remove(1, brand(3), { revision: tag2 }),
 			];
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("revive and modify ○ delete", () =>
+	it("revive and modify ○ remove", () =>
 		withConfig(() => {
 			const changes = TestChange.mint([0, 1], 2);
 			const detachEvent: ChangeAtomId = { revision: tag1, localId: brand(0) };
 			const revive = [Mark.revive(1, detachEvent, { changes })];
-			const deletion = [Mark.delete(2, brand(0))];
+			const deletion = [Mark.remove(2, brand(0))];
 			const actual = shallowCompose([tagChange(revive, tag2), tagChange(deletion, tag3)]);
 			const expected: TestChangeset = [
-				Mark.delete(
+				Mark.remove(
 					1,
 					{ localId: brand(0), revision: tag3 },
 					{ cellId: detachEvent, changes },
 				),
-				Mark.delete(1, { localId: brand(1), revision: tag3 }),
+				Mark.remove(1, { localId: brand(1), revision: tag3 }),
 			];
 			assertChangesetsEqual(actual, expected);
 		}));
@@ -537,14 +537,14 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ○ insert", () =>
+	it("remove ○ insert", () =>
 		withConfig(() => {
-			const deletion = Change.delete(0, 3);
+			const deletion = Change.remove(0, 3);
 			const insert = Change.insert(0, 1, brand(2));
 			// TODO: test with merge-right policy as well
 			const expected = [
 				Mark.insert(1, { localId: brand(2), revision: tag2 }),
-				Mark.delete(3, brand(0), { revision: tag1 }),
+				Mark.remove(3, brand(0), { revision: tag1 }),
 			];
 			const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
 			assertChangesetsEqual(actual, expected);
@@ -604,9 +604,9 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ○ revive (different earlier nodes)", () =>
+	it("remove ○ revive (different earlier nodes)", () =>
 		withConfig(() => {
-			const deletion = tagChange(Change.delete(0, 2), tag1);
+			const deletion = tagChange(Change.remove(0, 2), tag1);
 			const lineage: SF.LineageEvent[] = [
 				{ revision: tag1, id: brand(0), count: 2, offset: 0 },
 			];
@@ -616,15 +616,15 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			]);
 			const expected = [
 				Mark.revive(2, { revision: tag2, localId: brand(0), lineage }),
-				Mark.delete(2, brand(0), { revision: tag1 }),
+				Mark.remove(2, brand(0), { revision: tag1 }),
 			];
 			const actual = shallowCompose([deletion, revive]);
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ○ revive (different in-between nodes)", () =>
+	it("remove ○ revive (different in-between nodes)", () =>
 		withConfig(() => {
-			const deletion = tagChange(Change.delete(0, 2), tag1);
+			const deletion = tagChange(Change.remove(0, 2), tag1);
 			const lineage: SF.LineageEvent[] = [
 				{ revision: tag1, id: brand(0), count: 2, offset: 1 },
 			];
@@ -634,17 +634,17 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				Mark.tomb(tag1, brand(1)),
 			]);
 			const expected = [
-				Mark.delete(1, brand(0), { revision: tag1 }),
+				Mark.remove(1, brand(0), { revision: tag1 }),
 				Mark.revive(2, { revision: tag2, localId: brand(0), lineage }),
-				Mark.delete(1, brand(1), { revision: tag1 }),
+				Mark.remove(1, brand(1), { revision: tag1 }),
 			];
 			const actual = shallowCompose([deletion, revive]);
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete ○ revive (different later nodes)", () =>
+	it("remove ○ revive (different later nodes)", () =>
 		withConfig(() => {
-			const deletion = tagChange(Change.delete(0, 2), tag1);
+			const deletion = tagChange(Change.remove(0, 2), tag1);
 			const lineage: SF.LineageEvent[] = [
 				{ revision: tag1, id: brand(0), count: 2, offset: 2 },
 			];
@@ -653,19 +653,19 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				Mark.revive(2, { revision: tag2, localId: brand(0), lineage }),
 			]);
 			const expected = [
-				Mark.delete(2, brand(0), { revision: tag1 }),
+				Mark.remove(2, brand(0), { revision: tag1 }),
 				Mark.revive(2, { revision: tag2, localId: brand(0), lineage }),
 			];
 			const actual = shallowCompose([deletion, revive]);
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete1 ○ delete2 ○ revive (delete1)", () =>
+	it("remove1 ○ remove2 ○ revive (remove1)", () =>
 		withConfig(() => {
-			const delete1 = Change.delete(1, 3);
-			const delete2 = Change.delete(0, 2);
+			const remove1 = Change.remove(1, 3);
+			const remove2 = Change.remove(0, 2);
 			// The revive needs lineage to describe the precise gap in which it is reviving the nodes.
-			// Such lineage would normally be acquired by rebasing the revive over the second delete.
+			// Such lineage would normally be acquired by rebasing the revive over the second remove.
 			const revive = [
 				Mark.tomb(tag2),
 				Mark.tomb(tag1),
@@ -678,29 +678,29 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				Mark.tomb(tag2, brand(1)),
 			];
 			const expected = [
-				Mark.delete(1, brand(0), { revision: tag2 }),
-				Mark.delete(1, brand(0), { revision: tag1 }),
+				Mark.remove(1, brand(0), { revision: tag2 }),
+				Mark.remove(1, brand(0), { revision: tag1 }),
 				{ count: 1 },
-				Mark.delete(1, brand(2), { revision: tag1 }),
-				Mark.delete(1, brand(1), { revision: tag2 }),
+				Mark.remove(1, brand(2), { revision: tag1 }),
+				Mark.remove(1, brand(1), { revision: tag2 }),
 			];
 			const actual = shallowCompose([
-				tagChange(delete1, tag1),
-				tagChange(delete2, tag2),
+				tagChange(remove1, tag1),
+				tagChange(remove2, tag2),
 				tagChange(revive, tag3),
 			]);
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("delete1 ○ delete2 ○ revive (delete2)", () =>
+	it("remove1 ○ remove2 ○ revive (remove2)", () =>
 		withConfig(() => {
-			const delete1 = Change.delete(1, 3);
-			const delete2 = Change.delete(0, 2);
+			const remove1 = Change.remove(1, 3);
+			const remove2 = Change.remove(0, 2);
 			const revive = [Mark.revive(2, { revision: tag2, localId: brand(0) })];
-			const expected = [{ count: 1 }, Mark.delete(3, brand(0), { revision: tag1 })];
+			const expected = [{ count: 1 }, Mark.remove(3, brand(0), { revision: tag1 })];
 			const actual = shallowCompose([
-				tagChange(delete1, tag1),
-				tagChange(delete2, tag2),
+				tagChange(remove1, tag1),
+				tagChange(remove2, tag2),
 				tagChange(revive, tag3),
 			]);
 			assertChangesetsEqual(actual, expected);
@@ -809,15 +809,15 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("move ○ delete", () =>
+	it("move ○ remove", () =>
 		withConfig(() => {
 			const move = Change.move(1, 1, 4, brand(0));
-			const deletion = Change.delete(3, 1, brand(1));
+			const deletion = Change.remove(3, 1, brand(1));
 			const expected = [
 				{ count: 1 },
 				Mark.moveOut(1, brand(0)),
 				{ count: 2 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 			];
 			const actual = shallowCompose([makeAnonChange(move), makeAnonChange(deletion)]);
 			assertChangesetsEqual(actual, expected);
@@ -1003,8 +1003,8 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 	it("adjacent detached modifies 1", () =>
 		withConfig(() => {
 			// Starting state [A B]
-			// Revision 1 deletes A
-			// Revision 2 deletes B
+			// Revision 1 removes A
+			// Revision 2 removes B
 			// Revision 3 modifies A
 			// Revision 4 modifies B
 			const nodeChange1 = "Change1";
@@ -1027,8 +1027,8 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 	it("adjacent detached modifies 2", () =>
 		withConfig(() => {
 			// Starting state [A B]
-			// Revision 1 deletes B
-			// Revision 2 deletes A
+			// Revision 1 removes B
+			// Revision 2 removes A
 			// Revision 3 modifies B
 			// Revision 4 modifies A
 			const nodeChange1 = "Change1";
@@ -1051,8 +1051,8 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 	it("adjacent detached modifies 3", () =>
 		withConfig(() => {
 			// Starting state [A B]
-			// Revision 1 deletes A
-			// Revision 2 deletes B
+			// Revision 1 removes A
+			// Revision 2 removes B
 			// Revision 3 modifies B
 			// Revision 4 modifies A
 			const nodeChange1 = "Change1";
@@ -1075,8 +1075,8 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 	it("adjacent detached modifies 4", () =>
 		withConfig(() => {
 			// Starting state [A B]
-			// Revision 1 deletes B
-			// Revision 2 deletes A
+			// Revision 1 removes B
+			// Revision 2 removes A
 			// Revision 3 modifies A
 			// Revision 4 modifies B
 			const nodeChange1 = "Change1";
@@ -1097,10 +1097,10 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(actual, expected);
 		}));
 
-	it("move, delete, revive", () =>
+	it("move, remove, revive", () =>
 		withConfig(() => {
 			const move = tagChange(Change.move(1, 1, 0), tag1);
-			const del = tagChange(Change.delete(0, 1), tag2);
+			const del = tagChange(Change.remove(0, 1), tag2);
 			const revive = tagChange(
 				Change.revive(0, 1, { revision: tag2, localId: brand(0) }),
 				tag3,
@@ -1111,7 +1111,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 		}));
 
 	// This test leads compose to output a vestigial endpoint.
-	it.skip("return-to, delete, move-out", () => {
+	it.skip("return-to, remove, move-out", () => {
 		const returnTo = tagRollbackInverse(
 			[
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
@@ -1126,7 +1126,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			tag3,
 			tag1,
 		);
-		const del = tagChange([Mark.delete(1, brand(0))], tag2);
+		const del = tagChange([Mark.remove(1, brand(0))], tag2);
 		const move = tagChange(
 			[
 				Mark.moveOut(1, brand(0), { cellId: { revision: tag2, localId: brand(0) } }),
@@ -1280,31 +1280,31 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			assertChangesetsEqual(composed, expected);
 		}));
 
-	it("delete (rollback) ○ insert", () =>
+	it("remove (rollback) ○ insert", () =>
 		withConfig(() => {
 			const insertA = tagChange([Mark.insert(1, brand(0))], tag1);
-			const deleteB = tagRollbackInverse([Mark.delete(1, brand(0))], tag3, tag2);
-			const composed = shallowCompose([deleteB, insertA]);
+			const removeB = tagRollbackInverse([Mark.remove(1, brand(0))], tag3, tag2);
+			const composed = shallowCompose([removeB, insertA]);
 
 			// B is the inverse of a new attach. Since that new attach comes after A (temporally),
 			// its tiebreak policy causes the cell to come before A's insert (spatially).
-			// When composing the rollback with A's insert, the delete should come before the insert,
+			// When composing the rollback with A's insert, the remove should come before the insert,
 			// even though A's insert has a tiebreak policy which puts it before other new cells.
 			const expected = [
-				Mark.delete(1, { revision: tag3, localId: brand(0) }),
+				Mark.remove(1, { revision: tag3, localId: brand(0) }),
 				Mark.insert(1, { revision: tag1, localId: brand(0) }),
 			];
 
 			assertChangesetsEqual(composed, expected);
 		}));
 
-	it("move-in+delete ○ modify", () =>
+	it("move-in+remove ○ modify", () =>
 		withConfig(() => {
 			const changes = TestChange.mint([], 42);
 			const [mo, mi] = Mark.move(1, { revision: tag1, localId: brand(1) });
 			const attachDetach = Mark.attachAndDetach(
 				mi,
-				Mark.delete(1, { revision: tag2, localId: brand(2) }),
+				Mark.remove(1, { revision: tag2, localId: brand(2) }),
 			);
 			const base = makeAnonChange([mo, attachDetach]);
 			const modify = tagChange(
@@ -1499,7 +1499,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 					const changeX = tagChange(
 						[
 							Mark.modify("A", { revision: tag1, localId: brand(1) }),
-							Mark.delete(
+							Mark.remove(
 								1,
 								{ revision: tag2, localId: brand(2) },
 								{ cellId: { revision: tag1, localId: brand(2) } },
@@ -1519,7 +1519,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 
 					const expected = [
 						Mark.modify("A", { revision: tag1, localId: brand(1) }),
-						Mark.delete(
+						Mark.remove(
 							1,
 							{ revision: tag2, localId: brand(2) },
 							{ cellId: { revision: tag1, localId: brand(2) }, changes: "B" },
@@ -1554,7 +1554,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			// TODO: make this pass with CellOrderingMethod.Lineage
 			skipOnLineageMethod(config, "A ○ C - with lineage for B on both marks", () =>
 				withConfig(() => {
-					const cellA = Mark.delete(
+					const cellA = Mark.remove(
 						1,
 						{
 							revision: tag3,
@@ -1591,7 +1591,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 						localId: brand(1),
 						lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
 					});
-					const cellC = Mark.delete(
+					const cellC = Mark.remove(
 						1,
 						{
 							revision: tag3,
@@ -1618,7 +1618,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			// TODO: make this pass with CellOrderingMethod.Lineage
 			skipOnLineageMethod(config, "A ○ C - with lineage for B on C", () =>
 				withConfig(() => {
-					const cellA = Mark.delete(1, { revision: tag2, localId: brand(1) });
+					const cellA = Mark.remove(1, { revision: tag2, localId: brand(1) });
 					const cellC = Mark.insert(1, {
 						revision: tag3,
 						localId: brand(3),
@@ -1659,7 +1659,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 			// for all the cells that it names.
 			it("ABC ○ B", () =>
 				withConfig(() => {
-					const markABC = Mark.delete(3, { revision: tag1, localId: brand(1) });
+					const markABC = Mark.remove(3, { revision: tag1, localId: brand(1) });
 					const markB = Mark.modify("B", {
 						revision: tag1,
 						localId: brand(2),
@@ -1671,9 +1671,9 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 					const composedXY = shallowCompose([changeX, changeY]);
 
 					const expected = [
-						Mark.delete(1, { revision: tag1, localId: brand(1) }),
-						Mark.delete(1, { revision: tag1, localId: brand(2) }, { changes: "B" }),
-						Mark.delete(1, { revision: tag1, localId: brand(3) }),
+						Mark.remove(1, { revision: tag1, localId: brand(1) }),
+						Mark.remove(1, { revision: tag1, localId: brand(2) }, { changes: "B" }),
+						Mark.remove(1, { revision: tag1, localId: brand(3) }),
 					];
 					assertChangesetsEqual(composedXY, expected);
 				}));
@@ -1728,7 +1728,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 							revision: tag1,
 							localId: brand(1),
 						});
-						const markNamesB = Mark.delete(1, {
+						const markNamesB = Mark.remove(1, {
 							revision: tag3,
 							localId: brand(2),
 						});
@@ -1752,7 +1752,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 							revision: tag1,
 							localId: brand(2),
 						});
-						const markNamesA = Mark.delete(1, {
+						const markNamesA = Mark.remove(1, {
 							revision: tag3,
 							localId: brand(1),
 						});
@@ -1785,7 +1785,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 								localId: brand(2),
 								// tiebreak: Tiebreak.Right,
 							}),
-							Mark.delete(1, { revision: tag3, localId: brand(2) }),
+							Mark.remove(1, { revision: tag3, localId: brand(2) }),
 						);
 						const markB = Mark.modify("B", {
 							revision: tag3,
@@ -1809,7 +1809,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 						});
 						const markNamesA = Mark.attachAndDetach(
 							Mark.insert(1, { revision: tag3, localId: brand(1) }),
-							Mark.delete(1, { revision: tag3, localId: brand(1) }),
+							Mark.remove(1, { revision: tag3, localId: brand(1) }),
 						);
 						const markA = Mark.modify("A", {
 							revision: tag3,
@@ -1832,7 +1832,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				withConfig(() => {
 					const markA = Mark.attachAndDetach(
 						Mark.insert(1, { revision: tag2, localId: brand(1) }),
-						Mark.delete(1, { revision: tag2, localId: brand(1) }),
+						Mark.remove(1, { revision: tag2, localId: brand(1) }),
 					);
 					const markB = Mark.modify("B", {
 						localId: brand(2),
@@ -1851,7 +1851,7 @@ describeForBothConfigs("SequenceField - Compose", (config) => {
 				withConfig(() => {
 					const markB = Mark.attachAndDetach(
 						Mark.insert(1, { revision: tag2, localId: brand(2) }),
-						Mark.delete(1, { revision: tag2, localId: brand(2) }),
+						Mark.remove(1, { revision: tag2, localId: brand(2) }),
 					);
 					const markA = Mark.modify("A", {
 						localId: brand(1),

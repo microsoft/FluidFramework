@@ -710,7 +710,9 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	 * Tries to summarize with retries where retry is based on the failure params.
 	 * For example, summarization may be retried for failures with "retryAfterSeconds" param.
 	 */
-	private async trySummarizeWithRetries(reason: SummarizeReason) {
+	private async trySummarizeWithRetries(
+		reason: SummarizeReason,
+	): Promise<ISummarizeResults | undefined> {
 		// Helper to set summarize options, telemetry properties and call summarize.
 		const attemptSummarize = (attemptNumber: number, finalAttempt: boolean) => {
 			const summarizeOptions: ISummarizeOptions = {
@@ -749,24 +751,23 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let currentAttempt = 0;
 		let retryAfterSeconds: number | undefined;
 		let done = false;
-		let result: "success" | "failure" | "canceled" = "success";
+		let status: "success" | "failure" | "canceled" = "success";
+		let results: ISummarizeResults | undefined;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
-				result = "canceled";
+				status = "canceled";
 				done = true;
 				break;
 			}
 
-			const { summarizeProps, summarizeResult } = attemptSummarize(
-				currentAttempt,
-				false /* finalAttempt */,
-			);
+			const attemptResult = attemptSummarize(currentAttempt, false /* finalAttempt */);
+			results = attemptResult.summarizeResult;
 
 			// Ack / nack is the final step, so if it succeeds we're done.
-			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
+			const ackNackResult = await results.receivedSummaryAckOrNack;
 			if (ackNackResult.success) {
-				result = "success";
+				status = "success";
 				done = true;
 				break;
 			}
@@ -775,7 +776,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			// If submit summary failed, use the params from "summarySubmitted" result. Else, use the params
 			// from "receivedSummaryAckOrNack" result.
 			// Note: Check "summarySubmitted" result first because if it fails, ack nack would fail as well.
-			const submitSummaryResult = await summarizeResult.summarySubmitted;
+			const submitSummaryResult = await results.summarySubmitted;
 			if (!submitSummaryResult.success) {
 				maxAttempts = this.maxAttemptsForSubmitFailures;
 				retryAfterSeconds = submitSummaryResult.data?.retryAfterSeconds;
@@ -785,9 +786,9 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			}
 
 			// Emit "summarize" event for this failed attempt.
-			result = "failure";
+			status = "failure";
 			const eventProps: ISummarizeEventProps = {
-				result,
+				result: status,
 				currentAttempt,
 				maxAttempts,
 				error: ackNackResult.error,
@@ -808,16 +809,16 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
 					stage: submitSummaryResult.data?.stage,
 					dynamicRetries: true, // To differentiate this telemetry from regular retry logic
-					...summarizeProps,
+					...attemptResult.summarizeProps,
 				});
 				await delay(retryAfterSeconds * 1000);
 			}
 		} while (!done);
 
 		// If summarize attempt did not fail, emit "summarize" event and return. A failed attempt may be retried below.
-		if (result !== "failure") {
-			this.emit("summarize", { result, currentAttempt, maxAttempts });
-			return;
+		if (status !== "failure") {
+			this.emit("summarize", { result: status, currentAttempt, maxAttempts });
+			return results;
 		}
 
 		// If summarization wasn't successful above and the failure contains "retryAfterSeconds", perform one last
@@ -826,20 +827,44 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			const { summarizeResult } = attemptSummarize(++currentAttempt, true /* finalAttempt */);
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
-			result = ackNackResult.success ? "success" : "failure";
+			status = ackNackResult.success ? "success" : "failure";
 			const eventProps: ISummarizeEventProps = {
-				result,
+				result: status,
 				currentAttempt,
 				maxAttempts,
 				error: ackNackResult.success ? undefined : ackNackResult.error,
 			};
 			this.emit("summarize", eventProps);
+			results = summarizeResult;
 		}
 
 		// If summarization is still unsuccessful, stop the summarizer.
-		if (result === "failure") {
+		if (status === "failure") {
 			this.stopSummarizerCallback("failToSummarize");
 		}
+		return results;
+	}
+
+	/**
+	 * Attempts to generate a summary on demand with retries in case of failures. The retry logic is the same
+	 * as heuristics based summaries.
+	 */
+	private async summarizeOnDemandWithRetries(
+		reason: SummarizeReason,
+		resultsBuilder: SummarizeResultBuilder,
+	) {
+		const results = await this.trySummarizeWithRetries(reason);
+		if (results === undefined) {
+			resultsBuilder.fail("Summarization was canceled", undefined);
+			return resultsBuilder.build();
+		}
+		const submitResult = await results.summarySubmitted;
+		const summaryOpBroadcastedResult = await results.summaryOpBroadcasted;
+		const ackNackResult = await results.receivedSummaryAckOrNack;
+		resultsBuilder.summarySubmitted.resolve(submitResult);
+		resultsBuilder.summaryOpBroadcasted.resolve(summaryOpBroadcastedResult);
+		resultsBuilder.receivedSummaryAckOrNack.resolve(ackNackResult);
+		return resultsBuilder.build();
 	}
 
 	/** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */
@@ -859,12 +884,20 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		}
 
 		const { reason, ...summarizeOptions } = options;
-		const result = this.trySummarizeOnce(
-			{ summarizeReason: `onDemand/${reason}` },
-			summarizeOptions,
-			resultsBuilder,
-		);
-		return result;
+		if (options.retryOnFailure === true) {
+			this.summarizeOnDemandWithRetries(`onDemand;${reason}`, resultsBuilder).catch(
+				(error) => {
+					resultsBuilder.fail("summarize failed", error);
+				},
+			);
+		} else {
+			this.trySummarizeOnce(
+				{ summarizeReason: `onDemand/${reason}` },
+				summarizeOptions,
+				resultsBuilder,
+			);
+		}
+		return resultsBuilder.build();
 	}
 
 	/** {@inheritdoc (ISummarizer:interface).enqueueSummarize} */

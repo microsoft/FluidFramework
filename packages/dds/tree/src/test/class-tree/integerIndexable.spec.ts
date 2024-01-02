@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import/no-internal-modules
-import { IntegerIndexable } from "../../class-tree/integerIndexable";
+import { IntegerIndexable } from "../../class-tree/integerIndexable.js";
 
 export class ArrayFake<T> extends IntegerIndexable<T> {
 	public constructor(

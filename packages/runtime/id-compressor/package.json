@@ -69,7 +69,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"sorted-btree": "^1.8.0",
+		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

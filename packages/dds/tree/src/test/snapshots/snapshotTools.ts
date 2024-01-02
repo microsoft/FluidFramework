@@ -6,7 +6,7 @@
 import path from "path";
 import { strict as assert } from "assert";
 import { existsSync, rmSync, mkdirSync, writeFileSync, readFileSync } from "fs";
-import { JsonCompatibleReadOnly } from "../../util";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");
 

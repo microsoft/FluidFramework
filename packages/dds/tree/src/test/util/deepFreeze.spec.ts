@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { deepFreeze } from "../utils";
+import { deepFreeze } from "../utils.js";
 
 describe("deepFreeze", () => {
 	it("freezes plain objects", () => {

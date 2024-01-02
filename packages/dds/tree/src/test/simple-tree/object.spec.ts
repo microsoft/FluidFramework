@@ -10,8 +10,8 @@ import {
 	SchemaFactory,
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
-} from "../../class-tree";
-import { getRoot, makeSchema, pretty } from "./utils";
+} from "../../class-tree/index.js";
+import { getRoot, makeSchema, pretty } from "./utils.js";
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	schema: TSchema;

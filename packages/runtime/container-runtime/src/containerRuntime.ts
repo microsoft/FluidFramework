@@ -1411,9 +1411,6 @@ export class ContainerRuntime
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
 				canReuseHandle: false,
-				// Must set to true to throw on any data stores failure that was too severe to be handled.
-				// We also are not decoding the base summaries at the root.
-				throwOnFailure: true,
 				// If GC should not run, let the summarizer node know so that it does not track GC state.
 				gcDisabled: !this.garbageCollector.shouldRunGC,
 			},
@@ -2268,6 +2265,7 @@ export class ContainerRuntime
 					messageWithContext.message,
 					local,
 					localOpMetadata,
+					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
 				);
 				break;
 			case ContainerMessageType.BlobAttach:

@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, NodeChangeset, cursorForJsonableTreeNode } from "../../feature-libraries";
-import { FieldKey, JsonableTree, ITreeCursorSynchronous } from "../../core";
-import { brand } from "../../util";
-import { leaf } from "../../domains";
+import {
+	FieldKinds,
+	NodeChangeset,
+	cursorForJsonableTreeNode,
+} from "../../feature-libraries/index.js";
+import { FieldKey, JsonableTree, ITreeCursorSynchronous } from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import { leaf } from "../../domains/index.js";
 
 // TODO: Users of this are mainly working with in memory representations.
 // Therefore it should not be using JsonableTrees.
