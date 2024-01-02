@@ -38,9 +38,9 @@ import { changesetForChild, fooKey, testTreeCursor } from "../fieldKindTestUtils
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { assertEqual } from "./optionalFieldUtils.js";
-import { testSnapshots } from "./snapshots.spec.js";
-import { testRebaserAxioms } from "./optionalChangeRebaser.spec.js";
-import { testCodecs } from "./optionalFieldChangeCodecs.spec.js";
+import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
+import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

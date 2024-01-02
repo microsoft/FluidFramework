@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { testCompose } from "./compose.spec";
-import { testInvert } from "./invert.spec";
-import { testMarkListFactory } from "./markListFactory.spec";
-import { testMarkQueue } from "./markQueue.spec";
-import { testGenerateRandomChange } from "./randomChangeGenerator.spec";
-import { testRebase } from "./rebase.spec";
-import { testRelevantRemovedRoots } from "./relevantRemovedRoots.spec";
+import { testCompose } from "./compose.test";
+import { testInvert } from "./invert.test";
+import { testMarkListFactory } from "./markListFactory.test";
+import { testMarkQueue } from "./markQueue.test";
+import { testGenerateRandomChange } from "./randomChangeGenerator.test";
+import { testRebase } from "./rebase.test";
+import { testRelevantRemovedRoots } from "./relevantRemovedRoots.test";
 import {
 	testComposedSandwichRebasing,
 	testExamples,
@@ -17,12 +17,12 @@ import {
 	testSandwichComposing,
 	testSandwichRebasing,
 	testStateBasedRebaserAxioms,
-} from "./sequenceChangeRebaser.spec";
-import { testCodecs } from "./sequenceFieldCodecs.spec";
-import { testEditor } from "./sequenceFieldEditor.spec";
-import { testToDelta } from "./sequenceFieldToDelta.spec";
-import { testSnapshots } from "./snapshots.spec";
-import { testUtils } from "./utils.spec";
+} from "./sequenceChangeRebaser.test";
+import { testCodecs } from "./sequenceFieldCodecs.test";
+import { testEditor } from "./sequenceFieldEditor.test";
+import { testToDelta } from "./sequenceFieldToDelta.test";
+import { testSnapshots } from "./sequenceFieldSnapshots.test";
+import { testUtils } from "./sequenceFieldUtils.test";
 
 describe("SequenceField", () => {
 	testEditor();

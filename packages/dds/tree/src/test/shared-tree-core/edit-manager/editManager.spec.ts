@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { testCodec } from "./editManagerCodecs.spec";
-import { testCorrectness } from "./editManagerCorrectness.spec";
+import { testCodec } from "./editManagerCodecs.test";
+import { testCorrectness } from "./editManagerCorrectness.test";
 import { testPerf } from "./editManagerPerf.spec";
 
 describe("EditManager", () => {
