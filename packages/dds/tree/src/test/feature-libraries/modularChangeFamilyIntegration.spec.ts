@@ -44,6 +44,7 @@ import {
 import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+// eslint-disable-next-line import/no-internal-modules
 import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";

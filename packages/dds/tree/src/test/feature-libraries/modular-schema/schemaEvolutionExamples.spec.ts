@@ -26,6 +26,7 @@ import {
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
 

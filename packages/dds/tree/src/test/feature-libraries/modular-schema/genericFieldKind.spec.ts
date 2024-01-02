@@ -31,6 +31,7 @@ import {
 } from "../../utils.js";
 import { SessionAwareCodec } from "../../../codec/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
 

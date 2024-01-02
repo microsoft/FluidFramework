@@ -11,6 +11,7 @@ import {
 	FieldChangeRebaser,
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { Mutable, fail } from "../../../util/index.js";
 import { makeCodecFamily } from "../../../codec/index.js";

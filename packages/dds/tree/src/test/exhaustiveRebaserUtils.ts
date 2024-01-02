@@ -4,6 +4,7 @@
  */
 
 import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
 
 /**

@@ -12,6 +12,7 @@ import {
 	findAncestor,
 	findCommonAncestor,
 	rebaseBranch,
+	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../core/rebase/index.js";
 import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
 import { mintRevisionTag } from "../utils.js";

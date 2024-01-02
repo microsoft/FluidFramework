@@ -12,6 +12,7 @@ import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { SessionAwareCodec } from "../../../codec/index.js";
 import { RevisionTagCodec } from "../../../core/index.js";

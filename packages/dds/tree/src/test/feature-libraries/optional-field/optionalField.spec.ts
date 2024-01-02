@@ -26,6 +26,7 @@ import {
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
 	OptionalChangeset,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import {
 	assertFieldChangesEqual,

@@ -6,6 +6,8 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
 import { FieldKey, initializeForest, rootFieldKey } from "../../core/index.js";
 import { JsonCompatible, brand } from "../../util/index.js";

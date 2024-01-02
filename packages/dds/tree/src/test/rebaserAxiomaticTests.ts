@@ -12,6 +12,7 @@ import {
 	tagRollbackInverse,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema/index.js";
 import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils.js";
 import {

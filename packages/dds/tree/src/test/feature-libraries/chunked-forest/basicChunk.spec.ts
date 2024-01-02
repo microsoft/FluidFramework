@@ -24,6 +24,7 @@ import {
 	TreeChunk,
 } from "../../../feature-libraries/index.js";
 import { brand, ReferenceCountedBase } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";

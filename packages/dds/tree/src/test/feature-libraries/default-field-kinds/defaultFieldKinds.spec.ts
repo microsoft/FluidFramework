@@ -19,10 +19,12 @@ import {
 import { makeAnonChange, TaggedChange, tagChange } from "../../../core/index.js";
 import { brand, fakeIdAllocator } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { assertEqual } from "../optional-field/optionalFieldUtils.js";
+// eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
 
 /**

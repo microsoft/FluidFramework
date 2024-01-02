@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkQueue } from "../../../feature-libraries/sequence-field/markQueue.js";
+// eslint-disable-next-line import/no-internal-modules
 import { MoveEffect, MoveEffectTable } from "../../../feature-libraries/sequence-field/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MoveId } from "../../../feature-libraries/sequence-field/types.js";

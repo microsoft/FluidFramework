@@ -48,6 +48,7 @@ import {
 	testTrees,
 } from "../../../testTrees.js";
 import { leaf, SchemaBuilder } from "../../../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";

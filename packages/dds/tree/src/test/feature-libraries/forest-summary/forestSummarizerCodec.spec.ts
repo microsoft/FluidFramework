@@ -20,6 +20,7 @@ import {
 import { emptySchema } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Format, version } from "../../../feature-libraries/forest-summary/format.js";
+// eslint-disable-next-line import/no-internal-modules
 import { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	chunkField,
