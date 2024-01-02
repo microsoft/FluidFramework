@@ -26,7 +26,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
-// @public (undocumented)
+// @internal (undocumented)
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
@@ -34,36 +34,36 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @alpha
+// @internal
 export interface IContainerExperimental extends IContainer {
     closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
     getPendingLocalState?(): Promise<string>;
 }
 
-// @public
+// @internal
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
     getBlobIds(): string[];
 };
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // (undocumented)
     summarizeProtocolTree?: boolean;
 }
 
-// @public
+// @internal
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
@@ -76,7 +76,7 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public
+// @internal
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
@@ -88,7 +88,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public
+// @internal
 export interface IParsedUrl {
     id: string;
     path: string;
@@ -96,7 +96,7 @@ export interface IParsedUrl {
     version: string | null | undefined;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
     readonly audience: IAudienceOwner;
@@ -104,10 +104,10 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     processSignal(message: ISignalMessage): any;
 }
 
-// @public
+// @internal
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
 
-// @public
+// @internal
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
@@ -126,16 +126,16 @@ export class Loader implements IHostLoader {
     readonly services: ILoaderServices;
 }
 
-// @public
+// @internal
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @public
+// @internal
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
-// @public
+// @internal
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
-// @public
+// @internal
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 
 // (No @packageDocumentation comment for this package)

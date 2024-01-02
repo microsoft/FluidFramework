@@ -19,6 +19,7 @@ import {
 
 /**
  * Uses the provided factories to create and execute a runner.
+ * @internal
  */
 export async function run<T extends IResources>(
 	config: nconf.Provider,
@@ -87,6 +88,7 @@ export async function run<T extends IResources>(
 /**
  * Variant of run that is used to fully run a service. It configures base settings such as logging. And then will
  * exit the service once the runner completes.
+ * @internal
  */
 export function runService<T extends IResources>(
 	resourceFactory: IResourcesFactory<T>,

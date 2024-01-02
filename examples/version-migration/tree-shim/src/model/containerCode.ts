@@ -13,6 +13,9 @@ import { InventoryList, InventoryListFactory } from "./inventoryList";
 
 export const inventoryListId = "inventory-list";
 
+/**
+ * @internal
+ */
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(

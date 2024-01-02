@@ -16,7 +16,7 @@ import {
 } from "./schemaTypes";
 /**
  * Channel for a Tree DDS.
- * @alpha
+ * @beta
  */
 export interface ITree extends IChannel {
 	/**
@@ -58,7 +58,7 @@ export interface ITree extends IChannel {
 }
 
 /**
- * @alpha
+ * @beta
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
@@ -80,7 +80,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * This is a wrapper around ITreeView that adjusted it for the public package API.
  * TODO:
  * Establish a naming conversion between these internal and wrapper types.
- * @alpha
+ * @beta
  */
 export interface TreeView<in out TRoot> extends IDisposable {
 	/**

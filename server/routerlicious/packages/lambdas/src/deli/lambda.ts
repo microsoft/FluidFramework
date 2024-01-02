@@ -142,6 +142,9 @@ interface IOpEvent {
 	sequencedMessagesSinceLastOpEvent: number;
 }
 
+/**
+ * @internal
+ */
 export enum OpEventType {
 	/**
 	 * There have been no sequenced ops for X milliseconds since the last message.
@@ -164,6 +167,9 @@ export enum OpEventType {
 	UpdatedDurableSequenceNumber,
 }
 
+/**
+ * @internal
+ */
 export interface IDeliLambdaEvents extends IEvent {
 	/**
 	 * Emitted when certain op event heuristics are triggered.
@@ -229,6 +235,9 @@ const isServiceMessageType = (type: string) =>
 	type === MessageType.SummaryAck ||
 	type === MessageType.SummaryNack;
 
+/**
+ * @internal
+ */
 export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
 	private sequenceNumber: number;
 	private signalClientConnectionNumber: number;

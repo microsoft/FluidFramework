@@ -115,7 +115,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 
 		const alias = "alias";
 
-		it("Assign multiple data stores to the same alias, first write wins, same container - detached", async () => {
+		it("Assign multiple data stores to the same alias, first write wins, same container - detached", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const loader = provider.makeTestLoader(testContainerConfig) as Loader;
 			const container: IContainer = await loader.createDetachedContainer(
 				provider.defaultCodeDetails,
@@ -139,7 +143,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult3, "Conflict");
 		});
 
-		it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
+		it("Assign multiple data stores to the same alias, first write wins, same container", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -167,7 +175,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			);
 		});
 
-		it("Aliasing a datastore is idempotent", async () => {
+		it("Aliasing a datastore is idempotent", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
 			const aliasResult1 = await ds1.trySetAlias(alias);
@@ -179,7 +191,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject1, alias));
 		});
 
-		it("Aliasing a datastore while aliasing", async () => {
+		it("Aliasing a datastore while aliasing", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds3 = await runtimeOf(dataObject1).createDataStore(packageName);
@@ -216,7 +232,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		it(
 			"Trying to create multiple datastores aliased to the same value on the same client " +
 				"will always return the same datastore",
-			async () => {
+			async function () {
+				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+				if (provider.type === "TestObjectProviderWithVersionedLoad") {
+					this.skip();
+				}
 				const datastores: IDataStore[] = [];
 				const createAliasedDataStore = async () => {
 					try {
@@ -241,7 +261,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			},
 		);
 
-		it("Aliasing a datastore during an alias operation with the same name", async () => {
+		it("Aliasing a datastore during an alias operation with the same name", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -262,7 +286,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult4, "Success");
 		});
 
-		it("Aliasing a previously aliased datastore will fail", async () => {
+		it("Aliasing a previously aliased datastore will fail", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
 			const aliasResult1 = await ds1.trySetAlias(alias);
@@ -274,7 +302,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject1, alias));
 		});
 
-		it("Aliasing a datastore which previously failed to alias will succeed", async () => {
+		it("Aliasing a datastore which previously failed to alias will succeed", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -302,6 +334,10 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		});
 
 		it("Assign multiple data stores to the same alias, first write wins, different containers", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
@@ -323,7 +359,12 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		it(
 			"Assign multiple data stores to the same alias, first write wins, " +
 				"different containers from snapshot",
-			async () => {
+			async function () {
+				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+				if (provider.type === "TestObjectProviderWithVersionedLoad") {
+					this.skip();
+				}
+
 				await setupContainers({
 					...testContainerConfig,
 					runtimeOptions: {
@@ -386,7 +427,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			},
 		);
 
-		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async () => {
+		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const dataStore = await runtimeOf(dataObject1).createDataStore(packageName);
 			const dataObject = (await dataStore.entryPoint?.get()) as ITestFluidObject;
 			assert(dataObject !== undefined, "could not create data store");

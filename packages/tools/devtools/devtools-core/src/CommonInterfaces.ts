@@ -11,15 +11,13 @@
  * @example
  *
  * "Canvas Container"
- *
- * @public
+ * @internal
  */
 export type ContainerKey = string;
 
 /**
  * Common interface for data associated with a particular Container registered with the Devtools.
- *
- * @public
+ * @internal
  */
 export interface HasContainerKey {
 	/**

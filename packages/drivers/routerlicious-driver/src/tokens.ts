@@ -7,6 +7,7 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
 
 /**
  * Abstracts the discovery of claims contained within a token.
+ * @internal
  */
 export interface ITokenService {
 	/**
@@ -16,6 +17,9 @@ export interface ITokenService {
 	extractClaims(token: string): ITokenClaims;
 }
 
+/**
+ * @internal
+ */
 export interface ITokenResponse {
 	/**
 	 * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} value.
@@ -33,6 +37,7 @@ export interface ITokenResponse {
 /**
  * Abstracts the token fetching mechanism for a hosting application.
  * The hosting application is responsible for providing an implementation.
+ * @internal
  */
 export interface ITokenProvider {
 	/**

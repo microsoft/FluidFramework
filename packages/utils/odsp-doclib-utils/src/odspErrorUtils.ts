@@ -27,11 +27,20 @@ import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 // no response, or can't parse response
+/**
+ * @internal
+ */
 export const fetchIncorrectResponse = 712;
 // Error code for when the server state is read only and client tries to write. This code is set by the server
 // and is not likely to change.
+/**
+ * @internal
+ */
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
+/**
+ * @internal
+ */
 export function getSPOAndGraphRequestIdsFromResponse(headers: {
 	get: (id: string) => string | undefined | null;
 }) {
@@ -93,20 +102,32 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 	return additionalProps;
 }
 
-/** Empirically-based model of error response inner error from ODSP */
+/**
+ * Empirically-based model of error response inner error from ODSP
+ *
+ * @internal
+ */
 export interface OdspErrorResponseInnerError {
 	code?: string;
 	innerError?: OdspErrorResponseInnerError;
 }
 
-/** Empirically-based model of error responses from ODSP */
+/**
+ * Empirically-based model of error responses from ODSP
+ *
+ * @internal
+ */
 export interface OdspErrorResponse {
 	error: OdspErrorResponseInnerError & {
 		message: string;
 	};
 }
 
-/** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
+/**
+ * Error encapsulating the error response from ODSP containing the redirect location when a resource has moved
+ *
+ * @internal
+ */
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
 	readonly errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 	readonly canRetry = false;
@@ -130,6 +151,9 @@ function isOdspErrorResponse(x: any): x is OdspErrorResponse {
 	);
 }
 
+/**
+ * @internal
+ */
 export function tryParseErrorResponse(
 	response: string | undefined,
 	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
@@ -145,6 +169,9 @@ export function tryParseErrorResponse(
 	return { success: false };
 }
 
+/**
+ * @internal
+ */
 export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
 	const stack: string[] = [];
 	let error: OdspErrorResponseInnerError | undefined = errorResponse.error;
@@ -157,6 +184,9 @@ export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
 	return stack;
 }
 
+/**
+ * @internal
+ */
 export function createOdspNetworkError(
 	errorMessage: string,
 	statusCode: number,
@@ -340,6 +370,9 @@ export function createOdspNetworkError(
 	return error;
 }
 
+/**
+ * @internal
+ */
 export function enrichOdspError(
 	error: IFluidErrorBase & OdspError,
 	response?: Response,
@@ -367,6 +400,7 @@ export function enrichOdspError(
 
 /**
  * Throws network error - an object with a bunch of network related properties
+ * @internal
  */
 export function throwOdspNetworkError(
 	errorMessage: string,
@@ -401,6 +435,9 @@ function numberFromHeader(header: string | null): number | undefined {
 	return n;
 }
 
+/**
+ * @internal
+ */
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
 	return Array.isArray(x?.facetCodes);
 }

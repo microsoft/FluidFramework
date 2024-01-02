@@ -27,6 +27,9 @@ import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server
 import { createDocument } from "./localCreateDocument";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
+/**
+ * @internal
+ */
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
 	// empty strings as values.

@@ -76,7 +76,9 @@ export function extractLogSafeErrorProperties(
 }
 
 /**
- * type guard for ILoggingError interface
+ * Type-guard for {@link @fluidframework/core-interfaces#ILoggingError}.
+ *
+ * @internal
  */
 export const isILoggingError = (x: unknown): x is ILoggingError =>
 	typeof (x as Partial<ILoggingError>)?.getTelemetryProperties === "function";
@@ -339,7 +341,10 @@ export function isExternalError(error: unknown): boolean {
 }
 
 /**
- * Type guard to identify if a particular telemetry property appears to be a tagged telemetry property
+ * Type guard to identify if a particular telemetry property appears to be a
+ * {@link @fluidframework/core-interfaces#Tagged} telemetry property.
+ *
+ * @internal
  */
 export function isTaggedTelemetryPropertyValue(
 	x: Tagged<TelemetryEventPropertyTypeExt> | TelemetryEventPropertyTypeExt,

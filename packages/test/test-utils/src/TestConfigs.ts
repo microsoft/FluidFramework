@@ -5,6 +5,9 @@
 
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
+/**
+ * @internal
+ */
 export const mockConfigProvider = (
 	settings: Record<string, ConfigTypes> = {},
 ): IConfigProviderBase => {

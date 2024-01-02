@@ -375,7 +375,8 @@
 			]
 		},
 		"patchedDependencies": {
-			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch"
+			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
+			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch"
 		}
 	}
 }

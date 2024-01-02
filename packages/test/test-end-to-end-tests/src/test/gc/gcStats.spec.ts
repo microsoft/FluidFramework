@@ -97,6 +97,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -144,6 +150,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -238,6 +250,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -306,6 +324,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 				attachmentBlobCount: 0,
 				unrefAttachmentBlobCount: 0,
 				updatedAttachmentBlobCount: 0,
+				lifetimeNodeCount: 7,
+				lifetimeDataStoreCount: 3,
+				lifetimeAttachmentBlobCount: 0,
+				deletedNodeCount: 0,
+				deletedDataStoreCount: 0,
+				deletedAttachmentBlobCount: 0,
 			};
 
 			// Add both data store handles in default data store to mark them referenced.

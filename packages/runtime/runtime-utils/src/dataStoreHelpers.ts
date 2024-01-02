@@ -20,6 +20,9 @@ interface IResponseException extends Error {
 	underlyingResponseHeaders?: { [key: string]: any };
 }
 
+/**
+ * @internal
+ */
 export function exceptionToResponse(err: any): IResponse {
 	const status = 500;
 	if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
@@ -48,6 +51,9 @@ export function exceptionToResponse(err: any): IResponse {
 	};
 }
 
+/**
+ * @internal
+ */
 export function responseToException(response: IResponse, request: IRequest): Error {
 	const message = response.value;
 	const errWithStack = generateErrorWithStack();
@@ -65,9 +71,15 @@ export function responseToException(response: IResponse, request: IRequest): Err
 	return responseErr;
 }
 
+/**
+ * @internal
+ */
 export const create404Response = (request: IRequest) =>
 	createResponseError(404, "not found", request);
 
+/**
+ * @internal
+ */
 export function createResponseError(
 	status: number,
 	value: string,
@@ -92,8 +104,14 @@ export function createResponseError(
 	};
 }
 
+/**
+ * @internal
+ */
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
+/**
+ * @internal
+ */
 export function createDataStoreFactory(
 	type: string,
 	factory: Factory | Promise<Factory>,

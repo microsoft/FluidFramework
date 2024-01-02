@@ -20,7 +20,7 @@ import { ITestDbFactory } from '@fluidframework/server-test-utils';
 import { IWebSocket } from '@fluidframework/server-services-core';
 import { IWebSocketServer } from '@fluidframework/server-services-core';
 
-// @public
+// @internal
 export interface ILocalDeltaConnectionServer {
     // (undocumented)
     close(): Promise<void>;
@@ -36,7 +36,7 @@ export interface ILocalDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
 }
 
-// @public
+// @internal
 export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     // (undocumented)
     close(): Promise<void>;
@@ -54,7 +54,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     webSocketServer: LocalWebSocketServer;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class LocalOrdererManager implements IOrdererManager {
     constructor(storage: IDocumentStorage, databaseManager: IDatabaseManager, createHistorian: (tenant: string) => Promise<IHistorian>, logger: ILogger, serviceConfiguration?: Partial<IServiceConfiguration> | undefined, pubsub?: IPubSub | undefined, documentRepository?: IDocumentRepository | undefined, checkpointRepository?: ICheckpointRepository | undefined);
     close(): Promise<void>;
@@ -63,7 +63,7 @@ export class LocalOrdererManager implements IOrdererManager {
     hasPendingWork(): Promise<boolean>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class LocalWebSocket implements IWebSocket {
     constructor(id: string, server: LocalWebSocketServer);
     // (undocumented)
@@ -88,7 +88,7 @@ export class LocalWebSocket implements IWebSocket {
     send(event: string, ...args: any[]): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class LocalWebSocketServer implements IWebSocketServer {
     constructor(pubsub: IPubSub);
     // (undocumented)

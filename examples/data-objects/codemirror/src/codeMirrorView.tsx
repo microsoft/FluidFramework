@@ -186,6 +186,9 @@ export interface ICodeMirrorReactViewProps {
 	readonly presenceManager: PresenceManager;
 }
 
+/**
+ * @internal
+ */
 export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
 	props: ICodeMirrorReactViewProps,
 ) => {

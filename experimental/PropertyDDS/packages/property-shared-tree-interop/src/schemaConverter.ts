@@ -335,6 +335,7 @@ const builtinLibrary = builtinBuilder.intoLibrary();
  * @param extraTypes - The extra types which can't be found when traversing across
  * the PropertyDDS schema inheritances / dependencies starting from
  * the root schema or built-in node property schemas.
+ * @internal
  */
 export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = FieldKind>(
 	rootFieldKind: Kind,

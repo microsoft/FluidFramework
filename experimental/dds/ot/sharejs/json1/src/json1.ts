@@ -22,7 +22,7 @@ import {
 import { Json1Factory } from "./factory";
 
 /**
- * @public
+ * @internal
  */
 export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedJson1 {

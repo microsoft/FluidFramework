@@ -40,7 +40,7 @@ import {
 	splitMark,
 	isAttach,
 	getDetachOutputId,
-	isCellRename,
+	isImpactfulCellRename,
 } from "./utils";
 import {
 	Changeset,
@@ -56,7 +56,7 @@ import {
 	MarkEffect,
 	MoveOut,
 	MoveIn,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
 	getMoveEffect,
@@ -153,7 +153,11 @@ function rebaseMarkList<TNodeChange>(
 
 		// Inverse attaches do not contribute to lineage as they are effectively reinstating
 		// an older detach which cells should already have any necessary lineage for.
-		if ((markEmptiesCells(baseMark) || isCellRename(baseMark)) && !isInverseAttach(baseMark)) {
+		if (
+			(markEmptiesCells(baseMark) ||
+				isImpactfulCellRename(baseMark, baseRevision, metadata)) &&
+			!isInverseAttach(baseMark)
+		) {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
 			const detachId = getOutputCellId(baseMark, baseRevision, undefined);

@@ -8,8 +8,12 @@
 import { assert } from "@fluidframework/core-utils";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { IMergeTreeAnnotateMsg } from "./ops";
+// eslint-disable-next-line import/no-deprecated
 import { createMap, MapLike, PropertySet } from "./properties";
 
+/**
+ * @internal
+ */
 export enum PropertiesRollback {
 	/** Not in a rollback */
 	None,
@@ -18,6 +22,9 @@ export enum PropertiesRollback {
 	Rollback,
 }
 
+/**
+ * @internal
+ */
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;
 
@@ -48,6 +55,7 @@ export class PropertiesManager {
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet {
+		// eslint-disable-next-line import/no-deprecated
 		this.pendingKeyUpdateCount ??= createMap<number>();
 
 		// Clean up counts for rolled back edits before modifying oldProps
@@ -101,7 +109,7 @@ export class PropertiesManager {
 		newManager: PropertiesManager,
 	): PropertySet | undefined {
 		if (oldProps) {
-			// eslint-disable-next-line no-param-reassign
+			// eslint-disable-next-line no-param-reassign, import/no-deprecated
 			newProps ??= createMap<any>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
@@ -109,6 +117,7 @@ export class PropertiesManager {
 			for (const key of Object.keys(oldProps)) {
 				newProps[key] = oldProps[key];
 			}
+			// eslint-disable-next-line import/no-deprecated
 			newManager.pendingKeyUpdateCount = createMap<number>();
 			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
 				newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];

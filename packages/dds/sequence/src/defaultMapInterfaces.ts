@@ -35,7 +35,6 @@ export interface IValueOpEmitter {
 	 * @param previousValue - JSONable previous value as defined by the value type @deprecated unused
 	 * @param params - JSONable params for the operation as defined by the value type
 	 * @param localOpMetadata - JSONable local metadata which should be submitted with the op
-	 * @internal
 	 */
 	emit(
 		opName: IntervalOpType,
@@ -54,7 +53,7 @@ export interface IMapMessageLocalMetadata {
 
 /**
  * Optional flags that configure options for sequence DDSs
- * @public
+ * @internal
  */
 export interface SequenceOptions {
 	/**

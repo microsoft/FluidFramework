@@ -234,6 +234,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
+ * @internal
  */
 export async function waitContainerToCatchUp(container: IContainer) {
 	// Make sure we stop waiting if container is closed.
@@ -494,6 +495,7 @@ export class Container
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
 
@@ -803,6 +805,14 @@ export class Container
 			});
 		};
 
+		this._containerId = uuid();
+
+		this.client = Container.setupClient(
+			this._containerId,
+			this.options,
+			this.clientDetailsOverride,
+		);
+
 		// Create logger for data stores to use
 		const type = this.client.details.type;
 		const interactive = this.client.details.capabilities.interactive;
@@ -810,7 +820,6 @@ export class Container
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
 
-		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -1972,10 +1981,15 @@ export class Container
 		return pkg as IFluidCodeDetails;
 	}
 
-	private get client(): IClient {
+	private static setupClient(
+		containerId: string,
+		options?: ILoaderOptions,
+		clientDetailsOverride?: IClientDetails,
+	): IClient {
+		const loaderOptionsClient = structuredClone(options?.client);
 		const client: IClient =
-			this.options?.client !== undefined
-				? (this.options.client as IClient)
+			loaderOptionsClient !== undefined
+				? (loaderOptionsClient as IClient)
 				: {
 						details: {
 							capabilities: { interactive: true },
@@ -1986,21 +2000,22 @@ export class Container
 						user: { id: "" },
 				  };
 
-		if (this.clientDetailsOverride !== undefined) {
+		if (clientDetailsOverride !== undefined) {
 			client.details = {
 				...client.details,
-				...this.clientDetailsOverride,
+				...clientDetailsOverride,
 				capabilities: {
 					...client.details.capabilities,
-					...this.clientDetailsOverride.capabilities,
+					...clientDetailsOverride?.capabilities,
 				},
 			};
 		}
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
-			` containerId:${this._containerId}`,
+			` containerId:${containerId}`,
 		].join(";");
+
 		return client;
 	}
 
@@ -2506,7 +2521,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @alpha
+ * @internal
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2514,16 +2529,12 @@ export interface IContainerExperimental extends IContainer {
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @alpha misuse of this API can result in duplicate op submission and potential document corruption
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
-	 * @alpha
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

@@ -56,6 +56,7 @@ import {
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder";
 import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
+// eslint-disable-next-line import/no-deprecated
 import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
@@ -74,6 +75,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
+// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
 
@@ -212,7 +214,9 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 
 	constructor(childCount: number) {
 		super(childCount);
+		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<ReferencePosition>();
+		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<ReferencePosition>();
 	}
 
@@ -221,6 +225,9 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
 	/**
@@ -229,8 +236,6 @@ export interface IMergeTreeOptions {
 	 * the end of the string.
 	 *
 	 * This is primarily useful in the case of interval stickiness.
-	 *
-	 * @alpha
 	 */
 	mergeTreeReferencesCanSlideToEndpoint?: boolean;
 	mergeTreeSnapshotChunkSize?: number;
@@ -269,6 +274,9 @@ export interface IMergeTreeOptions {
 	mergeTreeEnableObliterate?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeAttributionOptions {
 	/**
 	 * If enabled, segments will store attribution keys which can be used with the runtime to determine
@@ -278,7 +286,6 @@ export interface IMergeTreeAttributionOptions {
 	 * are tracked is determined by the presence of existing attribution keys in the snapshot.
 	 *
 	 * default: false
-	 * @alpha
 	 */
 	track?: boolean;
 
@@ -287,15 +294,14 @@ export interface IMergeTreeAttributionOptions {
 	 * This option must be provided if either:
 	 * - `track` is set to true
 	 * - a document containing existing attribution information is loaded
-	 * @alpha
 	 */
 	policyFactory?: () => AttributionPolicy;
 }
 
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
- * @alpha
  * @sealed
+ * @internal
  */
 export interface AttributionPolicy {
 	/**
@@ -304,21 +310,17 @@ export interface AttributionPolicy {
 	 * to manage any attribution data it stores on segments.
 	 *
 	 * This must be done in an eventually consistent fashion.
-	 * @internal
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	attach: (client: Client) => void;
 	/**
 	 * Disables tracking attribution information on segments.
-	 * @internal
 	 */
 	detach: () => void;
-	/**
-	 * @internal
-	 */
+	/***/
 	isAttached: boolean;
 	/**
 	 * Serializer capable of serializing any attribution data this policy stores on segments.
-	 * @internal
 	 */
 	serializer: IAttributionCollectionSerializer;
 }
@@ -2685,7 +2687,9 @@ export class MergeTree {
 			}
 		} else {
 			const block = node as IHierBlock;
+			// eslint-disable-next-line import/no-deprecated
 			extend(rightmostTiles, block.rightmostTiles);
+			// eslint-disable-next-line import/no-deprecated
 			extendIfUndefined(leftmostTiles, block.leftmostTiles);
 		}
 	}
@@ -2694,7 +2698,9 @@ export class MergeTree {
 		let len: number | undefined;
 		const hierBlock = block.hierBlock();
 		if (hierBlock) {
+			// eslint-disable-next-line import/no-deprecated
 			hierBlock.rightmostTiles = createMap<Marker>();
+			// eslint-disable-next-line import/no-deprecated
 			hierBlock.leftmostTiles = createMap<Marker>();
 		}
 		for (let i = 0; i < block.childCount; i++) {

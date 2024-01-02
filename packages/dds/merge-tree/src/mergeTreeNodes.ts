@@ -16,6 +16,7 @@ import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
+// eslint-disable-next-line import/no-deprecated
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import { refTypeIncludesFlag, ReferencePosition, refGetTileLabels } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
@@ -23,6 +24,7 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 
 /**
  * Common properties for a node in a merge tree.
+ * @internal
  */
 export interface IMergeNodeCommon {
 	/**
@@ -86,6 +88,7 @@ export interface IHierBlock extends IMergeBlock {
 
 /**
  * Contains removal information associated to an {@link ISegment}.
+ * @internal
  */
 export interface IRemovalInfo {
 	/**
@@ -124,6 +127,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
+ * @internal
  */
 export interface IMoveInfo {
 	/**
@@ -199,6 +203,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
+ * @internal
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
@@ -226,9 +231,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * `attribution === undefined` until ack.
 	 *
 	 * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
-	 *
-	 * @alpha
-	 *
 	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
 	 *
 	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
@@ -302,12 +304,21 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * @throws - error if the segment state doesn't match segment group or op.
 	 * E.g. if the segment group is not first in the pending queue, or
 	 * an inserted segment does not have unassigned sequence number.
-	 *
-	 * @internal
 	 */
 	ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
 }
 
+/**
+ * @internal
+ */
+export interface IMarkerModifiedAction {
+	// eslint-disable-next-line @typescript-eslint/prefer-function-type
+	(marker: Marker): void;
+}
+
+/**
+ * @internal
+ */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -389,6 +400,9 @@ export interface SegmentGroup {
 	refSeq: number;
 }
 
+/**
+ * @internal
+ */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
@@ -450,6 +464,9 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 
+/**
+ * @internal
+ */
 export abstract class BaseSegment extends MergeNode implements ISegment {
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
@@ -461,9 +478,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public wasMovedOnInsert?: boolean | undefined;
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-	/**
-	 * @alpha
-	 */
+	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
 	public propertyManager?: PropertiesManager;
 	public properties?: PropertySet;
@@ -480,6 +495,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
+		// eslint-disable-next-line import/no-deprecated
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -501,6 +517,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected cloneInto(b: ISegment) {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
+		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
@@ -525,9 +542,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public abstract toJSONObject(): any;
 
-	/**
-	 * @internal
-	 */
+	/***/
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
 		assert(
@@ -673,10 +688,17 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
+ * @internal
  */
 export const reservedMarkerIdKey = "markerId";
+/**
+ * @internal
+ */
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
+/**
+ * @internal
+ */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
 }
@@ -689,6 +711,8 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * sub-linear time. This is useful, for example, in the case of jumping from the
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
+ *
+ * @internal
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
@@ -784,8 +808,14 @@ export class CollaborationWindow {
 	}
 }
 
+/**
+ * @internal
+ */
 export const compareNumbers = (a: number, b: number) => a - b;
 
+/**
+ * @internal
+ */
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 /**
@@ -793,6 +823,7 @@ export const compareStrings = (a: string, b: string) => a.localeCompare(b);
  *
  * @remarks This function is intended for debugging only. The exact format of
  * this string should not be relied upon between versions.
+ * @internal
  */
 export function debugMarkerToString(marker: Marker): string {
 	let bbuf = "";

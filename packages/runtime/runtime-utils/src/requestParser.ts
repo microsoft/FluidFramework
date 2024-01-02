@@ -6,6 +6,7 @@ import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 
 /**
  * The Request Parser takes an IRequest provides parsing and sub request creation
+ * @internal
  */
 export class RequestParser implements IRequest {
 	/**

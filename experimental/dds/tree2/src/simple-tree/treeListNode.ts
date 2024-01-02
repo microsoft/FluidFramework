@@ -21,7 +21,7 @@ export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
+ * @beta
  */
 export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeListNodeBase<
@@ -32,7 +32,7 @@ export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllo
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
+ * @beta
  */
 export const TreeListNode = {
 	/**
@@ -58,7 +58,7 @@ const create = Symbol("Create IterableTreeListContent");
  * Use {@link (TreeListNode:variable).inline} to create an instance of this type.
  * @privateRemarks
  * TODO: Figure out how to link {@link TreeListNode.inline} above such that it works with API-Extractor.
- * @alpha
+ * @beta
  */
 export class IterableTreeListContent<T> implements Iterable<T> {
 	private constructor(private readonly content: Iterable<T>) {}

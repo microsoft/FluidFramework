@@ -8,6 +8,7 @@ import { ITenantDocument } from "./tenantManager";
 
 /**
  * Abstract away ITenant collection logic
+ * @internal
  */
 export interface ITenantRepository {
 	/**
@@ -54,6 +55,9 @@ export interface ITenantRepository {
 	deleteOne(filter: any): Promise<any>;
 }
 
+/**
+ * @internal
+ */
 export class MongoTenantRepository implements ITenantRepository {
 	constructor(private readonly collection: ICollection<ITenantDocument>) {}
 	async find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {

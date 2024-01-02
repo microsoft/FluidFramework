@@ -4,7 +4,7 @@
  */
 
 /**
- * @public
+ * @internal
  */
 export enum MessageType {
 	/**
@@ -77,7 +77,7 @@ export enum MessageType {
 }
 
 /**
- * @public
+ * @internal
  */
 export enum SignalType {
 	/**
@@ -93,8 +93,7 @@ export enum SignalType {
 
 /**
  * Messages to track latency trace.
- *
- * @public
+ * @internal
  */
 export interface ITrace {
 	/**
@@ -114,7 +113,7 @@ export interface ITrace {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface INack {
 	/**
@@ -135,8 +134,7 @@ export interface INack {
 
 /**
  * Document-specific message.
- *
- * @public
+ * @internal
  */
 export interface IDocumentMessage {
 	/**
@@ -183,8 +181,7 @@ export interface IDocumentMessage {
 
 /**
  * Document Message with optional system level data field.
- *
- * @public
+ * @internal
  */
 export interface IDocumentSystemMessage extends IDocumentMessage {
 	data: string;
@@ -192,8 +189,7 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
 
 /**
  * Branch origin information.
- *
- * @public
+ * @internal
  */
 export interface IBranchOrigin {
 	/**
@@ -214,8 +210,7 @@ export interface IBranchOrigin {
 
 /**
  * Sequenced message for a distributed document.
- *
- * @public
+ * @internal
  */
 export interface ISequencedDocumentMessage {
 	/**
@@ -304,8 +299,7 @@ export interface ISequencedDocumentMessage {
 
 /**
  * {@link ISequencedDocumentAugmentedMessage} with experimental properties.
- *
- * @alpha
+ * @internal
  */
 export type ISequencedDocumentMessageExperimental = Omit<
 	ISequencedDocumentMessage,
@@ -323,14 +317,14 @@ export type ISequencedDocumentMessageExperimental = Omit<
 };
 
 /**
- * @public
+ * @internal
  */
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
@@ -338,8 +332,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 /**
  * Common interface between incoming and outgoing signals.
- *
- * @public
+ * @internal
  */
 export interface ISignalMessageBase {
 	/**
@@ -365,8 +358,7 @@ export interface ISignalMessageBase {
 
 /**
  * Interface for signals sent by the server to clients.
- *
- * @public
+ * @internal
  */
 export interface ISignalMessage extends ISignalMessageBase {
 	/**
@@ -379,8 +371,7 @@ export interface ISignalMessage extends ISignalMessageBase {
 
 /**
  * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
- *
- * @public
+ * @internal
  */
 export interface ISentSignalMessage extends ISignalMessageBase {
 	/**
@@ -390,7 +381,7 @@ export interface ISentSignalMessage extends ISignalMessageBase {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IUploadedSummaryDetails {
 	/**
@@ -400,7 +391,7 @@ export interface IUploadedSummaryDetails {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISummaryContent {
 	/**
@@ -435,8 +426,7 @@ export interface ISummaryContent {
 /**
  * General errors returned from the server.
  * May want to add error code or something similar in the future.
- *
- * @public
+ * @internal
  */
 export interface IServerError {
 	/**
@@ -447,8 +437,7 @@ export interface IServerError {
 
 /**
  * Data about the original proposed summary message.
- *
- * @public
+ * @internal
  */
 export interface ISummaryProposal {
 	/**
@@ -459,8 +448,7 @@ export interface ISummaryProposal {
 
 /**
  * Contents of summary ack expected from the server.
- *
- * @public
+ * @internal
  */
 export interface ISummaryAck {
 	/**
@@ -476,8 +464,7 @@ export interface ISummaryAck {
 
 /**
  * Contents of summary nack expected from the server.
- *
- * @public
+ * @internal
  */
 export interface ISummaryNack {
 	/**
@@ -507,8 +494,7 @@ export interface ISummaryNack {
 
 /**
  * Interface for nack content.
- *
- * @public
+ * @internal
  */
 export interface INackContent {
 	/**
@@ -538,8 +524,7 @@ export interface INackContent {
 
 /**
  * Type of the nack.
- *
- * @public
+ * @internal
  */
 export enum NackErrorType {
 	/**

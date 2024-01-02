@@ -7,14 +7,21 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 /**
  * Describes what kind of content is stored in cache entry.
+ * @internal
  */
 export const snapshotKey = "snapshot";
+/**
+ * @internal
+ */
 export type CacheContentType = "snapshot" | "ops";
 
 /*
  * File / container identifier.
  * There is overlapping information here - host can use all of it or parts
  * to implement storage / identify files.
+ */
+/**
+ * @internal
  */
 export interface IFileEntry {
 	/**
@@ -33,6 +40,7 @@ export interface IFileEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
+ * @internal
  */
 export interface IEntry {
 	/**
@@ -55,6 +63,7 @@ export interface IEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
+ * @internal
  */
 export interface ICacheEntry extends IEntry {
 	/**
@@ -69,6 +78,7 @@ export interface ICacheEntry extends IEntry {
  * cache implementation that does not survive across sessions. Snapshot entires stored in the
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
+ * @internal
  */
 export interface IPersistedCache {
 	/**
@@ -97,6 +107,7 @@ export interface IPersistedCache {
  * Api to generate a cache key from cache entry.
  * @param entry - cache entry from which a cache key is generated
  * @returns The key for cache.
+ * @internal
  */
 export function getKeyForCacheEntry(entry: ICacheEntry): string {
 	return `${entry.file.docId}_${entry.type}_${entry.key}`;

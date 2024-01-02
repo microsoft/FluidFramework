@@ -8,7 +8,7 @@ import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { canRetryOnError } from "./network";
 
 /**
- * @public
+ * @internal
  */
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
 	// BlobId -> blob prefetchCache cache

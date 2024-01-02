@@ -47,7 +47,7 @@ export function markEager<T>(t: T): T {
  * To force a `"function"` item to be treated as an eager item, call `markEager` before putting it in the list.
  * This is necessary e.g. when the eager list items are function types and the lazy items are functions that _return_ function types.
  * `FlexList`s are processed by `normalizeFlexList` and `normalizeFlexListEager`.
- * @alpha
+ * @beta
  */
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
@@ -82,7 +82,7 @@ export function normalizeFlexListEager<List extends FlexList>(
  * An "eager" or "lazy" Item in a `FlexList`.
  * Lazy items are wrapped in a function to allow referring to themselves before they are declared.
  * This makes recursive and co-recursive items possible.
- * @alpha
+ * @beta
  */
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -94,7 +94,7 @@ export type NormalizedFlexList<Item> = readonly Item[];
 export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
 /**
- * @alpha
+ * @beta
  */
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result
 	? Result
@@ -119,7 +119,7 @@ export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<
 
 /**
  * Normalize FlexList type to a union.
- * @alpha
+ * @beta
  */
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 

@@ -71,8 +71,7 @@ interface IDirectoryMessageHandler {
 
 /**
  * Operation indicating a value should be set for a key.
- *
- * @public
+ * @internal
  */
 export interface IDirectorySetOperation {
 	/**
@@ -99,8 +98,7 @@ export interface IDirectorySetOperation {
 
 /**
  * Operation indicating a key should be deleted from the directory.
- *
- * @public
+ * @internal
  */
 export interface IDirectoryDeleteOperation {
 	/**
@@ -121,15 +119,13 @@ export interface IDirectoryDeleteOperation {
 
 /**
  * An operation on a specific key within a directory.
- *
- * @public
+ * @internal
  */
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
- *
- * @public
+ * @internal
  */
 export interface IDirectoryClearOperation {
 	/**
@@ -145,15 +141,13 @@ export interface IDirectoryClearOperation {
 
 /**
  * An operation on one or more of the keys within a directory.
- *
- * @public
+ * @internal
  */
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
- *
- * @public
+ * @internal
  */
 export interface IDirectoryCreateSubDirectoryOperation {
 	/**
@@ -174,8 +168,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 /**
  * Operation indicating a subdirectory should be deleted.
- *
- * @public
+ * @internal
  */
 export interface IDirectoryDeleteSubDirectoryOperation {
 	/**
@@ -196,8 +189,7 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 /**
  * An operation on the subdirectories within a directory.
- *
- * @public
+ * @internal
  */
 export type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
@@ -205,15 +197,13 @@ export type IDirectorySubDirectoryOperation =
 
 /**
  * Any operation on a directory.
- *
- * @public
+ * @internal
  */
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 /**
  * Create info for the subdirectory.
- *
- * @public
+ * @internal
  */
 export interface ICreateInfo {
 	/**
@@ -234,8 +224,7 @@ export interface ICreateInfo {
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
- *
- * @public
+ * @internal
  */
 export interface IDirectoryDataObject {
 	/**
@@ -280,7 +269,7 @@ export interface IDirectoryNewStorageFormat {
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
  *
  * @sealed
- * @public
+ * @internal
  */
 export class DirectoryFactory implements IChannelFactory {
 	/**
@@ -458,7 +447,7 @@ class DirectoryCreationTracker {
  * ```
  *
  * @sealed
- * @public
+ * @internal
  */
 export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
@@ -496,9 +485,7 @@ export class SharedDirectory
 		return this.root.absolutePath;
 	}
 
-	/**
-	 * @internal
-	 */
+	/***/
 	public readonly localValueMaker: LocalValueMaker;
 
 	/**
@@ -715,7 +702,6 @@ export class SharedDirectory
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 * @internal
 	 */
 	protected summarizeCore(
 		serializer: IFluidSerializer,
@@ -729,7 +715,6 @@ export class SharedDirectory
 	 * @param op - Op to submit
 	 * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
 	 * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
-	 * @internal
 	 */
 	public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
 		this.submitLocalMessage(op, localOpMetadata);
@@ -737,13 +722,11 @@ export class SharedDirectory
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 * @internal
 	 */
 	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
-	 * @internal
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const message = content as IDirectoryOperation;
@@ -754,7 +737,6 @@ export class SharedDirectory
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 * @internal
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const data = await readAndParse(storage, snapshotFileName);
@@ -777,7 +759,6 @@ export class SharedDirectory
 	/**
 	 * Populate the directory with the given directory data.
 	 * @param data - A JSON string containing serialized directory data
-	 * @internal
 	 */
 	protected populate(data: IDirectoryDataObject): void {
 		const stack: [SubDirectory, IDirectoryDataObject][] = [];
@@ -851,7 +832,6 @@ export class SharedDirectory
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-	 * @internal
 	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,
@@ -868,7 +848,6 @@ export class SharedDirectory
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
-	 * @internal
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		const op: IDirectoryOperation = content as IDirectoryOperation;
@@ -1092,7 +1071,6 @@ export class SharedDirectory
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-	 * @internal
 	 */
 	protected applyStashedOp(op: unknown): unknown {
 		const handler = this.messageHandlers.get((op as IDirectoryOperation).type);

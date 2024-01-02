@@ -14,6 +14,7 @@ import {
 
 /**
  * Required params to create ref with config
+ * @internal
  */
 export interface ICreateRefParamsExternal extends git.ICreateRefParams {
 	config?: IExternalWriterConfig;
@@ -21,6 +22,7 @@ export interface ICreateRefParamsExternal extends git.ICreateRefParams {
 
 /**
  * Required params to get ref with config
+ * @internal
  */
 export interface IGetRefParamsExternal {
 	config?: IExternalWriterConfig;
@@ -28,6 +30,7 @@ export interface IGetRefParamsExternal {
 
 /**
  * Required params to patch ref with config
+ * @internal
  */
 export interface IPatchRefParamsExternal extends git.IPatchRefParams {
 	config?: IExternalWriterConfig;
@@ -39,6 +42,7 @@ interface IExternalWriterConfig {
 
 /**
  * Git cache data
+ * @internal
  */
 export interface IGitCache {
 	// Cached blob values
@@ -56,6 +60,7 @@ export interface IGitCache {
 
 /**
  * Interface to a generic Git provider
+ * @internal
  */
 export interface IGitService {
 	getBlob(sha: string): Promise<git.IBlob>;
@@ -81,6 +86,7 @@ export interface IGitService {
 /**
  * The Historian extends the git service by providing access to document header information stored in
  * the repository
+ * @internal
  */
 export interface IHistorian extends IGitService {
 	endpoint: string;
@@ -92,6 +98,9 @@ export interface IHistorian extends IGitService {
 	getFullTree(sha: string): Promise<any>;
 }
 
+/**
+ * @internal
+ */
 export interface IGitManager {
 	getHeader(id: string, sha: string): Promise<api.ISnapshotTree>;
 	getFullTree(sha: string): Promise<any>;
@@ -121,6 +130,7 @@ export interface IGitManager {
 
 /**
  * Uploads a summary to storage.
+ * @internal
  */
 export interface ISummaryUploadManager {
 	/**

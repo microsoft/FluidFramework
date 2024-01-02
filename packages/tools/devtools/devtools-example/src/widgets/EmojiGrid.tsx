@@ -14,6 +14,7 @@ import { EmojiButton } from "./EmojiButton";
 
 /**
  * {@link EmojiGrid} input props.
+ * @internal
  */
 export interface EmojiGridProps {
 	emojiMatrix: SharedMatrix<IFluidHandle<SharedCell<boolean>>>;
@@ -21,6 +22,7 @@ export interface EmojiGridProps {
 
 /**
  * A grid view, backed by a `SharedMatrix`, containing a series of {@link EmojiButton}s.
+ * @internal
  */
 export function EmojiGrid(props: EmojiGridProps): React.ReactElement {
 	const { emojiMatrix } = props;

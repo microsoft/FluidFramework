@@ -26,13 +26,13 @@ export {
 	IdRange,
 	CellMark,
 	AttachAndDetach,
-} from "./format";
+} from "./types";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
 } from "./sequenceFieldChangeHandler";
 export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
-export { sequenceFieldChangeCodecFactory } from "./sequenceFieldChangeEncoder";
+export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs";
 export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 export { MarkListFactory } from "./markListFactory";

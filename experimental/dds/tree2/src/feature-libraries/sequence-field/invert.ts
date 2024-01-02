@@ -18,7 +18,7 @@ import {
 	CellMark,
 	MoveIn,
 	MarkEffect,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,

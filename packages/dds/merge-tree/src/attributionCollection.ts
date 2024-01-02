@@ -57,9 +57,7 @@ export interface IAttributionCollectionSpec<T> {
  * @sealed
  */
 export interface IAttributionCollectionSerializer {
-	/**
-	 * @internal
-	 */
+	/***/
 	serializeAttributionCollections(
 		segments: Iterable<{
 			attribution?: IAttributionCollection<AttributionKey>;
@@ -69,7 +67,6 @@ export interface IAttributionCollectionSerializer {
 
 	/**
 	 * Populates attribution information on segments using the provided summary.
-	 * @internal
 	 */
 	populateAttributionCollections(
 		segments: Iterable<ISegment>,
@@ -78,7 +75,7 @@ export interface IAttributionCollectionSerializer {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface IAttributionCollection<T> {
 	/**
@@ -99,17 +96,16 @@ export interface IAttributionCollection<T> {
 	 * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
 	 * `i+1`th offset.
 	 * The last entry's key applies to the open interval from the last entry's offset to this collection's length.
-	 * @internal
 	 */
 	getAll(): IAttributionCollectionSpec<T>;
 
-	/** @internal */
+	/***/
 	splitAt(pos: number): IAttributionCollection<T>;
 
-	/** @internal */
+	/***/
 	append(other: IAttributionCollection<T>): void;
 
-	/** @internal */
+	/***/
 	clone(): IAttributionCollection<T>;
 
 	/**
@@ -118,7 +114,6 @@ export interface IAttributionCollection<T> {
 	 * Updates apply only to the individual channel (i.e. if an attribution policy needs to update the root
 	 * channel and 4 other channels, it should call `.update` 5 times).
 	 * @param channel - Updated collection for that channel.
-	 * @internal
 	 */
 	update(name: string | undefined, channel: IAttributionCollection<T>): void;
 }

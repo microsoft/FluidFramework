@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface IAlfredTenant {
 	id: string;
 	key: string;
@@ -10,6 +13,7 @@ export interface IAlfredTenant {
 
 /**
  * Session information that includes the server urls and session status
+ * @internal
  */
 export interface ISession {
 	/**

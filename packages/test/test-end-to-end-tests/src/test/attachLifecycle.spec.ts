@@ -5,7 +5,13 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { createLoader, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
+import {
+	createLoader,
+	ITestFluidObject,
+	timeoutPromise,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
@@ -88,10 +94,11 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) =>
 					await attachContainer();
 				}
 
-				const initDataObject = (await initContainer.getEntryPoint()) as ITestFluidObject;
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
 
 				const ds = await initDataObject.context.containerRuntime.createDataStore("default");
-				const newDataObj = (await ds.entryPoint.get()) as ITestFluidObject;
+				const newDataObj = await getDataStoreEntryPointBackCompat<ITestFluidObject>(ds);
 				const attachDatastore = async () => {
 					initDataObject.root.set("ds", newDataObj.handle);
 					while (
@@ -195,7 +202,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) =>
 				});
 
 				const initDataObject =
-					(await validationContainer.getEntryPoint()) as ITestFluidObject;
+					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
 				const newDatastore = await (
 					await waitKey<IFluidHandle<ITestFluidObject>>(

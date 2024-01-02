@@ -13,6 +13,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -97,7 +98,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
- * @public
+ * @internal
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -115,7 +116,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
- * @public
+ * @internal
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
@@ -136,7 +137,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 * An application using SharedString which explicitly wants to opt in to allowing reentrancy anyway can set `sharedStringPreventReentrancy`
 	 * on the data store options to `false`.
-	 * @internal
 	 */
 	protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
 
@@ -210,6 +210,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return ops;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
@@ -247,6 +248,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
+		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
 			segmentFromSpec,
 			createChildLogger({
@@ -291,8 +293,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 * @param start - The inclusive start of the range to obliterate
 	 * @param end - The exclusive end of the range to obliterate
-	 *
-	 * @alpha
 	 */
 	public obliterateRange(start: number, end: number): void {
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));

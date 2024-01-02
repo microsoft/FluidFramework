@@ -21,6 +21,9 @@ export interface ITableSliceConfig {
 	maxCol: number;
 }
 
+/**
+ * @internal
+ */
 export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> implements ITable {
 	public static getFactory() {
 		return TableSlice.factory;

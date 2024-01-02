@@ -5,6 +5,7 @@
 
 /**
  * Any mapping from a string to values of type `T`
+ * @internal
  */
 export interface MapLike<T> {
 	[index: string]: T;
@@ -18,6 +19,7 @@ export interface MapLike<T> {
  * @privateRemarks PropertySet is typed using `any` because when you include
  * custom methods such as toJSON(), JSON.stringify accepts most types other than
  * functions
+ * @internal
  */
 export type PropertySet = MapLike<any>;
 
@@ -51,6 +53,11 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 	return true;
 }
 
+/**
+ * @deprecated This functionality was not intended for public export and will
+ * be removed in a future release.
+ * @internal
+ */
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 	if (extension !== undefined) {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
@@ -67,6 +74,11 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 	return base;
 }
 
+/**
+ * @deprecated This functionality was not intended for public export and will
+ * be removed in a future release.
+ * @internal
+ */
 export function clone<T>(extension: MapLike<T> | undefined) {
 	if (extension === undefined) {
 		return undefined;
@@ -83,6 +95,8 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 }
 
 /**
+ * @deprecated This functionality was not intended for public export and will
+ * be removed in a future release.
  * @internal
  */
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet) {
@@ -91,6 +105,11 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 	return _oldProps;
 }
 
+/**
+ * @deprecated This functionality was not intended for public export and will
+ * be removed in a future release.
+ * @internal
+ */
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 	if (extension !== undefined) {
 		// eslint-disable-next-line no-restricted-syntax
@@ -104,6 +123,8 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 }
 
 /**
+ * @deprecated This functionality was not intended for public export and will
+ * be removed in a future release.
  * @internal
  */
 // Create a MapLike with good performance.

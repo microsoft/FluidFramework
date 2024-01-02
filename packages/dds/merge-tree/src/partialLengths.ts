@@ -19,8 +19,10 @@ import {
 	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
+// eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet";
 
+// eslint-disable-next-line import/no-deprecated
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
 	protected getKey(item: PartialSequenceLength): number {
 		return item.seq;

@@ -21,6 +21,7 @@ import { shortCodeMap } from "./assertionShortCodesMap";
  * or because it contains a short code which maps to that message).
  * @returns `true` if the message in the error object that was passed in matches the expected
  * message. Otherwise it throws an error.
+ * @internal
  */
 export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
 	const mappedMsg = (shortCodeMap[error.message] as string) ?? error.message;

@@ -22,7 +22,7 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IRevertible {
     // (undocumented)
     discard(): void;
@@ -30,16 +30,16 @@ export interface IRevertible {
     revert(): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
     pushToCurrentOperation(revertible: IRevertible): void;
 }
 
-// @public
+// @internal
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
-// @public
+// @internal
 export class SharedMatrix<T = any> extends SharedObject implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
@@ -94,13 +94,13 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     // (undocumented)
     toString(): string;
-    // @internal (undocumented)
+    // (undocumented)
     _undoRemoveCols(colStart: number, spec: IJSONSegment): void;
-    // @internal (undocumented)
+    // (undocumented)
     _undoRemoveRows(rowStart: number, spec: IJSONSegment): void;
 }
 
-// @public
+// @internal
 export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

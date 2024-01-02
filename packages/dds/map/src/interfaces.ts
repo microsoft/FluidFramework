@@ -13,8 +13,7 @@ import {
 
 /**
  * Type of "valueChanged" event parameter.
- *
- * @public
+ * @internal
  */
 export interface IValueChanged {
 	/**
@@ -34,8 +33,7 @@ export interface IValueChanged {
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
- *
- * @public
+ * @internal
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,8 +117,7 @@ export interface IDirectory
  *
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
- *
- * @public
+ * @internal
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
@@ -193,8 +190,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
- *
- * @public
+ * @internal
  */
 export interface IDirectoryEvents extends IEvent {
 	/**
@@ -275,8 +271,7 @@ export interface IDirectoryEvents extends IEvent {
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
- *
- * @public
+ * @internal
  */
 export interface ISharedDirectory
 	extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
@@ -291,8 +286,7 @@ export interface ISharedDirectory
 
 /**
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
- *
- * @public
+ * @internal
  */
 export interface IDirectoryValueChanged extends IValueChanged {
 	/**
@@ -303,8 +297,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
- *
- * @public
+ * @internal
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -343,8 +336,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
- *
- * @public
+ * @internal
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -389,8 +381,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * channel ID.
  *
  * @deprecated This type is legacy and deprecated.
- *
- * @public
+ * @internal
  */
 export interface ISerializableValue {
 	/**
@@ -407,8 +398,7 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
- *
- * @public
+ * @internal
  */
 export interface ISerializedValue {
 	/**

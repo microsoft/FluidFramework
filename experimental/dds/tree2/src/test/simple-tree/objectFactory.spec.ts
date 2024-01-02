@@ -10,7 +10,7 @@ import { TypedNode, Tree } from "../../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies";
 import { treeViewWithContent } from "../utils";
-import { itWithRoot } from "./utils";
+import { getRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
 	const sb = new SchemaBuilder({
@@ -72,19 +72,22 @@ describe("SharedTreeObject factories", () => {
 		},
 	};
 
-	itWithRoot("correctly construct objects with content", schema, initialTree, (root) => {
+	it("correctly construct objects with content", () => {
+		const root = getRoot(schema, initialTree);
 		root.child = childA.create({ content: 43 });
 		assert.equal(root.child.content, 43);
 	});
 
-	itWithRoot("construct objects that work in polymorphic fields", schema, initialTree, (root) => {
+	it("construct objects that work in polymorphic fields", () => {
+		const root = getRoot(schema, initialTree);
 		root.poly = childA.create({ content: 43 });
 		assert.equal(root.poly.content, 43);
 		root.poly = childB.create({ content: 44 });
 		assert.equal(root.poly.content, 44);
 	});
 
-	itWithRoot("can re-use content objects", schema, initialTree, (root) => {
+	it("can re-use content objects", () => {
+		const root = getRoot(schema, initialTree);
 		// The `create` functions stamp the content with a `[typeNameSymbol]`.
 		// This test ensures that they shallow copy the content before doing the stamp.
 		const content = { content: 43 };
@@ -94,14 +97,16 @@ describe("SharedTreeObject factories", () => {
 		assert.equal(root.poly.content, 44);
 	});
 
-	itWithRoot("don't require optional data to be included", schema, initialTree, (root) => {
+	it("don't require optional data to be included", () => {
+		const root = getRoot(schema, initialTree);
 		assert.equal(root.optional, undefined);
 		root.optional = {};
 		assert.deepEqual(root.optional, {});
 		assert.equal(root.optional.content, undefined);
 	});
 
-	itWithRoot("support nesting inside of a factory", schema, initialTree, (root) => {
+	it("support nesting inside of a factory", () => {
+		const root = getRoot(schema, initialTree);
 		root.grand = childC.create({
 			child: childD.create({
 				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
@@ -116,25 +121,21 @@ describe("SharedTreeObject factories", () => {
 		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
 	});
 
-	itWithRoot(
-		"support nesting inside of a plain javascript object",
-		schema,
-		initialTree,
-		(root) => {
-			root.grand = {
-				child: childD.create({
-					list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
-					map: new Map([
-						["a", childA.create({ content: 43 })],
-						["b", childB.create({ content: 43 })],
-					]),
-				}),
-			};
-			assert.deepEqual(root.grand.child.list, [{ content: 43 }, { content: 43 }]);
-			assert.deepEqual(root.grand.child.map.get("a"), { content: 43 });
-			assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
-		},
-	);
+	it("support nesting inside of a plain javascript object", () => {
+		const root = getRoot(schema, initialTree);
+		root.grand = {
+			child: childD.create({
+				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
+				map: new Map([
+					["a", childA.create({ content: 43 })],
+					["b", childB.create({ content: 43 })],
+				]),
+			}),
+		};
+		assert.deepEqual(root.grand.child.list, [{ content: 43 }, { content: 43 }]);
+		assert.deepEqual(root.grand.child.map.get("a"), { content: 43 });
+		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
+	});
 
 	describe("factory content extraction", () => {
 		it("extracts a primitive", () => {
@@ -226,6 +227,27 @@ describe("SharedTreeObject factories", () => {
 		view.root.child = childA.create(content);
 		view.root.grand.child.list.insertAtEnd(childA.create(content));
 		view.root.grand.child.map.set("a", childA.create(content));
+	});
+
+	it("hydration is not attempted on objects which are not proxies", () => {
+		// This regression test ensures that non-proxy objects inserted into the tree are
+		// not mistakenly "hydrated" as a proxy would be, falsely linking them to the content of the tree.
+		const root = getRoot(schema, initialTree);
+		const newChild = { content: 43 };
+		// `newChild` is not a proxy, so it should be copied into the tree here but otherwise remain disconnected
+		root.child = newChild;
+		const child = root.child;
+		assert.equal(child.content, 43);
+		// Mutating the tree should have no effect on `newChild`...
+		root.child.content = 44;
+		assert.equal(newChild.content, 43);
+		// ... but it should affect our handle to the child
+		assert.equal(child.content, 44);
+		// Mutating `newChild` should have no effect on the tree...
+		newChild.content = 45;
+		assert.equal(root.child.content, 44);
+		// ... and should have no effect on our handle to the child
+		assert.equal(child.content, 44);
 	});
 
 	describe("produce proxies that can be read after insertion for trees of", () => {

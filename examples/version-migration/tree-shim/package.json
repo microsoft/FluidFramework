@@ -38,7 +38,6 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/migration-shim": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-experimental/tree2": "workspace:~",

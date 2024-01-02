@@ -26,7 +26,7 @@ import { IFluidCodeDetails } from "./fluidPackage";
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
  * service.  The transition from detached to attached state is a one-way transition.
- * @public
+ * @internal
  */
 export enum AttachState {
 	/**
@@ -50,7 +50,7 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
- * @public
+ * @internal
  */
 export interface IRuntime extends IDisposable {
 	/**
@@ -87,8 +87,6 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
-	 * @alpha
-	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
 
@@ -109,7 +107,7 @@ export interface IRuntime extends IDisposable {
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
- * @public
+ * @internal
  */
 export interface IBatchMessage {
 	contents?: string;
@@ -122,7 +120,7 @@ export interface IBatchMessage {
  * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
- * @public
+ * @internal
  */
 export interface IContainerContext {
 	readonly options: ILoaderOptions;
@@ -203,12 +201,12 @@ export interface IContainerContext {
 }
 
 /**
- * @public
+ * @internal
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
- * @public
+ * @internal
  */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
@@ -219,7 +217,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
- * @public
+ * @internal
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
@@ -234,7 +232,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
- * @alpha
+ * @internal
  */
 export interface IGetPendingLocalStateProps {
 	/**

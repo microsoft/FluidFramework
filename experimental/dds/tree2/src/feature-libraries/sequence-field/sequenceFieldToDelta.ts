@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { MarkList, NoopMarkType } from "./format";
+import { MarkList, NoopMarkType } from "./types";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,

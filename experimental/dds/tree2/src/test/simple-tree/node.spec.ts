@@ -8,7 +8,7 @@ import { rootFieldKey } from "../../core";
 import { TreeStatus, Any } from "../../feature-libraries";
 import { TreeRoot, TreeNode, Tree, InsertableTreeRoot } from "../../simple-tree";
 import { SchemaBuilder } from "../../domains";
-import { itWithRoot } from "./utils";
+import { getRoot } from "./utils";
 
 describe("node API", () => {
 	const sb = new SchemaBuilder({ scope: "object" });
@@ -24,23 +24,29 @@ describe("node API", () => {
 	};
 
 	describe("schema", () => {
-		itWithRoot("object", treeSchema, initialTree, (root) => {
+		it("object", () => {
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.schema(root.object), object);
 		});
-		itWithRoot("list", treeSchema, initialTree, (root) => {
+
+		it("list", () => {
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.schema(root.list), list);
 		});
 	});
 
 	describe("is", () => {
-		itWithRoot("object", treeSchema, initialTree, (root) => {
+		it("object", () => {
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.is(root.object, object), true);
 			assert.equal(Tree.is(root.object, list), false);
 			assert.throws(() =>
 				Tree.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
 			);
 		});
-		itWithRoot("list", treeSchema, initialTree, (root) => {
+
+		it("list", () => {
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.is(root.list, list), true);
 			assert.equal(Tree.is(root.list, object), false);
 			assert.throws(() =>
@@ -50,43 +56,50 @@ describe("node API", () => {
 	});
 
 	describe("parent", () => {
-		itWithRoot("object", treeSchema, initialTree, (root) => {
+		it("object", () => {
+			const root = getRoot(treeSchema, initialTree);
 			const child = root.object;
 			const p = Tree.parent(child);
 			assert.equal(Tree.parent(root.object), root);
 		});
 
-		itWithRoot("list", treeSchema, initialTree, (root) => {
+		it("list", () => {
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.parent(root.list), root);
 		});
 
-		itWithRoot("root", treeSchema, initialTree, (root) => {
+		it("root", () => {
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.parent(root), undefined);
 		});
 	});
 
 	describe("key", () => {
-		itWithRoot("object", treeSchema, initialTree, (root) => {
+		it("object", () => {
+			const root = getRoot(treeSchema, initialTree);
 			for (const key of Object.keys(root) as Iterable<keyof typeof root>) {
 				const child = root[key];
 				assert.equal(Tree.key(child), key);
 			}
 		});
 
-		itWithRoot("list", treeSchema, initialTree, (root) => {
+		it("list", () => {
+			const root = getRoot(treeSchema, initialTree);
 			for (let key = 0; key < root.list.length; key += 1) {
 				const child = root.list[key];
 				assert.equal(Tree.key(child), key);
 			}
 		});
 
-		itWithRoot("root", treeSchema, initialTree, (root) => {
+		it("root", () => {
+			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.key(root), rootFieldKey);
 		});
 	});
 
 	describe("treeStatus", () => {
-		itWithRoot("object", treeSchema, initialTree, (root) => {
+		it("object", () => {
+			const root = getRoot(treeSchema, initialTree);
 			const o = root.object;
 			assert(o !== undefined);
 			assert.equal(Tree.status(o), TreeStatus.InDocument);
@@ -95,7 +108,8 @@ describe("node API", () => {
 		});
 
 		// TODO: Enable a test like this when lists are directly settable
-		// itWithRoot("list", treeSchema, initialTree, (root) => {
+		// it("list", () => {
+		// 	const root = getRoot(treeSchema, initialTree);
 		// 	const l = root.list;
 		// 	assert(l !== undefined);
 		// 	assert.equal(Tree.status(l), TreeStatus.InDocument);
@@ -106,61 +120,49 @@ describe("node API", () => {
 
 	describe("events", () => {
 		function check(mutate: (root: TreeRoot<typeof treeSchema>) => void) {
-			itWithRoot(
-				".on(..) must subscribe to change event",
-				treeSchema,
-				initialTree,
-				(root) => {
-					const log: any[][] = [];
+			it(".on(..) must subscribe to change event", () => {
+				const root = getRoot(treeSchema, initialTree);
+				const log: any[][] = [];
 
-					Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
-						log.push(args);
-					});
+				Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
+					log.push(args);
+				});
 
-					mutate(root);
+				mutate(root);
 
-					const numChanges = log.length;
-					assert(
-						numChanges > 0,
-						"Must receive change notifications after subscribing to event.",
-					);
-				},
-			);
+				const numChanges = log.length;
+				assert(
+					numChanges > 0,
+					"Must receive change notifications after subscribing to event.",
+				);
+			});
 
-			itWithRoot(
-				".on(..) must return unsubscribe function",
-				treeSchema,
-				initialTree,
-				(root) => {
-					const log: any[][] = [];
+			it(".on(..) must return unsubscribe function", () => {
+				const root = getRoot(treeSchema, initialTree);
+				const log: any[][] = [];
 
-					const unsubscribe = Tree.on(
-						root as TreeNode,
-						"afterChange",
-						(...args: any[]) => {
-							log.push(args);
-						},
-					);
+				const unsubscribe = Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
+					log.push(args);
+				});
 
-					mutate(root);
+				mutate(root);
 
-					const numChanges = log.length;
-					assert(
-						numChanges > 0,
-						"Must receive change notifications after subscribing to event.",
-					);
+				const numChanges = log.length;
+				assert(
+					numChanges > 0,
+					"Must receive change notifications after subscribing to event.",
+				);
 
-					unsubscribe();
+				unsubscribe();
 
-					mutate(root);
+				mutate(root);
 
-					assert.equal(
-						log.length,
-						numChanges,
-						"Mutation after unsubscribe must not emit change events.",
-					);
-				},
-			);
+				assert.equal(
+					log.length,
+					numChanges,
+					"Mutation after unsubscribe must not emit change events.",
+				);
+			});
 		}
 
 		describe("object", () => {
