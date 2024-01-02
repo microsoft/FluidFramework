@@ -11,15 +11,25 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
+		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
 		"build:ci": "npm run build:compile",
 		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
+		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json",
+		"check:are-the-types-wrong": "attw --pack",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
 		"ci:test": "echo No test for this package",
@@ -28,30 +38,33 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir ."
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@0.20.1",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/node": "^16.18.38",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.6.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
+		"renamer": "^4.0.0",
 		"rimraf": "^2.6.2",
-		"typescript": "~4.5.5"
+		"tsc-multi": "^1.1.0",
+		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"fluidBuild": {
@@ -64,6 +77,12 @@
 				"...",
 				"typetests:gen"
 			]
+		}
+	},
+	"pnpm": {
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch",
+			"tsc-multi@1.1.0": "../../../patches/tsc-multi@1.1.0.patch"
 		}
 	},
 	"typeValidation": {

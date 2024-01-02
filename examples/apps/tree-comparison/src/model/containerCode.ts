@@ -15,6 +15,9 @@ import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
 export const newTreeInventoryListId = "new-tree-inventory-list";
 
+/**
+ * @internal
+ */
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(
@@ -22,6 +25,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 				LegacyTreeInventoryListFactory.registryEntry,
 				NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
+			{ enableRuntimeIdCompressor: true },
 		);
 	}
 

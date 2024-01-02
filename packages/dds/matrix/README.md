@@ -119,3 +119,42 @@ return undefined; // Empty region
 A benefit of storing the cell data in [Z-order](https://en.wikipedia.org/wiki/Z-order_curve) is that both row-major and
 col-major traversal benefit from prefetching and cache coherence. Reading/writing to the physical storage along either
 axis is typically within an order of magnitude compared to sequentially accessing a cache hot native JavaScript array.
+
+### Switching From Last Write Win(LWW) to First Write Win(FWW) mode
+
+Shared Matrix allows to make to make one way switch from LWW to FWW. This is introduced in order to handle conflict
+when multiple clients at once initialize a cell. Using FWW, will help clients to receive a `conflict` event in case
+their change was rejected. They can resolve conflict with the new information that they received in the event.
+This event is only emitted when the SetCell Resolution Policy is First Write Win(FWW). This is emitted when two clients
+race and send changes without observing each other changes, the changes that gets sequenced last would be rejected, and
+only client who's changes rejected would be notified via this event, with expectation that it will merge its changes
+back by accounting new information (state from winner of the race).
+
+Some cases which documents how the Set op changes are applied or rejected during LWW -> FWW switch as some clients will
+be in FWW mode and some will in LWW mode. When app calls `switchSetCellPolicy` the policy is changed to FWW mode
+immediately and then later communicated to other clients via next SetOp which is made on the matrix.
+
+**Case 1:** When all clients have switched to FWW mode, then any race between 2 Set Op, will result in a `conflict` event
+at the loser client until it receives its own latest Set op. For example, client has sent op for cell C1. It receives remote
+ops R1 and R2 for cell C1. It will first raise `conflict` event when it receives R1 and then another `conflict` event when
+it receives R2. This will keep happening until it receives its own op, so that its changes are not lost due to conflict.
+
+**Case 2:** Client switches policy to FWW locally. No SetOp is made yet. This client has no pending changes yet. On receiving
+remote Set ops, this client will apply them all.
+
+**Case 3:** Client switches policy to FWW locally. This client has pending changes for cell C1. On
+receiving remote LWW Set op for C1, this client will reject it as its own op will finally be applied. So the first FWW
+SetOp is still treated as LWW op in a way. Now lets say it has received a remote FWW op for C1 instead of a LWW op, then
+the remote op would have been applied causing client's policy to shift to FWW with that op. It will also raise a conflict
+event locally as its Op for cell c1 will be rejected by other clients as it is a loser op.
+
+**Case 4:** In FWW mode, when there is no conflict, clients will still be able to overwrite cells. We track the sequence
+number for each cell when it was last edited and also track the clientId which made that change. If the receive a Op for
+cell C1, and its ref Sequence number is >= to sequence number at which it was last edited, then the cell would be
+overwritten. Otherwise, if the same client made the changes, then the op will still be applied as the client knew about
+the previous edit.
+
+**Case 5: Reconnection:** When a client makes an op in LWW mode in disconnected state for cell C1, then when it comes online
+later on, and catches up it sees a FWW op for C1, it will raise a `conflict` event for C1 and will not send it own op.
+It can receive many ops for C1 during catchup and will raise `conflict` event for each of those in case they are winner
+ops for C1.

@@ -92,8 +92,7 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
- *
- * @public
+ * @alpha
  */
 export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>

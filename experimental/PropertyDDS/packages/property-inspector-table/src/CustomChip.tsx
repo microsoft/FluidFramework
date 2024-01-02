@@ -28,6 +28,9 @@ interface IChipProps {
 	className: string;
 }
 
+/**
+ * @internal
+ */
 export const CustomChip: React.FunctionComponent<IChipProps> = (props) => {
 	const classes = useStyles(props);
 	return <span className={`${classes.chip} ${props.className}`}>{props.label}</span>;

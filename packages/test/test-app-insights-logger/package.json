@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-app-insights-logger",
-	"version": "2.0.0-internal.7.3.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "Azure Application Insights logger for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,6 +19,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -26,8 +27,8 @@
 		"full": "node ./dist/nodeStressTest.js --profile full",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "tsc"
 	},
 	"dependencies": {
@@ -36,11 +37,12 @@
 		"applicationinsights": "^2.1.9"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.28.0",
+		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-tools/build-cli": "0.29.0-225750",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@types/node": "^16.18.38",
+		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
+		"@types/node": "^18.19.0",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",

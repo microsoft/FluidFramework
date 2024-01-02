@@ -48,8 +48,8 @@
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
 		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
@@ -59,13 +59,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"lib/test/**/*.js"
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"lib/**/*.js"
+			"src/**/*.*ts",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -122,7 +122,7 @@
 	"devDependencies": {
 		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/async": "^3.2.20",
 		"@types/chai": "^4.3.5",

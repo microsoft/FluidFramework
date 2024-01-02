@@ -73,4 +73,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 	}
 }
 
+/**
+ * @internal
+ */
 export const fluidExport = new ProseMirrorRuntimeFactory();

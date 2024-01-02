@@ -11,7 +11,7 @@ const tscDependsOn = ["^tsc", "^api", "build:genver"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "eslint", "ci:build:docs", "build:manifest", "build:readme"],
+			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -48,6 +48,8 @@ module.exports = {
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
+			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
+			// requires them. I don't want to change the policy right now.
 			...tscDependsOn,
 			"typetests:gen",
 			"tsc",
@@ -58,10 +60,13 @@ module.exports = {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
-		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
-		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
-		"build:docs": [...tscDependsOn, "tsc"],
-		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:esnext": {
+			dependsOn: ["build:esnext"],
+			script: true,
+		},
+		"build:docs": ["tsc"],
+		"ci:build:docs": ["tsc"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
@@ -71,6 +76,8 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		"check:release-tags": ["tsc"],
+		"check:are-the-types-wrong": ["build"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
@@ -157,9 +164,17 @@ module.exports = {
 				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
+				"^experimental/dds/tree2/package.json",
+				"^experimental/dds/sequence-deprecated/package.json",
+				"^experimental/framework/tree-react-api/package.json",
+				"^packages/common/.*/package.json",
 				"^packages/dds/.*/package.json",
 				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
+				"^packages/loader/.*/package.json",
+				"^packages/runtime/.*/package.json",
+				"^packages/service-clients/.*/package.json",
+				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
 			"html-copyright-file-header": [
@@ -189,10 +204,11 @@ module.exports = {
 				"tools/markdown-magic/package.json",
 			],
 			"npm-package-json-script-mocha-config": [
-				// these doesn't use mocha config for reporters yet.
+				// these don't use mocha config for reporters yet.
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
+				"^common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
@@ -214,9 +230,10 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
-				// This is an ESM-only package, and uses tsc to build the ESM output. The policy handler doesn't understand this
+				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",
+				"packages/test/functional-tests/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -268,7 +285,12 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
-				npm: ["@fluidframework", "fluid-framework", "@fluid-internal/client-utils"],
+				npm: [
+					"@fluidframework",
+					"fluid-framework",
+					"@fluid-internal/client-utils",
+					"tinylicious",
+				],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
@@ -307,6 +329,9 @@ module.exports = {
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
+				["renamer", "renamer"],
+				["tsc-multi", "tsc-multi"],
+				["attw", "@arethetypeswrong/cli"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -328,7 +353,6 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
 		},

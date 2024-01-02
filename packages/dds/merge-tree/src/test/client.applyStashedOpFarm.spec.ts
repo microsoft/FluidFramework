@@ -36,7 +36,6 @@ function applyMessagesWithReconnect(
 		if (messageData[0].clientId !== clients[1].longClientId) {
 			const index = clients
 				.map((c) => c.longClientId)
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 				.indexOf(messageData[0].clientId as string);
 			stashClients[index].applyStashedOp(messageData[0].contents as IMergeTreeOp);
 			stashedOps.push([

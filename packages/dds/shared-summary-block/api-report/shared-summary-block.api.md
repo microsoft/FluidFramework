@@ -16,13 +16,13 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @alpha
 export interface ISharedSummaryBlock extends ISharedObject {
     get<T>(key: string): Jsonable<T>;
     set<T>(key: string, value: Jsonable<T>): void;
 }
 
-// @public
+// @alpha
 export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBlock {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
@@ -41,7 +41,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
-// @public @sealed
+// @internal @sealed
 export class SharedSummaryBlockFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

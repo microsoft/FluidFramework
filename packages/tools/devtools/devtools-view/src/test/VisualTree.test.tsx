@@ -18,7 +18,7 @@ import {
 	type FluidUnknownObjectNode,
 	type UnknownObjectNode,
 	VisualNodeKind,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../components";
 import { MessageRelayContext } from "../MessageRelayContext";
 import { MockMessageRelay } from "./MockMessageRelay";

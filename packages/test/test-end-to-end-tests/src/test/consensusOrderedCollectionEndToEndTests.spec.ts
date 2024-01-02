@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	acquireAndComplete,
 	ConsensusQueue,
@@ -14,29 +14,21 @@ import {
 	IConsensusOrderedCollection,
 	waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
 	create(runtime: IFluidDataStoreRuntime, id?: string): T;
 }
 
 const mapId = "mapKey";
-const registry: ChannelFactoryRegistry = [
-	[mapId, SharedMap.getFactory()],
-	[undefined, ConsensusQueue.getFactory()],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
 function generate(
 	name: string,
@@ -44,7 +36,17 @@ function generate(
 	input: any[],
 	output: any[],
 ) {
-	describeFullCompat(name, (getTestObjectProvider) => {
+	describeCompat(name, "FullCompat", (getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
+		const registry: ChannelFactoryRegistry = [
+			[mapId, SharedMap.getFactory()],
+			[undefined, ConsensusQueue.getFactory()],
+		];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+		};
+
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();
@@ -59,12 +61,12 @@ function generate(
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
@@ -73,7 +75,7 @@ function generate(
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		});
 

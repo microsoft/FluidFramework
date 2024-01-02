@@ -22,6 +22,9 @@ import {
 } from "./propertyTree";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
 
+/**
+ * @internal
+ */
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 	public abstract get attributes();
 	public abstract get type();
@@ -119,6 +122,9 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
 	public static readonly Type = "DeflatedPropertyTree:84534a0fe613522101f6";
 
@@ -171,6 +177,9 @@ export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
 	public static readonly Type = "LZ4PropertyTree:84534a0fe613522101f6";
 

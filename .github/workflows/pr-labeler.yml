@@ -25,6 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Label base branches and external contributors
     steps:
-      - uses: srvaroa/labeler@953347905ec8e4884e85c9957d24508e24119fc3 # ratchet:srvaroa/labeler@v1.3
+      - uses: srvaroa/labeler@5789c3303e99162cb381c2873ddddd88b0a76e91 # ratchet:srvaroa/labeler@v1
         env:
           GITHUB_TOKEN: "${{ github.token }}"

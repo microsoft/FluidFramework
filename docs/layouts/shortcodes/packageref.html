@@ -3,7 +3,7 @@
 {{/* - unscopedPackageName: The *unscoped* name of the package being linked to. */}}
 
 {{- $unscopedPackageName := .Get 0 -}}
-{{- $path := delimit (slice "/docs/apis/" $unscopedPackageName ".md" ) "" -}}
+{{- $path := delimit (slice "/docs/api/v1/" $unscopedPackageName ".md" ) "" -}}
 
 <a href="{{ relref . $path }}"><code>{{ $unscopedPackageName }}</code></a>
 
