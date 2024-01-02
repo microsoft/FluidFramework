@@ -5,10 +5,10 @@
 
 import * as JSON5 from "json5";
 import { lstatSync, readFileSync } from "node:fs";
-import type { TsConfigJson } from "type-fest";
-import { LeafWithFileStatDoneFileTask } from "./leafTask";
-import { globFn } from "../../../common/utils";
 import path from "node:path";
+import type { TsConfigJson } from "type-fest";
+import { globFn } from "../../../common/utils";
+import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 export class Ts2EsmTask extends LeafWithFileStatDoneFileTask {
 	/**

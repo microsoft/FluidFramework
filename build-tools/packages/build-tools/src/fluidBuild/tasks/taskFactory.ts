@@ -29,7 +29,7 @@ import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
-	"ts2esm": Ts2EsmTask, // Assume if tsc is out of date, ts2esm is out of date. This is insufficient and not good enough for test.
+	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
