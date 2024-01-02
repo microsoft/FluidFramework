@@ -241,6 +241,7 @@ importers:
       debug: ^4.3.4
       detect-indent: ^6.1.0
       eslint: ~8.51.0
+      execa: ^5.1.1
       find-up: ^5.0.0
       fs-extra: ^9.1.0
       glob: ^7.2.3
@@ -272,6 +273,7 @@ importers:
       date-fns: 2.30.0
       debug: 4.3.4
       detect-indent: 6.1.0
+      execa: 5.1.1
       find-up: 5.0.0
       fs-extra: 9.1.0
       glob: 7.2.3
