@@ -204,7 +204,8 @@ export class SummaryGenerator {
 		private readonly submitSummaryCallback: (
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
-		private readonly successfulSummaryCallback: (
+		private readonly successfulSummaryCallback: () => void,
+		private readonly refreshLatestSummaryCallback: (
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
@@ -433,11 +434,12 @@ export class SummaryGenerator {
 			};
 			if (ackNackOp.type === MessageType.SummaryAck) {
 				this.heuristicData.markLastAttemptAsSuccessful();
+				this.successfulSummaryCallback();
 				summarizeEvent.end({
 					...summarizeTelemetryProps,
 					handle: ackNackOp.contents.handle,
 				});
-				await this.successfulSummaryCallback({
+				await this.refreshLatestSummaryCallback({
 					proposalHandle: summarizeOp.contents.handle,
 					ackHandle: ackNackOp.contents.handle,
 					summaryRefSeq: summarizeOp.referenceSequenceNumber,

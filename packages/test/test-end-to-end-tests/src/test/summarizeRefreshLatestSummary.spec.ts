@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/container-runtime";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",
@@ -49,9 +50,65 @@ describeCompat(
 			await provider.ensureSynchronized();
 		});
 
-		itExpects(
-			"The summarizing client will immediately refresh its own summaries",
-			[
+		it("The summarizing client will immediately refresh its own summaries", async () => {
+			const summaryConfig: ISummaryConfiguration = {
+				...DefaultSummaryConfiguration,
+				...{
+					maxTime: 5000 * 12,
+					maxAckWaitTime: 120000,
+					maxOps: 1,
+					initialSummarizerDelayMs: 0,
+				},
+			};
+			const mockLogger = new MockLogger();
+			const testContainerConfig: ITestContainerConfig = {
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: summaryConfig,
+					},
+				},
+				loaderProps: {
+					logger: mockLogger,
+					configProvider: mockConfigProvider({
+						"Fluid.Summarizer.immediatelyRefreshLatestSummaryAck": true,
+					}),
+				},
+			};
+			const container = await provider.makeTestContainer(testContainerConfig);
+			const container2 = await provider.loadTestContainer(testContainerConfig);
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
+			const dataObject2 = (await container2.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container);
+			await waitForContainerConnection(container2);
+
+			// The first summary needs to be generated otherwise the summarizer will only generate one summary.
+			dataObject._root.set(`first`, "op");
+			await provider.ensureSynchronized();
+			mockLogger.assertMatch([
+				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
+				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
+				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
+				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
+			]);
+
+			const summaryVersions: string[] = [];
+			container.on("op", (op) => {
+				if (op.type === MessageType.SummaryAck) {
+					summaryVersions.push((op as ISummaryAckMessage).contents.handle);
+				}
+				if (op.type === MessageType.SummaryNack) {
+					throw new Error("Unexpected summary nack");
+				}
+			});
+
+			// Sending ops from two different clients/containers causes the heuristics summarizer to handle ops twice, which causes the summarizer to summarize before acking its first summary.
+			// Sending ops from the same client does not cause the heuristics summarizer to handle ops twice probably because of batching.
+			dataObject._root.set(`a`, "op1");
+			dataObject2._root.set(`b`, "op2");
+			await provider.ensureSynchronized();
+
+			// This verifies that two summaries were generated in succession from two ops.
+			mockLogger.assertMatch([
 				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
 				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
@@ -60,67 +117,23 @@ describeCompat(
 				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
-			],
-			async () => {
-				const summaryConfig: ISummaryConfiguration = {
-					...DefaultSummaryConfiguration,
-					...{
-						maxTime: 5000 * 12,
-						maxAckWaitTime: 120000,
-						maxOps: 1,
-						initialSummarizerDelayMs: 0,
-					},
-				};
-				const testContainerConfig: ITestContainerConfig = {
-					runtimeOptions: {
-						summaryOptions: {
-							summaryConfigOverrides: summaryConfig,
-						},
-					},
-					loaderProps: {
-						configProvider: mockConfigProvider({
-							"Fluid.Summarizer.immediatelyRefreshLatestSummaryAck": true,
-						}),
-					},
-				};
-				const container = await provider.makeTestContainer(testContainerConfig);
-				const container2 = await provider.loadTestContainer(testContainerConfig);
-				const dataObject = (await container.getEntryPoint()) as ITestDataObject;
-				const dataObject2 = (await container2.getEntryPoint()) as ITestDataObject;
-				await waitForContainerConnection(container);
-				await waitForContainerConnection(container2);
+			]);
 
-				// The first summary needs to be generated otherwise the summarizer will only generate one summary.
-				dataObject._root.set(`first`, "op");
-				await provider.ensureSynchronized();
+			const container3 = await provider.loadTestContainer(testContainerConfig, {
+				[LoaderHeader.version]: summaryVersions[0],
+			});
 
-				const array: string[] = [];
-				container.on("op", (op) => {
-					if (op.type === MessageType.SummaryAck) {
-						array.push((op as ISummaryAckMessage).contents.handle);
-					}
-					if (op.type === MessageType.SummaryNack) {
-						throw new Error("Unexpected summary nack");
-					}
-				});
-
-				// Sending ops from two different clients/containers causes the heuristics summarizer to handle ops twice, which causes the summarizer to summarize before acking its first summary.
-				// Sending ops from the same client does not cause the heuristics summarizer to handle ops twice probably because of batching.
-				dataObject._root.set(`a`, "op1");
-				dataObject2._root.set(`b`, "op2");
-				await provider.ensureSynchronized();
-				const container3 = await provider.loadTestContainer(testContainerConfig, {
-					[LoaderHeader.version]: array[0],
-				});
-
-				const dataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
-				assert(dataObject3._root.get(`a`) === "op1");
-				assert(dataObject3._root.get(`b`) === "op2");
-			},
-		);
+			const dataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
+			assert(dataObject3._root.get(`a`) === "op1", "1st op from 1st client missing!");
+			if (provider.driver.type === "local") {
+				assert(dataObject3._root.get(`b`) === "op2", "2nd op from 2nd client missing!");
+			} else {
+				assert(
+					dataObject3._root.get(`b`) !== "op2",
+					"2nd op from 2nd client processed in first summary",
+				);
+			}
+			assert.strictEqual(summaryVersions.length, 2, "expected 2 consecutive summaries");
+		});
 	},
 );
