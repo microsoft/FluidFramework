@@ -5,7 +5,7 @@
 
 export {
 	Changeset,
-	Delete,
+	Remove,
 	Detach,
 	HasMoveId,
 	HasRevisionTag,

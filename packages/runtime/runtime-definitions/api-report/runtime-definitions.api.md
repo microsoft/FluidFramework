@@ -369,7 +369,6 @@ export interface ISummarizerNode {
 // @alpha (undocumented)
 export interface ISummarizerNodeConfig {
     readonly canReuseHandle?: boolean;
-    readonly throwOnFailure?: true;
 }
 
 // @alpha (undocumented)

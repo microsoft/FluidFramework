@@ -14,7 +14,7 @@ import {
 	AttachAndDetach,
 	CellId,
 	Changeset,
-	Delete,
+	Remove,
 	Detach,
 	Insert,
 	Mark,
@@ -96,7 +96,7 @@ function makeV0Codec<TNodeChange>(
 							id: effect.id,
 						},
 					};
-				case "Delete":
+				case "Remove":
 					return {
 						delete: {
 							revision:
@@ -188,10 +188,10 @@ function makeV0Codec<TNodeChange>(
 			}
 			return mark;
 		},
-		delete(encoded: Encoded.Delete, context: ChangeEncodingContext): Delete {
+		delete(encoded: Encoded.Remove, context: ChangeEncodingContext): Remove {
 			const { id, revision, idOverride } = encoded;
-			const mark: Mutable<Delete> = {
-				type: "Delete",
+			const mark: Mutable<Remove> = {
+				type: "Remove",
 				id,
 			};
 			if (revision !== undefined) {

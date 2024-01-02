@@ -357,10 +357,10 @@ export class SharedTree
 					case FieldKinds.optional.identifier: {
 						const fieldEditor = this.editor.optionalField(field);
 						assert(
-							content.length <= 1,
+							content.getFieldLength() <= 1,
 							0x7f4 /* optional field content should normalize at most one item */,
 						);
-						fieldEditor.set(content.length === 0 ? undefined : content[0], true);
+						fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
 						break;
 					}
 					case FieldKinds.sequence.identifier: {

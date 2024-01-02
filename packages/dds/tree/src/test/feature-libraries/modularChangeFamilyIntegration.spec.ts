@@ -70,7 +70,7 @@ const tag3: RevisionTag = mintRevisionTag();
 // Tests the integration of ModularChangeFamily with the default field kinds.
 describe("ModularChangeFamily integration", () => {
 	describe("rebase", () => {
-		it("delete over cross-field move", () => {
+		it("remove over cross-field move", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
 
@@ -85,11 +85,11 @@ describe("ModularChangeFamily integration", () => {
 			editor.exitTransaction();
 
 			editor.enterTransaction();
-			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+			editor.sequenceField({ parent: undefined, field: fieldA }).remove(1, 1);
 			editor.exitTransaction();
 
 			editor.enterTransaction();
-			editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
+			editor.sequenceField({ parent: undefined, field: fieldB }).remove(2, 1);
 			editor.exitTransaction();
 
 			const [move, remove, expected] = getChanges();
@@ -103,10 +103,10 @@ describe("ModularChangeFamily integration", () => {
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 
-		it("cross-field move over delete", () => {
+		it("cross-field move over remove", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
-			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+			editor.sequenceField({ parent: undefined, field: fieldA }).remove(1, 1);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				1,
@@ -162,7 +162,7 @@ describe("ModularChangeFamily integration", () => {
 					parent: node2Path,
 					field: fieldC,
 				})
-				.delete(0, 1);
+				.remove(0, 1);
 
 			editor.exitTransaction();
 			const [move1, move2, modify] = getChanges();
@@ -174,7 +174,7 @@ describe("ModularChangeFamily integration", () => {
 				taggedMoves,
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
-			const fieldCExpected = [MarkMaker.delete(1, brand(2))];
+			const fieldCExpected = [MarkMaker.remove(1, brand(2))];
 			const node2Expected = {
 				fieldChanges: new Map([
 					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
@@ -441,7 +441,7 @@ describe("ModularChangeFamily integration", () => {
 					parent: node2Path,
 					field: fieldC,
 				})
-				.delete(0, 1);
+				.remove(0, 1);
 
 			editor.exitTransaction();
 			const [move1, move2, modify] = getChanges();

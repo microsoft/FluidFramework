@@ -550,7 +550,7 @@ describe("SharedTree", () => {
 		// Stop the processing of incoming changes on tree3 so that it does not learn about the deletion of Z
 		await provider.opProcessingController.pauseProcessing(container3);
 
-		// Delete Z
+		// Remove Z
 		view2.removeAt(0);
 
 		// Ensure tree2 has a chance to send deletion of Z
@@ -564,7 +564,7 @@ describe("SharedTree", () => {
 		// Summarized state: A C
 		await provider.summarize();
 
-		// Insert B between A and C (without knowing of Z being deleted)
+		// Insert B between A and C (without knowing of Z being removed)
 		view3.insertAt(2, ["B"]);
 
 		// Ensure the insertion of B is sent for processing by tree3 before tree3 receives the deletion of Z
@@ -590,7 +590,7 @@ describe("SharedTree", () => {
 		assert.deepEqual(view3.asArray, expectedValues);
 		// tree4 should only get the correct end state if it was able to get the adequate
 		// EditManager state from the summary. Specifically, in order to correctly rebase the insert
-		// of B, tree4 needs to have a local copy of the edit that deleted Z, so it can
+		// of B, tree4 needs to have a local copy of the edit that removed Z, so it can
 		// rebase the insertion of  B over that edit.
 		// Without that, it will interpret the insertion of B based on the current state, yielding
 		// the order ACB.
@@ -627,7 +627,7 @@ describe("SharedTree", () => {
 			};
 			summarizingTree.editor
 				.sequenceField({ parent: rootPath, field: fooField })
-				.delete(0, 1);
+				.remove(0, 1);
 		});
 
 		await provider.ensureSynchronized();
@@ -638,7 +638,7 @@ describe("SharedTree", () => {
 		cursor.enterField(fooField);
 		assert.equal(cursor.firstNode(), true);
 		// An error may occur earlier in the test but may be swallowed up. If so, this line will fail
-		// due to the delete edit above not being able to be applied to loadingTree.
+		// due to the remove edit above not being able to be applied to loadingTree.
 		assert.equal(cursor.value, "b");
 		assert.equal(cursor.nextNode(), true);
 		assert.equal(cursor.value, "c");
@@ -672,7 +672,7 @@ describe("SharedTree", () => {
 			};
 			summarizingTree.editor
 				.sequenceField({ parent: rootPath, field: fooField })
-				.delete(0, 1);
+				.remove(0, 1);
 		});
 
 		const cursor = summarizingTree.view.forest.allocateCursor();
@@ -1116,7 +1116,7 @@ describe("SharedTree", () => {
 					]);
 					assert.deepEqual(innerList.asArray, ["a", "b"]);
 
-					// delete subtree
+					// remove subtree
 					tree1.editableTree.content.content.removeAt(0);
 					provider.processMessages();
 					assert.deepEqual(tree1.editableTree.content.content.asArray, []);
@@ -1437,7 +1437,7 @@ describe("SharedTree", () => {
 
 		assert.throws(() =>
 			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
-			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).delete(0, 99),
+			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
 		);
 
 		provider.processMessages();
@@ -1524,7 +1524,7 @@ describe("SharedTree", () => {
 	});
 
 	describe.skip("Fuzz Test fail cases", () => {
-		it("Anchor Stability fails when root node is deleted", async () => {
+		it("Anchor Stability fails when root node is removed", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
@@ -1621,7 +1621,7 @@ describe("SharedTree", () => {
 					parent: undefined,
 					field: rootFieldKey,
 				});
-				field.delete(0, 1);
+				field.remove(0, 1);
 				return TransactionResult.Abort;
 			});
 			readCursor = tree.forest.allocateCursor();

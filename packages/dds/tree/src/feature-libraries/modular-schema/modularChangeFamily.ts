@@ -25,7 +25,6 @@ import {
 	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
 	makeDetachedNodeId,
-	ITreeCursor,
 	emptyDelta,
 	DeltaFieldMap,
 	DeltaFieldChanges,
@@ -36,6 +35,8 @@ import {
 	ChangeEncodingContext,
 	RevisionTagCodec,
 	mapCursorField,
+	ITreeCursorSynchronous,
+	CursorLocationType,
 } from "../../core/index.js";
 import {
 	brand,
@@ -47,7 +48,6 @@ import {
 	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	isReadonlyArray,
 	Mutable,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
@@ -57,12 +57,9 @@ import {
 	chunkFieldSingle,
 	defaultChunkPolicy,
 	FieldBatchCodec,
+	chunkTree,
 } from "../chunked-forest/index.js";
-import {
-	cursorForMapTreeField,
-	cursorForMapTreeNode,
-	mapTreeFromCursor,
-} from "../mapTreeCursor.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -725,7 +722,7 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
-		// If there's a node exists constraint and we deleted or revived the node, update constraint state
+		// If there's a node exists constraint and we removed or revived the node, update constraint state
 		if (rebasedChange.nodeExistsConstraint !== undefined) {
 			const violatedAfter = existenceState === NodeExistenceState.Dead;
 
@@ -1267,22 +1264,25 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 	}
 
+	/**
+	 * @param firstId - The ID to associate with the first node
+	 * @param content - The node(s) to build. Can be in either Field or Node mode.
+	 * @returns A description of the edit that can be passed to `submitChanges`.
+	 */
 	public buildTrees(
 		firstId: ChangesetLocalId,
-		newContent: ITreeCursor | readonly ITreeCursor[],
+		content: ITreeCursorSynchronous,
 	): GlobalEditDescription {
-		const content = isReadonlyArray(newContent) ? newContent : [newContent];
-		const length = content.length;
-		if (length === 0) {
+		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
 			return { type: "global" };
 		}
 		const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
-
-		const mapTrees = content.map((c) => mapTreeFromCursor(c));
-		const fieldCursor = cursorForMapTreeField(mapTrees);
-		const chunk = chunkFieldSingle(fieldCursor, defaultChunkPolicy);
+		const chunk =
+			content.mode === CursorLocationType.Fields
+				? chunkFieldSingle(content, defaultChunkPolicy)
+				: chunkTree(content, defaultChunkPolicy);
 		innerMap.set(firstId, chunk);
 
 		return {
