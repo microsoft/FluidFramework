@@ -31,7 +31,7 @@ const noTreeDelegate = (child: TestChange) => {
 };
 
 export function testRelevantRemovedRoots() {
-	describe("SequenceField - relevantRemovedRoots", () => {
+	describe("relevantRemovedRoots", () => {
 		describe("does not include", () => {
 			it("a tree that remains in-doc", () => {
 				const input: TestChangeset = [{ count: 1 }];

@@ -26,7 +26,7 @@ const childGen = (seed: number): NodeChangeset => ({
 });
 
 export function testGenerateRandomChange() {
-	describe("SequenceField - generateRandomChange", () => {
+	describe("generateRandomChange", () => {
 		it("generates the same change given the same seed", () => {
 			const change1 = generateRandomChange(testSeed, maxIndex, childGen);
 			const change2 = generateRandomChange(testSeed, maxIndex, childGen);
