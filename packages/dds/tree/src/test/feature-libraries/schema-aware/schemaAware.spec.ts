@@ -28,10 +28,10 @@ import {
 	AllowedTypes,
 } from "../../../feature-libraries/index.js";
 import { leaf, SchemaBuilder } from "../../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	FlexList,
 	FlexListToNonLazyArray,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/flexList.js";
 
 // Test UnbrandedName
