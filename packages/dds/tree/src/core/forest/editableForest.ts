@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { RevisionTagCodec } from "../rebase/revisionTagCodec.js";
+import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import {
 	DetachedField,

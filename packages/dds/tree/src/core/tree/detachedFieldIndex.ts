@@ -18,7 +18,7 @@ import {
 } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
-import { RevisionTagCodec } from "../rebase/revisionTagCodec.js";
+import { RevisionTagCodec } from "../rebase/index.js";
 import * as Delta from "./delta.js";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";

@@ -4,16 +4,17 @@
  */
 
 import { IIdCompressor, createIdCompressor } from "@fluidframework/id-compressor";
-import { ChangesetLocalId, RevisionTagCodec } from "../../core/index.js";
+import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/optional-field/index.js";
-import { brand } from "../../util/index.js";
-import { TestChange } from "../testChange.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
-import { sessionId } from "./testTrees.js";
+} from "../../../feature-libraries/optional-field/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sessionId } from "../../snapshots/testTrees.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -70,27 +71,27 @@ function generateTestChangesets(
 	];
 }
 
-describe("OptionalField - Snapshots", () => {
-	useSnapshotDirectory("optional-field");
-	const idCompressor = createIdCompressor(sessionId);
-	const changesets = generateTestChangesets(idCompressor);
-	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-	const family = makeOptionalFieldCodecFamily(
-		TestChange.codec,
-		new RevisionTagCodec(idCompressor),
-	);
+export function testSnapshots() {
+	describe("Snapshots", () => {
+		useSnapshotDirectory("optional-field");
+		const idCompressor = createIdCompressor(sessionId);
+		const changesets = generateTestChangesets(idCompressor);
+		idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+		const family = makeOptionalFieldCodecFamily(
+			TestChange.codec,
+			new RevisionTagCodec(idCompressor),
+		);
 
-	for (const version of family.getSupportedFormats()) {
-		describe(`version ${version}`, () => {
-			const codec = family.resolve(version);
-			for (const { name, change } of changesets) {
-				it(name, () => {
-					const encoded = codec.json.encode(change, {
-						originatorId: idCompressor.localSessionId,
+		for (const version of family.getSupportedFormats()) {
+			describe(`version ${version}`, () => {
+				const codec = family.resolve(version);
+				for (const { name, change } of changesets) {
+					it(name, () => {
+						const encoded = codec.json.encode(change, { originatorId: sessionId });
+						takeJsonSnapshot(encoded);
 					});
-					takeJsonSnapshot(encoded);
-				});
-			}
-		});
-	}
-});
+				}
+			});
+		}
+	});
+}

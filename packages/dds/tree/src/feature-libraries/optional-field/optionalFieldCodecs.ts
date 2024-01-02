@@ -6,7 +6,7 @@
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
-import { JsonCompatibleReadOnly } from "../../util/utils.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
 import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";

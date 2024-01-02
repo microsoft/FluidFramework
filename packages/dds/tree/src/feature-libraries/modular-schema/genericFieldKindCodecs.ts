@@ -5,7 +5,7 @@
 
 import { Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
-import { JsonCompatibleReadOnly } from "../../util/utils.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
 import { ChangeEncodingContext } from "../../core/index.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
