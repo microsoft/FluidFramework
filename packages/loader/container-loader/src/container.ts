@@ -360,6 +360,11 @@ export interface IPendingContainerState {
 	clientId?: string;
 }
 
+/**
+ * State saved by a container in detached state, to be used to load a new instance
+ * of the container to the same state (rehydrate)
+ * @internal
+ */
 export interface IPendingDetachedContainerState {
 	attached: boolean;
 	baseSnapshot: ISnapshotTree;
