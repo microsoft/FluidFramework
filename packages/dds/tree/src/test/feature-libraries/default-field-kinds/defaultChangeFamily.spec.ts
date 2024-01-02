@@ -157,7 +157,7 @@ describe("DefaultEditBuilder", () => {
 
 		const fooPath = { parent: root, field: fooKey };
 		const fooEditor = builder.sequenceField(fooPath);
-		fooEditor.delete(0, 1);
+		fooEditor.remove(0, 1);
 		assert.equal(deltas.length, 1);
 		fooEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.number.name, value: 42 }));
 		expectForest(forest, {
@@ -168,7 +168,7 @@ describe("DefaultEditBuilder", () => {
 		});
 		assert.equal(deltas.length, 2);
 
-		fooEditor.delete(0, 1);
+		fooEditor.remove(0, 1);
 		assert.equal(deltas.length, 3);
 	});
 
@@ -360,13 +360,13 @@ describe("DefaultEditBuilder", () => {
 			expectForest(forest, expected);
 		});
 
-		it("Can delete a root node", () => {
+		it("Can remove a root node", () => {
 			const { builder, forest } = initializeEditableForest(nodeX);
-			builder.sequenceField({ parent: undefined, field: rootKey }).delete(0, 1);
+			builder.sequenceField({ parent: undefined, field: rootKey }).remove(0, 1);
 			expectForest(forest, []);
 		});
 
-		it("Can delete child nodes", () => {
+		it("Can remove child nodes", () => {
 			const { builder, forest } = initializeEditableForest({
 				type: jsonObject.name,
 				fields: {
@@ -390,7 +390,7 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.sequenceField({ parent: root_foo2, field: fooKey }).delete(5, 2);
+			builder.sequenceField({ parent: root_foo2, field: fooKey }).remove(5, 2);
 			const expected = {
 				type: jsonObject.name,
 				fields: {

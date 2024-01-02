@@ -24,6 +24,8 @@ import {
 	typeNameSymbol,
 	FlexTreeSchema,
 	intoStoredSchema,
+	cursorForMapTreeField,
+	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -42,7 +44,6 @@ import {
 	createTestUndoRedoStacks,
 	emptyStringSequenceConfig,
 	expectSchemaEqual,
-	initializeTestTree,
 	jsonSequenceRootSchema,
 	stringSequenceRootSchema,
 	validateTreeConsistency,
@@ -71,6 +72,7 @@ import {
 	moveToDetachedField,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
+	TreeStoredSchema,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
@@ -550,7 +552,7 @@ describe("SharedTree", () => {
 		// Stop the processing of incoming changes on tree3 so that it does not learn about the deletion of Z
 		await provider.opProcessingController.pauseProcessing(container3);
 
-		// Delete Z
+		// Remove Z
 		view2.removeAt(0);
 
 		// Ensure tree2 has a chance to send deletion of Z
@@ -564,7 +566,7 @@ describe("SharedTree", () => {
 		// Summarized state: A C
 		await provider.summarize();
 
-		// Insert B between A and C (without knowing of Z being deleted)
+		// Insert B between A and C (without knowing of Z being removed)
 		view3.insertAt(2, ["B"]);
 
 		// Ensure the insertion of B is sent for processing by tree3 before tree3 receives the deletion of Z
@@ -590,7 +592,7 @@ describe("SharedTree", () => {
 		assert.deepEqual(view3.asArray, expectedValues);
 		// tree4 should only get the correct end state if it was able to get the adequate
 		// EditManager state from the summary. Specifically, in order to correctly rebase the insert
-		// of B, tree4 needs to have a local copy of the edit that deleted Z, so it can
+		// of B, tree4 needs to have a local copy of the edit that removed Z, so it can
 		// rebase the insertion of  B over that edit.
 		// Without that, it will interpret the insertion of B based on the current state, yielding
 		// the order ACB.
@@ -611,7 +613,7 @@ describe("SharedTree", () => {
 				],
 			},
 		};
-		initializeTestTree(summarizingTree.view, initialState);
+		initializeTestTree(summarizingTree.view, initialState, intoStoredSchema(wrongSchema));
 
 		await provider.ensureSynchronized();
 		await provider.summarize();
@@ -627,7 +629,7 @@ describe("SharedTree", () => {
 			};
 			summarizingTree.editor
 				.sequenceField({ parent: rootPath, field: fooField })
-				.delete(0, 1);
+				.remove(0, 1);
 		});
 
 		await provider.ensureSynchronized();
@@ -638,7 +640,7 @@ describe("SharedTree", () => {
 		cursor.enterField(fooField);
 		assert.equal(cursor.firstNode(), true);
 		// An error may occur earlier in the test but may be swallowed up. If so, this line will fail
-		// due to the delete edit above not being able to be applied to loadingTree.
+		// due to the remove edit above not being able to be applied to loadingTree.
 		assert.equal(cursor.value, "b");
 		assert.equal(cursor.nextNode(), true);
 		assert.equal(cursor.value, "c");
@@ -659,7 +661,7 @@ describe("SharedTree", () => {
 				],
 			},
 		};
-		initializeTestTree(summarizingTree.view, initialState);
+		initializeTestTree(summarizingTree.view, initialState, intoStoredSchema(wrongSchema));
 
 		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
 
@@ -672,7 +674,7 @@ describe("SharedTree", () => {
 			};
 			summarizingTree.editor
 				.sequenceField({ parent: rootPath, field: fooField })
-				.delete(0, 1);
+				.remove(0, 1);
 		});
 
 		const cursor = summarizingTree.view.forest.allocateCursor();
@@ -1116,7 +1118,7 @@ describe("SharedTree", () => {
 					]);
 					assert.deepEqual(innerList.asArray, ["a", "b"]);
 
-					// delete subtree
+					// remove subtree
 					tree1.editableTree.content.content.removeAt(0);
 					provider.processMessages();
 					assert.deepEqual(tree1.editableTree.content.content.asArray, []);
@@ -1313,7 +1315,7 @@ describe("SharedTree", () => {
 					],
 				},
 			};
-			initializeTestTree(tree, initialState);
+			initializeTestTree(tree, initialState, intoStoredSchema(wrongSchema));
 
 			const cursor = tree.forest.allocateCursor();
 			moveToDetachedField(tree.forest, cursor);
@@ -1437,7 +1439,7 @@ describe("SharedTree", () => {
 
 		assert.throws(() =>
 			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
-			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).delete(0, 99),
+			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
 		);
 
 		provider.processMessages();
@@ -1524,7 +1526,7 @@ describe("SharedTree", () => {
 	});
 
 	describe.skip("Fuzz Test fail cases", () => {
-		it("Anchor Stability fails when root node is deleted", async () => {
+		it("Anchor Stability fails when root node is removed", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
@@ -1621,7 +1623,7 @@ describe("SharedTree", () => {
 					parent: undefined,
 					field: rootFieldKey,
 				});
-				field.delete(0, 1);
+				field.remove(0, 1);
 				return TransactionResult.Abort;
 			});
 			readCursor = tree.forest.allocateCursor();
@@ -1710,4 +1712,54 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	it(`${title} (reference forked view)`, () => {
 		fn(checkoutWithContent(content).fork());
 	});
+}
+
+/**
+ * Document Schema which is not correct.
+ * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
+ * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
+ * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
+ *
+ * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
+ */
+// TODO: remove all usages of this.
+const wrongSchema = new SchemaBuilder({
+	scope: "Wrong Schema",
+	lint: {
+		rejectEmpty: false,
+	},
+}).intoSchema(SchemaBuilder.sequence(Any));
+
+/**
+ * Updates the given `tree` to the given `schema` and inserts `state` as its root.
+ */
+// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
+function initializeTestTree(
+	tree: ITreeCheckout,
+	state: JsonableTree | JsonableTree[] | undefined,
+	schema: TreeStoredSchema,
+): void {
+	if (state === undefined) {
+		tree.updateSchema(schema);
+		return;
+	}
+
+	if (!Array.isArray(state)) {
+		initializeTestTree(tree, [state], schema);
+	} else {
+		tree.updateSchema(schema);
+
+		// Apply an edit to the tree which inserts a node with a value
+		runSynchronous(tree, () => {
+			const mapTrees = state.map((jsonable) =>
+				mapTreeFromCursor(cursorForJsonableTreeNode(jsonable)),
+			);
+			const fieldCursor = cursorForMapTreeField(mapTrees);
+			const field = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKey,
+			});
+			field.insert(0, fieldCursor);
+		});
+	}
 }

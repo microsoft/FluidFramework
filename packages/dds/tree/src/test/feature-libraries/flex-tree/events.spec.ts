@@ -117,7 +117,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childBeforeChangeCount, 1);
 		assert.strictEqual(childAfterChangeCount, 1);
 
-		// Delete node - myOptionalNumber; should fire events on the root node
+		// Remove node - myOptionalNumber; should fire events on the root node
 		root.myOptionalNumber = undefined;
 
 		assert.strictEqual(rootBeforeChangeCount, 6);
@@ -179,7 +179,7 @@ describe("beforeChange/afterChange events", () => {
 		root.myString = "new string";
 		// Add a node where there was none before
 		root.myOptionalNumber = 3;
-		// Delete a node
+		// Remove a node
 		root.myOptionalNumber = undefined;
 		// Insert nodes in a sequence
 		// NOTE: events will fire for each inserted node (so 5 times)
@@ -250,7 +250,7 @@ describe("beforeChange/afterChange events", () => {
 		root.myString = "new string";
 		// Add a node where there was none before
 		root.myOptionalNumber = 3;
-		// Delete a node
+		// Remove a node
 		root.myOptionalNumber = undefined;
 		// Insert nodes in a sequence
 		// NOTE: events will fire for each inserted node (so 5 times)

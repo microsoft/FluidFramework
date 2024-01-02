@@ -52,7 +52,7 @@ describe("Fuzz - undo/redo", () => {
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
+		remove: 1,
 	};
 
 	describe.skip("Inorder undo/redo matches the initial/final state", () => {
@@ -229,7 +229,7 @@ describe("Fuzz - undo/redo", () => {
 
 	const unSequencedUndoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
+		remove: 1,
 		undo: 1,
 		redo: 1,
 	};

@@ -1281,7 +1281,7 @@ export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optiona
 
 // @internal (undocumented)
 export interface OptionalFieldEditBuilder {
-    set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
+    set(newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void;
 }
 
 // @internal
@@ -1308,10 +1308,10 @@ export interface PathVisitor {
     beforeDestroy(content: DetachedRangeUpPath): void;
     beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void;
     beforeReplace(newContent: DetachedRangeUpPath, oldContent: RangeUpPath, oldContentDestination: DetachedPlaceUpPath): void;
-    // @deprecated
-    onDelete(path: UpPath, count: number): void;
     // @deprecated (undocumented)
     onInsert(path: UpPath, content: ProtoNodes): void;
+    // @deprecated
+    onRemove(path: UpPath, count: number): void;
 }
 
 // @internal
@@ -1529,9 +1529,9 @@ export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequenc
 
 // @internal (undocumented)
 export interface SequenceFieldEditBuilder {
-    delete(index: number, count: number): void;
-    insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
+    insert(index: number, newContent: ITreeCursorSynchronous): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
+    remove(index: number, count: number): void;
 }
 
 // @public
@@ -1946,7 +1946,7 @@ export type Value = undefined | TreeValue;
 
 // @internal (undocumented)
 export interface ValueFieldEditBuilder {
-    set(newContent: ITreeCursor): void;
+    set(newContent: ITreeCursorSynchronous): void;
 }
 
 // @internal

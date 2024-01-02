@@ -214,7 +214,7 @@ export function generateTestTrees() {
 			},
 		},
 		{
-			name: "insert-and-delete",
+			name: "insert-and-remove",
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2);
@@ -230,7 +230,7 @@ export function generateTestTrees() {
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
-				// Delete node
+				// Remove node
 				tree1.editableTree.removeAt(0);
 
 				provider.processMessages();
@@ -303,7 +303,7 @@ export function generateTestTrees() {
 			},
 		},
 		{
-			name: "competing-deletes",
+			name: "competing-removes",
 			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
 					const provider = new TestTreeProviderLite(4);
@@ -456,7 +456,7 @@ export function generateTestTrees() {
 						parent: undefined,
 						field: rootFieldKey,
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				// The nested change
 				view.editor
 					.sequenceField({
@@ -467,7 +467,7 @@ export function generateTestTrees() {
 						},
 						field: brand("foo"),
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				view.transaction.commit();
 				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");

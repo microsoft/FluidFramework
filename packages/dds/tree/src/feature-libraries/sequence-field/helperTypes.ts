@@ -32,7 +32,7 @@ export type CellRename = AttachAndDetach | DetachOfRemovedNodes;
  * move that has since been cancelled out. This is needed so we can send and apply effects to such marks.
  * This information may be set on the following mark types:
  * - Noop
- * - Delete
+ * - Remove
  * - MoveOut
  *
  * Note that in the case of MoveOut, this makes the mark a potential receiver of effects from

@@ -18,7 +18,7 @@ import {
 	FlexTreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
@@ -61,8 +61,8 @@ function testField<T extends TreeFieldSchema>(
 		name,
 		schemaData: schema,
 		treeFactory: () => {
-			const cursors = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
-			return cursors.map(jsonableTreeFromCursor);
+			const cursor = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
+			return jsonableTreeFromFieldCursor(cursor);
 		},
 		policy: defaultSchemaPolicy,
 	};

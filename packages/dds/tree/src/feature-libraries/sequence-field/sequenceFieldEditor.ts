@@ -24,7 +24,7 @@ import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset<never>;
-	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
+	remove(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
 
 	/**
@@ -65,8 +65,8 @@ export const sequenceFieldEditor = {
 		};
 		return markAtIndex(index, mark);
 	},
-	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
-		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
+	remove: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
+		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id }),
 
 	revive: (index: number, count: number, detachEvent: CellId): Changeset<never> => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
