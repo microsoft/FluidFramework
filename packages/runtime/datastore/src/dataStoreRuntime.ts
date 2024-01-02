@@ -82,7 +82,7 @@ import { RemoteChannelContext } from "./remoteChannelContext";
 import { FluidObjectHandle } from "./fluidHandle";
 
 /**
- * @internal
+ * @alpha
  */
 export enum DataStoreMessageType {
 	// Creates a new channel
@@ -91,7 +91,7 @@ export enum DataStoreMessageType {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
@@ -101,7 +101,7 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
- * @internal
+ * @alpha
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
@@ -418,7 +418,7 @@ export class FluidDataStoreRuntime
 
 		this.verifyNotClosed();
 
-		assert(!this.contexts.has(id), "addChannel() with existing ID");
+		assert(!this.contexts.has(id), 0x865 /* addChannel() with existing ID */);
 
 		const type = channel.attributes.type;
 		const factory = this.sharedObjectRegistry.get(channel.attributes.type);

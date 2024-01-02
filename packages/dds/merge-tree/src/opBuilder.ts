@@ -12,6 +12,7 @@ import {
 	IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
 	IMergeTreeDeltaOp,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
 } from "./ops";
 import { PropertySet } from "./properties";
@@ -87,6 +88,7 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  *
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
 	return {
 		pos1: start,

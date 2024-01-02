@@ -25,6 +25,7 @@ import {
 } from "./localReference";
 import {
 	BlockAction,
+	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
 	IHierBlock,
 	IMergeBlock,
@@ -41,6 +42,7 @@ import {
 	MergeBlock,
 	reservedMarkerIdKey,
 	SegmentActions,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 	toMoveInfo,
 	seqLTE,
@@ -226,7 +228,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
@@ -275,7 +277,7 @@ export interface IMergeTreeOptions {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeAttributionOptions {
 	/**
@@ -301,7 +303,7 @@ export interface IMergeTreeAttributionOptions {
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
  * @sealed
- * @internal
+ * @alpha
  */
 export interface AttributionPolicy {
 	/**
@@ -478,8 +480,10 @@ export class MergeTree {
 
 	private static readonly theUnfinishedNode = { childCount: -1 } as unknown as IMergeBlock;
 
+	// eslint-disable-next-line import/no-deprecated
 	public readonly collabWindow = new CollaborationWindow();
 
+	// eslint-disable-next-line import/no-deprecated
 	public readonly pendingSegments = new DoublyLinkedList<SegmentGroup>();
 
 	public readonly segmentsToScour = new Heap<LRUSegment>(LRUSegmentComparer);
@@ -528,6 +532,7 @@ export class MergeTree {
 	 * concurrently obliterated on insert. We check this segment group to find
 	 * such segments
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private readonly locallyMovedSegments: Map<number, SegmentGroup> = new Map();
 
 	public constructor(public options?: IMergeTreeOptions) {
@@ -995,6 +1000,7 @@ export class MergeTree {
 			return;
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		const rebaseCollabWindow = new CollaborationWindow();
 		rebaseCollabWindow.loadFrom(this.collabWindow);
 		if (refSeq < this.collabWindow.minSeq) {
@@ -1453,6 +1459,7 @@ export class MergeTree {
 
 	private addToPendingList(
 		segment: ISegment,
+		// eslint-disable-next-line import/no-deprecated
 		segmentGroup?: SegmentGroup,
 		localSeq?: number,
 		previousProps?: PropertySet,
@@ -1612,6 +1619,7 @@ export class MergeTree {
 			return siblingExists;
 		};
 
+		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
 		const saveIfLocal = (locSegment: ISegment) => {
 			// Save segment so we can assign sequence number when acked by server
@@ -2044,6 +2052,7 @@ export class MergeTree {
 		const deltaSegments: IMergeTreeSegmentDelta[] = [];
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup | undefined;
 		const annotateSegment = (segment: ISegment) => {
 			assert(
@@ -2121,6 +2130,7 @@ export class MergeTree {
 		} else if (seq === UnassignedSequenceNumber && localSeq !== undefined) {
 			this.localMoveSeqs.add(localSeq);
 		}
+		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
 		const markMoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
 			const existingMoveInfo = toMoveInfo(segment);
@@ -2238,6 +2248,7 @@ export class MergeTree {
 		let _overwrite = overwrite;
 		this.ensureIntervalBoundary(start, refSeq, clientId);
 		this.ensureIntervalBoundary(end, refSeq, clientId);
+		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
 		const removedSegments: IMergeTreeSegmentDelta[] = [];
 		const localOverlapWithRefs: ISegment[] = [];
@@ -2322,6 +2333,7 @@ export class MergeTree {
 	/**
 	 * Revert an unacked local op
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
 		if (op.type === MergeTreeDeltaType.REMOVE) {
 			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;

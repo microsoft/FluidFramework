@@ -35,7 +35,7 @@ npm i @fluid-private/test-version-utils -D
 
 ### Layer version combinations
 
-Similar to `mocha`'s `describe`, this package provide various `describe*` functions that will generate variants with
+Similar to `mocha`'s `describe`, this package provide a `describeCompat` function that will generate variants with
 a specific driver and different version combinations of Fluid API between layers. All possible layer combinations that
 are generated (empty entries are current versions):
 
@@ -67,26 +67,26 @@ Therefore, we would test the following combinations:
 
 ### Mocha test setup with layer version combinations
 
-There are three compat `describe*` to generate different combinations, depending of the need of the tests
+`describeCompat` expects 3 arguments (name: string, compatVersionKind: CompatVersionKind, tests). There are three compatVersionKind options to generate different combinations, depending of the need of the tests:
 
-`describeFullCompat`: generate test variants with compat combinations that varies the version for all layers.
+`FullCompat`: generate test variants with compat combinations that varies the version for all layers.
 
 -   Used for tests that exercise all layers and will benefits compat combinations of all layers.
 
-`describeLoaderCompat`: generate test variants with compat combinations that only varies the loader version.
+`LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
 
 -   Use for tests that targets the loader layer, and don't care about compat combinations of other layers.
 -   Test combination generated: [CompatKind.None, CompatKind.Loader]
 
-`describeNoCompat` - generate one test variant that doesn't varies version of any layers.
+`NoCompat` - generate one test variant that doesn't varies version of any layers.
 
 -   Use for tests that doesn't benefit or require any compat testing.
 -   Test combination generated: [CompatKind.None]
 
-These compat `describe*` functions will also load the APIs with appropriate version and provide the test with a
+This compat `describe*` function will also load the APIs with appropriate version and provide the test with a
 `TestObjectProvider` object, where the test can use to access Fluid functionality. Even when compat testing
 is not necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test
-to enable compat testing easily in the future just by changing the `describe*`.
+to enable compat testing easily in the future just by changing the compatVersionKind parameter.
 
 ### Legacy version defaults and installation
 
@@ -97,7 +97,7 @@ package includes a `mocha` global hook that will install legacy packages at the 
 
 ## Command line options
 
-Tests using the compat `describe*` will be controllable using the command line options when running mocha on
+Tests using `describeCompat` will be controllable using the command line options when running mocha on
 driver selection, versions for compat testing, and compat kind combinations.
 
 ```text

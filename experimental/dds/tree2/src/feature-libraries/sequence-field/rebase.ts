@@ -29,7 +29,6 @@ import {
 	getOffsetInCellRange,
 	compareLineages,
 	withNodeChange,
-	areOverlappingIdRanges,
 	cloneCellId,
 	areOutputCellsEmpty,
 	isNewAttach,
@@ -41,6 +40,7 @@ import {
 	isAttach,
 	getDetachOutputId,
 	isImpactfulCellRename,
+	compareCellsFromSameRevision,
 } from "./utils";
 import {
 	Changeset,
@@ -56,6 +56,7 @@ import {
 	MarkEffect,
 	MoveOut,
 	MoveIn,
+	LineageEvent,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -516,9 +517,6 @@ function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follo
 	}
 }
 
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function sendMarkToDest<T>(
 	mark: Mark<T>,
@@ -922,19 +920,12 @@ function compareCellPositions(
 	const baseLength = baseMark.count;
 	assert(baseId?.revision !== undefined, 0x6a0 /* baseMark should have cell ID */);
 	const newId = getInputCellId(newMark, undefined, metadata);
-	assert(newId !== undefined, "newMark should have cell ID");
+	assert(newId !== undefined, 0x85a /* newMark should have cell ID */);
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
-		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
-			return baseId.localId - newId.localId;
-		}
-
-		const adjacentCells = baseId.adjacentCells ?? newId.adjacentCells;
-		if (adjacentCells !== undefined) {
-			return (
-				getPositionAmongAdjacentCells(adjacentCells, baseId.localId) -
-				getPositionAmongAdjacentCells(adjacentCells, newId.localId)
-			);
+		const cmp = compareCellsFromSameRevision(baseId, baseMark.count, newId, newMark.count);
+		if (cmp !== undefined) {
+			return cmp;
 		}
 	}
 
@@ -961,12 +952,20 @@ function compareCellPositions(
 	}
 
 	if (newId !== undefined) {
-		const cmp = compareLineages(baseId, newId, metadata);
+		const cmp = compareLineages(baseId, newId);
 		if (cmp !== 0) {
 			return Math.sign(cmp) * Infinity;
 		}
+
+		const cmp2 = compareMissingLineageEntries(baseId.lineage, newId.lineage, metadata);
+		if (cmp2 !== 0) {
+			return Math.sign(cmp2) * Infinity;
+		}
 	}
 
+	// Both cells must never have been filled (in their common history), otherwise they would have some common lineage.
+	// A new attach targets a cell that has never been filled.
+	// A mark can also target a cell which was initially filled on another branch, but which has never been filled on the current branch.
 	if (newId.revision === undefined) {
 		// An undefined revision must mean that the cell was created on the branch we are rebasing.
 		// Since it is newer than the `baseMark`'s cell, it should come first.
@@ -993,15 +992,48 @@ function compareCellPositions(
 	return -Infinity;
 }
 
-function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
-	let priorCells = 0;
-	for (const range of adjacentCells) {
-		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
-			return priorCells + (id - range.id);
-		}
-
-		priorCells += range.count;
+function compareMissingLineageEntries(
+	lineage1: LineageEvent[] | undefined,
+	lineage2: LineageEvent[] | undefined,
+	metadata: RevisionMetadataSource,
+): number {
+	const events1 = new Map<RevisionTag, LineageEvent>();
+	for (const event of lineage1 ?? []) {
+		events1.set(event.revision, event);
 	}
 
-	fail("Could not find id in adjacentCells");
+	const events2 = new Map<RevisionTag, LineageEvent>();
+	for (const event of lineage2 ?? []) {
+		events2.set(event.revision, event);
+	}
+
+	for (const revision of events1.keys()) {
+		if (events2.has(revision)) {
+			events1.delete(revision);
+			events2.delete(revision);
+		}
+	}
+
+	for (const event of events2.values()) {
+		// We've found a cell C that was emptied before the cell1 started tracking lineage.
+		// The cell1 should come before any such cell, so if cell2 comes after C
+		// then we know that cell1 should come before the cell2.
+		// TODO: Account for the cell1's tiebreak policy
+		if (!metadata.hasRollback(event.revision) && event.offset !== 0) {
+			return -1;
+		}
+	}
+
+	// cell1Events now contains only revisions which were not in cell2's lineage.
+	for (const event of events1.values()) {
+		// We've found a cell C that was emptied before the cell2 started tracking lineage.
+		// The cell2 should come before any such cell, so if cell1 comes after C
+		// then we know that cell2 should come before the cell1.
+		// TODO: Account for the cell2's tiebreak policy
+		if (!metadata.hasRollback(event.revision) && event.offset !== 0) {
+			return 1;
+		}
+	}
+
+	return 0;
 }

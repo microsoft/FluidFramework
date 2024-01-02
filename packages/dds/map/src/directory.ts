@@ -71,7 +71,7 @@ interface IDirectoryMessageHandler {
 
 /**
  * Operation indicating a value should be set for a key.
- * @internal
+ * @alpha
  */
 export interface IDirectorySetOperation {
 	/**
@@ -98,7 +98,7 @@ export interface IDirectorySetOperation {
 
 /**
  * Operation indicating a key should be deleted from the directory.
- * @internal
+ * @alpha
  */
 export interface IDirectoryDeleteOperation {
 	/**
@@ -119,13 +119,13 @@ export interface IDirectoryDeleteOperation {
 
 /**
  * An operation on a specific key within a directory.
- * @internal
+ * @alpha
  */
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
- * @internal
+ * @alpha
  */
 export interface IDirectoryClearOperation {
 	/**
@@ -141,13 +141,13 @@ export interface IDirectoryClearOperation {
 
 /**
  * An operation on one or more of the keys within a directory.
- * @internal
+ * @alpha
  */
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
- * @internal
+ * @alpha
  */
 export interface IDirectoryCreateSubDirectoryOperation {
 	/**
@@ -168,7 +168,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 /**
  * Operation indicating a subdirectory should be deleted.
- * @internal
+ * @alpha
  */
 export interface IDirectoryDeleteSubDirectoryOperation {
 	/**
@@ -189,7 +189,7 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 /**
  * An operation on the subdirectories within a directory.
- * @internal
+ * @alpha
  */
 export type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
@@ -197,13 +197,13 @@ export type IDirectorySubDirectoryOperation =
 
 /**
  * Any operation on a directory.
- * @internal
+ * @alpha
  */
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 /**
  * Create info for the subdirectory.
- * @internal
+ * @alpha
  */
 export interface ICreateInfo {
 	/**
@@ -224,7 +224,7 @@ export interface ICreateInfo {
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
- * @internal
+ * @alpha
  */
 export interface IDirectoryDataObject {
 	/**
@@ -269,7 +269,7 @@ export interface IDirectoryNewStorageFormat {
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class DirectoryFactory implements IChannelFactory {
 	/**
@@ -447,7 +447,7 @@ class DirectoryCreationTracker {
  * ```
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
@@ -1508,7 +1508,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		assert(
 			subdirNames.length === this._subdirectories.size,
-			"The count of keys for iteration should be consistent with the size of actual data",
+			0x85c /* The count of keys for iteration should be consistent with the size of actual data */,
 		);
 
 		const entriesIterator = {

@@ -24,7 +24,7 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 
 /**
  * Common properties for a node in a merge tree.
- * @internal
+ * @alpha
  */
 export interface IMergeNodeCommon {
 	/**
@@ -88,7 +88,7 @@ export interface IHierBlock extends IMergeBlock {
 
 /**
  * Contains removal information associated to an {@link ISegment}.
- * @internal
+ * @alpha
  */
 export interface IRemovalInfo {
 	/**
@@ -127,7 +127,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
- * @internal
+ * @alpha
  */
 export interface IMoveInfo {
 	/**
@@ -203,7 +203,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
- * @internal
+ * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
@@ -246,8 +246,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 */
 	propertyManager?: PropertiesManager;
 	/**
-	 * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
+	 * Local seq at which this segment was inserted.
+	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
+	 *
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localSeq?: number;
 	/**
@@ -255,7 +258,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
 	 * will be updated to the seq at which that client removed this segment.
 	 *
-	 * Like `localSeq`, this field is cleared once the local removal of the segment is acked.
+	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localRemovedSeq?: number;
 	/**
@@ -317,7 +321,7 @@ export interface IMarkerModifiedAction {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
@@ -391,7 +395,8 @@ export interface SegmentActions<TClientData> {
 }
 
 /**
- * @internal
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
  */
 export interface SegmentGroup {
 	segments: ISegmentLeaf[];
@@ -401,7 +406,7 @@ export interface SegmentGroup {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
@@ -465,7 +470,7 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export abstract class BaseSegment extends MergeNode implements ISegment {
 	public clientId: number = LocalClientId;
@@ -697,7 +702,7 @@ export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
@@ -712,7 +717,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
  *
- * @internal
+ * @alpha
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
@@ -787,17 +792,85 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 }
 
 /**
- * @internal
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;
 	collaborating = false;
-	// Lowest-numbered segment in window; no client can reference a state before this one
+
+	/**
+	 * Lowest-numbered segment in window; no client can reference a state before this one
+	 */
 	minSeq = 0;
-	// Highest-numbered segment in window and current
-	// reference segment for this client
+	/**
+	 * Highest-numbered segment in window and current reference sequence number for this client.
+	 */
 	currentSeq = 0;
 
+	/**
+	 * Highest-numbered localSeq used for a pending segment.
+	 * Semantically, `localSeq`s provide an ordering on in-flight merge-tree operations:
+	 * for operations stamped with localSeqs `a` and `b`, `a < b` if and only if `a` was submitted before `b`.
+	 *
+	 * @remarks - This field is analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
+	 * at op submission time rather than only at ack time. This enables more natural state tracking for in-flight ops.
+	 *
+	 * It's useful to stamp ops with such an incrementing counter because it enables reasoning about which segments existed from
+	 * the perspective of the local client at a given point in 'un-acked' time, which is necessary to support the reconnect flow.
+	 *
+	 * For example, imagine a client with initial state "123456" submits some ops to create the text "123456ABC".
+	 * If they insert the "C" first, then "B", then "A", their local segment state might look like this:
+	 * ```js
+	 * [
+	 *     { seq: 0, text: "1234" },
+	 *     { seq: 5, text: "56" },
+	 *     { localSeq: 3, seq: UnassignedSequenceNumber, text: "A" },
+	 *     { localSeq: 2, seq: UnassignedSequenceNumber, text: "B" },
+	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "C" },
+	 * ]
+	 * ```
+	 * (note that {@link ISegment.localSeq} tracks the localSeq at which a segment was inserted)
+	 *
+	 * Suppose the client then disconnects and reconnects before any of its insertions are acked. The reconnect flow will necessitate
+	 * that the client regenerates and resubmits ops based on its current segment state as well as the original op that was sent.
+	 *
+	 * It will generate the ops
+	 * 1. \{ pos: 6, text: "C" \}
+	 * 2. \{ pos: 6, text: "B" \}
+	 * 3. \{ pos: 6, text: "A" \}
+	 *
+	 * since when submitting the first op, remote clients don't know that this client is about to submit the "A" and "B".
+	 *
+	 * On the other hand, imagine if the client had originally submitted the ops in the order "A", "B", "C"
+	 * such that the segments' local state was instead:
+	 *
+	 * ```js
+	 * [
+	 *     { seq: 0, text: "1234" },
+	 *     { seq: 5, text: "56" },
+	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "A" },
+	 *     { localSeq: 2, seq: UnassignedSequenceNumber, text: "B" },
+	 *     { localSeq: 3, seq: UnassignedSequenceNumber, text: "C" },
+	 * ]
+	 * ```
+	 *
+	 * The resubmitted ops should instead be:
+	 * 1. \{ pos: 6, text: "A" \}
+	 * 2. \{ pos: 7, text: "B" \}
+	 * 3. \{ pos: 8, text: "C" \}
+	 *
+	 * since remote clients will have seen the "A" when processing the "B" as well as both the "A" and "B" when processing the "C".
+	 * As can be seen, the list of resubmitted ops is different in the two cases despite the merge-tree's segment state only differing
+	 * in `localSeq`.
+	 *
+	 * This example is a bit simplified from the general scenario: since no remote clients modified the merge-tree while the client
+	 * was disconnected, the resubmitted ops end up matching the original ops exactly.
+	 * However, this is not generally true: the production reconnect code takes into account visibility of segments based on both acked
+	 * and local information as appropriate.
+	 * Nonetheless, this simple scenario is enough to understand why it's useful to be able to determine if a segment should be visible
+	 * from a given (seq, localSeq) perspective.
+	 */
 	localSeq = 0;
 
 	loadFrom(a: CollaborationWindow) {

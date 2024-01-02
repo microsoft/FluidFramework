@@ -12,14 +12,14 @@ import { IUser } from "./users";
  *
  * Note: a user's connection mode is dependent on their permissions.
  * E.g. a user with read-only permissions will not be allowed a "write" connection mode.
- * @internal
+ * @alpha
  */
 export type ConnectionMode = "write" | "read";
 
 /**
  * Capabilities of a Client.
  * In particular, whether or not the client is {@link ICapabilities.interactive}.
- * @internal
+ * @alpha
  */
 export interface ICapabilities {
 	/**
@@ -36,7 +36,7 @@ export interface ICapabilities {
 
 /**
  * {@link IClient} connection / environment metadata.
- * @internal
+ * @alpha
  */
 export interface IClientDetails {
 	/**
@@ -63,7 +63,7 @@ export interface IClientDetails {
 
 /**
  * Represents a client connected to a Fluid service, including associated user details, permissions, and connection mode.
- * @internal
+ * @alpha
  */
 export interface IClient {
 	/**
@@ -96,7 +96,7 @@ export interface IClient {
 
 /**
  * A {@link IClient} that has been acknowledged by the sequencer.
- * @internal
+ * @alpha
  */
 export interface ISequencedClient {
 	/**
@@ -111,7 +111,7 @@ export interface ISequencedClient {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISignalClient {
 	/**

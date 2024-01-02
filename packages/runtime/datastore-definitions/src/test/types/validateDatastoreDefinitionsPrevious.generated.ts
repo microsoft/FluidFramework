@@ -246,7 +246,7 @@ use_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
 declare function get_old_TypeAliasDeclaration_Jsonable():
     TypeOnly<old.Jsonable>;
 declare function use_current_TypeAliasDeclaration_Jsonable(
-    use: TypeOnly<current.Jsonable>): void;
+    use: TypeOnly<current.Jsonable<any,any>>): void;
 use_current_TypeAliasDeclaration_Jsonable(
     get_old_TypeAliasDeclaration_Jsonable());
 
@@ -256,7 +256,7 @@ use_current_TypeAliasDeclaration_Jsonable(
 * "TypeAliasDeclaration_Jsonable": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Jsonable():
-    TypeOnly<current.Jsonable>;
+    TypeOnly<current.Jsonable<any,any>>;
 declare function use_old_TypeAliasDeclaration_Jsonable(
     use: TypeOnly<old.Jsonable>): void;
 use_old_TypeAliasDeclaration_Jsonable(
@@ -270,7 +270,7 @@ use_old_TypeAliasDeclaration_Jsonable(
 declare function get_old_TypeAliasDeclaration_Serializable():
     TypeOnly<old.Serializable>;
 declare function use_current_TypeAliasDeclaration_Serializable(
-    use: TypeOnly<current.Serializable>): void;
+    use: TypeOnly<current.Serializable<any>>): void;
 use_current_TypeAliasDeclaration_Serializable(
     get_old_TypeAliasDeclaration_Serializable());
 
@@ -280,7 +280,7 @@ use_current_TypeAliasDeclaration_Serializable(
 * "TypeAliasDeclaration_Serializable": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Serializable():
-    TypeOnly<current.Serializable>;
+    TypeOnly<current.Serializable<any>>;
 declare function use_old_TypeAliasDeclaration_Serializable(
     use: TypeOnly<old.Serializable>): void;
 use_old_TypeAliasDeclaration_Serializable(

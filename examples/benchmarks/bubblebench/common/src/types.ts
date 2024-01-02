@@ -30,7 +30,7 @@ export interface IBubble {
 export interface IClient {
 	clientId: string;
 	color: string;
-	bubbles: IArrayish<IBubble>;
+	bubbles: IBubble[];
 }
 
 /**

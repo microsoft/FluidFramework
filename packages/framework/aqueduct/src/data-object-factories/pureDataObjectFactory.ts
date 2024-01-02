@@ -120,7 +120,7 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @internal
+ * @alpha
  */
 export class PureDataObjectFactory<
 		TObj extends PureDataObject<I>,

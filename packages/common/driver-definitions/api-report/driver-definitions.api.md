@@ -65,7 +65,7 @@ export interface DriverPreCheckInfo {
     criticalBootDomains?: string[];
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum FetchSource {
     // (undocumented)
     default = "default",
@@ -73,10 +73,10 @@ export enum FetchSource {
     noCache = "noCache"
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type FiveDaysMs = 432000000;
 
-// @internal
+// @alpha
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
@@ -92,7 +92,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly tenantId?: string;
 }
 
-// @internal
+// @alpha
 export interface IContainerPackageInfo {
     name: string;
 }
@@ -110,7 +110,7 @@ export interface IDeltaStorageService {
     fetchReason?: string): Promise<IDeltasFetchResult>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
@@ -127,7 +127,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     version: string;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
@@ -143,12 +143,12 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "error", listener: (error: any) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IDocumentDeltaStorageService {
     fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IDocumentService {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
@@ -159,19 +159,19 @@ export interface IDocumentService {
     resolvedUrl: IResolvedUrl;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
     readonly summarizeProtocolTree?: boolean;
 }
 
-// @internal
+// @alpha
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
@@ -184,7 +184,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
-// @internal
+// @alpha
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
@@ -198,7 +198,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
-// @internal
+// @alpha
 export interface IDriverErrorBase {
     canRetry: boolean;
     endpointReached?: boolean;
@@ -231,7 +231,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
     readonly redirectUrl: IResolvedUrl;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IResolvedUrl {
     // (undocumented)
     endpoints: {
@@ -248,13 +248,13 @@ export interface IResolvedUrl {
     url: string;
 }
 
-// @internal
+// @alpha
 export interface IStream<T> {
     // (undocumented)
     read(): Promise<IStreamResult<T>>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type IStreamResult<T> = {
     done: true;
 } | {
@@ -262,7 +262,7 @@ export type IStreamResult<T> = {
     value: T;
 };
 
-// @internal
+// @alpha
 export interface ISummaryContext {
     readonly ackHandle: string | undefined;
     readonly proposalHandle: string | undefined;
@@ -278,14 +278,14 @@ export interface IThrottlingWarning extends IDriverErrorBase {
     readonly retryAfterSeconds: number;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1

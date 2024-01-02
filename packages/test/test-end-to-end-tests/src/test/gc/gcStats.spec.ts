@@ -12,7 +12,7 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -25,7 +25,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
  * nodes, data stores, blobs, etc.
  */
-describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
+describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let container: IContainer;
 	let containerRuntime: ContainerRuntime;

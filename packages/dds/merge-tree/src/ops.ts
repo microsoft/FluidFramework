@@ -5,7 +5,7 @@
 
 /**
  * Flags enum that dictates behavior of a {@link ReferencePosition}
- * @internal
+ * @alpha
  */
 export enum ReferenceType {
 	Simple = 0x0,
@@ -48,7 +48,7 @@ export enum ReferenceType {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMarkerDef {
 	refType?: ReferenceType;
@@ -56,7 +56,7 @@ export interface IMarkerDef {
 
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 /**
- * @internal
+ * @alpha
  */
 export const MergeTreeDeltaType = {
 	INSERT: 0,
@@ -70,12 +70,12 @@ export const MergeTreeDeltaType = {
 } as const;
 
 /**
- * @internal
+ * @alpha
  */
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeDelta {
 	/**
@@ -86,7 +86,7 @@ export interface IMergeTreeDelta {
 
 /**
  * A position specified relative to a segment.
- * @internal
+ * @alpha
  */
 export interface IRelativePosition {
 	/**
@@ -106,7 +106,7 @@ export interface IRelativePosition {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.INSERT;
@@ -118,7 +118,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.REMOVE;
@@ -129,7 +129,10 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 }
 
 /**
- * @internal
+ * @deprecated We no longer intend to support this functionality and it will
+ * be removed in a future release. There is no replacement for this
+ * functionality.
+ * @alpha
  */
 export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.OBLITERATE;
@@ -148,7 +151,7 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
@@ -164,7 +167,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
  * release, as group ops are redundant with the native batching capabilities
  * of the runtime
  *
- * @internal
+ * @alpha
  */
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.GROUP;
@@ -172,14 +175,14 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IJSONSegment {
 	props?: Record<string, any>;
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type IMergeTreeDeltaOp =
 	| IMergeTreeInsertMsg
@@ -188,6 +191,6 @@ export type IMergeTreeDeltaOp =
 	| IMergeTreeObliterateMsg;
 
 /**
- * @internal
+ * @alpha
  */
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;

@@ -5,7 +5,16 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
-import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
+import {
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeRename,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	TaggedChange,
+	areEqualChangeAtomIds,
+	makeDetachedNodeId,
+} from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { MarkList, NoopMarkType } from "./types";
 import {
@@ -19,19 +28,18 @@ import {
 } from "./utils";
 import { isMoveIn, isMoveOut } from "./moveEffectTable";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
+export type ToDelta<TNodeChange> = (child: TNodeChange) => DeltaFieldMap;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
 	deltaFromChild: ToDelta<TNodeChange>,
-): Delta.FieldChanges {
-	const local: Delta.Mark[] = [];
-	const global: Delta.DetachedNodeChanges[] = [];
-	const build: Delta.DetachedNodeBuild[] = [];
-	const rename: Delta.DetachedNodeRename[] = [];
+): DeltaFieldChanges {
+	const local: DeltaMark[] = [];
+	const global: DeltaDetachedNodeChanges[] = [];
+	const rename: DeltaDetachedNodeRename[] = [];
 
 	for (const mark of change) {
-		const deltaMark: Mutable<Delta.Mark> = { count: mark.count };
+		const deltaMark: Mutable<DeltaMark> = { count: mark.count };
 		const inputCellId = getInputCellId(mark, revision, undefined);
 		const changes = mark.changes;
 		if (changes !== undefined) {
@@ -178,15 +186,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 		}
 		local.pop();
 	}
-	const delta: Mutable<Delta.FieldChanges> = {};
+	const delta: Mutable<DeltaFieldChanges> = {};
 	if (local.length > 0) {
 		delta.local = local;
 	}
 	if (global.length > 0) {
 		delta.global = global;
-	}
-	if (build.length > 0) {
-		delta.build = build;
 	}
 	if (rename.length > 0) {
 		delta.rename = rename;

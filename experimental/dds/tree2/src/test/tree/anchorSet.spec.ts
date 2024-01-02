@@ -9,7 +9,6 @@ import {
 	Anchor,
 	AnchorNode,
 	AnchorSet,
-	Delta,
 	DetachedField,
 	FieldKey,
 	JsonableTree,
@@ -26,6 +25,10 @@ import {
 	DeltaVisitor,
 	getDetachedFieldContainingPath,
 	FieldUpPath,
+	DeltaMark,
+	DeltaFieldChanges,
+	ProtoNodes,
+	DeltaFieldMap,
 } from "../../core";
 import { brand } from "../../util";
 import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils";
@@ -62,12 +65,12 @@ describe("AnchorSet", () => {
 		// start with 0123 then move 1 so the order is 0213
 
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
 
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
@@ -86,7 +89,7 @@ describe("AnchorSet", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 
 		const trees = [node, node].map(cursorForJsonableTreeNode);
-		const fieldChanges: Delta.FieldChanges = {
+		const fieldChanges: DeltaFieldChanges = {
 			build: [{ id: buildId, trees }],
 			local: [{ count: 4 }, { count: 2, attach: buildId }],
 		};
@@ -205,17 +208,17 @@ describe("AnchorSet", () => {
 	it("can rebase over move", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
 
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
 
-		const modify: Delta.Mark = {
+		const modify: DeltaMark = {
 			count: 1,
 			fields: new Map([[fieldBar, { local: [{ count: 3 }, moveIn] }]]),
 		};
@@ -300,7 +303,7 @@ describe("AnchorSet", () => {
 		anchors.on("childrenChanging", log.logger("root childrenChange"));
 		anchors.on("treeChanging", log.logger("root treeChange"));
 
-		const deleteMark: Delta.Mark = {
+		const deleteMark: DeltaMark = {
 			count: 1,
 			detach: detachId,
 		};
@@ -324,7 +327,7 @@ describe("AnchorSet", () => {
 
 		log.expect([]);
 
-		const insertMark: Delta.Mark = {
+		const insertMark: DeltaMark = {
 			count: 1,
 			attach: buildId,
 		};
@@ -382,7 +385,7 @@ describe("AnchorSet", () => {
 	});
 
 	it("triggers beforeChange and afterChange callbacks in the right order and always as a pair", () => {
-		const deleteMark: Delta.Mark = {
+		const deleteMark: DeltaMark = {
 			count: 1,
 			detach: detachId,
 		};
@@ -447,11 +450,11 @@ describe("AnchorSet", () => {
 		// Test a move delta
 		// NOTE: This is a special case where the beforeChange and afterChange callbacks are called twice;
 		// once when detaching nodes from the source location, and once when attaching them at the target location.
-		const moveOutMark: Delta.Mark = {
+		const moveOutMark: DeltaMark = {
 			count: 1,
 			detach: { minor: 1 },
 		};
-		const moveInMark: Delta.Mark = {
+		const moveInMark: DeltaMark = {
 			count: 1,
 			attach: moveOutMark.detach,
 		};
@@ -472,7 +475,7 @@ describe("AnchorSet", () => {
 	});
 
 	it("arguments for beforeChange and afterChange events are the expected object", () => {
-		const deleteMark: Delta.Mark = {
+		const deleteMark: DeltaMark = {
 			count: 1,
 			detach: detachId,
 		};
@@ -531,11 +534,11 @@ describe("AnchorSet", () => {
 		// Test a move delta
 		// NOTE: This is a special case where the beforeChange and afterChange callbacks are called twice;
 		// once when detaching nodes from the source location, and once when attaching them at the target location.
-		const moveOutMark: Delta.Mark = {
+		const moveOutMark: DeltaMark = {
 			count: 1,
 			detach: { minor: 1 },
 		};
-		const moveInMark: Delta.Mark = {
+		const moveInMark: DeltaMark = {
 			count: 1,
 			attach: moveOutMark.detach,
 		};
@@ -563,11 +566,11 @@ describe("AnchorSet", () => {
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		const deleteMark: Delta.Mark = {
+		const deleteMark: DeltaMark = {
 			count: 1,
 			detach: detachId,
 		};
-		const replaceMark: Delta.Mark = {
+		const replaceMark: DeltaMark = {
 			count: 1,
 			attach: buildId,
 			detach: { minor: 42 },
@@ -587,7 +590,7 @@ describe("AnchorSet", () => {
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
 		const trees = [cursorForJsonableTreeNode(node)];
-		const fieldChanges: Delta.FieldChanges = {
+		const fieldChanges: DeltaFieldChanges = {
 			build: [{ id: buildId, trees }],
 			local: [{ count: 3 }, { count: 1, attach: buildId }],
 		};
@@ -605,7 +608,7 @@ describe("AnchorSet", () => {
 					}-${count}`,
 				)();
 			},
-			onInsert(path: UpPath, content: Delta.ProtoNodes): void {
+			onInsert(path: UpPath, content: ProtoNodes): void {
 				log.logger(
 					`visitSubtreeChange.onInsert-${String(path.parentField)}-${path.parentIndex}`,
 				)();
@@ -795,8 +798,8 @@ function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp
 	assert.equal(getDetachedFieldContainingPath(path!), expected);
 }
 
-function makeDelta(mark: Delta.Mark, path: UpPath): Delta.FieldMap {
-	const fields: Delta.FieldMap = new Map([
+function makeDelta(mark: DeltaMark, path: UpPath): DeltaFieldMap {
+	const fields: DeltaFieldMap = new Map([
 		[path.parentField, { local: [{ count: path.parentIndex }, mark] }],
 	]);
 	if (path.parent === undefined) {
@@ -806,8 +809,8 @@ function makeDelta(mark: Delta.Mark, path: UpPath): Delta.FieldMap {
 	return makeDelta({ count: 1, fields }, path.parent);
 }
 
-function makeFieldDelta(changes: Delta.FieldChanges, path: FieldUpPath): Delta.FieldMap {
-	const fields: Delta.FieldMap = new Map([[path.field, changes]]);
+function makeFieldDelta(changes: DeltaFieldChanges, path: FieldUpPath): DeltaFieldMap {
+	const fields: DeltaFieldMap = new Map([[path.field, changes]]);
 	if (path.parent === undefined) {
 		return fields;
 	}

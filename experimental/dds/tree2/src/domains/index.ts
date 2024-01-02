@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	SchemaBuilder,
-	FactoryObjectNodeSchema,
-	FactoryObjectNodeSchemaRecursive,
-} from "./schemaBuilder";
-
+export { SchemaBuilder } from "./schemaBuilder";
 export {
 	cursorToJsonObject,
 	jsonArray,

@@ -38,7 +38,7 @@ import {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -74,7 +74,7 @@ const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type:
 	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
 
-describeFullCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;
@@ -888,7 +888,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 });
 
 // Review: Run with Full Compat?
-describeNoCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;

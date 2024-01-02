@@ -4,7 +4,7 @@
  */
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISnapshotOptions {
 	blobs?: number;
@@ -29,7 +29,7 @@ export interface ISnapshotOptions {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOpsCachingPolicy {
 	/**
@@ -60,7 +60,7 @@ export interface IOpsCachingPolicy {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ICollabSessionOptions {
 	/**
@@ -82,7 +82,7 @@ export interface ICollabSessionOptions {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;

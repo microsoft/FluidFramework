@@ -120,7 +120,7 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either {@link @fluidframework/driver-definitions#(DriverErrorTypes:variable)} or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
- * @internal
+ * @alpha
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
@@ -128,7 +128,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 
 /**
  * Base interface for all errors and warnings
- * @internal
+ * @alpha
  */
 export interface IDriverErrorBase {
 	/**

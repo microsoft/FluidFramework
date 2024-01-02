@@ -8,6 +8,8 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { IdCompressor } from '@fluidframework/id-compressor';
+import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -15,6 +17,8 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -27,10 +31,17 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
+import { OpSpaceCompressedId } from '@fluidframework/id-compressor';
+import { SerializedIdCompressor } from '@fluidframework/id-compressor';
+import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
+import { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor';
+import { SessionId } from '@fluidframework/id-compressor';
+import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
+import { StableId } from '@fluidframework/id-compressor';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
-// @internal
+// @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 // @internal
@@ -39,7 +50,7 @@ export interface AttributionInfo {
     user: IUser;
 }
 
-// @internal
+// @alpha
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 // @internal (undocumented)
@@ -48,11 +59,11 @@ export const blobCountPropertyName = "BlobCount";
 // @internal (undocumented)
 export const channelsTreeName = ".channels";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type CreateChildSummarizerNodeParam = {
     type: CreateSummarizerNodeSource.FromSummary;
 } | {
@@ -63,7 +74,7 @@ export type CreateChildSummarizerNodeParam = {
     type: CreateSummarizerNodeSource.Local;
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum CreateSummarizerNodeSource {
     // (undocumented)
     FromAttach = 1,
@@ -73,17 +84,17 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
-// @internal
+// @alpha
 export interface DetachedAttributionKey {
     id: 0;
     // (undocumented)
     type: "detached";
 }
 
-// @internal
+// @alpha
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
 
-// @internal
+// @alpha
 export enum FlushMode {
     Immediate = 0,
     TurnBased = 1
@@ -113,7 +124,7 @@ export interface IAttachMessage {
     type: string;
 }
 
-// @internal
+// @alpha
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
@@ -132,7 +143,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
     (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
@@ -144,23 +155,15 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IDataStore {
     readonly entryPoint: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
-// @internal
-export interface IdCreationRange {
-    // (undocumented)
-    readonly ids?: {
-        readonly firstGenCount: number;
-        readonly count: number;
-        readonly requestedClusterSize: number;
-    };
-    // (undocumented)
-    readonly sessionId: SessionId;
-}
+export { IdCompressor }
+
+export { IdCreationRange }
 
 // @internal
 export interface IEnvelope {
@@ -168,14 +171,14 @@ export interface IEnvelope {
     contents: any;
 }
 
-// @internal
+// @alpha
 export interface IExperimentalIncrementalSummaryContext {
     latestSummarySequenceNumber: number;
     summaryPath: string;
     summarySequenceNumber: number;
 }
 
-// @internal
+// @alpha
 export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
@@ -201,7 +204,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     readonly visibilityState: VisibilityState;
 }
 
-// @internal
+// @alpha
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     readonly attachState: AttachState;
@@ -250,69 +253,53 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<void>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IFluidDataStoreContextEvents extends IEvent {
     // (undocumented)
     (event: "attaching" | "attached", listener: () => void): any;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
-// @internal
+// @alpha
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 
-// @internal
+// @alpha
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     // (undocumented)
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
 }
 
-// @internal
+// @alpha
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
     };
 }
 
-// @internal
+// @alpha
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
     usedRoutes?: string[];
 }
 
-// @internal
-export interface IIdCompressor {
-    decompress(id: SessionSpaceCompressedId): StableId;
-    generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
-    localSessionId: SessionId;
-    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
-}
+export { IIdCompressor }
 
-// @internal (undocumented)
-export interface IIdCompressorCore {
-    finalizeCreationRange(range: IdCreationRange): void;
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    takeNextCreationRange(): IdCreationRange;
-}
+export { IIdCompressorCore }
 
-// @internal
+// @alpha
 export interface IInboundSignalMessage extends ISignalMessage {
     // (undocumented)
     type: string;
@@ -323,13 +310,13 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
     readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -345,14 +332,14 @@ export interface ISignalEnvelope {
     };
 }
 
-// @internal
+// @alpha
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
     pathPartsForChildren?: string[];
 }
 
-// @internal
+// @alpha
 export interface ISummarizeResult {
     // (undocumented)
     stats: ISummaryStats;
@@ -360,7 +347,7 @@ export interface ISummarizeResult {
     summary: SummaryTree;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ISummarizerNode {
     // (undocumented)
     createChild(
@@ -378,18 +365,18 @@ export interface ISummarizerNode {
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ISummarizerNodeConfig {
     readonly canReuseHandle?: boolean;
     readonly throwOnFailure?: true;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
 }
 
-// @internal
+// @alpha
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     createChild(
@@ -406,7 +393,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @internal
+// @alpha
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -420,13 +407,13 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @internal
+// @alpha
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
     summary: ISummaryTree;
 }
 
-// @internal
+// @alpha
 export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
@@ -434,73 +421,52 @@ export interface ITelemetryContext {
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
-// @internal
+// @alpha
 export interface LocalAttributionKey {
     // (undocumented)
     type: "local";
 }
 
-// @internal
+// @alpha
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
-// @internal
+// @alpha
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
-// @internal
+// @alpha
 export interface OpAttributionKey {
     seq: number;
     type: "op";
 }
 
-// @internal
-export type OpSpaceCompressedId = number & {
-    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
-};
+export { OpSpaceCompressedId }
 
-// @internal
-export type SerializedIdCompressor = string & {
-    readonly _serializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
-};
+export { SerializedIdCompressor }
 
-// @internal
-export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
-    readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
-};
+export { SerializedIdCompressorWithNoSession }
 
-// @internal
-export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
-    readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
-};
+export { SerializedIdCompressorWithOngoingSession }
 
-// @internal
-export type SessionId = StableId & {
-    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
-};
+export { SessionId }
 
-// @internal
-export type SessionSpaceCompressedId = number & {
-    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
-};
+export { SessionSpaceCompressedId }
 
-// @internal
-export type StableId = string & {
-    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
-};
+export { StableId }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
 // @internal (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";
 
-// @internal
+// @alpha
 export const VisibilityState: {
     NotVisible: string;
     LocallyVisible: string;
     GloballyVisible: string;
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
 // (No @packageDocumentation comment for this package)

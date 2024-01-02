@@ -17,7 +17,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -27,7 +27,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/core-interfaces';
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -39,14 +39,14 @@ export interface IChannel extends IFluidLoadable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
-// @internal
+// @alpha
 export interface IChannelAttributes {
     readonly packageVersion?: string;
     readonly snapshotFormatVersion: string;
     readonly type: string;
 }
 
-// @internal
+// @alpha
 export interface IChannelFactory {
     readonly attributes: IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
@@ -54,7 +54,7 @@ export interface IChannelFactory {
     readonly type: string;
 }
 
-// @internal
+// @alpha
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
@@ -62,14 +62,14 @@ export interface IChannelServices {
     objectStorage: IChannelStorageService;
 }
 
-// @internal
+// @alpha
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @internal
+// @alpha
 export interface IDeltaConnection {
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     attach(handler: IDeltaHandler): void;
@@ -79,7 +79,7 @@ export interface IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): void;
 }
 
-// @internal
+// @alpha
 export interface IDeltaHandler {
     applyStashedOp(message: any): unknown;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
@@ -88,7 +88,7 @@ export interface IDeltaHandler {
     setConnectionState(connected: boolean): void;
 }
 
-// @internal
+// @alpha
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable, Partial<IProvideFluidDataStoreRegistry> {
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
@@ -125,7 +125,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     waitAttached(): Promise<void>;
 }
 
-// @internal (undocumented)
+// @alpha
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
     (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
@@ -137,12 +137,21 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
-// @internal
-export type Jsonable<T = any, TReplaced = void> = T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? {
-    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
-} : never;
+// @alpha (undocumented)
+export interface Internal_InterfaceOfJsonableTypesWith<T> {
+    // (undocumented)
+    [index: string | number]: JsonableTypeWith<T>;
+}
 
-// @internal
-export type Serializable<T = any> = Jsonable<T, IFluidHandle>;
+// @alpha
+export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
+    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
+} : never : never;
+
+// @alpha
+export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
+
+// @alpha
+export type Serializable<T> = Jsonable<T, IFluidHandle>;
 
 ```

@@ -88,7 +88,7 @@
 		"@types/chai": "^4.0.0",
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/recharts": "^1.8.24",

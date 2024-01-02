@@ -10,7 +10,12 @@ import {
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -20,14 +25,12 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
-	describeNoCompat,
+	describeCompat,
 	ExpectedEvents,
 	ITestDataObject,
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -67,7 +70,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeFullCompat("blobs", (getTestObjectProvider) => {
+describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();
@@ -251,7 +254,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
 // this functionality was added in 0.47 and can be added to the compat-enabled
 // tests above when the LTS version is bumped > 0.47
-describeNoCompat("blobs", (getTestObjectProvider) => {
+describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();

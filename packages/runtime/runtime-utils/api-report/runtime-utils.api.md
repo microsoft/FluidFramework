@@ -120,7 +120,7 @@ export class ObjectStoragePartition implements IChannelStorageService {
 // @internal
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
-// @internal
+// @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)
@@ -140,7 +140,7 @@ export class RequestParser implements IRequest {
 // @internal (undocumented)
 export function responseToException(response: IResponse, request: IRequest): Error;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     // (undocumented)
     hasInitialized(_runtime: T): Promise<void>;
@@ -191,7 +191,7 @@ export class TelemetryContext implements ITelemetryContext {
 }
 
 // @internal
-export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
+export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]): Map<string, string[]>;
 
 // @internal (undocumented)
 export function utf8ByteLength(str: string): number;

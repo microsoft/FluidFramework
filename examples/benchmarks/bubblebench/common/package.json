@@ -73,7 +73,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"c8": "^7.7.1",

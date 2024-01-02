@@ -56,7 +56,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
  * Represents a reference to a place within a merge tree. This place conceptually remains stable over time
  * by referring to a particular segment and offset within that segment.
  * Thus, this reference's character position changes as the tree is edited.
- * @internal
+ * @alpha
  */
 export interface ReferencePosition {
 	/**

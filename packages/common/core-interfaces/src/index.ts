@@ -72,3 +72,4 @@ export type {
 } from "./logger";
 export { LogLevel } from "./logger";
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
+export { ConfigTypes, IConfigProviderBase } from "./config";

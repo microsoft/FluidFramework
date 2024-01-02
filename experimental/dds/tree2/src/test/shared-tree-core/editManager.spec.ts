@@ -13,8 +13,8 @@ import {
 	emptyDelta,
 	mintRevisionTag,
 	ChangeFamilyEditor,
-	Delta,
 	GraphCommit,
+	DeltaRoot,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
@@ -1401,8 +1401,8 @@ function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[
 function addSequencedChange(
 	editManager: TestEditManager,
 	...args: Parameters<(typeof editManager)["addSequencedChange"]>
-): Delta.Root {
-	let delta: Delta.Root = emptyDelta;
+): DeltaRoot {
+	let delta: DeltaRoot = emptyDelta;
 	const offChange = editManager.localBranch.on("afterChange", ({ change }) => {
 		if (change !== undefined) {
 			delta = asDelta(change.change.intentions);

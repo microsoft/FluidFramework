@@ -27,7 +27,7 @@ import {
 	TreeFactory,
 } from "@fluid-experimental/tree2";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -148,7 +148,7 @@ function getNewTreeView(tree: ITree): TreeView<HandleType> {
 	);
 }
 
-describeNoCompat("Storing handles", (getTestObjectProvider) => {
+describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

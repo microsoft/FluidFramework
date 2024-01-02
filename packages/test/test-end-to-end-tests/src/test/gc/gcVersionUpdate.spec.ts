@@ -18,7 +18,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	IGCMetadata,
 	IGarbageCollector,
@@ -34,7 +34,7 @@ type IContainerRuntimeWithPrivates = IContainerRuntime & {
  * Validates that when the runtime GC version changes, we reset GC state and regenerate summary. Basically, when we
  * update the GC version due to bugs, newer versions re-run GC and older versions stop running GC.
  */
-describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
+describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;

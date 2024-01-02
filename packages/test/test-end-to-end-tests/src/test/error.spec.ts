@@ -15,11 +15,11 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 // REVIEW: enable compat testing?
-describeNoCompat("Errors Types", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;

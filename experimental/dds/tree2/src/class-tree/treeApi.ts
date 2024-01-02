@@ -11,12 +11,13 @@ import { NodeBase, NodeFromSchema, NodeKind, TreeNodeSchema } from "./schemaType
 import { getFlexSchema } from "./toFlexSchema";
 
 /**
- * Provides various functions for analyzing {@link TreeNode}s.
- * @beta
+ * Provides various functions for analyzing {@link NodeBase}s.
+ *
  * @privateRemarks
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
  * https://github.com/microsoft/rushstack/issues/1958.
+ * @beta
  */
 export interface TreeApi {
 	/**
@@ -64,7 +65,7 @@ export interface TreeApi {
 }
 
 /**
- * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
+ * The `Tree` object holds various functions for analyzing {@link NodeBase}s.
  * @beta
  */
 export const nodeApi: TreeApi = {

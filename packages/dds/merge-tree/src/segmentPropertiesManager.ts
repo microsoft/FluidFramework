@@ -12,7 +12,7 @@ import { IMergeTreeAnnotateMsg } from "./ops";
 import { createMap, MapLike, PropertySet } from "./properties";
 
 /**
- * @internal
+ * @alpha
  */
 export enum PropertiesRollback {
 	/** Not in a rollback */
@@ -23,7 +23,7 @@ export enum PropertiesRollback {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;

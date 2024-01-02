@@ -24,7 +24,7 @@ import {
 	TreeConfiguration,
 	SchemaFactory,
 } from "@fluid-experimental/tree2";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -111,7 +111,7 @@ function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
 	);
 }
 
-describeNoCompat("HotSwap", (getTestObjectProvider) => {
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
