@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SessionId } from "@fluidframework/id-compressor";
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import {
@@ -19,7 +18,6 @@ import { ForestRootId } from "./detachedFieldIndex.js";
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
 		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly sessionId: SessionId,
 		private readonly options: ICodecOptions,
 	) {}
 
@@ -52,17 +50,16 @@ class MajorCodec implements IJsonCodec<Major> {
 			"Expected final id on decode of detached field index revision",
 		);
 		return this.revisionTagCodec.decode(major, {
-			originatorId: this.sessionId,
+			originatorId: this.revisionTagCodec.localSessionId,
 		});
 	}
 }
 
 export function makeDetachedNodeToFieldCodec(
 	revisionTagCodec: RevisionTagCodec,
-	sessionId: SessionId,
 	options: ICodecOptions,
 ): IJsonCodec<DetachedFieldSummaryData, Format> {
-	const majorCodec = new MajorCodec(revisionTagCodec, sessionId, options);
+	const majorCodec = new MajorCodec(revisionTagCodec, options);
 	return makeVersionedValidatedCodec(options, new Set([version]), Format, {
 		encode: (data: DetachedFieldSummaryData): Format => {
 			const rootsForRevisions: EncodedRootsForRevision[] = [];

@@ -674,16 +674,11 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout(
-		testIdCompressor,
-		testRevisionTagCodec,
-		testIdCompressor.localSessionId,
-		{
-			...args,
-			forest,
-			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-		},
-	);
+	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
+		...args,
+		forest,
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+	});
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
@@ -703,7 +698,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
 	);
-	initializeForest(forest, nodeCursors, testRevisionTagCodec, testIdCompressor.localSessionId);
+	initializeForest(forest, nodeCursors, testRevisionTagCodec);
 	return forest;
 }
 
@@ -718,16 +713,11 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout(
-		testIdCompressor,
-		testRevisionTagCodec,
-		testIdCompressor.localSessionId,
-		{
-			...args,
-			forest,
-			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-		},
-	);
+	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
+		...args,
+		forest,
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(
 		branch,
@@ -1073,12 +1063,7 @@ export function applyTestDelta(
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ??
-			makeDetachedFieldIndex(
-				undefined,
-				testRevisionTagCodec,
-				testIdCompressor.localSessionId,
-			),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
 }
 
@@ -1091,12 +1076,7 @@ export function announceTestDelta(
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ??
-			makeDetachedFieldIndex(
-				undefined,
-				testRevisionTagCodec,
-				testIdCompressor.localSessionId,
-			),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
 }
 

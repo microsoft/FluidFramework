@@ -70,7 +70,6 @@ import { testTrees, treeContentFromTestTree } from "../../testTrees.js";
 import {
 	forestWithContent,
 	flexTreeViewWithContent,
-	testIdCompressor,
 	failCodec,
 	testRevisionTagCodec,
 } from "../../utils.js";

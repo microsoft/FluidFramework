@@ -4,7 +4,6 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { SessionId } from "@fluidframework/id-compressor";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	ITelemetryContext,
@@ -54,7 +53,6 @@ export class ForestSummarizer implements Summarizable {
 	public constructor(
 		private readonly forest: IEditableForest,
 		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly sessionId: SessionId,
 		fieldBatchCodec: FieldBatchCodec,
 		options: ICodecOptions = { jsonValidator: noopValidator },
 	) {
@@ -155,7 +153,7 @@ export class ForestSummarizer implements Summarizable {
 			applyDelta(
 				{ fields: new Map(fieldChanges) },
 				this.forest,
-				makeDetachedFieldIndex("init", this.revisionTagCodec, this.sessionId),
+				makeDetachedFieldIndex("init", this.revisionTagCodec),
 			);
 		}
 	}

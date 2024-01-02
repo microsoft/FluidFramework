@@ -11,7 +11,7 @@ import { DefaultChangeFamily } from "../../feature-libraries/index.js";
 import { noopValidator } from "../../codec/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
 import { Editor, makeEditMinter } from "../editMinter.js";
-import { failCodec, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { failCodec, testRevisionTagCodec } from "../utils.js";
 import {
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,

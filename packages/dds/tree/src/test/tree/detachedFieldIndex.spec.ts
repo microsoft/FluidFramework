@@ -178,7 +178,6 @@ describe("DetachedFieldIndex", () => {
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			revisionTagCodec,
-			wellFormedIdCompressor.localSessionId,
 			{ jsonValidator: typeboxValidator },
 		);
 		const expected = {
@@ -189,13 +188,9 @@ describe("DetachedFieldIndex", () => {
 		assert.deepEqual(detachedFieldIndex.encode(), expected);
 	});
 	describe("round-trip through JSON", () => {
-		const codec = makeDetachedNodeToFieldCodec(
-			revisionTagCodec,
-			wellFormedIdCompressor.localSessionId,
-			{
-				jsonValidator: typeboxValidator,
-			},
-		);
+		const codec = makeDetachedNodeToFieldCodec(revisionTagCodec, {
+			jsonValidator: typeboxValidator,
+		});
 		for (const { name, data } of generateTestCases(wellFormedIdCompressor)) {
 			it(name, () => {
 				const encoded = codec.encode(data);
@@ -212,7 +207,6 @@ describe("DetachedFieldIndex", () => {
 						"test",
 						idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 						revisionTagCodec,
-						wellFormedIdCompressor.localSessionId,
 						{
 							jsonValidator: typeboxValidator,
 						},
@@ -229,7 +223,6 @@ describe("DetachedFieldIndex", () => {
 						"test",
 						id,
 						malformedRevisionTagCodec,
-						malformedIdCompressor.localSessionId,
 						{
 							jsonValidator: typeboxValidator,
 						},
@@ -248,13 +241,9 @@ describe("DetachedFieldIndex", () => {
 			"beefbeef-beef-4000-8000-000000000001" as SessionId,
 		);
 		const snapshotRevisionTagCodec = new RevisionTagCodec(snapshotIdCompressor);
-		const codec = makeDetachedNodeToFieldCodec(
-			snapshotRevisionTagCodec,
-			snapshotIdCompressor.localSessionId,
-			{
-				jsonValidator: typeboxValidator,
-			},
-		);
+		const codec = makeDetachedNodeToFieldCodec(snapshotRevisionTagCodec, {
+			jsonValidator: typeboxValidator,
+		});
 
 		const testCases = generateTestCases(snapshotIdCompressor);
 		snapshotIdCompressor.finalizeCreationRange(snapshotIdCompressor.takeNextCreationRange());

@@ -13,7 +13,7 @@ import {
 	TreeCompressionStrategy,
 	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { testRevisionTagCodec } from "../utils.js";
 import { ICodecOptions } from "../../codec/index.js";
 
 /**

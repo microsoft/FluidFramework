@@ -133,7 +133,6 @@ describe.skip("End to End chunked encoding", () => {
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
 			revisionTagCodec,
-			idCompressor.localSessionId,
 			fieldBatchCodec,
 			options,
 		);
@@ -166,7 +165,6 @@ describe.skip("End to End chunked encoding", () => {
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
 			revisionTagCodec,
-			idCompressor.localSessionId,
 			fieldBatchCodec,
 			options,
 		);

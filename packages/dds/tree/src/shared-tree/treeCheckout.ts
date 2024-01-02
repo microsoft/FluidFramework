@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	AnchorLocator,
 	IForestSubscription,
@@ -175,7 +175,6 @@ export interface ITreeCheckout extends AnchorLocator {
 export function createTreeCheckout(
 	idCompressor: IIdCompressor,
 	revisionTagCodec: RevisionTagCodec,
-	sessionId: SessionId,
 	args?: {
 		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
 		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
@@ -224,7 +223,6 @@ export function createTreeCheckout(
 		forest,
 		events,
 		revisionTagCodec,
-		sessionId,
 		args?.removedRoots,
 	);
 }
@@ -326,11 +324,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
 		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly sessionId: SessionId,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
-			sessionId,
 		),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
@@ -405,7 +401,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			forest,
 			createEmitter(),
 			this.revisionTagCodec,
-			this.sessionId,
 			this.removedRoots.clone(),
 		);
 	}

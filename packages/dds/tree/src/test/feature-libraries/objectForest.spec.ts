@@ -15,7 +15,7 @@ import { JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
 import { singleJsonCursor } from "../../domains/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { testRevisionTagCodec } from "../utils.js";
 
 describe("object-forest", () => {
 	testForest({
@@ -31,12 +31,7 @@ describe("object-forest", () => {
 	describe("Throws an error for invalid edits", () => {
 		it("attaching content into the detached field it is being transferred from", () => {
 			const forest = buildForest();
-			initializeForest(
-				forest,
-				[singleJsonCursor(content)],
-				testRevisionTagCodec,
-				testIdCompressor.localSessionId,
-			);
+			initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -53,12 +48,7 @@ describe("object-forest", () => {
 
 		it("detaching content from the detached field it is being transferred to", () => {
 			const forest = buildForest();
-			initializeForest(
-				forest,
-				[singleJsonCursor(content)],
-				testRevisionTagCodec,
-				testIdCompressor.localSessionId,
-			);
+			initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -75,12 +65,7 @@ describe("object-forest", () => {
 
 		it("replacing content by transferring to and from the same detached field", () => {
 			const forest = buildForest();
-			initializeForest(
-				forest,
-				[singleJsonCursor(content)],
-				testRevisionTagCodec,
-				testIdCompressor.localSessionId,
-			);
+			initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -98,12 +83,7 @@ describe("object-forest", () => {
 
 	it("moveCursorToPath with an undefined path points to dummy node above detachedFields.", () => {
 		const forest = buildForest();
-		initializeForest(
-			forest,
-			[singleJsonCursor([1, 2])],
-			testRevisionTagCodec,
-			testIdCompressor.localSessionId,
-		);
+		initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
 		assert.deepEqual(cursor.getFieldKey(), cursorForMapTreeNode(forest.roots).getFieldKey());

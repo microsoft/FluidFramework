@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import { IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { RevisionTagCodec } from "../rebase/revisionTagCodec.js";
@@ -16,14 +15,12 @@ import { ProtoNodes, Root } from "./delta.js";
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
 	revisionTagCodec: RevisionTagCodec,
-	sessionId: SessionId,
 	options?: ICodecOptions,
 ): DetachedFieldIndex {
 	return new DetachedFieldIndex(
 		prefix,
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		revisionTagCodec,
-		sessionId,
 		options,
 	);
 }

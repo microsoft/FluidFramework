@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SessionId } from "@fluidframework/id-compressor";
 import {
 	Brand,
 	IdAllocator,
@@ -50,11 +49,10 @@ export class DetachedFieldIndex {
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly sessionId: SessionId,
 		options?: ICodecOptions,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, sessionId, this.options);
+		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options);
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -62,7 +60,6 @@ export class DetachedFieldIndex {
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
 			this.revisionTagCodec,
-			this.sessionId,
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
