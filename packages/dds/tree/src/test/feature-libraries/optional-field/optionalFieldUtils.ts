@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { TaggedChange } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { RegisterId, OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 
 // Optional changesets may be equivalent but not evaluate to be deep-equal, as some ordering is irrelevant.

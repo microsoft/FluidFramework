@@ -5,7 +5,6 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
 import { RevisionTagCodec } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";

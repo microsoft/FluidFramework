@@ -10,7 +10,6 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { CellId } from "../../../feature-libraries/sequence-field/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { TestChange } from "../../testChange.js";

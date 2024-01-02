@@ -8,7 +8,6 @@ import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand, Populated } from "../../../util/index.js";
 import { ChangeAtomId } from "../../../core/index.js";
 import { TestChange } from "../../testChange.js";
-// eslint-disable-next-line import/no-internal-modules
 import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	Attach,

@@ -22,7 +22,7 @@ module.exports = {
 				caughtErrorsIgnorePattern: "^_",
 			},
 		],
-		"import/no-internal-modules": "off",
+		"import/no-internal-modules": ["error", { allow: ["**/index.js"] }],
 	},
 	overrides: [
 		{

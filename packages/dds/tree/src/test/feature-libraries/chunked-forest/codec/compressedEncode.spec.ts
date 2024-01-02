@@ -51,9 +51,7 @@ import {
 import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { typeboxValidator } from "../../../../external-utilities/index.js";
 import { cursorForJsonableTreeField } from "../../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { FieldBatch } from "../../../../feature-libraries/chunked-forest/index.js";
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";

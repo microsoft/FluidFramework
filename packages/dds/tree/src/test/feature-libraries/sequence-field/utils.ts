@@ -31,7 +31,6 @@ import {
 	idAllocatorFromMaxId,
 	Mutable,
 } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	isAttachAndDetachEffect,

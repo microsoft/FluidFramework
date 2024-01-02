@@ -16,7 +16,6 @@ import {
 import {
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema/index.js";
 import { brand, fail } from "../util/index.js";
 import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from "../core/index.js";

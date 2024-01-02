@@ -23,7 +23,6 @@ import {
 	storedEmptyFieldSchema,
 	TreeStoredSchema,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,

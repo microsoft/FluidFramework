@@ -8,7 +8,6 @@ import { ChangesetLocalId, RevisionTagCodec } from "../../core/index.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/optional-field/index.js";
 import { brand } from "../../util/index.js";
 import { TestChange } from "../testChange.js";
