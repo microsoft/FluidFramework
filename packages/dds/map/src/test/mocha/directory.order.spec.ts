@@ -12,12 +12,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import {
-	DirectoryFactory,
-	DirectoryLocalOpMetadata,
-	IDirectoryOperation,
-	SharedDirectory,
-} from "../../directory";
+import { DirectoryFactory, IDirectoryOperation, SharedDirectory } from "../../directory";
 import { ISharedDirectory } from "../../interfaces";
 
 function createConnectedDirectory(
@@ -36,8 +31,8 @@ function createConnectedDirectory(
 }
 
 class TestSharedDirectory extends SharedDirectory {
-	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata {
-		return this.applyStashedOp(content) as DirectoryLocalOpMetadata;
+	public testApplyStashedOp(content: IDirectoryOperation) {
+		this.applyStashedOp(content);
 	}
 }
 

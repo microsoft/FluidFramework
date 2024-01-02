@@ -105,11 +105,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
     // (undocumented)
-    applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-    // (undocumented)
-    applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-    // (undocumented)
-    applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+    applyStashedOp(op: IMergeTreeOp): void;
     createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
