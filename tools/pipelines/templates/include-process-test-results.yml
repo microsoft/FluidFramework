@@ -26,7 +26,7 @@ steps:
       condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
   # Console Log Failed Tests
-  - ${{ each testResultDir in parameters.testResultDirs }}:
+  - ${{ each testResultDir in parameters.testResultDirs }}:    
     - task: Bash@3
       displayName: Log Failed Tests in ${{ testResultDir }}
       inputs:
