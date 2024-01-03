@@ -34,15 +34,15 @@ const typeRollupFilePath = ExtractorConfig.tryLoadForFolder({
 });
 let typeDefinitionFilePath;
 
-if(typeRollupFilePath){
+if (typeRollupFilePath) {
 	// Check if a specified typeRollupFile exists
 	if (typeRollupFilePath === undefined) {
-        throw new Error(`Type rollup file '${typeRollupFilePath}' not found.`);
-    }
-    typeDefinitionFilePath = typeRollupFilePath;
+		throw new Error(`Type rollup file '${typeRollupFilePath}' not found.`);
+	}
+	typeDefinitionFilePath = typeRollupFilePath;
 } else {
-    // Default to using index.d.ts and other .d.ts files under dist
-    typeDefinitionFilePath = "dist/index.d.ts";
+	// Default to using index.d.ts and other .d.ts files under dist
+	typeDefinitionFilePath = "dist/index.d.ts";
 }
 const testPath = `./src/test/types`;
 // remove scope if it exists
@@ -60,7 +60,6 @@ if (packageObject.typeValidation?.disabled) {
 	rmSync(filePath, { force: true });
 	process.exit(0);
 }
-
 
 {
 	// Information about the previous package from the package.json is not needed,
