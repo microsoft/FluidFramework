@@ -9,25 +9,12 @@
 #    output directories during compilation.
 
 packages:
-  - "azure/packages/*"
-  - "azure/packages/*/*"
+  - "azure/packages/**"
+  - "examples/**"
+  - "experimental/**"
+  - "packages/**"
 
-  - "examples/*/*"
-  - "examples/**/bubblebench/*"
-  - "examples/**/external-data"
-  - "examples/**/multiview/*"
-  - "examples/**/shared-tree-demo"
-
-  - "experimental/*/*"
-  - "experimental/**/ot"
-  - "experimental/**/json1"
-  - "**/PropertyDDS/*/*"
-  - "**/PropertyDDS/**/platform-dependent"
-
-  - "packages/*/*"
-  - "packages/**/app-insights-logger"
-  - "packages/**/devtools*"
-  - "packages/**/end-to-end-tests/*"
-
-  # exclude any package.json files that are inside src directories
+  # exclude any package.json files that are inside src or output directories
+  - "!**/dist/**"
+  - "!**/lib/**"
   - "!**/src/**"
