@@ -7,8 +7,8 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events/index.js";
 import { IDisposable, disposeSymbol } from "../util/index.js";
 import { FlexTreeView, type CheckoutEvents } from "../shared-tree/index.js";
-import { getProxyForField } from "../simple-tree/index.js";
 import { TreeFieldSchema as FlexTreeFieldSchema } from "../feature-libraries/index.js";
+import { getProxyForField } from "./proxies.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,

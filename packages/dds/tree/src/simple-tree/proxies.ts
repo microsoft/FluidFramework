@@ -38,9 +38,9 @@ import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/la
 import {
 	type TreeNodeSchema as TreeNodeSchemaClass,
 	type InsertableTypedNode,
-} from "../class-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeKind, TreeMapNode } from "../class-tree/schemaTypes.js";
+	NodeKind,
+	TreeMapNode,
+} from "./schemaTypes.js";
 import { IterableTreeListContent, TreeArrayNode } from "./treeListNode.js";
 import { Unhydrated, TreeNode } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";

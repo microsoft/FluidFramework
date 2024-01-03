@@ -6,9 +6,7 @@
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { fail } from "../util/index.js";
 import { EmptyObject } from "../feature-libraries/index.js";
-import { TreeNode } from "../simple-tree/index.js";
 import { SchemaFactory } from "./schemaFactory.js";
-
 import {
 	InsertableObjectFromSchemaRecord,
 	NodeFromSchema,
@@ -16,6 +14,7 @@ import {
 	ObjectFromSchemaRecord,
 	TreeNodeSchemaClass,
 } from "./schemaTypes.js";
+import { TreeNode } from "./types.js";
 
 /**
  * Create a schema for a node with no state.
