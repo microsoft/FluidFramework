@@ -77,6 +77,7 @@ async function computeInMemoryFullGitTree(
 ): Promise<IFullGitTree> {
 	const inMemoryWriteSummaryTreeOptions: IWriteSummaryTreeOptions = {
 		repoManager: inMemoryRepoManager,
+		sourceOfTruthRepoManager: options.repoManager,
 		enableLowIoWrite: false,
 		precomputeFullTree: true,
 		currentPath: "",
