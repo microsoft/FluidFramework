@@ -8,4 +8,5 @@ export {
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
+	ghostClusterInitialSize,
 } from "./0.0.1";
