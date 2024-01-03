@@ -87,9 +87,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.29.0-225750",
+		"@fluid-tools/build-cli": "0.29.0-227016",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/build-tools": "0.29.0-227016",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@types/js-yaml": "^4.0.5",
 		"@types/mocha": "^9.1.1",
