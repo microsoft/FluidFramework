@@ -2,4 +2,9 @@ packages:
   - "azure/packages/**"
   - "examples/**"
   - "experimental/**"
-  - "packages/**"
+
+  - "packages/*/*"
+  - "packages/**/devtools*"
+  - "packages/**/app-insights-logger"
+  - "packages/service-clients/end-to-end-tests/*"
+ 
