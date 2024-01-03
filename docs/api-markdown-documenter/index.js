@@ -13,7 +13,6 @@
 const chalk = require("chalk");
 const path = require("path");
 const versions = require("../data/versions.json");
-const { buildRedirects } = require("./build-redirects");
 const { renderApiDocumentation } = require("./render-api-documentation");
 
 const renderMultiVersion = process.argv[2];
@@ -68,5 +67,3 @@ Promise.all(apiDocRenders).then(
 		process.exit(1);
 	},
 );
-
-buildRedirects();
