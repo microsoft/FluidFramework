@@ -89,7 +89,7 @@ const createFrontMatterTitle = (apiItem) => {
 		[ApiItemKind.Package]: `${baseTitle} Package`,
 		[ApiItemKind.Namespace]: `${baseTitle} Namespace`,
 	};
-	return kindTitleMap[apiItem.kind] || baseTitle;
+	return kindTitleMap[apiItem.kind] ?? baseTitle;
 };
 
 module.exports = {
