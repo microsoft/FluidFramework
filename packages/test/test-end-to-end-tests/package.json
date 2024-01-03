@@ -95,6 +95,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/ink": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
@@ -126,9 +127,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.29.0-225750",
+		"@fluid-tools/build-cli": "0.29.0-227016",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/build-tools": "0.29.0-227016",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",

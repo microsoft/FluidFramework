@@ -49,6 +49,7 @@ import {
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
+import { ghostClusterInitialSize } from "./types";
 
 /**
  * The version of IdCompressor that is currently persisted.
@@ -58,11 +59,6 @@ const currentWrittenVersion = 1;
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
- *
- * @alpha
- *
- * @deprecated Not intended for public use and will be removed from the public API in the future.
- * Use `createIdCompressor` instead.
  */
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
@@ -104,10 +100,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private telemetryLocalIdCount = 0;
 	// The number of eager final IDs generated since the last telemetry was sent.
 	private telemetryEagerFinalIdCount = 0;
+	// The cluster for an ongoing ghost session, if one exists.
+	private ongoingGhostSession: IdCluster | undefined = undefined;
 
 	// #endregion
 
-	private constructor(
+	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger?: ITelemetryLoggerExt,
 	) {
@@ -128,43 +126,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(
-		sessionId: SessionId,
-		logger?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore;
-	public static create(
-		sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
-		loggerOrUndefined?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore {
-		let localSessionId: SessionId;
-		let logger: ITelemetryBaseLogger | undefined;
-		if (sessionIdOrLogger === undefined) {
-			localSessionId = createSessionId();
-		} else {
-			if (typeof sessionIdOrLogger === "string") {
-				localSessionId = sessionIdOrLogger;
-				logger = loggerOrUndefined;
-			} else {
-				localSessionId = createSessionId();
-				logger = loggerOrUndefined;
-			}
-		}
-		const compressor = new IdCompressor(
-			localSessionId,
-			logger === undefined ? undefined : createChildLogger({ logger }),
-		);
-		return compressor;
-	}
-
 	public generateCompressedId(): SessionSpaceCompressedId {
 		if (this.ongoingGhostSession) {
+			// This code should not be changed without a version bump (it is performed at a consensus point)
 			this.ongoingGhostSession.capacity++;
 			this.ongoingGhostSession.count++;
 			return lastFinalizedFinal(
@@ -196,17 +160,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	private ongoingGhostSession: IdCluster | undefined = undefined;
-	// todo move this to persisted state file
-	private readonly ghostClusterInitialSize = 512;
-
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
 		this.ongoingGhostSession = this.addEmptyCluster(
 			this.sessions.getOrCreate(ghostSessionId),
-			this.ghostClusterInitialSize,
+			ghostClusterInitialSize,
 		);
 		try {
 			ghostSessionCallback();
@@ -701,7 +661,24 @@ export function createIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
-	return IdCompressor.create(sessionIdOrLogger as SessionId, loggerOrUndefined);
+	let localSessionId: SessionId;
+	let logger: ITelemetryBaseLogger | undefined;
+	if (sessionIdOrLogger === undefined) {
+		localSessionId = createSessionId();
+	} else {
+		if (typeof sessionIdOrLogger === "string") {
+			localSessionId = sessionIdOrLogger;
+			logger = loggerOrUndefined;
+		} else {
+			localSessionId = createSessionId();
+			logger = loggerOrUndefined;
+		}
+	}
+	const compressor = new IdCompressor(
+		localSessionId,
+		logger === undefined ? undefined : createChildLogger({ logger }),
+	);
+	return compressor;
 }
 
 /**

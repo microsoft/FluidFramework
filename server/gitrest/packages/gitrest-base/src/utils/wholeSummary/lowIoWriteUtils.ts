@@ -44,7 +44,7 @@ async function retrieveMissingGitTreeIntoMemory(
 	const fullTree = await buildFullGitTreeFromGitTree(
 		missingTree,
 		writeSummaryTreeOptions.repoManager,
-		writeSummaryTreeOptions.blobCache /* blobCache */,
+		{} /* blobCache */,
 		false /* parseInnerFullGitTrees */,
 		true /* retrieveBlobs */,
 	);

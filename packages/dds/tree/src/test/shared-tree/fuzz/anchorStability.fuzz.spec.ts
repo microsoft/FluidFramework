@@ -15,7 +15,7 @@ import { UpPath, Anchor, Value } from "../../../core/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import {
 	cursorsFromContextualData,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
@@ -59,11 +59,9 @@ const config = {
 	},
 } satisfies TreeContent;
 
-const initialTreeJson = cursorsFromContextualData(
-	config,
-	config.schema.rootFieldSchema,
-	config.initialTree,
-).map(jsonableTreeFromCursor);
+const initialTreeJson = jsonableTreeFromFieldCursor(
+	cursorsFromContextualData(config, config.schema.rootFieldSchema, config.initialTree),
+);
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
@@ -78,7 +76,7 @@ describe("Fuzz - anchor stability", () => {
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 1,
-			delete: 2,
+			remove: 2,
 			move: 2,
 			fieldSelection: {
 				optional: 1,
@@ -141,7 +139,7 @@ describe("Fuzz - anchor stability", () => {
 	describe("Anchors are stable", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 2,
-			delete: 2,
+			remove: 2,
 			move: 2,
 			undo: 1,
 			redo: 1,
