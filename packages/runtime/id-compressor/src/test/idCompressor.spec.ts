@@ -9,7 +9,6 @@ import { take } from "@fluid-private/stochastic-test-utils";
 import { OpSpaceCompressedId, SessionId, SessionSpaceCompressedId, StableId } from "../";
 import { IdCompressor } from "../idCompressor";
 import { createSessionId } from "../utilities";
-import { ghostClusterInitialSize } from "../types";
 import {
 	performFuzzActions,
 	sessionIds,
@@ -384,7 +383,7 @@ describe("IdCompressor", () => {
 
 		it("can generate IDs during a ghost session", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
-			const idCount = ghostClusterInitialSize * 2;
+			const idCount = 10;
 			const ids = new Set<SessionSpaceCompressedId>();
 			const ghostSession = createSessionId();
 			compressor.beginGhostSession(ghostSession, () => {
@@ -396,6 +395,28 @@ describe("IdCompressor", () => {
 				}
 			});
 			assert.equal(ids.size, idCount);
+		});
+
+		it("does not create a cluster for a no-op ghost session", () => {
+			const mockLogger = new MockLogger();
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 5, mockLogger);
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 0,
+					sessionCount: 0,
+				},
+			]);
+			compressor.beginGhostSession(createSessionId(), () => {});
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 0,
+					sessionCount: 0,
+				},
+			]);
 		});
 	});
 

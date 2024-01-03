@@ -49,7 +49,6 @@ import {
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
-import { ghostClusterInitialSize } from "./types";
 
 /**
  * The version of IdCompressor that is currently persisted.
@@ -105,8 +104,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private telemetryLocalIdCount = 0;
 	// The number of eager final IDs generated since the last telemetry was sent.
 	private telemetryEagerFinalIdCount = 0;
-	// The cluster for an ongoing ghost session, if one exists.
-	private ongoingGhostSession: IdCluster | undefined = undefined;
+	// The ongoing ghost session, if one exists.
+	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId };
 
 	// #endregion
 
@@ -167,12 +166,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public generateCompressedId(): SessionSpaceCompressedId {
+		// This ghost session code inside this block should not be changed without a version bump (it is performed at a consensus point)
 		if (this.ongoingGhostSession) {
-			// This code should not be changed without a version bump (it is performed at a consensus point)
-			this.ongoingGhostSession.capacity++;
-			this.ongoingGhostSession.count++;
+			if (this.ongoingGhostSession.cluster === undefined) {
+				this.ongoingGhostSession.cluster = this.addEmptyCluster(
+					this.sessions.getOrCreate(this.ongoingGhostSession.ghostSessionId),
+					1,
+				);
+			} else {
+				this.ongoingGhostSession.cluster.capacity++;
+			}
+			this.ongoingGhostSession.cluster.count++;
 			return lastFinalizedFinal(
-				this.ongoingGhostSession,
+				this.ongoingGhostSession.cluster,
 			) as unknown as SessionSpaceCompressedId;
 		} else {
 			this.localGenCount++;
@@ -204,10 +210,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
-		this.ongoingGhostSession = this.addEmptyCluster(
-			this.sessions.getOrCreate(ghostSessionId),
-			ghostClusterInitialSize,
-		);
+		this.ongoingGhostSession = { ghostSessionId };
 		try {
 			ghostSessionCallback();
 		} finally {
@@ -347,7 +350,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {
 		assert(
-			!this.ongoingGhostSession,
+			!this.ongoingGhostSession?.cluster,
 			"IdCompressor should not be operated normally when in a ghost session",
 		);
 		const newCluster = session.addNewCluster(
