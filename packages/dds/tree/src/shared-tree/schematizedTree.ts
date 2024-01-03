@@ -10,7 +10,7 @@ import {
 	TreeStoredSchema,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
-} from "../core";
+} from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
@@ -20,10 +20,10 @@ import {
 	ViewSchema,
 	InsertableFlexField,
 	intoStoredSchema,
-} from "../feature-libraries";
-import { fail } from "../util";
-import { ISubscribable } from "../events";
-import { CheckoutEvents, ITreeCheckout } from "./treeCheckout";
+} from "../feature-libraries/index.js";
+import { fail } from "../util/index.js";
+import { ISubscribable } from "../events/index.js";
+import { CheckoutEvents, ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -210,7 +210,7 @@ export function afterSchemaChanges(
 /**
  * View Schema for a `SharedTree`.
  *
- * @alpha
+ * @internal
  */
 export interface SchemaConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema> {
 	/**
@@ -222,7 +222,7 @@ export interface SchemaConfiguration<TRoot extends TreeFieldSchema = TreeFieldSc
 /**
  * Content that can populate a `SharedTree`.
  *
- * @alpha
+ * @internal
  */
 export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -239,7 +239,7 @@ export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 /**
  * Options used to schematize a `SharedTree`.
  *
- * @alpha
+ * @internal
  */
 export interface SchematizeConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -252,7 +252,7 @@ export interface SchematizeConfiguration<TRoot extends TreeFieldSchema = TreeFie
 /**
  * Options used to initialize (if needed) and schematize a `SharedTree`.
  *
- * @alpha
+ * @internal
  */
 export interface InitializeAndSchematizeConfiguration<
 	TRoot extends TreeFieldSchema = TreeFieldSchema,
@@ -263,7 +263,7 @@ export interface InitializeAndSchematizeConfiguration<
  * Options used to initialize (if needed) and schematize a `SharedTree`.
  * @remarks
  * Using this builder improves type safety and error quality over just constructing the configuration as a object.
- * @alpha
+ * @internal
  */
 export function buildTreeConfiguration<T extends TreeFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<T>,

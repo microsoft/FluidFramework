@@ -4,15 +4,15 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { FieldKeySchema } from "../../core";
-import { Versioned } from "../versioned";
+import { schemaFormat } from "../../core/index.js";
+import { Versioned } from "../../codec/index.js";
 
 export const version = 1.0;
 
 export const Format = Type.Object(
 	{
 		version: Type.Literal(version),
-		keys: Type.Array(FieldKeySchema),
+		keys: Type.Array(schemaFormat.FieldKeySchema),
 		fields: Versioned,
 	},
 	{ additionalProperties: false },

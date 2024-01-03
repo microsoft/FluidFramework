@@ -4,28 +4,28 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
-import { capitalize, fail, requireAssignableTo } from "../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema";
-import { Multiplicity } from "../multiplicity";
+import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core/index.js";
+import { capitalize, fail, requireAssignableTo } from "../../util/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { Multiplicity } from "../multiplicity.js";
 import {
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	allowedTypesIsAny,
 	SchemaCollection,
 	MapNodeSchema,
 	LeafNodeSchema,
 	FieldNodeSchema,
 	ObjectNodeSchema,
-} from "./typedTreeSchema";
-import { normalizeFlexListEager } from "./flexList";
-import { Sourced } from "./view";
+} from "./typedTreeSchema.js";
+import { normalizeFlexListEager } from "./flexList.js";
+import { Sourced } from "./view.js";
 
 // TODO: tests for this file
 
 /**
  * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
- * @alpha
+ * @internal
  */
 export interface SchemaLibraryData extends SchemaCollection {
 	readonly name: string;
@@ -46,7 +46,7 @@ export interface SourcedAdapters {
 
 /**
  * Allows opting into and out of errors for some unusual schema patterns which are usually bugs.
- * @alpha
+ * @internal
  */
 export interface SchemaLintConfiguration {
 	readonly rejectForbidden: boolean;
@@ -80,7 +80,7 @@ export function aggregateSchemaLibraries(
 	libraries: Iterable<SchemaLibraryData>,
 	rootFieldSchema?: TreeFieldSchema,
 ): SchemaLibraryData {
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
 
 	const errors: string[] = [];

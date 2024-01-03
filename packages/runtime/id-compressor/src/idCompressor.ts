@@ -45,6 +45,7 @@ import {
 	lastFinalizedLocal,
 	Session,
 	Sessions,
+	lastFinalizedFinal,
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
@@ -53,15 +54,10 @@ import { FinalSpace } from "./finalSpace";
  * The version of IdCompressor that is currently persisted.
  * This should not be changed without careful consideration to compatibility.
  */
-const currentWrittenVersion = 1;
+const currentWrittenVersion = 2.0;
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
- *
- * @alpha
- *
- * @deprecated Not intended for public use and will be removed from the public API in the future.
- * Use `createIdCompressor` instead.
  */
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
@@ -103,10 +99,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private telemetryLocalIdCount = 0;
 	// The number of eager final IDs generated since the last telemetry was sent.
 	private telemetryEagerFinalIdCount = 0;
+	// The ongoing ghost session, if one exists.
+	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId };
 
 	// #endregion
 
-	private constructor(
+	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger?: ITelemetryLoggerExt,
 	) {
@@ -127,64 +125,57 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(
-		sessionId: SessionId,
-		logger?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore;
-	public static create(
-		sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
-		loggerOrUndefined?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore {
-		let localSessionId: SessionId;
-		let logger: ITelemetryBaseLogger | undefined;
-		if (sessionIdOrLogger === undefined) {
-			localSessionId = createSessionId();
-		} else {
-			if (typeof sessionIdOrLogger === "string") {
-				localSessionId = sessionIdOrLogger;
-				logger = loggerOrUndefined;
-			} else {
-				localSessionId = createSessionId();
-				logger = loggerOrUndefined;
-			}
-		}
-		const compressor = new IdCompressor(
-			localSessionId,
-			logger === undefined ? undefined : createChildLogger({ logger }),
-		);
-		return compressor;
-	}
-
 	public generateCompressedId(): SessionSpaceCompressedId {
-		this.localGenCount++;
-		const lastCluster = this.localSession.getLastCluster();
-		if (lastCluster === undefined) {
+		// This ghost session code inside this block should not be changed without a version bump (it is performed at a consensus point)
+		if (this.ongoingGhostSession) {
+			if (this.ongoingGhostSession.cluster === undefined) {
+				this.ongoingGhostSession.cluster = this.addEmptyCluster(
+					this.sessions.getOrCreate(this.ongoingGhostSession.ghostSessionId),
+					1,
+				);
+			} else {
+				this.ongoingGhostSession.cluster.capacity++;
+			}
+			this.ongoingGhostSession.cluster.count++;
+			return lastFinalizedFinal(
+				this.ongoingGhostSession.cluster,
+			) as unknown as SessionSpaceCompressedId;
+		} else {
+			this.localGenCount++;
+			const lastCluster = this.localSession.getLastCluster();
+			if (lastCluster === undefined) {
+				this.telemetryLocalIdCount++;
+				return this.generateNextLocalId();
+			}
+
+			// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
+			// it is known prior to range sequencing what a local ID's corresponding final ID will be.
+			// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
+			// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
+			// collaborators *after* the one containing the creation range.
+			const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
+			if (lastCluster.capacity > clusterOffset) {
+				this.telemetryEagerFinalIdCount++;
+				// Space in the cluster: eager final
+				return ((lastCluster.baseFinalId as number) +
+					clusterOffset) as SessionSpaceCompressedId;
+			}
+			// No space in the cluster, return next local
 			this.telemetryLocalIdCount++;
 			return this.generateNextLocalId();
 		}
+	}
 
-		// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
-		// it is known prior to range sequencing what a local ID's corresponding final ID will be.
-		// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
-		// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
-		// collaborators *after* the one containing the creation range.
-		const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
-		if (lastCluster.capacity > clusterOffset) {
-			this.telemetryEagerFinalIdCount++;
-			// Space in the cluster: eager final
-			return ((lastCluster.baseFinalId as number) +
-				clusterOffset) as SessionSpaceCompressedId;
+	/**
+	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
+	 */
+	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
+		this.ongoingGhostSession = { ghostSessionId };
+		try {
+			ghostSessionCallback();
+		} finally {
+			this.ongoingGhostSession = undefined;
 		}
-		// No space in the cluster, return next local
-		this.telemetryLocalIdCount++;
-		return this.generateNextLocalId();
 	}
 
 	private generateNextLocalId(): LocalCompressedId {
@@ -194,6 +185,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public takeNextCreationRange(): IdCreationRange {
+		assert(
+			!this.ongoingGhostSession,
+			"IdCompressor should not be operated normally when in a ghost session",
+		);
 		const count = this.localGenCount - (this.nextRangeBaseGenCount - 1);
 		if (count === 0) {
 			return {
@@ -227,6 +222,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
+		assert(
+			!this.ongoingGhostSession,
+			"IdCompressor should not be operated normally when in a ghost session",
+		);
 		// Check if the range has IDs
 		if (range.ids === undefined) {
 			return;
@@ -310,6 +309,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {
+		assert(
+			!this.ongoingGhostSession?.cluster,
+			"IdCompressor should not be operated normally when in a ghost session",
+		);
 		const newCluster = session.addNewCluster(
 			this.finalSpace.getAllocatedIdLimit(),
 			capacity,
@@ -473,6 +476,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
 	public serialize(hasLocalState: boolean): SerializedIdCompressor {
+		assert(
+			!this.ongoingGhostSession,
+			"IdCompressor should not be operated normally when in a ghost session",
+		);
 		const { normalizer, finalSpace, sessions } = this;
 		const sessionIndexMap = new Map<Session, number>();
 		let sessionIndex = 0;
@@ -558,7 +565,17 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			bufferUint: new BigUint64Array(buffer),
 		};
 		const version = readNumber(index);
-		assert(version === currentWrittenVersion, 0x75c /* Unknown serialized version. */);
+		switch (version) {
+			case 1.0:
+				throw new Error("IdCompressor version 1.0 is no longer supported.");
+			case 2.0:
+				return IdCompressor.deserialize2_0(index, sessionId);
+			default:
+				throw new Error("Unknown IdCompressor serialized version.");
+		}
+	}
+
+	static deserialize2_0(index: Index, sessionId?: SessionId): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
@@ -657,7 +674,24 @@ export function createIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
-	return IdCompressor.create(sessionIdOrLogger as SessionId, loggerOrUndefined);
+	let localSessionId: SessionId;
+	let logger: ITelemetryBaseLogger | undefined;
+	if (sessionIdOrLogger === undefined) {
+		localSessionId = createSessionId();
+	} else {
+		if (typeof sessionIdOrLogger === "string") {
+			localSessionId = sessionIdOrLogger;
+			logger = loggerOrUndefined;
+		} else {
+			localSessionId = createSessionId();
+			logger = loggerOrUndefined;
+		}
+	}
+	const compressor = new IdCompressor(
+		localSessionId,
+		logger === undefined ? undefined : createChildLogger({ logger }),
+	);
+	return compressor;
 }
 
 /**

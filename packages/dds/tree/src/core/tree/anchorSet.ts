@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { createEmitter, ISubscribable } from "../../events";
+import { createEmitter, ISubscribable } from "../../events/index.js";
 import {
 	brand,
 	Brand,
@@ -14,8 +14,8 @@ import {
 	BrandedKey,
 	BrandedMapSubset,
 	brandedSlot,
-} from "../../util";
-import { FieldKey } from "../schema-stored";
+} from "../../util/index.js";
+import { FieldKey } from "../schema-stored/index.js";
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
@@ -24,17 +24,17 @@ import {
 	Range,
 	PlaceUpPath,
 	RangeUpPath,
-} from "./pathTree";
-import { Value, EmptyKey } from "./types";
-import { PathVisitor } from "./visitPath";
-import { DeltaVisitor } from "./visitDelta";
-import * as Delta from "./delta";
-import { AnnouncedVisitor } from "./visitorUtils";
+} from "./pathTree.js";
+import { Value, EmptyKey } from "./types.js";
+import { PathVisitor } from "./visitPath.js";
+import { DeltaVisitor } from "./visitDelta.js";
+import * as Delta from "./delta.js";
+import { AnnouncedVisitor } from "./visitorUtils.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
  * Associated with a ref count on the underlying {@link AnchorNode}.
- * @alpha
+ * @internal
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -45,7 +45,7 @@ const NeverAnchor: Anchor = brand(0);
 
 /**
  * Maps anchors (which must be ones this locator knows about) to paths.
- * @alpha
+ * @internal
  */
 export interface AnchorLocator {
 	/**
@@ -63,7 +63,7 @@ export interface AnchorLocator {
  * Stores arbitrary, user-defined data on an {@link Anchor}.
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
- * @alpha
+ * @internal
  */
 export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
@@ -76,7 +76,7 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
  * - Include sub-deltas in events.
  * - Add more events.
  *
- * @alpha
+ * @internal
  */
 export interface AnchorEvents {
 	/**
@@ -145,7 +145,7 @@ export interface AnchorEvents {
  * - Include sub-deltas in events.
  * - Add more events.
  *
- * @alpha
+ * @internal
  */
 export interface AnchorSetRootEvents {
 	/**
@@ -161,7 +161,7 @@ export interface AnchorSetRootEvents {
 
 /**
  * Node in a tree of anchors.
- * @alpha
+ * @internal
  */
 export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
 	/**
@@ -204,7 +204,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
  * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
  * }
  * ```
- * @alpha
+ * @internal
  */
 export function anchorSlot<TContent>(): AnchorSlot<TContent> {
 	return brandedSlot<AnchorSlot<TContent>>();
@@ -220,7 +220,7 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * API surface to a small subset.
  *
  * @sealed
- * @alpha
+ * @internal
  */
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
 	private readonly events = createEmitter<AnchorSetRootEvents>();
@@ -980,7 +980,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 enum Status {
 	/**
 	 * Indicates the `NodePath` is being maintained and corresponds to a valid
-	 * (i.e., not deleted) node in the document.
+	 * (i.e., not removed) node in the document.
 	 */
 	Alive,
 	/**
@@ -992,7 +992,7 @@ enum Status {
 	 */
 	Disposed,
 	/**
-	 * Indicates the `NodePath` corresponds to a deleted node in the document.
+	 * Indicates the `NodePath` corresponds to a removed node in the document.
 	 * Such `NodePath`s are not maintained by the `AnchorSet` (other than updating
 	 * their status to `Disposed` when appropriate).
 	 *

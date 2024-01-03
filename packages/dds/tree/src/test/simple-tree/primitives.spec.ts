@@ -4,10 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema } from "../../class-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal";
-import { getRoot, makeSchema, pretty } from "./utils";
+import {
+	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
+} from "../../simple-tree/index.js";
+import { getRoot, makeSchema, pretty } from "./utils.js";
 
 // Construct a SharedTree with each of the above primitives as the root and then
 // 'deepEquals' compares the proxy with the original primitive value.

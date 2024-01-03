@@ -79,7 +79,7 @@ describe("IntervalCollection detached", () => {
 				await attachAndLoadSecondSharedString();
 
 			const collection2 = sharedString2.getIntervalCollection("intervals");
-			collection2.change(interval.getIntervalId(), 1, 1);
+			collection2.change(interval.getIntervalId(), { start: 1, end: 1 });
 			containerRuntimeFactory.processAllMessages();
 			assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
@@ -89,7 +89,7 @@ describe("IntervalCollection detached", () => {
 		it("slides immediately on segment removal", () => {
 			sharedString.insertText(0, "0123");
 			const interval = collection.add({ start: 0, end: 2 });
-			collection.change(interval.getIntervalId(), 0, 0);
+			collection.change(interval.getIntervalId(), { start: 0, end: 0 });
 			sharedString.removeText(0, 1);
 			assert.equal((interval.start.getSegment() as TextSegment)?.text, "123");
 			assert.equal((interval.end.getSegment() as TextSegment)?.text, "123");
@@ -98,7 +98,7 @@ describe("IntervalCollection detached", () => {
 		it("synchronizes correctly on another client", async () => {
 			sharedString.insertText(0, "0123");
 			const interval = collection.add({ start: 0, end: 2 });
-			collection.change(interval.getIntervalId(), 0, 0);
+			collection.change(interval.getIntervalId(), { start: 0, end: 0 });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
@@ -110,12 +110,12 @@ describe("IntervalCollection detached", () => {
 		it("can be changed by another client after attaching", async () => {
 			sharedString.insertText(0, "0123");
 			const interval = collection.add({ start: 0, end: 2 });
-			collection.change(interval.getIntervalId(), 0, 0);
+			collection.change(interval.getIntervalId(), { start: 0, end: 0 });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
 			const collection2 = sharedString2.getIntervalCollection("intervals");
-			collection2.change(interval.getIntervalId(), 1, 1);
+			collection2.change(interval.getIntervalId(), { start: 1, end: 1 });
 			containerRuntimeFactory.processAllMessages();
 			assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
@@ -125,7 +125,7 @@ describe("IntervalCollection detached", () => {
 		it("synchronizes correctly on another client", async () => {
 			sharedString.insertText(0, "0123");
 			const interval = collection.add({ start: 0, end: 2, props: { foo: "a1" } });
-			collection.changeProperties(interval.getIntervalId(), { foo: "a2" });
+			collection.change(interval.getIntervalId(), { props: { foo: "a2" } });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
@@ -140,12 +140,12 @@ describe("IntervalCollection detached", () => {
 		it("can be changed by another client after attaching", async () => {
 			sharedString.insertText(0, "0123");
 			const interval = collection.add({ start: 0, end: 2, props: { foo: "a1" } });
-			collection.changeProperties(interval.getIntervalId(), { foo: "a2" });
+			collection.change(interval.getIntervalId(), { props: { foo: "a2" } });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
 			const collection2 = sharedString2.getIntervalCollection("intervals");
-			collection2.changeProperties(interval.getIntervalId(), { foo: "b1" });
+			collection2.change(interval.getIntervalId(), { props: { foo: "b1" } });
 			containerRuntimeFactory.processAllMessages();
 
 			assertEquivalentSharedStrings(sharedString, sharedString2);

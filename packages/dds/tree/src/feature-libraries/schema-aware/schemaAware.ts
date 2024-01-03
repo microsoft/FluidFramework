@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core";
-import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core/index.js";
+import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
 import {
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	AllowedTypes,
 	LeafNodeSchema,
 	ObjectNodeSchema,
@@ -16,13 +16,13 @@ import {
 	MapNodeSchema,
 	FlexListToUnion,
 	LazyItem,
-} from "../typed-schema";
-import { Assume, FlattenKeys, _InlineTrick } from "../../util";
-import { Multiplicity } from "../multiplicity";
+} from "../typed-schema/index.js";
+import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
+import { Multiplicity } from "../multiplicity.js";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
- * @alpha
+ * @internal
  */
 // Using {} instead of interface {} or Record<string, never> for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
 // Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
@@ -31,7 +31,7 @@ export type EmptyObject = {};
 
 /**
  * Collects the various parts of the API together.
- * @alpha
+ * @internal
  */
 export type CollectOptions<
 	TTypedFields,
@@ -50,7 +50,7 @@ export type CollectOptions<
 
 /**
  * Remove type brand from name.
- * @alpha
+ * @internal
  */
 export type UnbrandedName<TName> = [
 	TName extends TreeNodeSchemaIdentifier<infer S> ? S : string,
@@ -60,7 +60,7 @@ export type UnbrandedName<TName> = [
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  *
  * In Editable mode, unwraps the fields.
- * @alpha
+ * @internal
  */
 export type TypedFields<TFields extends undefined | { readonly [key: string]: TreeFieldSchema }> = [
 	TFields extends { [key: string]: TreeFieldSchema }
@@ -72,7 +72,7 @@ export type TypedFields<TFields extends undefined | { readonly [key: string]: Tr
 
 /**
  * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on FieldKind.
- * @alpha
+ * @internal
  */
 export type InsertableFlexField<TField extends TreeFieldSchema> = [
 	ApplyMultiplicity<
@@ -83,7 +83,7 @@ export type InsertableFlexField<TField extends TreeFieldSchema> = [
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
- * @alpha
+ * @internal
  */
 export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
 	[Multiplicity.Forbidden]: undefined;
@@ -94,19 +94,19 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
 
 /**
  * Takes in `AllowedTypes` and returns a TypedTree union.
- * @alpha
+ * @internal
  */
 export type AllowedTypesToFlexInsertableTree<T extends AllowedTypes> = [
-	T extends readonly LazyItem<TreeNodeSchema>[]
-		? InsertableFlexNode<Assume<FlexListToUnion<T>, TreeNodeSchema>>
+	T extends readonly LazyItem<FlexTreeNodeSchema>[]
+		? InsertableFlexNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
 		: ContextuallyTypedNodeData,
 ][_InlineTrick];
 
 /**
  * Generate a schema aware API for a single tree schema.
- * @alpha
+ * @internal
  */
-export type InsertableFlexNode<TSchema extends TreeNodeSchema> = FlattenKeys<
+export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys<
 	CollectOptions<
 		TSchema extends ObjectNodeSchema<string, infer TFields extends Fields>
 			? TypedFields<TFields>

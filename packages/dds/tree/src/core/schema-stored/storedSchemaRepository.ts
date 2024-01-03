@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import BTree from "sorted-btree";
-import { createEmitter, ISubscribable } from "../../events";
-import { compareStrings } from "../../util";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { createEmitter, ISubscribable } from "../../events/index.js";
+import { compareStrings } from "../../util/index.js";
 import {
 	StoredSchemaCollection,
 	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	storedEmptyFieldSchema,
-} from "./schema";
+} from "./schema.js";
+import { TreeNodeSchemaIdentifier } from "./format.js";
 
 /**
  * Events for {@link TreeStoredSchemaSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @alpha
+ * @internal
  */
 export interface SchemaEvents {
 	/**
@@ -35,7 +35,7 @@ export interface SchemaEvents {
 
 /**
  * A collection of stored schema that fires events in response to changes.
- * @alpha
+ * @internal
  */
 export interface TreeStoredSchemaSubscription
 	extends ISubscribable<SchemaEvents>,
@@ -43,7 +43,7 @@ export interface TreeStoredSchemaSubscription
 
 /**
  * Mutable collection of stored schema.
- * @alpha
+ * @internal
  */
 export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
@@ -87,7 +87,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 				this.rootFieldSchemaData = data.rootFieldSchema;
 				this.nodeSchemaData = data.nodeSchemaData.clone();
 			} else {
-				this.rootFieldSchemaData = cloneFieldSchemaData(data.rootFieldSchema);
+				this.rootFieldSchemaData = data.rootFieldSchema;
 				this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
 			}
 		}
@@ -130,26 +130,7 @@ export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 function cloneNodeSchemaData(
 	nodeSchema: StoredSchemaCollection["nodeSchema"],
 ): BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
-	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [];
-	for (const [name, schema] of nodeSchema.entries()) {
-		entries.push([
-			name,
-			{
-				mapFields:
-					schema.mapFields === undefined
-						? undefined
-						: cloneFieldSchemaData(schema.mapFields),
-				objectNodeFields: new Map(schema.objectNodeFields),
-				leafValue: schema.leafValue,
-			},
-		]);
-	}
+	// Schema objects are immutable (unlike stored schema repositories), so this shallow copy is fine.
+	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [...nodeSchema.entries()];
 	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
-}
-
-function cloneFieldSchemaData(fieldSchema: TreeFieldStoredSchema): TreeFieldStoredSchema {
-	return {
-		kind: fieldSchema.kind,
-		types: fieldSchema.types === undefined ? undefined : new Set(fieldSchema.types),
-	};
 }

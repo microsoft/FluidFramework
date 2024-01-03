@@ -13,7 +13,7 @@ import {
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { ICodecOptions, noopValidator } from "../codec";
+import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	Compatibility,
 	FieldKey,
@@ -24,8 +24,8 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	schemaDataIsEmpty,
-} from "../core";
-import { SharedTreeCore } from "../shared-tree-core";
+} from "../core/index.js";
+import { SharedTreeCore } from "../shared-tree-core/index.js";
 import {
 	defaultSchemaPolicy,
 	ForestSummarizer,
@@ -46,9 +46,9 @@ import {
 	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
 	makeFieldBatchCodec,
-} from "../feature-libraries";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, disposeSymbol, fail } from "../util";
+} from "../feature-libraries/index.js";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import { brand, disposeSymbol, fail } from "../util/index.js";
 import {
 	ITree,
 	TreeConfiguration,
@@ -57,24 +57,24 @@ import {
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "../class-tree";
+} from "../simple-tree/index.js";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
 	initializeContent,
 	schematize,
-} from "./schematizedTree";
-import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
-import { FlexTreeView, CheckoutFlexTreeView } from "./treeView";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+} from "./schematizedTree.js";
+import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
+import { FlexTreeView, CheckoutFlexTreeView } from "./treeView.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
- * @alpha
+ * @internal
  */
 export interface SharedTreeContentSnapshot {
 	/**
@@ -89,6 +89,10 @@ export interface SharedTreeContentSnapshot {
 	 * All {@link TreeStatus#InDocument} content.
 	 */
 	readonly tree: JsonableTree[];
+	/**
+	 * All {@link TreeStatus#Removed} content.
+	 */
+	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
 
 /**
@@ -96,7 +100,7 @@ export interface SharedTreeContentSnapshot {
  * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
  *
  * See [the README](../../README.md) for details.
- * @alpha
+ * @internal
  */
 export interface ISharedTree extends ISharedObject, ITree {
 	/**
@@ -173,27 +177,41 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
+		assert(
+			runtime.idCompressor !== undefined,
+			"IdCompressor must be enabled to use SharedTree",
+		);
+
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedRoots = makeDetachedFieldIndex("repair", options);
+		const removedRoots = makeDetachedFieldIndex("repair", runtime.idCompressor, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = makeFieldBatchCodec(options, {
+			// TODO: provide schema here to enable schema based compression.
+			// schema: {
+			// 	schema,
+			// 	policy: defaultSchemaPolicy,
+			// },
+			encodeType: TreeCompressionStrategy.Compressed,
+		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			schema,
-			defaultSchemaPolicy,
-			options.summaryEncodeType,
+			runtime.idCompressor,
 			fieldBatchCodec,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
-		const innerChangeFamily = new SharedTreeChangeFamily(options);
+		const innerChangeFamily = new SharedTreeChangeFamily(
+			runtime.idCompressor,
+			fieldBatchCodec,
+			options,
+		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
 			SharedTreeChangeFamily.emptyChange,
@@ -227,11 +245,12 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.view = createTreeCheckout({
+		this.view = createTreeCheckout(runtime.idCompressor, {
 			branch: localBranch,
 			changeFamily,
 			schema,
 			forest,
+			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
 		});
@@ -290,6 +309,7 @@ export class SharedTree
 			return {
 				schema: this.storedSchema.clone(),
 				tree: jsonableTreeFromFieldCursor(cursor),
+				removed: this.view.getRemovedRoots(),
 			};
 		} finally {
 			cursor.free();
@@ -324,10 +344,10 @@ export class SharedTree
 					case FieldKinds.optional.identifier: {
 						const fieldEditor = this.editor.optionalField(field);
 						assert(
-							content.length <= 1,
+							content.getFieldLength() <= 1,
 							0x7f4 /* optional field content should normalize at most one item */,
 						);
-						fieldEditor.set(content.length === 0 ? undefined : content[0], true);
+						fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
 						break;
 					}
 					case FieldKinds.sequence.identifier: {
@@ -371,7 +391,7 @@ export class SharedTree
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	/**
@@ -383,7 +403,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 
 /**
  * Used to distinguish between different forest types.
- * @alpha
+ * @internal
  */
 export enum ForestType {
 	/**
@@ -406,7 +426,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
- * @alpha
+ * @internal
  */
 export class SharedTreeFactory implements IChannelFactory {
 	public readonly type: string = "https://graph.microsoft.com/types/tree";

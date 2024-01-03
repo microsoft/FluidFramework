@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../schema-stored";
-import { ITreeCursorSynchronous } from "./cursor";
+import { RevisionTag } from "../rebase/index.js";
+import { FieldKey } from "../schema-stored/index.js";
+import { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * This format describes changes that must be applied to a forest in order to update it.
@@ -67,7 +68,7 @@ import { ITreeCursorSynchronous } from "./cursor";
 /**
  * Represents the change made to a document.
  * Immutable, therefore safe to retain for async processing.
- * @alpha
+ * @internal
  */
 export interface Root<TTree = ProtoNode> {
 	/**
@@ -100,7 +101,7 @@ export interface Root<TTree = ProtoNode> {
  * Ownership and lifetime of data referenced by this cursor is unclear,
  * so it is a poor abstraction for this use-case which needs to hold onto the data in a non-exclusive (readonly) way.
  * Cursors can be one supported way to input data, but aren't a good storage format.
- * @alpha
+ * @internal
  */
 export type ProtoNode = ITreeCursorSynchronous;
 
@@ -112,13 +113,13 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Additionally, Cursors support sequences, so if using cursors, there are better ways to handle this than an array of cursors,
  * like using a cursor over all the content (starting in fields mode).
  * Long term something like TreeChunk should probably be used here.
- * @alpha
+ * @internal
  */
 export type ProtoNodes = readonly ProtoNode[];
 
 /**
  * Represents a change being made to a part of the document tree.
- * @alpha
+ * @internal
  */
 export interface Mark<TTree = ProtoNode> {
 	/**
@@ -148,21 +149,21 @@ export interface Mark<TTree = ProtoNode> {
 
 /**
  * A globally unique ID for a node in a detached field.
- * @alpha
+ * @internal
  */
 export interface DetachedNodeId {
-	readonly major?: string | number;
+	readonly major?: RevisionTag;
 	readonly minor: number;
 }
 
 /**
- * @alpha
+ * @internal
  */
 export type FieldMap<TTree = ProtoNode> = ReadonlyMap<FieldKey, FieldChanges<TTree>>;
 
 /**
  * Represents changes made to a detached node
- * @alpha
+ * @internal
  */
 export interface DetachedNodeChanges<TTree = ProtoNode> {
 	readonly id: DetachedNodeId;
@@ -174,7 +175,7 @@ export interface DetachedNodeChanges<TTree = ProtoNode> {
  *
  * Tree creation is idempotent: if a tree with the same ID already exists,
  * then this build is ignored in favor of the existing tree.
- * @alpha
+ * @internal
  */
 export interface DetachedNodeBuild<TTree = ProtoNode> {
 	readonly id: DetachedNodeId;
@@ -183,7 +184,7 @@ export interface DetachedNodeBuild<TTree = ProtoNode> {
 
 /**
  * Represents the destruction of detached nodes
- * @alpha
+ * @internal
  */
 export interface DetachedNodeDestruction {
 	readonly id: DetachedNodeId;
@@ -192,7 +193,7 @@ export interface DetachedNodeDestruction {
 
 /**
  * Represents a detached node being assigned a new `DetachedNodeId`.
- * @alpha
+ * @internal
  */
 export interface DetachedNodeRename {
 	readonly count: number;
@@ -202,7 +203,7 @@ export interface DetachedNodeRename {
 
 /**
  * Represents the changes to perform on a given field.
- * @alpha
+ * @internal
  */
 export interface FieldChanges<TTree = ProtoNode> {
 	/**

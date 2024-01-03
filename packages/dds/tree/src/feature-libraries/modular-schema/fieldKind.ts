@@ -10,10 +10,10 @@ import {
 	TreeStoredSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
-} from "../../core";
-import { Multiplicity } from "../multiplicity";
-import { isNeverField } from "./comparison";
-import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
+} from "../../core/index.js";
+import { Multiplicity } from "../multiplicity.js";
+import { isNeverField } from "./comparison.js";
+import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -27,7 +27,7 @@ import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
  *
- * @sealed @alpha
+ * @sealed @internal
  * @privateRemarks
  * This being @sealed is for users of this package.
  * This package itself may provide implementations.
@@ -135,7 +135,7 @@ export function withEditor<
 /**
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
- * @alpha
+ * @internal
  */
 export interface FullSchemaPolicy {
 	/**

@@ -5,7 +5,7 @@
 
 import type { IEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { fail, getOrCreate } from "../util";
+import { fail, getOrCreate } from "../util/index.js";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
@@ -18,7 +18,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 
 /**
  * `true` iff the given type is an acceptable shape for an event
- * @beta
+ * @public
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
@@ -39,7 +39,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
  * }
  * ```
  *
- * @beta
+ * @public
  */
 export type Events<E> = {
 	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -73,7 +73,6 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
  *
- * {@link createEmitter} can help implement this interface via delegation.
  * `EventEmitter` can be used as a base class to implement this via extension.
  * @param E - All the events that this emitter supports
  * @example
@@ -83,7 +82,10 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  *   error: (errorCode: number) => void;
  * }>
  * ```
- * @beta
+ * @privateRemarks
+ * {@link createEmitter} can help implement this interface via delegation.
+ *
+ * @public
  */
 export interface ISubscribable<E extends Events<E>> {
 	/**
@@ -98,7 +100,7 @@ export interface ISubscribable<E extends Events<E>> {
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @alpha
+ * @internal
  */
 export interface IEmitter<E extends Events<E>> {
 	/**
@@ -129,7 +131,7 @@ export interface IEmitter<E extends Events<E>> {
  *
  * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
- * @alpha
+ * @internal
  */
 export function createEmitter<E extends Events<E>>(
 	noListeners?: NoListenersCallback<E>,
@@ -140,12 +142,12 @@ export function createEmitter<E extends Events<E>>(
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @alpha
+ * @internal
  */
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
 /**
- * @alpha
+ * @internal
  */
 export interface HasListeners<E extends Events<E>> {
 	/**

@@ -13,40 +13,49 @@ import {
 	FieldKey,
 	FieldKindIdentifier,
 	makeAnonChange,
-	mintRevisionTag,
 	revisionMetadataSourceFromInfo,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-} from "../../core";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultEditBuilder,
 	FieldKinds,
 	FieldKindWithEditor,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 
-import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
-import { assertDeltaEqual, defaultRevisionMetadataFromChanges, testChangeReceiver } from "../utils";
+import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util/index.js";
+import {
+	assertDeltaEqual,
+	defaultRevisionMetadataFromChanges,
+	failCodec,
+	mintRevisionTag,
+	testChangeReceiver,
+	testIdCompressor,
+} from "../utils.js";
 import {
 	intoDelta,
 	ModularChangeFamily,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeFamily";
-import { leaf } from "../../domains";
+} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
-import { RevisionTagCodec } from "../../shared-tree-core";
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 // eslint-disable-next-line import/no-internal-modules
-import { MarkMaker } from "./sequence-field/testEdits";
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { MarkMaker } from "./sequence-field/testEdits.js";
+// eslint-disable-next-line import/no-internal-modules
+import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, new RevisionTagCodec(), {
+const family = new ModularChangeFamily(fieldKinds, testIdCompressor, failCodec, {
 	jsonValidator: typeboxValidator,
 });
 
@@ -61,7 +70,7 @@ const tag3: RevisionTag = mintRevisionTag();
 // Tests the integration of ModularChangeFamily with the default field kinds.
 describe("ModularChangeFamily integration", () => {
 	describe("rebase", () => {
-		it("delete over cross-field move", () => {
+		it("remove over cross-field move", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
 
@@ -76,11 +85,11 @@ describe("ModularChangeFamily integration", () => {
 			editor.exitTransaction();
 
 			editor.enterTransaction();
-			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+			editor.sequenceField({ parent: undefined, field: fieldA }).remove(1, 1);
 			editor.exitTransaction();
 
 			editor.enterTransaction();
-			editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
+			editor.sequenceField({ parent: undefined, field: fieldB }).remove(2, 1);
 			editor.exitTransaction();
 
 			const [move, remove, expected] = getChanges();
@@ -94,10 +103,10 @@ describe("ModularChangeFamily integration", () => {
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 
-		it("cross-field move over delete", () => {
+		it("cross-field move over remove", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
-			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+			editor.sequenceField({ parent: undefined, field: fieldA }).remove(1, 1);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				1,
@@ -153,7 +162,7 @@ describe("ModularChangeFamily integration", () => {
 					parent: node2Path,
 					field: fieldC,
 				})
-				.delete(0, 1);
+				.remove(0, 1);
 
 			editor.exitTransaction();
 			const [move1, move2, modify] = getChanges();
@@ -165,14 +174,26 @@ describe("ModularChangeFamily integration", () => {
 				taggedMoves,
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
-			const fieldCExpected = [MarkMaker.delete(1, brand(2))];
+			const fieldCExpected = [MarkMaker.remove(1, brand(2))];
 			const node2Expected = {
 				fieldChanges: new Map([
 					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
 				]),
 			};
 
-			const fieldBExpected = [{ count: 1, changes: node2Expected }];
+			const fieldBExpected = purgeUnusedCellOrderingInfo([
+				{ count: 1, changes: node2Expected },
+				// The two marks below a not essential and only exist because we're currently using tombstone
+				{ count: 1 },
+				{
+					count: 1,
+					cellId: {
+						revision: tag1,
+						localId: brand(0),
+						adjacentCells: [{ id: brand(0), count: 1 }],
+					},
+				},
+			]);
 
 			const node1Expected = {
 				fieldChanges: new Map([
@@ -180,7 +201,19 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldAExpected = [{ count: 1, changes: node1Expected }];
+			const fieldAExpected = purgeUnusedCellOrderingInfo([
+				{ count: 1, changes: node1Expected },
+				// The two marks below a not essential and only exist because we're currently using tombstones
+				{ count: 1 },
+				{
+					count: 1,
+					cellId: {
+						revision: tag1,
+						localId: brand(1),
+						adjacentCells: [{ id: brand(1), count: 1 }],
+					},
+				},
+			]);
 
 			const expected: ModularChangeset = {
 				fieldChanges: new Map([
@@ -408,7 +441,7 @@ describe("ModularChangeFamily integration", () => {
 					parent: node2Path,
 					field: fieldC,
 				})
-				.delete(0, 1);
+				.remove(0, 1);
 
 			editor.exitTransaction();
 			const [move1, move2, modify] = getChanges();
@@ -427,7 +460,13 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(1), { changes: node2Expected }),
+				MarkMaker.moveOut(1, brand(1), {
+					changes: node2Expected,
+					idOverride: {
+						type: DetachIdOverrideType.Unattach,
+						id: { revision: tag1, localId: brand(1) },
+					},
+				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 			];
@@ -439,7 +478,13 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldAExpected = [
-				MarkMaker.moveOut(1, brand(0), { changes: node1Expected }),
+				MarkMaker.moveOut(1, brand(0), {
+					changes: node1Expected,
+					idOverride: {
+						type: DetachIdOverrideType.Unattach,
+						id: { revision: tag1, localId: brand(0) },
+					},
+				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];

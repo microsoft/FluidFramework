@@ -160,7 +160,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	/**
 	 * This stores IDs of tombstoned blobs.
-	 * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
+	 *
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
 	 */
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
@@ -770,10 +772,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const maybeUnusedStorageIds: Set<string> = new Set();
 		for (const route of blobRoutes) {
 			const blobId = getBlobIdFromGCNodePath(route);
+			// If the blob hasn't already been deleted, log an error because this should never happen.
+			// If the blob has already been deleted, log a telemetry event. This can happen because multiple GC
+			// sweep ops can contain the same data store. It would be interesting to track how often this happens.
+			const alreadyDeleted = this.isBlobDeleted(route);
 			if (!this.redirectTable.has(blobId)) {
-				this.mc.logger.sendErrorEvent({
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "DeletedAttachmentBlobNotFound",
+					category: alreadyDeleted ? "generic" : "error",
 					blobId,
+					details: { alreadyDeleted },
 				});
 				continue;
 			}
@@ -801,8 +809,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * This is called to update blobs whose routes are tombstones. Tombstoned blobs enable testing scenarios with
-	 * accessing deleted content without actually deleting content from summaries.
+	 * This is called to update blobs whose routes are tombstones.
+	 *
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
+	 *
 	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
