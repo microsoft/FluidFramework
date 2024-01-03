@@ -10,7 +10,11 @@ import { IFluidHandle, ITelemetryBaseEvent, LogLevel } from "@fluidframework/cor
 import { Deferred, assert, delay } from "@fluidframework/core-utils";
 import { SharedCounter } from "@fluidframework/counter";
 import { IValueChanged, SharedMap } from "@fluidframework/map";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import { GcFailureExitCode, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
 
 /**
@@ -576,7 +580,15 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		}
 
 		this._nodeId = nodeId;
-		this._logger = config.logger;
+		this._logger = createChildLogger({
+			logger: config.logger,
+			namespace: "GC:Stress",
+			properties: {
+				all: {
+					clientId: this.context.clientId,
+				},
+			},
+		});
 		this.running = true;
 		this._blobContentPrefix = `${this.id}-client${config.runId}`;
 		/**
@@ -1000,9 +1012,6 @@ export class RootDataObject extends DataObject implements ITestRunner {
 			sendFunc = sendFunc.bind(config.logger);
 			sendFunc(event, logLevel);
 			if (
-				event.eventName.includes("InactiveObject") ||
-				event.eventName.includes("TombstoneReadyObject") ||
-				event.eventName.includes("SweepReadyObject") ||
 				event.eventName.includes("GC_Tombstone") ||
 				event.eventName.includes("GC_Deleted")
 			) {
