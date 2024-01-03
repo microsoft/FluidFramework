@@ -11,7 +11,7 @@ import {
 	FieldKinds,
 	AllowedTypes as FlexAllowedTypes,
 	TreeNodeSchemaBase as FlexTreeNodeSchemaBase,
-	TreeNodeSchema as FlexTreeNodeSchema,
+	FlexTreeNodeSchema,
 	defaultSchemaPolicy,
 	MapNodeSchema as FlexMapNodeSchema,
 	FieldNodeSchema as FlexFieldNodeSchema,
