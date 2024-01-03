@@ -23,6 +23,7 @@ import {
 	makeFieldBatchCodec,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
 import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { ForestType } from "../../../shared-tree";
 import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils";
@@ -31,7 +32,9 @@ import {
 	Chunker,
 	defaultChunkPolicy,
 	tryShapeFromSchema,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
+// eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 
 const options = {
