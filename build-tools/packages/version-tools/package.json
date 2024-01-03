@@ -75,12 +75,12 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@oclif/core": "^3.15.1",
+		"@oclif/core": "^3.16.0",
 		"@oclif/plugin-autocomplete": "^3.0.4",
-		"@oclif/plugin-commands": "^3.0.8",
+		"@oclif/plugin-commands": "^3.1.0",
 		"@oclif/plugin-help": "^6.0.9",
 		"@oclif/plugin-not-found": "^3.0.7",
-		"@oclif/plugin-plugins": "^4.1.13",
+		"@oclif/plugin-plugins": "^4.1.14",
 		"chalk": "^2.4.2",
 		"semver": "^7.5.4",
 		"table": "^6.8.1"
@@ -106,7 +106,7 @@
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
-		"oclif": "^4.1.0",
+		"oclif": "^4.1.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
