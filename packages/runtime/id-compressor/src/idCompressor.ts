@@ -615,7 +615,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	static deserialize2_0(index: Index, sessionId?: SessionId): IdCompressor {
+	private static deserialize2_0(index: Index, sessionId?: SessionId): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
