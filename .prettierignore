@@ -95,6 +95,9 @@ docs/themes/thxvscode/assets/js/bundle.js
 # Ignore these scss files
 docs/themes/thxvscode/assets/scss/*
 
+# Generated
+docs/static/staticwebapp.config.json
+
 # This is a test file
 tools/markdown-magic/test/include.md
 
