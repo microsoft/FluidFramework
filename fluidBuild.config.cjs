@@ -3,12 +3,29 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
-
 /**
- * This is a superset of the tasks that compile commonjs.
+ * This is a superset of the tasks that compile commonjs. Once the tsc task is completely removed, this can be
+ * removed and replaced with just "compile:commonjs".
  */
 const commonjsSuperset = ["tsc", "compile:commonjs"];
+
+/**
+ * This is a superset of the tasks that commonjs builds depend on. Once the tsc task is completely removed, this can be
+ * updated to remove the ^tsc entry.
+ */
+const commonjsDependsOn = ["^tsc", "^compile:commonjs", "^api", "build:genver", "ts2esm"];
+
+/**
+ * This is a superset of the tasks that compile esm. Once the build:esnext task is completely removed, this can be
+ * removed and replaced with just "compile:esm".
+ */
+const esmSuperset = ["build:esnext", "compile:esm"];
+
+/**
+ * This is a superset of the tasks that esm builds depend on. Once the build:esnext task is completely removed, this can
+ * be updated to remove the ^build:esnext entry.
+ */
+const esmDependsOn = ["^build:esnext", "^compile:esm"];
 
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
@@ -29,7 +46,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			dependsOn: ["commonjs", ...esmSuperset, "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -51,14 +68,11 @@ module.exports = {
 		"build:copy": [],
 		"build:genver": [],
 		"ts2esm": [],
-		"typetests:gen": ["^tsc", "^compile:commonjs", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
-		"tsc": tscDependsOn,
-		"compile:commonjs": tscDependsOn,
-		"build:esnext": [...tscDependsOn, "^build:esnext"],
+		"typetests:gen": [...commonjsDependsOn, "build:genver"], // we may reexport type from dependent packages, needs to build them first.
+		"tsc": [...commonjsDependsOn],
+		"compile:commonjs": [...commonjsDependsOn],
+		"build:esnext": [...commonjsDependsOn, ...esmDependsOn],
 		"build:test": [
-			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
-			// requires them. I don't want to change the policy right now.
-			...tscDependsOn,
 			"typetests:gen",
 			...commonjsSuperset,
 			"api-extractor:commonjs",
@@ -70,7 +84,7 @@ module.exports = {
 		},
 		"api-extractor:commonjs": [...commonjsSuperset],
 		"api-extractor:esnext": {
-			dependsOn: ["build:esnext"],
+			dependsOn: [...esmDependsOn],
 			script: true,
 		},
 		"build:docs": [...commonjsSuperset],
@@ -86,12 +100,12 @@ module.exports = {
 		"depcruise": [],
 		"check:release-tags": [...commonjsSuperset],
 		"check:are-the-types-wrong": ["build"],
-		"eslint": [...tscDependsOn, "commonjs"],
+		"eslint": [...commonjsDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
 		"prettier:fix": [],
-		"webpack": ["^tsc", "^build:esnext"],
-		"webpack:profile": ["^tsc", "^build:esnext"],
+		"webpack": [...commonjsDependsOn, ...esmDependsOn],
+		"webpack:profile": [...commonjsDependsOn, ...esmDependsOn],
 		"clean": {
 			before: ["*"],
 		},
