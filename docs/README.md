@@ -341,6 +341,7 @@ The following npm scripts are supported in this directory:
 | `build:md-magic:code` | `node markdown-magic-code.js` |
 | `build:md-magic:website` | `node markdown-magic-website.js` |
 | `build:multi-version` | Build the site; outputs to `public/` by default. Includes API content from all major release branches. |
+| `build:redirects` | `node ./build-redirects.js` |
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `build:website` | Build the website (including generating API docs and running markdown-magic) |
 | `build:website:multi-version` | `Build the website (including generating API docs and running markdown-magic). Includes API content from all major release branches. |
