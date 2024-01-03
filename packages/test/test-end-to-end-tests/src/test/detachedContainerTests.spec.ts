@@ -57,7 +57,7 @@ const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type:
 	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
 
-describeCompat("Detached Container", "2.0.0-internal.7.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [

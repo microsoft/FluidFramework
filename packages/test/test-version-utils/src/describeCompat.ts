@@ -52,6 +52,7 @@ export function isCompatVersionBelowMinVersion(
 	const compatVersionIndex: number = versionsMap.get(compatVersion) as number;
 	return compatVersionIndex < minVersionIndex;
 }
+
 /*
  * Mocha Utils for test to generate the compat variants.
  */

@@ -15,7 +15,7 @@ import {
 } from "../compatOptions.cjs";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import { baseVersion, testBaseVersion } from "./baseVersion.js";
+import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
 /**
@@ -186,7 +186,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	// not working with new rc version
 	const _configList: CompatConfig[] = [];
 
-	const [, semverInternal] = fromInternalScheme("2.0.0-internal.8.0.0", true, true);
+	const [, semverInternal] = fromInternalScheme(codeVersion, true, true);
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 	const greatestMajor = semverInternal.major;
