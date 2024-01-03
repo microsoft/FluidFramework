@@ -62,8 +62,8 @@ const change1WithChildChange: OptionalChangeset = {
 	childChanges: [["self", nodeChange1]],
 };
 
-describe("defaultFieldChangeCodecs", () => {
-	describe("OptionalChangeset", () => {
+export function testCodecs() {
+	describe("Codecs", () => {
 		const sessionId = "session1" as SessionId;
 		const encodingTestData: EncodingTestData<OptionalChangeset, unknown, SessionId> = {
 			successes: [
@@ -80,6 +80,4 @@ describe("defaultFieldChangeCodecs", () => {
 			encodingTestData,
 		);
 	});
-
-	// TODO: test other kinds of changesets
-});
+}
