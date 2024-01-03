@@ -5,40 +5,53 @@
 
 /**
  * This download script is used in docs/package.json to download the api json docs from the azure storage.
- * This script accepts an optional boolean parameter which controls if all versions or only the latest version 
+ * This script accepts an optional boolean parameter which controls if all versions or only the latest version
  * of the doc models get downloaded. (pass in true for all versions)
  * e.g. "node ./download-apis.js true"
  */
 
 const chalk = require("chalk");
 const download = require("download");
+const fs = require("fs-extra");
+const path = require("path");
 const versions = require("./data/versions.json");
 
 const renderMultiVersion = process.argv[2];
 
-docVersions = renderMultiVersion
+const docVersions = renderMultiVersion
 	? versions.params.previousVersions.concat(versions.params.currentVersion)
 	: [versions.params.currentVersion];
 
-const downloadConfigs = [];
+const downloadPromises = docVersions.map(async (version) => {
+	// We don't add a version-postfix for "current" version, since local website builds want to use the
+	// locally generated API doc models when present.
+	const versionPostfix = version === versions.params.currentVersion ? "" : `-${version}`;
+	const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest${versionPostfix}.tar.gz`;
+	const destination = path.resolve(
+		__dirname,
+		"..",
+		`_api-extractor-temp${versionPostfix}`,
+		"doc-models",
+	);
 
-docVersions.forEach((version) => {
-	version = version === versions.params.currentVersion ? "" : "-" + version;
-	const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest${version}.tar.gz`;
-	const destination = `../_api-extractor-temp${version}/doc-models/`;
+	// Delete any existing contents in the directory before downloading artifact
+	await fs.ensureDir(destination);
+	await fs.emptyDir(destination);
 
-	downloadConfigs.push(download(url, destination, { extract: true }));
+	// Download the artifacts
+	return download(url, destination, { extract: true });
 });
 
-Promise.all(
-	downloadConfigs
-).then(
+Promise.all(downloadPromises).then(
 	() => {
-		console.log(chalk.green("API doc models downloaded!"));
+		console.log(chalk.green("API doc model artifacts downloaded!"));
 		process.exit(0);
 	},
 	(error) => {
-		console.error(error);
+		console.error(
+			"Could not download API doc model artifacts due to one or more errors:",
+			error,
+		);
 		process.exit(1);
 	},
 );

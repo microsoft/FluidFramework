@@ -5,6 +5,7 @@
 
 const {
 	ApiItemKind,
+	ApiItemUtilities,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
@@ -12,6 +13,7 @@ const {
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
+const chalk = require("chalk");
 const fs = require("fs-extra");
 const path = require("path");
 
@@ -21,19 +23,26 @@ const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
-async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersionNum) {
+async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) {
+	function logProgress(message) {
+		console.log(`(${version}) ${message}`);
+	}
+
+	function logErrorAndRethrow(message, error) {
+		console.error(chalk.red(`(${version}) ${message}:`));
+		console.error(error);
+		throw error;
+	}
+
 	// Delete existing documentation output
-	console.log("Removing existing generated API docs...");
+	logProgress("Removing existing API docs...");
 	await fs.ensureDir(outputDir);
 	await fs.emptyDir(outputDir);
 
 	// Process API reports
-	console.log("Loading API model...");
-	console.group();
+	logProgress("Loading API model...");
 
 	const apiModel = await loadModel(inputDir);
-
-	console.groupEnd();
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
@@ -55,52 +64,49 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
-		packageFilterPolicy: (apiPackage) => {
-			// Skip `@fluid-internal` packages
+		skipPackage: (apiPackage) => {
+			// Skip `@fluid-internal` and `@fluid-private` packages
 			const packageName = apiPackage.displayName;
 			const packageScope = PackageName.getScope(packageName);
 
-			console.log(`${packageName}: ${packageScope}`);
-
-			return ["@fluid-internal"].includes(packageScope);
+			return ["@fluid-internal", "@fluid-private"].includes(packageScope);
 		},
-		fileNamePolicy: (apiItem) => {
-			return apiItem.kind === ApiItemKind.Model
-				? "index"
-				: DefaultPolicies.defaultFileNamePolicy(apiItem);
+		getFileNameForItem: (apiItem) => {
+			switch (apiItem.kind) {
+				case ApiItemKind.Model: {
+					return "ref"; // TODO
+				}
+				case ApiItemKind.Package: {
+					return ApiItemUtilities.getUnscopedPackageName(apiItem);
+				}
+				default: {
+					return ApiItemUtilities.getQualifiedApiItemName(apiItem);
+				}
+			}
 		},
-		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
+		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers, version),
 		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.
 		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
-	console.log("Generating API documentation...");
-	console.group();
+	logProgress("Generating API documentation...");
 
 	let documents;
 	try {
 		documents = transformApiModel(config);
 	} catch (error) {
-		console.error("Encountered error while generating API documentation:", error);
-		throw error;
+		logErrorAndRethrow("Encountered error while generating API documentation", error);
 	}
 
-	console.groupEnd();
-
-	console.group();
-	console.log("Generating nav contents...");
+	logProgress("Generating nav bar contents...");
 
 	try {
-		await buildNavBar(documents, apiVersionNum);
+		await buildNavBar(documents, version);
 	} catch (error) {
-		console.error("Error saving nav bar yaml files:", error);
-		throw error;
+		logErrorAndRethrow("Encountered an error while saving nav bar yaml files", error);
 	}
 
-	console.groupEnd();
-
-	console.log("Writing API documents to disk...");
-	console.group();
+	logProgress("Writing API documents to disk...");
 
 	await Promise.all(
 		documents.map(async (document) => {
@@ -111,8 +117,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 					customRenderers,
 				});
 			} catch (error) {
-				console.error("Encountered error while rendering Markdown:", error);
-				throw error;
+				logErrorAndRethrow("Encountered error while rendering Markdown", error);
 			}
 
 			let filePath = path.join(outputDir, `${document.documentPath}.md`);
@@ -129,16 +134,13 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 				await fs.ensureFile(filePath);
 				await fs.writeFile(filePath, fileContents);
 			} catch (error) {
-				console.error(
-					`Encountered error while writing file output for "${document.apiItem.displayName}":`,
+				logErrorAndRethrow(
+					`Encountered error while writing file output for "${document.apiItem.displayName}"`,
+					error,
 				);
-				console.error(error);
-				throw error;
 			}
 		}),
 	);
-
-	console.groupEnd();
 }
 
 module.exports = {
