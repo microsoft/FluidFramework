@@ -313,6 +313,17 @@ describe("IdCompressor", () => {
 		});
 	});
 
+	it("does not return the same non-empty range twice", () => {
+		const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);
+		generateCompressedIds(rangeCompressor, 3);
+		const range1 = rangeCompressor.takeNextCreationRange();
+		assert.notEqual(range1.ids, undefined);
+		const range2 = rangeCompressor.takeNextCreationRange();
+		assert.equal(range2.ids, undefined);
+		rangeCompressor.finalizeCreationRange(range1);
+		rangeCompressor.finalizeCreationRange(range2);
+	});
+
 	describe("Finalizing", () => {
 		it("prevents attempts to finalize ranges twice", () => {
 			const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);

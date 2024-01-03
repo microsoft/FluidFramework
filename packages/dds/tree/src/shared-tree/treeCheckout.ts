@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/runtime-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	AnchorLocator,
 	IForestSubscription,

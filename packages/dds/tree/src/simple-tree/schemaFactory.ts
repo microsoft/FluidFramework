@@ -25,9 +25,7 @@ import {
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../simple-tree/proxies.js";
-import { TreeArrayNode, TreeNode } from "../simple-tree/index.js";
+} from "./proxies.js";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
 	AllowedTypes,
@@ -49,6 +47,8 @@ import {
 	WithType,
 	type,
 } from "./schemaTypes.js";
+import { TreeNode } from "./types.js";
+import { TreeArrayNode } from "./treeListNode.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
