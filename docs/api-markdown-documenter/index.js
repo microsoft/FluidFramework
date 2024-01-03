@@ -23,7 +23,7 @@ docVersions = renderMultiVersion
 	: [versions.params.currentVersion];
 
 const apiDocRenders = docVersions.map(async (version) => {
-	// We don't add a version-postfix for "current" version, since local website builds want to use the
+	// We don't add a version-postfix directory name for "current" version, since local website builds want to use the
 	// locally generated API doc models when present.
 	const versionPostfix = version === versions.params.currentVersion ? "" : `-${version}`;
 

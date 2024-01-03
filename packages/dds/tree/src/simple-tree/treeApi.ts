@@ -13,11 +13,11 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { TreeNode } from "../simple-tree/index.js";
+import { TreeNode } from "./types.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexNode, tryGetFlexNode } from "../simple-tree/flexNode.js";
+import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getClassSchema, getOrCreateNodeProxy } from "../simple-tree/proxies.js";
+import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";

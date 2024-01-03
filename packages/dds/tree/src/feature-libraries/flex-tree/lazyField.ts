@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
+import { StableId } from "@fluidframework/id-compressor";
 import {
 	FieldKey,
 	TreeNavigationResult,

@@ -23,11 +23,26 @@ const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
+/**
+ * Generates a documentation suite for the API model saved under `inputDir`, saving the output to `outputDir`.
+ * @param {string} inputDir - The directory path containing the API model to be processed.
+ * @param {string} outputDir - The directory path under which the generated documentation suite will be saved.
+ * @param {string} uriRootDir - The base for all links between API members.
+ * @param {string} version - The API model version string used to differentiate different major versions of the
+ * framework for which API documentation is presented on the website.
+ */
 async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) {
+	/**
+	 * Logs a progress message, prefaced with the API version number to help differentiate parallel logging output.
+	 */
 	function logProgress(message) {
 		console.log(`(${version}) ${message}`);
 	}
 
+	/**
+	 * Logs the error with the specified message, prefaced with the API version number to help differentiate parallel
+	 * logging output, and re-throws the error.
+	 */
 	function logErrorAndRethrow(message, error) {
 		console.error(chalk.red(`(${version}) ${message}:`));
 		console.error(error);
@@ -35,7 +50,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) 
 	}
 
 	// Delete existing documentation output
-	logProgress("Removing existing API docs...");
+	logProgress("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
 	await fs.emptyDir(outputDir);
 
@@ -95,7 +110,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) 
 	try {
 		documents = transformApiModel(config);
 	} catch (error) {
-		logErrorAndRethrow("Encountered error while generating API documentation", error);
+		logErrorAndRethrow("Encountered error while processing API model", error);
 	}
 
 	logProgress("Generating nav bar contents...");
@@ -117,7 +132,10 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) 
 					customRenderers,
 				});
 			} catch (error) {
-				logErrorAndRethrow("Encountered error while rendering Markdown", error);
+				logErrorAndRethrow(
+					`Encountered error while rendering Markdown contents for "${document.apiItem.displayName}"`,
+					error,
+				);
 			}
 
 			let filePath = path.join(outputDir, `${document.documentPath}.md`);
