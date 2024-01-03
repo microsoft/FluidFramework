@@ -57,17 +57,6 @@ const apiDocRenders = docVersions.map(async (version) => {
 Promise.all(apiDocRenders).then(
 	() => {
 		console.log(chalk.green("All API docs written!"));
-
-		buildRedirects().then(
-			() => {
-				console.log(chalk.green("Redirects generated!"));
-			},
-			() => {
-				// Encountered 1 or more errors.
-				// Exit with non-0 code to fail build.
-				process.exit(1);
-			},
-		);
 	},
 	() => {
 		// Encountered 1 or more errors.
