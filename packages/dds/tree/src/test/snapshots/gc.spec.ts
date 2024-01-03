@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../class-tree/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {

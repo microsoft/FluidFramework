@@ -23,7 +23,7 @@ import {
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "./class-tree/index.js";
+} from "./simple-tree/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
