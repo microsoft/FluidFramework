@@ -11,7 +11,7 @@ import {
 	FieldKinds,
 	InsertableFlexNode,
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 } from "../../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../../util/index.js";
 
@@ -29,7 +29,7 @@ export const listTaskSchema = builder.objectRecursive("ListTask", {
 
 {
 	// Recursive objects don't get this type checking automatically, so confirm it
-	type _check = requireAssignableTo<typeof listTaskSchema, TreeNodeSchema>;
+	type _check = requireAssignableTo<typeof listTaskSchema, FlexTreeNodeSchema>;
 }
 
 export const rootFieldSchema = SchemaBuilder.required([stringTaskSchema, listTaskSchema]);

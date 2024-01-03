@@ -158,7 +158,7 @@ export {
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
 	AllowedTypes as FlexAllowedTypes,
-	TreeNodeSchema as FlexTreeNodeSchema,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
