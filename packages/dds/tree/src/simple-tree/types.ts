@@ -5,7 +5,7 @@
 
 import { FieldNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type, WithType } from "../class-tree/schemaTypes.js";
+import { type, WithType } from "./schemaTypes.js";
 import { IterableTreeListContent } from "./treeListNode.js";
 
 /**

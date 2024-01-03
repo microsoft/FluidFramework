@@ -11,7 +11,7 @@ import {
 	FieldKinds,
 	AllowedTypes as FlexAllowedTypes,
 	TreeNodeSchemaBase as FlexTreeNodeSchemaBase,
-	TreeNodeSchema as FlexTreeNodeSchema,
+	FlexTreeNodeSchema,
 	defaultSchemaPolicy,
 	MapNodeSchema as FlexMapNodeSchema,
 	FieldNodeSchema as FlexFieldNodeSchema,
@@ -21,18 +21,18 @@ import {
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import {
-	InsertableContent,
-	extractFactoryContent,
-	getClassSchema,
-	simpleSchemaSymbol,
-} from "../simple-tree/proxies.js";
-import {
 	AllowedUpdateType,
 	ITreeCursorSynchronous,
 	TreeNodeSchemaIdentifier,
 } from "../core/index.js";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree/index.js";
-import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
+import {
+	InsertableContent,
+	extractFactoryContent,
+	getClassSchema,
+	simpleSchemaSymbol,
+} from "./proxies.js";
+import { cursorFromNodeData } from "./toMapTree.js";
 import {
 	FieldKind,
 	FieldSchema,

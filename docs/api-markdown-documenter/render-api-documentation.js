@@ -21,6 +21,14 @@ const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
+/**
+ * Generates a documentation suite for the API model saved under `inputDir`, saving the output to `outputDir`.
+ * @param {string} inputDir - The directory path containing the API model to be processed.
+ * @param {string} outputDir - The directory path under which the generated documentation suite will be saved.
+ * @param {string} uriRootDir - The base for all links between API members.
+ * @param {string} apiVersionNum - The API model version string used to differentiate different major versions of the
+ * framework for which API documentation is presented on the website.
+ */
 async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersionNum) {
 	// Delete existing documentation output
 	console.log("Removing existing generated API docs...");
@@ -62,7 +70,8 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 
 			return ["@fluid-internal", "@fluid-private"].includes(packageScope);
 		},
-		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
+		frontMatter: (apiItem) =>
+			createHugoFrontMatter(apiItem, config, customRenderers, apiVersionNum),
 		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.
 		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});

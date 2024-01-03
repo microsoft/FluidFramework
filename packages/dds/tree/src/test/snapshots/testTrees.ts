@@ -20,7 +20,7 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	InsertableFlexNode,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
@@ -260,7 +260,7 @@ export function generateTestTrees() {
 				} as const;
 
 				// Enables below editing code to be slightly less verbose
-				const makeCursor = <T extends TreeNodeSchema>(
+				const makeCursor = <T extends FlexTreeNodeSchema>(
 					schema: T,
 					data: InsertableFlexNode<T>,
 				): ITreeCursorSynchronous =>

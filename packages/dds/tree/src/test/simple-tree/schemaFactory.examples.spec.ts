@@ -7,7 +7,13 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaFactory, ITree, TreeConfiguration, TreeView, Tree } from "../../class-tree/index.js";
+import {
+	SchemaFactory,
+	ITree,
+	TreeConfiguration,
+	TreeView,
+	Tree,
+} from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
