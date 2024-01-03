@@ -14,7 +14,7 @@ import {
 	FullSchemaPolicy,
 	Multiplicity,
 	SchemaLibrary,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
@@ -36,7 +36,7 @@ interface TestTree {
 	readonly treeFactory: () => JsonableTree[];
 }
 
-function testTree<T extends TreeNodeSchema>(
+function testTree<T extends FlexTreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
