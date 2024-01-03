@@ -6,10 +6,10 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { ContainerErrorType } from '@fluidframework/container-definitions';
+import { ContainerErrorTypes } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
-import { DriverErrorType } from '@fluidframework/driver-definitions';
+import { DriverErrorTypes } from '@fluidframework/driver-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -61,7 +61,7 @@ export interface CheckoutEvents {
 
 export { ConnectionState }
 
-export { ContainerErrorType }
+export { ContainerErrorTypes }
 
 export { ContainerSchema }
 
@@ -79,7 +79,7 @@ export enum DiscardResult {
 // @public
 export const disposeSymbol: unique symbol;
 
-export { DriverErrorType }
+export { DriverErrorTypes }
 
 // @public
 export type Events<E> = {

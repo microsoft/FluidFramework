@@ -52,16 +52,6 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-// @internal @deprecated
-export enum ContainerErrorType {
-    clientSessionExpiredError = "clientSessionExpiredError",
-    dataCorruptionError = "dataCorruptionError",
-    dataProcessingError = "dataProcessingError",
-    genericError = "genericError",
-    throttlingError = "throttlingError",
-    usageError = "usageError"
-}
-
 // @alpha
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
@@ -261,6 +251,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     (event: "pong", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
+    // @alpha
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
         reason: string;
