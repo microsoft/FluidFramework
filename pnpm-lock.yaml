@@ -48,6 +48,7 @@ importers:
       rimraf: ^4.4.0
       run-script-os: ^1.1.6
       syncpack: ^9.8.4
+      ts2esm: ^1.4.0
       typescript: ~5.1.6
     devDependencies:
       '@changesets/cli': 2.26.2
@@ -76,6 +77,7 @@ importers:
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
+      ts2esm: 1.4.0
       typescript: 5.1.6
 
   azure/packages/azure-client:
@@ -7263,7 +7265,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      ts2esm: ^1.1.0
+      ts2esm: ^1.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7319,7 +7321,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts2esm: 1.1.0
+      ts2esm: 1.4.0
       typescript: 5.1.6
 
   packages/drivers/debugger:
@@ -42926,14 +42928,14 @@ packages:
       typescript: 5.1.6
     dev: true
 
-  /ts2esm/1.1.0:
-    resolution: {integrity: sha512-XiKYI7ihbeqCyYDNMuR5cmGQ6bTh6URnHv4MEcqCD/VO3XRnbUUECW6VPpiuKxloTuq0S/CfDjSysLDaryAo+Q==}
+  /ts2esm/1.4.0:
+    resolution: {integrity: sha512-F8SML9As4p+9IQCOkRsScGkEcSP4esQm/D3nKMFb6to/2XwqzF2m8fpte/cyK7TAjBXXIcAn3c/DE79qyE2ttQ==}
     engines: {node: '>= 10.9'}
     hasBin: true
     dependencies:
       '@inquirer/prompts': 3.3.0
       ts-morph: 20.0.0
-      typescript: 5.3.2
+      typescript: 5.3.3
     dev: true
 
   /tsc-multi/1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6:
