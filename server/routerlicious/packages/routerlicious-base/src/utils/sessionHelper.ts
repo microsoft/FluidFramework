@@ -4,7 +4,12 @@
  */
 
 import { ISession, NetworkError } from "@fluidframework/server-services-client";
-import { IDocument, runWithRetry, IDocumentRepository } from "@fluidframework/server-services-core";
+import {
+	IDocument,
+	runWithRetry,
+	IDocumentRepository,
+	IClusterDrainingChecker,
+} from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
@@ -79,6 +84,7 @@ async function updateExistingSession(
 	sessionStickinessDurationMs: number,
 	lumberjackProperties: Record<string, any>,
 	messageBrokerId?: string,
+	skipSessionStickiness: boolean = false,
 ): Promise<ISession> {
 	let updatedDeli: string | undefined;
 	let updatedScribe: string | undefined;
@@ -110,7 +116,7 @@ async function updateExistingSession(
 		sessionStickyCalculationTimestamp,
 		sessionStickinessDurationMs,
 	});
-	if (!isSessionSticky || !sessionHasLocation) {
+	if (!isSessionSticky || skipSessionStickiness || !sessionHasLocation) {
 		// Allow session location to be moved.
 		if (
 			existingSession.ordererUrl !== ordererUrl ||
@@ -159,6 +165,9 @@ async function updateExistingSession(
 		isSessionAlive: true,
 		// If session was not alive, it cannot be "active"
 		isSessionActive: false,
+		// Always reset skip session stickiness to false when updating session
+		// since the session should be moved to a different cluster in a clean state.
+		skipSessionStickiness: false,
 	};
 	// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
 	if (updatedMessageBrokerId) {
@@ -267,8 +276,23 @@ export async function getSession(
 	documentRepository: IDocumentRepository,
 	sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
 	messageBrokerId?: string,
+	clusterDrainingChecker?: IClusterDrainingChecker,
 ): Promise<ISession> {
 	const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+
+	// Reject get session request if cluster is in draining process.
+	if (clusterDrainingChecker) {
+		const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
+		// TODO: delete the log
+		console.log(`yunho: session discovery flow, isCluster draining: ${isClusterDraining}`);
+		if (isClusterDraining) {
+			Lumberjack.info("Cluster is in draining process. Reject get session request.");
+			throw new NetworkError(
+				503,
+				"Server is unavailable. Please retry session discovery later.",
+			);
+		}
+	}
 
 	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document.scheduledDeletionTime !== undefined) {
@@ -302,6 +326,7 @@ export async function getSession(
 	}
 
 	// Session is not alive/discovered, so update and persist changes to DB.
+	const skipSessionStickiness = existingSession.skipSessionStickiness ?? false;
 	const updatedSession: ISession = await updateExistingSession(
 		ordererUrl,
 		historianUrl,
@@ -314,6 +339,7 @@ export async function getSession(
 		sessionStickinessDurationMs,
 		lumberjackProperties,
 		messageBrokerId,
+		skipSessionStickiness,
 	);
 	return convertSessionToFreshSession(updatedSession, lumberjackProperties);
 }

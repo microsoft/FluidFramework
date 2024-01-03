@@ -10,6 +10,7 @@ import {
 	ICheckpointService,
 	IClientManager,
 	IContext,
+	IClusterDrainingChecker,
 	IDeliState,
 	IDocument,
 	IDocumentRepository,
@@ -69,6 +70,7 @@ export class DeliLambdaFactory
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
+		private readonly clusterDrainingChecker?: IClusterDrainingChecker | undefined,
 	) {
 		super();
 	}
@@ -274,6 +276,17 @@ export class DeliLambdaFactory
 						"session.isSessionActive": keepSessionActive,
 						"lastAccessTime": Date.now(),
 					};
+					if (this.clusterDrainingChecker) {
+						const isClusterDraining =
+							await this.clusterDrainingChecker.isClusterDraining();
+						if (isClusterDraining) {
+							Lumberjack.info(
+								"Cluster is in draining, set skip session stickiness to be true",
+							);
+							// Skip session stickiness if cluster is in draining
+							data["session.skipSessionStickiness"] = true;
+						}
+					}
 					await this.documentRepository.updateOne(filter, data, undefined);
 					const message = `Marked session alive as false and active as ${keepSessionActive} for closeType:
                         ${JSON.stringify(closeType)}`;

@@ -598,6 +598,15 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 
+		// Set up cluster draining if enabled
+		const clusterDrainingEnabled = utils.getBooleanFromConfig("clusterDraining:enable", config);
+
+		let clusterDrainingChecker: core.IClusterDrainingChecker | undefined;
+		if (clusterDrainingEnabled) {
+			clusterDrainingChecker =
+				customizations?.clusterDrainingChecker ?? new core.DummyClusterDrainingChecker();
+		}
+
 		return new AlfredResources(
 			config,
 			producer,
@@ -630,7 +639,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			revokedTokenChecker,
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
-			customizations?.clusterDrainingChecker,
+			clusterDrainingChecker,
 		);
 	}
 }

@@ -162,6 +162,10 @@ export async function deliCreate(
 		localCheckpointEnabled,
 	);
 
+	// Cluster draining related
+	const clusterDrainingChecker =
+		customizations?.clusterDrainingChecker ?? new core.DummyClusterDrainingChecker();
+
 	return new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
@@ -172,6 +176,7 @@ export async function deliCreate(
 		undefined,
 		reverseProducer,
 		serviceConfiguration,
+		clusterDrainingChecker,
 	);
 }
 

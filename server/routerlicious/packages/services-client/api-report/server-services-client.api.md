@@ -383,6 +383,7 @@ export interface ISession {
     isSessionAlive: boolean;
     messageBrokerId?: string;
     ordererUrl: string;
+    skipSessionStickiness?: boolean;
 }
 
 // @internal (undocumented)

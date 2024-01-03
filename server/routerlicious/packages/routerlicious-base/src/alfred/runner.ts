@@ -102,6 +102,7 @@ export class AlfredRunner implements IRunner {
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
+				this.clusterDrainingChecker,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);
