@@ -54,8 +54,7 @@ function createHugoFrontMatter(apiItem, config, customRenderers, version) {
 	apiMembers.filter(element => element.displayName !== "")
 		.forEach(element => {
 			frontMatter.members[element.kind] = frontMatter.members[element.kind] || {};
-			const link = ApiItemUtilities.getLinkForApiItem(element, config);
-			frontMatter.members[element.kind][element.displayName] = link.target;
+			frontMatter.members[element.kind][element.displayName] = ApiItemUtilities.getLinkForApiItem(element, config).target;
 		});
 
 
