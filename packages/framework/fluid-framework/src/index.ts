@@ -64,7 +64,6 @@ export type {
 	TreeFieldFromImplicitField,
 	TreeLeafValue,
 	TreeMapNode,
-	TreeMapNodeBase,
 	TreeNodeEvents,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
@@ -76,12 +75,11 @@ export type {
 	WithType,
 } from "@fluidframework/tree";
 export {
-	create,
 	DiscardResult,
 	disposeSymbol,
 	FieldKind,
 	FieldSchema,
-	IterableTreeListContent,
+	IterableTreeArrayContent,
 	NodeKind,
 	RevertibleKind,
 	RevertResult,
