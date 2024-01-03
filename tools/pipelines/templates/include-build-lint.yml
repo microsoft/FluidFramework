@@ -4,20 +4,20 @@
 # include-build-lint template for the Build and Lint step in client build and test stability pipeline
 
 parameters:
-- name: taskBuild
-  type: string
+- name: taskBuild 
+  type: string 
   default: ci:build
 
-- name: taskLint
-  type: boolean
+- name: taskLint 
+  type: boolean 
   default: true
 
 - name: taskLintName
   type: string
-  default: lint
+  default: lint 
 
 - name: buildDirectory
-  type: string
+  type: string 
 
 steps:
 - ${{ if ne(parameters.taskBuild, 'false') }}:

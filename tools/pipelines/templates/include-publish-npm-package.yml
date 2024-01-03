@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small-1ES
+  default: Small
 
 - name: isReleaseGroup
   type: boolean
@@ -25,7 +25,7 @@ stages:
   variables:
   - group: ado-feeds
   jobs:
-  - template: /tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml@self
+  - template: include-publish-npm-package-deployment.yml
     parameters:
       feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
       feedKind: internal-test
@@ -39,8 +39,10 @@ stages:
   displayName: Publish to internal build feed
   # This condition should match the condition for publish_npm_internal_dev
   condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
   jobs:
-  - template: /tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml@self
+  - template: include-publish-npm-package-deployment.yml
     parameters:
       feedUrl: $(ado-feeds-build) # Comes from the ado-feeds variable group
       feedKind: internal-build
@@ -56,8 +58,10 @@ stages:
     displayName: Publish to internal dev feed
     # This condition should match the condition for publish_npm_internal_build
     condition: and(succeeded(), eq(variables['testBuild'], false))
+    variables:
+    - group: ado-feeds
     jobs:
-    - template: /tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml@self
+    - template: include-publish-npm-package-deployment.yml
       parameters:
         feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
         feedKind: internal-dev
@@ -69,8 +73,10 @@ stages:
   dependsOn: build
   displayName: Publish to public npmjs.org
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  variables:
+  - group: ado-feeds
   jobs:
-  - template: /tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml@self
+  - template: include-publish-npm-package-deployment.yml
     parameters:
       feedUrl: https://registry.npmjs.org
       feedKind: public

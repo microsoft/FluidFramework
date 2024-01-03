@@ -15,10 +15,12 @@ parameters:
 
 - name: publishFlags
   type: string
-  default: ''
+  default:
+
 - name: customEndPoint
   type: string
-  default: ''
+  default:
+
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
@@ -112,6 +114,7 @@ steps:
 
               if [[ "$(release)" == "release" && $feedName == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
                   scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
                   for scope in "${scopes[@]}"; do

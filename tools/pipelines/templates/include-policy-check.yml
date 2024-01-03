@@ -28,14 +28,14 @@ stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
   displayName: Policy checks
-  pool: Small-1ES
+  pool: Small
   jobs:
   - job:
     displayName: Run checks
     steps:
-    - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
+    - template: include-use-node-version.yml
 
-    - template: /tools/pipelines/templates/1ES/include-install-pnpm.yml@self
+    - template: include-install-pnpm.yml
       parameters:
         buildDirectory: $(Build.SourcesDirectory)
 

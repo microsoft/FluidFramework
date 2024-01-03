@@ -8,14 +8,14 @@ parameters:
   type: string
 
 - name: buildDirectory
-  type: string
+  type: string 
 
 - name: packageManagerInstallCommand
   type: string
 
-steps:
+steps: 
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-    - template: /tools/pipelines/templates/1ES/include-install-pnpm.yml@self
+    - template: include-install-pnpm.yml
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
 

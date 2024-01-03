@@ -15,7 +15,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small-1ES
+  default: Small
 
 - name: publishFlags
   type: string
@@ -45,14 +45,14 @@ jobs:
           steps:
           - download: current
             artifact: pack
-          - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
-          - template: /tools/pipelines/templates/1ES/include-publish-npm-package-steps.yml@self
+          - template: include-use-node-version.yml
+          - template: include-publish-npm-package-steps.yml
             parameters:
               artifactPath: scoped
               feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
-          - template: /tools/pipelines/templates/1ES/include-git-tag-steps.yml@self
+          - template: include-git-tag-steps.yml
             parameters:
               tagName: ${{ parameters.tagName }}

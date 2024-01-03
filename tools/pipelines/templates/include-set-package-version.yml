@@ -47,7 +47,7 @@ steps:
         # more information.
         echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
-  - template: /tools/pipelines/templates/1ES/include-install-pnpm.yml@self
+  - template: include-install-pnpm.yml
     parameters:
       buildDirectory: $(Build.SourcesDirectory)/build-tools
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
