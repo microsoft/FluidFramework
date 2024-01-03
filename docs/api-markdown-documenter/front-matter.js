@@ -20,12 +20,15 @@ const generatedContentNotice =
  * This will be appended to the top of the generated API documents.
  *
  * @param {ApiItem} apiItem - The root API item of the document being rendered.
- * @param {MarkdownDocumenterConfiguration} config - See
+ * @param {@fluid-tools/api-markdown-documenter#MarkdownDocumenterConfiguration} config - See
  * {@link @fluid-tools/api-markdown-documenter#MarkdownDocumenterConfiguration}.
+ * @param {@fluid-tools/api-markdown-documenter#MarkdownRenderers} - Custom renderers to use.
+ * @param {string} version - Version label string.
+ * Will be inserted as the `version` metadata in the generated document front-matter.
  *
  * @returns The JSON-formatted Hugo front-matter as a `string`.
  */
-function createHugoFrontMatter(apiItem, config, customRenderers) {
+function createHugoFrontMatter(apiItem, config, customRenderers, version) {
 	function extractSummary() {
 		const summaryParagraph = transformTsdocNode(
 			apiItem.tsdocComment.summarySection,
@@ -46,6 +49,8 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 
 	const frontMatter = {};
 	frontMatter.title = apiItem.displayName.replace(/"/g, "").replace(/!/g, "");
+	frontMatter.version = version;
+
 	let apiMembers = apiItem.members;
 	switch (apiItem.kind) {
 		case ApiItemKind.Model:
