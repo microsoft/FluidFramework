@@ -38,6 +38,9 @@ import { changesetForChild, fooKey, testTreeCursor } from "../fieldKindTestUtils
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { assertEqual } from "./optionalFieldUtils.js";
+import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
+import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -135,6 +138,10 @@ const change4: TaggedChange<OptionalChangeset> = tagChange(
 
 // TODO: unit test standalone functions from optionalField.ts
 describe("optionalField", () => {
+	testSnapshots();
+	testRebaserAxioms();
+	testCodecs();
+
 	// TODO: more editor tests
 	describe("editor", () => {
 		it("can be created", () => {
@@ -151,7 +158,7 @@ describe("optionalField", () => {
 		});
 	});
 
-	describe("optionalChangeRebaser", () => {
+	describe("Rebaser", () => {
 		it("can be composed", () => {
 			const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
 				assert.equal(changes.length, 1);
@@ -396,7 +403,7 @@ describe("optionalField", () => {
 		});
 	});
 
-	describe("optionalFieldIntoDelta", () => {
+	describe("IntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
 			const outerNodeId = makeDetachedNodeId(tag, 41);
 			const innerNodeId = makeDetachedNodeId(tag, 1);

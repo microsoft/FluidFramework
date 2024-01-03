@@ -8,6 +8,7 @@ export {
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
+	ghostClusterInitialSize,
 } from "./persisted-types";
 
 export { IIdCompressorCore, IIdCompressor } from "./idCompressor";
