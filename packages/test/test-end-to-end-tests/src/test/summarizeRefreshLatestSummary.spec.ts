@@ -21,6 +21,7 @@ import {
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { Deferred } from "@fluidframework/core-utils";
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",
@@ -91,10 +92,16 @@ describeCompat(
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
 			]);
 
+			const twoSummariesDeferred = new Deferred<void>();
 			const summaryVersions: string[] = [];
+			let summariesSeen = 0;
 			container.on("op", (op) => {
 				if (op.type === MessageType.SummaryAck) {
 					summaryVersions.push((op as ISummaryAckMessage).contents.handle);
+					summariesSeen++;
+					if (summariesSeen >= 2) {
+						twoSummariesDeferred.resolve();
+					}
 				}
 				if (op.type === MessageType.SummaryNack) {
 					throw new Error("Unexpected summary nack");
@@ -106,6 +113,7 @@ describeCompat(
 			dataObject._root.set(`a`, "op1");
 			dataObject2._root.set(`b`, "op2");
 			await provider.ensureSynchronized();
+			await twoSummariesDeferred.promise;
 
 			// This verifies that two summaries were generated in succession from two ops.
 			mockLogger.assertMatch([
