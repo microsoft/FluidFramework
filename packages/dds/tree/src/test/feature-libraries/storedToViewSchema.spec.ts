@@ -23,7 +23,7 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";
 import {
@@ -46,7 +46,7 @@ describe("storedToViewSchema", () => {
 			brand<TreeNodeSchemaIdentifier>("y"),
 			ValueSchema.Number,
 		);
-		const schemaMap = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>([
+		const schemaMap = new Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>([
 			[schemaX.name, schemaX],
 			[schemaY.name, schemaY],
 		]);

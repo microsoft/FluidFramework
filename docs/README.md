@@ -334,25 +334,24 @@ The following npm scripts are supported in this directory:
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
-| `build:api` | `npm run build:api-rollup && npm run build:api-documentation` |
+| `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
-| `build:api-documentation:multi-version` | `node ./api-markdown-documenter/index.js true` |
-| `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
-| `build:api-rollup:multi-version` | Runs `node ./rollup-api-json-helper.js true` while passing true to the optional parameter to produce rolled-up API data for all versions specified in data/versions.json. |
-| `build:api:multi-version` | `npm run build:api-rollup:multi-version && npm run build:api-documentation:multi-version` |
+| `build:api-documentation:multi-version` | Convert package API reports (`.api.json` files) into Markdown. Includes API content from all major release branches. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
 | `build:md-magic:website` | `node markdown-magic-website.js` |
 | `build:multi-version` | Build the site; outputs to `public/` by default. Includes API content from all major release branches. |
+| `build:redirects` | `node ./build-redirects.js` |
 | `build:repo-docs` | `npm run build:md-magic:code` |
-| `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo` |
+| `build:website` | Build the website (including generating API docs and running markdown-magic) |
+| `build:website:multi-version` | `Build the website (including generating API docs and running markdown-magic). Includes API content from all major release branches. |
 | `ci:build` | `npm run download && npm run build` |
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
 | `ci:start` | `http-server ./public --port 1313 --silent` |
 | `clean` | Remove all generated files. |
-| `download` | Download and extract the API JSON and Playground files locally. |
-| `download:api` | Download and extract the API JSON files locally. |
-| `download:api:multi` | Download API for all documentation versions and extract the API JSON files locally. |
+| `download` | Download the latest API JSON files from `main` locally and runs a build. |
+| `download:api` | Download the latest API JSON files from `main` locally. |
+| `download:api:multi-version` | Download and extract all latest API JSON from all major release branches files locally. |
 | `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
