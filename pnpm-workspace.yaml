@@ -1,5 +1,7 @@
 packages:
-  - "azure/packages/**"
+  - "azure/packages/*"
+  - "azure/packages/*/*"
+
   - "examples/**"
   - "experimental/**"
 
