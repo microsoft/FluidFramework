@@ -4,9 +4,13 @@
  */
 import { strict as assert } from "assert";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-import { ChangesetLocalId, IEditableForest, TreeStoredSchemaRepository } from "../../../core";
-import { leaf } from "../../../domains";
-import { typeboxValidator } from "../../../external-utilities";
+import {
+	ChangesetLocalId,
+	IEditableForest,
+	TreeStoredSchemaRepository,
+} from "../../../core/index.js";
+import { leaf } from "../../../domains/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	Context,
 	DefaultChangeFamily,
@@ -22,20 +26,20 @@ import {
 	intoStoredSchema,
 	makeFieldBatchCodec,
 	nodeKeyFieldKey,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk";
-import { ForestType } from "../../../shared-tree";
-import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils";
-import { brand } from "../../../util";
+import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import { ForestType } from "../../../shared-tree/index.js";
+import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
+import { brand } from "../../../util/index.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
 	tryShapeFromSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree";
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding";
+import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
