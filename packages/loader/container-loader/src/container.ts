@@ -110,7 +110,7 @@ import {
 	combineAppAndProtocolSummary,
 	getProtocolSnapshotTree,
 	getSnapshotTreeAndBlobsFromSerializedContainer,
-	recombineSnapshotTreeAndSnapshotBlobs,
+	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
 } from "./utils";
 import { initQuorumValuesFromCodeDetails } from "./quorum";
@@ -1832,14 +1832,8 @@ export class Container
 			);
 		}
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			recombineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
+			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
-		return this.rehydrateDetachedFromSnapshotWithBlobs(snapshotTreeWithBlobContents);
-	}
-
-	private async rehydrateDetachedFromSnapshotWithBlobs(
-		snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents,
-	) {
 		const attributes = await this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,

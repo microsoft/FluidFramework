@@ -193,7 +193,7 @@ export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree 
 	return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
 }
 
-export const recombineSnapshotTreeAndSnapshotBlobs = (
+export const combineSnapshotTreeAndSnapshotBlobs = (
 	baseSnapshot: ISnapshotTree,
 	snapshotBlobs: ISerializableBlobContents,
 ): ISnapshotTreeWithBlobContents => {
@@ -209,7 +209,7 @@ export const recombineSnapshotTreeAndSnapshotBlobs = (
 	// Recursively process trees in the current level
 	const trees: { [path: string]: ISnapshotTreeWithBlobContents } = {};
 	for (const [path, tree] of Object.entries(baseSnapshot.trees)) {
-		trees[path] = recombineSnapshotTreeAndSnapshotBlobs(tree, snapshotBlobs);
+		trees[path] = combineSnapshotTreeAndSnapshotBlobs(tree, snapshotBlobs);
 	}
 
 	// Create a new snapshot tree with blob contents and processed trees
@@ -235,9 +235,8 @@ export function isDeltaStreamConnectionForbiddenError(
 /**
  * Validates format in parsed string get from detached container
  * serialization using IPendingDetachedContainerState format.
- * @internal
  */
-export function isPendingDetachedContainerState(
+function isPendingDetachedContainerState(
 	detachedContainerState: IPendingDetachedContainerState,
 ): detachedContainerState is IPendingDetachedContainerState {
 	if (
