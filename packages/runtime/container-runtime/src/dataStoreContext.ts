@@ -50,8 +50,6 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
-	IIdCompressor,
-	IIdCompressorCore,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
@@ -67,6 +65,7 @@ import {
 	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
