@@ -29,11 +29,8 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 
 	// Process API reports
 	console.log("Loading API model...");
-	console.group();
 
 	const apiModel = await loadModel(inputDir);
-
-	console.groupEnd();
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
@@ -68,7 +65,6 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 	});
 
 	console.log("Generating API documentation...");
-	console.group();
 
 	let documents;
 	try {
@@ -78,9 +74,6 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		throw error;
 	}
 
-	console.groupEnd();
-
-	console.group();
 	console.log("Generating nav contents...");
 
 	try {
@@ -90,10 +83,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		throw error;
 	}
 
-	console.groupEnd();
-
 	console.log("Writing API documents to disk...");
-	console.group();
 
 	await Promise.all(
 		documents.map(async (document) => {
@@ -130,8 +120,6 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 			}
 		}),
 	);
-
-	console.groupEnd();
 }
 
 module.exports = {
