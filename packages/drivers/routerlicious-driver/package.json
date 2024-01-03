@@ -126,6 +126,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedEnumDeclaration_RouterliciousErrorType": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -6,12 +6,12 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { ContainerErrorType } from '@fluidframework/container-definitions';
+import { ContainerErrorTypes } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DeserializeCallback } from '@fluidframework/sequence';
 import { DirectoryFactory } from '@fluidframework/map';
-import { DriverErrorType } from '@fluidframework/driver-definitions';
+import { DriverErrorTypes } from '@fluidframework/driver-definitions';
 import { getTextAndMarkers } from '@fluidframework/sequence';
 import { IConnection } from '@fluidframework/fluid-static';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
@@ -88,7 +88,7 @@ export { AttachState }
 
 export { ConnectionState }
 
-export { ContainerErrorType }
+export { ContainerErrorTypes }
 
 export { ContainerSchema }
 
@@ -98,7 +98,7 @@ export { DeserializeCallback }
 
 export { DirectoryFactory }
 
-export { DriverErrorType }
+export { DriverErrorTypes }
 
 export { getTextAndMarkers }
 

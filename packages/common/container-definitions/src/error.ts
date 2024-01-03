@@ -82,11 +82,11 @@ export interface ContainerWarning extends IErrorBase {
  *
  * The following are commonly thrown error types, but `errorType` could be any string.
  *
- * - {@link @fluidframework/core-interfaces#ContainerErrorType}
+ * - {@link @fluidframework/core-interfaces#ContainerErrorTypes}
  *
- * - {@link @fluidframework/driver-definitions#DriverErrorType}
+ * - {@link @fluidframework/driver-definitions#DriverErrorTypes}
  *
- * - {@link @fluidframework/odsp-driver-definitions#OdspErrorType}
+ * - {@link @fluidframework/odsp-driver-definitions#OdspErrorTypes}
  *
  * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
  * @alpha

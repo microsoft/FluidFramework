@@ -72,6 +72,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedEnumDeclaration_OdspErrorType": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

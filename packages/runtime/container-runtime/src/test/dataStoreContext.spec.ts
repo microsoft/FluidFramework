@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
-import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
+import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandleContext,
@@ -169,7 +169,7 @@ describe("Data Store Context Tests", () => {
 					assert(isFluidError(e), "Expected a valid Fluid Error to be thrown");
 					assert.equal(
 						e.errorType,
-						ContainerErrorType.dataProcessingError,
+						ContainerErrorTypes.dataProcessingError,
 						"Error should be a DataProcessingError",
 					);
 					const props = e.getTelemetryProperties();

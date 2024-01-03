@@ -172,9 +172,9 @@ Errors are of [ICriticalContainerError](../../common/container-definitions/src/e
 
 There are 4 sources of errors:
 
-1. [ContainerErrorType](../../common/container-definitions/src/error.ts) - errors & warnings raised at loader level
-2. [DriverErrorType](../../common/driver-definitions/src/driverError.ts) - errors that are likely to be raised from the driver level
-3. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [RouterliciousErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
+1. [ContainerErrorTypes](../../common/container-definitions/src/error.ts) - errors & warnings raised at loader level
+2. [DriverErrorTypes](../../common/driver-definitions/src/driverError.ts) - errors that are likely to be raised from the driver level
+3. [OdspErrorTypes](../../drivers/odsp-driver/src/odspError.ts) and [RouterliciousErrorTypes](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
 4. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.
 
 `ICriticalContainerError.errorType` is a string, which represents a union of 4 error types described above. Hosting application may package different drivers and open different types of containers, and only hosting application may have enough information to enumerate all possible error codes in such scenarios.

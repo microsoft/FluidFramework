@@ -76,6 +76,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedEnumDeclaration_DriverErrorType": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

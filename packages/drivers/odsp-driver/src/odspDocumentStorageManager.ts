@@ -16,12 +16,12 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
-import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
+import { ISummaryContext, FetchSource } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
@@ -427,14 +427,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			if (!versionsResponse) {
 				throw new NonRetryableError(
 					"No response from /versions endpoint",
-					DriverErrorType.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
 			if (!Array.isArray(versionsResponse.value)) {
 				throw new NonRetryableError(
 					"Incorrect response from /versions endpoint, expected an array",
-					DriverErrorType.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
@@ -554,7 +554,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const errorType = error.errorType;
 			// If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
 			if (
-				errorType === OdspErrorType.snapshotTooBig &&
+				errorType === OdspErrorTypes.snapshotTooBig &&
 				hostSnapshotOptions?.mds !== undefined &&
 				this.hostPolicy.summarizerClient !== true
 			) {
@@ -562,8 +562,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 			// If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
 			if (
-				(errorType === OdspErrorType.snapshotTooBig ||
-					errorType === OdspErrorType.fetchTimeout) &&
+				(errorType === OdspErrorTypes.snapshotTooBig ||
+					errorType === OdspErrorTypes.fetchTimeout) &&
 				snapshotOptions.blobs
 			) {
 				this.logger.sendErrorEvent({
@@ -684,7 +684,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.snapshotUrl) {
 			throw new NonRetryableError(
 				"Method failed because no snapshot url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -694,7 +694,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentPOSTUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment POST url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -704,7 +704,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentGETUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment GET url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
