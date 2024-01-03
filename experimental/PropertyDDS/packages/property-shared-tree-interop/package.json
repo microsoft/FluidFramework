@@ -29,7 +29,8 @@
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",

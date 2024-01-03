@@ -19,7 +19,7 @@
 		"api-extractor:commonjs": "api-extractor run --local",
 		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
-		"build:commonjs": "fluid-build . --task commonjs",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",

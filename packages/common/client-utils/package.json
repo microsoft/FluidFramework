@@ -37,7 +37,7 @@
 		"api-extractor:commonjs": "api-extractor run --local",
 		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "fluid-build . --task build",
-		"build:commonjs": "fluid-build . --task commonjs",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
@@ -49,7 +49,6 @@
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -138,7 +137,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"eslint": [
-				"compile:commonjs",
+				"build:commonjs",
 				"build:test:mocha",
 				"build:test:jest",
 				"build:test:types"
@@ -152,13 +151,13 @@
 				"script": false
 			},
 			"build:test:jest": [
-				"compile:commonjs"
+				"build:commonjs"
 			],
 			"build:test:mocha": [
-				"compile:commonjs"
+				"build:commonjs"
 			],
 			"build:test:types": [
-				"compile:commonjs"
+				"build:commonjs"
 			]
 		}
 	},

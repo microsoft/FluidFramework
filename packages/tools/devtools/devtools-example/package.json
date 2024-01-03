@@ -38,7 +38,8 @@
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
 		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.json --preserveWatchOutput",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluentui/react-components": "~9.19.1",

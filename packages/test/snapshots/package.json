@@ -20,7 +20,6 @@
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -33,7 +32,8 @@
 		"test:mocha": "mocha --experimental-worker --ignore \"dist/test/generate/*\" dist/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:new": "mocha --experimental-worker \"dist/test/generate/new.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:update": "mocha --experimental-worker \"dist/test/generate/update.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup"
+		"test:update": "mocha --experimental-worker \"dist/test/generate/update.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"build:commonjs": "tsc"
 	},
 	"c8": {
 		"all": true,

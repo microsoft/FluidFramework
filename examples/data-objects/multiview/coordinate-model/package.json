@@ -38,7 +38,7 @@
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development",
-		"compile:commonjs": "tsc"
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-example/multiview-coordinate-interface": "workspace:~",
@@ -86,7 +86,7 @@
 		"tasks": {
 			"eslint": [
 				"^tsc",
-				"^compile:commonjs",
+				"^build:commonjs",
 				"@fluid-example/multiview-coordinate-interface#build:esnext"
 			],
 			"build:esnext": [

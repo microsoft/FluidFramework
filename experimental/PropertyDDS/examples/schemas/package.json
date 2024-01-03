@@ -26,7 +26,8 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"build:commonjs": "tsc"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",

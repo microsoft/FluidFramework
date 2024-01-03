@@ -18,7 +18,6 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf --glob coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
-		"compile:commonjs": "tsc",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -36,7 +35,8 @@
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-experimental/react-inputs": "workspace:~",

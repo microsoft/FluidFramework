@@ -29,7 +29,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development",
-		"compile:commonjs": "tsc"
+		"build:commonjs": "tsc"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.29.0-225750",

@@ -15,7 +15,6 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\"",
-		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -25,7 +24,8 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"webpack": "webpack",
-		"webpack:profile": "npm run webpack"
+		"webpack:profile": "npm run webpack",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",

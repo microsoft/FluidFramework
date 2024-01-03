@@ -38,7 +38,8 @@
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
 		"tsc": "tsc",
-		"webpack": "webpack --config webpack.svgs.js"
+		"webpack": "webpack --config webpack.svgs.js",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@hig/fonts": "^1.0.2",

@@ -37,7 +37,7 @@
 		"start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development",
-		"compile:commonjs": "tsc"
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

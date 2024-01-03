@@ -24,7 +24,6 @@
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
-		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -36,7 +35,8 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:base -- \"dist/test/**/*.spec.*js\"",
 		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"build:commonjs": "tsc"
 	},
 	"c8": {
 		"all": true,
@@ -101,7 +101,7 @@
 				],
 				"script": false
 			},
-			"compile:commonjs": [
+			"build:commonjs": [
 				"...",
 				"@fluid-private/stochastic-test-utils#build:test"
 			]

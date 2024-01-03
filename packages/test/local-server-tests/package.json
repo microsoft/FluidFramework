@@ -31,7 +31,8 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha dist/test -r node_modules/@fluidframework/mocha-test-setup --exit",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"build:commonjs": "tsc"
 	},
 	"c8": {
 		"all": true,

@@ -42,7 +42,8 @@
 		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",
 		"tsc": "tsc",
 		"webpack": "webpack",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"build:commonjs": "tsc"
 	},
 	"c8": {
 		"all": true,

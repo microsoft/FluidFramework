@@ -44,7 +44,8 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
 		"tsc": "tsc",
-		"tsc:watch": "tsc --watch"
+		"tsc:watch": "tsc --watch",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",

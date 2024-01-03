@@ -22,7 +22,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"postbuild": "npm run gen:tscdef",
-		"build:commonjs": "fluid-build . --task commonjs",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",

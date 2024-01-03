@@ -19,7 +19,6 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src tests",
 		"eslint:fix": "eslint --format stylish src tests --fix",
 		"format": "npm run prettier:fix",
@@ -46,7 +45,8 @@
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"test:verbose": "npm run test:jest:verbose",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

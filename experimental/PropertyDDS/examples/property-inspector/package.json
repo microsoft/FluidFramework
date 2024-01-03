@@ -34,7 +34,8 @@
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:watch": "npm run test:jest -- --watch",
 		"tsc": "tsc",
-		"webpack": "webpack --color --no-stats"
+		"webpack": "webpack --color --no-stats",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

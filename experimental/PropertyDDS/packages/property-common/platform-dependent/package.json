@@ -16,5 +16,8 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
+	},
+	"scripts": {
+		"build:commonjs": "tsc"
 	}
 }

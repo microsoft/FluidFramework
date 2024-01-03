@@ -24,7 +24,8 @@
 		"test:changeset": "cd ../property-changeset && mocha",
 		"test:common": "cd ../property-common && mocha",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",

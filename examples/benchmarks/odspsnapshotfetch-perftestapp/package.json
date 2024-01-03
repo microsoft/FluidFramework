@@ -33,7 +33,7 @@
 		"start:spo-df": "node dist/expressApp.js --env mode=spo-df",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development",
-		"compile:commonjs": "tsc"
+		"build:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-tools/fluidapp-odsp-urlresolver": "workspace:~",
