@@ -14,6 +14,7 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -29,8 +30,7 @@
 		"test:realsvc:odsp": "cross-env npm run test:realsvc:odsp:run",
 		"test:realsvc:odsp:run": "mocha --recursive \"dist/test/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.js",
 		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
-		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
-		"build:commonjs": "tsc"
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
 	"c8": {
 		"all": true,

@@ -16,6 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -37,8 +38,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluidframework/mocha-test-setup",
-		"build:commonjs": "tsc"
+		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluidframework/mocha-test-setup"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",

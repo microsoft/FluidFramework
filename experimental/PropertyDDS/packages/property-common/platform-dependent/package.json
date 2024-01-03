@@ -13,11 +13,11 @@
 	"author": "Microsoft and contributors",
 	"main": "server.js",
 	"browser": "browser.js",
+	"scripts": {
+		"build:commonjs": "tsc"
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	},
-	"scripts": {
-		"build:commonjs": "tsc"
 	}
 }

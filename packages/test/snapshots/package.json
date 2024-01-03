@@ -16,6 +16,7 @@
 	"types": "dist/generateSnapshotFiles.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
@@ -32,8 +33,7 @@
 		"test:mocha": "mocha --experimental-worker --ignore \"dist/test/generate/*\" dist/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:new": "mocha --experimental-worker \"dist/test/generate/new.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:update": "mocha --experimental-worker \"dist/test/generate/update.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"build:commonjs": "tsc"
+		"test:update": "mocha --experimental-worker \"dist/test/generate/update.spec.*js\" --exit -r node_modules/@fluidframework/mocha-test-setup"
 	},
 	"c8": {
 		"all": true,

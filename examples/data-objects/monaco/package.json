@@ -17,6 +17,7 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -35,8 +36,7 @@
 		"start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
 		"start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development",
-		"build:commonjs": "tsc"
+		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

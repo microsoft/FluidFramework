@@ -21,6 +21,7 @@
 	],
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -38,8 +39,7 @@
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
 		"tsc": "tsc",
-		"webpack": "webpack --config webpack.svgs.js",
-		"build:commonjs": "tsc"
+		"webpack": "webpack --config webpack.svgs.js"
 	},
 	"dependencies": {
 		"@hig/fonts": "^1.0.2",

@@ -16,6 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -45,8 +46,7 @@
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"test:verbose": "npm run test:jest:verbose",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development",
-		"build:commonjs": "tsc"
+		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

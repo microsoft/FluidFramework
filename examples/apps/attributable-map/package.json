@@ -16,6 +16,7 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -29,8 +30,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"start": "webpack serve",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development",
-		"build:commonjs": "tsc"
+		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

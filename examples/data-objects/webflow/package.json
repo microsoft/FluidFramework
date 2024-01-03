@@ -18,6 +18,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/",
 		"build:esnext": "tsc",
@@ -44,8 +45,7 @@
 		"test:mocha": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --config src/test/.mocharc.cjs \"dist/test/**/*.spec.js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development",
-		"build:commonjs": "tsc"
+		"webpack:dev": "webpack --env development"
 	},
 	"c8": {
 		"all": true,

@@ -29,6 +29,7 @@
 		"api-extractor:commonjs": "api-extractor run --local",
 		"bench": "mocha --recursive dist/test --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
 		"build:docs": "fluid-build . --task api",
@@ -48,8 +49,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test",
-		"build:commonjs": "tsc"
+		"test:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test"
 	},
 	"c8": {
 		"all": true,

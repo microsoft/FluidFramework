@@ -42,7 +42,6 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"compile:commonjs": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir ."
 	},
@@ -72,7 +71,7 @@
 			"release/**": "patch"
 		},
 		"tasks": {
-			"compile:commonjs": [
+			"build:commonjs": [
 				"...",
 				"typetests:gen"
 			]

@@ -13,6 +13,7 @@
 	"main": "src/index.js",
 	"types": "src/index.d.ts",
 	"scripts": {
+		"build:commonjs": "tsc",
 		"clean": "rimraf --glob nyc",
 		"coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
 		"format": "npm run prettier:fix",
@@ -24,8 +25,7 @@
 		"test:changeset": "cd ../property-changeset && mocha",
 		"test:common": "cd ../property-common && mocha",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"build:commonjs": "tsc"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",

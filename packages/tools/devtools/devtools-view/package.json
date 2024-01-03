@@ -21,6 +21,7 @@
 		"api-extractor:commonjs": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -44,8 +45,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
 		"tsc": "tsc",
-		"tsc:watch": "tsc --watch",
-		"build:commonjs": "tsc"
+		"tsc:watch": "tsc --watch"
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",

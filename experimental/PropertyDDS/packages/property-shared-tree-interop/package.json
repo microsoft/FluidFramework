@@ -15,6 +15,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
@@ -29,8 +30,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
-		"tsc": "tsc",
-		"build:commonjs": "tsc"
+		"tsc": "tsc"
 	},
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",

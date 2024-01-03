@@ -40,6 +40,7 @@
 	"bin": "dist/index.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
@@ -56,8 +57,7 @@
 		"start": "forever start dist/index.js",
 		"start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
 		"stop": "forever stop dist/index.js",
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"build:commonjs": "tsc"
+		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
 		"tinylicious": "^2.0.2"

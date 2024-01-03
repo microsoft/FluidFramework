@@ -14,6 +14,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:test": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "npm run webpack",
@@ -42,8 +43,7 @@
 		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",
 		"tsc": "tsc",
 		"webpack": "webpack",
-		"webpack:dev": "webpack --env development",
-		"build:commonjs": "tsc"
+		"webpack:dev": "webpack --env development"
 	},
 	"c8": {
 		"all": true,

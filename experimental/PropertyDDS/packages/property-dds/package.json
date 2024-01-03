@@ -16,6 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -35,8 +36,7 @@
 		"test:mocha-ts": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --timeout 1500000",
 		"test:mocha-ts-inspect": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --inspect-brk --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --timeout 1500000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
-		"build:commonjs": "tsc"
+		"tsc": "tsc"
 	},
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",

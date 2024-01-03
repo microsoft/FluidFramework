@@ -40,6 +40,7 @@
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
@@ -59,8 +60,7 @@
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
-		"build:commonjs": "tsc"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
 		"all": true,

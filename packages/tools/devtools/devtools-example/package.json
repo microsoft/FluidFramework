@@ -14,6 +14,7 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
@@ -38,8 +39,7 @@
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
 		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.json --preserveWatchOutput",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development",
-		"build:commonjs": "tsc"
+		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
 		"@fluentui/react-components": "~9.19.1",

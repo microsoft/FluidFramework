@@ -13,6 +13,7 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
@@ -34,8 +35,7 @@
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:watch": "npm run test:jest -- --watch",
 		"tsc": "tsc",
-		"webpack": "webpack --color --no-stats",
-		"build:commonjs": "tsc"
+		"webpack": "webpack --color --no-stats"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

@@ -16,6 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
 		"build:docs": "api-extractor run --local",
@@ -29,8 +30,7 @@
 		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"build:commonjs": "tsc"
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore"
 	},
 	"c8": {
 		"all": true,

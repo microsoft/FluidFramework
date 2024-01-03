@@ -16,6 +16,7 @@
 	"types": "lib/expressApp.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -32,8 +33,7 @@
 		"start:spo": "node dist/expressApp.js --env mode=spo",
 		"start:spo-df": "node dist/expressApp.js --env mode=spo-df",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development",
-		"build:commonjs": "tsc"
+		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
 		"@fluid-tools/fluidapp-odsp-urlresolver": "workspace:~",

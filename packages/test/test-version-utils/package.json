@@ -18,6 +18,7 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:genver": "gen-version",
@@ -35,8 +36,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha  --recursive \"dist/test/*.spec.*js\" --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup --timeout=10000",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"build:commonjs": "tsc"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
 		"all": true,

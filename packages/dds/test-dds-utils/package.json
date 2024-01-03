@@ -18,6 +18,7 @@
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
 		"build": "fluid-build . --task build",
+		"build:commonjs": "tsc",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"check:are-the-types-wrong": "attw --pack",
@@ -35,8 +36,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:base -- \"dist/test/**/*.spec.*js\"",
 		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"build:commonjs": "tsc"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
 		"all": true,
