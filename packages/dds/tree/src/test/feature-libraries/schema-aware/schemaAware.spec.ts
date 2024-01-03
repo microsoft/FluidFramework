@@ -14,10 +14,10 @@ import {
 	TypedFields,
 	UnbrandedName,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/schema-aware/schemaAware";
+} from "../../../feature-libraries/schema-aware/schemaAware.js";
 
-import { TreeNodeSchemaIdentifier } from "../../../core";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
+import { TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
 import {
 	valueSymbol,
 	FieldKinds,
@@ -26,10 +26,13 @@ import {
 	TreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
-} from "../../../feature-libraries";
-import { leaf, SchemaBuilder } from "../../../domains";
-// eslint-disable-next-line import/no-internal-modules
-import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
+} from "../../../feature-libraries/index.js";
+import { leaf, SchemaBuilder } from "../../../domains/index.js";
+import {
+	FlexList,
+	FlexListToNonLazyArray,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/typed-schema/flexList.js";
 
 // Test UnbrandedName
 {

@@ -4,9 +4,9 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
-import { FlexListToUnion, LazyItem } from "../feature-libraries";
-import { Unhydrated, TreeMapNodeBase, TreeNode } from "../simple-tree";
+import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
+import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
+import { Unhydrated, TreeMapNodeBase, TreeNode } from "../simple-tree/index.js";
 
 /**
  * Helper used to produce types for object nodes.

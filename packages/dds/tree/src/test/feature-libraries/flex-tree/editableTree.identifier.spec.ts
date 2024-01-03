@@ -10,9 +10,9 @@ import {
 	LocalNodeKey,
 	nodeKeyFieldKey,
 	NodeKeyManager,
-} from "../../../feature-libraries";
-import { leaf, nodeKeyField, nodeKeySchema, SchemaBuilder } from "../../../domains";
-import { flexTreeWithContent } from "../../utils";
+} from "../../../feature-libraries/index.js";
+import { leaf, nodeKeyField, nodeKeySchema, SchemaBuilder } from "../../../domains/index.js";
+import { flexTreeWithContent } from "../../utils.js";
 
 const builder = new SchemaBuilder({
 	scope: "EditableTree Node Keys",

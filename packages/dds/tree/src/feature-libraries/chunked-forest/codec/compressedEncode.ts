@@ -13,15 +13,15 @@ import {
 	Value,
 	forEachNode,
 	FieldKindIdentifier,
-} from "../../../core";
-import { fail, getOrCreate } from "../../../util";
-import { type FieldKind } from "../../modular-schema";
+} from "../../../core/index.js";
+import { fail, getOrCreate } from "../../../util/index.js";
+import { type FieldKind } from "../../modular-schema/index.js";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
 	handleShapesAndIdentifiers,
-} from "./chunkEncodingGeneric";
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
+} from "./chunkEncodingGeneric.js";
+import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
 	version,
 	EncodedChunkShape,
@@ -29,8 +29,8 @@ import {
 	EncodedAnyShape,
 	EncodedNestedArray,
 	EncodedFieldBatch,
-} from "./format";
-import { FieldBatch } from "./fieldBatch";
+} from "./format.js";
+import { FieldBatch } from "./fieldBatch.js";
 
 /**
  * Encode data from `FieldBatch` in into an `EncodedChunk`.

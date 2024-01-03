@@ -55,19 +55,12 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
-		packageFilterPolicy: (apiPackage) => {
-			// Skip `@fluid-internal` packages
+		skipPackage: (apiPackage) => {
+			// Skip `@fluid-internal` and `@fluid-private` packages
 			const packageName = apiPackage.displayName;
 			const packageScope = PackageName.getScope(packageName);
 
-			console.log(`${packageName}: ${packageScope}`);
-
-			return ["@fluid-internal"].includes(packageScope);
-		},
-		fileNamePolicy: (apiItem) => {
-			return apiItem.kind === ApiItemKind.Model
-				? "index"
-				: DefaultPolicies.defaultFileNamePolicy(apiItem);
+			return ["@fluid-internal", "@fluid-private"].includes(packageScope);
 		},
 		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
 		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.

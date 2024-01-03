@@ -20,8 +20,8 @@ import {
 	TreeNodeSchemaIdentifier,
 	forEachField,
 	TreeValue,
-} from "../../core";
-import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
+} from "../../core/index.js";
+import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -35,11 +35,11 @@ import {
 	ObjectNodeSchema,
 	Any,
 	AllowedTypes,
-} from "../typed-schema";
-import { FieldKinds } from "../default-schema";
-import { LocalNodeKey } from "../node-key";
-import { EditableTreeEvents, TreeEvent } from "./treeEvents";
-import { Context } from "./context";
+} from "../typed-schema/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import { LocalNodeKey } from "../node-key/index.js";
+import { EditableTreeEvents, TreeEvent } from "./treeEvents.js";
+import { Context } from "./context.js";
 import {
 	FlexTreeFieldNode,
 	FlexTreeLeafNode,
@@ -60,8 +60,8 @@ import {
 	onNextChange,
 	FlexTreeEntityKind,
 	flexTreeMarker,
-} from "./flexTreeTypes";
-import { LazyNodeKeyField, makeField } from "./lazyField";
+} from "./flexTreeTypes.js";
+import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -69,9 +69,9 @@ import {
 	isFreedSymbol,
 	makePropertyEnumerableOwn,
 	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity";
-import { unboxedField } from "./unboxed";
-import { treeStatusFromAnchorCache } from "./utilities";
+} from "./lazyEntity.js";
+import { unboxedField } from "./unboxed.js";
+import { treeStatusFromAnchorCache } from "./utilities.js";
 
 const lazyTreeSlot = anchorSlot<LazyTreeNode>();
 

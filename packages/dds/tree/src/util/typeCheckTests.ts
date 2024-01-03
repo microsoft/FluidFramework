@@ -21,7 +21,7 @@ import {
 	isAny,
 	eitherIsAny,
 	isStrictSubset,
-} from "./typeCheck";
+} from "./typeCheck.js";
 
 /**
  * Checks that typeCheck's constraints work as intended.

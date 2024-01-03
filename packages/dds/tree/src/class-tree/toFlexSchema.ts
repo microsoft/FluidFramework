@@ -17,18 +17,22 @@ import {
 	FieldNodeSchema as FlexFieldNodeSchema,
 	ObjectNodeSchema as FlexObjectNodeSchema,
 	schemaIsLeaf,
-} from "../feature-libraries";
-import { brand, fail, isReadonlyArray, mapIterable } from "../util";
-import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList";
+} from "../feature-libraries/index.js";
+import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
+import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import {
 	InsertableContent,
 	extractFactoryContent,
 	getClassSchema,
 	simpleSchemaSymbol,
-} from "../simple-tree/proxies";
-import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
-import { type InitializeAndSchematizeConfiguration } from "../shared-tree";
-import { cursorFromNodeData } from "../simple-tree/toMapTree";
+} from "../simple-tree/proxies.js";
+import {
+	AllowedUpdateType,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+} from "../core/index.js";
+import { type InitializeAndSchematizeConfiguration } from "../shared-tree/index.js";
+import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -37,8 +41,8 @@ import {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchema,
-} from "./schemaTypes";
-import { TreeConfiguration } from "./tree";
+} from "./schemaTypes.js";
+import { TreeConfiguration } from "./tree.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.

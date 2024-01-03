@@ -4,17 +4,17 @@
  */
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import { typeboxValidator } from "../../external-utilities";
+import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	TreeCompressionStrategy,
 	makeFieldBatchCodec,
-} from "../../feature-libraries";
-import { testIdCompressor } from "../utils";
-import { ICodecOptions } from "../../codec";
+} from "../../feature-libraries/index.js";
+import { testIdCompressor } from "../utils.js";
+import { ICodecOptions } from "../../codec/index.js";
 
 /**
  * A `SharedTreeCore` with

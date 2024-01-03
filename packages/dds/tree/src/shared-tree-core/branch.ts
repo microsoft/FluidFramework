@@ -23,10 +23,10 @@ import {
 	BranchRebaseResult,
 	rebaseChangeOverChanges,
 	tagRollbackInverse,
-} from "../core";
-import { EventEmitter, ISubscribable } from "../events";
-import { fail } from "../util";
-import { TransactionStack } from "./transactionStack";
+} from "../core/index.js";
+import { EventEmitter, ISubscribable } from "../events/index.js";
+import { fail } from "../util/index.js";
+import { TransactionStack } from "./transactionStack.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;

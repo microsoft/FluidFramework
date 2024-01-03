@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangesetLocalId } from "../../core";
-import { FieldEditor } from "../modular-schema";
-import { brand } from "../../util";
+import { ChangesetLocalId } from "../../core/index.js";
+import { FieldEditor } from "../modular-schema/index.js";
+import { brand } from "../../util/index.js";
 import {
 	CellId,
 	CellMark,
@@ -18,13 +18,13 @@ import {
 	MoveOut,
 	MoveIn,
 	MarkList,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
-import { splitMark } from "./utils";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
+import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset<never>;
-	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
+	remove(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
 
 	/**
@@ -65,8 +65,8 @@ export const sequenceFieldEditor = {
 		};
 		return markAtIndex(index, mark);
 	},
-	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
-		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
+	remove: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
+		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id }),
 
 	revive: (index: number, count: number, detachEvent: CellId): Changeset<never> => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);

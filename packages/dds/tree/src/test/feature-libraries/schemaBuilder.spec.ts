@@ -12,7 +12,7 @@ import {
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
-} from "../../util";
+} from "../../util/index.js";
 import {
 	AllowedTypes,
 	Any,
@@ -20,16 +20,16 @@ import {
 	LeafNodeSchema,
 	TreeFieldSchema,
 	TreeNodeSchema,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 
 import {
 	normalizeAllowedTypes,
 	normalizeField,
 	SchemaBuilderBase,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/schemaBuilderBase";
-import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core";
-import { SchemaBuilder } from "../../domains";
+} from "../../feature-libraries/schemaBuilderBase.js";
+import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
+import { SchemaBuilder } from "../../domains/index.js";
 
 describe("SchemaBuilderBase", () => {
 	describe("typedTreeSchema", () => {

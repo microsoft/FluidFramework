@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamilyEditor, TreeStoredSchema } from "../core";
-import { DefaultEditBuilder, IDefaultEditBuilder, ModularChangeFamily } from "../feature-libraries";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
+import { ChangeFamilyEditor, TreeStoredSchema } from "../core/index.js";
+import {
+	DefaultEditBuilder,
+	IDefaultEditBuilder,
+	ModularChangeFamily,
+} from "../feature-libraries/index.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 /**
  * Editor for schema changes.

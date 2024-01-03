@@ -4,21 +4,21 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Changeset } from "../../../feature-libraries/sequence-field";
-import { RevisionTagCodec } from "../../../core";
-import { brand } from "../../../util";
-import { TestChange } from "../../testChange";
+import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import { RevisionTagCodec } from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import {
 	EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	MockIdCompressor,
 	testIdCompressor,
-} from "../../utils";
-import { generatePopulatedMarks } from "./populatedMarks";
-import { ChangeMaker as Change, cases } from "./testEdits";
+} from "../../utils.js";
+import { generatePopulatedMarks } from "./populatedMarks.js";
+import { ChangeMaker as Change, cases } from "./testEdits.js";
 
 type TestCase = [string, Changeset<TestChange>, SessionId];
 
@@ -26,7 +26,7 @@ const sessionId = "session1" as SessionId;
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, SessionId> = {
 	successes: [
 		["with child change", Change.modify(1, TestChange.mint([], 1)), sessionId],
-		["without child change", Change.delete(2, 2), sessionId],
+		["without child change", Change.remove(2, 2), sessionId],
 		[
 			"with repair data",
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
@@ -41,12 +41,14 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, Session
 	],
 };
 
-describe("SequenceField encoding", () => {
-	makeEncodingTestSuite(
-		SF.sequenceFieldChangeCodecFactory(
-			TestChange.codec,
-			new RevisionTagCodec(new MockIdCompressor()),
-		),
-		encodingTestData,
-	);
-});
+export function testCodecs() {
+	describe("Codecs", () => {
+		makeEncodingTestSuite(
+			SF.sequenceFieldChangeCodecFactory(
+				TestChange.codec,
+				new RevisionTagCodec(new MockIdCompressor()),
+			),
+			encodingTestData,
+		);
+	});
+}

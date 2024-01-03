@@ -5,11 +5,22 @@
 
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { SessionId } from "@fluidframework/runtime-definitions";
-import { ChangeFamily, ChangeRebaser, ChangeFamilyEditor } from "../../core";
-import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange";
-import { Commit, EditManager } from "../../shared-tree-core";
-import { brand, makeArray } from "../../util";
-import { mintRevisionTag } from "../utils";
+import {
+	ChangeFamily,
+	ChangeRebaser,
+	ChangeFamilyEditor,
+	DeltaRoot,
+	emptyDelta,
+} from "../../../core/index.js";
+import {
+	TestChangeFamily,
+	TestChange,
+	testChangeFamilyFactory,
+	asDelta,
+} from "../../testChange.js";
+import { Commit, EditManager } from "../../../shared-tree-core/index.js";
+import { RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
+import { mintRevisionTag } from "../../utils.js";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 export function testChangeEditManagerFactory(options: {
@@ -403,4 +414,28 @@ export function rebaseConcurrentPeerEdits<TChange>(
 		}
 	};
 	return defer ? run : run();
+}
+
+export function checkChangeList(manager: TestEditManager, intentions: number[]): void {
+	TestChange.checkChangeList(getAllChanges(manager), intentions);
+}
+
+export function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
+	return manager.getTrunkChanges().concat(manager.getLocalChanges());
+}
+
+/** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
+export function addSequencedChange(
+	editManager: TestEditManager,
+	...args: Parameters<(typeof editManager)["addSequencedChange"]>
+): DeltaRoot {
+	let delta: DeltaRoot = emptyDelta;
+	const offChange = editManager.localBranch.on("afterChange", ({ change }) => {
+		if (change !== undefined) {
+			delta = asDelta(change.change.intentions);
+		}
+	});
+	editManager.addSequencedChange(...args);
+	offChange();
+	return delta;
 }

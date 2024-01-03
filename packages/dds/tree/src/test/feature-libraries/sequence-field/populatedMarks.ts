@@ -4,19 +4,19 @@
  */
 
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand, Populated } from "../../../util";
-import { ChangeAtomId } from "../../../core";
-import { TestChange } from "../../testChange";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand, Populated } from "../../../util/index.js";
+import { ChangeAtomId } from "../../../core/index.js";
+import { TestChange } from "../../testChange.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field";
+import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	Attach,
 	Detach,
 	DetachIdOverride,
 	MarkEffect,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types";
+} from "../../../feature-libraries/sequence-field/types.js";
 
 export type PopulatedMark<TNodeChange = TestChange> = Populated<
 	CellMark<Populated<MarkEffect>, TNodeChange>
@@ -89,7 +89,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 			idOverride: unattachIdOverride,
 		},
 		{
-			type: "Delete",
+			type: "Remove",
 			count: 1,
 			cellId,
 			changes,

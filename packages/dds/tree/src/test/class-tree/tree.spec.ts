@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
-import { TreeFactory } from "../../treeFactory";
+import { SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 const schema = new SchemaFactory("com.example");
 

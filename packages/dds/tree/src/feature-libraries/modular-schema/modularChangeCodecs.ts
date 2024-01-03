@@ -15,29 +15,29 @@ import {
 	ITreeCursorSynchronous,
 	RevisionInfo,
 	RevisionTag,
-} from "../../core";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
+} from "../../core/index.js";
+import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import {
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
 	SchemaValidationFunction,
 	SessionAwareCodec,
-} from "../../codec";
+} from "../../codec/index.js";
 import {
 	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
-} from "../chunked-forest";
+} from "../chunked-forest/index.js";
 import {
 	FieldChangeMap,
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
-} from "./modularChangeTypes";
-import { FieldKindWithEditor } from "./fieldKind";
-import { genericFieldKind } from "./genericFieldKind";
+} from "./modularChangeTypes.js";
+import { FieldKindWithEditor } from "./fieldKind.js";
+import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	EncodedBuilds,
 	EncodedBuildsArray,
@@ -46,7 +46,7 @@ import {
 	EncodedModularChangeset,
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
-} from "./modularChangeFormat";
+} from "./modularChangeFormat.js";
 
 export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,

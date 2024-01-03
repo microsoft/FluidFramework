@@ -5,23 +5,23 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { Type } from "@sinclair/typebox";
-import { ICodecFamily, makeCodecFamily } from "../codec";
+import { ICodecFamily, makeCodecFamily } from "../codec/index.js";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	Multiplicity,
 	cursorForJsonableTreeNode,
-} from "../feature-libraries";
+} from "../feature-libraries/index.js";
 // This is imported directly to implement an example of a field kind.
 import {
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../feature-libraries/modular-schema";
-import { brand, fail } from "../util";
-import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from "../core";
-import { leaf } from "../domains";
-import { makeValueCodec } from "./codec";
+} from "../feature-libraries/modular-schema/index.js";
+import { brand, fail } from "../util/index.js";
+import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from "../core/index.js";
+import { leaf } from "../domains/index.js";
+import { makeValueCodec } from "./codec/index.js";
 
 export const counterCodecFamily: ICodecFamily<number, SessionId> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],

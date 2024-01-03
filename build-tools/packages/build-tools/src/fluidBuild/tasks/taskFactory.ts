@@ -23,11 +23,13 @@ import { GroupTask } from "./groupTask";
 import { Task } from "./task";
 import { FlubListTask, FlubCheckLayerTask, FlubCheckPolicyTask } from "./leaf/flubTasks";
 import { RenameTypesTask } from "./leaf/renamerTask";
+import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
+	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,

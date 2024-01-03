@@ -4,8 +4,8 @@
  */
 
 import { Static, TSchema } from "@sinclair/typebox";
-import { JsonValidator, IJsonCodec, withSchemaValidation } from "../../codec";
-import { JsonCompatibleReadOnly } from "../../util";
+import { JsonValidator, IJsonCodec, withSchemaValidation } from "../../codec/index.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
  * Creates a json codec for objects which are just a json compatible value

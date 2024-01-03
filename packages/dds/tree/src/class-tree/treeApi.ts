@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { TreeValue } from "../core";
+import { TreeValue } from "../core/index.js";
 import {
 	EditableTreeEvents,
 	LeafNodeSchema,
@@ -12,15 +12,15 @@ import {
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
-} from "../feature-libraries";
-import { TreeNode } from "../simple-tree";
+} from "../feature-libraries/index.js";
+import { TreeNode } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexNode, tryGetFlexNode } from "../simple-tree/flexNode";
+import { getFlexNode, tryGetFlexNode } from "../simple-tree/flexNode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getClassSchema, getOrCreateNodeProxy } from "../simple-tree/proxies";
-import { schemaFromValue } from "./schemaFactory";
-import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes";
-import { getFlexSchema } from "./toFlexSchema";
+import { getClassSchema, getOrCreateNodeProxy } from "../simple-tree/proxies.js";
+import { schemaFromValue } from "./schemaFactory.js";
+import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes.js";
+import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

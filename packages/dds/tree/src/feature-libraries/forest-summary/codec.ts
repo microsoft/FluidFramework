@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
-import { FieldKey, ITreeCursorSynchronous } from "../../core";
-import { FieldBatchCodec } from "../chunked-forest";
-import { Format } from "./format";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
+import { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
+import { FieldBatchCodec } from "../chunked-forest/index.js";
+import { Format } from "./format.js";
 
 /**
  * Uses field cursors

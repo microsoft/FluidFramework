@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { FieldNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../feature-libraries";
+import { FieldNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type, WithType } from "../class-tree/schemaTypes";
-import { IterableTreeListContent } from "./treeListNode";
+import { type, WithType } from "../class-tree/schemaTypes.js";
+import { IterableTreeListContent } from "./treeListNode.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -112,7 +112,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param end - The ending index of the range to remove (exclusive).
 	 * @throws Throws if `start` is not in the range [0, `list.length`).
 	 * @throws Throws if `end` is less than `start`.
-	 * If `end` is not supplied or is greater than the length of the list, all items after `start` are deleted.
+	 * If `end` is not supplied or is greater than the length of the list, all items after `start` are removed.
 	 */
 	removeRange(start?: number, end?: number): void;
 

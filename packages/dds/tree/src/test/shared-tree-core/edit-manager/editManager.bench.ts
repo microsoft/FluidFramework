@@ -5,20 +5,20 @@
 
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
-import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../testChange";
-import { ChangeFamily, rootFieldKey } from "../../core";
-import { DefaultChangeFamily } from "../../feature-libraries";
-import { noopValidator } from "../../codec";
-import { singleJsonCursor } from "../../domains";
-import { Editor, makeEditMinter } from "../editMinter";
-import { failCodec, testIdCompressor } from "../utils";
+import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
+import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
+import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
+import { noopValidator } from "../../../codec/index.js";
+import { singleJsonCursor } from "../../../domains/index.js";
+import { Editor, makeEditMinter } from "../../editMinter.js";
+import { failCodec, testIdCompressor } from "../../utils.js";
 import {
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 	editManagerFactory,
-} from "./editManagerTestUtils";
+} from "./editManagerTestUtils.js";
 
 describe("EditManager - Bench", () => {
 	interface Scenario {

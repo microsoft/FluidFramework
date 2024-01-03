@@ -4,18 +4,18 @@
  */
 
 import { SessionId } from "@fluidframework/runtime-definitions";
-import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
-import { typeboxValidator } from "../../external-utilities";
-import { TestChange } from "../testChange";
-import { brand } from "../../util";
-import { RevisionTagCodec } from "../../core";
-import { SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
+import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
+import { TestChange } from "../../testChange.js";
+import { brand } from "../../../util/index.js";
+import { RevisionTagCodec } from "../../../core/index.js";
+import { SummaryData, makeEditManagerCodec } from "../../../shared-tree-core/index.js";
 import {
 	EncodingTestData,
 	MockIdCompressor,
 	makeEncodingTestSuite,
 	mintRevisionTag,
-} from "../utils";
+} from "../../utils.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -150,17 +150,19 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 	},
 };
 
-describe("EditManager codec", () => {
-	const codec = makeEditManagerCodec(
-		withDefaultBinaryEncoding(TestChange.codec),
-		new RevisionTagCodec(new MockIdCompressor()),
-		{
-			jsonValidator: typeboxValidator,
-		},
-	);
+export function testCodec() {
+	describe("Codec", () => {
+		const codec = makeEditManagerCodec(
+			withDefaultBinaryEncoding(TestChange.codec),
+			new RevisionTagCodec(new MockIdCompressor()),
+			{
+				jsonValidator: typeboxValidator,
+			},
+		);
 
-	makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases);
+		makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases);
 
-	// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
-	// TODO: format compatibility tests to detect breaking of existing documents.
-});
+		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
+		// TODO: format compatibility tests to detect breaking of existing documents.
+	});
+}

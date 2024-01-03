@@ -4,7 +4,7 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { GraphCommit } from "../core";
+import { GraphCommit } from "../core/index.js";
 
 export interface DecodedMessage<TChange> {
 	commit: GraphCommit<TChange>;

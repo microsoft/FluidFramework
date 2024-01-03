@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../core";
+import { FieldKey } from "../core/index.js";
 import {
 	TreeFieldSchema,
 	FlexTreeSchema,
@@ -12,9 +12,9 @@ import {
 	NodeKeyManager,
 	getTreeContext,
 	Context,
-} from "../feature-libraries";
-import { IDisposable, disposeSymbol } from "../util";
-import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
+} from "../feature-libraries/index.js";
+import { IDisposable, disposeSymbol } from "../util/index.js";
+import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
