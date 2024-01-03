@@ -4,10 +4,11 @@ import { createPackageJson, execTsc, removePackageJson } from "./tscWrapper";
 const { errorLog: error } = defaultLogger;
 
 async function main() {
-	await execTsc(...process.argv.slice(1));
+	const args = process.argv.slice(2);
+	await execTsc(...args);
 }
 
-// Create package.json for ESM build.
+// Create package.json for CJS build.
 createPackageJson("cjs");
 
 main()
