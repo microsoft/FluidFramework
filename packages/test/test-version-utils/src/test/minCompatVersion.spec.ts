@@ -18,7 +18,7 @@ describe("Minimum Compat Version", () => {
 			isCompatVersionBelowMinVersion(invalidString, versionMaps, {
 				name: `test`,
 				kind: CompatKind.None,
-				compatVersion: "2.0.0-rc.1.0.0",
+				compatVersion: "2.0.0-internal.8.0.0",
 			});
 			assert.fail("test should fail");
 		} catch (error: any) {
@@ -42,17 +42,6 @@ describe("Minimum Compat Version", () => {
 			);
 		});
 	}
-
-	it("2.0.0-internal.8.0.0 < 2.0.0-rc.1.0.0", () => {
-		assert.strictEqual(
-			isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", versionMaps, {
-				name: `test`,
-				kind: CompatKind.None,
-				compatVersion: "2.0.0-rc.1.0.0",
-			}),
-			false,
-		);
-	});
 
 	it("cross compat", () => {
 		assert.strictEqual(

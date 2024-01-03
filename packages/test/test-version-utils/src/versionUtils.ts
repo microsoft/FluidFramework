@@ -172,7 +172,6 @@ export function getAllFluidVersions(): Map<string, number> {
 	allVersions.forEach((value, index) => {
 		allVersionsMap.set(value, index);
 	});
-	allVersionsMap.set(pkgVersion, allVersionsMap.size);
 	return allVersionsMap;
 }
 
