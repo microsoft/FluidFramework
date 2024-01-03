@@ -15,7 +15,7 @@ import {
 } from "../compatOptions.cjs";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
+import { baseVersion, testBaseVersion } from "./baseVersion.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
 /**
@@ -52,6 +52,7 @@ export interface CompatConfig {
 	 * (Same version will be used across all layers).
 	 */
 	loadWith?: CompatVersion;
+	loadVersion?: string;
 }
 
 const defaultCompatVersions = {
@@ -185,7 +186,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	// not working with new rc version
 	const _configList: CompatConfig[] = [];
 
-	const [, semverInternal] = fromInternalScheme(codeVersion, true, true);
+	const [, semverInternal] = fromInternalScheme("2.0.0-internal.8.0.0", true, true);
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 	const greatestMajor = semverInternal.major;
@@ -239,6 +240,7 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 						compatVersion: resolvedCreateVersion,
 						createWith: createVersion,
 						loadWith: loadVersion,
+						loadVersion: resolvedLoadVersion,
 					};
 				}),
 			)

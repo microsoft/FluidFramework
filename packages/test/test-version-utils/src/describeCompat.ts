@@ -32,11 +32,17 @@ export function isCompatVersionBelowMinVersion(
 	versionsMap: Map<string, number>,
 	config: CompatConfig,
 ) {
-	const compatVersion = getRequestedVersion(
-		testBaseVersion(config.compatVersion),
-		config.compatVersion,
-	);
-	if (!versionsMap.get(minVersion)) {
+	let lowerVersion: string;
+	if (config.kind === CompatKind.CrossVersion) {
+		const compatV = versionsMap.get(config.compatVersion as string) as number;
+		const loadV = versionsMap.get(config.loadVersion as string) as number;
+		lowerVersion =
+			compatV < loadV ? (config.compatVersion as string) : (config.loadVersion as string);
+	} else {
+		lowerVersion = config.compatVersion as string;
+	}
+	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
+	if (!versionsMap.has(minVersion)) {
 		throw new Error(`Specified minimum version ${minVersion} not found in versions map`);
 	}
 	if (!versionsMap.has(compatVersion)) {
