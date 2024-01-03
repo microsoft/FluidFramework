@@ -11,7 +11,7 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
@@ -23,30 +23,15 @@ import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 const map1Id = "map1Key";
 const map2Id = "map2Key";
-const registry: ChannelFactoryRegistry = [
-	[map1Id, SharedMap.getFactory()],
-	[map2Id, SharedMap.getFactory()],
-];
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 // Function to yield a turn in the Javascript event loop.
 async function yieldJSTurn(): Promise<void> {
@@ -106,7 +91,22 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
 	);
 }
 
-describeNoCompat("Flushing ops", (getTestObjectProvider) => {
+describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+	const registry: ChannelFactoryRegistry = [
+		[map1Id, SharedMap.getFactory()],
+		[map2Id, SharedMap.getFactory()],
+	];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

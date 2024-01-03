@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -15,9 +15,14 @@ import {
 	DataObjectFactoryType,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	FluidErrorTypes,
+	IConfigProviderBase,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
 import {
@@ -25,9 +30,10 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ConfigTypes, GenericError, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { GenericError } from "@fluidframework/telemetry-utils";
 
-describeNoCompat("Message size", (getTestObjectProvider) => {
+describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

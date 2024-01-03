@@ -4,6 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 
+import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 import { AttachState } from "@fluidframework/container-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -256,14 +257,45 @@ describe("AzureClient", () => {
 	 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
 	 * schema type is statically known.
 	 */
-	it("preserves types of 'initialObjects'", async () => {
-		const { container } = await client.createContainer({
-			initialObjects: {
-				map1: SharedMap,
-			},
+	describe("'initialObjects'", () => {
+		it("preserves 'SharedMap' type", async () => {
+			const { container } = await client.createContainer({
+				initialObjects: {
+					map: SharedMap,
+				},
+			});
+
+			// Ensure that the 'map' API is accessible without casting or suppressing lint rules:
+			assert.equal(container.initialObjects.map.get("nonexistent"), undefined);
 		});
 
-		// Ensure that the 'map1' API is accessible without casting or suppressing lint rules:
-		assert.equal(container.initialObjects.map1.get("nonexistent"), undefined);
+		it("preserves 'SharedTree' type", async () => {
+			const { container } = await client.createContainer({
+				initialObjects: {
+					tree: SharedTree,
+				},
+			});
+
+			// Ensure that the 'tree' API is accessible without casting or suppressing lint rules:
+			const tree = container.initialObjects.tree;
+
+			// Apply Schema to returned SharedTree.
+			const _ = new SchemaFactory("test");
+
+			class RootNode extends _.object("Root", {
+				itWorks: _.string,
+			}) {}
+
+			const view = tree.schematize({
+				schema: RootNode,
+				initialTree: () =>
+					new RootNode({
+						itWorks: "yes",
+					}),
+			});
+
+			// Ensure root node is correctly typed.
+			assert.equal(view.root.itWorks, "yes");
+		});
 	});
 });

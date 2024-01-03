@@ -41,6 +41,9 @@ interface ContainerRecord {
 	lastProposal: number;
 }
 
+/**
+ * @alpha
+ */
 export class LoaderContainerTracker implements IOpProcessingController {
 	private readonly containers = new Map<IContainer, ContainerRecord>();
 	private lastProposalSeqNum: number = 0;

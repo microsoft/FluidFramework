@@ -14,7 +14,7 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import type { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -36,8 +36,9 @@ import {
 	waitForContainerConnection,
 	timeoutPromise,
 	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -51,34 +52,36 @@ const sharedMatrixId = "smatrix1Key";
 const sharedInkId = "sink1Key";
 const sparseMatrixId = "sparsematrixKey";
 
-const registry: ChannelFactoryRegistry = [
-	[sharedStringId, SharedString.getFactory()],
-	[sharedMapId, SharedMap.getFactory()],
-	[crcId, ConsensusRegisterCollection.getFactory()],
-	[sharedDirectoryId, SharedDirectory.getFactory()],
-	[sharedCellId, SharedCell.getFactory()],
-	[sharedInkId, Ink.getFactory()],
-	[sharedMatrixId, SharedMatrix.getFactory()],
-	[cocId, ConsensusQueue.getFactory()],
-	[sparseMatrixId, SparseMatrix.getFactory()],
-];
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
-
 const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
-	return dataStore.entryPoint.get() as Promise<ITestFluidObject>;
+	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
 
-describeFullCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [
+		[sharedStringId, SharedString.getFactory()],
+		[sharedMapId, SharedMap.getFactory()],
+		[crcId, ConsensusRegisterCollection.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
+		[sharedCellId, SharedCell.getFactory()],
+		[sharedInkId, Ink.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[cocId, ConsensusQueue.getFactory()],
+		[sparseMatrixId, SparseMatrix.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;
 
-	beforeEach(() => {
+	beforeEach(function () {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
 		loader = provider.makeTestLoader(testContainerConfig) as Loader;
@@ -253,8 +256,11 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container2 = await loader2.resolve({ url: requestUrl2 });
 
 		// Get the sub dataStore and assert that it is attached.
-		const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
-		const subDataStore2 = response2.value as ITestFluidObject;
+		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const subDataStore2Handle: IFluidHandle<ITestFluidObject> | undefined =
+			entryPoint2.root.get("attachKey");
+		assert(subDataStore2Handle !== undefined, "handle should exist");
+		const subDataStore2 = await subDataStore2Handle.get();
 		assert(
 			subDataStore2.runtime.attachState !== AttachState.Detached,
 			"DataStore should be attached!!",
@@ -456,7 +462,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const newDataStore = await dataStore.context.containerRuntime.createDataStore([
 			testDataStoreType,
 		]);
-		const comp2 = (await newDataStore.entryPoint.get()) as ITestFluidObject;
+		const comp2 = await getDataStoreEntryPointBackCompat<ITestFluidObject>(newDataStore);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -884,7 +890,26 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 });
 
 // Review: Run with Full Compat?
-describeNoCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [
+		[sharedStringId, SharedString.getFactory()],
+		[sharedMapId, SharedMap.getFactory()],
+		[crcId, ConsensusRegisterCollection.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
+		[sharedCellId, SharedCell.getFactory()],
+		[sharedInkId, Ink.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[cocId, ConsensusQueue.getFactory()],
+		[sparseMatrixId, SparseMatrix.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;

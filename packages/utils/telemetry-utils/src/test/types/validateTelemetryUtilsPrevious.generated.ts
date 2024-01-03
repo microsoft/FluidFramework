@@ -24,26 +24,14 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConfigTypes": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ConfigTypes": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_ConfigTypes():
-    TypeOnly<old.ConfigTypes>;
-declare function use_current_TypeAliasDeclaration_ConfigTypes(
-    use: TypeOnly<current.ConfigTypes>): void;
-use_current_TypeAliasDeclaration_ConfigTypes(
-    get_old_TypeAliasDeclaration_ConfigTypes());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConfigTypes": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ConfigTypes": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ConfigTypes():
-    TypeOnly<current.ConfigTypes>;
-declare function use_old_TypeAliasDeclaration_ConfigTypes(
-    use: TypeOnly<old.ConfigTypes>): void;
-use_old_TypeAliasDeclaration_ConfigTypes(
-    get_current_TypeAliasDeclaration_ConfigTypes());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -168,26 +156,14 @@ use_old_InterfaceDeclaration_IConfigProvider(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConfigProviderBase": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IConfigProviderBase": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IConfigProviderBase():
-    TypeOnly<old.IConfigProviderBase>;
-declare function use_current_InterfaceDeclaration_IConfigProviderBase(
-    use: TypeOnly<current.IConfigProviderBase>): void;
-use_current_InterfaceDeclaration_IConfigProviderBase(
-    get_old_InterfaceDeclaration_IConfigProviderBase());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConfigProviderBase": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IConfigProviderBase": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IConfigProviderBase():
-    TypeOnly<current.IConfigProviderBase>;
-declare function use_old_InterfaceDeclaration_IConfigProviderBase(
-    use: TypeOnly<old.IConfigProviderBase>): void;
-use_old_InterfaceDeclaration_IConfigProviderBase(
-    get_current_InterfaceDeclaration_IConfigProviderBase());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -596,6 +572,30 @@ declare function use_old_InterfaceDeclaration_MonitoringContext(
     use: TypeOnly<old.MonitoringContext>): void;
 use_old_InterfaceDeclaration_MonitoringContext(
     get_current_InterfaceDeclaration_MonitoringContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_MultiSinkLoggerProperties": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_MultiSinkLoggerProperties():
+    TypeOnly<old.MultiSinkLoggerProperties>;
+declare function use_current_InterfaceDeclaration_MultiSinkLoggerProperties(
+    use: TypeOnly<current.MultiSinkLoggerProperties>): void;
+use_current_InterfaceDeclaration_MultiSinkLoggerProperties(
+    get_old_InterfaceDeclaration_MultiSinkLoggerProperties());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_MultiSinkLoggerProperties": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_MultiSinkLoggerProperties():
+    TypeOnly<current.MultiSinkLoggerProperties>;
+declare function use_old_InterfaceDeclaration_MultiSinkLoggerProperties(
+    use: TypeOnly<old.MultiSinkLoggerProperties>): void;
+use_old_InterfaceDeclaration_MultiSinkLoggerProperties(
+    get_current_InterfaceDeclaration_MultiSinkLoggerProperties());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1580,6 +1580,30 @@ declare function use_old_VariableDeclaration_tagData(
     use: TypeOnly<typeof old.tagData>): void;
 use_old_VariableDeclaration_tagData(
     get_current_VariableDeclaration_tagData());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validatePrecondition": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_validatePrecondition():
+    TypeOnly<typeof old.validatePrecondition>;
+declare function use_current_FunctionDeclaration_validatePrecondition(
+    use: TypeOnly<typeof current.validatePrecondition>): void;
+use_current_FunctionDeclaration_validatePrecondition(
+    get_old_FunctionDeclaration_validatePrecondition());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validatePrecondition": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_validatePrecondition():
+    TypeOnly<typeof current.validatePrecondition>;
+declare function use_old_FunctionDeclaration_validatePrecondition(
+    use: TypeOnly<typeof old.validatePrecondition>): void;
+use_old_FunctionDeclaration_validatePrecondition(
+    get_current_FunctionDeclaration_validatePrecondition());
 
 /*
 * Validate forward compat by using old type in place of current type

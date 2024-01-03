@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	ChannelFactoryRegistry,
@@ -18,9 +18,10 @@ import {
 } from "@fluidframework/test-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 
-describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

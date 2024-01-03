@@ -71,4 +71,7 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 	}
 }
 
+/**
+ * @internal
+ */
 export const fluidExport = new SmdeContainerFactory();

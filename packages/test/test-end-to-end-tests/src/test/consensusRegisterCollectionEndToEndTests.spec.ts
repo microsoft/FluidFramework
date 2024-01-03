@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
@@ -20,28 +20,26 @@ import {
 	ChannelFactoryRegistry,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
 	create(runtime: IFluidDataStoreRuntime, id?: string): T;
 }
 
 const mapId = "mapKey";
-const registry: ChannelFactoryRegistry = [
-	[mapId, SharedMap.getFactory()],
-	[undefined, ConsensusRegisterCollection.getFactory()],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
-const groupedBatchingContainerConfig: ITestContainerConfig = {
-	...testContainerConfig,
-	runtimeOptions: { enableGroupedBatching: true },
-};
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-	describeFullCompat(name, (getTestObjectProvider) => {
+	describeCompat(name, "FullCompat", (getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
+		const registry: ChannelFactoryRegistry = [
+			[mapId, SharedMap.getFactory()],
+			[undefined, ConsensusRegisterCollection.getFactory()],
+		];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+		};
+
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();
@@ -293,23 +291,38 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
 generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
 
-describeNoCompat("ConsensusRegisterCollection grouped batching", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-	});
+describeCompat(
+	"ConsensusRegisterCollection grouped batching",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
+		const registry: ChannelFactoryRegistry = [
+			[mapId, SharedMap.getFactory()],
+			[undefined, ConsensusRegisterCollection.getFactory()],
+		];
+		const groupedBatchingContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions: { enableGroupedBatching: true },
+		};
 
-	it("grouped batching doesn't hit 0x071", async () => {
-		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		let provider: ITestObjectProvider;
+		beforeEach(() => {
+			provider = getTestObjectProvider();
+		});
 
-		const collection = ConsensusRegisterCollection.create(dataObject.runtime);
+		it("grouped batching doesn't hit 0x071", async () => {
+			const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
+			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
-		sharedMap.set("collection", collection.handle);
-		const write1P = collection.write("key1", "value1");
-		const write2P = collection.write("key1", "value2");
-		await Promise.all([write1P, write2P]);
-		await provider.ensureSynchronized();
-	});
-});
+			const collection = ConsensusRegisterCollection.create(dataObject.runtime);
+
+			sharedMap.set("collection", collection.handle);
+			const write1P = collection.write("key1", "value1");
+			const write2P = collection.write("key1", "value2");
+			await Promise.all([write1P, write2P]);
+			await provider.ensureSynchronized();
+		});
+	},
+);

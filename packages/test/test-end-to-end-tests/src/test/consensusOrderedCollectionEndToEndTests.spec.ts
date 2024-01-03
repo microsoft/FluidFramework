@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	acquireAndComplete,
 	ConsensusQueue,
@@ -22,21 +22,13 @@ import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
 	create(runtime: IFluidDataStoreRuntime, id?: string): T;
 }
 
 const mapId = "mapKey";
-const registry: ChannelFactoryRegistry = [
-	[mapId, SharedMap.getFactory()],
-	[undefined, ConsensusQueue.getFactory()],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
 function generate(
 	name: string,
@@ -44,7 +36,17 @@ function generate(
 	input: any[],
 	output: any[],
 ) {
-	describeFullCompat(name, (getTestObjectProvider) => {
+	describeCompat(name, "FullCompat", (getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
+		const registry: ChannelFactoryRegistry = [
+			[mapId, SharedMap.getFactory()],
+			[undefined, ConsensusQueue.getFactory()],
+		];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+		};
+
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
+// eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet";
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export type SortedSegmentSetItem =
 	| ISegment
@@ -28,7 +28,9 @@ export type SortedSegmentSetItem =
  * ordered and unique, and that new segments can be inserted into that order.
  *
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<
 	T,
 	string

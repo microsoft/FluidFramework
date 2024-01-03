@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { SharedDirectory, SharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -14,27 +14,29 @@ import {
 	DataObjectFactoryType,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
-import { IPendingRuntimeState } from "@fluidframework/container-runtime/dist/test";
+import { type IPendingRuntimeState } from "@fluidframework/container-runtime/test/containerRuntime";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
 const directoryId = "directoryKey";
-const registry: ChannelFactoryRegistry = [
-	[mapId, SharedMap.getFactory()],
-	[directoryId, SharedDirectory.getFactory()],
-];
 
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
+describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+	const registry: ChannelFactoryRegistry = [
+		[mapId, SharedMap.getFactory()],
+		[directoryId, SharedDirectory.getFactory()],
+	];
 
-describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	describe("from attached container", () => {
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;

@@ -7,7 +7,7 @@ import {
 	devtoolsMessageSource,
 	type ISourcedDevtoolsMessage,
 	isDevtoolsMessage,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 
 import { browser, window } from "../Globals";
 import { extensionMessageSource, relayMessageToPort } from "../messaging";

@@ -18,6 +18,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
+/**
+ * @alpha
+ */
 export interface IScribeProtocolState {
 	sequenceNumber: number;
 	minimumSequenceNumber: number;
@@ -26,6 +29,9 @@ export interface IScribeProtocolState {
 	values: [string, ICommittedProposal][];
 }
 
+/**
+ * @alpha
+ */
 export interface IProtocolHandler {
 	readonly quorum: IQuorum;
 	readonly attributes: IDocumentAttributes;
@@ -40,6 +46,7 @@ export interface IProtocolHandler {
 
 /**
  * Handles protocol specific ops.
+ * @internal
  */
 export class ProtocolOpHandler implements IProtocolHandler {
 	private readonly _quorum: Quorum;
@@ -147,10 +154,27 @@ export class ProtocolOpHandler implements IProtocolHandler {
 	public getProtocolState(): IScribeProtocolState {
 		// return a new object every time
 		// this ensures future state changes will not affect outside callers
+
+		const snapshot = this._quorum.snapshot();
+
+		const quorumMembers = snapshot.members;
+
+		// Removing any identifying client information
+		quorumMembers.forEach((member) => {
+			member[1] = {
+				...member[1],
+				client: {
+					...member[1].client,
+					user: { id: "" },
+				},
+			};
+		});
+
 		return {
 			sequenceNumber: this.sequenceNumber,
 			minimumSequenceNumber: this.minimumSequenceNumber,
 			...this._quorum.snapshot(),
+			members: quorumMembers,
 		};
 	}
 }

@@ -9,85 +9,55 @@ import { ConnectionState } from '@fluidframework/container-loader';
 import { ContainerErrorType } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
-import { DeserializeCallback } from '@fluidframework/sequence';
-import { DirectoryFactory } from '@fluidframework/map';
-import { DOProviderContainerRuntimeFactory } from '@fluidframework/fluid-static';
 import { DriverErrorType } from '@fluidframework/driver-definitions';
-import { FluidContainer } from '@fluidframework/fluid-static';
-import { getTextAndMarkers } from '@fluidframework/sequence';
+import { FluidObject } from '@fluidframework/core-interfaces';
+import { IChannel } from '@fluidframework/datastore-definitions';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IConnection } from '@fluidframework/fluid-static';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
-import { IDirectory } from '@fluidframework/map';
-import { IDirectoryClearOperation } from '@fluidframework/map';
-import { IDirectoryCreateSubDirectoryOperation } from '@fluidframework/map';
-import { IDirectoryDataObject } from '@fluidframework/map';
-import { IDirectoryDeleteOperation } from '@fluidframework/map';
-import { IDirectoryDeleteSubDirectoryOperation } from '@fluidframework/map';
-import { IDirectoryEvents } from '@fluidframework/map';
-import { IDirectoryKeyOperation } from '@fluidframework/map';
-import { IDirectoryNewStorageFormat } from '@fluidframework/map';
-import { IDirectoryOperation } from '@fluidframework/map';
-import { IDirectorySetOperation } from '@fluidframework/map';
-import { IDirectoryStorageOperation } from '@fluidframework/map';
-import { IDirectorySubDirectoryOperation } from '@fluidframework/map';
-import { IDirectoryValueChanged } from '@fluidframework/map';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
+import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IFluidContainerEvents } from '@fluidframework/fluid-static';
-import { IInterval } from '@fluidframework/sequence';
-import { IIntervalCollection } from '@fluidframework/sequence';
-import { IIntervalCollectionEvent } from '@fluidframework/sequence';
-import { IIntervalHelpers } from '@fluidframework/sequence';
-import { IJSONRunSegment } from '@fluidframework/sequence';
-import { ILocalValue } from '@fluidframework/map';
-import { IMapMessageLocalMetadata } from '@fluidframework/sequence';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IMember } from '@fluidframework/fluid-static';
-import { Interval } from '@fluidframework/sequence';
-import { IntervalLocator } from '@fluidframework/sequence';
-import { intervalLocatorFromEndpoint } from '@fluidframework/sequence';
-import { IntervalType } from '@fluidframework/sequence';
-import { IRootDataObject } from '@fluidframework/fluid-static';
-import { ISequenceDeltaRange } from '@fluidframework/sequence';
-import { ISerializableInterval } from '@fluidframework/sequence';
-import { ISerializableValue } from '@fluidframework/map';
-import { ISerializedInterval } from '@fluidframework/sequence';
-import { ISerializedValue } from '@fluidframework/map';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { IServiceAudienceEvents } from '@fluidframework/fluid-static';
-import { ISharedDirectory } from '@fluidframework/map';
-import { ISharedDirectoryEvents } from '@fluidframework/map';
-import { ISharedIntervalCollection } from '@fluidframework/sequence';
-import { ISharedMap } from '@fluidframework/map';
-import { ISharedMapEvents } from '@fluidframework/map';
-import { ISharedSegmentSequenceEvents } from '@fluidframework/sequence';
-import { ISharedString } from '@fluidframework/sequence';
-import { IValueChanged } from '@fluidframework/map';
-import { IValueOpEmitter } from '@fluidframework/sequence';
+import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { LoadableObjectClass } from '@fluidframework/fluid-static';
 import { LoadableObjectClassRecord } from '@fluidframework/fluid-static';
 import { LoadableObjectCtor } from '@fluidframework/fluid-static';
-import { LoadableObjectRecord } from '@fluidframework/fluid-static';
-import { LocalValueMaker } from '@fluidframework/map';
-import { MapFactory } from '@fluidframework/map';
 import { MemberChangedListener } from '@fluidframework/fluid-static';
-import { SequenceDeltaEvent } from '@fluidframework/sequence';
-import { SequenceEvent } from '@fluidframework/sequence';
-import { SequenceInterval } from '@fluidframework/sequence';
-import { SequenceMaintenanceEvent } from '@fluidframework/sequence';
-import { SerializedIntervalDelta } from '@fluidframework/sequence';
-import { ServiceAudience } from '@fluidframework/fluid-static';
-import { SharedDirectory } from '@fluidframework/map';
-import { SharedIntervalCollection } from '@fluidframework/sequence';
-import { SharedIntervalCollectionFactory } from '@fluidframework/sequence';
-import { SharedMap } from '@fluidframework/map';
+import { SharedObject } from '@fluidframework/shared-object-base';
 import { SharedObjectClass } from '@fluidframework/fluid-static';
-import { SharedSegmentSequence } from '@fluidframework/sequence';
-import { SharedSequence } from '@fluidframework/sequence';
-import { SharedString } from '@fluidframework/sequence';
-import { SharedStringFactory } from '@fluidframework/sequence';
-import { SharedStringSegment } from '@fluidframework/sequence';
-import { SubSequence } from '@fluidframework/sequence';
+
+// @public
+export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
+
+// @public
+export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required ? T : undefined | T;
+
+// @public
+export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
 export { AttachState }
+
+// @public
+export interface CheckoutEvents {
+    afterBatch(): void;
+    revertible(revertible: Revertible): void;
+}
 
 export { ConnectionState }
 
@@ -95,113 +65,132 @@ export { ContainerErrorType }
 
 export { ContainerSchema }
 
+// @public
+export const create: unique symbol;
+
 export { DataObjectClass }
 
-export { DeserializeCallback }
+// @public
+export enum DiscardResult {
+    Failure = 1,
+    Success = 0
+}
 
-export { DirectoryFactory }
-
-export { DOProviderContainerRuntimeFactory }
+// @public
+export const disposeSymbol: unique symbol;
 
 export { DriverErrorType }
 
-export { FluidContainer }
+// @public
+export type Events<E> = {
+    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
+};
 
-export { getTextAndMarkers }
+// @public
+export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+
+// @public
+export enum FieldKind {
+    Optional = 0,
+    Required = 1
+}
+
+// @public @sealed
+export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
+    constructor(kind: Kind, allowedTypes: Types);
+    // (undocumented)
+    readonly allowedTypes: Types;
+    // (undocumented)
+    readonly kind: Kind;
+    protected _typeCheck?: MakeNominal;
+}
+
+// @public
+export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
+
+// @public
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
 export { IConnection }
 
 export { ICriticalContainerError }
 
-export { IDirectory }
-
-export { IDirectoryClearOperation }
-
-export { IDirectoryCreateSubDirectoryOperation }
-
-export { IDirectoryDataObject }
-
-export { IDirectoryDeleteOperation }
-
-export { IDirectoryDeleteSubDirectoryOperation }
-
-export { IDirectoryEvents }
-
-export { IDirectoryKeyOperation }
-
-export { IDirectoryNewStorageFormat }
-
-export { IDirectoryOperation }
-
-export { IDirectorySetOperation }
-
-export { IDirectoryStorageOperation }
-
-export { IDirectorySubDirectoryOperation }
-
-export { IDirectoryValueChanged }
+// @public
+export interface IDisposable {
+    [disposeSymbol](): void;
+}
 
 export { IFluidContainer }
 
 export { IFluidContainerEvents }
 
-export { IInterval }
-
-export { IIntervalCollection }
-
-export { IIntervalCollectionEvent }
-
-export { IIntervalHelpers }
-
-export { IJSONRunSegment }
-
-export { ILocalValue }
-
-export { IMapMessageLocalMetadata }
-
 export { IMember }
 
-export { Interval }
+// @public
+export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
-export { IntervalLocator }
+// @public
+export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
-export { intervalLocatorFromEndpoint }
+// @public
+export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
+    readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
+};
 
-export { IntervalType }
+// @public
+export type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
-export { IRootDataObject }
+// @public
+export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? InsertableTypedNode<FlexListToUnion<TSchema>> : never;
 
-export { ISequenceDeltaRange }
-
-export { ISerializableInterval }
-
-export { ISerializableValue }
-
-export { ISerializedInterval }
-
-export { ISerializedValue }
+// @public
+export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
+    implicitlyConstructable: true;
+} ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
 export { IServiceAudience }
 
 export { IServiceAudienceEvents }
 
-export { ISharedDirectory }
+// @public
+export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
-export { ISharedDirectoryEvents }
+// @public @sealed
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+    get<T = any>(key: string): T | undefined;
+    set<T = unknown>(key: string, value: T): this;
+}
 
-export { ISharedIntervalCollection }
+// @public @sealed
+export interface ISharedMapEvents extends ISharedObjectEvents {
+    (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
 
-export { ISharedMap }
+// @public
+export interface ISubscribable<E extends Events<E>> {
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
 
-export { ISharedMapEvents }
+// @public
+export class IterableTreeListContent<T> implements Iterable<T> {
+    static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
+    [Symbol.iterator](): Iterator<T>;
+}
 
-export { ISharedSegmentSequenceEvents }
+// @public
+export interface ITree extends IChannel {
+    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+}
 
-export { ISharedString }
+// @public @sealed
+export interface IValueChanged {
+    key: string;
+    previousValue: any;
+}
 
-export { IValueChanged }
-
-export { IValueOpEmitter }
+// @public
+export type LazyItem<Item = unknown> = Item | (() => Item);
 
 export { LoadableObjectClass }
 
@@ -209,46 +198,271 @@ export { LoadableObjectClassRecord }
 
 export { LoadableObjectCtor }
 
-export { LoadableObjectRecord }
-
-export { LocalValueMaker }
-
-export { MapFactory }
+// @public
+export interface MakeNominal {
+}
 
 export { MemberChangedListener }
 
-export { SequenceDeltaEvent }
+// @public
+export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
-export { SequenceEvent }
+// @public
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
-export { SequenceInterval }
+// @public
+export enum NodeKind {
+    Array = 1,
+    Leaf = 3,
+    Map = 0,
+    Object = 2
+}
 
-export { SequenceMaintenanceEvent }
+// @public
+export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
+    -readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
+};
 
-export { SerializedIntervalDelta }
+// @public
+export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
+    readonly [P in symbol | string]: P extends K ? T : never;
+};
 
-export { ServiceAudience }
+// @public
+export interface Revertible {
+    discard(): DiscardResult;
+    readonly kind: RevertibleKind;
+    readonly origin: {
+        readonly isLocal: boolean;
+    };
+    revert(): RevertResult;
+}
 
-export { SharedDirectory }
+// @public
+export enum RevertibleKind {
+    Default = 0,
+    Rebase = 3,
+    Redo = 2,
+    Undo = 1
+}
 
-export { SharedIntervalCollection }
+// @public
+export enum RevertResult {
+    Failure = 1,
+    Success = 0
+}
 
-export { SharedIntervalCollectionFactory }
+// @public @sealed
+export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
+    constructor(scope: TScope);
+    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Array<${string}>`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.Array<${string}>`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.${Name}`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
+    fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
+    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Map<${string}>`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.Map<${string}>`>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, true>;
+    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.${Name}`>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.${string}`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
+    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.${Name}`>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
+    readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
+    readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>, object & InsertableObjectFromSchemaRecord<T>, true>;
+    optional<const T extends ImplicitAllowedTypes>(t: T): FieldSchema<FieldKind.Optional, T>;
+    // (undocumented)
+    readonly scope: TScope;
+    readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
+}
 
-export { SharedMap }
+// @public @deprecated
+export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    readonly [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // (undocumented)
+    protected applyStashedOp(content: unknown): unknown;
+    clear(): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
+    delete(key: string): boolean;
+    entries(): IterableIterator<[string, any]>;
+    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
+    get<T = any>(key: string): T | undefined;
+    static getFactory(): IChannelFactory;
+    has(key: string): boolean;
+    keys(): IterableIterator<string>;
+    // (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // (undocumented)
+    protected onDisconnect(): void;
+    // (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
+    set(key: string, value: unknown): this;
+    get size(): number;
+    // (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    values(): IterableIterator<any>;
+}
 
 export { SharedObjectClass }
 
-export { SharedSegmentSequence }
+// @public
+export class SharedTree implements ITree {
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    connect(services: IChannelServices): void;
+    // (undocumented)
+    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
+    // (undocumented)
+    static getFactory(): IChannelFactory;
+    // (undocumented)
+    getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
+    // (undocumented)
+    get handle(): IFluidHandle;
+    // (undocumented)
+    get id(): string;
+    // (undocumented)
+    get IFluidLoadable(): IFluidLoadable;
+    // (undocumented)
+    isAttached(): boolean;
+    // (undocumented)
+    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+    // (undocumented)
+    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
+}
 
-export { SharedSequence }
+// @public
+export const Tree: TreeApi;
 
-export { SharedString }
+// @public
+export interface TreeApi {
+    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
+    key(node: TreeNode): string | number;
+    on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
+    parent(node: TreeNode): TreeNode | undefined;
+    schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    readonly status: (node: TreeNode) => TreeStatus;
+}
 
-export { SharedStringFactory }
+// @public
+export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>, TreeArrayNode> {
+}
 
-export { SharedStringSegment }
+// @public
+export const TreeArrayNode: {
+    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+};
 
-export { SubSequence }
+// @public
+export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
+    insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
+    moveToEnd(sourceIndex: number): void;
+    moveToEnd(sourceIndex: number, source: TMoveFrom): void;
+    moveToIndex(index: number, sourceIndex: number): void;
+    moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
+    moveToStart(sourceIndex: number): void;
+    moveToStart(sourceIndex: number, source: TMoveFrom): void;
+    removeAt(index: number): void;
+    removeRange(start?: number, end?: number): void;
+}
+
+// @public
+export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
+    // (undocumented)
+    readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly schema: TSchema;
+}
+
+// @public
+export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
+
+// @public
+export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
+
+// @public
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>> {
+}
+
+// @public
+export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
+    delete(key: string): void;
+    set(key: string, value: TIn | undefined): void;
+}
+
+// @public
+export abstract class TreeNode implements WithType {
+    abstract get [type](): string;
+}
+
+// @public
+export interface TreeNodeEvents {
+    afterChange(): void;
+}
+
+// @public
+export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
+
+// @public
+export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
+
+// @public
+export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+    // @sealed
+    new (data: TInsertable): Unhydrated<TNode>;
+}
+
+// @public
+export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean> {
+    // (undocumented)
+    readonly identifier: Name;
+    readonly implicitlyConstructable: ImplicitlyConstructable;
+    // (undocumented)
+    readonly info: unknown;
+    // (undocumented)
+    readonly kind: Kind;
+}
+
+// @public
+export interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+    // (undocumented)
+    create(data: TInsertable): TNode;
+}
+
+// @public
+export enum TreeStatus {
+    Deleted = 2,
+    InDocument = 0,
+    Removed = 1
+}
+
+// @public
+export interface TreeView<in out TRoot> extends IDisposable {
+    readonly events: ISubscribable<CheckoutEvents>;
+    readonly root: TRoot;
+}
+
+// @public
+export const type: unique symbol;
+
+// @public
+export type Unhydrated<T> = T;
+
+// @public
+export interface WithType<TName extends string = string> {
+    get [type](): TName;
+}
 
 ```

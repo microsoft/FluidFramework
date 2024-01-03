@@ -307,7 +307,7 @@
 			"name": "Debug Current Mocha Test",
 			"env": {
 				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeFullCompat tests
+				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1"
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
@@ -344,7 +344,7 @@
 			"name": "Debug Current Test (JS)",
 			"env": {
 				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeFullCompat tests
+				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1"
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",

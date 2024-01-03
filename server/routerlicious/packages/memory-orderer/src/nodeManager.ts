@@ -11,6 +11,7 @@ import { RemoteNode } from "./remoteNode";
 
 /**
  * Tracks the validity of a set of nodes.
+ * @internal
  */
 export class NodeManager extends EventEmitter {
 	// Every node we have ever loaded

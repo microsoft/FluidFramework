@@ -6,10 +6,15 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
-import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IRequest,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
-	IPendingLocalState,
 	IFluidCodeDetails,
 	IContainer,
 	LoaderHeader,
@@ -26,7 +31,6 @@ import {
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
-	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	LocalCodeLoader,
@@ -43,15 +47,10 @@ import {
 	getDataStoreFactory,
 	ITestDataObject,
 	TestDataObjectType,
-	describeNoCompat,
+	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import {
-	ConfigTypes,
-	DataCorruptionError,
-	IConfigProviderBase,
-} from "@fluidframework/telemetry-utils";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
@@ -66,7 +65,7 @@ const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 // REVIEW: enable compat testing?
-describeNoCompat("Container", (getTestObjectProvider) => {
+describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
@@ -295,12 +294,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -349,9 +344,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			await localTestObjectProvider.makeTestContainer(testContainerConfig);
 		const pendingString = await container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingString);
-		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
+		const pendingLocalState: { url?: string } = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
-		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IResolvedUrl).url);
+		assert.strictEqual(pendingLocalState.url, container.resolvedUrl?.url);
 	});
 
 	it("can call connect() and disconnect() on Container", async () => {
@@ -385,12 +380,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("can control op processing with connect() and disconnect()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -861,7 +852,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("Driver", (getTestObjectProvider) => {
+describeCompat("Driver", "NoCompat", (getTestObjectProvider) => {
 	it("Driver Storage Policy Values", async () => {
 		const provider = getTestObjectProvider();
 		const fiveDaysMs: FiveDaysMs = 432_000_000;

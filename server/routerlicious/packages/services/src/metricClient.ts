@@ -50,6 +50,9 @@ class TelegrafClient implements IMetricClient {
 	}
 }
 
+/**
+ * @internal
+ */
 export function createMetricClient(config: any): IMetricClient {
 	return config !== undefined && config.client === "telegraf"
 		? new TelegrafClient(config.telegraf)

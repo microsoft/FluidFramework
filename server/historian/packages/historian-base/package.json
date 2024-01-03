@@ -35,13 +35,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"lib/test/**/*.js"
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"lib/**/*.js"
+			"src/**/*.*ts",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -61,7 +61,7 @@
 		"@fluidframework/server-services-shared": "^3.0.0-211732",
 		"@fluidframework/server-services-telemetry": "^3.0.0-211732",
 		"@fluidframework/server-services-utils": "^3.0.0-211732",
-		"axios": "^1.5.0",
+		"axios": "^1.6.2",
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
@@ -91,7 +91,7 @@
 		"@types/uuid": "^3.4.4",
 		"async": "^3.2.2",
 		"axios-mock-adapter": "^1.19.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"eslint-config-prettier": "~9.0.0",

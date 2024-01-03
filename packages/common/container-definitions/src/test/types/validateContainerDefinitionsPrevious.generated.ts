@@ -1056,30 +1056,6 @@ use_old_TypeAliasDeclaration_ILoaderOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IPendingLocalState():
-    TypeOnly<old.IPendingLocalState>;
-declare function use_current_InterfaceDeclaration_IPendingLocalState(
-    use: TypeOnly<current.IPendingLocalState>): void;
-use_current_InterfaceDeclaration_IPendingLocalState(
-    get_old_InterfaceDeclaration_IPendingLocalState());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingLocalState": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IPendingLocalState():
-    TypeOnly<current.IPendingLocalState>;
-declare function use_old_InterfaceDeclaration_IPendingLocalState(
-    use: TypeOnly<old.IPendingLocalState>): void;
-use_old_InterfaceDeclaration_IPendingLocalState(
-    get_current_InterfaceDeclaration_IPendingLocalState());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():

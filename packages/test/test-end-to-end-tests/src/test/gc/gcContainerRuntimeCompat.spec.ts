@@ -7,9 +7,7 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -19,7 +17,7 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../../packageVersion.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -29,7 +27,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * read and process it successfully.
  */
 // Issue #10053
-describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider) => {
+describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObjectProvider) => {
 	const currentVersionNumber = 0;
 	const oldVersionNumbers = [-1, -2];
 	const dataObjectFactory = new TestFluidObjectFactory([]);
@@ -47,12 +45,9 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 			},
 			gcOptions: { gcAllowed: true },
 		};
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		});
 		return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });

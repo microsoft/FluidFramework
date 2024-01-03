@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
+import { BTree } from '@tylerbu/sorted-btree-es6';
 import { assert } from '@fluidframework/core-utils';
 import { fail, copyPropertyIfDefined, compareBtrees, compareFiniteNumbers } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
@@ -12,8 +12,7 @@ import { NodeData, Payload } from './persisted-types';
 
 /**
  * A node that can be contained within a Forest
- *
- * @public
+ * @alpha
  */
 export interface ForestNode extends NodeData<NodeId> {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
@@ -41,8 +40,7 @@ export function isParentedForestNode(node: ForestNode): node is ParentedForestNo
 
 /**
  * Information about a ForestNode's parent
- *
- * @public
+ * @alpha
  */
 export interface ParentData {
 	readonly parentId: NodeId;
@@ -51,6 +49,7 @@ export interface ParentData {
 
 /**
  * Differences from one forest to another.
+ * @alpha
  */
 export interface Delta<NodeId> {
 	/**
@@ -75,8 +74,7 @@ interface ForestState {
 /**
  * An immutable forest of ForestNode.
  * Enforces single parenting, and allows querying the parent.
- *
- * @public
+ * @alpha
  */
 export class Forest {
 	/**

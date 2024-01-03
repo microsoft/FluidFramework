@@ -6,8 +6,8 @@ import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../../../co
 import { TscDependentTask } from "./tscTask";
 
 export class TsLintTask extends TscDependentTask {
-	protected get configFileFullPath() {
-		return this.getPackageFileFullPath("tslint.json");
+	protected get configFileFullPaths() {
+		return [this.getPackageFileFullPath("tslint.json")];
 	}
 
 	protected async getToolVersion() {
@@ -17,14 +17,14 @@ export class TsLintTask extends TscDependentTask {
 
 export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
-	protected get configFileFullPath() {
+	protected get configFileFullPaths() {
 		if (!this._configFileFullPath) {
 			this._configFileFullPath = getEsLintConfigFilePath(this.package.directory);
 			if (!this._configFileFullPath) {
 				throw new Error(`Unable to find config file for eslint ${this.command}`);
 			}
 		}
-		return this._configFileFullPath;
+		return [this._configFileFullPath];
 	}
 
 	protected get useWorker() {

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	createAndAttachContainer,
@@ -12,22 +12,22 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const mapId = "map";
-const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	runtimeOptions: {
-		summaryOptions: {
-			summaryConfigOverrides: { state: "disabled" },
-		},
-	},
-};
 
 // This is a regression test for https://github.com/microsoft/FluidFramework/issues/9163
-describeNoCompat("t9s issue regression test", (getTestObjectProvider) => {
+describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, apis) => {
+	const registry: ChannelFactoryRegistry = [[mapId, apis.dds.SharedMap.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: { state: "disabled" },
+			},
+		},
+	};
 	it("handles long logtail", async function () {
 		const provider = getTestObjectProvider();
 		const loader1 = provider.makeTestLoader(testContainerConfig);
