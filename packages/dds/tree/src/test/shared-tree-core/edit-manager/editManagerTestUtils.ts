@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangeFamily,
 	ChangeRebaser,
