@@ -46,9 +46,9 @@ function createCompatSuite(
 		if (compatFilter !== undefined) {
 			configs = configs.filter((value) => compatFilter.includes(value.kind));
 		}
-		const versionsMap = getAllFluidVersions();
+		const allVersions = getAllFluidVersions();
 		for (const config of configs) {
-			if (minVersion && isCompatVersionBelowMinVersion(minVersion, versionsMap, config)) {
+			if (minVersion && isCompatVersionBelowMinVersion(minVersion, allVersions, config)) {
 				// skip current config if compat version is below min version supported for test suite
 				continue;
 			}

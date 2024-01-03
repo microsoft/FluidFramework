@@ -163,16 +163,17 @@ export function resolveVersion(requested: string, installed: boolean) {
 /**
  * @internal
  */
-export function getAllFluidVersions(): Map<string, number> {
+export function getAllFluidVersions(): string[] {
 	const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
 		encoding: "utf-8",
 	});
 	const allVersions: string[] = JSON.parse(allVersionsFromNpm).sort(semver.compare);
-	const allVersionsMap = new Map<string, number>();
-	allVersions.forEach((value, index) => {
-		allVersionsMap.set(value, index);
-	});
-	return allVersionsMap;
+	return allVersions;
+	// const allVersionsMap = new Map<string, number>();
+	// allVersions.forEach((value, index) => {
+	// 	allVersionsMap.set(value, index);
+	// });
+	// return allVersionsMap;
 }
 
 async function ensureModulePath(version: string, modulePath: string) {

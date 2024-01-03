@@ -202,27 +202,27 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 
 export function isCompatVersionBelowMinVersion(
 	minVersion: string,
-	versionsMap: Map<string, number>,
+	allVersions: string[],
 	config: CompatConfig,
 ) {
-	let lowerVersion: string;
+	let lowerVersion: string | number;
 	if (config.kind === CompatKind.CrossVersion) {
-		const compatV = versionsMap.get(config.compatVersion as string) as number;
-		const loadV = versionsMap.get(config.loadVersion as string) as number;
+		const compatV = allVersions.indexOf(config.compatVersion as string);
+		const loadV = allVersions.indexOf(config.loadVersion as string);
 		lowerVersion =
 			compatV < loadV ? (config.compatVersion as string) : (config.loadVersion as string);
 	} else {
-		lowerVersion = config.compatVersion as string;
+		lowerVersion = config.compatVersion;
 	}
 	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
-	if (!versionsMap.has(minVersion)) {
+	if (!allVersions.includes(minVersion)) {
 		throw new Error(`Specified minimum version ${minVersion} not found in versions map`);
 	}
-	if (!versionsMap.has(compatVersion)) {
+	if (!allVersions.includes(compatVersion)) {
 		throw new Error(`Compat version ${compatVersion} not found in versions map`);
 	}
-	const minVersionIndex: number = versionsMap.get(minVersion) as number;
-	const compatVersionIndex: number = versionsMap.get(compatVersion) as number;
+	const minVersionIndex: number = allVersions.indexOf(minVersion);
+	const compatVersionIndex: number = allVersions.indexOf(compatVersion);
 	return compatVersionIndex < minVersionIndex;
 }
 
