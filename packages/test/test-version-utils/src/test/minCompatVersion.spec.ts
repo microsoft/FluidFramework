@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { isCompatVersionBelowMinVersion } from "../describeCompat.js";
 import { CompatKind } from "../../compatOptions.cjs";
 import { getAllFluidVersions } from "../versionUtils.js";
 import { pkgVersion } from "../packageVersion.js";
+import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
 
 describe("Minimum Compat Version", () => {
 	const versionMaps = getAllFluidVersions();

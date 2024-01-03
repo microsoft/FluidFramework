@@ -200,6 +200,32 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
+export function isCompatVersionBelowMinVersion(
+	minVersion: string,
+	versionsMap: Map<string, number>,
+	config: CompatConfig,
+) {
+	let lowerVersion: string;
+	if (config.kind === CompatKind.CrossVersion) {
+		const compatV = versionsMap.get(config.compatVersion as string) as number;
+		const loadV = versionsMap.get(config.loadVersion as string) as number;
+		lowerVersion =
+			compatV < loadV ? (config.compatVersion as string) : (config.loadVersion as string);
+	} else {
+		lowerVersion = config.compatVersion as string;
+	}
+	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
+	if (!versionsMap.has(minVersion)) {
+		throw new Error(`Specified minimum version ${minVersion} not found in versions map`);
+	}
+	if (!versionsMap.has(compatVersion)) {
+		throw new Error(`Compat version ${compatVersion} not found in versions map`);
+	}
+	const minVersionIndex: number = versionsMap.get(minVersion) as number;
+	const compatVersionIndex: number = versionsMap.get(compatVersion) as number;
+	return compatVersionIndex < minVersionIndex;
+}
+
 /**
  * Generates the cross version compat config permutations.
  * This will resolve to one permutation where `CompatConfig.createWith` is set to the current version and

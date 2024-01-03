@@ -7,7 +7,12 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
 import { assert } from "@fluidframework/core-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
-import { CompatConfig, configList, mochaGlobalSetup } from "./compatConfig.js";
+import {
+	CompatConfig,
+	configList,
+	isCompatVersionBelowMinVersion,
+	mochaGlobalSetup,
+} from "./compatConfig.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
@@ -20,38 +25,9 @@ import {
 	CompatApis,
 	getDriverApi,
 } from "./testApi.js";
-import { getAllFluidVersions, getRequestedVersion } from "./versionUtils.js";
+import { getAllFluidVersions } from "./versionUtils.js";
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
-
-/**
- * @internal
- */
-export function isCompatVersionBelowMinVersion(
-	minVersion: string,
-	versionsMap: Map<string, number>,
-	config: CompatConfig,
-) {
-	let lowerVersion: string;
-	if (config.kind === CompatKind.CrossVersion) {
-		const compatV = versionsMap.get(config.compatVersion as string) as number;
-		const loadV = versionsMap.get(config.loadVersion as string) as number;
-		lowerVersion =
-			compatV < loadV ? (config.compatVersion as string) : (config.loadVersion as string);
-	} else {
-		lowerVersion = config.compatVersion as string;
-	}
-	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
-	if (!versionsMap.has(minVersion)) {
-		throw new Error(`Specified minimum version ${minVersion} not found in versions map`);
-	}
-	if (!versionsMap.has(compatVersion)) {
-		throw new Error(`Compat version ${compatVersion} not found in versions map`);
-	}
-	const minVersionIndex: number = versionsMap.get(minVersion) as number;
-	const compatVersionIndex: number = versionsMap.get(compatVersion) as number;
-	return compatVersionIndex < minVersionIndex;
-}
 
 /*
  * Mocha Utils for test to generate the compat variants.

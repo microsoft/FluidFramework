@@ -21,7 +21,6 @@ export {
 	DescribeCompatSuite,
 	describeCompat,
 	ITestObjectProviderOptions,
-	isCompatVersionBelowMinVersion,
 } from "./describeCompat.js";
 export {
 	DescribeE2EDocSuite,
