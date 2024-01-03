@@ -91,16 +91,31 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			runtime,
 		);
 
-		// Handle summary acks asynchronously
+		// If there have been any acks newer that the one this client loaded from until now, process them before
+		// starting the running summarizer which will trigger summary heuristics.
+		// This is done primarily to handle scenarios where the summarizer loads from a cached snapshot and there
+		// is newer one available. The ack for the newer summary is processed before summarizing because otherwise
+		// that summary would fail as it has an older parent.
+		let nextReferenceSequenceNumber = runtime.deltaManager.initialSequenceNumber + 1;
+		const latestAck = summaryCollection.latestAck;
+		if (
+			latestAck !== undefined &&
+			latestAck.summaryOp.referenceSequenceNumber >= nextReferenceSequenceNumber
+		) {
+			await summarizer.handleSummaryAck(latestAck);
+			nextReferenceSequenceNumber = latestAck.summaryOp.referenceSequenceNumber + 1;
+		}
+
+		await summarizer.waitStart();
+
+		// Process summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
-		summarizer.processIncomingSummaryAcks().catch((error) => {
+		summarizer.processIncomingSummaryAcks(nextReferenceSequenceNumber).catch((error) => {
 			createChildLogger({ logger }).sendErrorEvent(
 				{ eventName: "HandleSummaryAckFatalError" },
 				error,
 			);
 		});
-
-		await summarizer.waitStart();
 
 		// Update heuristic counts
 		// By the time we get here, there are potentially ops missing from the heuristic summary counts
@@ -323,13 +338,16 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	}
 
 	/**
-	 * Responsible for receiving and processing all the summaryAcks.
+	 * Responsible for receiving and processing all the summary acks.
 	 * It starts processing ACKs after the one for the summary this client loaded from (initialSequenceNumber). Any
 	 * ACK before that is not interesting as it will simply be ignored.
+	 *
+	 * @param referenceSequenceNumber - The referenceSequenceNumber of the summary from which to start processing
+	 * acks.
 	 */
-	private async processIncomingSummaryAcks() {
+	private async processIncomingSummaryAcks(referenceSequenceNumber: number) {
 		// Start waiting for acks that are for summaries newer that the one this client loaded from.
-		let nextReferenceSequenceNumber = this.runtime.deltaManager.initialSequenceNumber + 1;
+		let nextReferenceSequenceNumber = referenceSequenceNumber;
 		while (!this.disposed) {
 			const ackedSummary = await this.summaryCollection.waitSummaryAck(
 				nextReferenceSequenceNumber,
