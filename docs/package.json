@@ -13,6 +13,7 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "concurrently npm:build:api-documentation npm:build:md-magic && npm run hugo",
+		"build:api": "npm run build:api-documentation",
 		"build:api-documentation": "node ./api-markdown-documenter/index.js",
 		"build:api-documentation:multi-version": "node ./api-markdown-documenter/index.js true",
 		"build:md-magic": "concurrently npm:build:md-magic:code npm:build:md-magic:website",

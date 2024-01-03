@@ -334,6 +334,7 @@ The following npm scripts are supported in this directory:
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
+| `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
 | `build:api-documentation:multi-version` | Convert package API reports (`.api.json` files) into Markdown. Includes API content from all major release branches. |
 | `build:md-magic` | Updates generated content in Markdown files. |
