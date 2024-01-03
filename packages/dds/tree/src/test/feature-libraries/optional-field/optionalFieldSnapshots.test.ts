@@ -12,8 +12,7 @@ import {
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-// eslint-disable-next-line import/no-internal-modules
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/snapshotTools.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sessionId } from "../../snapshots/testTrees.js";
 
