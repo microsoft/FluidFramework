@@ -160,6 +160,9 @@ export function resolveVersion(requested: string, installed: boolean) {
 	}
 }
 
+/**
+ * @internal
+ */
 export function getAllFluidVersions(): Map<string, number> {
 	const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
 		encoding: "utf-8",
@@ -169,7 +172,7 @@ export function getAllFluidVersions(): Map<string, number> {
 	allVersions.forEach((value, index) => {
 		allVersionsMap.set(value, index);
 	});
-	allVersionsMap.set("2.0.0-rc.1.0.0", allVersionsMap.size);
+	allVersionsMap.set(pkgVersion, allVersionsMap.size);
 	return allVersionsMap;
 }
 

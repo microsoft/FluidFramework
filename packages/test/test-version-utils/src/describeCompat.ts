@@ -24,6 +24,28 @@ import { getAllFluidVersions, getRequestedVersion } from "./versionUtils.js";
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
 
+/**
+ * @internal
+ */
+export function isCompatVersionBelowMinVersion(
+	minVersion: string,
+	versionsMap: Map<string, number>,
+	config: CompatConfig,
+) {
+	const compatVersion = getRequestedVersion(
+		testBaseVersion(config.compatVersion),
+		config.compatVersion,
+	);
+	if (!versionsMap.get(minVersion)) {
+		throw new Error(`Specified minimum version ${minVersion} not found in versions map`);
+	}
+	if (!versionsMap.has(compatVersion)) {
+		throw new Error(`Compat version ${compatVersion} not found in versions map`);
+	}
+	const minVersionIndex: number = versionsMap.get(minVersion) as number;
+	const compatVersionIndex: number = versionsMap.get(compatVersion) as number;
+	return compatVersionIndex < minVersionIndex;
+}
 /*
  * Mocha Utils for test to generate the compat variants.
  */
@@ -43,27 +65,9 @@ function createCompatSuite(
 		}
 		const versionsMap = getAllFluidVersions();
 		for (const config of configs) {
-			const compatVersion = config.compatVersion;
-			const stringVersion = getRequestedVersion(
-				testBaseVersion(compatVersion),
-				compatVersion,
-			);
-			if (minVersion !== undefined) {
-				if (!versionsMap.has(minVersion)) {
-					console.log(minVersion, " not found");
-					throw new Error("Specified minimun version not found in versions map");
-				}
-				if (!versionsMap.has(stringVersion)) {
-					console.log(stringVersion, " not found");
-					throw new Error("Compat version not found in versions map");
-				}
-
-				const minVersionIndex: number = versionsMap.get(minVersion) ?? Infinity;
-				const stringVersionIndex: number = versionsMap.get(stringVersion) ?? -1;
-				// skip config if related version is lower than speficed
-				if (stringVersionIndex < minVersionIndex) {
-					continue;
-				}
+			if (minVersion && isCompatVersionBelowMinVersion(minVersion, versionsMap, config)) {
+				// skip current config if compat version is below min version supported for test suite
+				continue;
 			}
 			describe(config.name, function () {
 				let provider: ITestObjectProvider;
