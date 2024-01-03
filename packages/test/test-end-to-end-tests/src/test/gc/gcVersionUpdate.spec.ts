@@ -23,7 +23,7 @@ import {
 	IGCMetadata,
 	IGarbageCollector,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/gc/index.js";
+} from "@fluidframework/container-runtime/test/gc";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {

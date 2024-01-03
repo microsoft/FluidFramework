@@ -24,9 +24,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-	ConfigTypes,
 	createChildLogger,
-	IConfigProviderBase,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
@@ -34,7 +32,14 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IErrorBase, IResponse, FluidObject, IGenericError } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IResponse,
+	FluidObject,
+	IGenericError,
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
@@ -785,12 +790,8 @@ describe("Runtime", () => {
 			const getMockDataStores = (): DataStores => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processFluidDataStoreOp: (
-						_message: ISequencedDocumentMessage,
-						_local: boolean,
-						_localMessageMetadata: unknown,
-					) => {},
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					processFluidDataStoreOp: (..._args) => {},
+					setConnectionState: (..._args) => {},
 				} as DataStores;
 			};
 

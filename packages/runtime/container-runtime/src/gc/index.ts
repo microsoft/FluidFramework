@@ -21,6 +21,7 @@ export {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCMetadata_Deprecated,
 	IGCResult,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
@@ -33,9 +34,11 @@ export {
 	stableGCVersion,
 	disableAttachmentBlobSweepKey,
 	disableDatastoreSweepKey,
+	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
+	ISweepMessage,
 } from "./gcDefinitions";
 export {
 	cloneGCData,

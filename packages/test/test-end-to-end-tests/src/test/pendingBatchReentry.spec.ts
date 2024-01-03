@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { SharedDirectory, SharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -25,7 +25,8 @@ import { SharedMatrix } from "@fluidframework/matrix";
 describeCompat(
 	"Op reentry and rebasing during pending batches",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
+		const { SharedMap, SharedDirectory } = apis.dds;
 		const registry: ChannelFactoryRegistry = [
 			["map", SharedMap.getFactory()],
 			["sharedString", SharedString.getFactory()],

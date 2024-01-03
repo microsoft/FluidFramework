@@ -51,7 +51,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree;
 // @internal
 export function convertToSummaryTree(snapshot: ITree, fullTree?: boolean): ISummarizeResult;
 
-// @internal
+// @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
 // @internal (undocumented)
@@ -99,6 +99,17 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 
 // @internal (undocumented)
 export function getNormalizedObjectStoragePathParts(path: string): string[];
+
+// @internal
+export interface ISerializedHandle {
+    // (undocumented)
+    type: "__fluid_handle__";
+    // (undocumented)
+    url: string;
+}
+
+// @internal
+export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
 // @internal (undocumented)
 export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
@@ -159,7 +170,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 // @internal
 export function seqFromTree(tree: ISnapshotTree, readAndParseBlob: ReadAndParseBlob): Promise<number>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor();
     // (undocumented)

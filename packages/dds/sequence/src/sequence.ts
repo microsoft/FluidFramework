@@ -48,7 +48,6 @@ import {
 	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
-	SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
@@ -550,7 +549,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * Runs serializer over the GC data for this SharedMatrix.
 	 * All the IFluidHandle's represent routes to other objects.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		if (this.intervalCollections.size > 0) {
 			this.intervalCollections.serialize(serializer);
 		}
@@ -731,7 +730,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(parseHandles(content, this.serializer));
+		const parsedContent = parseHandles(content, this.serializer);
+		const metadata =
+			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
+			this.client.applyStashedOp(parsedContent);
+		assert(!!metadata, "Metadata is undefined");
+		return metadata;
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/benchmark",
-	"version": "0.49.0",
+	"version": "0.50.0",
 	"description": "Benchmarking tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -57,7 +57,7 @@
 		"eslint": "~8.6.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^2.6.2",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267"
 }

@@ -7,7 +7,7 @@ import {
 	type IMessageRelay,
 	type IMessageRelayEvents,
 	type IDevtoolsMessage,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 /**
@@ -18,7 +18,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 export type MockRelayMessageHandler = (message: IDevtoolsMessage) => IDevtoolsMessage | undefined;
 
 /**
- * Mock implementation of {@link @fluid-experimental/devtools-core#IMessageRelay} for use in tests.
+ * Mock implementation of {@link @fluidframework/devtools-core#IMessageRelay} for use in tests.
  *
  * Takes in a message handler that (optionally) directly returns a response message to be emitted.
  */

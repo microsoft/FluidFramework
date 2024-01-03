@@ -30,7 +30,20 @@ const client = new OdspClient(clientProps);
 
 ### Experimental Features
 
-`OdspClient` could be instantiated with experimental features. These features are experimental in nature and should **NOT** be used in production applications. To learn more, see [Experimental Features](https://fluidframework.com/docs/build/experimental-features/).
+`OdspClient` provides access to experimental features, as demonstrated below. These features are experimental in nature and should **NOT** be used in production applications. To learn more, see [Experimental Features](https://fluidframework.com/docs/build/experimental-features/).
+
+```typescript
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
+export const clientProps: OdspClientProps = {
+	connection: connectionConfig,
+	configProvider: configProvider({
+		"Fluid.Container.ForceWriteConnection": true,
+	}),
+};
+```
 
 ## Fluid Containers
 

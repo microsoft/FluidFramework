@@ -10,7 +10,7 @@ import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ITestObjectProvider,
 	waitForContainerConnection,
@@ -38,123 +38,6 @@ const runtimeOptions: IContainerRuntimeOptions = {
 };
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
-class TestDataObject2 extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-	public get _context() {
-		return this.context;
-	}
-	private readonly mapKey = "SharedMap";
-	public map!: SharedMap;
-
-	protected async initializingFirstTime() {
-		const sharedMap = SharedMap.create(this.runtime, this.mapKey);
-		this.root.set(this.mapKey, sharedMap.handle);
-	}
-
-	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
-		assert(mapHandle !== undefined, "SharedMap not found");
-		this.map = await mapHandle.get();
-	}
-}
-
-class TestDataObject1 extends DataObject implements SearchContent {
-	public async getSearchContent(): Promise<string | undefined> {
-		// By this time, we are in the middle of the summarization process and
-		// the DataStore should have been initialized with no child.
-		// We will force it to be realized so when we invoke completeSummary on the SummarizerNode it would
-		// cause bug https://dev.azure.com/fluidframework/internal/_workitems/edit/1633 to happen.
-		const dataTestDataObject2Handle =
-			this.root.get<IFluidHandle<TestDataObject2>>("dsFactory2");
-		assert(dataTestDataObject2Handle, "dsFactory2 not located");
-		const dataStore2 = await dataTestDataObject2Handle.get();
-		dataStore2.map.set("mapkey", "value");
-
-		return Promise.resolve("TestDataObject1 Search Blob");
-	}
-
-	public get SearchContent() {
-		return this;
-	}
-
-	public get _root() {
-		return this.root;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-
-	private readonly matrixKey = "SharedMatrix";
-	public matrix!: SharedMatrix;
-
-	protected async initializingFirstTime() {
-		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
-		this.root.set(this.matrixKey, sharedMatrix.handle);
-
-		const dataStore = await this._context.containerRuntime.createDataStore(TestDataObjectType2);
-		const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
-		this.root.set("dsFactory2", dsFactory2.handle);
-	}
-
-	protected async hasInitialized() {
-		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-		assert(matrixHandle !== undefined, "SharedMatrix not found");
-		this.matrix = await matrixHandle.get();
-
-		this.matrix.insertRows(0, 3);
-		this.matrix.insertCols(0, 3);
-	}
-}
-const dataStoreFactory1 = new DataObjectFactory(
-	TestDataObjectType1,
-	TestDataObject1,
-	[SharedMap.getFactory(), SharedMatrix.getFactory()],
-	[],
-	[],
-	createDataStoreRuntime(),
-);
-const dataStoreFactory2 = new DataObjectFactory(
-	TestDataObjectType2,
-	TestDataObject2,
-	[SharedMap.getFactory(), SharedMatrix.getFactory()],
-	[],
-	[],
-	createDataStoreRuntime(),
-);
-
-const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
-	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
-	[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
-]);
-const containerRuntimeFactoryWithDefaultDataStore =
-	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
-const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-	containerRuntimeFactoryWithDefaultDataStore,
-	{
-		defaultFactory: dataStoreFactory1,
-		registryEntries: registryStoreEntries,
-		runtimeOptions,
-	},
-);
-
-async function createSummarizer(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	summaryVersion?: string,
-): Promise<ISummarizer> {
-	const createSummarizerResult = await createSummarizerFromFactory(
-		provider,
-		container,
-		dataStoreFactory1,
-		summaryVersion,
-		containerRuntimeFactoryWithDefaultDataStore,
-		registryStoreEntries,
-	);
-	return createSummarizerResult.summarizer;
-}
 
 function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
 	return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
@@ -186,7 +69,128 @@ function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDat
 describeCompat(
 	"Summary where data store is loaded out of order",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
+
+		class TestDataObject2 extends DataObject {
+			public get _root() {
+				return this.root;
+			}
+			public get _context() {
+				return this.context;
+			}
+			private readonly mapKey = "SharedMap";
+			public map!: SharedMap;
+
+			protected async initializingFirstTime() {
+				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
+				this.root.set(this.mapKey, sharedMap.handle);
+			}
+
+			protected async hasInitialized() {
+				const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+				assert(mapHandle !== undefined, "SharedMap not found");
+				this.map = await mapHandle.get();
+			}
+		}
+
+		class TestDataObject1 extends DataObject implements SearchContent {
+			public async getSearchContent(): Promise<string | undefined> {
+				// By this time, we are in the middle of the summarization process and
+				// the DataStore should have been initialized with no child.
+				// We will force it to be realized so when we invoke completeSummary on the SummarizerNode it would
+				// cause bug https://dev.azure.com/fluidframework/internal/_workitems/edit/1633 to happen.
+				const dataTestDataObject2Handle =
+					this.root.get<IFluidHandle<TestDataObject2>>("dsFactory2");
+				assert(dataTestDataObject2Handle, "dsFactory2 not located");
+				const dataStore2 = await dataTestDataObject2Handle.get();
+				dataStore2.map.set("mapkey", "value");
+
+				return Promise.resolve("TestDataObject1 Search Blob");
+			}
+
+			public get SearchContent() {
+				return this;
+			}
+
+			public get _root() {
+				return this.root;
+			}
+
+			public get _context() {
+				return this.context;
+			}
+
+			private readonly matrixKey = "SharedMatrix";
+			public matrix!: SharedMatrix;
+
+			protected async initializingFirstTime() {
+				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
+				this.root.set(this.matrixKey, sharedMatrix.handle);
+
+				const dataStore =
+					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+				const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
+				this.root.set("dsFactory2", dsFactory2.handle);
+			}
+
+			protected async hasInitialized() {
+				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+				assert(matrixHandle !== undefined, "SharedMatrix not found");
+				this.matrix = await matrixHandle.get();
+
+				this.matrix.insertRows(0, 3);
+				this.matrix.insertCols(0, 3);
+			}
+		}
+		const dataStoreFactory1 = new DataObjectFactory(
+			TestDataObjectType1,
+			TestDataObject1,
+			[SharedMap.getFactory(), SharedMatrix.getFactory()],
+			[],
+			[],
+			createDataStoreRuntime(),
+		);
+		const dataStoreFactory2 = new DataObjectFactory(
+			TestDataObjectType2,
+			TestDataObject2,
+			[SharedMap.getFactory(), SharedMatrix.getFactory()],
+			[],
+			[],
+			createDataStoreRuntime(),
+		);
+
+		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
+			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
+		]);
+		const containerRuntimeFactoryWithDefaultDataStore =
+			getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			containerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+				runtimeOptions,
+			},
+		);
+
+		async function createSummarizer(
+			testObjectProvider: ITestObjectProvider,
+			container: IContainer,
+			summaryVersion?: string,
+		): Promise<ISummarizer> {
+			const createSummarizerResult = await createSummarizerFromFactory(
+				testObjectProvider,
+				container,
+				dataStoreFactory1,
+				summaryVersion,
+				containerRuntimeFactoryWithDefaultDataStore,
+				registryStoreEntries,
+			);
+			return createSummarizerResult.summarizer;
+		}
+
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;
 		let mainDataStore: TestDataObject1;

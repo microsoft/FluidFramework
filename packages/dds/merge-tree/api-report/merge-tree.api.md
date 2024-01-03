@@ -19,7 +19,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 // @internal @deprecated (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet): PropertySet;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @sealed
@@ -114,11 +114,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
-    // @deprecated (undocumented)
-    findTile(startPos: number, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
     // (undocumented)
     getClientId(): number;
     // (undocumented)
@@ -253,7 +248,7 @@ export interface Dictionary<TKey, TData> {
     remove(key: TKey): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @internal
@@ -697,7 +692,7 @@ export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | t
 // @alpha (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
     trackingGroup: ITrackingGroup;
@@ -918,7 +913,7 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 // @internal (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @deprecated (undocumented)

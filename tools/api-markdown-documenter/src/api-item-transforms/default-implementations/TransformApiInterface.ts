@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 import {
-	ApiCallSignature,
-	ApiConstructSignature,
-	ApiIndexSignature,
-	ApiInterface,
-	ApiItem,
+	type ApiCallSignature,
+	type ApiConstructSignature,
+	type ApiIndexSignature,
+	type ApiInterface,
+	type ApiItem,
 	ApiItemKind,
-	ApiMethodSignature,
-	ApiPropertySignature,
+	type ApiMethodSignature,
+	type ApiPropertySignature,
 } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
+import { type SectionNode } from "../../documentation-domain";
 import { filterByKind } from "../../utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 import { filterChildMembers } from "../ApiItemTransformUtilities";
 

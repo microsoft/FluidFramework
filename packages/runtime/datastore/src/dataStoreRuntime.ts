@@ -51,7 +51,6 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
-	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -72,6 +71,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {
 	LocalChannelContext,
@@ -764,6 +764,10 @@ export class FluidDataStoreRuntime
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+		// Note: This is deprecated on IFluidDataStoreContext, and in an n/n-1 scenario where the
+		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
+		// will be the one to call addedGCOutboundReference directly.
+		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}
 
@@ -1156,7 +1160,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- * @internal
+ * @alpha
  */
 export const mixinSummaryHandler = (
 	handler: (
