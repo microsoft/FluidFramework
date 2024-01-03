@@ -43,16 +43,9 @@ docVersions.forEach((version) => {
 			apiDocsDirectoryPath,
 			uriRootDirectoryPath,
 			version,
-		).then(
-			() => {
-				console.log(chalk.green(`${version} API docs written!`));
-			},
-			(error) => {
-				throw new Error(
-					`${version} API docs could not be written due to an error: ${error}`,
-				);
-			},
-		),
+		).then(() => {
+			console.log(chalk.green(`(${version}) API docs written!`));
+		}),
 	);
 });
 
@@ -62,7 +55,6 @@ Promise.all(apiDocRenders).then(
 		process.exit(0);
 	},
 	(error) => {
-		console.error(error);
 		process.exit(1);
 	},
 );
