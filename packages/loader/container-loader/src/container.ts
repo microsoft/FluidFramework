@@ -1828,7 +1828,7 @@ export class Container
 		if (hasAttachmentBlobs) {
 			assert(
 				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
-				"serialized container with attachment blobs must be rehydrated with detached blob storage",
+				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
