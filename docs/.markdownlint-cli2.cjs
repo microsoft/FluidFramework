@@ -152,5 +152,5 @@ module.exports = {
 			indent: 4,
 		},
 	},
-	globs: ["content/**/*.md", "!content/docs/apis", "!node_modules"],
+	globs: ["content/**/*.md", "!content/docs/apis", "!content/docs/api", "!node_modules"],
 };

@@ -59,11 +59,6 @@ const currentWrittenVersion = 1;
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
- *
- * @alpha
- *
- * @deprecated Not intended for public use and will be removed from the public API in the future.
- * Use `createIdCompressor` instead.
  */
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
@@ -110,7 +105,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	// #endregion
 
-	private constructor(
+	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger?: ITelemetryLoggerExt,
 	) {
@@ -129,41 +124,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				this.localSession.sessionUuid,
 			) as SessionId;
 		}
-	}
-
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(
-		sessionId: SessionId,
-		logger?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore;
-	public static create(
-		sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
-		loggerOrUndefined?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore {
-		let localSessionId: SessionId;
-		let logger: ITelemetryBaseLogger | undefined;
-		if (sessionIdOrLogger === undefined) {
-			localSessionId = createSessionId();
-		} else {
-			if (typeof sessionIdOrLogger === "string") {
-				localSessionId = sessionIdOrLogger;
-				logger = loggerOrUndefined;
-			} else {
-				localSessionId = createSessionId();
-				logger = loggerOrUndefined;
-			}
-		}
-		const compressor = new IdCompressor(
-			localSessionId,
-			logger === undefined ? undefined : createChildLogger({ logger }),
-		);
-		return compressor;
 	}
 
 	public generateCompressedId(): SessionSpaceCompressedId {
@@ -701,7 +661,24 @@ export function createIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
-	return IdCompressor.create(sessionIdOrLogger as SessionId, loggerOrUndefined);
+	let localSessionId: SessionId;
+	let logger: ITelemetryBaseLogger | undefined;
+	if (sessionIdOrLogger === undefined) {
+		localSessionId = createSessionId();
+	} else {
+		if (typeof sessionIdOrLogger === "string") {
+			localSessionId = sessionIdOrLogger;
+			logger = loggerOrUndefined;
+		} else {
+			localSessionId = createSessionId();
+			logger = loggerOrUndefined;
+		}
+	}
+	const compressor = new IdCompressor(
+		localSessionId,
+		logger === undefined ? undefined : createChildLogger({ logger }),
+	);
+	return compressor;
 }
 
 /**

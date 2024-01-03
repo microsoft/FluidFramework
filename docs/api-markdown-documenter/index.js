@@ -25,7 +25,17 @@ docVersions = renderMultiVersion
 const apiDocRenders = [];
 
 docVersions.forEach((version) => {
-	const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_api-extractor-temp", version);
+	// We don't add a version-postfix directory name for "current" version, since local website builds want to use the
+	// locally generated API doc models when present.
+	const versionPostfix = version === versions.params.currentVersion ? "" : `-${version}`;
+
+	const apiReportsDirectoryPath = path.resolve(
+		__dirname,
+		"..",
+		"..",
+		`_api-extractor-temp${versionPostfix}`,
+		"doc-models",
+	);
 
 	// TODO: remove check for 2.0 and just set apiDocsDirectoryPath to include version.
 	// currently publishing to base apis directory until 2.0 release
