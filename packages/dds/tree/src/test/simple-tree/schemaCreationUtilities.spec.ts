@@ -12,14 +12,14 @@ import {
 	SchemaFactory,
 	TreeConfiguration,
 	TreeView,
-} from "../../class-tree/index.js";
+} from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import {
 	enumFromStrings,
 	typedObjectValues,
 	adaptEnum,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaCreationUtilities.js";
+} from "../../simple-tree/schemaCreationUtilities.js";
 import { testIdCompressor } from "../utils.js";
 
 const schema = new SchemaFactory("test");

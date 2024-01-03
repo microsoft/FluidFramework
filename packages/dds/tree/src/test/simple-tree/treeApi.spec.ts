@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 // eslint-disable-next-line import/no-internal-modules
-import { nodeApi } from "../../class-tree/treeApi.js";
+import { nodeApi } from "../../simple-tree/treeApi.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { SchemaFactory, TreeConfiguration } from "../../class-tree/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 
