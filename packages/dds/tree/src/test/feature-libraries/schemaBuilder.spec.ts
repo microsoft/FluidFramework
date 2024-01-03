@@ -19,7 +19,7 @@ import {
 	FieldKinds,
 	LeafNodeSchema,
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 } from "../../feature-libraries/index.js";
 
 import {
@@ -56,7 +56,7 @@ describe("SchemaBuilderBase", () => {
 			const recursiveReference = () => recursiveStruct;
 			type _trickCompilerIntoWorking = requireAssignableTo<
 				typeof recursiveReference,
-				() => TreeNodeSchema
+				() => FlexTreeNodeSchema
 			>;
 			const recursiveStruct = builder.object("recursiveStruct2", {
 				foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),

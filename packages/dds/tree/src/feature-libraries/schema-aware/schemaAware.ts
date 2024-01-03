@@ -7,7 +7,7 @@ import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core/ind
 import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
 import {
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	AllowedTypes,
 	LeafNodeSchema,
 	ObjectNodeSchema,
@@ -97,8 +97,8 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
  * @internal
  */
 export type AllowedTypesToFlexInsertableTree<T extends AllowedTypes> = [
-	T extends readonly LazyItem<TreeNodeSchema>[]
-		? InsertableFlexNode<Assume<FlexListToUnion<T>, TreeNodeSchema>>
+	T extends readonly LazyItem<FlexTreeNodeSchema>[]
+		? InsertableFlexNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
 		: ContextuallyTypedNodeData,
 ][_InlineTrick];
 
@@ -106,7 +106,7 @@ export type AllowedTypesToFlexInsertableTree<T extends AllowedTypes> = [
  * Generate a schema aware API for a single tree schema.
  * @internal
  */
-export type InsertableFlexNode<TSchema extends TreeNodeSchema> = FlattenKeys<
+export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys<
 	CollectOptions<
 		TSchema extends ObjectNodeSchema<string, infer TFields extends Fields>
 			? TypedFields<TFields>

@@ -16,7 +16,7 @@ import { fail } from "../util/index.js";
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	FlexTreeSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	MapFieldSchema,
 	TreeFieldSchema,
 	AllowedTypes,
@@ -36,7 +36,7 @@ import {
  * @internal
  */
 export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema {
-	const map: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const map: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	for (const [identifier, innerSchema] of schema.nodeSchema) {
 		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
@@ -93,7 +93,7 @@ function mapToObject<MapValue>(map: Map<string, MapValue>): Record<string, MapVa
 
 export function fieldSchemaFromStoredSchema(
 	schema: TreeFieldStoredSchema,
-	map: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
+	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 ): TreeFieldSchema {
 	const kind =
 		defaultSchemaPolicy.fieldKinds.get(schema.kind.identifier) ?? fail("missing field kind");
