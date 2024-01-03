@@ -37,21 +37,21 @@ export const TreeArrayNode = {
 	 * Its contents will be inserted consecutively in the corresponding location in the array.
 	 * @example
 	 * ```ts
-	 * array.insertAtEnd(TreeArrayNode.inline(iterable))
+	 * array.insertAtEnd(TreeArrayNode.spread(iterable))
 	 * ```
 	 */
-	inline: <T>(content: Iterable<T>) => create(content),
+	spread: <T>(content: Iterable<T>) => create(content),
 };
 
 /**
  * Package internal construction API.
- * Use {@link (TreeArrayNode:variable).inline} to create an instance of this type instead.
+ * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type instead.
  */
 let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
- * Use {@link (TreeArrayNode:variable).inline} to create an instance of this type.
+ * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type.
  * @public
  */
 export class IterableTreeArrayContent<T> implements Iterable<T> {

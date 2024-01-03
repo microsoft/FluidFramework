@@ -349,7 +349,7 @@ export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = Impl
 
 // @public
 export const TreeArrayNode: {
-    inline: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
+    spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
 
 // @public
