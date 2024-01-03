@@ -54,7 +54,7 @@ import { FinalSpace } from "./finalSpace";
  * The version of IdCompressor that is currently persisted.
  * This should not be changed without careful consideration to compatibility.
  */
-const currentWrittenVersion = 1;
+const currentWrittenVersion = 2.0;
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
@@ -565,7 +565,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			bufferUint: new BigUint64Array(buffer),
 		};
 		const version = readNumber(index);
-		assert(version === currentWrittenVersion, 0x75c /* Unknown serialized version. */);
+		switch (version) {
+			case 1.0:
+				throw new Error("IdCompressor version 1.0 is no longer supported.");
+			case 2.0:
+				break;
+			default:
+				throw new Error("Unknown IdCompressor serialized version.");
+		}
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
