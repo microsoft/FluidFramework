@@ -15,18 +15,32 @@ import {
 	flexTreeViewWithContent,
 	checkoutWithContent,
 	requiredBooleanRootSchema,
+	validateTreeContent,
+	numberSequenceRootSchema,
 } from "../utils.js";
 import {
 	AllowedUpdateType,
+	FieldUpPath,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	TreeValue,
 	Value,
 	moveToDetachedField,
+	rootFieldKey,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
-import { ContextuallyTypedNodeData, FieldKinds } from "../../feature-libraries/index.js";
+import {
+	ContextuallyTypedNodeData,
+	FieldKinds,
+	cursorForJsonableTreeField,
+	intoStoredSchema,
+} from "../../feature-libraries/index.js";
+
+const rootField: FieldUpPath = {
+	parent: undefined,
+	field: rootFieldKey,
+};
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
@@ -572,6 +586,41 @@ describe("sharedTreeView", () => {
 				"O",
 			]);
 		});
+	});
+
+	it("schema edits cause originator to purge repair data and undo-redo queue", () => {
+		const provider = new TestTreeProviderLite(1);
+		const checkout = provider.trees[0].view;
+
+		checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+		checkout.editor.sequenceField(rootField).insert(
+			0,
+			cursorForJsonableTreeField([
+				{ type: leaf.string.name, value: "1" },
+				{ type: leaf.number.name, value: 2 },
+			]),
+		);
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(checkout.events);
+
+		checkout.editor.sequenceField(rootField).remove(0, 1); // Remove "1"
+		checkout.editor.sequenceField(rootField).remove(0, 1); // Remove 2
+		undoStack.pop()?.revert(); // Restore 2
+		validateTreeContent(checkout, {
+			schema: jsonSequenceRootSchema,
+			initialTree: [2],
+		});
+
+		assert.equal(undoStack.length, 1);
+		assert.equal(redoStack.length, 1);
+		assert.equal(checkout.getRemovedRoots().length, 1);
+
+		checkout.updateSchema(intoStoredSchema(numberSequenceRootSchema));
+
+		assert.equal(undoStack.length, 0);
+		assert.equal(redoStack.length, 0);
+		const removedRoots = checkout.getRemovedRoots();
+		assert.equal(removedRoots.length, 0);
+		unsubscribe();
 	});
 });
 
