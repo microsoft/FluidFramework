@@ -7,7 +7,9 @@ import { GenericChangeset } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
 import { TestChange } from "../../testChange.js";
+// eslint-disable-next-line import/no-internal-modules
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/snapshotTools.js";
+// eslint-disable-next-line import/no-internal-modules
 import { sessionId } from "../../snapshots/testTrees.js";
 
 const nodeChange = TestChange.mint([], 1);
