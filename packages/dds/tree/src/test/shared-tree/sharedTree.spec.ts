@@ -14,7 +14,6 @@ import { IContainerExperimental } from "@fluidframework/container-loader";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	cursorForJsonableTreeNode,
-	jsonableTreeFromCursor,
 	Any,
 	TreeStatus,
 	TreeFieldSchema,
@@ -24,8 +23,6 @@ import {
 	typeNameSymbol,
 	FlexTreeSchema,
 	intoStoredSchema,
-	cursorForMapTreeField,
-	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -35,7 +32,7 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
-import { brand, disposeSymbol, fail, TransactionResult } from "../../util/index.js";
+import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	SharedTreeTestFactory,
 	SummarizeType,
@@ -54,24 +51,19 @@ import {
 import {
 	ForestType,
 	ISharedTree,
-	ITreeCheckout,
 	FlexTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
 	SharedTreeFactory,
-	runSynchronous,
 } from "../../shared-tree/index.js";
 import {
 	compareUpPaths,
 	FieldKey,
-	JsonableTree,
-	mapCursorField,
 	rootFieldKey,
 	UpPath,
 	moveToDetachedField,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
-	TreeStoredSchema,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
@@ -729,6 +721,7 @@ describe("SharedTree", () => {
 	});
 
 	// AB#5745: Enable this test once it passes.
+	// TODO: above mentioned task is done, but this still fails. Fix it.
 	it.skip("can tolerate incomplete transactions when attaching", async () => {
 		const onCreate = (tree: SharedTree) => {
 			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
@@ -1466,116 +1459,6 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe.skip("Fuzz Test fail cases", () => {
-		it("Anchor Stability fails when root node is removed", async () => {
-			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
-
-			const rootFieldSchema = SchemaBuilder.required(Any);
-			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const rootNodeSchema = testSchemaBuilder.object("Node", {
-				foo: SchemaBuilder.sequence(leaf.number),
-				foo2: SchemaBuilder.sequence(leaf.number),
-			});
-			const testSchema = testSchemaBuilder.intoSchema(rootFieldSchema);
-
-			// TODO: if this tests is just about deleting the root, it should use a simpler tree.
-			const initialTreeState: JsonableTree = {
-				type: rootNodeSchema.name,
-				fields: {
-					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-					],
-					foo2: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-					],
-				},
-			};
-			const tree = provider.trees[0].view;
-			initializeTestTree(tree, initialTreeState, intoStoredSchema(testSchema));
-
-			// building the anchor for anchor stability test
-			const cursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			cursor.getPath();
-			cursor.firstField();
-			cursor.getFieldKey();
-			cursor.enterNode(1);
-			const firstAnchor = cursor.buildAnchor();
-			cursor.free();
-
-			let anchorPath;
-
-			// validate anchor
-			const expectedPath: UpPath = {
-				parent: {
-					parent: undefined,
-					parentIndex: 0,
-					parentField: rootFieldKey,
-				},
-				parentField: brand("foo"),
-				parentIndex: 1,
-			};
-
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-			let path: UpPath;
-			// edit 1
-			let readCursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, readCursor);
-			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// eslint-disable-next-line prefer-const
-			path = {
-				parent: rootPath,
-				parentField: brand("foo2"),
-				parentIndex: 1,
-			};
-			runSynchronous(tree, () => {
-				const field = tree.editor.sequenceField({
-					parent: undefined,
-					field: rootFieldKey,
-				});
-				field.insert(
-					1,
-					cursorForJsonableTreeNode({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Abort;
-			});
-
-			anchorPath = tree.locate(firstAnchor);
-			assert(compareUpPaths(expectedPath, anchorPath));
-
-			readCursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 2
-			runSynchronous(tree, () => {
-				const field = tree.editor.sequenceField({
-					parent: undefined,
-					field: rootFieldKey,
-				});
-				field.remove(0, 1);
-				return TransactionResult.Abort;
-			});
-			readCursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			anchorPath = tree.locate(firstAnchor);
-			assert(compareUpPaths(expectedPath, anchorPath));
-		});
-	});
-
 	describe("Creates a SharedTree using specific ForestType", () => {
 		it("unspecified ForestType uses ObjectForest", () => {
 			const { trees } = new TestTreeProviderLite(
@@ -1616,38 +1499,4 @@ function assertSchema<TRoot extends TreeFieldSchema>(
 	schema: FlexTreeSchema<TRoot>,
 ): FlexTreeView<TRoot> {
 	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
-}
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
-function initializeTestTree(
-	tree: ITreeCheckout,
-	state: JsonableTree | JsonableTree[] | undefined,
-	schema: TreeStoredSchema,
-): void {
-	if (state === undefined) {
-		tree.updateSchema(schema);
-		return;
-	}
-
-	if (!Array.isArray(state)) {
-		initializeTestTree(tree, [state], schema);
-	} else {
-		tree.updateSchema(schema);
-
-		// Apply an edit to the tree which inserts a node with a value
-		runSynchronous(tree, () => {
-			const mapTrees = state.map((jsonable) =>
-				mapTreeFromCursor(cursorForJsonableTreeNode(jsonable)),
-			);
-			const fieldCursor = cursorForMapTreeField(mapTrees);
-			const field = tree.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			field.insert(0, fieldCursor);
-		});
-	}
 }
