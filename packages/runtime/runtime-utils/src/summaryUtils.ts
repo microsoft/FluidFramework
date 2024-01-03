@@ -20,6 +20,7 @@ import {
 	ISummaryBlob,
 	TreeEntry,
 	ITreeEntry,
+	ISummaryHandle,
 } from "@fluidframework/protocol-definitions";
 import {
 	ISummaryStats,
@@ -212,12 +213,61 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
 	}
 
+	/**
+	 * This function does the following:
+	 * - For handle type result, normalizes the handles and prefixes the given 'prefix' to it.
+	 * - Adds the given summarize result to the summary tree.
+	 * - Adds the stats from the given summarize result to the overall summary stats.
+	 */
+	public addWithStatsAndPrefixHandles(
+		prefix: string,
+		key: string,
+		summarizeResult: ISummarizeResult,
+	): void {
+		if (summarizeResult.summary.type === SummaryType.Handle) {
+			prefixSummaryHandle(prefix, summarizeResult.summary);
+		} else if (summarizeResult.summary.type === SummaryType.Tree) {
+			prefixAllSummaryHandles(prefix, summarizeResult.summary);
+		}
+		this.summaryTree[key] = summarizeResult.summary;
+		this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
+	}
+
 	public addAttachment(id: string) {
 		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 
 	public getSummaryTree(): ISummaryTreeWithStats {
 		return { summary: this.summary, stats: this.stats };
+	}
+}
+
+/**
+ * Prefixes the summary handle with the given prefix. It also normalizes the handle, i.e., ensures
+ * it doesn't have unexpected slashes.
+ */
+function prefixSummaryHandle(prefix: string, summaryHandle: ISummaryHandle) {
+	const handle = summaryHandle.handle;
+	// Remove any leading slashes from the handle.
+	let normalizedHandle = trimLeadingSlashes(handle);
+	// Prefix the given id to the normalized handle.
+	normalizedHandle = `/${prefix}/${normalizedHandle}`;
+	// Remove any trailing slashes from the normalized handle. Note that the trailing slashes are removed after
+	// adding the prefix for handling the special case where handle is "/".
+	normalizedHandle = trimTrailingSlashes(normalizedHandle);
+	summaryHandle.handle = normalizedHandle;
+}
+
+/**
+ * Recursively prefixes all summary handles in the given summary tree with the given prefix.
+ */
+function prefixAllSummaryHandles(prefix: string, summaryTree: ISummaryTree) {
+	for (const [, summaryObject] of Object.entries(summaryTree.tree)) {
+		if (summaryObject.type === SummaryType.Handle) {
+			prefixSummaryHandle(prefix, summaryObject);
+		} else if (summaryObject.type === SummaryType.Tree) {
+			prefixAllSummaryHandles(prefix, summaryObject);
+		}
 	}
 }
 

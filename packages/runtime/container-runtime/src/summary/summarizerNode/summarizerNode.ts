@@ -142,7 +142,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				return {
 					summary: {
 						type: SummaryType.Handle,
-						handle: latestSummary.fullPath.path,
+						handle: "/",
 						handleType: SummaryType.Tree,
 					},
 					stats,
@@ -162,7 +162,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 						summarySequenceNumber: this.wipReferenceSequenceNumber,
 						latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
 						// TODO: remove summaryPath
-						summaryPath: this._latestSummary.fullPath.path,
+						summaryPath: "",
 				  }
 				: undefined;
 

@@ -181,6 +181,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
     // (undocumented)
     addWithStats(key: string, summarizeResult: ISummarizeResult): void;
+    addWithStatsAndPrefixHandles(prefix: string, key: string, summarizeResult: ISummarizeResult): void;
     // (undocumented)
     getSummaryTree(): ISummaryTreeWithStats;
     // (undocumented)

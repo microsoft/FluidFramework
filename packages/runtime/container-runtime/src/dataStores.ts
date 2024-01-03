@@ -635,7 +635,7 @@ export class DataStores implements IDisposable {
 	): Promise<ISummaryTreeWithStats> {
 		const summaryBuilder = new SummaryTreeBuilder();
 
-		// Iterate over each store and ask it to snapshot
+		// Iterate over each store and ask it to summarize.
 		await Promise.all(
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
@@ -658,7 +658,14 @@ export class DataStores implements IDisposable {
 						trackState,
 						telemetryContext,
 					);
-					summaryBuilder.addWithStats(contextId, contextSummary);
+					// Add the context's summary to the summary tree. Also, prefix all handles in its summary tree with
+					// "channelsTreeName" name and its id since that is where its previous summary would be. The context
+					// only adds the handle id relative to its path.
+					summaryBuilder.addWithStatsAndPrefixHandles(
+						`${channelsTreeName}/${contextId}`,
+						contextId,
+						contextSummary,
+					);
 				}),
 		);
 
