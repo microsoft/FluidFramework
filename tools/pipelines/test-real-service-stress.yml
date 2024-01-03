@@ -37,6 +37,8 @@ stages:
   # stress tests odsp
   - stage:
     displayName:  Stress tests - Odsp
+    # disable as the lts version, 1.0.0 is no longer supported for all features on odsp, specifically "Received summaryNack: Upgrade to a newer version of the Fluid client packages to summarize."
+    condition: "false"
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
     variables:
