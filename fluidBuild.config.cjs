@@ -27,7 +27,7 @@ module.exports = {
 			script: false,
 		},
 		"commonjs": {
-			dependsOn: ["tsc", "build:test"],
+			dependsOn: ["tsc", "compile:commonjs", "build:test"],
 			script: false,
 		},
 		"lint": {
@@ -44,9 +44,10 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
-		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"ts2esm": [],
+		"typetests:gen": ["^tsc", "^compile:commonjs", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
+		"compile:commonjs": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
 			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
@@ -177,6 +178,13 @@ module.exports = {
 				"^packages/service-clients/.*/package.json",
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
+
+				// exclude everything from this handler because it's not ready yet
+				"^.*/package.json",
+			],
+			"fluid-build-tasks-tsc": [
+				// exclude everything from this handler because it's not ready yet
+				"^.*/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
