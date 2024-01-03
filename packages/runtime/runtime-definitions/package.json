@@ -93,47 +93,47 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IIdCompressorCore": {
+			"RemovedInterfaceDeclaration_IIdCompressorCore": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"ClassDeclaration_IdCompressor": {
+			"RemovedClassDeclaration_IdCompressor": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IIdCompressor": {
+			"RemovedInterfaceDeclaration_IIdCompressor": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IdCreationRange": {
+			"RemovedInterfaceDeclaration_IdCreationRange": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_OpSpaceCompressedId": {
+			"RemovedTypeAliasDeclaration_OpSpaceCompressedId": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_SerializedIdCompressor": {
+			"RemovedTypeAliasDeclaration_SerializedIdCompressor": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_SerializedIdCompressorWithNoSession": {
+			"RemovedTypeAliasDeclaration_SerializedIdCompressorWithNoSession": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {
+			"RemovedTypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_SessionId": {
+			"RemovedTypeAliasDeclaration_SessionId": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_SessionSpaceCompressedId": {
+			"RemovedTypeAliasDeclaration_SessionSpaceCompressedId": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_StableId": {
+			"RemovedTypeAliasDeclaration_StableId": {
 				"forwardCompat": false,
 				"backCompat": false
 			}
