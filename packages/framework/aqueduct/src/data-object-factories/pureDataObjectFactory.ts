@@ -19,6 +19,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
 	IFluidDataStoreContextDetached,
+	IDataStore,
 } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -259,8 +260,14 @@ export class PureDataObjectFactory<
 		runtime: IContainerRuntime,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
-		return this.createInstanceCore(context, initialState);
+		const context = runtime.createDetachedDataStore([this.type]);
+		const { instance, runtime: dataStoreRuntime } = await this.createInstanceCore(
+			context,
+			initialState,
+		);
+		const dataStore: IDataStore = runtime.getDataStore(dataStoreRuntime);
+		await dataStore.trySetAlias(rootDataStoreId);
+		return instance;
 	}
 
 	protected async createNonRootInstanceCore(
@@ -269,13 +276,14 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		const context = containerRuntime.createDetachedDataStore(packagePath);
-		return this.createInstanceCore(context, initialState);
+		const { instance } = await this.createInstanceCore(context, initialState);
+		return instance;
 	}
 
 	protected async createInstanceCore(
 		context: IFluidDataStoreContextDetached,
 		initialState?: I["InitialState"],
-	): Promise<TObj> {
+	): Promise<{ instance: TObj; runtime: FluidDataStoreRuntime }> {
 		const { instance, runtime } = await createDataObject(
 			this.ctor,
 			context,
@@ -288,6 +296,6 @@ export class PureDataObjectFactory<
 
 		await context.attachRuntime(this, runtime);
 
-		return instance;
+		return { instance, runtime };
 	}
 }

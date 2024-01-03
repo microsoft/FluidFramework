@@ -31,6 +31,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntime():
 declare function use_current_InterfaceDeclaration_IContainerRuntime(
     use: TypeOnly<current.IContainerRuntime>): void;
 use_current_InterfaceDeclaration_IContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntime());
 
 /*
@@ -103,6 +104,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle
 declare function use_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
     use: TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated());
 
 /*

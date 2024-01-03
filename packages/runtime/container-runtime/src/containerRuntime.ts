@@ -2496,6 +2496,16 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, false);
 	}
 
+	public getDataStore(dataStoreChannel: IFluidDataStoreChannel): IDataStore {
+		return channelToDataStore(
+			dataStoreChannel,
+			dataStoreChannel.id,
+			this,
+			this.dataStores,
+			this.mc.logger,
+		);
+	}
+
 	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(

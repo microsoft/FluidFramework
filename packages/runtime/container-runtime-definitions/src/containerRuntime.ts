@@ -22,6 +22,8 @@ import {
 	FlushMode,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
+	IDataStore,
+	IFluidDataStoreChannel,
 	IFluidDataStoreContextDetached,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
@@ -88,6 +90,8 @@ export interface IContainerRuntime
 		pkg: Readonly<string[]>,
 		rootDataStoreId: string,
 	): IFluidDataStoreContextDetached;
+
+	getDataStore(dataStoreChannel: IFluidDataStoreChannel): IDataStore;
 
 	/**
 	 * Returns true if document is dirty, i.e. there are some pending local changes that
