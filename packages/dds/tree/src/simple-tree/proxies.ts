@@ -41,7 +41,7 @@ import {
 	NodeKind,
 	TreeMapNode,
 } from "./schemaTypes.js";
-import { IterableTreeListContent, TreeArrayNode } from "./treeListNode.js";
+import { IterableTreeArrayContent, TreeArrayNode } from "./treeListNode.js";
 import { Unhydrated, TreeNode } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
@@ -277,11 +277,11 @@ export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeArrayNod
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
 	insertedAtIndex: number,
-	content: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[],
+	content: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
 ): ExtractedFactoryContent {
 	return extractFactoryContent(
 		content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeListContent ? Array.from(c) : [c],
+			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		),
 		insertedAtIndex,
 	);
@@ -317,7 +317,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		value(
 			this: TreeArrayNode,
 			index: number,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -338,7 +338,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	insertAtStart: {
 		value(
 			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -359,7 +359,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	insertAtEnd: {
 		value(
 			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 

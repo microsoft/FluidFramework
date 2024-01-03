@@ -229,12 +229,10 @@ export {
 
 export {
 	TreeArrayNode,
-	TreeMapNodeBase,
 	Unhydrated,
-	IterableTreeListContent,
+	IterableTreeArrayContent,
 	TreeNode,
 	TreeArrayNodeBase,
-	create,
 } from "./simple-tree/index.js";
 
 export {
