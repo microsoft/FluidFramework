@@ -14,9 +14,9 @@ import {
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
 } from "../feature-libraries/index.js";
-import { TreeMapNode } from "../class-tree/index.js";
 import { TreeNode, TypedNode } from "./types.js";
 import { TreeArrayNode } from "./treeListNode.js";
+import { TreeMapNode } from "./schemaTypes.js";
 
 /** Associates an FlexTreeNode with a target object  */
 const targetSymbol = Symbol("FlexNodeTarget");
