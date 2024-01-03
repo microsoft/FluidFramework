@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree/index.js";
+import { NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
 import { TreeArrayNode } from "../../simple-tree/index.js";
 import { getRoot, pretty } from "./utils.js";
 

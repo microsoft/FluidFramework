@@ -23,7 +23,7 @@ import {
 	FieldKinds,
 	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
 } from "../../../feature-libraries/index.js";
@@ -86,7 +86,7 @@ import {
 
 	{
 		// Recursive objects don't get this type checking automatically, so confirm it
-		type _check = requireAssignableTo<typeof boxSchema, TreeNodeSchema>;
+		type _check = requireAssignableTo<typeof boxSchema, FlexTreeNodeSchema>;
 	}
 
 	type x = typeof numberSchema.name;
@@ -213,7 +213,7 @@ import {
 			type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 			type BoolChild = ChildSchemaTypes[1];
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeNodeSchema>>;
+			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<FlexTreeNodeSchema>>;
 			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
 			type ChildTypes = AllowedTypesToFlexInsertableTree<ChildSchemaTypes>;
 		}
@@ -236,7 +236,7 @@ import {
 
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
-			type _check1 = requireAssignableTo<RecObjectSchema, TreeNodeSchema>;
+			type _check1 = requireAssignableTo<RecObjectSchema, FlexTreeNodeSchema>;
 			type _check2 = requireAssignableTo<RecFieldSchema, TreeFieldSchema>;
 		}
 
@@ -296,7 +296,7 @@ import {
 			type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 			type BoxChild = ChildSchemaTypes[1];
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeNodeSchema>>;
+			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<FlexTreeNodeSchema>>;
 			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
 			{
 				{

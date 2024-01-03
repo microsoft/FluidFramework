@@ -153,7 +153,7 @@ async function getShaFromTreeHandleEntry(
 	const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
 		parentTree,
 		options.repoManager,
-		options.blobCache /* blobCache */,
+		{} /* blobCache */,
 		// Parse inner git tree blobs so that we can properly reference blob shas in new summary.
 		true /* parseInnerFullGitTrees */,
 		// We only need shas here, so don't waste resources retrieving blobs that are not included in fullGitTrees.

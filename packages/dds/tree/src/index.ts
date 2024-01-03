@@ -158,7 +158,7 @@ export {
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
 	AllowedTypes as FlexAllowedTypes,
-	TreeNodeSchema as FlexTreeNodeSchema,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
@@ -301,7 +301,7 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
-} from "./class-tree/index.js";
+} from "./simple-tree/index.js";
 export { SharedTree, TreeFactory } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";

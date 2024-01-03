@@ -24,7 +24,7 @@ import {
 import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import {
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	MapNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -100,7 +100,7 @@ function cleanupTree(anchor: AnchorNode): void {
 
 function buildSubclass(
 	context: Context,
-	schema: TreeNodeSchema,
+	schema: FlexTreeNodeSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
@@ -124,7 +124,7 @@ function buildSubclass(
 /**
  * Lazy implementation of {@link FlexTreeNode}.
  */
-export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSchema>
+export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchema>
 	extends LazyEntity<TSchema, Anchor>
 	implements FlexTreeNode
 {
@@ -168,7 +168,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		this.type = schema.name;
 	}
 
-	public is<TSchemaInner extends TreeNodeSchema>(
+	public is<TSchemaInner extends FlexTreeNodeSchema>(
 		schema: TSchemaInner,
 	): this is FlexTreeTypedNode<TSchemaInner> {
 		assert(
