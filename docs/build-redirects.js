@@ -36,8 +36,11 @@ fs.writeFile(
 ).then(
 	() => {
 		console.log(chalk.green("Redirects file generated!"));
+		process.exit(0);
 	},
 	() => {
+		console.error(chalk.red("Could not generate redirects file due to an error:"));
+		console.error(error);
 		process.exit(1);
 	},
 );
