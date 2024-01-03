@@ -91,6 +91,7 @@
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -110,7 +111,6 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.fuzz.spec.*js\" -r @fluidframework/mocha-test-setup",
-		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},

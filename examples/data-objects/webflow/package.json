@@ -43,9 +43,9 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --config src/test/.mocharc.cjs \"dist/test/**/*.spec.js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"compile:commonjs": "tsc"
 	},
 	"c8": {
 		"all": true,

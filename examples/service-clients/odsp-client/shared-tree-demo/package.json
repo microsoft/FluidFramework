@@ -30,7 +30,8 @@
 		"start": "webpack serve --config webpack.config.js",
 		"start:test": "webpack serve --config webpack.test.js",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"compile:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@azure/msal-browser": "^2.34.0",

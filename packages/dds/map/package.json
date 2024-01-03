@@ -81,6 +81,7 @@
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -95,7 +96,6 @@
 		"test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.cjs",
 		"test:mocha": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" -r node_modules/@fluidframework/mocha-test-setup --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},

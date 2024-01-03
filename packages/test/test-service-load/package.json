@@ -22,6 +22,7 @@
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"compile:commonjs": "tsc",
 		"debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
 		"debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
 		"debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",
@@ -49,7 +50,6 @@
 		"test:stress:tinylicious": "cross-env fluid__test__driver=t9s start-server-and-test start:tinylicious:test 7070 test:stress:tinylicious:run",
 		"test:stress:tinylicious:report": "npm run test:stress:tinylicious",
 		"test:stress:tinylicious:run": "npm run test:stress:run",
-		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
 		"usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"

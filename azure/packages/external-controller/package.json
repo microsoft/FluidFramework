@@ -19,6 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -37,7 +38,6 @@
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"tinylicious": "tinylicious",
-		"tsc": "tsc",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

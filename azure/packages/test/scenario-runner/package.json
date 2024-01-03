@@ -18,6 +18,7 @@
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -36,7 +37,6 @@
 		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7071 test:realsvc:azure:run",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
-		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},

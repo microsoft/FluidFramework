@@ -32,7 +32,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --config src/test/.mocharc.js dist/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"compile:commonjs": "tsc"
 	},
 	"c8": {
 		"all": true,

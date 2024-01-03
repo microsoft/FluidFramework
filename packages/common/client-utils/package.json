@@ -49,6 +49,7 @@
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -60,7 +61,6 @@
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
-		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -138,7 +138,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"eslint": [
-				"tsc",
+				"compile:commonjs",
 				"build:test:mocha",
 				"build:test:jest",
 				"build:test:types"
@@ -152,13 +152,13 @@
 				"script": false
 			},
 			"build:test:jest": [
-				"tsc"
+				"compile:commonjs"
 			],
 			"build:test:mocha": [
-				"tsc"
+				"compile:commonjs"
 			],
 			"build:test:types": [
-				"tsc"
+				"compile:commonjs"
 			]
 		}
 	},

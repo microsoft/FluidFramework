@@ -79,6 +79,7 @@
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"compile:commonjs": "tsc",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -90,8 +91,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.*js\" -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",

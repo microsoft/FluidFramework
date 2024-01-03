@@ -36,7 +36,8 @@
 		"start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
 		"start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"compile:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

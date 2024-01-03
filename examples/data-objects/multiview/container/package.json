@@ -38,7 +38,8 @@
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"compile:commonjs": "tsc"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

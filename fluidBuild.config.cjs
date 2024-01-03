@@ -4,6 +4,12 @@
  */
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
+
+/**
+ * This is a superset of the tasks that compile commonjs.
+ */
+const commonjsSuperset = ["tsc", "compile:commonjs"];
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -27,7 +33,7 @@ module.exports = {
 			script: false,
 		},
 		"commonjs": {
-			dependsOn: ["tsc", "compile:commonjs", "build:test"],
+			dependsOn: [...commonjsSuperset, "build:test"],
 			script: false,
 		},
 		"lint": {
@@ -54,7 +60,7 @@ module.exports = {
 			// requires them. I don't want to change the policy right now.
 			...tscDependsOn,
 			"typetests:gen",
-			"tsc",
+			...commonjsSuperset,
 			"api-extractor:commonjs",
 			"api-extractor:esnext",
 		],
@@ -62,23 +68,23 @@ module.exports = {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
-		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:commonjs": [...commonjsSuperset],
 		"api-extractor:esnext": {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		"build:docs": ["tsc"],
-		"ci:build:docs": ["tsc"],
+		"build:docs": [...commonjsSuperset],
+		"ci:build:docs": [...commonjsSuperset],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
 		},
 		"build:manifest": {
-			dependsOn: ["tsc"],
+			dependsOn: [...commonjsSuperset],
 			script: true,
 		},
 		"depcruise": [],
-		"check:release-tags": ["tsc"],
+		"check:release-tags": [...commonjsSuperset],
 		"check:are-the-types-wrong": ["build"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],

@@ -25,6 +25,7 @@
 		"build:webpack": "npm run webpack",
 		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"compile:commonjs": "tsc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -37,7 +38,6 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
 		"webpack": "webpack --color --config webpack.config.js"
