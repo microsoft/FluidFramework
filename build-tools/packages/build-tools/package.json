@@ -96,10 +96,5 @@
 				"typescript"
 			]
 		}
-	},
-	"typeValidation": {
-		"disabled": false,
-		"broken": {},
-		"typeRollupFile": "dist/build-tools.alpha.d.ts"
 	}
 }

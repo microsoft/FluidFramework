@@ -12,6 +12,7 @@ import { PackageJson } from "../common/npmPackage";
 import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
 import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
 import { typeOnly } from "./compatibility";
+import { ExtractorConfig } from "@microsoft/api-extractor";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -28,15 +29,14 @@ if (!existsSync(previousPackageJsonPath)) {
 		`${previousPackageJsonPath} not found. You may need to install the package via pnpm install.`,
 	);
 }
-const previousPackageJson = readJsonSync(previousPackageJsonPath);
-
-const typeValidationConfig = previousPackageJson.typeValidation || {};
-const typeRollupFilePath = typeValidationConfig.typeRollupFile;
+const typeRollupFilePath = ExtractorConfig.tryLoadForFolder({
+	startingFolder: previousBasePath,
+});
 let typeDefinitionFilePath;
 
 if(typeRollupFilePath){
 	// Check if a specified typeRollupFile exists
-	if (!existsSync(typeRollupFilePath)) {
+	if (typeRollupFilePath === undefined) {
         throw new Error(`Type rollup file '${typeRollupFilePath}' not found.`);
     }
     typeDefinitionFilePath = typeRollupFilePath;
