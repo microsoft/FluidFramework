@@ -4,7 +4,7 @@
  */
 
 export {
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeFieldSchema,
 	Any,
 	allowedTypesToTypeSet,

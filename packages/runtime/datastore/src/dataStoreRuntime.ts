@@ -51,7 +51,6 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
-	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -72,6 +71,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {
 	LocalChannelContext,

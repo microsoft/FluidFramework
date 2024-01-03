@@ -4,7 +4,6 @@
  */
 
 import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
-import { TreeArrayNode } from "../simple-tree/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
 import {
 	ImplicitAllowedTypes,
@@ -18,6 +17,7 @@ import {
 	WithType,
 } from "./schemaTypes.js";
 import { SchemaFactory } from "./schemaFactory.js";
+import { TreeArrayNode } from "./treeListNode.js";
 
 /**
  * Extends SchemaFactory with utilities for recursive types.

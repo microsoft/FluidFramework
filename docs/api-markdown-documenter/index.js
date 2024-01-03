@@ -13,7 +13,6 @@
 const chalk = require("chalk");
 const path = require("path");
 const versions = require("../data/versions.json");
-const { buildRedirects } = require("./build-redirects");
 const { renderApiDocumentation } = require("./render-api-documentation");
 
 const renderMultiVersion = process.argv[2];
@@ -25,7 +24,17 @@ docVersions = renderMultiVersion
 const apiDocRenders = [];
 
 docVersions.forEach((version) => {
-	const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_api-extractor-temp", version);
+	// We don't add a version-postfix directory name for "current" version, since local website builds want to use the
+	// locally generated API doc models when present.
+	const versionPostfix = version === versions.params.currentVersion ? "" : `-${version}`;
+
+	const apiReportsDirectoryPath = path.resolve(
+		__dirname,
+		"..",
+		"..",
+		`_api-extractor-temp${versionPostfix}`,
+		"doc-models",
+	);
 
 	// TODO: remove check for 2.0 and just set apiDocsDirectoryPath to include version.
 	// currently publishing to base apis directory until 2.0 release
@@ -43,16 +52,9 @@ docVersions.forEach((version) => {
 			apiDocsDirectoryPath,
 			uriRootDirectoryPath,
 			version,
-		).then(
-			() => {
-				console.log(chalk.green(`${version} API docs written!`));
-			},
-			(error) => {
-				throw new Error(
-					`${version} API docs could not be written due to an error: ${error}`,
-				);
-			},
-		),
+		).then(() => {
+			console.log(chalk.green(`(${version}) API docs written!`));
+		}),
 	);
 });
 
@@ -62,9 +64,6 @@ Promise.all(apiDocRenders).then(
 		process.exit(0);
 	},
 	(error) => {
-		console.error(error);
 		process.exit(1);
 	},
 );
-
-buildRedirects();
