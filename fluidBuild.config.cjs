@@ -5,15 +5,15 @@
 
 /**
  * This is a superset of the tasks that compile commonjs. Once the tsc task is completely removed, this can be
- * removed and replaced with just "compile:commonjs".
+ * removed and replaced with just "build:commonjs".
  */
-const commonjsSuperset = ["tsc", "compile:commonjs"];
+const commonjsSuperset = ["tsc", "build:commonjs"];
 
 /**
  * This is a superset of the tasks that commonjs builds depend on. Once the tsc task is completely removed, this can be
  * updated to remove the ^tsc entry.
  */
-const commonjsDependsOn = ["^tsc", "^compile:commonjs", "^api", "build:genver", "ts2esm"];
+const commonjsDependsOn = ["^tsc", "^build:commonjs", "^api", "build:genver", "ts2esm"];
 
 /**
  * This is a superset of the tasks that compile esm. Once the build:esnext task is completely removed, this can be
@@ -70,7 +70,7 @@ module.exports = {
 		"ts2esm": [],
 		"typetests:gen": [...commonjsDependsOn, "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": [...commonjsDependsOn],
-		"compile:commonjs": [...commonjsDependsOn],
+		"build:commonjs": [...commonjsDependsOn],
 		"build:esnext": [...commonjsDependsOn, ...esmDependsOn],
 		"build:test": [
 			"typetests:gen",
@@ -121,7 +121,6 @@ module.exports = {
 		},
 		"build:commonjs": {
 			dependsOn: ["commonjs"],
-			script: false,
 		},
 	},
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
