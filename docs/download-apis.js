@@ -24,8 +24,8 @@ const docVersions = renderMultiVersion
 
 Promise.all(
 	docVersions.map(async (version) => {
-		// We don't add a version-postfix for "current" version, since local website builds want to use the
-		// locally generated API doc models when present.
+		// We don't add a version-postfix directory name for "current" version, since local website builds want to use
+		// the locally generated API doc models when present.
 		const versionPostfix = version === versions.params.currentVersion ? "" : `-${version}`;
 		const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest${versionPostfix}.tar.gz`;
 		const destination = path.resolve(
