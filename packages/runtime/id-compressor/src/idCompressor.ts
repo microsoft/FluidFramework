@@ -569,10 +569,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			case 1.0:
 				throw new Error("IdCompressor version 1.0 is no longer supported.");
 			case 2.0:
-				break;
+				return IdCompressor.deserialize2_0(index, sessionId);
 			default:
 				throw new Error("Unknown IdCompressor serialized version.");
 		}
+	}
+
+	static deserialize2_0(index: Index, sessionId?: SessionId): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
