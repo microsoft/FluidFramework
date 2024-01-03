@@ -22,13 +22,30 @@ const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./cu
 const { createHugoFrontMatter } = require("./front-matter");
 
 async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersionNum) {
+	/**
+	 * Logs a progress message, prefaced with the API version number to help differentiate parallel logging output.
+	 */
+	function logProgress(message) {
+		console.log(`(${apiVersionNum}) ${message}`);
+	}
+
+	/**
+	 * Logs the error with the specified message, prefaced with the API version number to help differentiate parallel
+	 * logging output, and re-throws the error.
+	 */
+	function logErrorAndRethrow(message, error) {
+		console.error(chalk.red(`(${apiVersionNum}) ${message}:`));
+		console.error(error);
+		throw error;
+	}
+
 	// Delete existing documentation output
-	console.log("Removing existing generated API docs...");
+	logProgress("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
 	await fs.emptyDir(outputDir);
 
 	// Process API reports
-	console.log("Loading API model...");
+	logProgress("Loading API model...");
 
 	const apiModel = await loadModel(inputDir);
 
@@ -64,26 +81,24 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
-	console.log("Generating API documentation...");
+	logProgress("Generating API documentation...");
 
 	let documents;
 	try {
 		documents = transformApiModel(config);
 	} catch (error) {
-		console.error("Encountered error while generating API documentation:", error);
-		throw error;
+		logErrorAndRethrow("Encountered error while processing API model", error);
 	}
 
-	console.log("Generating nav contents...");
+	logProgress("Generating nav contents...");
 
 	try {
 		await buildNavBar(documents, apiVersionNum);
 	} catch (error) {
-		console.error("Error saving nav bar yaml files:", error);
-		throw error;
+		logErrorAndRethrow("Encountered an error while saving nav bar yaml files", error);
 	}
 
-	console.log("Writing API documents to disk...");
+	logProgress("Writing API documents to disk...");
 
 	await Promise.all(
 		documents.map(async (document) => {
@@ -94,8 +109,10 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 					customRenderers,
 				});
 			} catch (error) {
-				console.error("Encountered error while rendering Markdown:", error);
-				throw error;
+				logErrorAndRethrow(
+					`Encountered error while rendering Markdown contents for "${document.apiItem.displayName}"`,
+					error,
+				);
 			}
 
 			let filePath = path.join(outputDir, `${document.documentPath}.md`);
@@ -112,11 +129,10 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 				await fs.ensureFile(filePath);
 				await fs.writeFile(filePath, fileContents);
 			} catch (error) {
-				console.error(
-					`Encountered error while writing file output for "${document.apiItem.displayName}":`,
+				logErrorAndRethrow(
+					`Encountered error while writing file output for "${document.apiItem.displayName}"`,
+					error,
 				);
-				console.error(error);
-				throw error;
 			}
 		}),
 	);

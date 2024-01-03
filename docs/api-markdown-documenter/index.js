@@ -45,11 +45,11 @@ docVersions.forEach((version) => {
 			version,
 		).then(
 			() => {
-				console.log(chalk.green(`${version} API docs written!`));
+				console.log(chalk.green(`(${version}) API docs written!`));
 			},
 			(error) => {
 				throw new Error(
-					`${version} API docs could not be written due to an error: ${error}`,
+					`(${version}) API docs could not be written due to an error: ${error}`,
 				);
 			},
 		),
