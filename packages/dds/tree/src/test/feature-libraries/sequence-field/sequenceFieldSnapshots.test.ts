@@ -7,7 +7,8 @@ import { createIdCompressor } from "@fluidframework/id-compressor";
 import { RevisionTagCodec } from "../../../core/index.js";
 import { SequenceField } from "../../../feature-libraries/index.js";
 import { TestChange } from "../../testChange.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/snapshotTools.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { sessionId } from "../../snapshots/testTrees.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
