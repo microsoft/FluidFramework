@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"exports": {
 		".": {
 			"import": {
@@ -36,7 +37,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc-esm",
+		"build:esnext": "tsc",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -54,7 +55,8 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
+		"ts2esm": "ts2esm ./tsconfig.json ./src/test/tsconfig.json",
+		"tsc": "tsc-cjs --outDir ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -102,6 +104,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
+		"ts2esm": "^1.1.0",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},

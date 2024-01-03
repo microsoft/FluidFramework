@@ -6025,6 +6025,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      ts2esm: ^1.1.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     devDependencies:
@@ -6051,6 +6052,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      ts2esm: 1.1.0
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 

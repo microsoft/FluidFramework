@@ -1,20 +1,17 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { defaultLogger } from "./common/logging";
-import { createPackageJson, execTsc, removePackageJson } from "./tscWrapper";
+import { removePackageJson, tscWrapper } from "./tscWrapper";
 
-const { errorLog: error } = defaultLogger;
+const { errorLog } = defaultLogger;
 
-async function main() {
-	const args = process.argv.slice(2);
-	await execTsc(...args);
-}
-
-// Create package.json for CJS build.
-createPackageJson("cjs");
-
-main()
+tscWrapper("cjs")
 	.catch((e) => {
-		error(`Unexpected error. ${e.message}`);
-		error(e.stack);
+		errorLog(`Unexpected error. ${e.message}`);
+		errorLog(e.stack);
 	})
 	.finally(() => {
 		removePackageJson();
