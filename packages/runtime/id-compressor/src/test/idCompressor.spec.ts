@@ -435,6 +435,17 @@ describe("IdCompressor", () => {
 					sessionCount: 0,
 				},
 			]);
+			compressor.beginGhostSession(createSessionId(), () => {
+				compressor.generateCompressedId();
+			});
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 1,
+					sessionCount: 1,
+				},
+			]);
 		});
 	});
 
