@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { Tree, TreeConfiguration, TreeView } from "../../class-tree/index.js";
+import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -17,12 +17,12 @@ import {
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaTypes.js";
+} from "../../simple-tree/schemaTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaFactory.js";
+} from "../../simple-tree/schemaFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { TreeNode } from "../../simple-tree/index.js";

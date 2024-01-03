@@ -57,7 +57,7 @@ import {
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "../class-tree/index.js";
+} from "../simple-tree/index.js";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
