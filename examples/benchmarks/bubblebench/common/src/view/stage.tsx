@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { IAppState } from "../types";
+import { IAppState } from "../types.js";
 import { BubbleView } from "./bubble";
 
 export interface IStage {

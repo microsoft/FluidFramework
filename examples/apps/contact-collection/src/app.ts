@@ -8,8 +8,8 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 import {
 	ContactCollectionContainerRuntimeFactory,
 	IContactCollectionAppModel,
-} from "./containerCode";
-import { renderContact, renderContactCollection } from "./view";
+} from "./containerCode.js";
+import { renderContact, renderContactCollection } from "./view.js";
 
 const searchParams = new URLSearchParams(location.search);
 const specifiedContact = searchParams.get("contact") ?? undefined;

@@ -5,7 +5,7 @@
 
 import * as React from "react";
 import { Tree } from "@fluidframework/tree";
-import { Inventory } from "../schema";
+import { Inventory } from "../schema.js";
 import { Counter } from "./counter";
 
 export const MainView: React.FC<{ inventory: Inventory }> = ({ inventory }) => {

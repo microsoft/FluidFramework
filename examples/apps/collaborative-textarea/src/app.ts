@@ -7,7 +7,10 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
+import {
+	CollaborativeTextContainerRuntimeFactory,
+	ICollaborativeTextAppModel,
+} from "./container.js";
 import { CollaborativeTextView } from "./view";
 
 /**

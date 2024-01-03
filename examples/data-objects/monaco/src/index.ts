@@ -8,7 +8,7 @@ import { DataObjectFactory } from "@fluidframework/aqueduct";
 import * as sequence from "@fluidframework/sequence";
 import React from "react";
 
-import { MonacoRunner } from "./dataObject";
+import { MonacoRunner } from "./dataObject.js";
 import { MonacoView } from "./view";
 
 const monacoName = "@fluid-example/monaco";

@@ -5,8 +5,8 @@
 
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
-import { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid";
-import { IDataObjectGridItemEntry, dataObjectRegistry } from "./dataObjectRegistry";
+import { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
+import { IDataObjectGridItemEntry, dataObjectRegistry } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar";
 
 import "react-grid-layout/css/styles.css";

@@ -6,7 +6,7 @@
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import React from "react";
-import { TableModel, tableModelType } from "./tableModel";
+import { TableModel, tableModelType } from "./tableModel.js";
 import { TableView } from "./tableView";
 
 const tableModelFactory = createDataStoreFactory(

@@ -17,10 +17,10 @@ import {
 
 import React from "react";
 
-import { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
+import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 import { CodeMirrorReactView } from "./codeMirrorView";
 
-export { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
+export { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 export { CodeMirrorReactView } from "./codeMirrorView";
 
 const defaultComponentId = "default";

@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import type { IInventoryListAppModel } from "../modelInterfaces";
+import type { IInventoryListAppModel } from "../modelInterfaces.js";
 import { InventoryListView } from "./inventoryView";
 
 export interface IInventoryListAppViewProps {
