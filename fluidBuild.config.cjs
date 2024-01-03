@@ -119,9 +119,6 @@ module.exports = {
 			dependsOn: ["compile"],
 			script: false,
 		},
-		"build:commonjs": {
-			dependsOn: ["commonjs"],
-		},
 	},
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
