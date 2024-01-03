@@ -35,7 +35,7 @@ function createHugoFrontMatter(apiItem, config, customRenderers, version) {
 		version,
 		kind: apiItem.kind,
 		members: new Map(),
-		package: associatedPackage?.name.replace(/"/g, "").replace(/!/g, "") 
+		package: associatedPackage?.name.replace(/"/g, "").replace(/!/g, ""),
 		unscopedPackageName: associatedPackage ?
 			ApiItemUtilities.getUnscopedPackageName(associatedPackage) :
 			undefined,
