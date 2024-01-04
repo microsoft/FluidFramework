@@ -10,41 +10,6 @@
     {{- end }}
 
     {{ .Content }}
-    
-        <div class="swimlane availableServices">
-            <div class="container">
-                <div class="row">
-                    <div class="row title" style="text-align: center;">
-                        <h2><strong>Available Fluid Services</strong></h2>
-                    </div>
-                    <div class="row availableServices-list">
-                        <div class="availableServices">
-                            <div class="container">
-                                <div class="row">
-                                    <div class="col-md-6 no-gutters">
-                                            <span><b>Azure Fluid Relay</b></span>
-                                            <div>
-                                                <p>Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share. It is designed to be used with the Fluid Framework, but can also be used with other collaborative frameworks.</p>
-                                            </div>
-                                            <div>
-                                                <a href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview">Learn more...</a>
-                                            </div>
-                                    </div>
-                                    <div class="col-md-6 no-gutters">
-                                            <span><b>Sharepoint Embeeded</b></span>
-                                            <div>
-                                                <p>Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. SharePoint Embedded is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
-                                            </div>
-                                            <div>
-                                                <a href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview">Learn more...</a>
-                                            </div>
-                                        </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
         <div class="swimlane releases">
             <div class="container">
@@ -61,21 +26,7 @@
                 </div>
             </div>
         </div>
-        <!-- <div class="swimlane licensing">
-            <div class="container">
-                <div class="row" style="text-align: center;">
-                    <div class="row title">
-                        <h2><strong>Licensing and Cost</strong></h2>
-                    </div>
-                    <div class="subtext">
-                        <p>We believe that an <strong>open, inclusive, and respectful </strong>community will help shape a better future for this project. That’s why Fluid Framework is made available for <strong>FREE</strong> as an <strong>Open Source project</strong> under the <a href="https://github.com/microsoft/FluidFramework/blob/main/LICENSE" target="_blank">MIT license</a> . 
-                        </p>
-                        <p>Choice of compatible hosted service will determine its running cost for delivering complete application. e.g. Explore pay-as-you-go-pricing for Azure Fluid Relay <a href="https://azure.microsoft.com/en-us/pricing/details/fluid-relay/">here</a>.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div> -->
+
 
 {{- if templates.Exists "partials/extra-foot.html" -}}
 {{ partial "extra-foot.html" . }}

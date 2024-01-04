@@ -64,7 +64,7 @@ params:
     version: "0.50"
     urlRef: "docs/updates/v0.50.md"
     message: | # if set, this will override the release notes updates
-      Fluid Framework 2.0 beta is coming soon! [Learn more.](/blogs/)
+      Fluid Framework 2.0 beta is available now! [Learn more.](/blogs/)
 
 menu:
   main:

@@ -163,7 +163,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                                         <h2>Azure Fluid Relay</h2>
                                     </div>
                                     <div>
-                                        <p>Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share. It is designed to be used with the Fluid Framework, but can also be used with other collaborative frameworks.</p>
+                                        <p>Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.</p>
                                     </div>
                                     <div>
                                         <a href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview">Learn more...</a>
@@ -185,6 +185,17 @@ summary: "An open-source client technology stack that enables real-time collabor
                     </div>
                 </div>
             </div>
+                <div class="row text-center">
+                    <h2><strong>Achitecture Diagram</strong></h2>
+                 </div>
+                <div class="row diagram text-center">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <img height="450" width="850" alt="Architecture" src="images/FF Stack.png">
+                        </div>    
+                    </div>    
+                </div>
+            </div>   
         </div>
     </div>
 </div>
