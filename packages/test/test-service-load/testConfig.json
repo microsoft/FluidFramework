@@ -3,6 +3,7 @@
 		"ci": {
 			"opRatePerMin": 10,
 			"signalsPerMin": 10,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 15000,
 			"numClients": 120,
 			"totalSendCount": 10000,
@@ -57,6 +58,7 @@
 		},
 		"ci_frs": {
 			"opRatePerMin": 10,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 15000,
 			"numClients": 100,
 			"totalSendCount": 10000,
@@ -83,6 +85,7 @@
 		},
 		"full": {
 			"opRatePerMin": 1920,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 1500000,
 			"numClients": 60,
 			"totalSendCount": 200000,
@@ -94,6 +97,7 @@
 		},
 		"mini": {
 			"opRatePerMin": 60,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 5000,
 			"numClients": 2,
 			"totalSendCount": 30,
@@ -114,6 +118,7 @@
 		},
 		"debug": {
 			"opRatePerMin": 60,
+			"futureOpRate": 0.5,
 			"progressIntervalMs": 5000,
 			"numClients": 1,
 			"totalSendCount": 30,
@@ -125,6 +130,7 @@
 		},
 		"ci_nofault": {
 			"opRatePerMin": 10,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 15000,
 			"numClients": 120,
 			"totalSendCount": 10000,
@@ -132,6 +138,7 @@
 		},
 		"scale": {
 			"opRatePerMin": 60,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 20000,
 			"numClients": 10,
 			"totalSendCount": 70000,
@@ -143,6 +150,7 @@
 		},
 		"scale_nofault": {
 			"opRatePerMin": 60,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 20000,
 			"numClients": 10,
 			"totalSendCount": 70000,
@@ -150,6 +158,7 @@
 		},
 		"blobs": {
 			"opRatePerMin": 60,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 5000,
 			"numClients": 4,
 			"totalSendCount": 150,
@@ -173,6 +182,7 @@
 		},
 		"offline": {
 			"opRatePerMin": 60,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 5000,
 			"numClients": 4,
 			"totalSendCount": 300,
@@ -196,6 +206,7 @@
 		},
 		"binarySnapshotFormat": {
 			"opRatePerMin": 60,
+			"futureOpRate": 0.1,
 			"progressIntervalMs": 5000,
 			"numClients": 4,
 			"totalSendCount": 150,
