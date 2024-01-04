@@ -104,9 +104,9 @@
 		"tinylicious": "^2.0.2"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.29.0-227016",
+		"@fluid-tools/build-cli": "0.29.0-227332",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-227016",
+		"@fluidframework/build-tools": "0.29.0-227332",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
