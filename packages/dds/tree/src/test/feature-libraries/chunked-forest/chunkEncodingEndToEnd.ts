@@ -52,7 +52,7 @@ const context = {
 	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
+const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator });
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 
@@ -124,6 +124,7 @@ describe("End to end chunked encoding", () => {
 			flexTree.context.forest as IEditableForest,
 			idCompressor,
 			fieldBatchCodec,
+			context,
 			options,
 		);
 
@@ -151,6 +152,7 @@ describe("End to end chunked encoding", () => {
 			flexTree.context.forest as IEditableForest,
 			idCompressor,
 			fieldBatchCodec,
+			context,
 			options,
 		);
 

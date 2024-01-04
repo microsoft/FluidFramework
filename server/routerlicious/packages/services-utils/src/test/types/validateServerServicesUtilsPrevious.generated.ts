@@ -319,6 +319,7 @@ declare function get_old_ClassDeclaration_WebSocketTracker():
 declare function use_current_ClassDeclaration_WebSocketTracker(
     use: TypeOnly<current.WebSocketTracker>): void;
 use_current_ClassDeclaration_WebSocketTracker(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_WebSocketTracker());
 
 /*

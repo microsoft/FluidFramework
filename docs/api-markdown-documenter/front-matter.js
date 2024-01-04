@@ -36,29 +36,31 @@ function createHugoFrontMatter(apiItem, config, customRenderers, version) {
 		kind: apiItem.kind,
 		members: new Map(),
 		package: associatedPackage?.name.replace(/"/g, "").replace(/!/g, ""),
-		unscopedPackageName: associatedPackage ?
-			ApiItemUtilities.getUnscopedPackageName(associatedPackage) :
-			undefined,
+		unscopedPackageName: associatedPackage
+			? ApiItemUtilities.getUnscopedPackageName(associatedPackage)
+			: undefined,
 	};
 
 	if (apiItem.tsdocComment) {
 		frontMatter.summary = extractSummary(apiItem, config, customRenderers);
 	}
 
-	const apiMembers = apiItem.kind === ApiItemKind.Package ?
-		apiItem.entryPoints[0].members :
-		apiItem.members;
+	const apiMembers =
+		apiItem.kind === ApiItemKind.Package ? apiItem.entryPoints[0].members : apiItem.members;
 
-	apiMembers.filter(({ displayName }) => displayName !== "")
-		.forEach(api => {
+	apiMembers
+		.filter(({ displayName }) => displayName !== "")
+		.forEach((api) => {
 			frontMatter.members[api.kind] = frontMatter.members[api.kind] ?? {};
-			frontMatter.members[api.kind][api.displayName] = ApiItemUtilities.getLinkForApiItem(api, config).target;
+			frontMatter.members[api.kind][api.displayName] = ApiItemUtilities.getLinkForApiItem(
+				api,
+				config,
+			).target;
 		});
-
 
 	const hugoFrontMatter = JSON.stringify(frontMatter, undefined, 2).trim();
 	return [hugoFrontMatter, generatedContentNotice].join(`${EOL}${EOL}`).trim();
-};
+}
 
 const extractSummary = (apiItem, config, customRenderers) => {
 	const summaryParagraph = transformTsdocNode(
