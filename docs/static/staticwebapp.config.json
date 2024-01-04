@@ -2,7 +2,7 @@
   "routes": [
     {
       "route": "/docs/apis",
-      "redirect": "/docs/api/v2",
+      "redirect": "/docs/api/v1",
       "statusCode": 301
     }
   ],
