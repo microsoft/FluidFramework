@@ -86,11 +86,11 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	intoDelta: ({ change, revision }): DeltaFieldChanges => {
 		const delta: Mutable<DeltaFieldChanges> = {};
 		if (change !== 0) {
-			// This is an arbitrary number for testing.
-			const changeId = makeDetachedNodeId(revision, 424242);
-			const buildId = makeDetachedNodeId(revision, 424243);
-			delta.build = [{ id: buildId, trees: [singleJsonCursor(change.new)] }];
-			delta.local = [{ count: 1, attach: buildId, detach: changeId }];
+			// We use the new and old numbers as the node ids.
+			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
+			const detach = makeDetachedNodeId(revision, change.old);
+			const attach = makeDetachedNodeId(revision, change.new);
+			delta.local = [{ count: 1, attach, detach }];
 		}
 		return delta;
 	},

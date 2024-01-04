@@ -819,7 +819,16 @@ describe("ModularChangeFamily", () => {
 				local: [
 					{
 						count: 1,
-						fields: new Map([[fieldA, deltaForSet(node1, buildId, detachId)]]),
+						fields: new Map([
+							[
+								fieldA,
+								{
+									local: [
+										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
+									],
+								},
+							],
+						]),
 					},
 				],
 			};
@@ -827,7 +836,7 @@ describe("ModularChangeFamily", () => {
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+					[fieldB, { local: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
 				]),
 			};
 
