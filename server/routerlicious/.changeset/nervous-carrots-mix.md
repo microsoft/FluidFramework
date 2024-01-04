@@ -4,5 +4,7 @@
 "@fluidframework/server-memory-orderer": major
 ---
 
+BREAKING CHANGE: Foreman lambda removed
+
 The Foreman lambda in @fluidframework/server-lambdas has been removed. It has not been used for several releases. There
 is no replacement.

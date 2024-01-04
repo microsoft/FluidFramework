@@ -2,7 +2,7 @@
 "@fluidframework/server-services-client": major
 ---
 
-Export ITimeoutContext, getGlobalTimeoutContext, and setGlobalTimeoutContext from @fluidframework/server-services-client
+server-services-client: New internal exports
 
 The `@fluidframework/server-services-client` package now exports the following items. These APIs are intended for internal use within the Fluid Framework only. They will be marked as internal APIs in a future release.
 
