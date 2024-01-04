@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "../runWithRetry";
 
@@ -77,7 +77,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throttle Error");
-				(error as any).errorType = DriverErrorType.throttlingError;
+				(error as any).errorType = DriverErrorTypes.throttlingError;
 				(error as any).retryAfterSeconds = 400;
 				(error as any).canRetry = true;
 				throw error;

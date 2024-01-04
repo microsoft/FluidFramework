@@ -12,8 +12,8 @@
  */
 
 export type { ICriticalContainerError } from "@fluidframework/container-definitions";
-export { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
-export { DriverErrorType } from "@fluidframework/driver-definitions";
+export { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
 	ContainerSchema,
