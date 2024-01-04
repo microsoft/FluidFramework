@@ -112,6 +112,14 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 
 	await Promise.all(
 		documents.map(async (document) => {
+			// We inject custom landing pages for each model (the root of a versioned documentation suite) using Hugo,
+			// so we will skip generating a file for the model here.
+			// TODO: add native support to api-markdown-documenter to allow skipping document generation for different
+			// kinds of items, and utilize that instead.
+			if (document.apiItem?.kind === ApiItemKind.Model) {
+				return;
+			}
+
 			let fileContents;
 			try {
 				fileContents = MarkdownRenderer.renderDocument(document, {
@@ -128,14 +136,6 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 			let filePath = path.join(outputDir, `${document.documentPath}.md`);
 
 			try {
-				// Hugo uses a special file-naming syntax to represent documents with "child" documents in the same directory.
-				// Namely, "_index.md". However, the resulting html names these modules "index", rather than
-				// "_index", so we cannot use the "_index" convention when generating the docs and the links between them.
-				// To accommodate this, we will match on "index.md" files and adjust the file name accordingly.
-				if (filePath.endsWith("index.md")) {
-					filePath = filePath.replace("index.md", "_index.md");
-				}
-
 				await fs.ensureFile(filePath);
 				await fs.writeFile(filePath, fileContents);
 			} catch (error) {
