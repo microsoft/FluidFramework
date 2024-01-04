@@ -32,7 +32,6 @@ import {
 	FieldBatchCodec,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
@@ -193,16 +192,7 @@ export function createTreeCheckout(
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			idCompressor,
-			args?.fieldBatchCodec ??
-				makeFieldBatchCodec(defaultCodecOptions, {
-					// TODO: Currently unsure which schema should be passed if an op contains a schema edit, so it is not enabled.
-					// This should eventually handle that case, and pass in the correct schema accordingly.
-					// schema: {
-					// 	schema,
-					// 	policy: defaultSchemaPolicy,
-					// },
-					encodeType: TreeCompressionStrategy.Compressed,
-				}),
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
 			{ jsonValidator: noopValidator },
 		);
 	const branch =

@@ -164,6 +164,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
 	 */
 	// eslint-disable-next-line import/no-deprecated
+	public peekPendingSegmentGroups(): SegmentGroup | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
@@ -746,10 +750,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		for (const segment of segmentGroup.segments.sort((a, b) =>
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
-			const segmentSegGroup = segment.segmentGroups.dequeue();
 			assert(
-				segmentGroup === segmentSegGroup,
-				0x035 /* "Segment group not at head of segment pending queue" */,
+				segment.segmentGroups.remove?.(segmentGroup) === true,
+				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
 				segmentGroup.localSeq !== undefined,
