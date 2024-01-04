@@ -25,9 +25,7 @@ import {
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../simple-tree/proxies.js";
-import { TreeArrayNode, TreeNode } from "../simple-tree/index.js";
+} from "./proxies.js";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
 	AllowedTypes,
@@ -49,6 +47,8 @@ import {
 	WithType,
 	type,
 } from "./schemaTypes.js";
+import { TreeNode } from "./types.js";
+import { TreeArrayNode } from "./treeListNode.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -289,7 +289,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @remarks
 	 * The unique identifier for this Map is defined as a function of the provided types.
@@ -322,7 +322,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	>;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
+	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *

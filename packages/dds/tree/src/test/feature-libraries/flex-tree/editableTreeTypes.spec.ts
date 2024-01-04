@@ -45,7 +45,7 @@ import {
 	LeafNodeSchema,
 	MapNodeSchema,
 	ObjectNodeSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
 	ArrayToUnion,
@@ -320,22 +320,22 @@ describe("editableTreeTypes", () => {
 		// Type-Erased
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<[TreeNodeSchema]>, FlexTreeNode>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[FlexTreeNodeSchema]>, FlexTreeNode>
 			>;
 			type _2 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<[ObjectNodeSchema]>, FlexTreeObjectNode>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeTypedNodeUnion<[TreeNodeSchema, TreeNodeSchema]>,
+					FlexTreeTypedNodeUnion<[FlexTreeNodeSchema, FlexTreeNodeSchema]>,
 					FlexTreeNode
 				>
 			>;
 			type _4 = requireTrue<areSafelyAssignable<FlexTreeTypedNodeUnion<[Any]>, FlexTreeNode>>;
-			type y = ConstantFlexListToNonLazyArray<TreeNodeSchema[]>;
+			type y = ConstantFlexListToNonLazyArray<FlexTreeNodeSchema[]>;
 
 			type _5 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<TreeNodeSchema[]>, FlexTreeNode>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexTreeNodeSchema[]>, FlexTreeNode>
 			>;
 			type _6 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<AllowedTypes>, FlexTreeNode>
@@ -399,7 +399,7 @@ describe("editableTreeTypes", () => {
 		{
 			type _1 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[TreeNodeSchema]>,
+					FlexTreeUnboxNodeUnion<[FlexTreeNodeSchema]>,
 					FlexTreeUnknownUnboxed
 				>
 			>;
@@ -408,14 +408,14 @@ describe("editableTreeTypes", () => {
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[TreeNodeSchema, TreeNodeSchema]>,
+					FlexTreeUnboxNodeUnion<[FlexTreeNodeSchema, FlexTreeNodeSchema]>,
 					FlexTreeNode
 				>
 			>;
 			type _4 = requireTrue<areSafelyAssignable<FlexTreeUnboxNodeUnion<[Any]>, FlexTreeNode>>;
 			type _5 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<TreeNodeSchema[]>,
+					FlexTreeUnboxNodeUnion<FlexTreeNodeSchema[]>,
 					FlexTreeUnknownUnboxed
 				>
 			>;
@@ -435,7 +435,7 @@ describe("editableTreeTypes", () => {
 
 	// IsArrayOfOne
 	{
-		type _1 = requireFalse<IsArrayOfOne<[TreeNodeSchema, TreeNodeSchema]>>;
+		type _1 = requireFalse<IsArrayOfOne<[FlexTreeNodeSchema, FlexTreeNodeSchema]>>;
 		type _2 = requireFalse<IsArrayOfOne<[]>>;
 		type _3 = requireTrue<areSafelyAssignable<IsArrayOfOne<AllowedTypes>, boolean>>;
 		type _4 = requireTrue<IsArrayOfOne<[Any]>>;

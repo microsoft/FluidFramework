@@ -112,9 +112,9 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-225750",
+		"@fluid-tools/build-cli": "0.29.0-227016",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/build-tools": "0.29.0-227016",
 		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@microsoft/api-extractor": "^7.38.3",

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory } from "../../class-tree/index.js";
-
+import { TreeNode, SchemaFactory } from "../../simple-tree/index.js";
 import {
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
@@ -14,9 +13,8 @@ import {
 	TreeLeafValue,
 	TreeNodeFromImplicitAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../class-tree/schemaTypes.js";
+} from "../../simple-tree/schemaTypes.js";
 import { TreeValue } from "../../core/index.js";
-import { TreeNode } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 
