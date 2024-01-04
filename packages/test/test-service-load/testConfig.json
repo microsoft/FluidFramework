@@ -3,7 +3,7 @@
 		"ci": {
 			"opRatePerMin": 10,
 			"signalsPerMin": 10,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 2,
 			"progressIntervalMs": 15000,
 			"numClients": 120,
 			"totalSendCount": 10000,
@@ -58,7 +58,7 @@
 		},
 		"ci_frs": {
 			"opRatePerMin": 10,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 2,
 			"progressIntervalMs": 15000,
 			"numClients": 100,
 			"totalSendCount": 10000,
