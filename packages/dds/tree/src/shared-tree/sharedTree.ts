@@ -192,18 +192,20 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const fieldBatchCodec = makeFieldBatchCodec(options, {
-			// TODO: provide schema here to enable schema based compression.
-			// schema: {
-			// 	schema,
-			// 	policy: defaultSchemaPolicy,
-			// },
-			encodeType: TreeCompressionStrategy.Compressed,
-		});
+		const fieldBatchCodec = makeFieldBatchCodec(options);
+
+		const encoderContext = {
+			schema: {
+				schema,
+				policy: defaultSchemaPolicy,
+			},
+			encodeType: options.treeEncodeType,
+		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			runtime.idCompressor,
 			fieldBatchCodec,
+			encoderContext,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
@@ -398,7 +400,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
 	 */
 	forest?: ForestType;
-	summaryEncodeType?: TreeCompressionStrategy;
+	treeEncodeType?: TreeCompressionStrategy;
 }
 
 /**
@@ -421,7 +423,7 @@ export enum ForestType {
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 };
 
 /**

@@ -5,8 +5,8 @@
 	"recommendations": [
 		// "docsmsft.docs-authoring-pack",
 		"davidanson.vscode-markdownlint",
-		"stkb.rewrap"
+		"stkb.rewrap",
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-	"unwantedRecommendations": []
+	"unwantedRecommendations": [],
 }
