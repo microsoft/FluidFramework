@@ -11,19 +11,21 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -125,7 +127,20 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts2esm": "^1.1.0",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

@@ -4,6 +4,8 @@
 
 ```ts
 
+import { FieldKind as FieldKind_2 } from './schemaTypes';
+import { FieldSchema as FieldSchema_2 } from './schemaTypes';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -14,13 +16,18 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { InsertableObjectFromSchemaRecord as InsertableObjectFromSchemaRecord_2 } from './schemaTypes';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
 import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
+import { TreeNode as TreeNode_2 } from '..';
+import { TreeNodeSchema as TreeNodeSchema_2 } from './schemaTypes';
+import { TreeNodeSchemaClass as TreeNodeSchemaClass_2 } from './schemaTypes';
 import type { TSchema } from '@sinclair/typebox';
+import { WithType as WithType_2 } from './schemaTypes';
 
 // @internal
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
@@ -1100,14 +1107,14 @@ export type LazyTreeNodeSchema = FlexTreeNodeSchema | (() => FlexTreeNodeSchema)
 
 // @internal
 export const leaf: {
-    number: LeafNodeSchema<"com.fluidframework.leaf.number", ValueSchema.Number>;
-    boolean: LeafNodeSchema<"com.fluidframework.leaf.boolean", ValueSchema.Boolean>;
-    string: LeafNodeSchema<"com.fluidframework.leaf.string", ValueSchema.String>;
-    handle: LeafNodeSchema<"com.fluidframework.leaf.handle", ValueSchema.FluidHandle>;
-    null: LeafNodeSchema<"com.fluidframework.leaf.null", ValueSchema.Null>;
-    primitives: readonly [LeafNodeSchema<"com.fluidframework.leaf.number", ValueSchema.Number>, LeafNodeSchema<"com.fluidframework.leaf.boolean", ValueSchema.Boolean>, LeafNodeSchema<"com.fluidframework.leaf.string", ValueSchema.String>];
-    all: readonly [LeafNodeSchema<"com.fluidframework.leaf.handle", ValueSchema.FluidHandle>, LeafNodeSchema<"com.fluidframework.leaf.null", ValueSchema.Null>, LeafNodeSchema<"com.fluidframework.leaf.number", ValueSchema.Number>, LeafNodeSchema<"com.fluidframework.leaf.boolean", ValueSchema.Boolean>, LeafNodeSchema<"com.fluidframework.leaf.string", ValueSchema.String>];
-    library: SchemaLibrary;
+    number: LeafNodeSchema_2<"com.fluidframework.leaf.number", ValueSchema.Number>;
+    boolean: LeafNodeSchema_2<"com.fluidframework.leaf.boolean", ValueSchema.Boolean>;
+    string: LeafNodeSchema_2<"com.fluidframework.leaf.string", ValueSchema.String>;
+    handle: LeafNodeSchema_2<"com.fluidframework.leaf.handle", ValueSchema.FluidHandle>;
+    null: LeafNodeSchema_2<"com.fluidframework.leaf.null", ValueSchema.Null>;
+    primitives: readonly [LeafNodeSchema_2<"com.fluidframework.leaf.number", ValueSchema.Number>, LeafNodeSchema_2<"com.fluidframework.leaf.boolean", ValueSchema.Boolean>, LeafNodeSchema_2<"com.fluidframework.leaf.string", ValueSchema.String>];
+    all: readonly [LeafNodeSchema_2<"com.fluidframework.leaf.handle", ValueSchema.FluidHandle>, LeafNodeSchema_2<"com.fluidframework.leaf.null", ValueSchema.Null>, LeafNodeSchema_2<"com.fluidframework.leaf.number", ValueSchema.Number>, LeafNodeSchema_2<"com.fluidframework.leaf.boolean", ValueSchema.Boolean>, LeafNodeSchema_2<"com.fluidframework.leaf.string", ValueSchema.String>];
+    library: SchemaLibrary_2;
 };
 
 // @internal (undocumented)
