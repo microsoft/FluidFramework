@@ -158,7 +158,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
-    peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
+    peekPendingSegmentGroups(): SegmentGroup | undefined;
+    // (undocumented)
+    peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
@@ -1033,6 +1035,8 @@ export class SegmentGroupCollection {
     enqueue(segmentGroup: SegmentGroup): void;
     // @deprecated (undocumented)
     pop?(): SegmentGroup | undefined;
+    // (undocumented)
+    remove?(segmentGroup: SegmentGroup): boolean;
     // (undocumented)
     get size(): number;
 }
