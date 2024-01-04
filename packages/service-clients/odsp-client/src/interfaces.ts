@@ -28,6 +28,12 @@ export interface OdspConnectionConfig {
 	 * RaaS Drive Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
+
+	/**
+	 * Specifies the file path where Fluid files are created.
+	 * If not specified, Fluid files will be created at the root of the drive.
+	 */
+	filePath?: string;
 }
 /**
  * @beta
