@@ -357,8 +357,10 @@ The following npm scripts are supported in this directory:
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
 | `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
 | `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
-| `lint` | `markdownlint-cli2` |
-| `lint:fix` | `markdownlint-cli2-fix` |
+| `lint` | `npm run markdownlint && npm run prettier` |
+| `lint:fix` | `npm run markdownlint:fix && npm run prettier:fix` |
+| `markdownlint` | `markdownlint-cli2` |
+| `markdownlint:fix` | `markdownlint-cli2-fix` |
 | `prettier` | `prettier --check . --ignore-path ../.prettierignore` |
 | `prettier:fix` | `prettier --write . --ignore-path ../.prettierignore` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
