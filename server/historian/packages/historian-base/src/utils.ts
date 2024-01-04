@@ -33,12 +33,17 @@ export function normalizePort(val) {
 }
 
 export const Constants = Object.freeze({
-	historianRestThrottleIdSuffix: "HistorianRest",
 	createSummaryThrottleIdPrefix: "createSummary",
-	getSummaryThrottleIdPrefix: "getSummary",
 	generalRestCallThrottleIdPrefix: "generalRestCall",
+	getSummaryThrottleIdPrefix: "getSummary",
+	historianRestThrottleIdSuffix: "HistorianRest",
 	IsEphemeralContainer: "Is-Ephemeral-Container",
 	isInitialSummary: "isInitialSummary",
+	message: "message",
+	sequenceNumber: "sequenceNumber",
+	summarySequenceNumber: "summarySequenceNumber",
+	summarySize: "summarySize",
+	summaryType: "summaryType",
 });
 
 export function getTokenLifetimeInSec(token: string): number {

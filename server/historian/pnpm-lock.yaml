@@ -162,6 +162,7 @@ importers:
       jsonwebtoken: ^9.0.0
       mocha: ^10.1.0
       nconf: ^0.11.4
+      object-sizeof: ^1.6.3
       prettier: ~3.0.3
       querystring: ^0.2.0
       rimraf: ^3.0.2
@@ -190,6 +191,7 @@ importers:
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.0
       nconf: 0.11.4
+      object-sizeof: 1.6.3
       querystring: 0.2.1
       uuid: 3.4.0
       winston: 3.8.2
@@ -5617,7 +5619,7 @@ packages:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
       base64-js: 1.5.1
-      ieee754: 1.1.13
+      ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
 
@@ -11486,6 +11488,12 @@ packages:
     resolution: {integrity: sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==}
     engines: {node: '>= 0.4'}
     dev: true
+
+  /object-sizeof/1.6.3:
+    resolution: {integrity: sha512-LGtilAKuDGKCcvu1Xg3UvAhAeJJlFmblo3faltmOQ80xrGwAHxnauIXucalKdTEksHp/Pq9tZGz1hfyEmjFJPQ==}
+    dependencies:
+      buffer: 5.7.1
+    dev: false
 
   /object-treeify/1.1.33:
     resolution: {integrity: sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==}

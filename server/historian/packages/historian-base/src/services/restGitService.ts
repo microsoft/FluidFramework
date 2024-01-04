@@ -22,6 +22,7 @@ import {
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
+import sizeof from "object-sizeof";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Constants, getRequestErrorTranslator } from "../utils";
@@ -237,8 +238,16 @@ export class RestGitService {
 			summaryParams,
 			initial !== undefined ? { initial } : undefined,
 		);
-		// JSON.stringify is not ideal for performance here, but it is better than crashing the cache service.
-		const summarySize = JSON.stringify(summaryResponse).length;
+
+		const summarySize = sizeof(summaryResponse);
+		Lumberjack.info(`Successfully created summary`, {
+			...this.lumberProperties,
+			[Constants.summaryType]: summaryParams.type,
+			[Constants.summarySequenceNumber]: summaryParams.sequenceNumber,
+			[Constants.message]: summaryParams.message,
+			[Constants.isInitialSummary]: initial,
+			[Constants.summarySize]: summarySize,
+		});
 		if (
 			summaryParams.type === "container" &&
 			(summaryResponse as IWholeFlatSummary).trees !== undefined &&
@@ -250,6 +259,7 @@ export class RestGitService {
 				this.getSummaryCacheKey(summaryParams.type),
 				summaryResponse as IWholeFlatSummary,
 			);
+
 			// Important: separately cache latest summary's sha for efficiently checking if a
 			// summary read for a specific sha is actually looking for latest summary.
 			this.setCache<string>(
