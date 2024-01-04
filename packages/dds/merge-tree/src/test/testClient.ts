@@ -19,7 +19,7 @@ import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
 import { DoublyLinkedList } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, IMergeLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
+import { IMergeBlock, ISegmentLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
@@ -149,7 +149,7 @@ export class TestClient extends Client {
 			// assert.notEqual(d.deltaSegments.length, 0);
 			d.deltaSegments.forEach((s) => {
 				if (d.operation === MergeTreeDeltaType.INSERT) {
-					const seg: IMergeLeaf = s.segment;
+					const seg: ISegmentLeaf = s.segment;
 					assert.notEqual(seg.parent, undefined);
 				}
 			});
@@ -519,7 +519,8 @@ export class TestClient extends Client {
 		let foundMarker: Marker | undefined;
 
 		const { segment } = this.getContainingSegment(startPos);
-		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const segWithParent: ISegmentLeaf = segment!;
 
 		if (Marker.is(segWithParent)) {
 			if (refHasTileLabel(segWithParent, markerLabel)) {

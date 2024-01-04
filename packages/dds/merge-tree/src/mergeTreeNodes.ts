@@ -10,7 +10,6 @@ import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
-import { ISegmentLeaf } from "./mergeTree";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
@@ -38,9 +37,12 @@ export interface IMergeNodeCommon {
 	ordinal: string;
 	isLeaf(): this is ISegment;
 }
-
-export type IMergeLeaf = ISegment & { parent?: IMergeBlock };
-export type IMergeNode = IMergeBlock | IMergeLeaf;
+/**
+ * someday we may split tree leaves from segments, but for now they are the same
+ * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
+ */
+export type ISegmentLeaf = ISegment & { parent?: IMergeBlock };
+export type IMergeNode = IMergeBlock | ISegmentLeaf;
 /**
  * Internal (i.e. non-leaf) node in a merge tree.
  * @internal
@@ -399,7 +401,7 @@ export interface SegmentActions<TClientData> {
  * @alpha
  */
 export interface SegmentGroup {
-	segments: ISegmentLeaf[];
+	segments: ISegment[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
@@ -610,7 +612,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			return undefined;
 		}
 
-		const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
+		const leafSegment: ISegmentLeaf | undefined = this.createSplitSegmentAt(pos);
 
 		if (!leafSegment) {
 			return undefined;
@@ -618,7 +620,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 		this.copyPropertiesTo(leafSegment);
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const thisAsMergeSegment: IMergeLeaf = this;
+		const thisAsMergeSegment: ISegmentLeaf = this;
 		leafSegment.parent = thisAsMergeSegment.parent;
 
 		// Give the leaf a temporary yet valid ordinal.

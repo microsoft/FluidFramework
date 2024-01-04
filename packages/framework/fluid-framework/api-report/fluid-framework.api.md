@@ -6,10 +6,10 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { ContainerErrorType } from '@fluidframework/container-definitions';
+import { ContainerErrorTypes } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
-import { DriverErrorType } from '@fluidframework/driver-definitions';
+import { DriverErrorTypes } from '@fluidframework/driver-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -61,12 +61,9 @@ export interface CheckoutEvents {
 
 export { ConnectionState }
 
-export { ContainerErrorType }
+export { ContainerErrorTypes }
 
 export { ContainerSchema }
-
-// @public
-export const create: unique symbol;
 
 export { DataObjectClass }
 
@@ -79,7 +76,7 @@ export enum DiscardResult {
 // @public
 export const disposeSymbol: unique symbol;
 
-export { DriverErrorType }
+export { DriverErrorTypes }
 
 // @public
 export type Events<E> = {
@@ -173,8 +170,7 @@ export interface ISubscribable<E extends Events<E>> {
 }
 
 // @public
-export class IterableTreeListContent<T> implements Iterable<T> {
-    static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
+export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
@@ -348,19 +344,19 @@ export interface TreeApi {
 }
 
 // @public
-export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>, TreeArrayNode> {
+export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>, TreeArrayNode> {
 }
 
 // @public
 export const TreeArrayNode: {
-    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+    spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
 
 // @public
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
-    insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-    insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-    insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
@@ -393,13 +389,9 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 // @public
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>> {
-}
-
-// @public
-export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
-    set(key: string, value: TIn | undefined): void;
+    set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
 }
 
 // @public

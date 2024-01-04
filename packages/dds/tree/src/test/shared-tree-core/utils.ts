@@ -10,7 +10,6 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	TreeCompressionStrategy,
 	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
 import { testRevisionTagCodec } from "../utils.js";
@@ -38,9 +37,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			summarizables,
 			new DefaultChangeFamily(
 				testRevisionTagCodec,
-				makeFieldBatchCodec(codecOptions, {
-					encodeType: TreeCompressionStrategy.Uncompressed,
-				}),
+				makeFieldBatchCodec(codecOptions),
 				codecOptions,
 			),
 			codecOptions,

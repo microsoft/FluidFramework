@@ -22,7 +22,6 @@ import {
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -112,7 +111,7 @@ const revisionTagCodec = new RevisionTagCodec(new MockIdCompressor());
 const family = new ModularChangeFamily(
 	fieldKinds,
 	revisionTagCodec,
-	makeFieldBatchCodec(codecOptions, { encodeType: TreeCompressionStrategy.Uncompressed }),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 

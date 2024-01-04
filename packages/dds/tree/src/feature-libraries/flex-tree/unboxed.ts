@@ -9,7 +9,7 @@ import { FieldKinds } from "../default-schema/index.js";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	schemaIsLeaf,
 } from "../typed-schema/index.js";
 import { Context } from "./context.js";
@@ -25,7 +25,7 @@ import { makeField } from "./lazyField.js";
 /**
  * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.
  */
-export function unboxedTree<TSchema extends TreeNodeSchema>(
+export function unboxedTree<TSchema extends FlexTreeNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

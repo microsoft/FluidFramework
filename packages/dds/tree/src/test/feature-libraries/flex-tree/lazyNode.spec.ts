@@ -31,7 +31,7 @@ import {
 	FieldKind,
 	AllowedTypes,
 	typeNameSymbol,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 	DefaultEditBuilder,
@@ -120,7 +120,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 /**
  * Test {@link LazyTreeNode} implementation.
  */
-class TestLazyTree<TSchema extends TreeNodeSchema> extends LazyTreeNode<TSchema> {}
+class TestLazyTree<TSchema extends FlexTreeNodeSchema> extends LazyTreeNode<TSchema> {}
 
 /**
  * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
