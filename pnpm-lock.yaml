@@ -9853,6 +9853,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
+      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-223007
       '@fluidframework/register-collection': workspace:~
@@ -9890,6 +9891,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/map': link:../../dds/map
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@fluidframework/protocol-definitions': 3.1.0-223007
       '@fluidframework/register-collection': link:../../dds/register-collection
