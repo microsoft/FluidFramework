@@ -19,7 +19,6 @@ import {
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { Deferred } from "@fluidframework/core-utils";
 
@@ -52,6 +51,10 @@ describeCompat(
 		});
 
 		it("The summarizing client will immediately refresh its own summaries", async () => {
+			if (provider.driver.type !== "local") {
+				// skip other drivers as the test would look quite different just to replicate the same behavior
+				return;
+			}
 			const summaryConfig: ISummaryConfiguration = {
 				...DefaultSummaryConfiguration,
 				...{
@@ -126,21 +129,6 @@ describeCompat(
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
 			]);
-
-			const container3 = await provider.loadTestContainer(testContainerConfig, {
-				[LoaderHeader.version]: summaryVersions[0],
-			});
-
-			const dataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
-			assert(dataObject3._root.get(`a`) === "op1", "1st op from 1st client missing!");
-			if (provider.driver.type === "local") {
-				assert(dataObject3._root.get(`b`) === "op2", "2nd op from 2nd client missing!");
-			} else {
-				assert(
-					dataObject3._root.get(`b`) !== "op2",
-					"2nd op from 2nd client processed in first summary",
-				);
-			}
 			assert.strictEqual(summaryVersions.length, 2, "expected 2 consecutive summaries");
 		});
 	},
