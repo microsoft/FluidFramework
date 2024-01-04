@@ -32,7 +32,6 @@ import {
 	FieldKindIdentifier,
 	FieldKey,
 	UpPath,
-	deltaForSet,
 	revisionMetadataSourceFromInfo,
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,

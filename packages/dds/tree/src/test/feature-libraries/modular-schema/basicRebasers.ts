@@ -15,7 +15,6 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 import { Mutable, fail } from "../../../util/index.js";
 import { makeCodecFamily } from "../../../codec/index.js";
-import { singleJsonCursor } from "../../../domains/index.js";
 import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core/index.js";
 import { Multiplicity } from "../../../feature-libraries/index.js";
 import { makeValueCodec } from "../../codec/index.js";
@@ -77,7 +76,7 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 
 export type ValueChangeset = ReplaceOp<number>;
 
-export const valueHandler: FieldChangeHandler<ValueChangeset> = {
+export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
 		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>, SessionId>(Type.Any())]]),
@@ -97,7 +96,7 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 
 	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
-};
+} satisfies FieldChangeHandler<ValueChangeset>;
 
 export const valueField = new FieldKindWithEditor(
 	"Value",

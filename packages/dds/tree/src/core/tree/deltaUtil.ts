@@ -53,21 +53,6 @@ export function deltaForRootInitialization(content: readonly ITreeCursorSynchron
 	return delta;
 }
 
-export function deltaForSet(
-	newNode: ITreeCursorSynchronous,
-	buildId: DetachedNodeId,
-	detachId?: DetachedNodeId,
-): FieldChanges {
-	const mark: Mutable<Mark> = { count: 1, attach: buildId };
-	if (detachId !== undefined) {
-		mark.detach = detachId;
-	}
-	return {
-		build: [{ id: buildId, trees: [newNode] }],
-		local: [mark],
-	};
-}
-
 export function makeDetachedNodeId(
 	major: DetachedNodeId["major"],
 	minor: DetachedNodeId["minor"],

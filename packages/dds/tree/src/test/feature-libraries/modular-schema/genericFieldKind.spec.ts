@@ -17,7 +17,6 @@ import {
 	tagChange,
 	TaggedChange,
 	FieldKey,
-	deltaForSet,
 	DeltaFieldMap,
 	DeltaFieldChanges,
 	RevisionTagCodec,
@@ -30,7 +29,6 @@ import {
 	makeEncodingTestSuite,
 } from "../../utils.js";
 import { SessionAwareCodec } from "../../../codec/index.js";
-import { singleJsonCursor } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
@@ -132,17 +130,14 @@ const childRebaser = (
 	return nodeChangeFromValueChange(rebased);
 };
 
-const detachId = { minor: 42 };
-const buildId = { minor: 42 };
-
 const childToDelta = (nodeChange: NodeChangeset): DeltaFieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
-	return deltaForValueChange(valueChange.new);
+	return deltaForValueChange(valueChange);
 };
 
-function deltaForValueChange(newValue: number): DeltaFieldMap {
-	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
+function deltaForValueChange(valueChange: ValueChangeset): DeltaFieldMap {
+	return new Map([[valueFieldKey, valueHandler.intoDelta(makeAnonChange(valueChange))]]);
 }
 
 const crossFieldManager: CrossFieldManager = {
@@ -388,9 +383,9 @@ describe("GenericField", () => {
 
 		const expected: DeltaFieldChanges = {
 			local: [
-				{ count: 1, fields: deltaForValueChange(1) },
+				{ count: 1, fields: deltaForValueChange(valueChange0To1) },
 				{ count: 1 },
-				{ count: 1, fields: deltaForValueChange(2) },
+				{ count: 1, fields: deltaForValueChange(valueChange1To2) },
 			],
 		};
 
@@ -422,14 +417,7 @@ describe("GenericField", () => {
 			],
 		};
 
-		const throwCodec: SessionAwareCodec<any> = {
-			encode: unexpectedDelegate,
-			decode: unexpectedDelegate,
-		};
-
-		const leafCodec = valueHandler
-			.codecsFactory(throwCodec, new RevisionTagCodec(new MockIdCompressor()))
-			.resolve(0).json;
+		const leafCodec = valueHandler.codecsFactory().resolve(0).json;
 		const childCodec: SessionAwareCodec<NodeChangeset> = {
 			encode: (nodeChange, originatorId) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
