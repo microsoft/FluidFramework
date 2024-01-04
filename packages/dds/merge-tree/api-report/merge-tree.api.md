@@ -164,7 +164,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     longClientId: string | undefined;
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
-    peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
+    peekPendingSegmentGroups(): SegmentGroup | undefined;
+    // (undocumented)
+    peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
@@ -946,6 +948,8 @@ export class SegmentGroupCollection {
     enqueue(segmentGroup: SegmentGroup): void;
     // (undocumented)
     pop?(): SegmentGroup | undefined;
+    // (undocumented)
+    remove?(segmentGroup: SegmentGroup): boolean;
     // (undocumented)
     get size(): number;
 }
