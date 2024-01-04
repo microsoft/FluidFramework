@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf } from "../../domains";
-import { cursorForJsonableTreeNode } from "../../feature-libraries";
+import { leaf } from "../../domains/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import {
 	FieldKey,
 	DeltaVisitor,
@@ -18,9 +18,9 @@ import {
 	DeltaMark,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
-} from "../../core";
-import { brand } from "../../util";
-import { deepFreeze, testIdCompressor } from "../utils";
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import { deepFreeze, testIdCompressor } from "../utils.js";
 
 function visit(
 	delta: DeltaRoot,

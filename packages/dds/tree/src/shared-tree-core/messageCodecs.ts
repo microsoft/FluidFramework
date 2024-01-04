@@ -4,11 +4,16 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly } from "../util";
-import { ICodecOptions, IJsonCodec, SessionAwareCodec, withSchemaValidation } from "../codec";
-import { ChangeFamilyCodec, EncodedRevisionTag, RevisionTag } from "../core";
-import { DecodedMessage } from "./messageTypes";
-import { Message } from "./messageFormat";
+import { JsonCompatibleReadOnly } from "../util/index.js";
+import {
+	ICodecOptions,
+	IJsonCodec,
+	SessionAwareCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
+import { ChangeFamilyCodec, EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import { DecodedMessage } from "./messageTypes.js";
+import { Message } from "./messageFormat.js";
 
 export function makeMessageCodec<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,

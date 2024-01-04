@@ -15,23 +15,23 @@ import {
 	FieldKinds,
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
-} from "../../../feature-libraries";
-import { FieldAnchor, FieldKey, rootFieldKey, UpPath } from "../../../core";
-import { forestWithContent, flexTreeViewWithContent } from "../../utils";
-import { leaf, leaf as leafDomain, SchemaBuilder } from "../../../domains";
-import { brand } from "../../../util";
+} from "../../../feature-libraries/index.js";
+import { FieldAnchor, FieldKey, rootFieldKey, UpPath } from "../../../core/index.js";
+import { forestWithContent, flexTreeViewWithContent } from "../../utils.js";
+import { leaf, leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
+import { brand } from "../../../util/index.js";
 import {
 	LazyField,
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
-} from "../../../feature-libraries/flex-tree/lazyField";
+} from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	getReadonlyContext,
 	initializeCursor,
 	readonlyTreeWithContent,
 	rootFieldAnchor,
-} from "./utils";
+} from "./utils.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };

@@ -11,7 +11,7 @@ import {
 	genericFieldKind,
 	CrossFieldManager,
 	MemoizedIdRangeAllocator,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	tagChange,
@@ -21,19 +21,20 @@ import {
 	DeltaFieldMap,
 	DeltaFieldChanges,
 	RevisionTagCodec,
-} from "../../../core";
-import { fakeIdAllocator, brand } from "../../../util";
+} from "../../../core/index.js";
+import { fakeIdAllocator, brand } from "../../../util/index.js";
 import {
 	EncodingTestData,
 	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
-} from "../../utils";
-import { SessionAwareCodec } from "../../../codec";
-import { singleJsonCursor } from "../../../domains";
+} from "../../utils.js";
+import { SessionAwareCodec } from "../../../codec/index.js";
+import { singleJsonCursor } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
-import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
+import { testSnapshots } from "./genericFieldSnapshots.test.js";
 
 const valueFieldKey: FieldKey = brand("Value");
 
@@ -149,7 +150,9 @@ const crossFieldManager: CrossFieldManager = {
 	set: unexpectedDelegate,
 };
 
-describe("Generic FieldKind", () => {
+describe("GenericField", () => {
+	testSnapshots();
+
 	describe("compose", () => {
 		it("empty list", () => {
 			const actual = genericFieldKind.changeHandler.rebaser.compose(

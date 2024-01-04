@@ -18,7 +18,7 @@ import {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	MakeNominal,
 	Named,
@@ -27,11 +27,11 @@ import {
 	oneFromSet,
 	Assume,
 	mapIterable,
-} from "../../util";
-import { FieldKinds, Forbidden } from "../default-schema";
-import { FieldKind, FullSchemaPolicy } from "../modular-schema";
-import { LazyItem } from "./flexList";
-import { ObjectToMap, objectToMapTyped } from "./typeUtils";
+} from "../../util/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import { FieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
+import { LazyItem } from "./flexList.js";
+import { ObjectToMap, objectToMapTyped } from "./typeUtils.js";
 
 /**
  * @internal
@@ -58,7 +58,7 @@ export type NormalizeObjectNodeFields<T extends Fields> = {
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 {
-	type _check = requireAssignableTo<TreeNodeSchema, Unenforced<TreeNodeSchema>>;
+	type _check = requireAssignableTo<FlexTreeNodeSchema, Unenforced<FlexTreeNodeSchema>>;
 }
 
 /**
@@ -231,7 +231,7 @@ export class FieldNodeSchema<
  *
  * For now this is using just the base type since the union is causing issues with schema aware typing, likely due to it being a union and thus distributing over extends clauses.
  */
-export type TreeNodeSchema = TreeNodeSchemaBase;
+export type FlexTreeNodeSchema = TreeNodeSchemaBase;
 
 /**
  * Convert FieldSchemaSpecification | undefined into TreeFieldSchema.
@@ -278,7 +278,7 @@ export type Any = typeof Any;
  * This makes recursive and co-recursive types possible.
  * @internal
  */
-export type LazyTreeNodeSchema = TreeNodeSchema | (() => TreeNodeSchema);
+export type LazyTreeNodeSchema = FlexTreeNodeSchema | (() => FlexTreeNodeSchema);
 
 /**
  * Types for use in fields.
@@ -286,7 +286,7 @@ export type LazyTreeNodeSchema = TreeNodeSchema | (() => TreeNodeSchema);
  * "Any" is boxed in an array to allow use as variadic parameter.
  * @internal
  */
-export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeNodeSchema>[];
+export type AllowedTypes = readonly [Any] | readonly LazyItem<FlexTreeNodeSchema>[];
 
 /**
  * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
@@ -366,7 +366,7 @@ export class TreeFieldSchema<
 	private readonly lazyTypes: Lazy<{
 		names: TreeTypeSet;
 		schema: AllowedTypeSet;
-		monomorphicChildType?: TreeNodeSchema;
+		monomorphicChildType?: FlexTreeNodeSchema;
 	}>;
 
 	/**
@@ -428,7 +428,7 @@ export class TreeFieldSchema<
 	 * Some code paths (like unboxing and compressed tree encoding) special case schema with exactly one allowed type.
 	 * This field allows for simple and optimized handling of this case.
 	 */
-	public get monomorphicChildType(): TreeNodeSchema | undefined {
+	public get monomorphicChildType(): FlexTreeNodeSchema | undefined {
 		return this.lazyTypes.value.monomorphicChildType;
 	}
 
@@ -465,7 +465,7 @@ export class TreeFieldSchema<
  * See {@link AllowedTypes} for a compile time optimized version.
  * @internal
  */
-export type AllowedTypeSet = Any | ReadonlySet<TreeNodeSchema>;
+export type AllowedTypeSet = Any | ReadonlySet<FlexTreeNodeSchema>;
 
 /**
  * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
@@ -475,7 +475,7 @@ export function allowedTypesSchemaSet(t: AllowedTypes): AllowedTypeSet {
 	if (allowedTypesIsAny(t)) {
 		return Any;
 	}
-	const list: TreeNodeSchema[] = t.map((value: LazyItem<TreeNodeSchema>) => {
+	const list: FlexTreeNodeSchema[] = t.map((value: LazyItem<FlexTreeNodeSchema>) => {
 		if (typeof value === "function") {
 			return value();
 		}
@@ -559,39 +559,39 @@ export interface SchemaCollection {
 	/**
 	 * {@inheritdoc SchemaCollection}
 	 */
-	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>;
 }
 
 // These schema type narrowing functions are preferred over `instanceof` due to being easier to migrate to class based schema.
 
 /**
- * Checks if a {@link TreeNodeSchema} is a {@link MapNodeSchema}.
+ * Checks if a {@link FlexTreeNodeSchema} is a {@link MapNodeSchema}.
  * @internal
  */
-export function schemaIsMap(schema: TreeNodeSchema): schema is MapNodeSchema {
+export function schemaIsMap(schema: FlexTreeNodeSchema): schema is MapNodeSchema {
 	return schema instanceof MapNodeSchema;
 }
 
 /**
- * Checks if a {@link TreeNodeSchema} is a {@link LeafNodeSchema}.
+ * Checks if a {@link FlexTreeNodeSchema} is a {@link LeafNodeSchema}.
  * @internal
  */
-export function schemaIsLeaf(schema: TreeNodeSchema): schema is LeafNodeSchema {
+export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSchema {
 	return schema instanceof LeafNodeSchema;
 }
 
 /**
- * Checks if a {@link TreeNodeSchema} is a {@link FieldNodeSchema}.
+ * Checks if a {@link FlexTreeNodeSchema} is a {@link FieldNodeSchema}.
  * @internal
  */
-export function schemaIsFieldNode(schema: TreeNodeSchema): schema is FieldNodeSchema {
+export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FieldNodeSchema {
 	return schema instanceof FieldNodeSchema;
 }
 
 /**
- * Checks if a {@link TreeNodeSchema} is a {@link ObjectNodeSchema}.
+ * Checks if a {@link FlexTreeNodeSchema} is a {@link ObjectNodeSchema}.
  * @internal
  */
-export function schemaIsObjectNode(schema: TreeNodeSchema): schema is ObjectNodeSchema {
+export function schemaIsObjectNode(schema: FlexTreeNodeSchema): schema is ObjectNodeSchema {
 	return schema instanceof ObjectNodeSchema;
 }

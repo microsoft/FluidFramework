@@ -13,8 +13,8 @@ import {
 	FieldKey,
 	RevisionTag,
 	makeDetachedNodeId,
-} from "../core";
-import { Mutable } from "../util";
+} from "../core/index.js";
+import { Mutable } from "../util/index.js";
 
 export function nodeIdFromChangeAtom(
 	changeAtom: ChangeAtomId,

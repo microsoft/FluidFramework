@@ -94,6 +94,7 @@ async function writeSummaryTree(
 ): Promise<IFullGitTree> {
 	const writeSummaryTreeOptions: IWriteSummaryTreeOptions = {
 		repoManager: options.repoManager,
+		sourceOfTruthRepoManager: options.repoManager,
 		precomputeFullTree: options.precomputeFullTree,
 		currentPath: "",
 		enableLowIoWrite: options.useLowIoWrite,

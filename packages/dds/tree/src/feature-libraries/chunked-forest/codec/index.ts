@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { EncodedFieldBatch } from "./format";
-export { FieldBatch } from "./fieldBatch";
-export { FieldBatchCodec, makeFieldBatchCodec } from "./codecs";
+export { EncodedFieldBatch } from "./format.js";
+export { FieldBatch } from "./fieldBatch.js";
+export { FieldBatchCodec, makeFieldBatchCodec } from "./codecs.js";

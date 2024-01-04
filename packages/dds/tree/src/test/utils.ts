@@ -54,16 +54,14 @@ import {
 	createTreeCheckout,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
-	runSynchronous,
 	SharedTreeContentSnapshot,
 	CheckoutFlexTreeView,
-} from "../shared-tree";
+} from "../shared-tree/index.js";
 import {
-	Any,
 	buildForest,
 	createMockNodeKeyManager,
 	TreeFieldSchema,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	mapFieldChanges,
 	mapFieldsChanges,
 	mapMarkList,
@@ -71,14 +69,14 @@ import {
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
 	normalizeNewFieldContent,
-	cursorForJsonableTreeNode,
 	FlexTreeTypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
 	mapRootChanges,
 	intoStoredSchema,
-} from "../feature-libraries";
+	cursorForMapTreeNode,
+} from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
 	mapCursorField,
@@ -113,10 +111,10 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
-} from "../core";
-import { JsonCompatible, brand, nestedMapFromFlatList } from "../util";
-import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec";
-import { typeboxValidator } from "../external-utilities";
+} from "../core/index.js";
+import { JsonCompatible, brand, nestedMapFromFlatList } from "../util/index.js";
+import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorToJsonObject,
 	jsonRoot,
@@ -124,10 +122,10 @@ import {
 	singleJsonCursor,
 	SchemaBuilder,
 	leaf,
-} from "../domains";
-import { HasListeners, IEmitter, ISubscribable } from "../events";
+} from "../domains/index.js";
+import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeSchemaCodec } from "../feature-libraries/schema-index/codec";
+import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 
 // Testing utilities
 
@@ -583,11 +581,9 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
-	return normalizeNewFieldContent(
-		content,
-		content.schema.rootFieldSchema,
-		content.initialTree,
-	).map(jsonableTreeFromCursor);
+	return jsonableTreeFromFieldCursor(
+		normalizeNewFieldContent(content, content.schema.rootFieldSchema, content.initialTree),
+	);
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
@@ -688,15 +684,16 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 
 export function forestWithContent(content: TreeContent): IEditableForest {
 	const forest = buildForest();
-	initializeForest(
-		forest,
-		normalizeNewFieldContent(
-			{ schema: content.schema },
-			content.schema.rootFieldSchema,
-			content.initialTree,
-		),
-		testIdCompressor,
+	const fieldCursor = normalizeNewFieldContent(
+		{ schema: content.schema },
+		content.schema.rootFieldSchema,
+		content.initialTree,
 	);
+	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
+	const nodeCursors = mapCursorField(fieldCursor, (c) =>
+		cursorForMapTreeNode(mapTreeFromCursor(c)),
+	);
+	initializeForest(forest, nodeCursors, testIdCompressor);
 	return forest;
 }
 
@@ -809,7 +806,7 @@ export function insert(
 
 export function remove(tree: ITreeCheckout, index: number, count: number): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.delete(index, count);
+	field.remove(index, count);
 }
 
 export function expectJsonTree(
@@ -824,37 +821,6 @@ export function expectJsonTree(
 	}
 	if (expectRemovedRootsAreSynchronized) {
 		checkRemovedRootsAreSynchronized(trees);
-	}
-}
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
-export function initializeTestTree(
-	tree: ITreeCheckout,
-	state: JsonableTree | JsonableTree[] | undefined,
-	schema: TreeStoredSchema = intoStoredSchema(wrongSchema),
-): void {
-	if (state === undefined) {
-		tree.updateSchema(schema);
-		return;
-	}
-
-	if (!Array.isArray(state)) {
-		initializeTestTree(tree, [state], schema);
-	} else {
-		tree.updateSchema(schema);
-
-		// Apply an edit to the tree which inserts a node with a value
-		runSynchronous(tree, () => {
-			const writeCursors = state.map(cursorForJsonableTreeNode);
-			const field = tree.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			field.insert(0, writeCursors);
-		});
 	}
 }
 
@@ -1032,22 +998,6 @@ export function defaultRevInfosFromChanges(
 
 	return revInfos;
 }
-
-/**
- * Document Schema which is not correct.
- * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
- * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
- * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
- *
- * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
- */
-// TODO: remove all usages of this.
-export const wrongSchema = new SchemaBuilder({
-	scope: "Wrong Schema",
-	lint: {
-		rejectEmpty: false,
-	},
-}).intoSchema(SchemaBuilder.sequence(Any));
 
 export function applyTestDelta(
 	delta: DeltaFieldMap,

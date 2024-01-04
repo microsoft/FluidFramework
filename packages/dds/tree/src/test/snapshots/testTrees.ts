@@ -5,26 +5,25 @@
 
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { brand } from "../../util";
+import { brand } from "../../util/index.js";
 import {
 	ISharedTree,
 	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
 	runSynchronous,
-} from "../../shared-tree";
+} from "../../shared-tree/index.js";
 import {
 	Any,
 	FieldKinds,
 	TreeFieldSchema,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	InsertableFlexNode,
 	intoStoredSchema,
-} from "../../feature-libraries";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../feature-libraries/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	TestTreeProviderLite,
 	emptyJsonSequenceConfig,
@@ -32,7 +31,7 @@ import {
 	insert,
 	jsonSequenceRootSchema,
 	remove,
-} from "../utils";
+} from "../utils.js";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -41,8 +40,8 @@ import {
 	JsonableTree,
 	UpPath,
 	rootFieldKey,
-} from "../../core";
-import { leaf, SchemaBuilder } from "../../domains";
+} from "../../core/index.js";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
@@ -53,7 +52,6 @@ const rootNode: UpPath = {
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });
@@ -157,10 +155,18 @@ export function generateTestTrees() {
 				const tree2 = provider.trees[1].view;
 
 				// NOTE: we're using the old tree editing APIs here as the new
-				// editable-tree-2 API doesn't support cross-field moves at the
+				// flex-tree API doesn't support cross-field moves at the
 				// time of writing
+
+				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
+				const nodeSchema = schemaBuilder.object("Node", {
+					foo: SchemaBuilder.sequence(leaf.string),
+					bar: SchemaBuilder.sequence(leaf.string),
+				});
+				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
+				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 				const initialState: JsonableTree = {
-					type: brand("Node"),
+					type: nodeSchema.name,
 					fields: {
 						foo: [
 							{ type: leaf.string.name, value: "a" },
@@ -174,14 +180,6 @@ export function generateTestTrees() {
 						],
 					},
 				};
-
-				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
-				const nodeSchema = schemaBuilder.object("Node", {
-					foo: SchemaBuilder.sequence(leaf.string),
-					bar: SchemaBuilder.sequence(leaf.string),
-				});
-				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
-				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 
 				tree1.updateSchema(intoStoredSchema(schema));
 
@@ -214,7 +212,7 @@ export function generateTestTrees() {
 			},
 		},
 		{
-			name: "insert-and-delete",
+			name: "insert-and-remove",
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2);
@@ -230,7 +228,7 @@ export function generateTestTrees() {
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
-				// Delete node
+				// Remove node
 				tree1.editableTree.removeAt(0);
 
 				provider.processMessages();
@@ -260,7 +258,7 @@ export function generateTestTrees() {
 				} as const;
 
 				// Enables below editing code to be slightly less verbose
-				const makeCursor = <T extends TreeNodeSchema>(
+				const makeCursor = <T extends FlexTreeNodeSchema>(
 					schema: T,
 					data: InsertableFlexNode<T>,
 				): ITreeCursorSynchronous =>
@@ -303,7 +301,7 @@ export function generateTestTrees() {
 			},
 		},
 		{
-			name: "competing-deletes",
+			name: "competing-removes",
 			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
 					const provider = new TestTreeProviderLite(4);
@@ -456,7 +454,7 @@ export function generateTestTrees() {
 						parent: undefined,
 						field: rootFieldKey,
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				// The nested change
 				view.editor
 					.sequenceField({
@@ -467,7 +465,7 @@ export function generateTestTrees() {
 						},
 						field: brand("foo"),
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				view.transaction.commit();
 				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");

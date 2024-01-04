@@ -29,7 +29,6 @@ import { SummarizerNode } from "./summarizerNode";
 import {
 	EscapedPath,
 	ICreateChildDetails,
-	IInitialSummary,
 	ISummarizerNodeRootContract,
 	SummaryNode,
 	ValidateSummaryResult,
@@ -111,7 +110,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		changeSequenceNumber: number,
 		/** Undefined means created without summary */
 		latestSummary?: SummaryNode,
-		initialSummary?: IInitialSummary,
 		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
@@ -135,7 +133,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			config,
 			changeSequenceNumber,
 			latestSummary,
-			initialSummary,
 			wipSummaryLogger,
 			telemetryId,
 		);
@@ -398,7 +395,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		createParam: CreateChildSummarizerNodeParam,
 		config: ISummarizerNodeConfigWithGC = {},
 		getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 	): ISummarizerNodeWithGC {
 		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
 		/**
@@ -423,7 +419,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			},
 			createDetails.changeSequenceNumber,
 			createDetails.latestSummary,
-			createDetails.initialSummary,
 			this.wipSummaryLogger,
 			getGCDataFn,
 			getChildBaseGCDetailsFn,
@@ -563,7 +558,6 @@ export const createRootSummarizerNodeWithGC = (
 		referenceSequenceNumber === undefined
 			? undefined
 			: SummaryNode.createForRoot(referenceSequenceNumber),
-		undefined /* initialSummary */,
 		undefined /* wipSummaryLogger */,
 		getGCDataFn,
 		getBaseGCDetailsFn,
