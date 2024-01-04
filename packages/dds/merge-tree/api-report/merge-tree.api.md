@@ -5,7 +5,6 @@
 ```ts
 
 import { AttributionKey } from '@fluidframework/runtime-definitions';
-import { Heap } from '@fluidframework/core-utils';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -584,15 +583,13 @@ export interface KeyComparer<TKey> {
     (a: TKey, b: TKey): number;
 }
 
-// @alpha
+// @alpha @sealed
 export class LocalReferenceCollection {
     // (undocumented)
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReferencePosition>;
         [Symbol.iterator](): any;
     };
-    constructor(
-    segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // (undocumented)
@@ -611,6 +608,8 @@ export class LocalReferenceCollection {
     isAfterTombstone(lref: LocalReferencePosition): boolean;
     // (undocumented)
     removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    static setOrGet(segment: ISegment): LocalReferenceCollection;
     split(offset: number, splitSeg: ISegment): void;
     // (undocumented)
     walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
@@ -925,7 +924,7 @@ export interface SegmentGroup {
     // (undocumented)
     refSeq: number;
     // (undocumented)
-    segments: ISegmentLeaf[];
+    segments: ISegment[];
 }
 
 // @alpha (undocumented)
