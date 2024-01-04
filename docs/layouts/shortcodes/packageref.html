@@ -2,8 +2,10 @@
 {{/* Parameters: */}}
 {{/* - unscopedPackageName: The *unscoped* name of the package being linked to. */}}
 
+{{- $currentVersion := $.Site.Data.versions.currentVersion -}}
+{{- $apiLink := print "/docs/api/" $currentVersion "/" -}}
 {{- $unscopedPackageName := .Get 0 -}}
-{{- $path := delimit (slice "/docs/api/v1/" $unscopedPackageName ".md" ) "" -}}
+{{- $path := delimit (slice $apiLink $unscopedPackageName ".md" ) "" -}}
 
 <a href="{{ relref . $path }}"><code>{{ $unscopedPackageName }}</code></a>
 
