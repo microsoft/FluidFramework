@@ -2417,6 +2417,14 @@ export class ContainerRuntime
 			this._orderSequentiallyCalls++;
 			result = callback();
 		} catch (error) {
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "OrderSequentiallyException",
+					orderSequentiallyCalls: this._orderSequentiallyCalls,
+				},
+				error,
+			);
+
 			if (checkpoint) {
 				// This will throw and close the container if rollback fails
 				try {
