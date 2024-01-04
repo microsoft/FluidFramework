@@ -12,8 +12,6 @@ import {
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
-	RevisionTag,
-	deltaForSet,
 	DeltaFieldMap,
 	DeltaRoot,
 	ChangeFamilyCodec,
@@ -21,7 +19,6 @@ import {
 } from "../core/index.js";
 import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
-import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
 import { deepFreeze } from "./utils.js";
 
 export interface NonEmptyTestChange {
@@ -166,24 +163,14 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta({ change, revision }: TaggedChange<TestChange>): DeltaFieldMap {
+function toDelta({ change }: TaggedChange<TestChange>): DeltaFieldMap {
 	if (change.intentions.length > 0) {
-		const hasMajor: { major?: RevisionTag } = {};
-		if (revision !== undefined) {
-			hasMajor.major = revision;
-		}
-		const buildId = { ...hasMajor, minor: 424243 };
 		return new Map([
 			[
-				brand("foo"),
-				deltaForSet(
-					cursorForJsonableTreeNode({
-						type: brand("test"),
-						value: change.intentions.map(String).join("|"),
-					}),
-					buildId,
-					{ ...hasMajor, minor: 424242 },
-				),
+				// We represent the intentions as a list if node offsets in some imaginary field "testIntentions".
+				// This is purely for the sake of testing.
+				brand("testIntentions"),
+				{ local: change.intentions.map((i) => ({ count: i })) },
 			],
 		]);
 	}

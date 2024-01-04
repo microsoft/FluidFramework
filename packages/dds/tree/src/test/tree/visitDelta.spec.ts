@@ -12,7 +12,6 @@ import {
 	visitDelta,
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
-	deltaForSet,
 	DeltaRoot,
 	DeltaFieldChanges,
 	DeltaMark,
@@ -102,52 +101,62 @@ describe("visitDelta", () => {
 	});
 	it("insert root", () => {
 		const index = makeDetachedFieldIndex("", testIdCompressor);
-		testTreeVisit(
-			deltaForSet(content, { minor: 42 }),
-			[
-				["enterField", rootKey],
-				["create", [content], field0],
-				["exitField", rootKey],
-				["enterField", rootKey],
-				["attach", field0, 1, 0],
-				["exitField", rootKey],
-			],
-			index,
-		);
+		const node = { minor: 42 };
+		const rootFieldDelta: DeltaFieldChanges = {
+			local: [{ count: 1, attach: node }],
+		};
+		const delta: DeltaRoot = {
+			build: [{ id: node, trees: [content] }],
+			fields: new Map([[rootKey, rootFieldDelta]]),
+		};
+		const expected: VisitScript = [
+			["create", [content], field0],
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["attach", field0, 1, 0],
+			["exitField", rootKey],
+		];
+		testVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("idempotent insert", () => {
 		const index = makeDetachedFieldIndex("", testIdCompressor);
 		const node = { minor: 42 };
 		index.createEntry(node);
-		testTreeVisit(
-			deltaForSet(content, { minor: 42 }),
-			[
-				["enterField", rootKey],
-				["exitField", rootKey],
-				["enterField", rootKey],
-				["attach", field0, 1, 0],
-				["exitField", rootKey],
-			],
-			index,
-		);
+		const rootFieldDelta: DeltaFieldChanges = {
+			local: [{ count: 1, attach: node }],
+		};
+		const delta: DeltaRoot = {
+			build: [{ id: node, trees: [content] }],
+			fields: new Map([[rootKey, rootFieldDelta]]),
+		};
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["attach", field0, 1, 0],
+			["exitField", rootKey],
+		];
+		testVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("insert child", () => {
 		const index = makeDetachedFieldIndex("", testIdCompressor);
-		const delta: DeltaFieldChanges = {
+		const buildId = { minor: 42 };
+		const rootFieldDelta: DeltaFieldChanges = {
 			local: [
 				{
 					count: 1,
-					fields: new Map([[fooKey, deltaForSet(content, { minor: 42 })]]),
+					fields: new Map([[fooKey, { local: [{ count: 1, attach: buildId }] }]]),
 				},
 			],
 		};
 		const expected: VisitScript = [
+			["create", [content], field0],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["create", [content], field0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -159,7 +168,11 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index);
+		const delta: DeltaRoot = {
+			build: [{ id: buildId, trees: [content] }],
+			fields: new Map([[rootKey, rootFieldDelta]]),
+		};
+		testVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("remove root", () => {
