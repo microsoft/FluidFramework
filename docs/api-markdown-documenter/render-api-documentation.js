@@ -5,7 +5,6 @@
 
 const {
 	ApiItemKind,
-	ApiItemUtilities,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
@@ -85,19 +84,6 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 			const packageScope = PackageName.getScope(packageName);
 
 			return ["@fluid-internal", "@fluid-private"].includes(packageScope);
-		},
-		getFileNameForItem: (apiItem) => {
-			switch (apiItem.kind) {
-				case ApiItemKind.Model: {
-					return "ref"; // TODO
-				}
-				case ApiItemKind.Package: {
-					return ApiItemUtilities.getUnscopedPackageName(apiItem);
-				}
-				default: {
-					return ApiItemUtilities.getQualifiedApiItemName(apiItem);
-				}
-			}
 		},
 		frontMatter: (apiItem) =>
 			createHugoFrontMatter(apiItem, config, customRenderers, apiVersionNum),
