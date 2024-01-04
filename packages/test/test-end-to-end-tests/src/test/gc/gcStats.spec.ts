@@ -81,7 +81,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 			this.skip();
 		}
 		settings = {};
-		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = tombstoneTimeoutMs;
 		const testContainerConfig: ITestContainerConfig = {
 			runtimeOptions: {
 				summaryOptions: {
