@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
+import { assert } from "@fluidframework/core-utils";
 import { pkgVersion } from "./packageVersion.js";
 import { InstalledPackage } from "./testApi.js";
 
@@ -421,13 +422,18 @@ function internalSchema(
 	// Here we handle edge cases of converting the early rc/internal releases.
 	// We convert early rc releases to internal releases, and early internal releases to public releases.
 	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {
-		if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
-			if (requested === -1) {
-				return `^2.0.0-internal.8.0.0`;
+		if (semver.eq(publicVersion, "2.0.0")) {
+			// Check for most common edge case first (N-1)
+			if (semver.lt(internalVersion, "2.0.0") && requested === -1) {
+				return "^2.0.0-internal.8.0.0";
 			}
 
-			if (requested === -2) {
-				return `^2.0.0-internal.7.0.0`;
+			const parsed = semver.parse(internalVersion);
+			assert(parsed !== null, "internalVersion should not be parsable");
+			if (parsed.major + requested < 1) {
+				// If the request will evaluate to an internal release, it's easier to major to convert the request
+				// to the equivalent internal release request.
+				return internalSchema("2.0.0", "8.0.0", "internal", requested + 1);
 			}
 		}
 	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
