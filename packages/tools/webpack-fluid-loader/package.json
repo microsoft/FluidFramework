@@ -10,8 +10,20 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "lib/index.mjs",
 	"browser": {
 		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
 	},
@@ -20,7 +32,7 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"build:webpack": "npm run webpack",
 		"check:are-the-types-wrong": "attw --pack",
@@ -115,6 +127,7 @@
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
 		"ts-loader": "^9.3.0",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"
