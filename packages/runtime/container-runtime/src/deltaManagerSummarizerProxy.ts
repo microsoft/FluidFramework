@@ -6,8 +6,8 @@
 import { IDeltaManager, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { summarizerClientType } from "@fluidframework/runtime-definitions";
 import { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
-import { summarizerClientType } from "./summary";
 
 /**
  * Proxy to the real IDeltaManager for restricting certain access to layers below container runtime in summarizer clients:

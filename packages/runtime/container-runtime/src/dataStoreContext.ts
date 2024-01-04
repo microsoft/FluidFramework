@@ -51,6 +51,7 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 	VisibilityState,
+	summarizerClientType,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -74,7 +75,6 @@ import {
 	WriteFluidDataStoreAttributes,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
-	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
 import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";

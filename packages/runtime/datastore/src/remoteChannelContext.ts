@@ -17,6 +17,7 @@ import {
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 	ITelemetryContext,
+	summarizerClientType,
 } from "@fluidframework/runtime-definitions";
 import {
 	createChildLogger,
@@ -24,6 +25,7 @@ import {
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import {
+	branchChannel,
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
 	IChannelContext,
@@ -36,8 +38,8 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime";
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
 	private pending: ISequencedDocumentMessage[] | undefined = [];
-	private readonly channelP: Promise<IChannel>;
-	private channel: IChannel | undefined;
+	private readonly channelP: Promise<{ main: IChannel; summarizer?: IChannel }>;
+	private channels: { main: IChannel; summarizer?: IChannel } | undefined;
 	private readonly services: ChannelServiceEndpoints;
 	private readonly summarizerNode: ISummarizerNodeWithGC;
 	private readonly subLogger: ITelemetryLoggerExt;
@@ -76,7 +78,7 @@ export class RemoteChannelContext implements IChannelContext {
 			extraBlobs,
 		);
 
-		this.channelP = new LazyPromise<IChannel>(async () => {
+		this.channelP = new LazyPromise(async () => {
 			const { attributes, factory } = await loadChannelFactoryAndAttributes(
 				dataStoreContext,
 				this.services,
@@ -85,7 +87,7 @@ export class RemoteChannelContext implements IChannelContext {
 				attachMessageType,
 			);
 
-			const channel = await loadChannel(
+			const main = await loadChannel(
 				runtime,
 				attributes,
 				factory,
@@ -93,10 +95,15 @@ export class RemoteChannelContext implements IChannelContext {
 				this.subLogger,
 				this.id,
 			);
+			const summarizer =
+				dataStoreContext.containerRuntime.clientDetails.type === summarizerClientType
+					? await branchChannel(main, this.services, runtime, factory, runtime.logger)
+					: undefined;
 
 			// Send all pending messages to the channel
 			assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
 			for (const message of this.pending) {
+				summarizer?.services.deltaConnection.process(message, false, undefined);
 				this.services.deltaConnection.process(
 					message,
 					false,
@@ -106,14 +113,14 @@ export class RemoteChannelContext implements IChannelContext {
 			this.thresholdOpsCounter.send("ProcessPendingOps", this.pending.length);
 
 			// Commit changes.
-			this.channel = channel;
+			this.channels = { main, summarizer: summarizer?.channel };
 			this.pending = undefined;
 			this.isLoaded = true;
 
 			// Because have some await between we created the service and here, the connection state might have changed
 			// and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
 			this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
-			return this.channel;
+			return this.channels;
 		});
 
 		const thisSummarizeInternal = async (
@@ -142,7 +149,7 @@ export class RemoteChannelContext implements IChannelContext {
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public getChannel(): Promise<IChannel> {
-		return this.channelP;
+		return this.channelP.then((c) => c?.main);
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
@@ -208,9 +215,9 @@ export class RemoteChannelContext implements IChannelContext {
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummarizeInternalResult> {
-		const channel = await this.getChannel();
+		const channels = await this.channelP;
 		const summarizeResult = await summarizeChannelAsync(
-			channel,
+			channels.summarizer ?? channels.main,
 			fullTree,
 			trackState,
 			telemetryContext,
@@ -236,8 +243,8 @@ export class RemoteChannelContext implements IChannelContext {
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
 	 */
 	private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-		const channel = await this.getChannel();
-		return channel.getGCData(fullGC);
+		const channels = await this.channelP;
+		return (channels.summarizer ?? channels.main).getGCData(fullGC);
 	}
 
 	public updateUsedRoutes(usedRoutes: string[]) {

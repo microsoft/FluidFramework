@@ -22,7 +22,6 @@ export {
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
 	SummarizerClientElection,
-	summarizerClientType,
 } from "./summarizerClientElection";
 export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics";
 export {

@@ -203,3 +203,39 @@ export async function loadChannel(
 
 	return factory.load(dataStoreRuntime, channelId, services, attributes);
 }
+
+export async function branchChannel(
+	channel: IChannel,
+	channelServices: ChannelServiceEndpoints,
+	dataStoreRuntime: IFluidDataStoreRuntime,
+	factory: IChannelFactory,
+	logger: ITelemetryLoggerExt,
+) {
+	const services: ChannelServiceEndpoints = {
+		deltaConnection: ChannelDeltaConnection.clone(channelServices.deltaConnection, {
+			submit: () => {},
+			dirty: () => {},
+			addedGCOutboundReference: () => {},
+		}),
+		objectStorage: channelServices.objectStorage,
+	};
+
+	// forward remote main channel ops to branch
+	channelServices.deltaConnection.on("process", (msg, local, md) => {
+		services.deltaConnection.process(msg, false, undefined);
+	});
+
+	const branch = {
+		channel: await loadChannel(
+			dataStoreRuntime,
+			channel.attributes,
+			factory,
+			services,
+			logger,
+			channel.id,
+		),
+		services,
+	};
+
+	return branch;
+}

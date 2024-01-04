@@ -85,6 +85,7 @@ import {
 	channelsTreeName,
 	IDataStore,
 	ITelemetryContext,
+	summarizerClientType,
 } from "@fluidframework/runtime-definitions";
 import type {
 	SerializedIdCompressorWithNoSession,
@@ -140,7 +141,6 @@ import {
 	OrderedClientCollection,
 	OrderedClientElection,
 	SummarizerClientElection,
-	summarizerClientType,
 	SubmitSummaryResult,
 	IConnectableRuntime,
 	IGeneratedSummaryStats,

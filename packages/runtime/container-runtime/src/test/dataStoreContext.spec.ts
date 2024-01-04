@@ -31,6 +31,7 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 	channelsTreeName,
+	summarizerClientType,
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -58,7 +59,6 @@ import {
 	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
-	summarizerClientType,
 } from "../summary";
 
 describe("Data Store Context Tests", () => {

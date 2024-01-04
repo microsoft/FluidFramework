@@ -7,9 +7,43 @@ import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { DataProcessingError } from "@fluidframework/telemetry-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
-export class ChannelDeltaConnection implements IDeltaConnection {
+export class ChannelDeltaConnection
+	extends TypedEventEmitter<{
+		(
+			event: "process",
+			listener: (
+				message: ISequencedDocumentMessage,
+				local: boolean,
+				localOpMetadata: unknown,
+			) => void,
+		);
+	}>
+	implements IDeltaConnection
+{
+	public static clone(
+		original: ChannelDeltaConnection,
+		overrides: {
+			_connected?: boolean;
+			submit?: (message: unknown, localOpMetadata: unknown) => void;
+			dirty?: () => void;
+			addedGCOutboundReference?: (
+				srcHandle: IFluidHandle,
+				outboundHandle: IFluidHandle,
+			) => void;
+			logger?: ITelemetryBaseLogger;
+		},
+	) {
+		return new ChannelDeltaConnection(
+			overrides._connected ?? original._connected,
+			overrides.submit ?? original.submit,
+			overrides.dirty ?? original.dirty,
+			overrides.addedGCOutboundReference ?? original.addedGCOutboundReference,
+		);
+	}
+
 	private _handler: IDeltaHandler | undefined;
 
 	private get handler(): IDeltaHandler {
@@ -29,7 +63,9 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 			srcHandle: IFluidHandle,
 			outboundHandle: IFluidHandle,
 		) => void,
-	) {}
+	) {
+		super();
+	}
 
 	public attach(handler: IDeltaHandler) {
 		assert(this._handler === undefined, 0x178 /* "Missing delta handler on attach" */);
@@ -52,6 +88,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 				message,
 			);
 		}
+		this.emit("process", message, local, localOpMetadata);
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
