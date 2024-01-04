@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { strict } from "assert";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -15,20 +16,115 @@ import {
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
-} from "../../../core";
-import { TestChange } from "../../testChange";
+} from "../../../core/index.js";
+import { TestChange } from "../../testChange.js";
 import {
 	assertFieldChangesEqual,
 	deepFreeze,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
-} from "../../utils";
-import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
+} from "../../utils.js";
+import {
+	brand,
+	fakeIdAllocator,
+	IdAllocator,
+	idAllocatorFromMaxId,
+	Mutable,
+} from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	isAttachAndDetachEffect,
+	isDetach,
+	isTombstone,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/utils.js";
+import {
+	CellOrderingMethod,
+	SequenceConfig,
+	sequenceConfig,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/config.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
-import { TestChangeset } from "./testEdits";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { TestChangeset } from "./testEdits.js";
+
+export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
+	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
+	strict.deepEqual(actual, updatedExpected);
+}
+
+export function purgeUnusedCellOrderingInfo<T>(change: SF.Changeset<T>): SF.Changeset<T> {
+	switch (sequenceConfig.cellOrdering) {
+		case CellOrderingMethod.Tombstone:
+			return withoutLineage(change);
+		case CellOrderingMethod.Lineage:
+			return withoutTombstones(change);
+		default:
+			unreachableCase(sequenceConfig.cellOrdering);
+	}
+}
+
+export function skipOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Lineage) {
+		it.skip(title, fn);
+	} else {
+		it(title, fn);
+	}
+}
+
+export function onlyOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Lineage) {
+		it(title, fn);
+	} else {
+		it.skip(title, fn);
+	}
+}
+
+export function skipOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
+		it.skip(title, fn);
+	} else {
+		it(title, fn);
+	}
+}
+
+export function onlyOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
+	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
+		it(title, fn);
+	} else {
+		it.skip(title, fn);
+	}
+}
+
+export function describeForBothConfigs(title: string, fn: (config: SequenceConfig) => void): void {
+	describe(title, () => {
+		for (const method of [CellOrderingMethod.Tombstone, CellOrderingMethod.Lineage]) {
+			describe(`${method}-based cell ordering`, () => {
+				withOrderingMethod(method, fn);
+			});
+		}
+	});
+}
+
+export function withOrderingMethod(
+	method: CellOrderingMethod,
+	fn: (config: SequenceConfig) => void,
+) {
+	const priorMethod = sequenceConfig.cellOrdering;
+	const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
+	mutableConfig.cellOrdering = method;
+	try {
+		// It's important that return a new object here rather `sequenceConfig` because `fn` may keep a reference to it
+		// (e.g., a lambda's closure) while it may be mutated between the time that reference it taken and the time the
+		// config is read.
+		// Most notably, this is the case when using `describeForBothConfigs` which mutates `sequenceConfig` but does
+		// not run the tests within it immediately.
+		fn({ ...sequenceConfig });
+	} finally {
+		mutableConfig.cellOrdering = priorMethod;
+	}
+}
 
 export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
@@ -74,10 +170,15 @@ function composeI<T>(
 	composer: (childChanges: TaggedChange<T>[]) => T,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset<T> {
+	const updatedChanges = changes.map(({ change, revision, rollbackOf }) => ({
+		change: purgeUnusedCellOrderingInfo(change),
+		revision,
+		rollbackOf,
+	}));
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
 	let composed = SF.compose(
-		changes,
+		updatedChanges,
 		composer,
 		idAllocator,
 		moveEffects,
@@ -85,7 +186,7 @@ function composeI<T>(
 			? Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
 				: revInfos
-			: defaultRevisionMetadataFromChanges(changes),
+			: defaultRevisionMetadataFromChanges(updatedChanges),
 	);
 
 	if (moveEffects.isInvalidated) {
@@ -101,20 +202,23 @@ export function rebase(
 	base: TaggedChange<TestChangeset>,
 	revisionMetadata?: RebaseRevisionMetadata,
 ): TestChangeset {
-	deepFreeze(change);
-	deepFreeze(base);
+	const cleanChange = purgeUnusedCellOrderingInfo(change);
+	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
+	deepFreeze(cleanChange);
+	deepFreeze(cleanBase);
 
 	const metadata =
 		revisionMetadata ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
-			base.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(
+			defaultRevInfosFromChanges([cleanBase, makeAnonChange(cleanChange)]),
+			[cleanBase.revision],
+		);
 
 	const moveEffects = SF.newCrossFieldTable();
-	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
+	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));
 	let rebasedChange = SF.rebase(
-		change,
-		base,
+		cleanChange,
+		cleanBase,
 		TestChange.rebase,
 		idAllocator,
 		moveEffects,
@@ -123,8 +227,8 @@ export function rebase(
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
 		rebasedChange = SF.rebase(
-			change,
-			base,
+			cleanChange,
+			cleanBase,
 			TestChange.rebase,
 			idAllocator,
 			moveEffects,
@@ -177,10 +281,12 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 }
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
+	const cleanChange = { ...change, change: purgeUnusedCellOrderingInfo(change.change) };
+	deepFreeze(cleanChange);
 	const table = SF.newCrossFieldTable();
-	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
+	const revisionMetadata = defaultRevisionMetadataFromChanges([cleanChange]);
 	let inverted = SF.invert(
-		change,
+		cleanChange,
 		TestChange.invert,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
@@ -193,7 +299,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		table.srcQueries.clear();
 		table.dstQueries.clear();
 		inverted = SF.invert(
-			change,
+			cleanChange,
 			TestChange.invert,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
@@ -242,14 +348,29 @@ export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>
 export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	const factory = new SF.MarkListFactory<T>();
 	for (const mark of changeset) {
-		if (mark.cellId?.lineage === undefined && mark.cellId?.adjacentCells === undefined) {
-			factory.push(mark);
-		} else {
-			const cloned = SF.cloneMark(mark);
-			assert(cloned.cellId !== undefined, "Should have cell ID");
+		const cloned = SF.cloneMark(mark);
+		if (cloned.cellId !== undefined) {
 			delete cloned.cellId.lineage;
 			delete cloned.cellId.adjacentCells;
-			factory.push(cloned);
+		}
+		if (isDetach(cloned) || isAttachAndDetachEffect(cloned)) {
+			const detach = isAttachAndDetachEffect(cloned) ? cloned.detach : cloned;
+			if (detach.idOverride !== undefined) {
+				delete detach.idOverride.id.lineage;
+				delete detach.idOverride.id.adjacentCells;
+			}
+		}
+		factory.push(cloned);
+	}
+
+	return factory.list;
+}
+
+export function withoutTombstones<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
+	const factory = new SF.MarkListFactory<T>();
+	for (const mark of changeset) {
+		if (!isTombstone(mark)) {
+			factory.push(mark);
 		}
 	}
 

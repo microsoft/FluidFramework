@@ -9,6 +9,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryContext,
@@ -18,16 +19,15 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../core";
-import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
-import { SharedTreeBranch, getChangeReplaceType } from "./branch";
-import { EditManagerSummarizer } from "./editManagerSummarizer";
-import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
-import { SeqNumber } from "./editManagerFormat";
-import { DecodedMessage } from "./messageTypes";
-import { makeMessageCodec } from "./messageCodecs";
-import { RevisionTagCodec } from "./revisionTagCodecs";
+import { ICodecOptions, IJsonCodec } from "../codec/index.js";
+import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
+import { brand, JsonCompatibleReadOnly } from "../util/index.js";
+import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
+import { EditManagerSummarizer } from "./editManagerSummarizer.js";
+import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import { SeqNumber } from "./editManagerFormat.js";
+import { DecodedMessage } from "./messageTypes.js";
+import { makeMessageCodec } from "./messageCodecs.js";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -73,6 +73,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
+	private readonly idCompressor: IIdCompressor;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -94,29 +96,33 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
+		assert(
+			runtime.idCompressor !== undefined,
+			"IdCompressor must be enabled to use SharedTree",
+		);
+		this.idCompressor = runtime.idCompressor;
+		const mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
-		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		const localSessionId = generateStableId();
-		this.editManager = new EditManager(changeFamily, localSessionId);
+		const localSessionId = runtime.idCompressor.localSessionId;
+		this.editManager = new EditManager(changeFamily, localSessionId, mintRevisionTag);
 		this.editManager.localBranch.on("afterChange", (args) => {
-			const { type } = args;
-			switch (type) {
+			if (this.getLocalBranch().isTransacting()) {
+				// Avoid submitting ops for changes that are part of a transaction.
+				return;
+			}
+			switch (args.type) {
 				case "append":
 					for (const c of args.newCommits) {
-						if (!this.getLocalBranch().isTransacting()) {
-							this.submitCommit(c);
-						}
+						this.submitCommit(c);
 					}
 					break;
 				case "replace":
 					if (getChangeReplaceType(args) === "transactionCommit") {
-						if (!this.getLocalBranch().isTransacting()) {
-							this.submitCommit(args.newCommits[0]);
-						}
+						this.submitCommit(args.newCommits[0]);
 					}
 					break;
 				default:
@@ -124,7 +130,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			}
 		});
 
-		const revisionTagCodec = new RevisionTagCodec();
+		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		this.summarizables = [
 			new EditManagerSummarizer(this.editManager, revisionTagCodec, options),
 			...summarizables,
@@ -136,7 +142,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs.resolve(formatVersion).json,
-			new RevisionTagCodec(),
+			new RevisionTagCodec(runtime.idCompressor),
 			options,
 		);
 	}
@@ -183,14 +189,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
 	 */
-	private submitCommit(commit: GraphCommit<TChange>): void {
+	private submitCommit(commit: GraphCommit<TChange>, isResubmit = false): void {
 		if (!this.submitOps) {
 			return;
 		}
 
 		// Edits should not be submitted until all transactions finish
 		assert(
-			!this.getLocalBranch().isTransacting(),
+			!this.getLocalBranch().isTransacting() || isResubmit,
 			0x68b /* Unexpected edit submitted during transaction */,
 		);
 
@@ -249,7 +255,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { revision },
 		} = this.messageCodec.decode(content);
 		const [commit] = this.editManager.findLocalCommit(revision);
-		this.submitCommit(commit);
+		this.submitCommit(commit, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {

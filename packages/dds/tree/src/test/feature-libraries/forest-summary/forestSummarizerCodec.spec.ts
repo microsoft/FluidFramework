@@ -5,41 +5,38 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { rootFieldKey } from "../../../core";
-import { typeboxValidator } from "../../../external-utilities";
+import { rootFieldKey } from "../../../core/index.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	makeFieldBatchCodec,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 
 import {
 	FieldSet,
 	makeForestSummarizerCodec,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/forest-summary/codec";
-import { emptySchema } from "../../cursorTestSuite";
+} from "../../../feature-libraries/forest-summary/codec.js";
+import { emptySchema } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Format, version } from "../../../feature-libraries/forest-summary/format";
+import { Format, version } from "../../../feature-libraries/forest-summary/format.js";
 // eslint-disable-next-line import/no-internal-modules
-import { TreeChunk } from "../../../feature-libraries/chunked-forest";
+import { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	chunkField,
 	defaultChunkPolicy,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree";
-import { brand } from "../../../util";
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
+import { brand } from "../../../util/index.js";
+import { ICodecOptions } from "../../../codec/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator });
-const contextualFieldBatchCodec = fieldBatchCodec({
+const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
+const fieldBatchCodec = makeFieldBatchCodec(codecOptions, {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 });
-const codecWithContext = makeForestSummarizerCodec(
-	{ jsonValidator: typeboxValidator },
-	fieldBatchCodec,
-);
-// Uncompressed
-const codec = codecWithContext({ encodeType: TreeCompressionStrategy.Uncompressed });
+
+const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);
 
 const testFieldChunks: TreeChunk[] = chunkField(
 	cursorForJsonableTreeField([{ type: emptySchema.name }]),
@@ -62,7 +59,7 @@ const validData: [string, FieldSet, Format | undefined][] = [
 		{
 			version,
 			keys: [],
-			fields: contextualFieldBatchCodec.encode([]),
+			fields: fieldBatchCodec.encode([]),
 		},
 	],
 	[
@@ -71,7 +68,7 @@ const validData: [string, FieldSet, Format | undefined][] = [
 		{
 			version,
 			keys: [rootFieldKey],
-			fields: contextualFieldBatchCodec.encode([testFieldChunk.cursor()]),
+			fields: fieldBatchCodec.encode([testFieldChunk.cursor()]),
 		},
 	],
 	[

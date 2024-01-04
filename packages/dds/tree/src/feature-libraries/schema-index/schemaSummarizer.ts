@@ -17,17 +17,17 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core";
+import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
 import {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
-} from "../../shared-tree-core";
-import { JsonCompatible } from "../../util";
-import { CollabWindow } from "../incrementalSummarizationUtils";
-import { Format } from "./format";
-import { encodeRepo, makeSchemaCodec } from "./codec";
+} from "../../shared-tree-core/index.js";
+import { JsonCompatible } from "../../util/index.js";
+import { CollabWindow } from "../incrementalSummarizationUtils.js";
+import { Format } from "./format.js";
+import { encodeRepo, makeSchemaCodec } from "./codec.js";
 
 const schemaStringKey = "SchemaString";
 /**
@@ -131,7 +131,7 @@ export class SchemaSummarizer implements Summarizable {
  * @privateRemarks
  * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
  * This intentionally does not leak the format types in the API.
- * @alpha
+ * @internal
  */
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
 	return encodeRepo(schema);

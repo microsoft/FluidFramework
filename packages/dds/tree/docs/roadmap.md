@@ -90,7 +90,7 @@ The intention preservation requirement dictates that all editing operations shou
 
 The mechanism in Shared Tree responsible for satisfying these criteria is called the Rebaser.
 Some of the resulting design documents can be found [here](../docs).
-The operations available in the editing API (e.g., insert, delete) are rolled out incrementally in future milestones.
+The operations available in the editing API (e.g., insert, remove) are rolled out incrementally in future milestones.
 
 ## UUID Compression Scheme
 
@@ -117,7 +117,7 @@ The specification can be found [here](../docs/data-model/README.md).
 
 For developers eager to start using the Shared Tree DDS, this milestone represents the point where they can do so for scenarios involving transient data.
 That is, at this stage developers can create a Shared Tree from other data and use it to sync that data between all clients.
-Insert, delete, and modify operations will be functional; however, the storage formats will not be final at this stage.
+Insert, remove, and modify operations will be functional; however, the storage formats will not be final at this stage.
 There will be no data migration strategy for the data stored in the Shared Tree DDS at this stage.
 The move operation is also not yet available.
 
@@ -180,7 +180,7 @@ In a future milestone, [alternative designs](../docs/undo) are explored that bet
 
 > In progress
 
-Conceptually, a move is simply a delete and an insert of the same data.
+Conceptually, a move is simply a remove and an insert of the same data.
 However, without proper semantics (and thus rebasing), concurrent changes can result in missing or duplicated data.
 The move operation preserves the identity of the nodes being moved and ensures that the outcome matches the developer's expectations.
 
@@ -248,7 +248,7 @@ however, the architecture allows easy extension in the future to include more do
 
 By default, edits (i.e., transactions) in Shared Tree will always succeed (never conflict) due to the high-quality automatic merge resolution.
 Transactions always guarantee atomicity (no interleaved changes from other transactions), but some changes may not have an effect due to concurrent edits that are applied first
-(e.g., a transaction that changes two nodes may only apply a subset of the changes due to one of the nodes being concurrently deleted).
+(e.g., a transaction that changes two nodes may only apply a subset of the changes due to one of the nodes being concurrently removed).
 While convenient and usually sufficient, this behavior may not appropriately uphold application invariants.
 
 This milestone enables a developer to declaratively specify what sorts of concurrent edits should cause a transaction to fail and be marked as conflicted.
@@ -325,7 +325,7 @@ This feature results in a much better integration with tooling, including autoco
 
 This milestone enables a more complex and semantic form of undo/redo.
 Under this design, undo modifies the document in a way which both inverts the effect of a given change and adjusts the effect of that change on changes which came after it.
-For example, retroactively undoing a deletion would also apply edits to the deleted content which had previously failed due to their target being deleted.
+For example, retroactively undoing a deletion would also apply edits to the removed content which had previously failed due to their target being removed.
 Retroactively undoing an edit might also cause the undoing of later transactions which would not have been valid if the original edit had not been made.
 One potential retroactive undo policy would be to set the document to the state it would have been in if the undone change had never been made.
 

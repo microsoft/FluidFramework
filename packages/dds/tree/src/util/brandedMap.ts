@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "./typeCheck";
-import { getOrCreate } from "./utils";
+import { Invariant } from "./typeCheck.js";
+import { getOrCreate } from "./utils.js";
 
 /**
  * Key in a {@link BrandedMapSubset}.
- * @alpha
+ * @internal
  */
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 
 /**
- * @alpha
+ * @internal
  */
 export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
 	unknown,
@@ -36,7 +36,7 @@ export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey exte
  * @remarks
  * These APIs are designed so that a Map can be used to implement this type.
  *
- * @alpha
+ * @internal
  */
 export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
@@ -66,7 +66,7 @@ let slotCounter = 0;
 
 /**
  * Define a strongly typed slot in which data can be stored in a {@link BrandedMapSubset}.
- * @alpha
+ * @internal
  */
 export function brandedSlot<TSlot extends BrandedKey<any, any>>(): TSlot {
 	return slotCounter++ as TSlot;

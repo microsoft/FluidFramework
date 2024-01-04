@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "^api", "^build:rename-types", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -23,13 +23,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: [
-				"commonjs",
-				"build:esnext",
-				"build:test",
-				"build:copy",
-				"build:rename-types",
-			],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -51,9 +45,12 @@ module.exports = {
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
+		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
+			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
+			// requires them. I don't want to change the policy right now.
 			...tscDependsOn,
 			"typetests:gen",
 			"tsc",
@@ -65,8 +62,10 @@ module.exports = {
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
-		"api-extractor:esnext": ["api-extractor:commonjs", "build:esnext"],
-		"build:rename-types": ["build:esnext", "api-extractor:esnext"],
+		"api-extractor:esnext": {
+			dependsOn: ["build:esnext"],
+			script: true,
+		},
 		"build:docs": ["tsc"],
 		"ci:build:docs": ["tsc"],
 		"build:readme": {
@@ -332,6 +331,7 @@ module.exports = {
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
 				["renamer", "renamer"],
+				["ts2esm", "ts2esm"],
 				["tsc-multi", "tsc-multi"],
 				["attw", "@arethetypeswrong/cli"],
 			],

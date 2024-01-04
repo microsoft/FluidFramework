@@ -6,11 +6,6 @@
 import { assert } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
-import {
-	generateStableId as runtimeGenerateStableId,
-	assertIsStableId,
-	StableId,
-} from "@fluidframework/id-compressor";
 
 /**
  * Subset of Map interface.
@@ -53,7 +48,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * @alpha
+ * @internal
  */
 export function fail(message: string): never {
 	throw new Error(message);
@@ -199,7 +194,7 @@ export function* zipIterables<T, U>(
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatible =
 	| string
@@ -215,7 +210,7 @@ export type JsonCompatible =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
 
@@ -224,7 +219,7 @@ export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -309,81 +304,9 @@ export function assertNonNegativeSafeInteger(index: number) {
  * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
  * it will behave like `TInput` was used directly.
  *
- * @alpha
+ * @internal
  */
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
-
-/**
- * The counter used to generate deterministic stable ids for testing purposes.
- */
-let deterministicStableIdCount: number | undefined;
-
-/**
- * Runs `f` with {@link generateStableId} altered to return sequential StableIds starting as a fixed seed.
- * Used to make test logic that uses {@link generateStableId} deterministic.
- *
- * @remarks Only use this function for testing purposes.
- *
- * @example
- *
- * ```typescript
- * function f() {
- *    const id = generateStableId();
- *    ...
- * }
- * const result = useDeterministicStableId(f());
- * ```
- */
-export function useDeterministicStableId<T>(f: () => T): T {
-	assert(
-		deterministicStableIdCount === undefined,
-		0x6ce /* useDeterministicStableId cannot be nested */,
-	);
-	deterministicStableIdCount = 1;
-	try {
-		return f();
-		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
-		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
-	} finally {
-		deterministicStableIdCount = undefined;
-	}
-}
-
-export async function useAsyncDeterministicStableId<T>(f: () => Promise<T>): Promise<T> {
-	assert(
-		deterministicStableIdCount === undefined,
-		0x79f /* useAsyncDeterministicStableId cannot be nested */,
-	);
-	deterministicStableIdCount = 1;
-	try {
-		return await f();
-		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
-		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
-	} finally {
-		deterministicStableIdCount = undefined;
-	}
-}
-
-/**
- * Generates a random StableId.
- *
- * For test usage desiring deterministic results, see {@link useDeterministicStableId}.
- */
-export function generateStableId(): StableId {
-	if (deterministicStableIdCount !== undefined) {
-		assert(
-			deterministicStableIdCount < 281_474_976_710_656,
-			0x6cf /* The maximum valid value for deterministicStableIdCount is 16^12 */,
-		);
-		// Tried to generate a unique id prefixing it with the word 'beef'
-		return assertIsStableId(
-			`beefbeef-beef-4000-8000-${(deterministicStableIdCount++)
-				.toString(16)
-				.padStart(12, "0")}`,
-		);
-	}
-	return runtimeGenerateStableId();
-}
 
 /**
  * Convert an object into a Map.
@@ -447,7 +370,7 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- * @alpha
+ * @internal
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
@@ -464,17 +387,31 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 /**
  * Type with a name describing what it is.
  * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- * @alpha
+ * @internal
  */
 export interface Named<TName> {
 	readonly name: TName;
 }
 
 /**
+ * Order {@link Named} objects by their name.
+ * @internal
+ */
+export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.
- * @beta
+ * @public
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
@@ -482,7 +419,7 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
  * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
- * @beta
+ * @public
  */
 export interface IDisposable {
 	/**

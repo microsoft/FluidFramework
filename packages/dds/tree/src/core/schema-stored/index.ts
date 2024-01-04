@@ -7,23 +7,30 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeSchemaIdentifierSchema as TreeSchemaIdentifierSchema,
-	FieldKey,
-	FieldKeySchema,
 	TreeTypeSet,
-	FieldKindIdentifier,
-	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeStoredSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
-} from "./schema";
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	BrandedTreeNodeSchemaDataFormat,
+	decodeFieldSchema,
+	encodeFieldSchema,
+	storedSchemaDecodeDispatcher,
+	ErasedTreeNodeSchemaDataFormat,
+} from "./schema.js";
 export {
 	TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	TreeStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
-} from "./storedSchemaRepository";
+} from "./storedSchemaRepository.js";
+
+export { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format.js";
+
+import * as schemaFormat from "./format.js";
+export { schemaFormat };

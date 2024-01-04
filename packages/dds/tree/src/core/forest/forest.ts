@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ISubscribable } from "../../events";
-import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored";
+import { ISubscribable } from "../../events/index.js";
+import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored/index.js";
 import {
 	Anchor,
 	AnchorSet,
@@ -15,8 +15,8 @@ import {
 	ITreeCursorSynchronous,
 	rootField,
 	UpPath,
-} from "../tree";
-import type { IEditableForest } from "./editableForest";
+} from "../tree/index.js";
+import type { IEditableForest } from "./editableForest.js";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -31,7 +31,7 @@ import type { IEditableForest } from "./editableForest";
  * Events for {@link IForestSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @alpha
+ * @internal
  */
 export interface ForestEvents {
 	/**
@@ -53,7 +53,7 @@ export interface ForestEvents {
  * Not invalidated when schema changes.
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
- * @alpha
+ * @internal
  */
 export interface IForestSubscription extends ISubscribable<ForestEvents> {
 	/**
@@ -156,7 +156,7 @@ export function moveToDetachedField(
 /**
  * Anchor to a field.
  * This is structurally based on the parent, so it will move only as the parent moves.
- * @alpha
+ * @internal
  */
 export interface FieldAnchor {
 	/**
@@ -169,7 +169,7 @@ export interface FieldAnchor {
 
 /**
  * ITreeCursor supporting IForestSubscription and its changes over time.
- * @alpha
+ * @internal
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
 	/**
@@ -219,7 +219,7 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export enum ITreeSubscriptionCursorState {
 	/**
@@ -237,7 +237,7 @@ export enum ITreeSubscriptionCursorState {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export const enum TreeNavigationResult {
 	/**

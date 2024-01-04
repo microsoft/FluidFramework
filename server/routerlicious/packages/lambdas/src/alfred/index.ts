@@ -632,11 +632,15 @@ export function configureWebSocketServices(
 			(connectedMessage as any).timestamp = connectedTimestamp;
 
 			// Track socket and tokens for this connection
-			if (socketTracker && claims.jti) {
-				socketTracker.addSocketForToken(
-					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
-					socket,
-				);
+			if (socketTracker) {
+				if (claims.jti) {
+					socketTracker.addSocketForToken(
+						core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
+						socket,
+					);
+				} else {
+					socketTracker.addSocket(socket);
+				}
 			}
 
 			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called

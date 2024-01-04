@@ -11,10 +11,14 @@ import {
 	FieldKey,
 	MapTree,
 	TreeNodeSchemaIdentifier,
-} from "../../core";
-import { mapTreeFromCursor, cursorForMapTreeNode, mapRootChanges } from "../../feature-libraries";
-import { brand } from "../../util";
-import { deepFreeze } from "../utils";
+} from "../../core/index.js";
+import {
+	mapTreeFromCursor,
+	cursorForMapTreeNode,
+	mapRootChanges,
+} from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
+import { deepFreeze } from "../utils.js";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const emptyMap = new Map();

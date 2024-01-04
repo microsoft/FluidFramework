@@ -14,7 +14,7 @@ import {
 	isNeverTree,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/modular-schema/comparison";
+} from "../../../feature-libraries/modular-schema/comparison.js";
 import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
@@ -23,11 +23,14 @@ import {
 	TreeNodeSchemaIdentifier,
 	storedEmptyFieldSchema,
 	FieldKindIdentifier,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	LeafNodeStoredSchema,
 	MutableTreeStoredSchema,
 	TreeStoredSchemaRepository,
-} from "../../../core";
-import { Named, brand } from "../../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
 
 /**
  * APIs to help build schema.
@@ -43,7 +46,7 @@ const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
- * @alpha
+ * @internal
  */
 function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
@@ -64,38 +67,6 @@ interface TreeNodeStoredSchemaBuilder {
 	readonly leafValue?: ValueSchema;
 }
 
-/**
- * Helper for building {@link TreeNodeStoredSchema}.
- */
-function treeNodeStoredSchema(data: TreeNodeStoredSchemaBuilder): TreeNodeStoredSchema {
-	const objectNodeFields = new Map();
-	const fields = data.objectNodeFields ?? {};
-	// eslint-disable-next-line no-restricted-syntax
-	for (const key in fields) {
-		if (Object.prototype.hasOwnProperty.call(fields, key)) {
-			objectNodeFields.set(brand(key), fields[key]);
-		}
-	}
-
-	return {
-		objectNodeFields,
-		mapFields: data.mapFields,
-		leafValue: data.leafValue,
-	};
-}
-
-/**
- * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
- */
-function namedTreeNodeStoredSchema(
-	data: TreeNodeStoredSchemaBuilder & Named<string>,
-): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
-	return {
-		name: brand(data.name),
-		...treeNodeStoredSchema({ ...data }),
-	};
-}
-
 describe("Schema Comparison", () => {
 	/**
 	 * TreeFieldStoredSchema permits anything.
@@ -107,15 +78,9 @@ describe("Schema Comparison", () => {
 	 * TreeNodeStoredSchema that permits anything without a value.
 	 * Note that children under the fields still have to be in schema.
 	 */
-	const anyTreeWithoutValue: TreeNodeStoredSchema = {
-		objectNodeFields: emptyMap,
-		mapFields: anyField,
-	};
+	const anyTreeWithoutValue: TreeNodeStoredSchema = new MapNodeStoredSchema(anyField);
 
-	const numberLeaf: TreeNodeStoredSchema = {
-		objectNodeFields: emptyMap,
-		leafValue: ValueSchema.Number,
-	};
+	const numberLeaf: TreeNodeStoredSchema = new LeafNodeStoredSchema(ValueSchema.Number);
 
 	/**
 	 * TreeFieldStoredSchema which is impossible for any data to be in schema with.
@@ -125,35 +90,34 @@ describe("Schema Comparison", () => {
 	/**
 	 * TreeNodeStoredSchema which is impossible for any data to be in schema with.
 	 */
-	const neverTree: TreeNodeStoredSchema = {
-		objectNodeFields: emptyMap,
-		mapFields: neverField,
+	const neverTree: TreeNodeStoredSchema = new MapNodeStoredSchema(neverField);
+
+	const neverTree2: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
+		new Map([[brand("x"), neverField]]),
+	);
+
+	const emptyTree = {
+		name: brand<TreeNodeSchemaIdentifier>("empty"),
+		schema: new ObjectNodeStoredSchema(new Map()),
 	};
 
-	const neverTree2: TreeNodeStoredSchema = {
-		objectNodeFields: new Map([[brand("x"), neverField]]),
+	const emptyLocalFieldTree = {
+		name: brand<TreeNodeSchemaIdentifier>("emptyLocalFieldTree"),
+		schema: new ObjectNodeStoredSchema(new Map([[brand("x"), storedEmptyFieldSchema]])),
 	};
 
-	const emptyTree = namedTreeNodeStoredSchema({
-		name: "empty",
-		objectNodeFields: {},
-	});
-
-	const emptyLocalFieldTree = namedTreeNodeStoredSchema({
-		name: "emptyLocalFieldTree",
-		objectNodeFields: { x: storedEmptyFieldSchema },
-	});
-
-	const optionalLocalFieldTree = namedTreeNodeStoredSchema({
-		name: "optionalLocalFieldTree",
-		objectNodeFields: { x: fieldSchema(FieldKinds.optional, [emptyTree.name]) },
-	});
-
-	const valueLocalFieldTree = namedTreeNodeStoredSchema({
-		name: "valueLocalFieldTree",
-		objectNodeFields: { x: fieldSchema(FieldKinds.required, [emptyTree.name]) },
-	});
-
+	const optionalLocalFieldTree = {
+		name: brand<TreeNodeSchemaIdentifier>("optionalLocalFieldTree"),
+		schema: new ObjectNodeStoredSchema(
+			new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
+		),
+	};
+	const valueLocalFieldTree = {
+		name: brand<TreeNodeSchemaIdentifier>("valueLocalFieldTree"),
+		schema: new ObjectNodeStoredSchema(
+			new Map([[brand("x"), fieldSchema(FieldKinds.required, [emptyTree.name])]]),
+		),
+	};
 	const valueAnyField = fieldSchema(FieldKinds.required);
 	const valueEmptyTreeField = fieldSchema(FieldKinds.required, [emptyTree.name]);
 	const optionalAnyField = fieldSchema(FieldKinds.optional);
@@ -181,7 +145,7 @@ describe("Schema Comparison", () => {
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, storedEmptyFieldSchema), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, valueEmptyTreeField), true);
-		updateTreeSchema(repo, brand("empty"), emptyTree);
+		updateTreeSchema(repo, brand("empty"), emptyTree.schema);
 		assert.equal(
 			isNeverField(
 				defaultSchemaPolicy,
@@ -199,18 +163,11 @@ describe("Schema Comparison", () => {
 	it("isNeverTree", () => {
 		const repo = new TreeStoredSchemaRepository();
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
-		assert(
-			isNeverTree(defaultSchemaPolicy, repo, {
-				objectNodeFields: emptyMap,
-				mapFields: neverField,
-			}),
-		);
+		assert(isNeverTree(defaultSchemaPolicy, repo, new MapNodeStoredSchema(neverField)));
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
 		assert(isNeverTree(defaultSchemaPolicy, repo, undefined));
 		assert.equal(
-			isNeverTree(defaultSchemaPolicy, repo, {
-				objectNodeFields: emptyMap,
-			}),
+			isNeverTree(defaultSchemaPolicy, repo, new ObjectNodeStoredSchema(emptyMap)),
 			false,
 		);
 		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTreeWithoutValue), false);
@@ -220,22 +177,20 @@ describe("Schema Comparison", () => {
 				defaultSchemaPolicy,
 				repo,
 				repo.nodeSchema.get(emptyTree.name),
-				emptyTree,
+				emptyTree.schema,
 			),
 		);
-		updateTreeSchema(repo, emptyTree.name, emptyTree);
+		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, emptyLocalFieldTree), false);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, valueLocalFieldTree), false);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, optionalLocalFieldTree), false);
+		assert.equal(isNeverTree(defaultSchemaPolicy, repo, emptyLocalFieldTree.schema), false);
+		assert.equal(isNeverTree(defaultSchemaPolicy, repo, valueLocalFieldTree.schema), false);
+		assert.equal(isNeverTree(defaultSchemaPolicy, repo, optionalLocalFieldTree.schema), false);
 	});
 
 	it("isNeverTreeRecursive", () => {
 		const repo = new TreeStoredSchemaRepository();
 		const recursiveField = fieldSchema(FieldKinds.required, [brand("recursive")]);
-		const recursiveType = treeNodeStoredSchema({
-			mapFields: recursiveField,
-		});
+		const recursiveType = new MapNodeStoredSchema(recursiveField);
 		updateTreeSchema(repo, brand("recursive"), recursiveType);
 		assert(isNeverTree(defaultSchemaPolicy, repo, recursiveType));
 	});
@@ -246,10 +201,8 @@ describe("Schema Comparison", () => {
 			brand("recursive"),
 			emptyTree.name,
 		]);
-		const recursiveType = treeNodeStoredSchema({
-			mapFields: recursiveField,
-		});
-		updateTreeSchema(repo, emptyTree.name, emptyTree);
+		const recursiveType = new MapNodeStoredSchema(recursiveField);
+		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 		updateTreeSchema(repo, brand("recursive"), recursiveType);
 		assert(isNeverTree(defaultSchemaPolicy, repo, recursiveType));
 	});
@@ -310,7 +263,7 @@ describe("Schema Comparison", () => {
 	it("allowsFieldSuperset", () => {
 		const repo = new TreeStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
-		updateTreeSchema(repo, emptyTree.name, emptyTree);
+		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
 			brand("never"),
 		]);
@@ -346,12 +299,17 @@ describe("Schema Comparison", () => {
 
 	it("allowsTreeSuperset-no leaf values", () => {
 		const repo = new TreeStoredSchemaRepository();
-		updateTreeSchema(repo, emptyTree.name, emptyTree);
+		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 		const compare = (
 			a: TreeNodeStoredSchema | undefined,
 			b: TreeNodeStoredSchema | undefined,
 		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
-		testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTreeWithoutValue]);
+		testOrder(compare, [
+			neverTree,
+			emptyTree.schema,
+			optionalLocalFieldTree.schema,
+			anyTreeWithoutValue,
+		]);
 		testPartialOrder(
 			compare,
 			[
@@ -359,21 +317,21 @@ describe("Schema Comparison", () => {
 				neverTree2,
 				undefined,
 				anyTreeWithoutValue,
-				emptyTree,
-				emptyLocalFieldTree,
-				optionalLocalFieldTree,
-				valueLocalFieldTree,
+				emptyTree.schema,
+				emptyLocalFieldTree.schema,
+				optionalLocalFieldTree.schema,
+				valueLocalFieldTree.schema,
 			],
 			[
 				[neverTree, neverTree2, undefined],
-				[emptyTree, emptyLocalFieldTree],
+				[emptyTree.schema, emptyLocalFieldTree.schema],
 			],
 		);
 	});
 
 	it("allowsTreeSuperset-leaf values", () => {
 		const repo = new TreeStoredSchemaRepository();
-		updateTreeSchema(repo, emptyTree.name, emptyTree);
+		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
 		const compare = (
 			a: TreeNodeStoredSchema | undefined,
 			b: TreeNodeStoredSchema | undefined,

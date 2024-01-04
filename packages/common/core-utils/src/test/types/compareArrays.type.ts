@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { compareArrays } from "../..";
+import { compareArrays } from "@fluidframework/core-utils";
 
 // Paranoid check that typing will prevent comparing with non-Array types like 'compareArrays(null, null)',
 // which would otherwise pass the trivial acceptance clause.

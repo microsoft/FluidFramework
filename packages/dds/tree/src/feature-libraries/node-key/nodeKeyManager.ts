@@ -10,8 +10,8 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { brand, extractFromOpaque } from "../../util";
-import { StableNodeKey, LocalNodeKey } from "./nodeKey";
+import { brand, extractFromOpaque } from "../../util/index.js";
+import { StableNodeKey, LocalNodeKey } from "./nodeKey.js";
 
 /**
  * An object which handles the generation of node keys as well as conversion between their two types ({@link StableNodeKey} and {@link LocalNodeKey}).

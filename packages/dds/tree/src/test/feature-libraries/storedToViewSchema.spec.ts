@@ -7,12 +7,15 @@ import { strict as assert } from "assert";
 import {
 	EmptyKey,
 	FieldKey,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	ValueSchema,
 	storedEmptyFieldSchema,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	Any,
 	FieldKinds,
@@ -20,16 +23,16 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 import {
 	fieldSchemaFromStoredSchema,
 	treeSchemaFromStoredSchema,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../feature-libraries/storedToViewSchema";
-import { brand } from "../../util";
+} from "../../feature-libraries/storedToViewSchema.js";
+import { brand } from "../../util/index.js";
 
 describe("storedToViewSchema", () => {
 	describe("fieldSchemaFromStoredSchema", () => {
@@ -43,7 +46,7 @@ describe("storedToViewSchema", () => {
 			brand<TreeNodeSchemaIdentifier>("y"),
 			ValueSchema.Number,
 		);
-		const schemaMap = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>([
+		const schemaMap = new Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>([
 			[schemaX.name, schemaX],
 			[schemaY.name, schemaY],
 		]);
@@ -74,13 +77,10 @@ describe("storedToViewSchema", () => {
 		});
 
 		it("oneOfEach", () => {
-			const schemaLeaf: TreeNodeStoredSchema = {
-				leafValue: ValueSchema.Number,
-				objectNodeFields: new Map(),
-			};
+			const schemaLeaf = new LeafNodeStoredSchema(ValueSchema.Number);
 
-			const schemaObject: TreeNodeStoredSchema = {
-				objectNodeFields: new Map<FieldKey, TreeFieldStoredSchema>([
+			const schemaObject = new ObjectNodeStoredSchema(
+				new Map<FieldKey, TreeFieldStoredSchema>([
 					[
 						brand<FieldKey>("foo"),
 						{
@@ -89,10 +89,10 @@ describe("storedToViewSchema", () => {
 						} satisfies TreeFieldStoredSchema,
 					],
 				] satisfies [FieldKey, TreeFieldStoredSchema][]),
-			};
+			);
 
-			const schemaRecursive: TreeNodeStoredSchema = {
-				objectNodeFields: new Map<FieldKey, TreeFieldStoredSchema>([
+			const schemaRecursive = new ObjectNodeStoredSchema(
+				new Map<FieldKey, TreeFieldStoredSchema>([
 					[
 						brand<FieldKey>("foo"),
 						{
@@ -101,11 +101,11 @@ describe("storedToViewSchema", () => {
 						} satisfies TreeFieldStoredSchema,
 					],
 				] satisfies [FieldKey, TreeFieldStoredSchema][]),
-			};
+			);
 
 			// Current policy is to treat this case as an object.
-			const schemaEmptyKey: TreeNodeStoredSchema = {
-				objectNodeFields: new Map<FieldKey, TreeFieldStoredSchema>([
+			const schemaEmptyKey = new ObjectNodeStoredSchema(
+				new Map<FieldKey, TreeFieldStoredSchema>([
 					[
 						EmptyKey,
 						{
@@ -114,14 +114,11 @@ describe("storedToViewSchema", () => {
 						} satisfies TreeFieldStoredSchema,
 					],
 				] satisfies [FieldKey, TreeFieldStoredSchema][]),
-			};
-			const schemaMap: TreeNodeStoredSchema = {
-				objectNodeFields: new Map(),
-				mapFields: {
-					kind: { identifier: FieldKinds.optional.identifier },
-					types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
-				},
-			};
+			);
+			const schemaMap = new MapNodeStoredSchema({
+				kind: { identifier: FieldKinds.optional.identifier },
+				types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
+			});
 			const stored = {
 				rootFieldSchema: {
 					kind: { identifier: FieldKinds.optional.identifier },
@@ -142,7 +139,7 @@ describe("storedToViewSchema", () => {
 				const storedNodeSchema = stored.nodeSchema.get(key) ?? assert.fail();
 				assert(nodeSchema instanceof TreeNodeSchemaBase);
 				assert.equal(nodeSchema.name, key);
-				if (storedNodeSchema.mapFields !== undefined) {
+				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					// Since its tested separately, assume fields are converted correctly.
 					assert(nodeSchema instanceof MapNodeSchema);
 				} else {
@@ -151,10 +148,11 @@ describe("storedToViewSchema", () => {
 
 				assert.equal(
 					(nodeSchema as Partial<LeafNodeSchema>).leafValue,
-					storedNodeSchema.leafValue,
+					(storedNodeSchema as Partial<LeafNodeStoredSchema>).leafValue,
 				);
 
 				if (nodeSchema instanceof ObjectNodeSchema) {
+					assert(storedNodeSchema instanceof ObjectNodeStoredSchema);
 					assert.equal(
 						storedNodeSchema.objectNodeFields.size,
 						nodeSchema.objectNodeFields.size,

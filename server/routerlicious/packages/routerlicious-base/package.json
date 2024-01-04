@@ -109,7 +109,7 @@
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^9.0.2",
 		"@types/ws": "^6.0.1",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
@@ -132,6 +132,12 @@
 			"ClassDeclaration_RiddlerResources": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_AlfredResources": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAlfredResourcesCustomizations": {
+				"forwardCompat": false
 			}
 		}
 	}

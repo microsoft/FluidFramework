@@ -9,8 +9,8 @@ import {
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
-} from "../../core";
-import { fail } from "../../util";
+} from "../../core/index.js";
+import { fail } from "../../util/index.js";
 import {
 	FieldKind,
 	allowsTreeSchemaIdentifierSuperset,
@@ -19,15 +19,15 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	FieldKindWithEditor,
-} from "../modular-schema";
-import { sequenceFieldChangeHandler } from "../sequence-field";
+} from "../modular-schema/index.js";
+import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
 import {
 	noChangeCodecFamily,
 	OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
-} from "../optional-field";
-import { Multiplicity } from "../multiplicity";
+} from "../optional-field/index.js";
+import { Multiplicity } from "../multiplicity.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -183,30 +183,30 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 /**
- * @alpha
+ * @internal
  */
 export interface Required extends FieldKind<"Value", Multiplicity.Single> {}
 /**
- * @alpha
+ * @internal
  */
 export interface Optional extends FieldKind<"Optional", Multiplicity.Optional> {}
 /**
- * @alpha
+ * @internal
  */
 export interface Sequence extends FieldKind<"Sequence", Multiplicity.Sequence> {}
 /**
- * @alpha
+ * @internal
  */
 export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Single> {}
 /**
- * @alpha
+ * @internal
  */
 export interface Forbidden
 	extends FieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
- * @alpha
+ * @internal
  */
 export const FieldKinds: {
 	// TODO: inheritDoc for these somehow
