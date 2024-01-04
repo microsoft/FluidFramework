@@ -336,19 +336,19 @@ export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: str
 
 // @internal
 export class PerformanceEvent {
-    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean);
+    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean);
     // (undocumented)
-    cancel(props?: ITelemetryProperties, error?: unknown): void;
+    cancel(props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
     get duration(): number;
     // (undocumented)
-    end(props?: ITelemetryProperties): void;
-    reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: unknown): void;
+    end(props?: ITelemetryPropertiesExt): void;
+    reportEvent(eventNameSuffix: string, props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
-    reportProgress(props?: ITelemetryProperties, eventNameSuffix?: string): void;
-    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean): PerformanceEvent;
-    static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers, sampleThreshold?: number): T;
-    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, sampleThreshold?: number): Promise<T>;
+    reportProgress(props?: ITelemetryPropertiesExt, eventNameSuffix?: string): void;
+    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean): PerformanceEvent;
+    static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers, sampleThreshold?: number): T;
+    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, sampleThreshold?: number): Promise<T>;
 }
 
 // @internal
