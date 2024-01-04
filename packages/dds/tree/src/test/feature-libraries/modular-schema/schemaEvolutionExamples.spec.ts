@@ -23,10 +23,10 @@ import {
 	storedEmptyFieldSchema,
 	TreeStoredSchema,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/runtime-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	AnchorLocator,
 	IForestSubscription,
@@ -195,7 +195,12 @@ export function createTreeCheckout(
 			idCompressor,
 			args?.fieldBatchCodec ??
 				makeFieldBatchCodec(defaultCodecOptions, {
-					// TODO: provide schema here to enable schema based compression.
+					// TODO: Currently unsure which schema should be passed if an op contains a schema edit, so it is not enabled.
+					// This should eventually handle that case, and pass in the correct schema accordingly.
+					// schema: {
+					// 	schema,
+					// 	policy: defaultSchemaPolicy,
+					// },
 					encodeType: TreeCompressionStrategy.Compressed,
 				}),
 			{ jsonValidator: noopValidator },

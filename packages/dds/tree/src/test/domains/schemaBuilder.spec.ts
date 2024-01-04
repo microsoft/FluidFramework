@@ -10,7 +10,7 @@ import {
 	FieldKinds,
 	TreeFieldSchema,
 	FlexTreeSequenceField,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
 	FlexTreeTypedNode,
@@ -131,7 +131,7 @@ describe("domains - SchemaBuilder", () => {
 				>;
 
 				// Not cached for structural use
-				assert((builder.list(builder.number) as TreeNodeSchema) !== list);
+				assert((builder.list(builder.number) as FlexTreeNodeSchema) !== list);
 				// Creating again errors instead or reuses
 				assert.throws(() => builder.list("Foo", builder.number));
 			});
