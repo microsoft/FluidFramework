@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalType } from "../intervalCollection";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 function assertIntervalCollectionsAreEquivalent(
@@ -64,14 +63,14 @@ function assertSharedStringsAreEquivalent(
 }
 
 describe("SharedString Snapshot Version", () => {
-	let filebase: string;
+	let fileBase: string;
 	const message =
 		"SharedString snapshot format has changed. " +
 		"Please update the snapshotFormatVersion if appropriate " +
 		"and then run npm test:newsnapfiles to create new snapshot test files.";
 
 	before(() => {
-		filebase = path.join(__dirname, `../../${LocationBase}`);
+		fileBase = path.join(__dirname, `../../${LocationBase}`);
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
@@ -79,7 +78,7 @@ describe("SharedString Snapshot Version", () => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
 		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
 		};
 		const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
@@ -94,7 +93,7 @@ describe("SharedString Snapshot Version", () => {
 		normalized: boolean,
 	) {
 		it(name, async () => {
-			const filename = `${filebase}${name}.json`;
+			const filename = `${fileBase}${name}.json`;
 			assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
 			const data = fs.readFileSync(filename, "utf8");
 			const sharedString = await loadSharedString("fakeId", data);
@@ -136,7 +135,7 @@ describe("SharedString Snapshot Version", () => {
 
 	function generateSnapshotDiffTest(name: string, testString: SharedString) {
 		it(name, async () => {
-			const filename = `${filebase}${name}.json`;
+			const filename = `${fileBase}${name}.json`;
 			assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
 			const data = fs.readFileSync(filename, "utf8").trim();
 			const dataObject = JSON.parse(data);
@@ -172,7 +171,7 @@ describe("SharedString Snapshot Version", () => {
 		originalString.initializeLocal();
 		originalString.insertText(0, "ABCD");
 		const collectionId = "015e0f46-efa3-42d7-a9ab-970ecc376df9";
-		originalString.getIntervalCollection(collectionId).add(1, 2, IntervalType.SlideOnRemove);
+		originalString.getIntervalCollection(collectionId).add({ start: 1, end: 2 });
 		const summaryTree = originalString.getAttachSummary().summary;
 		const snapshotTree = convertSummaryTreeToITree(summaryTree);
 		const serializedSnapshot = JSON.stringify(snapshotTree);

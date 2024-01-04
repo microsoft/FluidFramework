@@ -4,6 +4,8 @@
  */
 
 import { assert } from "chai";
+import { Phase } from "./runBenchmark";
+import { Timer } from "./timer";
 
 /**
  * Kinds of benchmarks.
@@ -92,18 +94,52 @@ for (const type of Object.values(TestType)) {
  * Arguments to `benchmark`
  * @public
  */
-export type BenchmarkArguments = BenchmarkSyncArguments | BenchmarkAsyncArguments;
+export type BenchmarkArguments = Titled &
+	(BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
+
+/**
+ * @public
+ */
+export type CustomBenchmarkArguments = MochaExclusiveOptions &
+	CustomBenchmark &
+	BenchmarkDescription;
+
+/**
+ * @public
+ */
+export type BenchmarkRunningOptions =
+	| BenchmarkSyncArguments
+	| BenchmarkAsyncArguments
+	| CustomBenchmarkArguments;
+
+export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnBatch;
+
+export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments &
+	BenchmarkTimingOptions &
+	OnBatch;
+
+/**
+ * Object with a "title".
+ * @public
+ */
+export interface Titled {
+	/**
+	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+	 */
+	title: string;
+}
 
 /**
  * Arguments to benchmark a synchronous function
  * @public
  */
-export interface BenchmarkSyncArguments extends BenchmarkOptions {
-	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-	 */
-	title: string;
+export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions {}
 
+/**
+ * Arguments to benchmark a synchronous function
+ * @public
+ */
+export interface BenchmarkSyncFunction extends BenchmarkOptions {
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
@@ -111,15 +147,16 @@ export interface BenchmarkSyncArguments extends BenchmarkOptions {
 }
 
 /**
- * Arguments to benchmark a callback-based asynchronous function
+ * Configuration for benchmarking an asynchronous function.
  * @public
  */
-export interface BenchmarkAsyncArguments extends BenchmarkOptions {
-	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-	 */
-	title: string;
+export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {}
 
+/**
+ * An asynchronous function to benchmark.
+ * @public
+ */
+export interface BenchmarkAsyncFunction extends BenchmarkOptions {
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
 	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -130,27 +167,80 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
 }
 
 /**
+ * @public
+ */
+export interface BenchmarkTimer<T> {
+	readonly iterationsPerBatch: number;
+	readonly timer: Timer<T>;
+	recordBatch(duration: number): boolean;
+}
+
+/**
+ * @public
+ */
+export interface CustomBenchmark extends BenchmarkTimingOptions {
+	benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
+}
+
+/**
  * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
  * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
  * @public
  */
-export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
+export interface BenchmarkTimingOptions {
 	/**
 	 * The max time in seconds to run the benchmark.
 	 */
 	maxBenchmarkDurationSeconds?: number;
 
 	/**
-	 * The min sample count to reach.
-	 * @remarks This takes precedence over {@link BenchmarkOptions.maxBenchmarkDurationSeconds}.
+	 * The minimum number of batches to measure.
+	 * @remarks This takes precedence over {@link BenchmarkTimingOptions.maxBenchmarkDurationSeconds}.
 	 */
-	minSampleCount?: number;
+	minBatchCount?: number;
 
 	/**
-	 * The minimum time in seconds to run an individual sample.
+	 * The minimum time in seconds to run an individual batch.
 	 */
-	minSampleDurationSeconds?: number;
+	minBatchDurationSeconds?: number;
 
+	startPhase?: Phase;
+}
+
+/**
+ * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
+ * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * @public
+ */
+export interface OnBatch {
+	/**
+	 * Executes before the start of each batch. This has the same semantics as benchmarkjs's `onCycle`:
+	 * https://benchmarkjs.com/docs/#options_onCycle
+	 *
+	 * @remarks
+	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
+	 * iterations per batch.
+	 */
+	beforeEachBatch?: () => void;
+}
+
+/**
+ * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
+ * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * @public
+ */
+export interface BenchmarkOptions
+	extends MochaExclusiveOptions,
+		HookArguments,
+		BenchmarkTimingOptions,
+		OnBatch,
+		BenchmarkDescription {}
+
+/**
+ * Set of options to describe a benchmark.
+ * @public
+ */
+export interface BenchmarkDescription {
 	/**
 	 * The kind of benchmark.
 	 */
@@ -190,20 +280,20 @@ export type HookFunction = () => void | Promise<unknown>;
  * @remarks
  *
  * Be careful when writing non-pure benchmark functions!
- * Benchmark.js is written with the assumption that each cycle it runs is an independent sample.
+ * This library is written with the assumption that each cycle it runs is an independent sample.
  * This can typically be achieved by using the `onCycle` hook to reset state, with some caveats.
  * For more details, read below.
  *
- * Benchmark.js runs the benchmark function in two hierarchical groups: cycles and iterations.
+ * This library runs the benchmark function in two hierarchical groups: cycles and iterations.
  * One iteration consists of a single execution of `benchmarkFn`.
  * Since the time taken by a single iteration might be significantly smaller than the clock resolution, benchmark
  * dynamically decides to run a number of iterations per cycle.
- * After a warmup period, this number is fixed across cycles (i.e. if Benchmark.js decides to run 10,000 iterations
+ * After a warmup period, this number is fixed across cycles (i.e. if this library decides to run 10,000 iterations
  * per cycle, all statistical analysis will be performed on cycles which consist of 10,000 iterations)
  * This strategy also helps minimize noise from JITting code.
  *
- * Statistical analysis is performed at the cycle level: Benchmark.js treats each cycle's timing information as a data
- * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshhold or its max
+ * Statistical analysis is performed at the cycle level: this library treats each cycle's timing information as a data
+ * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshold or its max
  * time has been reached.
  * The statistical analysis it uses is invalid if cycles aren't independent trials: consider the test
  * ```typescript
@@ -236,9 +326,10 @@ export type HookFunction = () => void | Promise<unknown>;
  *
  * With this change, it's more reasonable to model each cycle as an independent event.
  *
- * Note that this approach is slightly misleading in the data it measures: if Benchmark.js chooses a cycle size of 10k,
+ * Note that this approach is slightly misleading in the data it measures: if this library chooses a cycle size of 10k,
  * the time reported per iteration is really an average of the time taken to insert 10k elements at the start, and not
  * the average time to insert an element to the start of the empty list as the test body might suggest at a glance.
+ *
  * @example
  *
  * ```typescript
@@ -291,15 +382,6 @@ export interface HookArguments {
 	 * @remarks This does *not* execute on each iteration or cycle.
 	 */
 	after?: HookFunction;
-	/**
-	 * Executes before the start of each cycle. This has the same semantics as benchmarkjs's `onCycle`:
-	 * https://benchmarkjs.com/docs/#options_onCycle
-	 *
-	 * @remarks
-	 * Beware that cycles run `benchmarkFn` more than once: a typical microbenchmark might involve 10k
-	 * iterations per cycle.
-	 */
-	onCycle?: HookFunction;
 }
 
 /**
@@ -307,7 +389,7 @@ export interface HookArguments {
  * @public
  */
 export function validateBenchmarkArguments(
-	args: BenchmarkArguments,
+	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
 ):
 	| { isAsync: true; benchmarkFn: () => Promise<unknown> }
 	| { isAsync: false; benchmarkFn: () => void } {
@@ -323,6 +405,47 @@ export function validateBenchmarkArguments(
 	}
 
 	return { isAsync: true, benchmarkFn: intersection.benchmarkFnAsync };
+}
+
+/**
+ * Validates arguments to `benchmark`.
+ * @public
+ */
+export function benchmarkArgumentsIsCustom(
+	args: BenchmarkRunningOptions,
+): args is CustomBenchmarkArguments {
+	const intersection = args as Partial<BenchmarkSyncArguments> &
+		Partial<BenchmarkAsyncArguments> &
+		Partial<CustomBenchmarkArguments>;
+
+	const isSync = intersection.benchmarkFn !== undefined;
+	const isAsync = intersection.benchmarkFnAsync !== undefined;
+	const isCustom = intersection.benchmarkFnCustom !== undefined;
+	assert(
+		[isSync, isAsync, isCustom].filter((x) => x).length === 1,
+		"Exactly one of `benchmarkFn`, `benchmarkFnAsync` or `benchmarkFnCustom` should be defined.",
+	);
+	return isCustom;
+}
+
+/**
+ * Tags and formats the provided Title from the supplied {@link BenchmarkDescription} to create a
+ * tagged and formatted Title for the Reporter.
+ *
+ * @param args - See {@link BenchmarkDescription} and {@link Titled}
+ * @returns A formatted tagged title from the supplied `BenchmarkDescription`.
+ *
+ * @public
+ */
+export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
+	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
+	const testTypeTag = TestType[TestType.ExecutionTime];
+	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
+
+	if (args.category !== "" && args.category !== undefined) {
+		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
+	}
+	return qualifiedTitle;
 }
 
 /**
@@ -343,7 +466,7 @@ export const isInPerformanceTestingMode = process.argv.includes("--perfMode");
  * Ex: cpu temperature will still be an issue, and thus running with fixed CPU clock speeds is still recommend
  * for more precise data.
  */
-export const isParentProcess = process.argv.includes("--parentProcess");
+export const isParentProcess: boolean = process.argv.includes("--parentProcess");
 
 /**
  * --childProcess should only be used to indicate that a test run with parentProcess is running,

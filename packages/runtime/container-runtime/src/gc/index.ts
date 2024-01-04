@@ -5,42 +5,58 @@
 
 export { GarbageCollector } from "./garbageCollection";
 export {
-	currentGCVersion,
+	nextGCVersion,
 	defaultInactiveTimeoutMs,
+	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
-	disableSweepLogKey,
 	GCNodeType,
 	gcTestModeKey,
-	gcTombstoneGenerationOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
+	gcGenerationOptionName,
+	GCFeatureMatrix,
 	GCVersion,
-	gcVersionUpgradeToV2Key,
+	gcVersionUpgradeToV4Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCMetadata_Deprecated,
+	IGCResult,
 	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 	IGCStats,
 	oneDayMs,
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
-	sweepAttachmentBlobsKey,
-	sweepDatastoresKey,
-	throwOnTombstoneLoadKey,
-	throwOnTombstoneUsageKey,
+	disableAttachmentBlobSweepKey,
+	disableDatastoreSweepKey,
+	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
+	throwOnTombstoneLoadOverrideKey,
+	GarbageCollectionMessage,
+	ISweepMessage,
 } from "./gcDefinitions";
 export {
-	getSnapshotDataFromOldSnapshotFormat,
-	sendGCUnexpectedUsageEvent,
-	shouldAllowGcTombstoneEnforcement,
+	cloneGCData,
+	concatGarbageCollectionStates,
+	trimLeadingAndTrailingSlashes,
+	unpackChildNodesGCDetails,
 } from "./gcHelpers";
-export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
+export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 export {
-	skipClosureForXDaysKey,
-	closuresMapLocalStorageKey,
-	SweepReadyUsageDetectionHandler,
-} from "./gcSweepReadyUsageDetection";
+	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
+} from "./gcSummaryDefinitions";
+export {
+	gcStateBlobKey,
+	GCSummaryStateTracker,
+	IGCSummaryTrackingData,
+} from "./gcSummaryStateTracker";
+export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";

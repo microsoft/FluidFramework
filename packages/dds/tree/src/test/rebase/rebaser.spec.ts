@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, RevisionTag } from "../../core";
+import { ChangeRebaser, RevisionTag } from "../../core/index.js";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { GraphCommit, Rebaser } from "../../core/rebase";
+import { GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
 
-import { assertIsStableId } from "../../id-compressor";
-import { fail } from "../../util";
+import { fail } from "../../util/index.js";
+import { mintRevisionTag } from "../utils.js";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -19,7 +19,7 @@ function makeRevisionTag(tag: number): RevisionTag {
 		fail("Tags bigger than 15 are not supported");
 	}
 
-	return assertIsStableId(`00000000-0000-4000-8000-00000000000${tag.toString(16)}`);
+	return tag as RevisionTag;
 }
 
 const dummyChange = {};
@@ -38,8 +38,6 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 	public rebase(): typeof dummyChange {
 		return {};
 	}
-
-	public rebaseAnchors(): void {}
 }
 
 describe("rebaser", () => {
@@ -68,7 +66,6 @@ describe("rebaser", () => {
 				for (const revision of main) {
 					cur = {
 						revision: makeRevisionTag(revision),
-						sessionId: "",
 						change: {},
 						parent: cur,
 					};
@@ -80,7 +77,6 @@ describe("rebaser", () => {
 				for (const revision of branch.slice(1)) {
 					cur = {
 						revision: makeRevisionTag(revision),
-						sessionId: "",
 						change: {},
 						parent: cur,
 					};
@@ -126,20 +122,25 @@ describe("rebaser", () => {
 			}`;
 
 			it(title, () => {
-				const rebaser = new Rebaser(new DummyChangeRebaser());
 				const tester = new BranchTester(main, branch);
 				const base =
 					baseInMain !== undefined
 						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
 						: tester.main;
 
-				const [result] = rebaser.rebaseBranch(tester.branch, base, tester.main);
+				const { newSourceHead } = rebaseBranch(
+					mintRevisionTag,
+					new DummyChangeRebaser(),
+					tester.branch,
+					base,
+					tester.main,
+				);
 				// The `expected` parameter starts at the base of the branch. Prepend the rest of the main
 				// branch to it so that it can be fully compared against the `BranchTester`'s `main`.
 				const expectedBaseIndex = main.indexOf(expected[0]);
 				assert.notEqual(expectedBaseIndex, -1, "Expected expected base to be in main");
 				const mainBeforeExpected = main.slice(0, expectedBaseIndex);
-				tester.assertParentage(result, ...[...mainBeforeExpected, ...expected]);
+				tester.assertParentage(newSourceHead, ...[...mainBeforeExpected, ...expected]);
 			});
 		}
 

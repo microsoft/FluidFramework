@@ -14,7 +14,8 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	const requiredModules = [
 		// General mocha setup e.g. suppresses console.log,
 		// This has to be before others (except logger) so that registerMochaTestWrapperFuncs is available
-		`@fluidframework/mocha-test-setup`,
+		"@fluidframework/mocha-test-setup",
+		"source-map-support/register",
 		...(additionalRequiredModules ? additionalRequiredModules : []),
 	];
 
@@ -50,28 +51,32 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
+		// Performance tests benefit from having access to GC, and memory tests require it.
+		// Exposing it here avoids all packages which do perf testing from having to expose it.
+		"v8-expose-gc": true,
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
 		config["timeout"] = process.env.FLUID_TEST_TIMEOUT;
 	}
 
-	if (process.env.FLUID_TEST_REPORT === "1") {
-		const packageJson = require(`${packageDir}/package.json`);
-		config["reporter"] = `xunit`;
-		if (testReportPrefix) {
-			config["reporter-options"] = [
-				// give the report file a unique name based on testReportPrefix
-				`output=${packageDir}/nyc/${testReportPrefix}-junit-report.xml`,
-				`suiteName=${packageJson.name} - ${testReportPrefix}`,
-			];
-		} else {
-			config["reporter-options"] = [
-				`output=${packageDir}/nyc/junit-report.xml`,
-				`suiteName=${packageJson.name}`,
-			];
-		}
-	}
+	const packageJson = require(`${packageDir}/package.json`);
+	config["reporter"] = `mocha-multi-reporters`;
+	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
+	const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
+	console.log(
+		`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml and nyc/${outputFilePrefix}junit-report.json`,
+	);
+	const suiteName =
+		testReportPrefix !== undefined
+			? `${packageJson.name} - ${testReportPrefix}`
+			: packageJson.name;
+	config["reporter-options"] = [
+		`configFile=${path.join(
+			__dirname,
+			"test-config.json",
+		)},cmrOutput=xunit+output+${outputFilePrefix}:mocha-json-output-reporter+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+	];
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {
 		config["forbid-only"] = true;

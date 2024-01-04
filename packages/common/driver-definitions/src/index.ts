@@ -5,7 +5,7 @@
 
 export {
 	DriverError,
-	DriverErrorType,
+	DriverErrorTypes,
 	IAnyDriverError,
 	IAuthorizationError,
 	IDriverErrorBase,
@@ -37,9 +37,6 @@ export {
 	DriverHeader,
 	IContainerPackageInfo,
 	IDriverHeader,
-	IFluidResolvedUrl,
 	IResolvedUrl,
-	IResolvedUrlBase,
-	IWebResolvedUrl,
 	IUrlResolver,
 } from "./urlResolver";

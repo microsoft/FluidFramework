@@ -4,6 +4,7 @@
 		"lib": ["ES2019", "ES2018.Promise", "DOM", "DOM.Iterable"],
 		"noImplicitAny": true,
 		"noUnusedLocals": false,
+		"noImplicitOverride": true,
 		"rootDir": "./",
 		"outDir": "../../dist/test",
 		"types": ["node", "mocha"],

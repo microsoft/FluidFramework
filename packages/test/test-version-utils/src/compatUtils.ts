@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
+import {
+	FluidObject,
+	IFluidHandleContext,
+	IFluidLoadable,
+	IRequest,
+} from "@fluidframework/core-interfaces";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
@@ -11,22 +17,34 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { FluidTestDriverConfig, createFluidTestDriver } from "@fluidframework/test-drivers";
-import { mixinAttributor } from "@fluidframework/attributor";
-import { pkgVersion } from "./packageVersion";
-import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
+import { mixinAttributor } from "@fluid-experimental/attributor";
+import { pkgVersion } from "./packageVersion.js";
+import {
+	getLoaderApi,
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getDriverApi,
+	CompatApis,
+} from "./testApi.js";
 
+/**
+ * @internal
+ */
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
+/**
+ * @internal
+ */
 export interface ITestDataObject extends IFluidLoadable {
 	_context: IFluidDataStoreContext;
 	_runtime: IFluidDataStoreRuntime;
@@ -88,20 +106,48 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 }
 
 // Only support current version, not baseVersion support
+/**
+ * @internal
+ */
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi(pkgVersion));
 
-async function createVersionedFluidTestDriver(
-	baseVersion: string,
+/**
+ * @internal
+ */
+export async function getVersionedTestObjectProviderFromApis(
+	apis: Omit<CompatApis, "dds">,
 	driverConfig?: {
 		type?: TestDriverTypes;
 		config?: FluidTestDriverConfig;
-		version?: number | string;
 	},
 ) {
-	const driverApi = getDriverApi(baseVersion, driverConfig?.version);
-	return createFluidTestDriver(driverConfig?.type ?? "local", driverConfig?.config, driverApi);
+	const driver = await createFluidTestDriver(
+		driverConfig?.type ?? "local",
+		driverConfig?.config,
+		apis.driver,
+	);
+
+	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
+		const runtimeCtor =
+			containerOptions?.enableAttribution === true
+				? mixinAttributor(apis.containerRuntime.ContainerRuntime)
+				: apis.containerRuntime.ContainerRuntime;
+		const factoryCtor = createTestContainerRuntimeFactory(runtimeCtor);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+		);
+	};
+
+	return new TestObjectProvider(apis.loader.Loader, driver, containerFactoryFn);
 }
 
+/**
+ * @internal
+ */
 export async function getVersionedTestObjectProvider(
 	baseVersion: string,
 	loaderVersion?: number | string,
@@ -113,21 +159,75 @@ export async function getVersionedTestObjectProvider(
 	runtimeVersion?: number | string,
 	dataRuntimeVersion?: number | string,
 ): Promise<TestObjectProvider> {
-	const loaderApi = getLoaderApi(baseVersion, loaderVersion);
-	const containerRuntimeApi = getContainerRuntimeApi(baseVersion, runtimeVersion);
-	const dataRuntimeApi = getDataRuntimeApi(baseVersion, dataRuntimeVersion);
-	const driver = await createVersionedFluidTestDriver(baseVersion, driverConfig);
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+	return getVersionedTestObjectProviderFromApis(
+		{
+			loader: getLoaderApi(baseVersion, loaderVersion),
+			containerRuntime: getContainerRuntimeApi(baseVersion, runtimeVersion),
+			dataRuntime: getDataRuntimeApi(baseVersion, dataRuntimeVersion),
+			driver: getDriverApi(baseVersion, driverConfig?.version),
+		},
+		driverConfig,
+	);
+}
 
-	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
-	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+/**
+ * @internal
+ */
+export async function getCompatVersionedTestObjectProviderFromApis(
+	apis: CompatApis,
+	driverConfig: {
+		type: TestDriverTypes;
+		config: FluidTestDriverConfig;
+	},
+): Promise<TestObjectProviderWithVersionedLoad> {
+	assert(apis.driverForLoading !== undefined, "driverForLoading must be defined");
+	assert(apis.loaderForLoading !== undefined, "loaderForLoading must be defined");
+	assert(apis.dataRuntimeForLoading !== undefined, "dataRuntimeForLoading must be defined");
+
+	const driverForCreating = await createFluidTestDriver(
+		driverConfig.type,
+		driverConfig.config,
+		apis.driver,
+	);
+
+	const driverConfigForLoading = driverConfig;
+	const driverForLoading = await createFluidTestDriver(
+		driverConfigForLoading.type,
+		driverConfigForLoading.config,
+		apis.driverForLoading,
+	);
+
+	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+		(
+			runtime as any as Required<FluidObject<IFluidHandleContext>>
+		).IFluidHandleContext.resolveHandle(request);
+
+	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	const getDataStoreFactoryFnForLoading = createGetDataStoreFactoryFunction(
+		apis.dataRuntimeForLoading,
+	);
+
+	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
-		const runtimeCtor =
-			containerOptions?.enableAttribution === true
-				? mixinAttributor(containerRuntimeApi.ContainerRuntime)
-				: containerRuntimeApi.ContainerRuntime;
-		const factoryCtor = createTestContainerRuntimeFactory(runtimeCtor);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			apis.containerRuntime.ContainerRuntime,
+		);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+			[innerRequestHandler],
+		);
+	};
+	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFnForLoading(containerOptions);
+		assert(
+			apis.containerRuntimeForLoading !== undefined,
+			"containerRuntimeForLoading must be defined",
+		);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			apis.containerRuntimeForLoading.ContainerRuntime,
+		);
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
@@ -136,5 +236,12 @@ export async function getVersionedTestObjectProvider(
 		);
 	};
 
-	return new TestObjectProvider(loaderApi.Loader, driver, containerFactoryFn);
+	return new TestObjectProviderWithVersionedLoad(
+		apis.loader.Loader,
+		apis.loaderForLoading.Loader,
+		driverForCreating,
+		driverForLoading,
+		createContainerFactoryFn,
+		loadContainerFactoryFn,
+	);
 }

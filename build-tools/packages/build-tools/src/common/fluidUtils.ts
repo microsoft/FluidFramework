@@ -2,100 +2,84 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as path from "path";
+import * as childProcess from "node:child_process";
+import * as path from "node:path";
+import { existsSync } from "node:fs";
 import { cosmiconfigSync } from "cosmiconfig";
+import findUp from "find-up";
 
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
-import { defaultLogger } from "./logging";
-import { existsSync, lookUpDirAsync, readJsonAsync, realpathAsync } from "./utils";
+import { realpathAsync } from "./utils";
+import { readJson } from "fs-extra";
 
-const { verbose } = defaultLogger;
-
-async function isFluidRootLerna(dir: string) {
-	const filename = path.join(dir, "lerna.json");
-	if (!existsSync(filename)) {
-		verbose(`InferRoot: lerna.json not found`);
-		return false;
-	}
-	const rootPackageManifest = getFluidBuildConfig(dir);
-	if (
-		rootPackageManifest.repoPackages.server !== undefined &&
-		!existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))
-	) {
-		verbose(
-			`InferRoot: ${dir}/${
-				rootPackageManifest.repoPackages.server as string
-			}/lerna.json not found`,
-		);
-		return false;
-	}
-
-	return true;
-}
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
 
 async function isFluidRootPackage(dir: string) {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
-		verbose(`InferRoot: package.json not found`);
+		traceInit(`InferRoot: package.json not found`);
 		return false;
 	}
 
-	const parsed = await readJsonAsync(filename);
-	if (parsed.name === "root" && parsed.private === true) {
+	const parsed = await readJson(filename);
+	if (parsed.private === true) {
 		return true;
 	}
-	verbose(`InferRoot: package.json not matched`);
+	traceInit(`InferRoot: package.json not matched`);
 	return false;
 }
 
-async function isFluidRoot(dir: string) {
-	return (await isFluidRootLerna(dir)) && (await isFluidRootPackage(dir));
-}
-
 async function inferRoot() {
-	return lookUpDirAsync(process.cwd(), async (curr) => {
-		verbose(`InferRoot: probing ${curr}`);
-		try {
-			if (await isFluidRoot(curr)) {
-				return true;
-			}
-			// eslint-disable-next-line no-empty
-		} catch {}
-		return false;
-	});
+	let fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
+	if (fluidConfig === undefined) {
+		traceInit(`No fluidBuild.config.cjs found. Falling back to git root.`);
+		// Use the git root as a fallback for older branches where the fluidBuild config is still in
+		// package.json
+		const gitRoot = childProcess
+			.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
+			.trim();
+		fluidConfig = path.join(gitRoot, "package.json");
+		if (fluidConfig === undefined || !existsSync(fluidConfig)) {
+			return undefined;
+		}
+	}
+	const isRoot = await isFluidRootPackage(path.dirname(fluidConfig));
+	if (isRoot) {
+		return path.dirname(fluidConfig);
+	}
+
+	return undefined;
 }
 
 export async function getResolvedFluidRoot() {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {
-		verbose(`Using argument root @ ${root}`);
+		traceInit(`Using argument root @ ${root}`);
 	} else {
 		root = await inferRoot();
 		if (root) {
 			checkFluidRoot = false;
-			verbose(`Using inferred root @ ${root}`);
+			traceInit(`Using inferred root @ ${root}`);
 		} else if (commonOptions.defaultRoot) {
 			root = commonOptions.defaultRoot;
-			verbose(`Using default root @ ${root}`);
+			traceInit(`Using default root @ ${root}`);
 		} else {
-			console.error(
-				`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
+			throw new Error(
+				`Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
 			);
-			process.exit(-101);
 		}
 	}
 
-	if (checkFluidRoot && !isFluidRoot(root)) {
-		console.error(`ERROR: '${root}' is not a root of Fluid repo.`);
-		process.exit(-100);
+	if (checkFluidRoot && !isFluidRootPackage(root)) {
+		throw new Error(`'${root}' is not a root of Fluid repo.`);
 	}
 
 	const resolvedRoot = path.resolve(root);
 	if (!existsSync(resolvedRoot)) {
-		console.error(`ERROR: Repo root '${resolvedRoot}' does not exist.`);
-		process.exit(-102);
+		throw new Error(`Repo root '${resolvedRoot}' does not exist.`);
 	}
 
 	// Use realpath.native to get the case-sensitive path on windows

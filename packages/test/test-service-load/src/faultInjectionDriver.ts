@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import {
-	DriverErrorType,
+	DriverErrorTypes,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
@@ -22,14 +23,11 @@ import {
 	INack,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, wrapError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
-	public get protocolName() {
-		return this.internal.protocolName;
-	}
 	public get documentServices() {
 		return this._documentServices;
 	}
@@ -117,6 +115,9 @@ export class FaultInjectionDocumentService implements IDocumentService {
 	}
 
 	public dispose(error?: any) {
+		this.onlineP.reject(
+			wrapError(error, (message) => new FaultInjectionError(`disposed: ${message}`, false)),
+		);
 		this.internal.dispose(error);
 	}
 
@@ -125,11 +126,12 @@ export class FaultInjectionDocumentService implements IDocumentService {
 			this._currentDeltaStream?.disposed !== false,
 			"Document service factory should only have one open connection",
 		);
-		const internal = await this.internal.connectToDeltaStream(client);
-
 		// this method is not expected to resolve until connected
 		await this.onlineP.promise;
-		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal, this.online);
+		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(
+			await this.internal.connectToDeltaStream(client),
+			this.online,
+		);
 		return this._currentDeltaStream;
 	}
 
@@ -153,8 +155,10 @@ export class FaultInjectionDocumentDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	private _disposed: boolean = false;
-	constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
+	constructor(
+		private readonly internal: IDocumentDeltaConnection,
+		private online: boolean,
+	) {
 		super();
 		this.on("newListener", (event) => this.forwardEvent(event));
 	}
@@ -176,7 +180,7 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public get disposed() {
-		return this._disposed;
+		return this.internal.disposed;
 	}
 
 	public get clientId() {
@@ -240,13 +244,15 @@ export class FaultInjectionDocumentDeltaConnection
 	 * Disconnects the given delta connection
 	 */
 	public dispose(): void {
-		this._disposed = true;
 		this.events.forEach((listener, event) => this.internal.off(event, listener));
 		this.internal.dispose();
 	}
 
 	public injectNack(docId: string, canRetry: boolean | undefined) {
-		assert(!this.disposed, "cannot inject nack into closed delta connection");
+		// Cannot inject nack into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		const nack: Partial<INack> = {
 			content: {
 				code: canRetry === true ? 500 : 403,
@@ -258,7 +264,10 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public injectError(canRetry: boolean | undefined) {
-		assert(!this.disposed, "cannot inject error into closed delta connection");
+		// Cannot inject error into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		// https://nodejs.org/api/events.html#events_error_events
 		assert(
 			this.listenerCount("error") > 0,
@@ -268,7 +277,10 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public injectDisconnect() {
-		assert(!this.disposed, "cannot inject disconnect into closed delta connection");
+		// Cannot inject disconnect into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		this.emit("disconnect", "FaultInjectionDisconnect");
 	}
 
@@ -285,7 +297,10 @@ export class FaultInjectionDocumentDeltaConnection
 }
 
 export class FaultInjectionDocumentDeltaStorageService implements IDocumentDeltaStorageService {
-	constructor(private readonly internal: IDocumentDeltaStorageService, private online: boolean) {}
+	constructor(
+		private readonly internal: IDocumentDeltaStorageService,
+		private online: boolean,
+	) {}
 	public goOffline() {
 		this.online = false;
 	}
@@ -302,7 +317,10 @@ export class FaultInjectionDocumentDeltaStorageService implements IDocumentDelta
 }
 
 export class FaultInjectionDocumentStorageService implements IDocumentStorageService {
-	constructor(private readonly internal: IDocumentStorageService, private online: boolean) {}
+	constructor(
+		private readonly internal: IDocumentStorageService,
+		private online: boolean,
+	) {}
 
 	public goOffline() {
 		this.online = false;
@@ -360,7 +378,7 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 }
 
 function throwOfflineError(): never {
-	throw new FaultInjectionError("simulated offline error", false, DriverErrorType.offlineError);
+	throw new FaultInjectionError("simulated offline error", false, DriverErrorTypes.offlineError);
 }
 
 export class FaultInjectionError extends LoggingError {

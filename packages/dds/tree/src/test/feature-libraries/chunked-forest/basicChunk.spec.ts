@@ -6,48 +6,49 @@
 import { strict as assert } from "assert";
 import {
 	TestField,
+	mapSchema,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
-} from "../../cursorTestSuite";
+} from "../../cursorTestSuite.js";
 import {
 	EmptyKey,
 	ITreeCursor,
 	ITreeCursorSynchronous,
 	JsonableTree,
-	TreeSchemaIdentifier,
-} from "../../../core";
+	TreeNodeSchemaIdentifier,
+} from "../../../core/index.js";
 import {
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	chunkTree,
 	TreeChunk,
-} from "../../../feature-libraries";
-import { brand, ReferenceCountedBase } from "../../../util";
+} from "../../../feature-libraries/index.js";
+import { brand, ReferenceCountedBase } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { uniformChunk } from "../../../feature-libraries/chunked-forest";
+import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
 	chunkField,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree";
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk";
-import { jsonNumber } from "../../../domains";
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
+import { leaf } from "../../../domains/index.js";
 import {
 	ChunkedCursor,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunk";
-import { emptyShape, testData } from "./uniformChunkTestData";
-import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities";
+} from "../../../feature-libraries/chunked-forest/chunk.js";
+import { emptyShape, testData } from "./uniformChunkTestData.js";
+import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
-		const inputCursor = singleTextCursor(data);
+		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
@@ -62,7 +63,7 @@ describe("basic chunk", () => {
 
 	it("calling chunkField on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
-		const inputCursor = singleTextCursor(data);
+		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
@@ -77,7 +78,7 @@ describe("basic chunk", () => {
 	testGeneralPurposeTreeCursor(
 		"basic chunk",
 		(data): ITreeCursor => {
-			const inputCursor = singleTextCursor(data);
+			const inputCursor = cursorForJsonableTreeNode(data);
 			const chunk = basicChunkTree(inputCursor, basicOnlyChunkPolicy);
 			const cursor: ITreeCursor = chunk.cursor();
 			cursor.enterNode(0);
@@ -87,7 +88,7 @@ describe("basic chunk", () => {
 		true,
 	);
 
-	const schema: TreeSchemaIdentifier = brand("fakeSchema");
+	const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 
 	const hybridData: TestField<BasicChunk>[] = [];
 	for (const data of testData) {
@@ -217,7 +218,7 @@ describe("basic chunk", () => {
 });
 
 function numericBasicChunk(value: number = 0): BasicChunk {
-	return new BasicChunk(jsonNumber.name, new Map(), value);
+	return new BasicChunk(leaf.number.name, new Map(), value);
 }
 
 /**
@@ -235,11 +236,11 @@ class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 		this.chunk.referenceRemoved();
 	}
 
-	get topLevelLength(): number {
+	public get topLevelLength(): number {
 		return this.chunk.topLevelLength;
 	}
 
-	cursor(): ChunkedCursor {
+	public cursor(): ChunkedCursor {
 		return this.chunk.cursor();
 	}
 }

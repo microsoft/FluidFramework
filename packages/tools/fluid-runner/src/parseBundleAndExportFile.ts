@@ -7,18 +7,18 @@ import * as fs from "fs";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
-import { getArgsValidationError } from "./getArgsValidationError";
 /* eslint-disable import/no-internal-modules */
 import { ITelemetryOptions } from "./logger/fileLogger";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
 /* eslint-enable import/no-internal-modules */
-import { getSnapshotFileContent } from "./utils";
+import { getSnapshotFileContent, getArgsValidationError } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 
 /**
  * Parse a provided JS bundle, execute code on Container based on ODSP snapshot, and write result to file
  * @param codeLoader - path to provided JS bundle that implements ICodeLoaderBundle (see codeLoaderBundle.ts)
+ * @internal
  */
 export async function parseBundleAndExportFile(
 	codeLoader: string,
@@ -27,6 +27,8 @@ export async function parseBundleAndExportFile(
 	telemetryFile: string,
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -58,7 +60,7 @@ export async function parseBundleAndExportFile(
 					return { success: false, eventName, errorMessage };
 				}
 
-				const argsValidationError = getArgsValidationError(inputFile, outputFile);
+				const argsValidationError = getArgsValidationError(inputFile, outputFile, timeout);
 				if (argsValidationError) {
 					const eventName = clientArgsValidationError;
 					logger.sendErrorEvent({ eventName, message: argsValidationError });
@@ -72,6 +74,8 @@ export async function parseBundleAndExportFile(
 						fluidExport,
 						logger,
 						options,
+						timeout,
+						disableNetworkFetch,
 					),
 				);
 

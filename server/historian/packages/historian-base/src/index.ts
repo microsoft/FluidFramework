@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
+export { IHistorianResourcesCustomizations } from "./customizations";
 export { configureHistorianLogging } from "./logger";
 export { create, IRoutes } from "./routes";
 export { HistorianRunner } from "./runner";
-export { HistorianResources, HistorianResourcesFactory, HistorianRunnerFactory } from "./runnerFactory";
+export {
+	HistorianResources,
+	HistorianResourcesFactory,
+	HistorianRunnerFactory,
+} from "./runnerFactory";
 export {
 	ICache,
 	IConnectionString,

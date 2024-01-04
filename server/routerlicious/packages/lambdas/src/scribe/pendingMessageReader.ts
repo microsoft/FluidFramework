@@ -9,15 +9,25 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 import { IPendingMessageReader } from "./interfaces";
 
 export class PendingMessageReader implements IPendingMessageReader {
-    constructor(
-        private readonly tenantId: string,
-        private readonly documentId: string,
-        protected readonly deltaService: IDeltaService,
-    ) { }
-    
-    public async readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]> {
-        Lumberjack.info(`Fetching pending messages from ${from} to ${to}`, getLumberBaseProperties(this.documentId, this.tenantId));
-        const deltasP = this.deltaService.getDeltas("", this.tenantId, this.documentId, from-1, to+1);
-        return deltasP;
-    }
+	constructor(
+		private readonly tenantId: string,
+		private readonly documentId: string,
+		protected readonly deltaService: IDeltaService,
+	) {}
+
+	public async readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]> {
+		Lumberjack.info(
+			`Fetching pending messages from ${from} to ${to}`,
+			getLumberBaseProperties(this.documentId, this.tenantId),
+		);
+		const deltasP = this.deltaService.getDeltas(
+			"",
+			this.tenantId,
+			this.documentId,
+			from - 1,
+			to + 1,
+			"scribe",
+		);
+		return deltasP;
+	}
 }

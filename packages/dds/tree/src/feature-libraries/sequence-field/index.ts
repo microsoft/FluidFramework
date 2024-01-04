@@ -4,80 +4,55 @@
  */
 
 export {
-	Attach,
-	NewAttach,
 	Changeset,
-	Delete,
+	Remove,
 	Detach,
-	Effects,
-	HasChanges,
 	HasMoveId,
-	HasPlaceFields,
 	HasRevisionTag,
-	HasTiebreakPolicy,
 	Insert,
 	Mark,
 	MarkList,
-	Modify,
 	MoveIn,
 	MoveOut,
 	NodeChangeType,
-	NodeCount,
+	CellCount as NodeCount,
 	MoveId,
-	ObjectMark,
-	PriorOp,
-	ProtoNode,
-	RangeType,
-	Reattach,
-	ReturnFrom,
-	ReturnTo,
-	Revive,
-	Tiebreak,
-	Skip,
+	Attach,
+	NoopMark,
 	LineageEvent,
-	HasReattachFields,
-	CellSpanningMark,
-	InputSpanningMark,
-	OutputSpanningMark,
-	SkipLikeReattach,
-	Conflicted,
-	CanConflict,
-} from "./format";
+	CellId,
+	HasMarkFields,
+	HasLineage,
+	IdRange,
+	CellMark,
+	AttachAndDetach,
+	DetachIdOverride,
+} from "./types.js";
+export { DetachIdOverrideType } from "./format.js";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
-} from "./sequenceFieldChangeHandler";
-export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
-export {
-	decodeJson,
-	encodeForJson,
-	NodeChangeDecoder,
-	NodeChangeEncoder,
-	sequenceFieldChangeEncoder,
-} from "./sequenceFieldChangeEncoder";
-export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
-export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
-export { MarkListFactory } from "./markListFactory";
-export { amendRebase, NodeChangeRebaser, rebase } from "./rebase";
-export { amendInvert, invert, NodeChangeInverter } from "./invert";
-export { amendCompose, compose, NodeChangeComposer } from "./compose";
+} from "./sequenceFieldChangeHandler.js";
+export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser.js";
+export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
+export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta.js";
+export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
+export { MarkListFactory } from "./markListFactory.js";
+export { NodeChangeRebaser, rebase } from "./rebase.js";
+export { invert, NodeChangeInverter } from "./invert.js";
+export { amendCompose, compose, NodeChangeComposer } from "./compose.js";
 export {
 	areComposable,
 	areRebasable,
-	isActiveReattach,
 	getInputLength,
-	isDetachMark,
-	isReattach,
+	isDetach,
 	DetachedNodeTracker,
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
-} from "./utils";
-export {
-	isMoveMark,
-	MoveMark,
-	MoveEffectTable,
-	MoveEffect,
-	PairedMarkUpdate,
-	splitMarkOnOutput,
-} from "./moveEffectTable";
+	cloneMark,
+	extractMarkEffect,
+} from "./utils.js";
+export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable.js";
+
+export { relevantRemovedRoots } from "./relevantRemovedRoots.js";

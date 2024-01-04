@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
+import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	SummaryTree,
 	ISummaryTree,
@@ -15,6 +15,7 @@ import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbage
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
+ * @public
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
@@ -30,6 +31,7 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
+ * @public
  */
 export interface ISummaryTreeWithStats {
 	/**
@@ -45,6 +47,7 @@ export interface ISummaryTreeWithStats {
 
 /**
  * Represents a summary at a current sequence number.
+ * @alpha
  */
 export interface ISummarizeResult {
 	stats: ISummaryStats;
@@ -56,7 +59,8 @@ export interface ISummarizeResult {
  * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
  *
  * @example
- * ```
+ *
+ * ```typescript
  * id:""
  * pathPartsForChildren: ["path1"]
  * stats: ...
@@ -64,6 +68,7 @@ export interface ISummarizeResult {
  *   ...
  *     "path1":
  * ```
+ * @alpha
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
 	id: string;
@@ -74,73 +79,57 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 /**
- * The garbage collection data of each node in the reference graph.
+ * @experimental - Can be deleted/changed at any time
+ * Contains the necessary information to allow DDSes to do incremental summaries
+ * @public
  */
-export interface IGarbageCollectionNodeData {
+export interface IExperimentalIncrementalSummaryContext {
 	/**
-	 * The set of routes to other nodes in the graph.
+	 * The sequence number of the summary generated that will be sent to the server.
 	 */
-	outboundRoutes: string[];
+	summarySequenceNumber: number;
 	/**
-	 * If the node is unreferenced, the timestamp of when it was marked unreferenced.
+	 * The sequence number of the most recent summary that was acknowledged by the server.
 	 */
-	unreferencedTimestampMs?: number;
+	latestSummarySequenceNumber: number;
+	/**
+	 * The path to the runtime/datastore/dds that is used to generate summary handles
+	 * Note: Summary handles are nodes of the summary tree that point to previous parts of the last successful summary
+	 * instead of being a blob or tree node
+	 *
+	 * This path contains the id of the data store and dds which should not be leaked to layers below them. Ideally,
+	 * a layer should not know its own id. This is important for channel unification work and there has been a lot of
+	 * work to remove these kinds of leakages. Some still exist, which have to be fixed but we should not be adding
+	 * more dependencies.
+	 */
+	// TODO: remove summaryPath
+	summaryPath: string;
 }
 
 /**
- * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
- * GC data.
+ * @alpha
  */
-export interface IGarbageCollectionState {
-	gcNodes: { [id: string]: IGarbageCollectionNodeData };
-}
-
-/**
- * @deprecated - IGarbageCollectionState is written in the root of the summary now.
- * Legacy GC details from when the GC details were written at the data store's summary tree.
- */
-export interface IGarbageCollectionSummaryDetailsLegacy {
-	/** A list of routes to Fluid objects that are used in this node. */
-	usedRoutes?: string[];
-	/** The GC data of this node. */
-	gcData?: IGarbageCollectionData;
-	/** If this node is unreferenced, the time when it was marked as such. */
-	unrefTimestamp?: number;
-}
-
-/**
- * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
- */
-export interface IGarbageCollectionSnapshotData {
-	gcState: IGarbageCollectionState;
-	tombstones: string[] | undefined;
-	deletedNodes: string[] | undefined;
-}
-
 export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
+	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ) => Promise<ISummarizeInternalResult>;
 
+/**
+ * @alpha
+ */
 export interface ISummarizerNodeConfig {
 	/**
 	 * True to reuse previous handle when unchanged since last acked summary.
 	 * Defaults to true.
 	 */
 	readonly canReuseHandle?: boolean;
-	/**
-	 * True to always stop execution on error during summarize, or false to
-	 * attempt creating a summary that is a pointer ot the last acked summary
-	 * plus outstanding ops in case of internal summarize failure.
-	 * Defaults to false.
-	 *
-	 * BUG BUG: Default to true while we investigate problem
-	 * with differential summaries
-	 */
-	readonly throwOnFailure?: true;
 }
 
+/**
+ * @alpha
+ */
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 	/**
 	 * True if GC is disabled. If so, don't track GC related state for a summary.
@@ -149,11 +138,17 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 	readonly gcDisabled?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export enum CreateSummarizerNodeSource {
 	FromSummary,
 	FromAttach,
 	Local,
 }
+/**
+ * @alpha
+ */
 export type CreateChildSummarizerNodeParam =
 	| {
 			type: CreateSummarizerNodeSource.FromSummary;
@@ -167,6 +162,9 @@ export type CreateChildSummarizerNodeParam =
 			type: CreateSummarizerNodeSource.Local;
 	  };
 
+/**
+ * @alpha
+ */
 export interface ISummarizerNode {
 	/**
 	 * Latest successfully acked summary reference sequence number
@@ -179,9 +177,6 @@ export interface ISummarizerNode {
 	invalidate(sequenceNumber: number): void;
 	/**
 	 * Calls the internal summarize function and handles internal state tracking.
-	 * If unchanged and fullTree is false, it will reuse previous summary subtree.
-	 * If an error is encountered and throwOnFailure is false, it will try to make
-	 * a summary with a pointer to the previous summary + a blob of outstanding ops.
 	 * @param fullTree - true to skip optimizations and always generate the full tree
 	 * @param trackState - indicates whether the summarizer node should track the state of the summary or not
 	 * @param telemetryContext - summary data passed through the layers for telemetry purposes
@@ -255,6 +250,7 @@ export interface ISummarizerNode {
  * `isReferenced`: This tells whether this node is referenced in the document or not.
  *
  * `updateUsedRoutes`: Used to notify this node of routes that are currently in use in it.
+ * @alpha
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	createChild(
@@ -279,7 +275,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 		config?: ISummarizerNodeConfigWithGC,
 		getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		/**
-		 * @deprecated - The functionality to update child's base GC details is incorporated in the summarizer node.
+		 * @deprecated The functionality to update child's base GC details is incorporated in the summarizer node.
 		 */
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 	): ISummarizerNodeWithGC;
@@ -313,11 +309,15 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	updateUsedRoutes(usedRoutes: string[]): void;
 }
 
+/**
+ * @internal
+ */
 export const channelsTreeName = ".channels";
 
 /**
  * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
+ * @public
  */
 export interface ITelemetryContext {
 	/**
@@ -355,6 +355,12 @@ export interface ITelemetryContext {
 	serialize(): string;
 }
 
+/**
+ * @internal
+ */
 export const blobCountPropertyName = "BlobCount";
 
+/**
+ * @internal
+ */
 export const totalBlobSizePropertyName = "TotalBlobSize";

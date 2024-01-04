@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryProperties } from '@fluidframework/common-definitions';
+import type { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import type { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { fail } from './Common';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog';

@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Link, UrlTarget } from "../Link";
-import { DocumentationParentNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
+import { type Link, type UrlTarget } from "../Link";
+import { DocumentationParentNodeBase, type SingleLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";
 
@@ -21,6 +21,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```html
  * <a href="https://fluidframework.com/">Fluid Framework</a>
  * ```
+ *
+ * @public
  */
 export class LinkNode
 	extends DocumentationParentNodeBase<SingleLineDocumentationNode>

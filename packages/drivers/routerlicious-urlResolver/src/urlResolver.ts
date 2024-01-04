@@ -4,9 +4,9 @@
  */
 
 import { parse } from "url";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { Provider } from "nconf";
 
@@ -16,6 +16,9 @@ const r11sServers = [
 	"www.eu.prague.office-int.com",
 ];
 
+/**
+ * @internal
+ */
 export class RouterliciousUrlResolver implements IUrlResolver {
 	constructor(
 		private readonly config:
@@ -124,7 +127,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		ordererUrl += ``;
 		deltaStorageUrl += ``;
 
-		const resolved: IFluidResolvedUrl = {
+		const resolved: IResolvedUrl = {
 			endpoints: {
 				storageUrl,
 				deltaStorageUrl,
@@ -139,9 +142,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 	}
 
 	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-		const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
-
-		const parsedUrl = parse(fluidResolvedUrl.url);
+		const parsedUrl = parse(resolvedUrl.url);
 		assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");
 		assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);
@@ -158,11 +159,17 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IAlfredUser extends IUser {
 	displayName: string;
 	name: string;
 }
 
+/**
+ * @internal
+ */
 export interface IConfig {
 	serverUrl: string;
 	blobStorageUrl: string;

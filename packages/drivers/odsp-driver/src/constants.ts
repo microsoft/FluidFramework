@@ -3,5 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @alpha
+ */
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
+
+/**
+ * @alpha
+ */
 export const OdcFileSiteOrigin = "https://1drv.ms";

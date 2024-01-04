@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { ISubscribable } from "../../events";
-import { Dependee } from "../dependency-tracking";
-import { StoredSchemaRepository } from "../schema-stored";
+import { assert } from "@fluidframework/core-utils";
+import { ISubscribable } from "../../events/index.js";
+import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored/index.js";
 import {
 	Anchor,
 	AnchorSet,
-	Delta,
 	DetachedField,
 	detachedFieldAsKey,
-	FieldKey,
 	ITreeCursor,
+	ITreeCursorSynchronous,
 	rootField,
-} from "../tree";
-import type { IEditableForest } from "./editableForest";
+	UpPath,
+} from "../tree/index.js";
+import type { IEditableForest } from "./editableForest.js";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -32,42 +31,47 @@ import type { IEditableForest } from "./editableForest";
  * Events for {@link IForestSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @alpha
+ * @internal
  */
 export interface ForestEvents {
 	/**
-	 * Delta is about to be applied to forest.
+	 * The forest is about to be changed.
+	 * Emitted before the first change in a batch of changes.
 	 */
-	beforeDelta(delta: Delta.Root): void;
+	beforeChange(): void;
 
 	/**
-	 * Delta was just applied to forest.
+	 * The forest was just changed.
+	 * Emitted after the last change in a batch of changes.
 	 */
-	afterDelta(delta: Delta.Root): void;
+	afterChange(): void;
 }
 
 /**
- * Invalidates whenever `current` changes.
+ * Invalidates whenever the tree content changes.
  * For now (might change later) downloading new parts of the forest counts as a change.
+ * Not invalidated when schema changes.
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
- * @alpha
+ * @internal
  */
-export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
+export interface IForestSubscription extends ISubscribable<ForestEvents> {
+	/**
+	 * Set of anchors this forest is tracking.
+	 *
+	 * To keep these anchors usable, this AnchorSet must be updated / rebased for any changes made to the forest.
+	 * It is the responsibility of the caller of the forest-editing methods to do this, not the forest itself.
+	 * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
+	 * update the anchors in a semantically optimal way.
+	 */
+	readonly anchors: AnchorSet;
+
 	/**
 	 * Create an independent copy of this forest, that uses the provided schema and anchors.
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
 	 */
-	clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
-
-	/**
-	 * Schema used within this forest.
-	 * All data must conform to these schema.
-	 *
-	 * The root's schema is tracked under {@link rootFieldKey}.
-	 */
-	readonly schema: StoredSchemaRepository;
+	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
 
 	/**
 	 * Allocates a cursor in the "cleared" state.
@@ -96,6 +100,30 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
+
+	/**
+	 * Set `cursorToMove` to location described by path.
+	 * This is NOT a relative move: current position is discarded.
+	 * Path must point to existing node.
+	 */
+	moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void;
+
+	/**
+	 * The cursor is moved to a special dummy node above the detached fields.
+	 * This dummy node can be used to read the detached fields,
+	 * but other operations (such as inspecting the dummy node's type or path) should not be relied upon.
+	 * While this method does not return an {@link ITreeSubscriptionCursor}, similar restrictions apply to its use:
+	 * the returned cursor must not used after any edits are made to the forest.
+	 */
+	getCursorAboveDetachedFields(): ITreeCursorSynchronous;
+
+	/**
+	 * True if there are no nodes in the forest at all.
+	 *
+	 * @remarks
+	 * This means no nodes under any detached field, not just the special document root one.
+	 */
+	readonly isEmpty: boolean;
 }
 
 /**
@@ -128,7 +156,7 @@ export function moveToDetachedField(
 /**
  * Anchor to a field.
  * This is structurally based on the parent, so it will move only as the parent moves.
- * @alpha
+ * @internal
  */
 export interface FieldAnchor {
 	/**
@@ -141,7 +169,7 @@ export interface FieldAnchor {
 
 /**
  * ITreeCursor supporting IForestSubscription and its changes over time.
- * @alpha
+ * @internal
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
 	/**
@@ -191,7 +219,7 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export enum ITreeSubscriptionCursorState {
 	/**
@@ -209,7 +237,7 @@ export enum ITreeSubscriptionCursorState {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export const enum TreeNavigationResult {
 	/**

@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import {
+	readAndParse,
+	blobHeadersBlobName as blobNameForBlobHeaders,
+} from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -81,6 +84,10 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
 	return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
+
+/**
+ * @alpha
+ */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/** The last message processed at the time of summary. Only primitive property types are added to the summary. */
@@ -89,8 +96,15 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	readonly disableIsolatedChannels?: true;
 	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
 	readonly summaryNumber?: number;
+	/** GUID to identify a document in telemetry */
+	readonly telemetryDocumentId?: string;
+	/** True if the runtime IdCompressor is enabled */
+	readonly idCompressorEnabled?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface ICreateContainerMetadata {
 	/** Runtime version of the container when it was first created */
 	createContainerRuntimeVersion?: string;
@@ -98,7 +112,10 @@ export interface ICreateContainerMetadata {
 	createContainerTimestamp?: number;
 }
 
-/** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
+/**
+ * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
+ * @alpha
+ */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
 	| "clientId"
@@ -148,6 +165,8 @@ export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
+export const idCompressorBlobName = ".idCompressor";
+export const blobHeadersBlobName = blobNameForBlobHeaders;
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
@@ -167,6 +186,7 @@ export const nonDataStorePaths = [
 	".serviceProtocol",
 	blobsTreeName,
 	gcTreeKey,
+	idCompressorBlobName,
 ];
 
 export const dataStoreAttributesBlobName = ".component";
@@ -177,7 +197,9 @@ export const dataStoreAttributesBlobName = ".component";
  * @param summarizeResult - Summary tree and stats to modify
  *
  * @example
+ *
  * Converts from:
+ *
  * ```typescript
  * {
  *     type: SummaryType.Tree,
@@ -198,6 +220,7 @@ export const dataStoreAttributesBlobName = ".component";
  *     },
  * }
  * ```
+ *
  * And adds +1 to treeNodeCount in stats.
  */
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {

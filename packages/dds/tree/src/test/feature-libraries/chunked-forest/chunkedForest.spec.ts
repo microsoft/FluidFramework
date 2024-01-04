@@ -3,132 +3,89 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
-
 // Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest";
-/* eslint-disable-next-line import/no-internal-modules */
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
-
+// eslint-disable-next-line import/no-internal-modules
+import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	AnchorSet,
-	TransactionCheckout,
-	EditManager,
-	FieldKey,
-	mintRevisionTag,
-	initializeForest,
-	InMemoryStoredSchemaRepository,
-	JsonableTree,
-	mapCursorField,
-	mapCursorFields,
-	moveToDetachedField,
-	rootFieldKeySymbol,
-	TransactionResult,
-} from "../../../core";
-import { jsonSchemaData } from "../../../domains";
-import {
-	chunkTree,
-	DefaultChangeFamily,
-	defaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
-	defaultSchemaPolicy,
-	jsonableTreeFromCursor,
-	runSynchronousTransaction,
-	singleTextCursor,
+	IChunker,
+	makeTreeChunker,
+	Chunker,
+	polymorphic,
+	ShapeInfo,
 	defaultChunkPolicy,
-} from "../../../feature-libraries";
-import { testForest } from "../../forestTestSuite";
-import { brand } from "../../../util";
+	tryShapeFromSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
 
-const fooKey: FieldKey = brand("foo");
+import { TreeStoredSchemaSubscription } from "../../../core/index.js";
+import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { testForest } from "../../forestTestSuite.js";
+
+const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
+	[
+		"basic",
+		(schema): IChunker =>
+			new Chunker(
+				schema,
+				defaultSchemaPolicy,
+				Number.POSITIVE_INFINITY,
+				Number.POSITIVE_INFINITY,
+				0,
+				() => polymorphic,
+			),
+	],
+	["default", (schema) => makeTreeChunker(schema, defaultSchemaPolicy)],
+	[
+		"sequences",
+		(schema): IChunker =>
+			new Chunker(schema, defaultSchemaPolicy, 2, 1, 0, (): ShapeInfo => polymorphic),
+	],
+	[
+		"minimal-uniform",
+		(schema): IChunker =>
+			new Chunker(
+				schema,
+				defaultSchemaPolicy,
+				Number.POSITIVE_INFINITY,
+				Number.POSITIVE_INFINITY,
+				1,
+				tryShapeFromSchema,
+			),
+	],
+	[
+		"uniform",
+		(schema): IChunker =>
+			new Chunker(
+				schema,
+				defaultSchemaPolicy,
+				Number.POSITIVE_INFINITY,
+				Number.POSITIVE_INFINITY,
+				defaultChunkPolicy.uniformChunkNodeCount,
+				tryShapeFromSchema,
+			),
+	],
+	[
+		"mixed",
+		(schema): IChunker =>
+			new Chunker(
+				schema,
+				defaultSchemaPolicy,
+				2,
+				1,
+				defaultChunkPolicy.uniformChunkNodeCount,
+				tryShapeFromSchema,
+			),
+	],
+];
 
 describe("ChunkedForest", () => {
-	testForest({
-		suiteName: "ChunkedForest forest suite",
-		factory: () =>
-			buildChunkedForest(
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-			),
-		skipCursorErrorCheck: true,
-	});
-
-	it("doesn't copy data when capturing and restoring repair data", () => {
-		const initialState: JsonableTree = {
-			type: brand("Node"),
-			fields: {
-				foo: [
-					{ type: brand("Number"), value: 0 },
-					{ type: brand("Number"), value: 1 },
-					{ type: brand("Number"), value: 2 },
-				],
-			},
-		};
-		const anchors = new AnchorSet();
-		const forest = buildChunkedForest(
-			new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-			anchors,
-		);
-		const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
-			defaultChangeFamily,
-			anchors,
-		);
-		editManager.initSessionId(uuid());
-		const cursor = singleTextCursor(initialState);
-		const chunk = new TestChunk(
-			cursor.type,
-			new Map(
-				mapCursorFields(cursor, () => [
-					cursor.getFieldKey(),
-					mapCursorField(cursor, () => chunkTree(cursor, defaultChunkPolicy)),
-				]),
-			),
-			cursor.value,
-		);
-		const chunkCursor = chunk.cursor();
-		chunkCursor.firstNode();
-		initializeForest(forest, [chunkCursor]);
-
-		const checkout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset> = {
-			forest,
-			changeFamily: defaultChangeFamily,
-			submitEdit: (edit) => {
-				const delta = editManager.addLocalChange(mintRevisionTag(), edit);
-				forest.applyDelta(delta);
-			},
-		};
-
-		assert(chunk.isShared(), "chunk should be shared after forest initialization");
-		assert.equal(chunk.referenceCount, 2);
-
-		runSynchronousTransaction(checkout, (_, editor) => {
-			const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
-			rootField.delete(0, 1);
-			// Aborting the transaction should restore the forest
-			return TransactionResult.Abort;
+	for (const [name, chunker] of chunkers) {
+		describe(name, () => {
+			testForest({
+				suiteName: "ChunkedForest forest suite",
+				factory: (schema) => buildChunkedForest(chunker(schema)),
+				skipCursorErrorCheck: true,
+			});
 		});
-
-		assert(
-			chunk.isShared(),
-			"chunk should be shared after storing as repair data and reinserting",
-		);
-		assert.equal(chunk.referenceCount, 4);
-
-		const readCursor = forest.allocateCursor();
-		moveToDetachedField(forest, readCursor);
-		const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-		readCursor.free();
-		assert.deepEqual(actual, [initialState]);
-	});
-});
-
-class TestChunk extends BasicChunk {
-	public referenceCount: number = 1;
-
-	public referenceAdded(): void {
-		super.referenceAdded();
-		this.referenceCount++;
 	}
-}
+});

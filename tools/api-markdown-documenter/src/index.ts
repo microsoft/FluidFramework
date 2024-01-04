@@ -18,11 +18,17 @@
 
 export {
 	type ApiItemTransformationConfiguration,
-	type CreateChildContentSections,
-	defaultApiItemTransformations,
+	type ApiItemTransformationOptions,
+	type DefaultDocumentationSuiteOptions,
+	type DocumentationSuiteOptions,
+	type DocumentBoundaries,
+	// TODO: remove this once utility APIs can be called with partial configs.
+	getApiItemTransformationConfigurationWithDefaults,
+	type HierarchyBoundaries,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-	transformDocNode,
+	transformApiModel,
+	transformTsdocNode,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.
@@ -32,45 +38,15 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
-	getContextWithDefaults as getMarkdownRenderContextWithDefaults,
+	type HtmlRenderContext,
+	type HtmlRenderers,
+	type HtmlRenderConfiguration,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
-	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
-	renderDocument as renderDocumentAsMarkdown,
-	renderNode as renderNodeAsMarkdown,
-	renderNodes as renderNodesAsMarkdown,
-} from "./markdown-renderer";
-
-export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
-
-export {
-	type ApiFunctionLike,
-	type ApiMemberKind,
-	type ApiModuleLike,
-	type ApiSignatureLike,
-	type ApiModifier,
-	getDefaultValueBlock,
-	getDeprecatedBlock,
-	getExampleBlocks,
-	getFilePathForApiItem,
-	getHeadingForApiItem,
-	getLinkForApiItem,
-	getModifiers,
-	getQualifiedApiItemName,
-	getReturnsBlock,
-	getSeeBlocks,
-	getThrowsBlocks,
-	getUnscopedPackageName,
-	isDeprecated,
-	isOptional,
-	isReadonly,
-	isStatic,
-} from "./utilities";
-
-export {
-	MarkdownDocumenterConfiguration,
-	markdownDocumenterConfigurationWithDefaults,
-} from "./Configuration";
+	type MarkdownRenderConfiguration,
+} from "./renderers";
+export type { ConfigurationBase } from "./ConfigurationBase";
+export type { FileSystemConfiguration } from "./FileSystemConfiguration";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";
 export { loadModel } from "./LoadModel";
@@ -81,18 +57,75 @@ export {
 	verboseConsoleLogger,
 } from "./Logging";
 export {
-	DefaultPolicies,
-	defaultPolicyOptions,
-	type DocumentBoundaries,
-	type FileNamePolicy,
-	type FrontMatterPolicy,
-	type HeadingTitlePolicy,
-	type HierarchyBoundaries,
-	type LinkTextPolicy,
-	type PackageFilterPolicy,
-	type PolicyOptions,
-	type UriBaseOverridePolicy,
-} from "./Policies";
+	type ApiFunctionLike,
+	type ApiMemberKind,
+	type ApiModifier,
+	type ApiModuleLike,
+	type ApiSignatureLike,
+} from "./utilities";
 
-// Conveinence re-exports of API model types
-export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+// #region Scoped exports
+
+// This pattern is required to scope the utilities in a way that API-Extractor supports.
+/* eslint-disable unicorn/prefer-export-from */
+
+// Export `ApiItem`-related utilities
+import * as ApiItemUtilities from "./ApiItemUtilitiesModule";
+
+// Export layout-related utilities (for use in writing custom transformations)
+import * as LayoutUtilities from "./LayoutUtilitiesModule";
+
+// Export renderers
+import * as HtmlRenderer from "./HtmlRendererModule";
+import * as MarkdownRenderer from "./MarkdownRendererModule";
+
+export {
+	/**
+	 * Utilities for use with `ApiItem`s.
+	 *
+	 * @remarks
+	 *
+	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
+	 *
+	 * @public
+	 */
+	ApiItemUtilities,
+	/**
+	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
+	 *
+	 * @remarks
+	 *
+	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
+	 *
+	 * @public
+	 */
+	LayoutUtilities,
+	/**
+	 * Functionality for rendering {@link DocumentationNode}s as HTML.
+	 *
+	 * @alpha
+	 */
+	HtmlRenderer,
+	/**
+	 * Functionality for rendering {@link DocumentationNode}s as Markdown.
+	 *
+	 * @public
+	 */
+	MarkdownRenderer,
+};
+
+/* eslint-enable unicorn/prefer-export-from */
+
+// #endregion
+
+// #region Convenience re-exports
+
+// Convenience re-exports
+export {
+	type ApiItem,
+	ApiItemKind,
+	type ApiModel,
+	type ApiPackage,
+	ReleaseTag,
+} from "@microsoft/api-extractor-model";
+export { NewlineKind } from "@rushstack/node-core-library";

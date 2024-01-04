@@ -7,17 +7,20 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import {
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import {
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * An IFluidHandle implementation that has a random path / url. This is used to test that adding this handle to
@@ -68,7 +71,7 @@ class TestSubDataStoreObject {
  * should not result in any asserts / errors. There shouldn't be nodes corresponding to these handle paths in the
  * GC data that is generated.
  */
-describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
+describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let dataStoreA: ITestDataObject;
@@ -94,14 +97,12 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		dataStoreA = await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
 		await waitForContainerConnection(mainContainer);
 
 		const summarizerContainer = await provider.loadTestContainer(defaultGCConfig);
-		const summarizerDataStoreA = await requestFluidObject<ITestDataObject>(
-			summarizerContainer,
-			"default",
-		);
+		const summarizerDataStoreA =
+			await getContainerEntryPointBackCompat<ITestDataObject>(summarizerContainer);
 		summarizerRuntime = summarizerDataStoreA._context.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(summarizerContainer);
 	});

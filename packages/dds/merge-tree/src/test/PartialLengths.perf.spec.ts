@@ -19,7 +19,7 @@ describe("MergeTree partial lengths", () => {
 			before: () => {
 				MergeTree.options.incrementalUpdate = incremental;
 			},
-			benchmarkFn: async () => {
+			benchmarkFn: () => {
 				const mergeTree = new MergeTree();
 
 				let i = 1;

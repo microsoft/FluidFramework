@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
@@ -15,12 +15,11 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 // REVIEW: enable compat testing?
-describeNoCompat("Errors Types", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
@@ -65,12 +64,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 		});
 		loaderContainerTracker.add(loader);
 		const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
-		const testResolved = await loader.services.urlResolver.resolve({ url: requestUrl });
-		ensureFluidResolvedUrl(testResolved);
-		return Container.load(loader, {
-			resolvedUrl: testResolved,
-			version: undefined,
-		});
+		return loader.resolve({ url: requestUrl });
 	}
 
 	itExpects(
@@ -78,13 +72,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 		[
 			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				errorType: ContainerErrorType.genericError,
-				error: "Injected error",
-				fatalConnectError: true,
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				errorType: ContainerErrorType.genericError,
+				errorType: ContainerErrorTypes.genericError,
 				error: "Injected error",
 				fatalConnectError: true,
 			},
@@ -104,12 +92,51 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 				};
 				await loadContainer({ documentServiceFactory: mockFactory });
 			} catch (e: any) {
-				assert(e.errorType === ContainerErrorType.genericError);
+				assert(e.errorType === ContainerErrorTypes.genericError);
 				assert(e.message === "Injected error");
 				assert(e.fatalConnectError);
 			}
 		},
 	);
+
+	it("Clear odsp driver cache on critical load error", async function () {
+		if (provider.driver.type !== "odsp") {
+			this.skip();
+		}
+		const documentServiceFactory = provider.documentServiceFactory;
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		const cache = documentServiceFactory["persistedCache"];
+		const cacheFileEntry = {
+			type: "snapshot",
+			key: "",
+			file: {
+				resolvedUrl: containerUrl,
+				docId: containerUrl.id,
+			},
+		};
+		assert(
+			(await cache?.get?.(cacheFileEntry)) !== undefined,
+			"create container should have cached the snapshot",
+		);
+		try {
+			const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+			mockFactory.createDocumentService = async (resolvedUrl) => {
+				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+				service.connectToStorage = async () => {
+					throw new Error("Injected error");
+				};
+				return service;
+			};
+			await loadContainer({ documentServiceFactory: mockFactory });
+		} catch (e: any) {
+			assert(e.errorType === ContainerErrorTypes.genericError);
+			assert(e.message === "Injected error");
+		}
+		assert(
+			(await cache?.get?.(cacheFileEntry)) === undefined,
+			"odsp cache should have been cleared on critical error/container dispose",
+		);
+	});
 
 	function assertCustomPropertySupport(err: any) {
 		err.asdf = "asdf";

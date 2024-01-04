@@ -3,37 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import {
-	CachedConfigProvider,
-	ConfigTypes,
-	IConfigProviderBase,
-	inMemoryConfigProvider,
-} from "../config";
+import { strict as assert } from "node:assert";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { CachedConfigProvider, inMemoryConfigProvider } from "../config";
+import { TelemetryDataTag } from "../logger";
+import { MockLogger } from "../mockLogger";
+
+const getMockStore = (settings: Record<string, string>): Storage => {
+	const ops: string[] = [];
+	return {
+		getItem: (key: string): string | null => {
+			ops.push(key);
+			return settings[key];
+		},
+		getOps: (): Readonly<string[]> => ops,
+		length: Object.keys(settings).length,
+		clear: (): void => {},
+		// eslint-disable-next-line unicorn/no-null
+		key: (_index: number): string | null => null,
+		removeItem: (_key: string): void => {},
+		setItem: (_key: string, _value: string): void => {},
+	};
+};
+
+const untypedProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	};
+};
 
 describe("Config", () => {
-	const getMockStore = (settings: Record<string, string>): Storage => {
-		const ops: string[] = [];
-		return {
-			getItem: (key: string): string | null => {
-				ops.push(key);
-				return settings[key];
-			},
-			getOps: (): Readonly<string[]> => ops,
-			length: Object.keys(settings).length,
-			clear: () => {},
-			key: (_index: number): string | null => null,
-			removeItem: (_key: string) => {},
-			setItem: (_key: string, _value: string) => {},
-		};
-	};
-
-	const untypedProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
-		return {
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		};
-	};
-
 	it("Typing - storage provider", () => {
 		const settings = {
 			number: "1",
@@ -52,9 +51,21 @@ describe("Config", () => {
 		};
 
 		const mockStore = getMockStore(settings);
-		const config = new CachedConfigProvider(inMemoryConfigProvider(mockStore));
+		const logger = new MockLogger();
+		const config = new CachedConfigProvider(logger, inMemoryConfigProvider(mockStore));
 
 		assert.equal(config.getNumber("number"), 1);
+		logger.assertMatch([
+			{
+				category: "generic",
+				eventName: "ConfigRead",
+				configName: { tag: TelemetryDataTag.CodeArtifact, value: "number" },
+				configValue: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: `{"raw":"1","string":"1","number":1}`,
+				},
+			},
+		]);
 		assert.equal(config.getNumber("badNumber"), undefined);
 		assert.equal(config.getNumber("stringAndNumber"), 1);
 
@@ -96,7 +107,7 @@ describe("Config", () => {
 		};
 
 		const mockStore = untypedProvider(settings);
-		const config = new CachedConfigProvider(mockStore);
+		const config = new CachedConfigProvider(undefined, mockStore);
 
 		assert.equal(config.getNumber("number"), 1);
 		assert.equal(config.getNumber("stringAndNumber"), 1);
@@ -123,7 +134,7 @@ describe("Config", () => {
 	});
 
 	it("Void provider", () => {
-		const config = new CachedConfigProvider(inMemoryConfigProvider(undefined));
+		const config = new CachedConfigProvider(undefined, inMemoryConfigProvider(undefined));
 		assert.equal(config.getNumber("number"), undefined);
 		assert.equal(config.getString("does not exist"), undefined);
 		assert.equal(config.getBoolean("boolean"), undefined);
@@ -150,6 +161,7 @@ describe("Config", () => {
 		};
 
 		const config1 = new CachedConfigProvider(
+			undefined,
 			inMemoryConfigProvider(getMockStore(settings1)),
 			inMemoryConfigProvider(getMockStore(settings1)),
 			inMemoryConfigProvider(getMockStore(settings2)),
@@ -164,6 +176,7 @@ describe("Config", () => {
 		assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
 
 		const config2 = new CachedConfigProvider(
+			undefined,
 			inMemoryConfigProvider(getMockStore(settings3)),
 			inMemoryConfigProvider(getMockStore(settings2)),
 			inMemoryConfigProvider(getMockStore(settings1)),
@@ -203,8 +216,9 @@ describe("Config", () => {
 
 		getRawConfig(name: string): ConfigTypes {
 			// The point here is to use `getSetting`
+			// eslint-disable-next-line unicorn/no-null
 			const val = this.getSetting(name, null);
-			return val === null ? undefined : val;
+			return val ?? undefined;
 		}
 
 		getSetting<T extends SettingType>(
@@ -239,7 +253,7 @@ describe("Config", () => {
 			badBooleanArray2: ["true", "false", "true"],
 		};
 
-		const config = new CachedConfigProvider(new HybridSettingsProvider(settings));
+		const config = new CachedConfigProvider(undefined, new HybridSettingsProvider(settings));
 
 		assert.equal(config.getNumber("number"), 1);
 		assert.equal(config.getNumber("sortOfNumber"), 1);

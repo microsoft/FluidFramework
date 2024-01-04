@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -21,6 +22,7 @@ import {
  * chosen for a particular input state.
  *
  * @example
+ *
  * ```typescript
  * const modifyGenerator = ({ random, list }) => {
  *     return { type: "modify", index: random.integer(0, list.length - 1) };
@@ -36,6 +38,8 @@ import {
  *     [{ type: "delete" }, 1, (state) => state.list.length > 0]
  * ]);
  * ```
+ *
+ * @internal
  */
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	weights: Weights<T, TState>,
@@ -44,8 +48,13 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;
-		cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		if (weight > 0) {
+			cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		}
 		totalWeight = cumulativeWeight;
+	}
+	if (totalWeight === 0) {
+		throw new Error("createWeightedGenerator must have some positive weight");
 	}
 
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be
@@ -54,7 +63,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	return (state) => {
 		const { random } = state;
 		const sample = () => {
-			const weightSelected = random.integer(1, totalWeight);
+			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {
@@ -80,6 +89,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 
 /**
  * Higher-order generator operator which creates a new generator producing the first `n` elements of `generator`.
+ * @internal
  */
 export function take<T, TState>(n: number, generator: Generator<T, TState>): Generator<T, TState> {
 	let count = 0;
@@ -94,6 +104,7 @@ export function take<T, TState>(n: number, generator: Generator<T, TState>): Gen
 
 /**
  * @returns a deterministic generator that always returns the items of `contents` in order.
+ * @internal
  */
 export function generatorFromArray<T, TAdditionalState>(
 	contents: T[],
@@ -110,6 +121,7 @@ export function generatorFromArray<T, TAdditionalState>(
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chain<T, TState>(...generators: Generator<T, TState>[]): Generator<T, TState> {
 	let currentIndex = 0;
@@ -129,6 +141,7 @@ export function chain<T, TState>(...generators: Generator<T, TState>[]): Generat
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chainIterables<T, TState>(
 	generators: Generator<Generator<T, TState>, void>,
@@ -149,26 +162,42 @@ export function chainIterables<T, TState>(
 }
 
 /**
+ * Controls exit behavior for {@link interleave}.
+ * @internal
+ */
+export enum ExitBehavior {
+	OnBothExhausted,
+	OnEitherExhausted,
+}
+
+/**
  * Interleaves outputs from `generator1` and `generator2`.
  * By default outputs are taken one at a time, but can be controlled with `numOps1` and `numOps2`.
  * This is useful in stochastic tests for producing a certain operation (e.g. "validate" or "synchronize") at a
  * defined interval.
  *
- * Exhausts both input generators before terminating.
+ * Exhausts both input generators before terminating by default. If {@link ExitBehavior.OnEitherExhausted} is
+ * provided, instead exits as soon as the next element it would produce is `done`.
  *
  * @example
+ *
  * ```typescript
  * // Assume gen1 produces 1, 2, 3, ... and gen2 produces "a", "b", "c", ...
  * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
  * interleave(gen1, gen2, 2) // 1, 2, a, 3, 4, b, 5, 6, c, ...
- * interleave(gen1, gen2, 2, 3) // 1, 2, a, b, c, 3, 4, d, e, f, ...
+ * interleave(take(2, gen1), gen2, 1, 1, ExitBehavior.OnEitherExhausted) // 1, a, 2, b
+ * interleave(gen1, take(2, gen2), 1, 1, ExitBehavior.OnEitherExhausted) // 1, a, 2, b, 3
+ * interleave(gen1, take(3, gen2), 2, 3) // 1, 2, a, b, c, 3, 4
+ * interleave(gen1, take(2, gen2), 2, 3) // 1, 2, a, b
  * ```
+ * @internal
  */
 export function interleave<T, TState>(
 	generator1: Generator<T, TState>,
 	generator2: Generator<T, TState>,
 	numOps1 = 1,
 	numOps2 = 1,
+	exitBehavior = ExitBehavior.OnBothExhausted,
 ): Generator<T, TState> {
 	// The implementation strategy here is to use `chainIterables` to alternate which of the two input generators
 	// we feed to the output. This has one small problem: once both generators are exhausted, `chainIterables` needs
@@ -203,9 +232,20 @@ export function interleave<T, TState>(
 		return result;
 	};
 
+	let isDone: () => boolean;
+	switch (exitBehavior) {
+		case ExitBehavior.OnBothExhausted:
+			isDone = () => generator1Exhausted && generator2Exhausted;
+			break;
+		case ExitBehavior.OnEitherExhausted:
+			isDone = () => generator1Exhausted || generator2Exhausted;
+			break;
+		default:
+			unreachableCase(exitBehavior);
+	}
 	let generatorIndex = 0;
 	return chainIterables(() => {
-		if (generator1Exhausted && generator2Exhausted) {
+		if (isDone()) {
 			return done;
 		}
 
@@ -219,6 +259,7 @@ export function interleave<T, TState>(
 /**
  * Creates a generator for an infinite stream of `t`s.
  * @param t - Output value to repeatedly generate.
+ * @internal
  */
 export function repeat<T, TState = void>(t: T): Generator<T, TState> {
 	return () => t;
@@ -233,6 +274,7 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
  * chosen for a particular input state.
  *
  * @example
+ *
  * ```typescript
  * const modifyGenerator = async ({ random, list }) => {
  *     return { type: "modify", index: random.integer(0, list.length - 1) };
@@ -248,6 +290,7 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
  *     [{ type: "delete" }, 1, (state) => state.list.length > 0]
  * ]);
  * ```
+ * @internal
  */
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(
 	weights: AsyncWeights<T, TState>,
@@ -257,8 +300,13 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;
-		cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		if (weight > 0) {
+			cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		}
 		totalWeight = cumulativeWeight;
+	}
+	if (totalWeight === 0) {
+		throw new Error("createWeightedAsyncGenerator must have some positive weight");
 	}
 
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be
@@ -267,7 +315,7 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 	return async (state) => {
 		const { random } = state;
 		const sample = () => {
-			const weightSelected = random.integer(1, totalWeight);
+			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {
@@ -293,6 +341,7 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 
 /**
  * Higher-order generator operator which creates a new generator producing the first `n` elements of `generator`.
+ * @internal
  */
 export function takeAsync<T, TState>(
 	n: number,
@@ -310,6 +359,7 @@ export function takeAsync<T, TState>(
 
 /**
  * @returns a deterministic generator that always returns the items of `contents` in order.
+ * @internal
  */
 export function asyncGeneratorFromArray<T, TAdditionalState>(
 	contents: T[],
@@ -320,6 +370,7 @@ export function asyncGeneratorFromArray<T, TAdditionalState>(
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chainAsync<T, TState>(
 	...generators: AsyncGenerator<T, TState>[]
@@ -341,6 +392,7 @@ export function chainAsync<T, TState>(
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chainAsyncIterables<T, TState>(
 	generators: AsyncGenerator<AsyncGenerator<T, TState>, void>,
@@ -363,26 +415,15 @@ export function chainAsyncIterables<T, TState>(
 }
 
 /**
- * Interleaves outputs from `generator1` and `generator2`.
- * By default outputs are taken one at a time, but can be controlled with `numOps1` and `numOps2`.
- * This is useful in stochastic tests for producing a certain operation (e.g. "validate" or "synchronize") at a
- * defined interval.
- *
- * Exhausts both input generators before terminating.
- *
- * @example
- * ```typescript
- * // Assume gen1 produces 1, 2, 3, ... and gen2 produces "a", "b", "c", ...
- * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
- * interleave(gen1, gen2, 2) // 1, 2, a, 3, 4, b, 5, 6, c, ...
- * interleave(gen1, gen2, 2, 3) // 1, 2, a, b, c, 3, 4, d, e, f, ...
- * ```
+ * AsyncGenerator variant of {@link interleave}.
+ * @internal
  */
 export function interleaveAsync<T, TState>(
 	generator1: AsyncGenerator<T, TState>,
 	generator2: AsyncGenerator<T, TState>,
 	numOps1 = 1,
 	numOps2 = 1,
+	exitBehavior = ExitBehavior.OnBothExhausted,
 ): AsyncGenerator<T, TState> {
 	let generator1Exhausted = false;
 	let generator2Exhausted = false;
@@ -399,9 +440,20 @@ export function interleaveAsync<T, TState>(
 		return result;
 	};
 
+	let isDone: () => boolean;
+	switch (exitBehavior) {
+		case ExitBehavior.OnBothExhausted:
+			isDone = () => generator1Exhausted && generator2Exhausted;
+			break;
+		case ExitBehavior.OnEitherExhausted:
+			isDone = () => generator1Exhausted || generator2Exhausted;
+			break;
+		default:
+			unreachableCase(exitBehavior);
+	}
 	let generatorIndex = 0;
 	return chainAsyncIterables(async () => {
-		if (generator1Exhausted && generator2Exhausted) {
+		if (isDone()) {
 			return done;
 		}
 
@@ -415,6 +467,7 @@ export function interleaveAsync<T, TState>(
 /**
  * Creates a generator for an infinite stream of `t`s.
  * @param t - Output value to repeatedly generate.
+ * @internal
  */
 export function repeatAsync<T, TState = void>(t: T): AsyncGenerator<T, TState> {
 	return async () => t;

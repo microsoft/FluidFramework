@@ -5,25 +5,35 @@
 
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
+// eslint-disable-next-line import/no-deprecated
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
+/**
+ * @alpha
+ */
 export type Trackable = ISegment | LocalReferencePosition;
 
-export class TrackingGroup {
+/**
+ * @alpha
+ */
+export interface ITrackingGroup {
+	tracked: readonly Trackable[];
+	size: number;
+	has(trackable: Trackable): boolean;
+	link(trackable: Trackable): void;
+	unlink(trackable: Trackable): boolean;
+}
+
+/**
+ * @alpha
+ */
+export class TrackingGroup implements ITrackingGroup {
+	// eslint-disable-next-line import/no-deprecated
 	private readonly trackedSet: SortedSegmentSet<Trackable>;
 
 	constructor() {
+		// eslint-disable-next-line import/no-deprecated
 		this.trackedSet = new SortedSegmentSet<Trackable>();
-	}
-
-	/**
-	 * @deprecated - use tracked instead.
-	 * For references positions this will return the underlying segment,
-	 * which may not match the intention
-	 */
-	public get segments(): readonly ISegment[] {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.trackedSet.items.map((v) => (v.isLeaf() ? v : v.getSegment()!));
 	}
 
 	public get tracked(): readonly Trackable[] {
@@ -38,14 +48,14 @@ export class TrackingGroup {
 		return this.trackedSet.has(trackable);
 	}
 
-	public link(trackable: Trackable) {
+	public link(trackable: Trackable): void {
 		if (!this.trackedSet.has(trackable)) {
 			this.trackedSet.addOrUpdate(trackable);
 			trackable.trackingCollection.link(this);
 		}
 	}
 
-	public unlink(trackable: Trackable) {
+	public unlink(trackable: Trackable): boolean {
 		if (this.trackedSet.remove(trackable)) {
 			trackable.trackingCollection.unlink(this);
 			return true;
@@ -54,17 +64,66 @@ export class TrackingGroup {
 	}
 }
 
-export class TrackingGroupCollection {
-	public readonly trackingGroups: Set<TrackingGroup>;
+/**
+ * Tracking group backed by an unordered set. Lookup, insertion, and deletion are O(1)
+ */
+export class UnorderedTrackingGroup implements ITrackingGroup {
+	private readonly trackedSet: Set<Trackable>;
 
-	constructor(private readonly trackable: Trackable) {
-		this.trackingGroups = new Set<TrackingGroup>();
+	constructor() {
+		this.trackedSet = new Set<Trackable>();
 	}
 
-	public link(trackingGroup: TrackingGroup): void {
+	public get tracked(): readonly Trackable[] {
+		return Array.from(this.trackedSet);
+	}
+
+	public get size(): number {
+		return this.trackedSet.size;
+	}
+
+	public has(trackable: Trackable): boolean {
+		return this.trackedSet.has(trackable);
+	}
+
+	public link(trackable: Trackable): void {
+		if (!this.trackedSet.has(trackable)) {
+			this.trackedSet.add(trackable);
+			trackable.trackingCollection.link(this);
+		}
+	}
+
+	public unlink(trackable: Trackable): boolean {
+		if (this.trackedSet.delete(trackable)) {
+			trackable.trackingCollection.unlink(this);
+			return true;
+		}
+		return false;
+	}
+}
+
+/**
+ * A collection of {@link ITrackingGroup}.
+ * @alpha
+ */
+export class TrackingGroupCollection {
+	private readonly _trackingGroups: Set<ITrackingGroup>;
+
+	public get trackingGroups(): Set<TrackingGroup> {
+		// Cast here is necessary to avoid a breaking change to
+		// `TrackingGroupCollection`. Ideally we could just return
+		// `Set<ITrackingGroup>`
+		return this._trackingGroups as Set<TrackingGroup>;
+	}
+
+	constructor(private readonly trackable: Trackable) {
+		this._trackingGroups = new Set<ITrackingGroup>();
+	}
+
+	public link(trackingGroup: ITrackingGroup): void {
 		if (trackingGroup) {
-			if (!this.trackingGroups.has(trackingGroup)) {
-				this.trackingGroups.add(trackingGroup);
+			if (!this._trackingGroups.has(trackingGroup)) {
+				this._trackingGroups.add(trackingGroup);
 			}
 
 			if (!trackingGroup.has(this.trackable)) {
@@ -73,37 +132,37 @@ export class TrackingGroupCollection {
 		}
 	}
 
-	public unlink(trackingGroup: TrackingGroup): boolean {
-		if (this.trackingGroups.has(trackingGroup)) {
+	public unlink(trackingGroup: ITrackingGroup): boolean {
+		if (this._trackingGroups.has(trackingGroup)) {
 			if (trackingGroup.has(this.trackable)) {
 				trackingGroup.unlink(this.trackable);
 			}
-			this.trackingGroups.delete(trackingGroup);
+			this._trackingGroups.delete(trackingGroup);
 			return true;
 		}
 
 		return false;
 	}
 
-	public copyTo(trackable: Trackable) {
-		this.trackingGroups.forEach((sg) => {
+	public copyTo(trackable: Trackable): void {
+		this._trackingGroups.forEach((sg) => {
 			trackable.trackingCollection.link(sg);
 		});
 	}
 
 	public get empty(): boolean {
-		return this.trackingGroups.size === 0;
+		return this._trackingGroups.size === 0;
 	}
 
 	public matches(trackingCollection: TrackingGroupCollection): boolean {
 		if (
 			!trackingCollection ||
-			this.trackingGroups.size !== trackingCollection.trackingGroups.size
+			this._trackingGroups.size !== trackingCollection._trackingGroups.size
 		) {
 			return false;
 		}
-		for (const tg of this.trackingGroups.values()) {
-			if (!trackingCollection.trackingGroups.has(tg)) {
+		for (const tg of this._trackingGroups.values()) {
+			if (!trackingCollection._trackingGroups.has(tg)) {
 				return false;
 			}
 		}

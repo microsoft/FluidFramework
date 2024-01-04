@@ -3,62 +3,308 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
+import { IContainerExperimental } from "@fluidframework/container-loader";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	cursorForJsonableTreeNode,
+	Any,
+	TreeStatus,
+	TreeFieldSchema,
+	SchemaBuilderInternal,
+	boxedIterator,
 	FieldKinds,
-	singleTextCursor,
-	getSchemaString,
-	jsonableTreeFromCursor,
-	namedTreeSchema,
-	IDefaultEditBuilder,
-} from "../../feature-libraries";
-import { brand } from "../../util";
-import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree, ISharedTreeCheckout } from "../../shared-tree";
+	typeNameSymbol,
+	FlexTreeSchema,
+	intoStoredSchema,
+} from "../../feature-libraries/index.js";
+import {
+	ChunkedForest,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/chunked-forest/chunkedForest.js";
+import {
+	ObjectForest,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/object-forest/objectForest.js";
+import { brand, disposeSymbol, fail } from "../../util/index.js";
+import {
+	SharedTreeTestFactory,
+	SummarizeType,
+	TestTreeProvider,
+	TestTreeProviderLite,
+	createTestUndoRedoStacks,
+	emptyStringSequenceConfig,
+	expectSchemaEqual,
+	jsonSequenceRootSchema,
+	stringSequenceRootSchema,
+	validateTreeConsistency,
+	validateTreeContent,
+	validateViewConsistency,
+	numberSequenceRootSchema,
+} from "../utils.js";
+import {
+	ForestType,
+	ISharedTree,
+	FlexTreeView,
+	InitializeAndSchematizeConfiguration,
+	SharedTree,
+	SharedTreeFactory,
+} from "../../shared-tree/index.js";
 import {
 	compareUpPaths,
 	FieldKey,
-	JsonableTree,
-	mapCursorField,
 	rootFieldKey,
-	rootFieldKeySymbol,
-	symbolFromKey,
-	TreeValue,
 	UpPath,
-	Value,
 	moveToDetachedField,
-	TransactionResult,
-	fieldSchema,
-	GlobalFieldKey,
-	SchemaData,
-	IForestSubscription,
-} from "../../core";
-import { SharedTreeCore } from "../../shared-tree-core";
-import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
+	AllowedUpdateType,
+	storedEmptyFieldSchema,
+} from "../../core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { EditManager } from "../../shared-tree-core/index.js";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 
 const fooKey: FieldKey = brand("foo");
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
-const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
 
 describe("SharedTree", () => {
-	it("reads only one node", async () => {
-		// This is a regression test for a scenario in which a transaction would apply its delta twice,
-		// inserting two nodes instead of just one
-		const provider = await TestTreeProvider.create(1);
-		provider.trees[0].runTransaction((f, editor) => {
-			const writeCursor = singleTextCursor({ type: brand("LonelyNode") });
-			const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-			field.insert(0, writeCursor);
-
-			return TransactionResult.Apply;
+	describe("schematize", () => {
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
 		});
 
-		const { forest } = provider.trees[0];
-		const readCursor = forest.allocateCursor();
-		moveToDetachedField(forest, readCursor);
-		assert(readCursor.firstNode());
-		assert.equal(readCursor.nextNode(), false);
-		readCursor.free();
+		const builder = new SchemaBuilder({
+			scope: "test",
+			name: "Schematize Tree Tests",
+		});
+		const schema = builder.intoSchema(SchemaBuilder.optional(leaf.number));
+		const storedSchema = intoStoredSchema(schema);
+
+		const builderGeneralized = new SchemaBuilder({
+			scope: "test",
+			name: "Schematize Tree Tests Generalized",
+		});
+
+		const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
+		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
+
+		it("concurrent Schematize", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content = {
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["x"],
+			} satisfies InitializeAndSchematizeConfiguration;
+			const tree1 = provider.trees[0].schematizeInternal(content);
+			provider.trees[1].schematizeInternal(content);
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, ["x"]);
+		});
+
+		it("initialize tree", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			);
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const view = tree.schematizeInternal({
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: 10,
+				schema,
+			});
+			assert.equal(view.editableTree.content, 10);
+		});
+
+		it("noop upgrade", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
+			tree.view.updateSchema(storedSchema);
+
+			// No op upgrade with AllowedUpdateType.None does not error
+			const schematized = tree.schematizeInternal({
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: 10,
+				schema,
+			});
+			// And does not add initial tree:
+			assert.equal(schematized.editableTree.content, undefined);
+		});
+
+		it("incompatible upgrade errors", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
+			tree.view.updateSchema(storedSchemaGeneralized);
+			assert.throws(() => {
+				tree.schematizeInternal({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: 5,
+					schema,
+				});
+			});
+		});
+
+		it("upgrade schema", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
+			tree.view.updateSchema(storedSchema);
+			const schematized = tree.schematizeInternal({
+				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+				initialTree: 5,
+				schema: schemaGeneralized,
+			});
+			// Initial tree should not be applied
+			assert.equal(schematized.editableTree.content, undefined);
+		});
+
+		// TODO: ensure unhydrated initialTree input is correctly hydrated.
+		it.skip("unhydrated tree input", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const sb = new SchemaFactory("test-factory");
+			class Foo extends sb.object("Foo", {}) {}
+
+			const unhydratedInitialTree = new Foo({});
+			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			assert(view.root === unhydratedInitialTree);
+		});
+	});
+
+	describe("requireSchema", () => {
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+		const schemaEmpty = new SchemaBuilderInternal({
+			scope: "com.fluidframework.test",
+			lint: { rejectEmpty: false, rejectForbidden: false },
+		}).intoSchema(TreeFieldSchema.empty);
+
+		function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
+			tree.view.updateSchema(intoStoredSchema(schema));
+			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
+			tree.view.events.emit("afterBatch");
+		}
+
+		it("empty", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
+			const view = assertSchema(tree, schemaEmpty);
+			assert.deepEqual([...view.editableTree[boxedIterator]()], []);
+		});
+
+		it("differing schema errors and schema change callback", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
+			const builder = new SchemaBuilder({ scope: "test" });
+			const schemaGeneralized = builder.intoSchema(builder.optional(Any));
+			{
+				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
+				assert.equal(view, undefined);
+			}
+
+			const log: string[] = [];
+			{
+				const view = tree.requireSchema(schemaEmpty, () => log.push("empty"));
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, []);
+			updateSchema(tree, schemaGeneralized);
+
+			assert.deepEqual(log, ["empty"]);
+
+			{
+				const view = tree.requireSchema(schemaGeneralized, () =>
+					// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
+					(log as string[]).push("general"),
+				);
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, ["empty"]);
+			updateSchema(tree, schemaEmpty);
+			assert.deepEqual(log, ["empty", "general"]);
+		});
+	});
+
+	it("handle in op", async () => {
+		const provider = await TestTreeProvider.create(2);
+		assert(provider.trees[0].isAttached());
+		assert(provider.trees[1].isAttached());
+
+		const field = provider.trees[0].editor.optionalField({
+			parent: undefined,
+			field: rootFieldKey,
+		});
+		field.set(
+			cursorForJsonableTreeNode({ type: leaf.handle.name, value: provider.trees[0].handle }),
+			true,
+		);
+	});
+
+	it("flex-tree-end-to-end", () => {
+		const builder = new SchemaBuilder({ scope: "e2e" });
+		const schema = builder.intoSchema(leaf.number);
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
+		const view = sharedTree.schematizeInternal({
+			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+			initialTree: 1,
+			schema,
+		});
+		const root = view.editableTree;
+		const leafNode = root.boxedContent;
+		assert.equal(leafNode.value, 1);
+		root.content = 2;
+		assert(leafNode.treeStatus() !== TreeStatus.InDocument);
+		assert.equal(root.content, 2);
+	});
+
+	it("contentSnapshot", () => {
+		const factory = new SharedTreeFactory();
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
+		{
+			const snapshot = sharedTree.contentSnapshot();
+			assert.deepEqual(snapshot.tree, []);
+			expectSchemaEqual(snapshot.schema, {
+				rootFieldSchema: storedEmptyFieldSchema,
+				nodeSchema: new Map(),
+			});
+		}
+		sharedTree.schematizeInternal({
+			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+			initialTree: ["x"],
+			schema: stringSequenceRootSchema,
+		});
+		{
+			const snapshot = sharedTree.contentSnapshot();
+			assert.deepEqual(snapshot.tree, [{ type: leaf.string.name, value: "x" }]);
+			expectSchemaEqual(snapshot.schema, intoStoredSchema(stringSequenceRootSchema));
+		}
 	});
 
 	it("can be connected to another tree", async () => {
@@ -67,81 +313,252 @@ describe("SharedTree", () => {
 		assert(provider.trees[1].isAttached());
 
 		const value = "42";
-		const expectedSchema = getSchemaString(testSchema);
 
 		// Apply an edit to the first tree which inserts a node with a value
-		initializeTestTree(provider.trees[0]);
-		pushTestValue(provider.trees[0], value);
+		const view1 = provider.trees[0].schematizeInternal({
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: [value],
+		});
 
 		// Ensure that the first tree has the state we expect
-		assert.equal(peekTestValue(provider.trees[0]), value);
-		assert.equal(getSchemaString(provider.trees[0].storedSchema), expectedSchema);
+		assert.deepEqual(view1.editableTree.asArray, [value]);
+		expectSchemaEqual(
+			provider.trees[0].storedSchema,
+			intoStoredSchema(stringSequenceRootSchema),
+		);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
-		assert.equal(peekTestValue(provider.trees[1]), value);
-		// Ensure second tree got the schema from initialization:
-		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
+		validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		// Ensure that a tree which connects after the edit has already happened also catches up
 		const joinedLaterTree = await provider.createTree();
-		assert.equal(peekTestValue(joinedLaterTree), value);
-		// Ensure schema catchup works:
-		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
+		validateTreeConsistency(provider.trees[0], joinedLaterTree);
 	});
 
 	it("can summarize and load", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
-		const [summarizingTree] = provider.trees;
 		const value = 42;
-		initializeTestTree(summarizingTree);
-		pushTestValue(summarizingTree, value);
+		provider.trees[0].schematizeInternal({
+			schema: jsonSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: [value],
+		});
 		await provider.summarize();
 		await provider.ensureSynchronized();
 		const loadingTree = await provider.createTree();
-		assert.equal(peekTestValue(loadingTree), value);
-		assert.equal(getSchemaString(loadingTree.storedSchema), getSchemaString(testSchema));
+		validateTreeContent(loadingTree.view, {
+			schema: jsonSequenceRootSchema,
+			initialTree: [value],
+		});
+	});
+
+	function validateSchemaStringType(
+		summaryTree: ISummaryTree,
+		treeId: string,
+		summaryType: SummaryType,
+	): void {
+		assert(
+			summaryTree.tree[".channels"].type === SummaryType.Tree,
+			"Runtime summary tree not created for blob dds test",
+		);
+		const dataObjectTree = summaryTree.tree[".channels"].tree.default;
+		assert(
+			dataObjectTree.type === SummaryType.Tree,
+			"Data store summary tree not created for blob dds test",
+		);
+		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
+		assert(
+			dataObjectChannelsTree.type === SummaryType.Tree,
+			"Data store channels tree not created for blob dds test",
+		);
+		const ddsTree = dataObjectChannelsTree.tree[treeId];
+		assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
+		const indexes = ddsTree.tree.indexes;
+		assert(indexes.type === SummaryType.Tree, "Blob Indexes tree not created");
+		const schema = indexes.tree.Schema;
+		assert(schema.type === SummaryType.Tree, "Blob Schema tree not created");
+		assert(schema.tree.SchemaString.type === summaryType, "incorrect SchemaString type");
+	}
+
+	describe("schema index summarization", () => {
+		describe("incrementally reuses previous blobs", () => {
+			it("on a client which never uploaded a blob", async () => {
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+					idCompressor: createIdCompressor(),
+				});
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
+					idCompressor: createIdCompressor(),
+				});
+				const factory = new SharedTreeTestFactory(() => {});
+
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				const tree1 = factory.create(dataStoreRuntime1, "A");
+				tree1.connect({
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+					objectStorage: new MockStorage(),
+				});
+
+				const b = new SchemaBuilder({ scope: "0x4a6 repro" });
+				const node = b.objectRecursive("test node", {
+					child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
+						() => node,
+						leaf.number,
+					]),
+				});
+				const schema = b.intoSchema(b.optional(node));
+
+				const config = {
+					schema,
+					initialTree: undefined,
+					allowedSchemaModifications: AllowedUpdateType.None,
+				} satisfies InitializeAndSchematizeConfiguration;
+				const view1 = tree1.schematizeInternal(config);
+				const editable1 = view1.editableTree;
+
+				editable1.content = { [typeNameSymbol]: node.name, child: undefined };
+				containerRuntimeFactory.processAllMessages();
+
+				const tree2 = await factory.load(
+					dataStoreRuntime2,
+					"B",
+					{
+						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+						objectStorage: MockStorage.createFromSummary(
+							(await tree1.summarize()).summary,
+						),
+					},
+					factory.attributes,
+				);
+
+				containerRuntimeFactory.processAllMessages();
+				const incrementalSummaryContext = {
+					summarySequenceNumber: dataStoreRuntime1.deltaManager.lastSequenceNumber,
+
+					latestSummarySequenceNumber: dataStoreRuntime1.deltaManager.lastSequenceNumber,
+
+					summaryPath: "test",
+				};
+				const summaryTree = await tree2.summarize(
+					undefined,
+					undefined,
+					undefined,
+					incrementalSummaryContext,
+				);
+				containerRuntimeFactory.processAllMessages();
+				const indexes = summaryTree.summary.tree.indexes;
+				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				const schemaBlob = indexes.tree.Schema;
+				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
+				assert(
+					schemaBlob.tree.SchemaString.type === SummaryType.Handle,
+					"schemaString should be a handle",
+				);
+			});
+
+			it("on a client which uploaded a blob", async () => {
+				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+
+				await provider.ensureSynchronized();
+				const tree1 = provider.trees[0];
+				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+				await provider.ensureSynchronized();
+				await provider.summarize();
+
+				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				view1.editableTree.insertAt(0, ["A"]);
+
+				await provider.ensureSynchronized();
+				const { summaryTree } = await provider.summarize();
+				validateSchemaStringType(summaryTree, provider.trees[0].id, SummaryType.Handle);
+			});
+		});
+
+		describe("uploads new schema data", () => {
+			it("without incremental summary context", async () => {
+				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+				await provider.ensureSynchronized();
+				const summaryTree = await provider.trees[0].summarize();
+				const indexes = summaryTree.summary.tree.indexes;
+				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				const schemaBlob = indexes.tree.Schema;
+				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
+				assert(
+					schemaBlob.tree.SchemaString.type === SummaryType.Blob,
+					"schemaString should be a Blob",
+				);
+			});
+
+			it("when it has changed since the last summary", async () => {
+				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+
+				await provider.ensureSynchronized();
+				const tree1 = provider.trees[0];
+				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				await provider.ensureSynchronized();
+				await provider.summarize();
+
+				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				view1.editableTree.insertAt(0, ["A"]);
+
+				await provider.ensureSynchronized();
+				validateSchemaStringType(
+					(await provider.summarize()).summaryTree,
+					provider.trees[0].id,
+					SummaryType.Handle,
+				);
+
+				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				await provider.ensureSynchronized();
+				validateSchemaStringType(
+					(await provider.summarize()).summaryTree,
+					provider.trees[0].id,
+					SummaryType.Blob,
+				);
+			});
+		});
 	});
 
 	it("can process ops after loading from summary", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
-		const tree1 = provider.trees[0];
 		const tree2 = await provider.createTree();
 		const tree3 = await provider.createTree();
+
 		const [container1, container2, container3] = provider.containers;
 
-		const schema: SchemaData = {
-			treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-			globalFieldSchema: new Map([
-				// This test requires the use of a sequence field
-				[rootFieldKey, fieldSchema(FieldKinds.sequence)],
-			]),
-		};
-		tree1.storedSchema.update(schema);
-
-		insert(tree1, 0, "Z");
-		insert(tree1, 1, "A");
-		insert(tree1, 2, "C");
+		const tree1 = provider.trees[0].schematizeInternal({
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: ["Z", "A", "C"],
+		});
 
 		await provider.ensureSynchronized();
+
+		const view1 = tree1.editableTree;
+		const view2 = assertSchema(tree2, stringSequenceRootSchema).editableTree;
+		const view3 = assertSchema(tree3, stringSequenceRootSchema).editableTree;
 
 		// Stop the processing of incoming changes on tree3 so that it does not learn about the deletion of Z
 		await provider.opProcessingController.pauseProcessing(container3);
 
-		// Delete Z
-		remove(tree2, 0, 1);
+		// Remove Z
+		view2.removeAt(0);
 
 		// Ensure tree2 has a chance to send deletion of Z
 		await provider.opProcessingController.processOutgoing(container2);
 
 		// Ensure tree1 has a chance to receive the deletion of Z before putting out a summary
 		await provider.opProcessingController.processIncoming(container1);
-		validateRootField(tree1, ["A", "C"]);
+		assert.deepEqual(view1.asArray, ["A", "C"]);
 
 		// Have tree1 make a summary
 		// Summarized state: A C
 		await provider.summarize();
 
-		// Insert B between A and C (without knowing of Z being deleted)
-		insert(tree3, 2, "B");
+		// Insert B between A and C (without knowing of Z being removed)
+		view3.insertAt(2, ["B"]);
 
 		// Ensure the insertion of B is sent for processing by tree3 before tree3 receives the deletion of Z
 		await provider.opProcessingController.processOutgoing(container3);
@@ -153,7 +570,7 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 
 		// Load the last summary (state: "AC") and process the deletion of Z and insertion of B
-		const tree4 = await provider.createTree();
+		const tree4 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
 
 		// Ensure tree4 has a chance to process trailing ops.
 		await provider.ensureSynchronized();
@@ -161,1435 +578,925 @@ describe("SharedTree", () => {
 		// Trees 1 through 3 should get the correct end state (ABC) whether we include EditManager data
 		// in summaries or not.
 		const expectedValues = ["A", "B", "C"];
-		validateRootField(tree1, expectedValues);
-		validateRootField(tree2, expectedValues);
-		validateRootField(tree3, expectedValues);
+		assert.deepEqual(view1.asArray, expectedValues);
+		assert.deepEqual(view2.asArray, expectedValues);
+		assert.deepEqual(view3.asArray, expectedValues);
 		// tree4 should only get the correct end state if it was able to get the adequate
 		// EditManager state from the summary. Specifically, in order to correctly rebase the insert
-		// of B, tree4 needs to have a local copy of the edit that deleted Z, so it can
+		// of B, tree4 needs to have a local copy of the edit that removed Z, so it can
 		// rebase the insertion of  B over that edit.
 		// Without that, it will interpret the insertion of B based on the current state, yielding
 		// the order ACB.
-		validateRootField(tree4, expectedValues);
+		assert.deepEqual(tree4.editableTree.asArray, expectedValues);
+	});
+
+	it("can load a summary from a tree and receive edits of the new state", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [summarizingTree] = provider.trees;
+
+		summarizingTree.schematizeInternal({
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: ["a", "b", "c"],
+		});
+
+		await provider.ensureSynchronized();
+		await provider.summarize();
+
+		const loadingTree = await provider.createTree();
+
+		summarizingTree.editor
+			.sequenceField({
+				field: rootFieldKey,
+				parent: undefined,
+			})
+			.remove(0, 1);
+
+		await provider.ensureSynchronized();
+
+		validateTreeContent(loadingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["b", "c"],
+		});
+	});
+
+	it("can load a summary from a tree and receive edits that require repair data", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [summarizingTree] = provider.trees;
+
+		summarizingTree.schematizeInternal({
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: ["a", "b", "c"],
+		});
+
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
+
+		summarizingTree.editor
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.remove(0, 1);
+
+		validateTreeContent(summarizingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["b", "c"],
+		});
+
+		await provider.ensureSynchronized();
+		await provider.summarize();
+
+		const loadingTree = await provider.createTree();
+
+		const revertible = undoStack.pop();
+		assert(revertible !== undefined, "expected undo stack to have an entry");
+		revertible.revert();
+
+		validateTreeContent(summarizingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["a", "b", "c"],
+		});
+
+		await provider.ensureSynchronized();
+
+		validateTreeContent(loadingTree.view, {
+			schema: stringSequenceRootSchema,
+			initialTree: ["a", "b", "c"],
+		});
+		unsubscribe();
 	});
 
 	it("can summarize local edits in the attach summary", async () => {
-		const onCreate = (tree: ISharedTree) => {
-			const schema: SchemaData = {
-				treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-				globalFieldSchema: new Map([
-					// This test requires the use of a sequence field
-					[rootFieldKey, fieldSchema(FieldKinds.sequence)],
-				]),
-			};
-			tree.storedSchema.update(schema);
-			insert(tree, 0, "A");
-			insert(tree, 1, "C");
-			validateRootField(tree, ["A", "C"]);
+		const onCreate = (tree: SharedTree) => {
+			const view = tree.schematizeInternal(emptyStringSequenceConfig);
+			view.editableTree.insertAtStart(["A"]);
+			view.editableTree.insertAtEnd(["C"]);
+			assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
+			view[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
 			new SharedTreeTestFactory(onCreate),
 		);
-		const [tree1] = provider.trees;
-		validateRootField(tree1, ["A", "C"]);
-		const tree2 = await provider.createTree();
+		const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
+		assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
+		await provider.ensureSynchronized();
+		const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
 		// Check that the joining tree was initialized with data from the attach summary
-		validateRootField(tree2, ["A", "C"]);
+		assert.deepEqual(tree2.editableTree.asArray, ["A", "C"]);
 
 		// Check that further edits are interpreted properly
-		insert(tree1, 1, "B");
+		tree1.editableTree.insertAt(1, "B");
 		await provider.ensureSynchronized();
-		validateRootField(tree1, ["A", "B", "C"]);
-		validateRootField(tree2, ["A", "B", "C"]);
+		assert.deepEqual(tree1.editableTree.asArray, ["A", "B", "C"]);
+		assert.deepEqual(tree2.editableTree.asArray, ["A", "B", "C"]);
 	});
 
-	it("has bounded memory growth in EditManager", async () => {
-		const provider = await TestTreeProvider.create(2);
-		const [tree1, tree2] = provider.trees;
+	it("can tolerate local edits submitted as part of a transaction in the attach summary", async () => {
+		const onCreate = (tree: SharedTree) => {
+			// Schematize uses a transaction as well
+			const view = tree.schematizeInternal(emptyStringSequenceConfig);
+			view.checkout.transaction.start();
+			view.editableTree.insertAtStart(["A"]);
+			view.editableTree.insertAt(1, ["C"]);
+			view.checkout.transaction.commit();
+			assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
+			view[disposeSymbol]();
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			SummarizeType.onDemand,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
+		assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
+		const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
+		// Check that the joining tree was initialized with data from the attach summary
+		assert.deepEqual(tree2.editableTree.asArray, ["A", "C"]);
+
+		// Check that further edits are interpreted properly
+		tree1.editableTree.insertAt(1, "B");
+		await provider.ensureSynchronized();
+		assert.deepEqual(tree1.editableTree.asArray, ["A", "B", "C"]);
+		assert.deepEqual(tree2.editableTree.asArray, ["A", "B", "C"]);
+	});
+
+	// AB#5745: Enable this test once it passes.
+	// TODO: above mentioned task is done, but this still fails. Fix it.
+	it.skip("can tolerate incomplete transactions when attaching", async () => {
+		const onCreate = (tree: SharedTree) => {
+			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			tree.view.transaction.start();
+			const view = assertSchema(tree, stringSequenceRootSchema).editableTree;
+			view.insertAtStart(["A"]);
+			view.insertAt(1, ["C"]);
+			assert.deepEqual(view.asArray, ["A", "C"]);
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			SummarizeType.onDemand,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
+		assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
+		const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
+		tree1.checkout.transaction.commit();
+		// Check that the joining tree was initialized with data from the attach summary
+		assert.deepEqual(tree2, []);
+
+		await provider.ensureSynchronized();
+		assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
+		assert.deepEqual(tree2.editableTree.asArray, ["A", "C"]);
+
+		// Check that further edits are interpreted properly
+		tree1.editableTree.insertAt(1, ["B"]);
+		await provider.ensureSynchronized();
+		assert.deepEqual(tree1.editableTree.asArray, ["A", "B", "C"]);
+		assert.deepEqual(tree2.editableTree.asArray, ["A", "B", "C"]);
+	});
+
+	it("has bounded memory growth in EditManager", () => {
+		const provider = new TestTreeProviderLite(2);
+		provider.trees[0].schematizeInternal(emptyStringSequenceConfig)[disposeSymbol]();
+		provider.processMessages();
+
+		const [tree1, tree2] = provider.trees.map(
+			(t) => assertSchema(t, stringSequenceRootSchema).editableTree,
+		);
 
 		// Make some arbitrary number of edits
 		for (let i = 0; i < 10; ++i) {
-			insert(tree1, 0, "");
+			tree1.insertAtStart([""]);
 		}
 
-		await provider.ensureSynchronized();
+		provider.processMessages();
 
 		// These two edit will have ref numbers that correspond to the last of the above edits
-		insert(tree1, 0, "");
-		insert(tree2, 0, "");
+		tree1.insertAtStart([""]);
+		tree2.insertAtStart([""]);
 
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
-		await provider.ensureSynchronized();
+		provider.processMessages();
 
 		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
 		// if we'll ever expose some memory stats in which the trunk length would be included.
 		// If we do then this test should be updated to use that code path.
-		const t1 = tree1 as unknown as SharedTreeCore<unknown, any, any>;
-		const t2 = tree2 as unknown as SharedTreeCore<unknown, any, any>;
-		assert(t1.editManager.getTrunk().length < 10);
-		assert(t2.editManager.getTrunk().length < 10);
+		const t1 = provider.trees[0] as unknown as { editManager?: EditManager<any, any, any> };
+		const t2 = provider.trees[1] as unknown as { editManager?: EditManager<any, any, any> };
+		assert(
+			t1.editManager !== undefined && t2.editManager !== undefined,
+			"EditManager has moved. This test must be updated.",
+		);
+		assert(t1.editManager.getTrunkChanges().length < 10);
+		assert(t2.editManager.getTrunkChanges().length < 10);
 	});
 
-	describe("Editing", () => {
-		it("can insert and delete a node in a sequence field", async () => {
+	it("can process changes while detached", async () => {
+		const onCreate = (t: ISharedTree) => {
+			const view = t.schematizeInternal(emptyStringSequenceConfig);
+			view.editableTree.insertAtStart(["B"]);
+			view.editableTree.insertAtStart(["A"]);
+			assert.deepEqual(view.editableTree.asArray, ["A", "B"]);
+			view[disposeSymbol]();
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			undefined,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const tree = assertSchema(provider.trees[0], stringSequenceRootSchema);
+		assert.deepEqual(tree.editableTree.asArray, ["A", "B"]);
+	});
+
+	describe("Undo and redo", () => {
+		it("the insert of a node in a sequence field", () => {
 			const value = "42";
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
+			provider.processMessages();
 
 			// Insert node
-			pushTestValue(tree1, value);
-
-			await provider.ensureSynchronized();
+			tree1.editableTree.insertAtStart([value]);
+			provider.processMessages();
 
 			// Validate insertion
-			assert.equal(peekTestValue(tree2), value);
+			assert.deepEqual(tree2.editableTree.asArray, [value]);
 
-			// Delete node
-			remove(tree1, 0, 1);
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
 
-			await provider.ensureSynchronized();
+			assert.deepEqual(tree1.editableTree.asArray, []);
+			assert.deepEqual(tree2.editableTree.asArray, []);
 
-			assert.equal(peekTestValue(tree1), undefined);
-			assert.equal(peekTestValue(tree2), undefined);
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value]);
+			assert.deepEqual(tree2.editableTree.asArray, [value]);
+			unsubscribe();
 		});
 
-		it("can handle competing deletes", async () => {
-			for (const index of [0, 1, 2, 3]) {
-				const provider = await TestTreeProvider.create(4);
-				const [tree1, tree2, tree3, tree4] = provider.trees;
-				const sequence: JsonableTree[] = [
-					{ type: brand("Number"), value: 0 },
-					{ type: brand("Number"), value: 1 },
-					{ type: brand("Number"), value: 2 },
-					{ type: brand("Number"), value: 3 },
-				];
-				initializeTestTree(tree1, sequence);
-				await provider.ensureSynchronized();
-
-				remove(tree1, index, 1);
-				remove(tree2, index, 1);
-				remove(tree3, index, 1);
-
-				await provider.ensureSynchronized();
-
-				const expectedSequence = [0, 1, 2, 3];
-				expectedSequence.splice(index, 1);
-				validateRootField(tree1, expectedSequence);
-				validateRootField(tree2, expectedSequence);
-				validateRootField(tree3, expectedSequence);
-				validateRootField(tree4, expectedSequence);
-			}
-		});
-
-		it("can insert and delete a node in an optional field", async () => {
-			const value = "42";
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
+		it("inserts of multiple nodes in a sequence field", () => {
+			const value = "A";
+			const value2 = "B";
+			const value3 = "C";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
+			provider.processMessages();
 
 			// Insert node
-			pushTestValue(tree1, value);
-
-			// Delete node
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
-				field.set(undefined, false);
-				return TransactionResult.Apply;
-			});
-
-			await provider.ensureSynchronized();
-			assert.equal(peekTestValue(tree1), undefined);
-			assert.equal(peekTestValue(tree2), undefined);
-
-			// Set node
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
-				field.set(singleTextCursor({ type: brand("TestValue"), value: 43 }), true);
-				return TransactionResult.Apply;
-			});
-
-			await provider.ensureSynchronized();
-			assert.equal(peekTestValue(tree1), 43);
-			assert.equal(peekTestValue(tree2), 43);
-		});
-
-		it("can edit a global field", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-
-			// Insert root node
-			pushTestValue(tree1, 42);
-
-			// Insert child in global field
-			tree1.runTransaction((forest, editor) => {
-				const writeCursor = singleTextCursor({ type: brand("TestValue"), value: 43 });
-				const field = editor.sequenceField(
-					{
-						parent: undefined,
-						parentField: rootFieldKeySymbol,
-						parentIndex: 0,
-					},
-					globalFieldKeySymbol,
-				);
-				field.insert(0, writeCursor);
-
-				return TransactionResult.Apply;
-			});
-
-			await provider.ensureSynchronized();
+			tree1.editableTree.insertAtStart(value3);
+			tree1.editableTree.insertAtStart(value2);
+			tree1.editableTree.insertAtStart(value);
+			provider.processMessages();
 
 			// Validate insertion
-			{
-				const readCursor = tree2.forest.allocateCursor();
-				moveToDetachedField(tree2.forest, readCursor);
-				assert(readCursor.firstNode());
-				readCursor.enterField(globalFieldKeySymbol);
-				assert(readCursor.firstNode());
-				const { value } = readCursor;
-				assert.equal(value, 43);
-				readCursor.free();
-			}
+			assert.deepEqual(tree1.editableTree.asArray, [value, value2, value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value, value2, value3]);
 
-			// Delete node
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(
-					{
-						parent: undefined,
-						parentField: rootFieldKeySymbol,
-						parentIndex: 0,
-					},
-					globalFieldKeySymbol,
-				);
-				field.delete(0, 1);
-				return TransactionResult.Apply;
-			});
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
 
-			await provider.ensureSynchronized();
+			assert.deepEqual(tree1.editableTree.asArray, [value2, value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value2, value3]);
 
-			// Validate deletion
-			{
-				const readCursor = tree2.forest.allocateCursor();
-				moveToDetachedField(tree2.forest, readCursor);
-				assert(readCursor.firstNode());
-				readCursor.enterField(globalFieldKeySymbol);
-				assert(!readCursor.firstNode());
-			}
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, []);
+			assert.deepEqual(tree2.editableTree.asArray, []);
+
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
+			unsubscribe();
 		});
 
-		it("can abandon a transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1] = provider.trees;
+		it("rebased edits", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content = {
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["A", "B", "C", "D"],
+			} satisfies InitializeAndSchematizeConfiguration;
+			const tree1 = provider.trees[0].schematizeInternal(content);
 
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(tree1, initialState);
-			tree1.runTransaction((forest, editor) => {
-				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
-				const root0Path = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-				const root1Path = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 1,
-				};
-				const foo0 = editor.sequenceField(root0Path, fooKey);
-				const foo1 = editor.sequenceField(root1Path, fooKey);
-				editor.setValue(
-					{
-						parent: root0Path,
-						parentField: fooKey,
-						parentIndex: 1,
-					},
-					41,
-				);
-				editor.setValue(
-					{
-						parent: root0Path,
-						parentField: fooKey,
-						parentIndex: 2,
-					},
-					42,
-				);
-				editor.setValue(root0Path, "RootValue1");
-				foo0.delete(0, 1);
-				rootField.insert(0, singleTextCursor({ type: brand("Test") }));
-				foo1.delete(0, 1);
-				editor.setValue(root1Path, "RootValue2");
-				foo1.insert(0, singleTextCursor({ type: brand("Test") }));
-				editor.setValue(
-					{
-						parent: root1Path,
-						parentField: fooKey,
-						parentIndex: 1,
-					},
-					82,
-				);
-				// Aborting the transaction should restore the forest
-				return TransactionResult.Abort;
-			});
+			const {
+				undoStack: undoStack1,
+				redoStack: redoStack1,
+				unsubscribe: unsubscribe1,
+			} = createTestUndoRedoStacks(tree1.checkout.events);
 
-			validateTree(tree1, [initialState]);
-		});
-
-		it("can insert multiple nodes", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-
-			// Insert nodes
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(0, singleTextCursor({ type: brand("Test"), value: 1 }));
-				return TransactionResult.Apply;
-			});
-
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(1, singleTextCursor({ type: brand("Test"), value: 2 }));
-				return TransactionResult.Apply;
-			});
-
-			await provider.ensureSynchronized();
+			provider.processMessages();
+			const tree2 =
+				provider.trees[1].requireSchema(content.schema, () => fail("schema changed")) ??
+				fail("schematize failed");
+			const {
+				undoStack: undoStack2,
+				redoStack: redoStack2,
+				unsubscribe: unsubscribe2,
+			} = createTestUndoRedoStacks(tree2.checkout.events);
 
 			// Validate insertion
-			{
-				const readCursor = tree2.forest.allocateCursor();
-				moveToDetachedField(tree2.forest, readCursor);
-				assert(readCursor.firstNode());
-				assert.equal(readCursor.value, 1);
-				assert.equal(readCursor.nextNode(), true);
-				assert.equal(readCursor.value, 2);
-				assert.equal(readCursor.nextNode(), false);
-				readCursor.free();
-			}
+			validateTreeContent(tree2.checkout, content);
+
+			const root1 = tree1.editableTree;
+			const root2 = tree2.editableTree;
+			// Insert nodes on both trees
+			root1.insertAt(1, ["x"]);
+			assert.deepEqual(root1.asArray, ["A", "x", "B", "C", "D"]);
+
+			root2.insertAt(3, ["y"]);
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "y", "D"]);
+
+			// Syncing will cause both trees to rebase their local changes
+			provider.processMessages();
+
+			// Undo node insertion on both trees
+			undoStack1.pop()?.revert();
+			assert.deepEqual(root1.asArray, ["A", "B", "C", "y", "D"]);
+
+			undoStack2.pop()?.revert();
+			assert.deepEqual(root2.asArray, ["A", "x", "B", "C", "D"]);
+
+			provider.processMessages();
+			validateTreeContent(tree1.checkout, content);
+			validateTreeContent(tree2.checkout, content);
+
+			// Insert additional node at the beginning to require rebasing
+			root1.insertAt(0, ["0"]);
+			assert.deepEqual(root1.asArray, ["0", "A", "B", "C", "D"]);
+
+			const expectedAfterRedo = ["0", "A", "x", "B", "C", "y", "D"];
+			// Redo node insertion on both trees
+			redoStack1.pop()?.revert();
+			assert.deepEqual(root1.asArray, ["0", "A", "x", "B", "C", "D"]);
+
+			redoStack2.pop()?.revert();
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "y", "D"]);
+
+			provider.processMessages();
+			assert.deepEqual(tree1.editableTree.asArray, expectedAfterRedo);
+			assert.deepEqual(tree2.editableTree.asArray, expectedAfterRedo);
+			unsubscribe1();
+			unsubscribe2();
 		});
 
-		it("can move nodes across fields", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
+		/**
+		 * the collab window includes all sequenced edits after the minimum sequence number
+		 * these tests test that undoing edits behind (i.e., with a seq# less than) the minimum sequence number works
+		 */
+		it("refresher for repair data out of collab window", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content = {
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["A", "B", "C", "D"],
+			} satisfies InitializeAndSchematizeConfiguration;
+			const tree1 = provider.trees[0].schematizeInternal(content);
 
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Node"), value: "a" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "c" },
-					],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "e" },
-						{ type: brand("Node"), value: "f" },
-					],
-				},
-			};
-			initializeTestTree(tree1, initialState);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
 
-			tree1.runTransaction((forest, editor) => {
-				const rootPath = {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				};
-				editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
-				return TransactionResult.Apply;
-			});
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(content);
 
-			await provider.ensureSynchronized();
+			const root1 = tree1.editableTree;
+			const root2 = tree2.editableTree;
 
-			const expectedState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [{ type: brand("Node"), value: "a" }],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "c" },
-						{ type: brand("Node"), value: "e" },
-						{ type: brand("Node"), value: "f" },
-					],
-				},
-			};
-			validateTree(tree1, [expectedState]);
-			validateTree(tree2, [expectedState]);
+			// remove in first tree
+			root1.removeAt(0);
+
+			provider.processMessages();
+			const removeSequenceNumber = provider.sequenceNumber;
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			// send edits to move the collab window up
+			root2.insertAt(3, ["y"]);
+			provider.processMessages();
+			root1.removeAt(3);
+			provider.processMessages();
+			root2.insertAt(3, ["y"]);
+			provider.processMessages();
+			root1.removeAt(3);
+			provider.processMessages();
+
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			// ensure the remove is out of the collab window
+			assert(removeSequenceNumber < provider.minimumSequenceNumber);
+			undoStack[0]?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["A", "B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "D"]);
+
+			assert.equal(redoStack.length, 1);
+			redoStack.pop()?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			unsubscribe();
+		});
+
+		describe("can concurrently restore and edit removed tree", () => {
+			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
+			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+
+			for (const scenario of ["restore then change", "change then restore"]) {
+				it(`with the ${scenario} sequenced`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const content = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [["a"]],
+					} satisfies InitializeAndSchematizeConfiguration;
+					const tree1 = provider.trees[0].schematizeInternal(content);
+					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+						createTestUndoRedoStacks(tree1.checkout.events);
+					const tree2 = provider.trees[1].schematizeInternal(content);
+					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+						createTestUndoRedoStacks(tree2.checkout.events);
+
+					provider.processMessages();
+
+					// Validate insertion
+					validateTreeContent(tree2.checkout, content);
+
+					// edit subtree
+					const outerList = tree2.editableTree.content.content;
+					const innerList = (outerList.at(0) ?? assert.fail()).content;
+					innerList.insertAtEnd("b");
+					provider.processMessages();
+					assert.deepEqual(tree1.editableTree.content.content.at(0)?.content.asArray, [
+						"a",
+						"b",
+					]);
+					assert.deepEqual(innerList.asArray, ["a", "b"]);
+
+					// remove subtree
+					tree1.editableTree.content.content.removeAt(0);
+					provider.processMessages();
+					assert.deepEqual(tree1.editableTree.content.content.asArray, []);
+					assert.deepEqual(tree2.editableTree.content.content.asArray, []);
+
+					if (scenario === "restore then change") {
+						undoStack1.pop()?.revert();
+						undoStack2.pop()?.revert();
+					} else {
+						undoStack2.pop()?.revert();
+						undoStack1.pop()?.revert();
+					}
+
+					provider.processMessages();
+					// check the undo happened
+					assert.deepEqual(tree1.editableTree.content.content.at(0)?.content.asArray, [
+						"a",
+					]);
+					assert.deepEqual(tree2.editableTree.content.content.at(0)?.content.asArray, [
+						"a",
+					]);
+
+					unsubscribe1();
+					unsubscribe2();
+				});
+			}
 		});
 	});
 
+	// TODO: many of these events tests should be tests of SharedTreeView instead.
+	describe("Events", () => {
+		const builder = new SchemaBuilder({ scope: "Events test schema" });
+		const rootTreeNodeSchema = builder.object("root", {
+			x: builder.number,
+		});
+		const schema = builder.intoSchema(builder.optional(Any));
+
+		it("triggers revertible events for local changes", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+			provider.processMessages();
+			const tree2 = assertSchema(provider.trees[1], stringSequenceRootSchema);
+
+			const {
+				undoStack: undoStack1,
+				redoStack: redoStack1,
+				unsubscribe: unsubscribe1,
+			} = createTestUndoRedoStacks(tree1.checkout.events);
+			const {
+				undoStack: undoStack2,
+				redoStack: redoStack2,
+				unsubscribe: unsubscribe2,
+			} = createTestUndoRedoStacks(tree2.checkout.events);
+
+			// Insert node
+			tree1.editableTree.insertAtStart([value]);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual(tree2.editableTree.asArray, [value]);
+			assert.equal(undoStack1.length, 1);
+			assert.equal(undoStack2.length, 0);
+
+			undoStack1.pop()?.revert();
+			provider.processMessages();
+
+			// Insert node
+			tree2.editableTree.insertAtStart(["43"]);
+			provider.processMessages();
+
+			assert.equal(undoStack1.length, 0);
+			assert.equal(redoStack1.length, 1);
+			assert.equal(undoStack2.length, 1);
+			assert.equal(redoStack2.length, 0);
+
+			redoStack1.pop()?.revert();
+			provider.processMessages();
+
+			assert.equal(undoStack1.length, 1);
+			assert.equal(redoStack1.length, 0);
+			assert.equal(undoStack2.length, 1);
+			assert.equal(redoStack2.length, 0);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		it("doesn't trigger a revertible event for rebases", () => {
+			const provider = new TestTreeProviderLite(2);
+			// Initialize the tree
+			const tree1 = provider.trees[0].schematizeInternal({
+				initialTree: ["A", "B", "C", "D"],
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			});
+			provider.processMessages();
+			const tree2 =
+				provider.trees[1].requireSchema(stringSequenceRootSchema, () =>
+					fail("schema changed"),
+				) ?? fail("invalid schema");
+
+			// Validate initialization
+			validateViewConsistency(tree1.checkout, tree2.checkout);
+
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.checkout.events,
+			);
+
+			const root1 = tree1.editableTree;
+			const root2 = tree2.editableTree;
+			// Insert a node on tree 2
+			root2.insertAt(4, ["z"]);
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "D", "z"]);
+
+			// Insert nodes on both trees
+			root1.insertAt(1, ["x"]);
+			assert.deepEqual(root1.asArray, ["A", "x", "B", "C", "D"]);
+
+			root2.insertAt(3, ["y"]);
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "y", "D", "z"]);
+
+			// Syncing will cause both trees to rebase their local changes
+			provider.processMessages();
+
+			assert.equal(undoStack1.length, 1);
+			assert.equal(undoStack2.length, 2);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+	});
+
+	// TODO:
+	// These tests should either be tests of SharedTreeView, EditManager, or the relevant field kind's rebase function.
+	// Keeping a couple integration tests for rebase at this level might be ok (for example schema vs other edits), but that should be minimal,
+	// and those tests should setup proper schema, and use the high levels editing APIs (editable tree) if they are serving as integration tests of SharedTree,
 	describe("Rebasing", () => {
-		it("can rebase two inserts", async () => {
+		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-			insert(tree1, 0, "y");
-			await provider.ensureSynchronized();
-
-			insert(tree1, 0, "x");
-			insert(tree2, 1, "a", "c");
-			insert(tree2, 2, "b");
-			await provider.ensureSynchronized();
-
-			const expected = ["x", "y", "a", "b", "c"];
-			validateRootField(tree1, expected);
-			validateRootField(tree2, expected);
-		});
-
-		it("can rebase delete over move", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-
-			insert(tree1, 0, "a", "b");
-			await provider.ensureSynchronized();
-
-			// Move b before a
-			tree1.runTransaction((forest, editor) => {
-				editor.move(undefined, rootFieldKeySymbol, 1, 1, undefined, rootFieldKeySymbol, 0);
-				return TransactionResult.Apply;
-			});
-
-			// Delete b
-			remove(tree2, 1, 1);
-
-			await provider.ensureSynchronized();
-
-			const expected = ["a"];
-			validateRootField(tree1, expected);
-			validateRootField(tree2, expected);
-		});
-
-		it.skip("can rebase delete over cross-field move", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Node"), value: "a" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "c" },
-					],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "e" },
-					],
-				},
+			const config = {
+				initialTree: ["a"],
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
 			};
-			initializeTestTree(tree1, initialState);
+			const view1 = provider.trees[0].schematizeInternal(config);
 			await provider.ensureSynchronized();
 
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
+			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const pausedTree = view1;
+			await provider.opProcessingController.pauseProcessing(pausedContainer);
+			pausedTree.editableTree.insertAt(1, ["b"]);
+			pausedTree.editableTree.insertAt(2, ["c"]);
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			provider.opProcessingController.resumeProcessing();
 
-			// Move bc between d and e.
-			tree1.runTransaction((forest, editor) => {
-				editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
-				return TransactionResult.Apply;
-			});
-
-			// Delete c
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("foo"));
-				field.delete(2, 1);
-				return TransactionResult.Apply;
-			});
-
+			const otherLoadedTree = assertSchema(
+				provider.trees[1],
+				stringSequenceRootSchema,
+			).editableTree;
+			otherLoadedTree.insertAtStart(["d"]);
 			await provider.ensureSynchronized();
 
-			const expectedState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [{ type: brand("Node"), value: "a" }],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "e" },
-					],
-				},
-			};
-			validateTree(tree1, [expectedState]);
-			validateTree(tree2, [expectedState]);
+			const loader = provider.makeTestLoader();
+			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
+			const tree = assertSchema(
+				await dataStore.getSharedObject<ISharedTree>("TestSharedTree"),
+				stringSequenceRootSchema,
+			);
+			await waitForContainerConnection(loadedContainer, true);
+			await provider.ensureSynchronized();
+			assert.deepEqual(tree.editableTree.asArray, ["d", "a", "b", "c"]);
+			assert.deepEqual(otherLoadedTree.asArray, ["d", "a", "b", "c"]);
 		});
 	});
 
 	describe("Anchors", () => {
-		it("Anchors can be created and dereferenced", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const tree = provider.trees[0];
+		it("Anchors can be created and dereferenced", () => {
+			const provider = new TestTreeProviderLite();
 
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(tree, initialState);
+			provider.trees[0].schematizeInternal({
+				schema: numberSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [0, 1, 2],
+			});
+
+			const tree = provider.trees[0].view;
 
 			const cursor = tree.forest.allocateCursor();
 			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			cursor.enterField(brand("foo"));
+
 			cursor.enterNode(0);
 			cursor.seekNodes(1);
 			const anchor = cursor.buildAnchor();
 			cursor.free();
 			const childPath = tree.locate(anchor);
 			const expected: UpPath = {
-				parent: {
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 0,
-				},
-				parentField: brand("foo"),
+				parent: undefined,
+				parentField: rootFieldKey,
 				parentIndex: 1,
 			};
 			assert(compareUpPaths(childPath, expected));
 		});
 	});
 
-	describe("Checkouts", () => {
-		it("are isolated from the root checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			pushTestValue(tree, "root");
-			const checkout = tree.fork();
-			pushTestValue(checkout, "checkout");
-			assert.equal(peekTestValue(tree), "root");
-			assert.equal(peekTestValue(checkout), "checkout");
-		});
-
-		it("are isolated from their base checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const baseCheckout = tree.fork();
-			pushTestValue(baseCheckout, "base");
-			const checkout = baseCheckout.fork();
-			pushTestValue(checkout, "checkout");
-			assert.equal(peekTestValue(baseCheckout), "base");
-			assert.equal(peekTestValue(checkout), "checkout");
-		});
-
-		it("provide isolation from the root checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkout = tree.fork();
-			assert.equal(peekTestValue(tree), undefined);
-			assert.equal(peekTestValue(checkout), undefined);
-			pushTestValue(tree, "root");
-			assert.equal(peekTestValue(tree), "root");
-			assert.equal(peekTestValue(checkout), undefined);
-		});
-
-		it("provide isolation from their base checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const baseCheckout = tree.fork();
-			const checkout = baseCheckout.fork();
-			assert.equal(peekTestValue(baseCheckout), undefined);
-			assert.equal(peekTestValue(checkout), undefined);
-			pushTestValue(baseCheckout, "base");
-			assert.equal(peekTestValue(baseCheckout), "base");
-			assert.equal(peekTestValue(checkout), undefined);
-		});
-
-		it("merge changes into the root checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkout = tree.fork();
-			pushTestValue(checkout, "checkout");
-			checkout.merge();
-			assert.equal(peekTestValue(tree), "checkout");
-		});
-
-		it("merge changes into their base checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const baseCheckout = tree.fork();
-			const checkout = baseCheckout.fork();
-			pushTestValue(checkout, "checkout");
-			checkout.merge();
-			assert.equal(peekTestValue(baseCheckout), "checkout");
-		});
-
-		it("merge changes through multiple checkouts", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkoutA = tree.fork();
-			const checkoutB = checkoutA.fork();
-			const checkoutC = checkoutB.fork();
-			pushTestValue(checkoutC, "checkout");
-			checkoutC.merge();
-			assert.equal(peekTestValue(checkoutA), undefined);
-			assert.equal(peekTestValue(checkoutB), "checkout");
-			checkoutB.merge();
-			assert.equal(peekTestValue(checkoutA), "checkout");
-			assert.equal(peekTestValue(checkoutB), "checkout");
-		});
-
-		it("merge correctly when multiple ancestors are mutated", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkoutA = tree.fork();
-			const checkoutB = checkoutA.fork();
-			const checkoutC = checkoutB.fork();
-			pushTestValue(checkoutA, "A");
-			pushTestValue(checkoutB, "B");
-			pushTestValue(checkoutC, "C");
-
-			checkoutC.merge();
-			assert.equal(peekTestValue(checkoutA), "A");
-			assert.equal(peekTestValue(checkoutB), "C");
-			checkoutB.merge();
-			assert.equal(peekTestValue(checkoutA), "C");
-		});
-
-		it("can perform a complicated merge scenario", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkoutA = tree.fork();
-			const checkoutB = checkoutA.fork();
-			const checkoutC = checkoutB.fork();
-			pushTestValue(checkoutA, "A1");
-			pushTestValue(checkoutB, "B1");
-			pushTestValue(checkoutC, "C1");
-			checkoutC.merge();
-			pushTestValue(tree, "R1");
-			pushTestValue(checkoutA, "A2");
-			pushTestValue(checkoutB, "B2");
-			checkoutB.merge();
-			const checkoutD = checkoutA.fork();
-			pushTestValue(checkoutA, "A3");
-			checkoutD.pull();
-			assert.equal(peekTestValue(checkoutD), "A3");
-			pushTestValue(checkoutA, "A4");
-			pushTestValue(checkoutD, "D1");
-			pushTestValue(tree, "R2");
-			checkoutD.merge();
-			checkoutA.merge();
-			pushTestValue(tree, "R3");
-			assert.deepEqual(
-				[...getTestValues(tree)],
-				["R1", "R2", "A1", "A2", "B1", "C1", "B2", "A3", "A4", "D1", "R3"].reverse(),
-			);
-		});
-
-		it("can pull changes in from the root checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkout = tree.fork();
-			pushTestValue(tree, "root");
-			assert.equal(peekTestValue(checkout), undefined);
-			checkout.pull();
-			assert.equal(peekTestValue(checkout), "root");
-		});
-
-		it("can pull changes in from a base checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const baseCheckout = tree.fork();
-			const checkout = baseCheckout.fork();
-			pushTestValue(baseCheckout, "base");
-			assert.equal(peekTestValue(checkout), undefined);
-			checkout.pull();
-			assert.equal(peekTestValue(checkout), "base");
-		});
-
-		it("submit edits to Fluid when merging into the root checkout", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-			const baseCheckout = tree1.fork();
-			const checkout = baseCheckout.fork();
-			// Modify the checkout, but tree2 should remain unchanged until the edit merges all the way up
-			pushTestValue(checkout, "42");
-			await provider.ensureSynchronized();
-			assert.equal(peekTestValue(tree2), undefined);
-			checkout.merge();
-			await provider.ensureSynchronized();
-			assert.equal(peekTestValue(tree2), undefined);
-			baseCheckout.merge();
-			await provider.ensureSynchronized();
-			assert.equal(peekTestValue(tree2), "42");
-		});
-
-		it("do not squash commits", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-			let opsReceived = 0;
-			tree2.on("op", () => (opsReceived += 1));
-			const baseCheckout = tree1.fork();
-			const checkout = baseCheckout.fork();
-			pushTestValue(checkout, "A");
-			pushTestValue(checkout, "B");
-			checkout.merge();
-			baseCheckout.merge();
-			await provider.ensureSynchronized();
-			assert.equal(opsReceived, 2);
-		});
-
-		it("update anchors after merging into the root checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			pushTestValue(tree, "A");
-			let cursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, cursor);
-			cursor.firstNode();
-			const anchor = cursor.buildAnchor();
-			cursor.clear();
-			const checkout = tree.fork();
-			pushTestValue(checkout, "B");
-			checkout.merge();
-			cursor = tree.forest.allocateCursor();
-			tree.forest.tryMoveCursorToNode(anchor, cursor);
-			assert.equal(cursor.value, "A");
-			cursor.clear();
-		});
-
-		it("update anchors", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkout = tree.fork();
-			pushTestValue(checkout, "A");
-			let cursor = checkout.forest.allocateCursor();
-			moveToDetachedField(checkout.forest, cursor);
-			cursor.firstNode();
-			const anchor = cursor.buildAnchor();
-			cursor.clear();
-			pushTestValue(checkout, "B");
-			cursor = checkout.forest.allocateCursor();
-			checkout.forest.tryMoveCursorToNode(anchor, cursor);
-			assert.equal(cursor.value, "A");
-			cursor.clear();
-		});
-
-		it("update anchors after merging into a base checkout", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const baseCheckout = tree.fork();
-			pushTestValue(baseCheckout, "A");
-			let cursor = baseCheckout.forest.allocateCursor();
-			moveToDetachedField(baseCheckout.forest, cursor);
-			cursor.firstNode();
-			const anchor = cursor.buildAnchor();
-			cursor.clear();
-			const checkout = tree.fork();
-			pushTestValue(checkout, "B");
-			checkout.merge();
-			cursor = baseCheckout.forest.allocateCursor();
-			baseCheckout.forest.tryMoveCursorToNode(anchor, cursor);
-			assert.equal(cursor.value, "A");
-			cursor.clear();
-		});
-
-		it("are disposed after merging", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkoutA = tree.fork();
-			const checkoutB = checkoutA.fork();
-			const checkoutC = checkoutB.fork();
-			assert.equal(checkoutA.isMerged(), false);
-			assert.equal(checkoutB.isMerged(), false);
-			assert.equal(checkoutC.isMerged(), false);
-			checkoutA.merge();
-			assert.equal(checkoutA.isMerged(), true);
-			assert.equal(checkoutB.isMerged(), true);
-			assert.equal(checkoutC.isMerged(), true);
-		});
-
-		it("can be read after disposal", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			pushTestValue(tree, "root");
-			const checkout = tree.fork();
-			checkout.merge();
-			assert.equal(peekTestValue(checkout), "root");
-		});
-
-		it("cannot be mutated after disposal", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const checkout = tree.fork();
-			checkout.merge();
-			const expectedError = "Branch is already merged";
-			assert.throws(
-				() => checkout.pull(),
-				(e) => validateAssertionError(e, expectedError),
-			);
-			assert.throws(
-				() => checkout.fork(),
-				(e) => validateAssertionError(e, expectedError),
-			);
-			assert.throws(
-				() => checkout.merge(),
-				(e) => validateAssertionError(e, expectedError),
-			);
-			assert.throws(
-				() => pushTestValue(checkout, "unused"),
-				(e) => validateAssertionError(e, expectedError),
-			);
-		});
+	it("don't send ops before committing", () => {
+		const provider = new TestTreeProviderLite(2);
+		const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+		provider.processMessages();
+		const tree2 = provider.trees[1];
+		let opsReceived = 0;
+		tree2.on("op", () => (opsReceived += 1));
+		tree1.checkout.transaction.start();
+		tree1.editableTree.insertAtStart(["x"]);
+		provider.processMessages();
+		assert.equal(opsReceived, 0);
+		tree1.checkout.transaction.commit();
+		provider.processMessages();
+		assert.equal(opsReceived, 1);
+		assert.deepEqual(assertSchema(tree2, stringSequenceRootSchema).editableTree.asArray, ["x"]);
 	});
 
-	describe.skip("Fuzz Test fail cases", () => {
-		it("Invalid operation", async () => {
-			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-			const initialTreeState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-					foo2: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
-			await provider.ensureSynchronized();
+	it("send only one op after committing", () => {
+		const provider = new TestTreeProviderLite(2);
+		const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+		provider.processMessages();
+		const tree2 = provider.trees[1];
+		let opsReceived = 0;
+		tree2.on("op", () => (opsReceived += 1));
+		tree1.checkout.transaction.start();
+		tree1.editableTree.insertAtStart(["B"]);
+		tree1.editableTree.insertAtStart(["A"]);
+		tree1.checkout.transaction.commit();
+		provider.processMessages();
+		assert.equal(opsReceived, 1);
+		assert.deepEqual(assertSchema(tree2, stringSequenceRootSchema).editableTree.asArray, [
+			"A",
+			"B",
+		]);
+	});
 
-			const tree0 = provider.trees[0];
-			const tree1 = provider.trees[1];
-			const tree2 = provider.trees[2];
+	it("do not send an op after committing if nested", () => {
+		const provider = new TestTreeProviderLite(2);
+		const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+		provider.processMessages();
+		const tree2 = provider.trees[1];
+		let opsReceived = 0;
+		tree2.on("op", () => (opsReceived += 1));
+		tree1.checkout.transaction.start();
+		tree1.checkout.transaction.start();
+		tree1.editableTree.insertAtStart("A");
+		tree1.checkout.transaction.commit();
+		provider.processMessages();
+		assert.equal(opsReceived, 0);
+		const view2 = assertSchema(tree2, stringSequenceRootSchema).editableTree;
+		assert.deepEqual(view2.asArray, []);
+		tree1.editableTree.insertAtEnd(["B"]);
+		tree1.checkout.transaction.commit();
+		provider.processMessages();
+		assert.equal(opsReceived, 1);
+		assert.deepEqual(view2.asArray, ["A", "B"]);
+	});
 
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			let path: UpPath;
-			// edit 1
-			let readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			path = {
-				parent: rootPath,
-				parentField: brand("foo2"),
-				parentIndex: 1,
-			};
-			tree1.runTransaction((forest, editor) => {
-				editor.setValue(path, 7419365656138425);
-				return TransactionResult.Apply;
+	it("process changes while detached", async () => {
+		const onCreate = (parentTree: SharedTree) => {
+			const parent = parentTree.schematizeInternal({
+				initialTree: ["A"],
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
 			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
+			parent.checkout.transaction.start();
+			parent.editableTree.insertAtStart(["B"]);
+			parent.checkout.transaction.commit();
+			const child = parent.fork();
+			child.checkout.transaction.start();
+			child.editableTree.insertAtStart(["C"]);
+			child.checkout.transaction.commit();
+			parent.checkout.merge(child.checkout);
+			child[disposeSymbol]();
+			assert.deepEqual(parent.editableTree.asArray, ["C", "B", "A"]);
+			parent[disposeSymbol]();
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			undefined,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const [tree] = provider.trees;
+		assert.deepEqual(assertSchema(tree, stringSequenceRootSchema).editableTree.asArray, [
+			"C",
+			"B",
+			"A",
+		]);
+	});
 
-			// edit 2
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// edit 3
-			await provider.ensureSynchronized();
+	it("doesn't submit an op for a change that crashes", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [tree1, tree2] = provider.trees;
 
-			// edit 4
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 5
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("foo"));
-				field.delete(1, 1);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 6
-			await provider.ensureSynchronized();
-
-			// edit 7
-			await provider.ensureSynchronized();
-
-			// edit 8
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					1,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			path = {
-				parent: rootPath,
-				parentField: brand("foo"),
-				parentIndex: 0,
-			};
-			// edit 9
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree2.runTransaction((forest, editor) => {
-				editor.setValue(path, -3697253287396999);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 10
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree0.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("foo"));
-				field.delete(1, 1);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 11
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.delete(0, 1);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// edit 12
-			await provider.ensureSynchronized();
-
-			// edit 13
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree0.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
+		tree2.on("pre-op", () => {
+			assert.fail();
 		});
-		it("Anchor Stability fails when root node is deleted", async () => {
-			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
-			const initialTreeState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-					foo2: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
+
+		assert.throws(() =>
+			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
+			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
+		);
+
+		provider.processMessages();
+	});
+
+	describe("Schema changes", () => {
+		it("handles two trees schematizing identically at the same time", async () => {
+			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+			const value1 = "42";
+			const value2 = "42";
+
+			const view1 = provider.trees[0].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [value1],
+			});
+
+			provider.trees[1].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [value2],
+			});
+
+			await provider.ensureSynchronized();
+			assert.deepEqual(view1.editableTree.asArray, [value1]);
+			expectSchemaEqual(
+				provider.trees[1].storedSchema,
+				intoStoredSchema(stringSequenceRootSchema),
+			);
+			validateTreeConsistency(provider.trees[0], provider.trees[1]);
+		});
+
+		it("can be undone at the tip", async () => {
+			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+
 			const tree = provider.trees[0];
+			const { undoStack } = createTestUndoRedoStacks(tree.view.events);
 
-			// building the anchor for anchor stability test
-			const cursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			cursor.getPath();
-			cursor.firstField();
-			cursor.getFieldKey();
-			cursor.enterNode(1);
-			const firstAnchor = cursor.buildAnchor();
-			cursor.free();
+			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
 
-			let anchorPath;
+			tree.view.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(jsonSequenceRootSchema));
 
-			// validate anchor
-			const expectedPath: UpPath = {
-				parent: {
-					parent: undefined,
-					parentIndex: 0,
-					parentField: rootFieldKeySymbol,
-				},
-				parentField: brand("foo"),
-				parentIndex: 1,
-			};
+			const revertible = undoStack.pop();
+			revertible?.revert();
 
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-			let path: UpPath;
-			// edit 1
-			let readCursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, readCursor);
-			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// eslint-disable-next-line prefer-const
-			path = {
-				parent: rootPath,
-				parentField: brand("foo2"),
-				parentIndex: 1,
-			};
-			tree.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					1,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Abort;
-			});
-
-			anchorPath = tree.locate(firstAnchor);
-			assert(compareUpPaths(expectedPath, anchorPath));
-
-			readCursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 2
-			tree.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.delete(0, 1);
-				return TransactionResult.Abort;
-			});
-			readCursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			anchorPath = tree.locate(firstAnchor);
-			assert(compareUpPaths(expectedPath, anchorPath));
+			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
 		});
-		it("ensureSynchronized shows diverged trees", async () => {
-			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-			const initialTreeState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-					foo2: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
+	});
+
+	describe("Stashed ops", () => {
+		// Fails because 'ranges finalized out of order' in deltaQueue.ts on the ensureSynchronized call.
+		// This doesn't bubble up b/c of issues using TestTreeProvider without proper listening to errors coming
+		// from containers.
+		it("can apply and resubmit stashed schema ops", async () => {
+			const provider = await TestTreeProvider.create(2);
+
+			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const pausedTree = provider.trees[0];
+			await provider.opProcessingController.pauseProcessing(pausedContainer);
+			pausedTree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			provider.opProcessingController.resumeProcessing();
+
+			const loader = provider.makeTestLoader();
+			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
+			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 
-			const tree0 = provider.trees[0];
-			const tree1 = provider.trees[1];
-			const tree2 = provider.trees[2];
+			const otherLoadedTree = provider.trees[1];
+			expectSchemaEqual(
+				tree.contentSnapshot().schema,
+				intoStoredSchema(stringSequenceRootSchema),
+			);
+			expectSchemaEqual(
+				otherLoadedTree.storedSchema,
+				intoStoredSchema(stringSequenceRootSchema),
+			);
+		});
+	});
 
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
+	describe("Creates a SharedTree using specific ForestType", () => {
+		it("unspecified ForestType uses ObjectForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+				}),
+			);
+			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
+		});
 
-			let path: UpPath;
-			// edit 1
-			await provider.ensureSynchronized();
+		it("ForestType.Reference uses ObjectForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Reference,
+				}),
+			);
+			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
+		});
 
-			// edit 2
-			let readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					1,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 3
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree0.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 4
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree0.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 5
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 6
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree0.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 7
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 8
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			remove(tree2, 0, 1);
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 9
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// eslint-disable-next-line prefer-const
-			path = {
-				parent: rootPath,
-				parentField: brand("Test"),
-				parentIndex: 0,
-			};
-			tree0.runTransaction((forest, editor) => {
-				editor.setValue(path, 3969223090210651);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 10
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree0.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 10
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-				return TransactionResult.Apply;
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 11
-			await provider.ensureSynchronized();
-
-			checkTreesAreSynchronized(provider);
+		it("ForestType.Optimized uses ChunkedForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Optimized,
+				}),
+			);
+			assert.equal(trees[0].view.forest instanceof ChunkedForest, true);
 		});
 	});
 });
 
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	localFields: {
-		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
-	},
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey],
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([
-		[rootFieldKey, rootFieldSchema],
-		[globalFieldKey, globalFieldSchema],
-	]),
-};
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-function initializeTestTree(
+function assertSchema<TRoot extends TreeFieldSchema>(
 	tree: ISharedTree,
-	state?: JsonableTree | JsonableTree[],
-	schema: SchemaData = testSchema,
-): void {
-	if (state === undefined) {
-		tree.storedSchema.update(schema);
-		return;
-	}
-
-	if (!Array.isArray(state)) {
-		initializeTestTree(tree, [state], schema);
-	} else {
-		tree.storedSchema.update(schema);
-
-		// Apply an edit to the tree which inserts a node with a value
-		tree.runTransaction((forest, editor) => {
-			const writeCursors = state.map(singleTextCursor);
-			const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-			field.insert(0, writeCursors);
-
-			return TransactionResult.Apply;
-		});
-	}
-}
-
-/**
- * Inserts a single node under the root of the tree with the given value.
- * Use {@link peekTestValue} to read the value.
- */
-function pushTestValue(tree: ISharedTreeCheckout, value: TreeValue): void {
-	tree.runTransaction((_: IForestSubscription, editor: IDefaultEditBuilder) => {
-		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
-		return TransactionResult.Apply;
-	});
-}
-
-/**
- * Reads a value in a tree set by {@link pushTestValue} if it exists.
- */
-function peekTestValue({ forest }: ISharedTreeCheckout): TreeValue | undefined {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	if (!readCursor.firstNode()) {
-		readCursor.free();
-		return undefined;
-	}
-	const { value } = readCursor;
-	readCursor.free();
-	return value;
-}
-
-/**
- * Reads a value in a tree set by {@link pushTestValue} if it exists.
- */
-function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	if (readCursor.firstNode()) {
-		yield readCursor.value;
-		while (readCursor.nextNode()) {
-			yield readCursor.value;
-		}
-		readCursor.free();
-	}
-}
-
-/**
- * Helper function to insert node at a given index.
- *
- * TODO: delete once the JSON editing API is ready for use.
- *
- * @param tree - The tree on which to perform the insert.
- * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
- */
-function insert(tree: ISharedTreeCheckout, index: number, ...values: string[]): void {
-	tree.runTransaction((forest, editor) => {
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
-		field.insert(index, nodes);
-		return TransactionResult.Apply;
-	});
-}
-
-function remove(tree: ISharedTree, index: number, count: number): void {
-	tree.runTransaction((forest, editor) => {
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.delete(index, count);
-		return TransactionResult.Apply;
-	});
-}
-
-/**
- * Checks that the root field of the given tree contains nodes with the given values.
- * Fails if the given tree contains fewer or more nodes in the root trait.
- * Fails if the given tree contains nodes with different values in the root trait.
- * Does not check if nodes in the root trait have any children.
- *
- * TODO: delete once the JSON reading API is ready for use.
- *
- * @param tree - The tree to verify.
- * @param expected - The expected values for the nodes in the root field of the tree.
- */
-function validateRootField(tree: ISharedTreeCheckout, expected: Value[]): void {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
-	let hasNode = readCursor.firstNode();
-	for (const value of expected) {
-		assert(hasNode);
-		assert.equal(readCursor.value, value);
-		hasNode = readCursor.nextNode();
-	}
-	assert.equal(hasNode, false);
-	readCursor.free();
-}
-
-function validateTree(tree: ISharedTreeCheckout, expected: JsonableTree[]): void {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
-	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-	readCursor.free();
-	assert.deepEqual(actual, expected);
+	schema: FlexTreeSchema<TRoot>,
+): FlexTreeView<TRoot> {
+	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
 }

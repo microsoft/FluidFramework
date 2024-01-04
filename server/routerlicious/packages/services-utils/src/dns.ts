@@ -7,9 +7,12 @@ import * as dns from "dns";
 import * as os from "os";
 import * as util from "util";
 
+/**
+ * @internal
+ */
 export async function getHostIp(): Promise<string> {
-    const hostname = os.hostname();
-    const lookup = util.promisify(dns.lookup);
-    const info = await lookup(hostname);
-    return info.address;
+	const hostname = os.hostname();
+	const lookup = util.promisify(dns.lookup);
+	const info = await lookup(hostname);
+	return info.address;
 }

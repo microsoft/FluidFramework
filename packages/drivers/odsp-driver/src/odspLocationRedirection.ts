@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { getOdspResolvedUrl } from "./odspUtils";
 
@@ -11,10 +11,10 @@ import { getOdspResolvedUrl } from "./odspUtils";
  * It takes a resolved url with old siteUrl and creates a new resolved url with updated site url domain.
  * @param resolvedUrl - Previous odsp resolved url with older site url.
  * @param redirectLocation - Url at which the network call has to be made. It contains new site info.
- * @returns - Resolved url after patching the correct siteUrl.
+ * @returns The resolved url after patching the correct siteUrl.
  */
 export function patchOdspResolvedUrl(
-	resolvedUrl: IFluidResolvedUrl,
+	resolvedUrl: IResolvedUrl,
 	redirectLocation: string,
 ): IOdspResolvedUrl {
 	const odspResolvedUrl = { ...getOdspResolvedUrl(resolvedUrl) };

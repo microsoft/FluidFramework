@@ -4,7 +4,8 @@
  */
 
 /**
- * Defines scope access for a Container/Document
+ * Defines scope access for a Container/Document.
+ * @alpha
  */
 export enum ScopeType {
 	/**

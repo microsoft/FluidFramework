@@ -5,52 +5,49 @@
 
 import { strict as assert } from "assert";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { Container } from "@fluidframework/container-loader";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
 	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
+	class TestDataObject extends apis.dataRuntime.DataObject {
+		public get _root() {
+			return this.root;
+		}
 	}
-}
 
-describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		// Disable summaries so the summarizer client doesn't interfere with the audience
+	const dataObjectFactory = new apis.dataRuntime.DataObjectFactory(
+		"TestDataObject",
+		TestDataObject,
+		[],
+		[],
+	);
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 		{
-			summaryOptions: {
-				summaryConfigOverrides: { state: "disabled" },
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			// Disable summaries so the summarizer client doesn't interfere with the audience
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: { state: "disabled" },
+				},
 			},
 		},
 	);
 
-	const createContainer = async (): Promise<Container> =>
-		(await provider.createContainer(runtimeFactory)) as Container;
-	const loadContainer = async (): Promise<Container> =>
-		(await provider.loadContainer(runtimeFactory)) as Container;
+	const createContainer = async (): Promise<IContainer> =>
+		provider.createContainer(runtimeFactory);
+	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
 
 	/** Function to wait for a client with the given clientId to be added to the audience of the given container. */
-	async function waitForClientAdd(container: Container, clientId: string, errorMsg: string) {
+	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
 		if (container.audience.getMember(clientId) === undefined) {
 			return timeoutPromise(
 				(resolve) => {
@@ -74,7 +71,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	}
 
 	/** Function to wait for a client with the given clientId to be remove from the audience of the given container. */
-	async function waitForClientRemove(container: Container, clientId: string, errorMsg: string) {
+	async function waitForClientRemove(container: IContainer, clientId: string, errorMsg: string) {
 		if (container.audience.getMember(clientId) !== undefined) {
 			return timeoutPromise(
 				(resolve) => {
@@ -106,7 +103,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	it("should add clients in audience as expected", async () => {
 		// Create a client - client1 and wait for it to be connected.
 		const client1Container = await createContainer();
-		await waitForContainerConnection(client1Container, true);
+		await waitForContainerConnection(client1Container);
 
 		// Validate that client1 is added to its own audience.
 		assert(client1Container.clientId !== undefined, "client1 does not have clientId");
@@ -118,7 +115,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 
 		// Load a second client - client2 and wait for it to be connected.
 		const client2Container = await loadContainer();
-		await waitForContainerConnection(client2Container, true);
+		await waitForContainerConnection(client2Container);
 
 		// Validate that client2 is added to its own audience.
 		assert(client2Container.clientId !== undefined, "client2 does not have clientId");
@@ -146,25 +143,21 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	it("should add clients in audience as expected in write mode", async () => {
 		// Create a client - client1.
 		const client1Container = await createContainer();
-		const client1DataStore = await requestFluidObject<TestDataObject>(
-			client1Container,
-			"default",
-		);
+		const client1DataStore =
+			await getContainerEntryPointBackCompat<TestDataObject>(client1Container);
 
 		// Load a second client - client2.
 		const client2Container = await loadContainer();
-		const client2DataStore = await requestFluidObject<TestDataObject>(
-			client2Container,
-			"default",
-		);
+		const client2DataStore =
+			await getContainerEntryPointBackCompat<TestDataObject>(client2Container);
 
 		// Perform operations to move the clients to "write" mode (if not already in write mode).
 		client1DataStore._root.set("testKey1", "testValue1");
 		client2DataStore._root.set("testKey2", "testValue2");
 
 		// Ensure that the clients are connected and synchronized.
-		await waitForContainerConnection(client1Container, true);
-		await waitForContainerConnection(client2Container, true);
+		await waitForContainerConnection(client1Container);
+		await waitForContainerConnection(client2Container);
 		await provider.ensureSynchronized();
 
 		assert(client1Container.clientId !== undefined, "client1 does not have clientId");
@@ -198,11 +191,11 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	it("should remove clients in audience as expected", async () => {
 		// Create a client - client1 and wait for it to be connected.
 		const client1Container = await createContainer();
-		await waitForContainerConnection(client1Container, true);
+		await waitForContainerConnection(client1Container);
 
 		// Load a second client - client2 and wait for it to be connected.
 		const client2Container = await loadContainer();
-		await waitForContainerConnection(client2Container, true);
+		await waitForContainerConnection(client2Container);
 
 		assert(client1Container.clientId !== undefined, "client1 does not have clientId");
 		assert(client2Container.clientId !== undefined, "client2 does not have clientId");

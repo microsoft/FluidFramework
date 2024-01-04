@@ -3,16 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
+import { strict as assert } from "assert";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionState,
 } from "@fluidframework/runtime-definitions";
+import {
+	concatGarbageCollectionStates,
+	IGarbageCollectionState,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/test/gc";
+import { IContainer } from "@fluidframework/container-definitions";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.
@@ -27,7 +33,11 @@ export function getGCStateFromSummary(
 	if (rootGCTree === undefined) {
 		return undefined;
 	}
-	assert(rootGCTree.type === SummaryType.Tree, `GC data should be a tree`);
+	assert.equal(
+		rootGCTree.type,
+		SummaryType.Tree,
+		"getGCStateFromSummary: GC data should be a tree",
+	);
 
 	let rootGCState: IGarbageCollectionState = { gcNodes: {} };
 	for (const key of Object.keys(rootGCTree.tree)) {
@@ -37,8 +47,12 @@ export function getGCStateFromSummary(
 		}
 
 		const gcBlob = rootGCTree.tree[key];
-		assert(gcBlob !== undefined, "GC state not available");
-		assert(gcBlob.type === SummaryType.Blob, "GC state is not a blob");
+		assert(gcBlob !== undefined, "getGCStateFromSummary: GC state not available");
+		assert.equal(
+			gcBlob.type,
+			SummaryType.Blob,
+			"getGCStateFromSummary: GC state is not a blob",
+		);
 		const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
 		// Merge the GC state of this blob into the root GC state.
 		rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
@@ -58,13 +72,21 @@ export function getGCTombstoneStateFromSummary(summaryTree: ISummaryTree): strin
 		return undefined;
 	}
 
-	assert(rootGCTree.type === SummaryType.Tree, "GC data should be a tree");
+	assert.equal(
+		rootGCTree.type,
+		SummaryType.Tree,
+		"getGCTombstoneStateFromSummary: GC data should be a tree",
+	);
 	const tombstoneBlob = rootGCTree.tree[gcTombstoneBlobKey];
 	if (tombstoneBlob === undefined) {
 		return undefined;
 	}
 
-	assert(tombstoneBlob.type === SummaryType.Blob, "Tombstone state is not a blob");
+	assert.equal(
+		tombstoneBlob.type,
+		SummaryType.Blob,
+		"getGCTombstoneStateFromSummary: Tombstone state is not a blob",
+	);
 	return JSON.parse(tombstoneBlob.content as string) as string[];
 }
 
@@ -80,12 +102,52 @@ export function getGCDeletedStateFromSummary(summaryTree: ISummaryTree): string[
 		return undefined;
 	}
 
-	assert(rootGCTree.type === SummaryType.Tree, "GC data should be a tree");
+	assert.equal(
+		rootGCTree.type,
+		SummaryType.Tree,
+		"getGCDeletedStateFromSummary: GC data should be a tree",
+	);
 	const sweepBlob = rootGCTree.tree[gcDeletedBlobKey];
 	if (sweepBlob === undefined) {
 		return undefined;
 	}
 
-	assert(sweepBlob.type === SummaryType.Blob, "Sweep state is not a blob");
+	assert.equal(
+		sweepBlob.type,
+		SummaryType.Blob,
+		"getGCDeletedStateFromSummary: Sweep state is not a blob",
+	);
 	return JSON.parse(sweepBlob.content as string) as string[];
+}
+
+export const waitForContainerWriteModeConnectionWrite = async (container: IContainer) => {
+	const resolveIfActive = (res: () => void) => {
+		if (container.deltaManager.active) {
+			res();
+		}
+	};
+	if (!container.deltaManager.active) {
+		await new Promise<void>((resolve, reject) => {
+			container.on("connected", () => resolveIfActive(resolve));
+			container.once("closed", (error) => reject(error));
+		});
+	}
+};
+
+/**
+ * We manufacture a handle to simulate a bug where an object is unreferenced in GC's view
+ * (and reminder, interactive clients never update their GC data after loading),
+ * but someone still has a handle to it.
+ *
+ * It's possible to achieve this truly with multiple clients where one revives it mid-session
+ * after it was unreferenced for the inactive timeout, but that's more complex to implement
+ * in a test and is no better than this approach
+ */
+export function manufactureHandle<T>(
+	handleContext: IFluidHandleContext,
+	url: string,
+): IFluidHandle<T> {
+	const serializer = new FluidSerializer(handleContext, () => {});
+	const handle: IFluidHandle<T> = parseHandles({ type: "__fluid_handle__", url }, serializer);
+	return handle;
 }

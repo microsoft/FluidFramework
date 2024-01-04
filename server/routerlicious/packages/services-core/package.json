@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-core",
-	"version": "0.1038.4000",
+	"version": "3.0.0",
 	"description": "Fluid server services core definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,42 +14,90 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
+		"build:compile": "npm run tsc && npm run typetests:gen",
 		"build:genver": "gen-version",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run eslint",
-		"lint:fix": "npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-		"tsc": "tsc"
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "^0.1038.4000",
-		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-services-client": "^0.1038.4000",
-		"@fluidframework/server-services-telemetry": "^0.1038.4000",
+		"@fluidframework/common-utils": "^3.1.0",
+		"@fluidframework/gitresources": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.1.0",
+		"@fluidframework/server-services-client": "workspace:~",
+		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^14.18.0",
-		"debug": "^4.1.1",
+		"@types/node": "^18.17.1",
+		"debug": "^4.3.4",
 		"events": "^3.1.0",
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-135362",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@rushstack/eslint-config": "^2.6.1",
-		"concurrently": "^7.5.0",
+		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@2.0.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
-		"prettier": "~2.6.2",
-		"rimraf": "^3.0.2",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
+	},
+	"typeValidation": {
+		"broken": {
+			"RemovedInterfaceDeclaration_IPartitionConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"VariableDeclaration_DefaultServiceConfiguration": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IServerConfiguration": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IServiceConfiguration": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDeliServerConfiguration": {
+				"forwardCompat": false,
+				"backCompat": true
+			},
+			"InterfaceDeclaration_IOrdererConnection": {
+				"forwardCompat": false,
+				"backCompat": true
+			},
+			"ClassDeclaration_CheckpointService": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ICheckpointService": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IWebSocketTracker": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

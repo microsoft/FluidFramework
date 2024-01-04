@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/merge-tree";
-import { getCss } from "../document";
-import { areStringsEquivalent } from "../util";
+import { ISegment } from "@fluidframework/sequence";
+import { getCss } from "../document/index.js";
+import { areStringsEquivalent } from "../util/index.js";
 
 // Note: Similar to TokenList.set(..), but elides the search for duplicate tokens.
 const concat = (leftTokens: string, rightTokens: string) =>

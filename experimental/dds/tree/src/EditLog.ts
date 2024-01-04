@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assert, compareArrays, fail } from './Common';
+import { BTree } from '@tylerbu/sorted-btree-es6';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
+import { assert, compareArrays } from '@fluidframework/core-utils';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
 import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';
@@ -15,8 +17,8 @@ import type { ChangeCompressor } from './ChangeCompression';
 /**
  * An ordered set of Edits associated with a SharedTree.
  * Supports fast lookup of edits by ID and enforces idempotence.
- * @public
  * @sealed
+ * @alpha
  */
 export interface OrderedEditSet<TChange = unknown> {
 	/**
@@ -145,7 +147,7 @@ export interface EditChunk<TChange> {
  * EditHandles are used to load edit chunks stored outside of the EditLog.
  * This is typically implemented by a wrapper around an IFluidHandle<ArrayBufferLike>.
  * @deprecated Edit virtualization is no longer supported.
- * @public
+ * @internal
  */
 export interface EditHandle<TChange> {
 	readonly get: () => Promise<EditWithoutId<TChange>[]>;
@@ -198,7 +200,7 @@ export type EditEvictionHandler = (editsToEvict: number) => void;
 
 /**
  * Events which may be emitted by {@link EditLog}
- * @public
+ * @alpha
  */
 export interface IEditLogEvents extends IEvent {
 	(event: 'unexpectedHistoryChunk', listener: () => void);
@@ -210,6 +212,7 @@ export interface IEditLogEvents extends IEvent {
  * Ordered first by locality (acked or local), then by time of insertion.
  * May not contain more than one edit with the same ID.
  * @sealed
+ * @alpha
  */
 export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
@@ -220,10 +223,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private readonly sequencedEdits: Edit<TChange>[] = [];
 	private readonly localEdits: Edit<TChange>[] = [];
 
-	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
+	private readonly allEditIds = new Map<EditId, OrderedEditId>();
 	private _earliestAvailableEditIndex = 0;
-	private readonly _editAddedHandlers: Set<EditAddedHandler<TChange>> = new Set();
-	private readonly _editEvictionHandlers: Set<EditEvictionHandler> = new Set();
+	private readonly _editAddedHandlers = new Set<EditAddedHandler<TChange>>();
+	private readonly _editEvictionHandlers = new Set<EditEvictionHandler>();
 
 	/**
 	 * @returns The index of the earliest edit stored in this log.
@@ -256,7 +259,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public constructor(
 		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
-		private readonly logger?: ITelemetryLogger,
+		private readonly logger?: ITelemetryLoggerExt,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		private readonly targetLength = Infinity,
 		private readonly evictionFrequency = targetLength * 2,
@@ -288,7 +291,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 					const id = editIds[editIndex];
 					this.sequencedEdits.push({ id, ...edit });
 					const encounteredEditId = this.allEditIds.get(id);
-					assert(encounteredEditId === undefined, 'Duplicate acked edit.');
+					assert(encounteredEditId === undefined, 0x60a /* Duplicate acked edit. */);
 					this.allEditIds.set(id, { isLocal: false, index: editIndex });
 				}
 			} else {
@@ -386,7 +389,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 		if (orderedEdit.isLocal) {
 			const firstLocal = this.allEditIds.get(this.localEdits[0].id) ?? fail('edit not found');
-			assert(firstLocal.isLocal);
+			assert(firstLocal.isLocal, 0x60b /* local edit should be local */);
 			return (
 				this._earliestAvailableEditIndex +
 				this.numberOfSequencedEdits +
@@ -479,7 +482,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	): void {
 		assert(
 			minSequenceNumber >= this._minSequenceNumber,
-			'Sequenced edits should carry a monotonically increasing min number'
+			0x60c /* Sequenced edits should carry a monotonically increasing min number */
 		);
 		this._minSequenceNumber = minSequenceNumber;
 
@@ -491,10 +494,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		const encounteredEditId = this.allEditIds.get(id);
 		if (encounteredEditId !== undefined) {
 			// New edit already exits: it must have been a local edit.
-			assert(encounteredEditId.isLocal, 'Duplicate acked edit.');
+			assert(encounteredEditId.isLocal, 0x60d /* Duplicate acked edit. */);
 			// Remove it from localEdits. Due to ordering requirements, it must be first.
 			const oldLocalEditId = this.localEdits.shift()?.id ?? fail('Local edit should exist');
-			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
+			assert(oldLocalEditId === id, 0x60e /* Causal ordering should be upheld */);
 		}
 
 		this.sequencedEdits.push(edit);
@@ -536,7 +539,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private evictEdits(): void {
 		assert(
 			this.sequenceNumberToIndex !== undefined,
-			'Edits should never be evicted if the target length is set to infinity'
+			0x60f /* Edits should never be evicted if the target length is set to infinity */
 		);
 
 		const minSequenceIndex =

@@ -1,10 +1,15 @@
 # @fluidframework/task-manager
 
-<!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:scripts=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 
 <!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
 
 ## Installation
 
@@ -16,7 +21,7 @@ npm i @fluidframework/task-manager
 
 ## API Documentation
 
-API documentation for **@fluidframework/task-manager** is available at <https://fluidframework.com/docs/apis/task-manager>.
+API documentation for **@fluidframework/task-manager** is available at <https://fluidframework.com/docs/api/v1/task-manager>.
 
 ## Contribution Guidelines
 
@@ -38,16 +43,20 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out our [GitHub
+Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an
+issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
 Thank you!
 
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
 Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->

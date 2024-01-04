@@ -3,45 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
-	LocalFieldKey,
 	ITreeCursor,
 	EmptyKey,
 	FieldKey,
 	mapCursorField,
 	mapCursorFields,
 	ITreeCursorSynchronous,
-} from "../../core";
-import { JsonCompatible } from "../../util";
-import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
+} from "../../core/index.js";
+import { JsonCompatible } from "../../util/index.js";
 import {
-	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
-	jsonObject,
-	jsonString,
-} from "./jsonDomainSchema";
+	CursorAdapter,
+	isFluidHandle,
+	stackTreeNodeCursor,
+} from "../../feature-libraries/index.js";
+import { leaf } from "../leafDomain.js";
+import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
-		typeof node === "object"
-			? undefined // null, arrays, and objects have no defined value
-			: node, // boolean, numbers, and strings are their own value
+		node !== null && typeof node === "object"
+			? undefined // arrays and objects have no defined value
+			: node, // null, boolean, numbers, and strings are their own values
 	type: (node: JsonCompatible) => {
 		const type = typeof node;
 
 		switch (type) {
 			case "number":
-				return jsonNumber.name;
+				return leaf.number.name;
 			case "string":
-				return jsonString.name;
+				return leaf.string.name;
 			case "boolean":
-				return jsonBoolean.name;
+				return leaf.boolean.name;
 			default:
 				if (node === null) {
-					return jsonNull.name;
+					return leaf.null.name;
 				} else if (Array.isArray(node)) {
 					return jsonArray.name;
 				} else {
@@ -57,10 +54,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				} else if (Array.isArray(node)) {
 					return node.length === 0 ? [] : [EmptyKey];
 				} else {
-					return (Object.keys(node) as FieldKey[]).filter((key) => {
-						const value = node[key as LocalFieldKey];
-						return !Array.isArray(value) || value.length !== 0;
-					});
+					return Object.keys(node) as FieldKey[];
 				}
 			default:
 				return [];
@@ -82,7 +76,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 		}
 
 		if (Object.prototype.hasOwnProperty.call(node, key)) {
-			const field = node[key as LocalFieldKey];
+			const field = node[key];
 			assert(
 				field !== undefined,
 				0x41e /* explicit undefined fields should not be preserved in JSON */,
@@ -98,26 +92,25 @@ const adapter: CursorAdapter<JsonCompatible> = {
  * Used to read a Jsonable tree for testing and benchmarking.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
- * @alpha
  */
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
-	return singleStackTreeCursor(root, adapter);
+	return stackTreeNodeCursor(adapter, root);
 }
 
 /**
  * Extract a JS object tree from the contents of the given ITreeCursor.
  * Assumes that ITreeCursor contains only unaugmented JsonTypes.
- * @alpha
  */
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 	const type = reader.type;
 
 	switch (type) {
-		case jsonNumber.name:
-		case jsonBoolean.name:
-		case jsonString.name:
-			assert(isPrimitiveValue(reader.value), 0x41f /* expected a primitive value */);
-			return reader.value as JsonCompatible;
+		case leaf.number.name:
+		case leaf.boolean.name:
+		case leaf.string.name:
+			assert(reader.value !== undefined, 0x84f /* out of schema: missing value */);
+			assert(!isFluidHandle(reader.value), 0x850 /* out of schema: unexpected FluidHandle */);
+			return reader.value;
 		case jsonArray.name: {
 			reader.enterField(EmptyKey);
 			const result = mapCursorField(reader, cursorToJsonObject);
@@ -127,7 +120,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 		case jsonObject.name: {
 			const result: JsonCompatible = {};
 			mapCursorFields(reader, (cursor) => {
-				const key = cursor.getFieldKey() as LocalFieldKey;
+				const key = cursor.getFieldKey();
 				assert(cursor.firstNode(), 0x420 /* expected non-empty field */);
 				// like `result[key] = cursorToJsonObject(reader);` except safe when keyString == "__proto__".
 				Object.defineProperty(result, key, {
@@ -141,7 +134,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 			return result;
 		}
 		default: {
-			assert(type === jsonNull.name, 0x422 /* unexpected type */);
+			assert(type === leaf.null.name, 0x422 /* unexpected type */);
 			return null;
 		}
 	}

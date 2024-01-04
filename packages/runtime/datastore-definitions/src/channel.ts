@@ -7,19 +7,21 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
+	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
+/**
+ * @public
+ */
 export interface IChannel extends IFluidLoadable {
 	/**
 	 * A readonly identifier for the channel
 	 */
 	readonly id: string;
-
-	readonly owner?: string;
 
 	readonly attributes: IChannelAttributes;
 
@@ -27,18 +29,33 @@ export interface IChannel extends IFluidLoadable {
 	 * Generates summary of the channel synchronously. It is called when an `attach message`
 	 * for a local channel is generated. In other words, when the channel is being attached
 	 * to make it visible to other clients.
-	 * Note: Since Attach Summary is generated for local channels when making them visible to
+	 *
+	 * @remarks
+	 *
+	 * Note: Since the Attach Summary is generated for local channels when making them visible to
 	 * remote clients, they don't have any previous summaries to compare against. For this reason,
-	 * The attach summary cannot contain summary handles (paths to sub-trees or blobs).
-	 * It can, however, contain ISummaryAttachment (handles to blobs uploaded async via the blob manager).
-	 * @param fullTree - flag indicating whether the attempt should generate a full
+	 * the attach summary cannot contain summary handles (paths to sub-trees or blobs).
+	 * It can, however, contain {@link @fluidframework/protocol-definitions#ISummaryAttachment}
+	 * (handles to blobs uploaded async via the blob manager).
+	 *
+	 * @param fullTree - A flag indicating whether the attempt should generate a full
 	 * summary tree without any handles for unchanged subtrees.
-	 * @param trackState - optimization for tracking state of objects across summaries. If the state
-	 * of an object did not change since last successful summary, an ISummaryHandle can be used
-	 * instead of re-summarizing it. If this is false, the expectation is that you should never
-	 * send an ISummaryHandle since you are not expected to track state.
+	 *
+	 * Default: `false`
+	 *
+	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
+	 * of an object did not change since last successful summary, an
+	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
+	 * send an `ISummaryHandle`, since you are not expected to track state.
+	 *
 	 * Note: The goal is to remove the trackState and automatically decided whether the
-	 * handles will be used or not: https://github.com/microsoft/FluidFramework/issues/10455
+	 * handles will be used or not: {@link https://github.com/microsoft/FluidFramework/issues/10455}
+	 *
+	 * Default: `false`
+	 *
+	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
+	 *
 	 * @returns A summary capturing the current state of the channel.
 	 */
 	getAttachSummary(
@@ -50,16 +67,33 @@ export interface IChannel extends IFluidLoadable {
 	/**
 	 * Generates summary of the channel asynchronously.
 	 * This should not be called where the channel can be modified while summarization is in progress.
+	 *
 	 * @param fullTree - flag indicating whether the attempt should generate a full
-	 * summary tree without any handles for unchanged subtrees. It is only set to true when generating
+	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
 	 * a summary from the entire container.
-	 * @param trackState - This tells whether we should track state from this summary.
+	 *
+	 * Default: `false`
+	 *
+	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
+	 * of an object did not change since last successful summary, an
+	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
+	 * send an `ISummaryHandle`, since you are not expected to track state.
+	 *
+	 * Default: `false`
+	 *
+	 * Note: The goal is to remove the trackState and automatically decided whether the
+	 * handles will be used or not: {@link https://github.com/microsoft/FluidFramework/issues/10455}
+	 *
+	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
+	 *
 	 * @returns A summary capturing the current state of the channel.
 	 */
 	summarize(
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats>;
 
 	/**
@@ -70,7 +104,7 @@ export interface IChannel extends IFluidLoadable {
 
 	/**
 	 * Enables the channel to send and receive ops.
-	 * @param services - Services to connect to
+	 * @param services - The services to connect to.
 	 */
 	connect(services: IChannelServices): void;
 
@@ -84,6 +118,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
+ * @public
  */
 export interface IDeltaHandler {
 	/**
@@ -131,6 +166,7 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
+ * @public
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -156,6 +192,9 @@ export interface IDeltaConnection {
 	dirty(): void;
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.
@@ -166,6 +205,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
+ * @public
  */
 export interface IChannelStorageService {
 	/**
@@ -186,6 +226,7 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
+ * @public
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -196,6 +237,8 @@ export interface IChannelServices {
 /**
  * Definitions of a channel factory.
  *
+ * @remarks
+ *
  * The runtime must be able to produce "channels" of the correct in-memory object type for the collaborative session.
  * Here "channels" are typically distributed data structures (DDSs).
  *
@@ -204,10 +247,13 @@ export interface IChannelServices {
  * (ops), which indicate a new instance of a channel being introduced to the collaboration session, to produce the
  * appropriate in-memory object.
  *
- * @example If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
- * the collaborating clients will need to have access to a factory that can produce the `SharedMap` obect.
+ * Factories follow a common model but enable custom behavior.
  *
- * @remarks Factories follow a common model but enable custom behavior.
+ * @example
+ *
+ * If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
+ * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
+ * @public
  */
 export interface IChannelFactory {
 	/**

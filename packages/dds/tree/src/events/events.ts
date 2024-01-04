@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
-import { fail, getOrCreate } from "../util";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { fail, getOrCreate } from "../util/index.js";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
@@ -18,22 +18,28 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 
 /**
  * `true` iff the given type is an acceptable shape for an event
- * @alpha
+ * @public
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 /**
  * Used to specify the kinds of events emitted by an {@link ISubscribable}.
+ *
+ * @remarks
+ *
+ * Any object type is a valid {@link Events}, but only the event-like properties of that
+ * type will be included.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface MyEvents {
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
  * }
  * ```
- * Any object type is a valid {@link Events}, but only the event-like properties of that
- * type will be included.
- * @alpha
+ *
+ * @public
  */
 export type Events<E> = {
 	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -41,11 +47,13 @@ export type Events<E> = {
 
 /**
  * Converts an `Events` type (i.e. the event registry for an {@link ISubscribable}) into a type consumable
- * by an IEventProvider from `@fluidframework/common-definitions`.
+ * by an IEventProvider from `@fluidframework/core-interfaces`.
  * @param E - the `Events` type to transform
  * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface MyEvents {
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
@@ -65,7 +73,6 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
  *
- * {@link createEmitter} can help implement this interface via delegation.
  * `EventEmitter` can be used as a base class to implement this via extension.
  * @param E - All the events that this emitter supports
  * @example
@@ -75,7 +82,10 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  *   error: (errorCode: number) => void;
  * }>
  * ```
- * @alpha
+ * @privateRemarks
+ * {@link createEmitter} can help implement this interface via delegation.
+ *
+ * @public
  */
 export interface ISubscribable<E extends Events<E>> {
 	/**
@@ -89,16 +99,31 @@ export interface ISubscribable<E extends Events<E>> {
 }
 
 /**
- * An object which can emit events to subscribed listeners.
- * @alpha
+ * Interface for an event emitter that can emit typed events to subscribed listeners.
+ * @internal
  */
 export interface IEmitter<E extends Events<E>> {
 	/**
-	 * Fire the given event, notifying all subscribers by calling their registered listener functions.
+	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
 	 * @param eventName - the name of the event to fire
 	 * @param args - the arguments passed to the event listener functions
 	 */
 	emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+
+	/**
+	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
+	 * It also collects the return values of all listeners into an array.
+	 *
+	 * Warning: This method should be used with caution. It deviates from the standard event-based integration pattern as creates substantial coupling between the emitter and its listeners.
+	 * For the majority of use-cases it is recommended to use the standard {@link IEmitter.emit} functionality.
+	 * @param eventName - the name of the event to fire
+	 * @param args - the arguments passed to the event listener functions
+	 * @returns An array of the return values of each listener, preserving the order listeners were called.
+	 */
+	emitAndCollect<K extends keyof Events<E>>(
+		eventName: K,
+		...args: Parameters<E[K]>
+	): ReturnType<E[K]>[];
 }
 
 /**
@@ -106,7 +131,7 @@ export interface IEmitter<E extends Events<E>> {
  *
  * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
- * @alpha
+ * @internal
  */
 export function createEmitter<E extends Events<E>>(
 	noListeners?: NoListenersCallback<E>,
@@ -117,12 +142,12 @@ export function createEmitter<E extends Events<E>>(
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @alpha
+ * @internal
  */
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
 /**
- * @alpha
+ * @internal
  */
 export interface HasListeners<E extends Events<E>> {
 	/**
@@ -138,9 +163,12 @@ export interface HasListeners<E extends Events<E>> {
 
 /**
  * Provides an API for subscribing to and listening to events.
- * Classes wishing to emit events may either extend this class:
- * @example
- * ```ts
+ *
+ * @remarks Classes wishing to emit events may either extend this class or compose over it.
+ *
+ * @example Extending this class
+ *
+ * ```typescript
  * interface MyEvents {
  *   "loaded": () => void;
  * }
@@ -151,9 +179,10 @@ export interface HasListeners<E extends Events<E>> {
  *   }
  * }
  * ```
- * Or, compose over it:
- * @example
- * ```ts
+ *
+ * @example Composing over this class
+ *
+ * ```typescript
  * class MyClass implements ISubscribable<MyEvents> {
  *   private readonly events = EventEmitter.create<MyEvents>();
  *
@@ -168,7 +197,7 @@ export interface HasListeners<E extends Events<E>> {
  * ```
  */
 export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasListeners<E> {
-	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
+	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
@@ -182,6 +211,22 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 				listener(...argArray);
 			}
 		}
+	}
+
+	protected emitAndCollect<K extends keyof Events<E>>(
+		eventName: K,
+		...args: Parameters<E[K]>
+	): ReturnType<E[K]>[] {
+		const listeners = this.listeners.get(eventName);
+		if (listeners !== undefined) {
+			const argArray: unknown[] = args;
+			const resultArray: ReturnType<E[K]>[] = [];
+			for (const listener of listeners.values()) {
+				resultArray.push(listener(...argArray));
+			}
+			return resultArray;
+		}
+		return [];
 	}
 
 	/**
@@ -226,7 +271,14 @@ class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implem
 		super(noListeners);
 	}
 
-	public emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+	public override emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
 		return super.emit(eventName, ...args);
+	}
+
+	public override emitAndCollect<K extends keyof Events<E>>(
+		eventName: K,
+		...args: Parameters<E[K]>
+	): ReturnType<E[K]>[] {
+		return super.emitAndCollect(eventName, ...args);
 	}
 }

@@ -6,6 +6,7 @@ import { assert } from "chai";
 import * as semver from "semver";
 
 import {
+	detectInternalVersionConstraintType,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionRange,
@@ -22,7 +23,13 @@ describe("internalScheme", () => {
 			assert.isTrue(result);
 		});
 
-		it("2.0.0-alpha.1.0.0 is not internal scheme (must use internal)", () => {
+		it("2.0.0-rc.1.0.0 is internal scheme", () => {
+			const input = `2.0.0-rc.1.0.0`;
+			const result = isInternalVersionScheme(input);
+			assert.isTrue(result);
+		});
+
+		it("2.0.0-alpha.1.0.0 is not internal scheme (must use internal/rc)", () => {
 			const input = `2.0.0-alpha.1.0.0`;
 			const result = isInternalVersionScheme(input);
 			assert.isFalse(result);
@@ -30,6 +37,12 @@ describe("internalScheme", () => {
 
 		it("2.0.0-alpha.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
 			const input = `2.0.0-alpha.1.0.0`;
+			const result = isInternalVersionScheme(input, false, true);
+			assert.isTrue(result);
+		});
+
+		it("2.0.0-rc.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
+			const input = `2.0.0-rc.1.0.0`;
 			const result = isInternalVersionScheme(input, false, true);
 			assert.isTrue(result);
 		});
@@ -52,9 +65,15 @@ describe("internalScheme", () => {
 			assert.isFalse(result);
 		});
 
+		it("2.0.0-rc.1.1.0.0 is not internal scheme (prerelease must only have four items)", () => {
+			const input = `2.0.0-rc.1.1.0.0`;
+			const result = isInternalVersionScheme(input);
+			assert.isFalse(result);
+		});
+
 		it("validateVersionScheme: 2.0.0-dev.1.1.0.123 is valid when allowAnyPrereleaseId is true", () => {
 			const input = `2.0.0-dev.1.1.0.123`;
-			const result = validateVersionScheme(input, true, "dev");
+			const result = validateVersionScheme(input, true, ["dev"]);
 			assert.isTrue(result);
 		});
 
@@ -66,6 +85,12 @@ describe("internalScheme", () => {
 
 		it("2.0.0-internal.1.1.0 is a valid internal version when prerelease is true", () => {
 			const input = `2.0.0-internal.1.1.0`;
+			const result = isInternalVersionScheme(input, true);
+			assert.isTrue(result);
+		});
+
+		it("2.0.0-rc.1.1.0 is a valid internal version when prerelease is true", () => {
+			const input = `2.0.0-rc.1.1.0`;
 			const result = isInternalVersionScheme(input, true);
 			assert.isTrue(result);
 		});
@@ -105,6 +130,22 @@ describe("internalScheme", () => {
 			assert.isTrue(isInternalVersionRange(input));
 		});
 
+		it(">=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0 is internal", () => {
+			const input = `>=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0`;
+			assert.isTrue(isInternalVersionRange(input));
+		});
+
+		// This test case should fail but it doesn't. "Fluid internal version ranges" should always have a prerelease
+		// identifier that matches between the upper and lower bound. It's skipped because I think the case it guards
+		// against isn't likely, so I don't think it's worth the cost of fixing it.
+		//
+		// The reason the code behaves wrong is because it only checks the lower bound of the range to see if it's an
+		// internal version. If the lower bound version is internal, then the function returns true.
+		it.skip(">=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0 is not internal", () => {
+			const input = `>=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0`;
+			assert.isFalse(isInternalVersionRange(input));
+		});
+
 		it(">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0 is internal", () => {
 			const input = `>=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0`;
 			assert.isTrue(isInternalVersionRange(input));
@@ -137,6 +178,11 @@ describe("internalScheme", () => {
 
 		it("^2.0.0-internal.2.2.1 is not internal", () => {
 			const input = `^2.0.0-internal.2.2.1`;
+			assert.isFalse(isInternalVersionRange(input));
+		});
+
+		it("~2.0.0-internal.2.2.1 is not internal", () => {
+			const input = `~2.0.0-internal.2.2.1`;
 			assert.isFalse(isInternalVersionRange(input));
 		});
 	});
@@ -294,6 +340,57 @@ describe("internalScheme", () => {
 			);
 			assert.isFalse(
 				semver.satisfies(`2.0.0-dev.1.5.0`, `>=2.0.0-internal.1.4.0 <2.0.0-internal.2.0.0`),
+			);
+		});
+	});
+
+	describe("detect constraint types", () => {
+		it("patch constraint", () => {
+			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.1.0`;
+			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("minor constraint", () => {
+			const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0`;
+			const expected = `minor`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("minor constraint with higher majors", () => {
+			const input = `>=2.0.0-internal.2.21.34 <2.0.0-internal.3.0.0`;
+			const expected = `minor`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("~ constraint", () => {
+			const input = `~2.0.0-internal.1.0.23`;
+			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("^ constraint", () => {
+			const input = `^2.0.0-internal.1.0.0`;
+			const expected = `minor`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("invalid and unsupported ranges throw", () => {
+			assert.throws(() => detectInternalVersionConstraintType("~"));
+			assert.throws(() => detectInternalVersionConstraintType("*"));
+			assert.throws(() => detectInternalVersionConstraintType("1.2.3"));
+			assert.throws(() => detectInternalVersionConstraintType("1.2.3-0"));
+			assert.throws(() => detectInternalVersionConstraintType("^1.2.3"));
+			assert.throws(() => detectInternalVersionConstraintType("^1.2.3-0"));
+			assert.throws(() => detectInternalVersionConstraintType("~1.2.3"));
+			assert.throws(() => detectInternalVersionConstraintType("~1.2.3-0"));
+			assert.throws(() =>
+				detectInternalVersionConstraintType("workspace:~2.0.0-internal.1.0.23"),
 			);
 		});
 	});

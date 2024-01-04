@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
 	ITestFluidObject,
 	timeoutPromise,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
@@ -30,24 +30,24 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 		),
 	);
 
-describeFullCompat("TestSignals", (getTestObjectProvider) => {
+describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
-		const container1 = (await provider.makeTestContainer(testContainerConfig)) as Container;
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 
-		const container2 = (await provider.loadTestContainer(testContainerConfig)) as Container;
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const container2 = await provider.loadTestContainer(testContainerConfig);
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 		// need to be connected to send signals
-		if (!container1.connected) {
+		if (container1.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container1.once("connected", resolve));
 		}
-		if (!container2.connected) {
+		if (container2.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container2.once("connected", resolve));
 		}
 	});

@@ -3,23 +3,24 @@
  * Licensed under the MIT License.
  */
 import {
-	ApiCallSignature,
-	ApiConstructSignature,
-	ApiIndexSignature,
-	ApiInterface,
-	ApiItem,
+	type ApiCallSignature,
+	type ApiConstructSignature,
+	type ApiIndexSignature,
+	type ApiInterface,
+	type ApiItem,
 	ApiItemKind,
-	ApiMethodSignature,
-	ApiPropertySignature,
+	type ApiMethodSignature,
+	type ApiPropertySignature,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
-import { SectionNode } from "../../documentation-domain";
+import { type SectionNode } from "../../documentation-domain";
 import { filterByKind } from "../../utilities";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { filterChildMembers } from "../ApiItemTransformUtilities";
 
 /**
- * Default policy for rendering doc sections for `Interface` items.
+ * Default documentation transform for `Interface` items.
  *
  * @remarks Format:
  *
@@ -37,7 +38,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  *
  * - index-signatures
  *
- * Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteOptions.documentBoundaries})
  *
  * - constructor-signatures
  *
@@ -53,14 +54,13 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  */
 export function transformApiInterface(
 	apiInterface: ApiInterface,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 
-	const hasAnyChildren = apiInterface.members.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterChildMembers(apiInterface, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructSignatures = filterByKind(apiInterface.members, [
 			ApiItemKind.ConstructSignature,
@@ -172,5 +172,5 @@ export function transformApiInterface(
 		}
 	}
 
-	return config.createChildContentSections(apiInterface, childSections, config);
+	return config.createDefaultLayout(apiInterface, childSections, config);
 }

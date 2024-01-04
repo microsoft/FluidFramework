@@ -5,18 +5,24 @@
 
 import assert from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TestFluidObject, ITestObjectProvider } from "@fluidframework/test-utils";
+import type { SharedMap } from "@fluidframework/map";
 import {
-	describeFullCompat,
+	TestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "@fluidframework/test-utils";
+import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-private/test-version-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
-describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
+describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach(function () {
 		provider = getTestObjectProvider();
 	});
 
@@ -27,20 +33,16 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		// Create a Container for the first client.
 		const firstContainer = await provider.makeTestContainer();
-		firstContainerObject1 = await requestFluidObject<ITestDataObject>(
-			firstContainer,
-			"default",
-		);
+		firstContainerObject1 =
+			await getContainerEntryPointBackCompat<ITestDataObject>(firstContainer);
 		const containerRuntime1 = firstContainerObject1._context.containerRuntime;
 		const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
-		firstContainerObject2 = await requestFluidObject<ITestDataObject>(dataStore, "");
+		firstContainerObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
 
 		// Load the Container that was created by the first client.
 		const secondContainer = await provider.loadTestContainer();
-		secondContainerObject1 = await requestFluidObject<ITestDataObject>(
-			secondContainer,
-			"default",
-		);
+		secondContainerObject1 =
+			await getContainerEntryPointBackCompat<ITestDataObject>(secondContainer);
 
 		await provider.ensureSynchronized();
 	});
@@ -50,8 +52,9 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 		const absolutePath = "";
 
 		// Verify that the local client's ContainerRuntime has the correct absolute path.
-		const containerRuntime1 =
-			firstContainerObject1._context.containerRuntime.IFluidHandleContext;
+		const containerRuntime1 = (
+			firstContainerObject1._context.containerRuntime as ContainerRuntime
+		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime1.absolutePath,
 			absolutePath,
@@ -59,8 +62,9 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 		);
 
 		// Verify that the remote client's ContainerRuntime has the correct absolute path.
-		const containerRuntime2 =
-			secondContainerObject1._context.containerRuntime.IFluidHandleContext;
+		const containerRuntime2 = (
+			secondContainerObject1._context.containerRuntime as ContainerRuntime
+		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime2.absolutePath,
 			absolutePath,

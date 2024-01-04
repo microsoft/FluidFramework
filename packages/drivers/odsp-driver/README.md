@@ -7,6 +7,21 @@ The ODSP Fluid service is not a publicly available service, and currently it is 
 to connect to it. This driver is present as an illustration of a different Fluid driver implementation.
 Developers should not depend on this driver for their own solutions.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## ODSP APIs
 
 Documenting some basics about opds-driver specific apis that are relevant for creation or loading of a Fluid file from ODSP.
@@ -24,3 +39,20 @@ Documenting some basics about opds-driver specific apis that are relevant for cr
 -   Fetches the snapshot of an existing Fluid file.
 -   Earlier, application needed to redeem the sharing link of the file before a /trees/latest fetch could be made. To reduce the number of round trips made to ODSP, redemption of the share link now happens along with fetching latest snapshot in the same api request by passing share link in `&sl` request parameter.
 -   This api is also preflight-less, which means it is not preceded by an OPTIONS call in the browsers to reduce the network trips to the server.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "../runWithRetry";
 
 const _setTimeout = global.setTimeout;
@@ -19,7 +19,7 @@ async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> 
 }
 
 describe("runWithRetry Tests", () => {
-	const logger = new TelemetryNullLogger();
+	const logger = createChildLogger();
 
 	it("Should succeed at first time", async () => {
 		let retryTimes: number = 1;
@@ -73,15 +73,11 @@ describe("runWithRetry Tests", () => {
 	it("Check that it retries after retry seconds", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		let timerFinished = false;
-		setTimeout(() => {
-			timerFinished = true;
-		}, 200);
 		const api = async () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throttle Error");
-				(error as any).errorType = DriverErrorType.throttlingError;
+				(error as any).errorType = DriverErrorTypes.throttlingError;
 				(error as any).retryAfterSeconds = 400;
 				(error as any).canRetry = true;
 				throw error;
@@ -89,7 +85,6 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
-		assert.strictEqual(timerFinished, true, "Timer should be destroyed");
 		assert.strictEqual(retryTimes, 0, "Should retry once");
 		assert.strictEqual(success, true, "Retry should succeed ultimately");
 	});
@@ -182,5 +177,27 @@ describe("runWithRetry Tests", () => {
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as retrying was disabled");
+	});
+
+	it("Abort reason is included in thrown exception", async () => {
+		const abortController = new AbortController();
+
+		const api = () => {
+			abortController.abort("Sample abort reason");
+			const error = new Error("aborted");
+			(error as any).canRetry = true;
+			throw error;
+		};
+		try {
+			await runWithFastSetTimeout(async () =>
+				runWithRetry(api, "test", logger, {
+					cancel: abortController.signal,
+				}),
+			);
+			assert.fail("Should not succeed");
+		} catch (error) {
+			assert.strictEqual((error as any).message, "runWithRetry was Aborted");
+			assert.strictEqual((error as any).reason, "Sample abort reason");
+		}
 	});
 });

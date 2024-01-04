@@ -5,27 +5,15 @@
 
 import { strict as assert } from "assert";
 import {
-	EmptyKey,
 	FieldUpPath,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
-	rootFieldKeySymbol,
-} from "../../../core";
-import { jsonArray, jsonNumber } from "../../../domains";
-import { jsonableTreeFromCursor, singleTextCursor, TreeChunk } from "../../../feature-libraries";
-import { checkFieldTraversal } from "../../cursorTestSuite";
-
-/**
- * Note that returned cursor is not at the root of its tree, so its path may be unexpected.
- * It is placed under index 0 of the EmptyKey field.
- */
-export function fieldCursorFromJsonableTrees(trees: JsonableTree[]): ITreeCursorSynchronous {
-	const fullTree: JsonableTree = { type: jsonArray.name, fields: { [EmptyKey]: trees } };
-	const cursor = singleTextCursor(fullTree);
-	cursor.enterField(EmptyKey);
-	return cursor;
-}
+	rootFieldKey,
+} from "../../../core/index.js";
+import { leaf } from "../../../domains/index.js";
+import { jsonableTreeFromCursor, TreeChunk } from "../../../feature-libraries/index.js";
+import { checkFieldTraversal } from "../../cursorTestSuite.js";
 
 export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): JsonableTree[] {
 	return mapCursorField(cursor, jsonableTreeFromCursor);
@@ -34,7 +22,7 @@ export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): Js
 export function numberSequenceField(length: number): JsonableTree[] {
 	const field: JsonableTree[] = [];
 	for (let index = 0; index < length; index++) {
-		field.push({ type: jsonNumber.name, value: index });
+		field.push({ type: leaf.number.name, value: index });
 	}
 	return field;
 }
@@ -45,11 +33,18 @@ export function assertChunkCursorEquals(chunk: TreeChunk, expected: JsonableTree
 	assert.equal(chunk.topLevelLength, expected.length);
 }
 
+export function assertChunkCursorBatchEquals(chunk: TreeChunk[], expected: JsonableTree[][]): void {
+	assert.equal(chunk.length, expected.length);
+	for (let index = 0; index < chunk.length; index++) {
+		assertChunkCursorEquals(chunk[index], expected[index]);
+	}
+}
+
 export function validateChunkCursor(
 	chunk: TreeChunk,
 	expected: JsonableTree[],
 	expectedPath: FieldUpPath = {
-		field: rootFieldKeySymbol,
+		field: rootFieldKey,
 		parent: undefined,
 	},
 ): void {

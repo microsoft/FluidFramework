@@ -8,28 +8,38 @@ export {
 	Brand,
 	BrandedType,
 	brandOpaque,
+	brandedNumberType,
+	brandedStringType,
 	extractFromOpaque,
 	ExtractFromOpaque,
+	fromErased,
+	Erased,
+	ErasedType,
 	NameFromBranded,
 	Opaque,
 	ValueFromBranded,
-} from "./brand";
+	brandErased,
+} from "./brand.js";
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
+	forEachInNestedMap,
 	NestedMap,
 	SizedNestedMap,
+	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
-} from "./nestedMap";
-export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
-export { OffsetList, OffsetListFactory } from "./offsetList";
+	nestedMapToFlatList,
+	nestedMapFromFlatList,
+} from "./nestedMap.js";
+export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet.js";
+export { OffsetList, OffsetListFactory } from "./offsetList.js";
+export { TransactionResult } from "./transactionResult.js";
 export {
 	areSafelyAssignable,
-	Bivariant,
 	Contravariant,
 	Covariant,
 	eitherIsAny,
@@ -42,11 +52,11 @@ export {
 	requireFalse,
 	requireTrue,
 	requireAssignableTo,
-} from "./typeCheck";
-export { StackyIterator } from "./stackyIterator";
+} from "./typeCheck.js";
+export { StackyIterator } from "./stackyIterator.js";
 export {
+	asMutable,
 	clone,
-	compareArrays,
 	compareSets,
 	fail,
 	getOrAddEmptyToMap,
@@ -56,10 +66,63 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
 	Mutable,
+	Populated,
 	RecursiveReadonly,
 	zipIterables,
-} from "./utils";
-export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
+	Assume,
+	assertValidIndex,
+	assertValidRange,
+	assertNonNegativeSafeInteger,
+	objectToMap,
+	invertMap,
+	oneFromSet,
+	Named,
+	compareNamed,
+	disposeSymbol,
+	IDisposable,
+	capitalize,
+	assertValidRangeIndices,
+	transformObjectMap,
+	compareStrings,
+} from "./utils.js";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting.js";
+
+export {
+	AllowOptional,
+	RequiredFields,
+	OptionalFields,
+	_InlineTrick,
+	_RecursiveTrick,
+	FlattenKeys,
+	AllowOptionalNotFlattened,
+	RestrictiveReadonlyRecord,
+} from "./typeUtils.js";
+
+export {
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	getOrCreateSlotContent,
+	brandedSlot,
+} from "./brandedMap.js";
+
+export {
+	getFirstEntryFromRangeMap,
+	getFromRangeMap,
+	RangeEntry,
+	RangeMap,
+	RangeQueryResult,
+	setInRangeMap,
+} from "./rangeMap.js";
+
+export {
+	IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+	IdAllocationState,
+	fakeIdAllocator,
+} from "./idAllocator.js";

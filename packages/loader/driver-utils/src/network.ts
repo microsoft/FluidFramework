@@ -7,22 +7,28 @@ import {
 	IThrottlingWarning,
 	IDriverErrorBase,
 	IAuthorizationError,
-	DriverErrorType,
 	ILocationRedirectionError,
 	IResolvedUrl,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
+/**
+ * @internal
+ */
 export enum OnlineStatus {
 	Offline,
 	Online,
 	Unknown,
 }
 
-// It tells if we have local connection only - we might not have connection to web.
-// No solution for node.js (other than resolve dns names / ping specific sites)
-// Can also use window.addEventListener("online" / "offline")
+/**
+ * It tells if we have local connection only - we might not have connection to web.
+ * No solution for node.js (other than resolve dns names / ping specific sites)
+ * Can also use window.addEventListener("online" / "offline")
+ * @internal
+ */
 export function isOnline(): OnlineStatus {
 	if (
 		typeof navigator === "object" &&
@@ -35,45 +41,41 @@ export function isOnline(): OnlineStatus {
 }
 
 /**
- * Interface describing errors and warnings raised by any driver code.
- * Not expected to be implemented by a class or an object literal, but rather used in place of
- * any or unknown in various function signatures that pass errors around.
- *
- * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
- * It will be either DriverErrorType or the specific driver's specialized error type enum,
- * but we can't reference a specific driver's error type enum in this code.
- *
- * @deprecated - In favour of {@link @fluidframework/driver-definitions#IAnyDriverError} so that
- * it can used from the base to upper layers.
+ * Telemetry props with driver-specific required properties
+ * @internal
  */
-export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
-	readonly errorType: string;
-}
-
-/** Telemetry props with driver-specific required properties */
 export type DriverErrorTelemetryProps = ITelemetryProperties & {
 	driverVersion: string | undefined;
 };
 
 /**
  * Generic network error class.
+ * @internal
  */
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
-	readonly errorType = DriverErrorType.genericNetworkError;
+	/**
+	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
+	 */
+	readonly errorType = DriverErrorTypes.genericNetworkError;
 
-	constructor(message: string, readonly canRetry: boolean, props: DriverErrorTelemetryProps) {
+	constructor(
+		message: string,
+		readonly canRetry: boolean,
+		props: DriverErrorTelemetryProps,
+	) {
 		super(message, props);
 	}
 }
 
 /**
  * FluidInvalidSchema error class.
+ * @internal
  */
 export class FluidInvalidSchemaError
 	extends LoggingError
 	implements IDriverErrorBase, IFluidErrorBase
 {
-	readonly errorType = DriverErrorType.fluidInvalidSchema;
+	readonly errorType = DriverErrorTypes.fluidInvalidSchema;
 	readonly canRetry = false;
 
 	constructor(message: string, props: DriverErrorTelemetryProps) {
@@ -81,24 +83,32 @@ export class FluidInvalidSchemaError
 	}
 }
 
+/**
+ * @internal
+ */
 export class DeltaStreamConnectionForbiddenError
 	extends LoggingError
 	implements IDriverErrorBase, IFluidErrorBase
 {
-	static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+	static readonly errorType = DriverErrorTypes.deltaStreamConnectionForbidden;
 	readonly errorType = DeltaStreamConnectionForbiddenError.errorType;
 	readonly canRetry = false;
+	readonly storageOnlyReason: string | undefined;
 
-	constructor(message: string, props: DriverErrorTelemetryProps) {
+	constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string) {
 		super(message, { ...props, statusCode: 400 });
+		this.storageOnlyReason = storageOnlyReason;
 	}
 }
 
+/**
+ * @internal
+ */
 export class AuthorizationError
 	extends LoggingError
 	implements IAuthorizationError, IFluidErrorBase
 {
-	readonly errorType = DriverErrorType.authorizationError;
+	readonly errorType = DriverErrorTypes.authorizationError;
 	readonly canRetry = false;
 
 	constructor(
@@ -112,11 +122,14 @@ export class AuthorizationError
 	}
 }
 
+/**
+ * @internal
+ */
 export class LocationRedirectionError
 	extends LoggingError
 	implements ILocationRedirectionError, IFluidErrorBase
 {
-	readonly errorType = DriverErrorType.locationRedirection;
+	readonly errorType = DriverErrorTypes.locationRedirection;
 	readonly canRetry = false;
 
 	constructor(
@@ -129,6 +142,9 @@ export class LocationRedirectionError
 	}
 }
 
+/**
+ * @internal
+ */
 export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
 	constructor(
 		message: string,
@@ -140,23 +156,38 @@ export class NetworkErrorBasic<T extends string> extends LoggingError implements
 	}
 }
 
+/**
+ * @internal
+ */
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
-	constructor(message: string, readonly errorType: T, props: DriverErrorTelemetryProps) {
+	constructor(
+		message: string,
+		readonly errorType: T,
+		props: DriverErrorTelemetryProps,
+	) {
 		super(message, errorType, false, props);
 	}
 }
 
+/**
+ * @internal
+ */
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
-	constructor(message: string, readonly errorType: T, props: DriverErrorTelemetryProps) {
+	constructor(
+		message: string,
+		readonly errorType: T,
+		props: DriverErrorTelemetryProps,
+	) {
 		super(message, errorType, true, props);
 	}
 }
 
 /**
  * Throttling error class - used to communicate all throttling errors
+ * @internal
  */
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-	readonly errorType = DriverErrorType.throttlingError;
+	readonly errorType = DriverErrorTypes.throttlingError;
 	readonly canRetry = true;
 
 	constructor(
@@ -168,9 +199,15 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 	}
 }
 
+/**
+ * @internal
+ */
 export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
-	new NonRetryableError(message, DriverErrorType.writeError, props);
+	new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
+/**
+ * @internal
+ */
 export function createGenericNetworkError(
 	message: string,
 	retryInfo: { canRetry: boolean; retryAfterMs?: number },
@@ -186,13 +223,20 @@ export function createGenericNetworkError(
  * Check if a connection error can be retried.  Unless explicitly allowed, retry is disallowed.
  * I.e. asserts or unexpected exceptions in our code result in container failure.
  * @param error - The error to inspect for ability to retry
+ * @internal
  */
 export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
-/** Check retryAfterSeconds property on error */
+/**
+ * Check retryAfterSeconds property on error
+ * @internal
+ */
 export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
 	error?.retryAfterSeconds as number | undefined;
 
-/** Check retryAfterSeconds property on error and convert to ms */
+/**
+ * Check retryAfterSeconds property on error and convert to ms
+ * @internal
+ */
 export const getRetryDelayFromError = (error: any): number | undefined =>
 	error?.retryAfterSeconds !== undefined ? error.retryAfterSeconds * 1000 : undefined;

@@ -1,6 +1,21 @@
-# @fluidframework/attributor
+# @fluid-experimental/attributor
 
 This package contains definitions and implementations for framework-provided attribution functionality.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Status
 
@@ -15,7 +30,7 @@ When you instantiate your container runtime, pass a scope which implements `IPro
 
 ```typescript
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { mixinAttributor, createRuntimeAttributor } from "@fluidframework/attributor";
+import { mixinAttributor, createRuntimeAttributor } from "@fluid-experimental/attributor";
 
 const ContainerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
@@ -54,13 +69,19 @@ function getAttributionInfo(
 	attributor: IRuntimeAttributor,
 	sharedString: SharedString,
 	pos: number,
-): AttributionInfo {
+): AttributionInfo | undefined {
 	const { segment, offset } = sharedString.getContainingSegment(pos);
 	if (!segment || !offset) {
 		throw new UsageError("Invalid pos");
 	}
 	const attributionKey: AttributionKey = segment.attribution.getAtOffset(offset);
-	return attributor.getAttributionInfo(attributionKey);
+	// BEWARE: DDSes may track attribution key with type "detached" and "local", which aren't yet
+	// supported out-of-the-box in IRuntimeAttributor. The application can recover AttributionInfo
+	// from these keys if it wants using user information about the creator of the document and the
+	// current active user, respectively.
+	if (attributor.has(attributionKey)) {
+		return attributor.get(attributionKey);
+	}
 }
 
 // Get the user who inserted the text at position 0 in `sharedString` and the timestamp for when they did so.
@@ -98,3 +119,20 @@ The current design of the mixin's behavior is therefore motivated by the ability
 The behavior of `"Fluid.Attribution.WriteOnNewFile"` supports the standard strategy of rolling out code that reads a new format and waiting for it to saturate before beginning to write that new format.
 "reading the new format" corresponds to using a container runtime initialized with `mixinAttributor`, and "writing the new format" to enabling `"Fluid.Attribution.WriteOnNewFile"` in configuration.
 During the "waiting to saturate" period, developers are free to experiment with turning the feature flag on locally and testing various compatability scenarios.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

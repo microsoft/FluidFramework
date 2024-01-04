@@ -51,6 +51,7 @@ export interface RebaseChangeSetOptions extends ApplyChangeSetOptions {
 
 /**
  * The plain serialization data structure used to encode a ChangeSet.
+ * @internal
  */
 export type SerializedChangeSet = any; // @TODO Maybe we should add full type for the ChangeSet
 export type ChangeSetType = any;
@@ -71,6 +72,7 @@ export interface ConflictInfo {
  * The ChangeSet represents an operation to be done (or that was done) on the data. It encapsulate one or
  * many addition/insertion and deletion of properties. The ChangeSetObject also provides functionality
  * to merge and swap change sets.
+ * @internal
  */
 export class ChangeSet {
 	static ConflictType = ConflictType;
@@ -272,18 +274,15 @@ export class ChangeSet {
 		if (io_baseChanges[in_baseKey] && io_baseChanges[in_baseKey].hasOwnProperty("value")) {
 			io_baseChanges[in_baseKey].value = newValue;
 		} else {
-			if (
+			io_baseChanges[in_baseKey] =
 				io_baseChanges[in_baseKey] === undefined &&
 				in_appliedValue &&
 				in_appliedValue.hasOwnProperty("oldValue")
-			) {
-				io_baseChanges[in_baseKey] = {
-					value: newValue,
-					oldValue: in_appliedValue.oldValue,
-				};
-			} else {
-				io_baseChanges[in_baseKey] = newValue;
-			}
+					? {
+							value: newValue,
+							oldValue: in_appliedValue.oldValue,
+					  }
+					: newValue;
 		}
 	}
 
@@ -336,18 +335,15 @@ export class ChangeSet {
 				oldValue = in_baseChanges[in_changedKey].oldValue;
 				// we need to convert the format to allow the application of the changes
 				// since _performApplyAfterOnPropertyArray only understands insert/modify/remove commands
-				if (
+				in_baseChanges[in_changedKey] =
 					in_baseChanges[in_changedKey] &&
 					in_baseChanges[in_changedKey].hasOwnProperty("value")
-				) {
-					in_baseChanges[in_changedKey] = {
-						insert: [[0, in_baseChanges[in_changedKey].value]],
-					};
-				} else {
-					in_baseChanges[in_changedKey] = {
-						insert: [[0, in_baseChanges[in_changedKey]]],
-					};
-				}
+						? {
+								insert: [[0, in_baseChanges[in_changedKey].value]],
+						  }
+						: {
+								insert: [[0, in_baseChanges[in_changedKey]]],
+						  };
 				baseIsSetChange = true;
 			}
 			let appliedChanges = in_appliedPropertyChanges[in_changedKey];
@@ -357,14 +353,13 @@ export class ChangeSet {
 
 			if (splitTypeid.typeid === "String" && isString(appliedChanges)) {
 				// we've got a 'set' command and just overwrite the changes
-				if (baseIsSetChange && oldValue !== undefined) {
-					in_baseChanges[in_changedKey] = {
-						value: appliedChanges,
-						oldValue,
-					};
-				} else {
-					in_baseChanges[in_changedKey] = appliedChanges;
-				}
+				in_baseChanges[in_changedKey] =
+					baseIsSetChange && oldValue !== undefined
+						? {
+								value: appliedChanges,
+								oldValue,
+						  }
+						: appliedChanges;
 			} else {
 				// we have incremental changes (or a standard array)
 				this._performApplyAfterOnPropertyArray(
@@ -379,14 +374,13 @@ export class ChangeSet {
 					newValue = isEmpty(in_baseChanges[in_changedKey])
 						? ""
 						: in_baseChanges[in_changedKey].insert[0][1];
-					if (oldValue !== undefined) {
-						in_baseChanges[in_changedKey] = {
-							value: newValue,
-							oldValue,
-						};
-					} else {
-						in_baseChanges[in_changedKey] = newValue;
-					}
+					in_baseChanges[in_changedKey] =
+						oldValue !== undefined
+							? {
+									value: newValue,
+									oldValue,
+							  }
+							: newValue;
 				}
 			}
 
@@ -645,12 +639,17 @@ export class ChangeSet {
 							in_ownPropertyChangeSet[typeid][paths[j]],
 						);
 					}
-
-					// Remove the typeid, when it no longer contains any keys
-					if (isEmpty(io_rebasePropertyChangeSet[typeid])) {
-						delete io_rebasePropertyChangeSet[typeid];
-					}
 				}
+
+				// Remove the typeid, when it no longer contains any keys
+				if (isEmpty(io_rebasePropertyChangeSet[typeid][paths[j]])) {
+					delete io_rebasePropertyChangeSet[typeid][paths[j]];
+				}
+			}
+
+			// Remove the typeid, when it no longer contains any keys
+			if (isEmpty(io_rebasePropertyChangeSet[typeid])) {
+				delete io_rebasePropertyChangeSet[typeid];
 			}
 		}
 

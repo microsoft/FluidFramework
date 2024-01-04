@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/request-handler",
-	"version": "2.0.0-internal.3.3.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "A simple request handling library for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,47 +11,101 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/request-handler-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/request-handler-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/request-handler-beta.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/request-handler-beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/request-handler-public.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/request-handler-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
-		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
-		"build:genver": "gen-version",
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -62,37 +116,50 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-runtime-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/runtime-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/runtime-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0"
+		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-135362",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-135362",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.0.0-internal.3.2.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@microsoft/api-extractor": "^7.22.2",
-		"@rushstack/eslint-config": "^2.5.1",
+		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-tools/build-cli": "0.29.0-227332",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.29.0-227332",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.0.0-internal.8.0.0",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.36",
-		"@types/random-js": "^1.0.31",
-		"concurrently": "^6.2.0",
+		"@types/node": "^18.19.0",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.2",
+		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
-		"eslint": "~8.6.0",
-		"mocha": "^10.0.0",
-		"nyc": "^15.0.0",
-		"prettier": "~2.6.2",
-		"random-js": "^1.0.8",
-		"rimraf": "^2.6.2",
-		"typescript": "~4.5.5"
+		"eslint": "~8.50.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"tsc-multi": "^1.1.0",
+		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"broken": {}

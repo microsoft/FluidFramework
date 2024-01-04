@@ -14,4 +14,4 @@ export {
 	IEmitter,
 	NoListenersCallback,
 	HasListeners,
-} from "./events";
+} from "./events.js";

@@ -362,17 +362,6 @@ const mergeTreeDeltaOpSchema = {
 		{
 			properties: {
 				type: { enum: [2] },
-				combiningOp: {
-					type: "object",
-					properties: {
-						defaultValue: {},
-						maxValue: {},
-						minValue: {},
-						name: { type: "string" },
-					},
-					required: ["name"],
-					additionalProperties: false,
-				},
 				pos1: { type: "number" },
 				pos2: { type: "number" },
 				props: { type: "object" },

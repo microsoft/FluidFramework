@@ -43,7 +43,7 @@ interface SharedTreeUndoRedoOptions {
 export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOptions): void {
 	const { localMode, title, undo, redo, beforeEach: additionalSetup } = options;
 	const afterEdit = options.afterEdit ?? noop;
-	const testOutOfOrderRevert = options.testOutOfOrderRevert === undefined ? true : options.testOutOfOrderRevert;
+	const testOutOfOrderRevert = options.testOutOfOrderRevert ?? true;
 
 	const treeOptions = {
 		localMode,

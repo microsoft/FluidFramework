@@ -1,6 +1,33 @@
-# @fluid-internal/tree
+# @fluidframework/tree
 
-This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
+For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
+
+## Status
+
+Notable consideration that early adopters should be wary of:
+
+-   The persisted format is not stable and long term support for persisted format is not yet in effect.
+    This means clients running more recent versions of SharedTree may find themselves unable to load old document or may corrupt them when editing.
+    Current estimate for LTS is April 2024.
+-   SharedTree currently has unbounded memory growth:
+    -   Removed content is retained forever.
+    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
+-   All changes are atomized by the `visitDelta` function. This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Motivation
 
@@ -14,7 +41,7 @@ The current feature focus is on:
     -   Transactionality.
     -   Support schema in a semantically robust way.
 -   Scalability:
-    -   Support for partial checkouts: allow efficiently viewing and editing parts of larger datasets without downloading the whole thing.
+    -   Support for partial views: allow efficiently viewing and editing parts of larger datasets without downloading the whole thing.
     -   Ability to easily (sharing code with client) spin up optional services to improve scalability further (ex: server side summaries, indexing, permissions etc.)
     -   Efficient data encodings.
 -   Expressiveness:
@@ -28,12 +55,12 @@ The current feature focus is on:
     -   New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
     -   New services (ex: to support permissions, server side indexing etc.)
 
-## Whats missing from existing DDSes?
+## What's missing from existing DDSes?
 
 `directory` and `map` can not provide merge resolution that guarantees well-formedness of trees while supporting the desired editing APIs (like subsequence move),
 and are missing (and cannot be practically extended to have) efficient ways to handle large data or schema.
 
-`sequence` does not capture the hierarchy or schema, and also does not handle partial checkouts.
+`sequence` does not capture the hierarchy or schema, and also does not handle partial views.
 Additionally its actual merge resolution leaves some things to be desired in some cases which `tree` aims to improve on.
 
 `experimental/tree` does not have a built in schema system reducing the data available to make semantically high quality merges.
@@ -48,10 +75,10 @@ but it was decided that it makes more sense to build up this more featureful DDS
 
 Currently existing DDS implementations can not support cross DDS transactions.
 For example, moving part of a sequence from one sequence DDS to another cannot be done transactionally, meaning if the source of the move conflicts, the destination half can't be updated or aborted if it's in a different DDS.
-Cross DDS moves also currently can't be as efficient as moves withing a single DDS, and there isn't a good way to do cross DDS history or branching without major framework changes.
+Cross DDS moves also currently can't be as efficient as moves within a single DDS, and there isn't a good way to do cross DDS history or branching without major framework changes.
 There are also some significant per DDS performance and storage costs that make this approach much more costly than using a single DDS.
 
-One way to think about this new tree DDS is to try and mix some of the Fluid-Framework features (like the ability to checkout a subset of the data) with features from DDSes (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
+One way to think about this new tree DDS is to try and mix some of the Fluid-Framework features (like the ability to view a subset of the data) with features from DDSes (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
 If this effort is successful, it might reveal some improved abstractions for modularizing hierarchical collaborative data-structures (perhaps "field kinds"),
 which could make their way back into the framework, enabling some features specific to this tree (ex: history, branching, transactional moves, reduced overhead) to be framework features instead.
 
@@ -64,14 +91,11 @@ This package can be developed using any of the [regular workflows for working on
 
 -   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
     This will recommend a test runner extension, which should be installed.
--   Build the Client release group as normal (for example: `npm i && npm run build:fast` in the repository root).
+-   Build the Client release group as normal (for example: `pnpm i && npm run build:fast` in the repository root).
 -   After editing the tree project, run `npm run build` in its directory.
 -   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
-
-This package uses [`good-fences`](https://github.com/smikula/good-fences) to manage intra-package dependencies in `fence.json` files.
-If modifying such dependencies, learn how `good-fences` works, and review (and update if needed) the "Architecture" section below.
 
 ## Architecture
 
@@ -90,16 +114,16 @@ graph TD;
         store["Data Store"]-->doc["Persisted Summaries"]
     end
     container["Fluid Container"]-->shared-tree
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluidframework/tree"
         shared-tree--"extends"-->shared-tree-core
         shared-tree-core-."reads".->doc
         shared-tree-core-->EditManager-->X["collab window & branches"]
         shared-tree-core-->Indexes-->ForestIndex
-        shared-tree-->checkout["default checkout"]
-        transaction-."updates".->checkout
-        transaction-->ProgressiveEditBuilder
-        checkout-."reads".->ForestIndex
-        checkout-->transaction
+        shared-tree-->view["SharedTreeView"]
+        transaction-."updates".->view
+        transaction-->EditBuilder
+        view-."reads".->ForestIndex
+        view-->transaction
     end
 ```
 
@@ -111,8 +135,8 @@ The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree
 
 See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
 
-When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/core/checkout/README.md) which abstracts the indexes into nice application facing APIs.
-Checkouts may also have state from the application, including:
+When applications want access to the `tree`'s data, they do so through an [`ISharedTreeView`](./src/shared-tree/sharedTreeView.ts) which abstracts the indexes into nice application facing APIs.
+Views may also have state from the application, including:
 
 -   [`view-schema`](./src/core/schema-view/README.md)
 -   adapters for out-of-schema data
@@ -120,11 +144,11 @@ Checkouts may also have state from the application, including:
 -   pending transactions
 -   registrations for application callbacks / events.
 
-[`shared-tree`](./src/shared-tree/) provides a default checkout which it owns, but applications can create more if desired, which they will own.
-Since checkouts subscribe to events from `shared-tree`, explicitly disposing any additionally created ones of is required to avoid leaks.
+[`shared-tree`](./src/shared-tree/) provides a default view which it owns, but applications can create more if desired, which they will own.
+Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones is required to avoid leaks.
 
-[transactions](./src/core/transaction/README.md) are created from `checkouts` and are currently synchronous.
-Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the checkout,
+[transactions](./src/core/transaction/README.md) are created by `ISharedTreeView`s and are currently synchronous.
+Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the view,
 could be added in the future.
 
 ### Data Flow
@@ -134,18 +158,18 @@ could be added in the future.
 ```mermaid
 flowchart LR;
     doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluidframework/tree"
         shared-tree--"configures"-->shared-tree-core
         shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
-        ForestIndex--"Exposed by"-->checkout
+        ForestIndex--"Exposed by"-->ISharedTreeView
     end
-    checkout--"viewed by"-->app
+    ISharedTreeView--"viewed by"-->app
 ```
 
 [`shared-tree`](./src/shared-tree/) configures [`shared-tree-core`](./src/shared-tree-core/README.md) with a set of indexes.
 `shared-tree-core` downloads the summary data from the Fluid Container, feeding the summary data (and any future edits) into the indexes.
-`shared-tree` then constructs the default `checkout`.
-The application using the `shared-tree` can get the checkout from which it can read data (which the checkout internally gets from the indexes).
+`shared-tree` then constructs the default view.
+The application using the `shared-tree` can get the view from which it can read data (which the view internally gets from the indexes).
 For any given part of the application this will typically follow one of two patterns:
 
 -   read the tree data as needed to create the view.
@@ -168,7 +192,7 @@ this should usually be easier, but may incur some performance overhead in specif
 When views want to hold onto part of the tree (for the first pattern),
 they do so with "anchors" which have well defined behavior across edits.
 
-TODO: Note that as some point the application will want their [`view-schema`](./src/core/schema-view/README.md) applied to the tree from the checkout.
+TODO: Note that as some point the application will want their [`view-schema`](./src/core/schema-view/README.md) applied to the tree from the view.
 The system for doing this is called "schematize" and is currently not implemented.
 When it is more designed, some details for how it works belong in this section (as well as the section below).
 
@@ -181,11 +205,11 @@ This shows editing during a transaction:
 
 ```mermaid
 flowchart RL
-    subgraph "@fluid-internal/tree"
-        transaction--"collects edits in"-->ProgressiveEditBuilder
-        ProgressiveEditBuilder--"updates anchors"-->AnchorSet
-        ProgressiveEditBuilder--"deltas for edits"-->transaction
-        transaction--"applies deltas to"-->forest["checkout's forest"]
+    subgraph "@fluidframework/tree"
+        transaction--"collects edits in"-->EditBuilder
+        EditBuilder--"updates anchors"-->AnchorSet
+        EditBuilder--"deltas for edits"-->transaction
+        transaction--"applies deltas to"-->forest["ISharedTreeView's forest"]
     end
     command["App's command callback"]
     command--"Edits"-->transaction
@@ -193,20 +217,20 @@ flowchart RL
 ```
 
 The application can use their view to locate places they want to edit.
-The application passes a "command" to the checkout which create a transaction that runs the command.
+The application passes a "command" to the view which create a transaction that runs the command.
 This "command" can interactively edit the tree.
 Internally the transaction implements these edits by creating changes.
 Each change is processed in two ways:
 
 -   the change is converted to a delta which is applied to the forest and any existing anchors allowing the application to read the updated tree afterwards.
--   the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
+-   the changes applied to the `EditBuilder` are accumulated and used to create/encode the actual edit to send to Fluid.
 
 Once the command ends, the transaction is rolled back leaving the forest in a clean state.
-Then if the command did not error, a `changeset` is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
-The checkout then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the checkout was behind due to it being async for some reason).
-Finally the checkout sends the op to `shared-tree-core` which submits it to Fluid.
+Then if the command did not error, a `changeset` is created from the changes applied to the `EditBuilder`, which is encoded into a Fluid Op.
+The view then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the view was behind due to it being async for some reason).
+Finally the view sends the op to `shared-tree-core` which submits it to Fluid.
 This submission results in the op becoming a local op, which `shared-tree-core` creates a delta for.
-This delta goes to the indexes, resulting in the ForestIndex and thus checkouts getting updated,
+This delta goes to the indexes, resulting in the ForestIndex and thus views getting updated,
 as well as anything else subscribing to deltas.
 
 This shows completion of a transaction.
@@ -218,9 +242,9 @@ Also not shown is the (also usually unneeded) step of rebasing the changeset bef
 ```mermaid
 flowchart LR
     command["App's command callback"]--"commit"-->transaction
-    subgraph "@fluid-internal/tree"
-        transaction--"build"-->ProgressiveEditBuilder
-        ProgressiveEditBuilder--"changeset"-->transaction
+    subgraph "@fluidframework/tree"
+        transaction--"build"-->EditBuilder
+        EditBuilder--"changeset"-->transaction
         transaction--"changeset (from builder)"-->core["shared-tree-core"]
         core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
     end
@@ -235,7 +259,7 @@ rebases it as needed, and sends another delta to the indexes.
 ```mermaid
 graph LR;
     service["Fluid Service"]--"Sequenced Op"-->core["shared-tree-core"]
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluidframework/tree"
         core--"changeset"-->EditManager
         EditManager--"add changeset"-->remote["remote branch"]
         remote--"rebase into"-->main[main branch]
@@ -250,9 +274,9 @@ graph LR;
 
 ### Dependencies
 
-`@fluid-internal/tree` depends on the Fluid runtime (various packages in `@fluidframework/*`)
-and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-internal`).
-`@fluid-internal/tree` is also complex,
+`@fluidframework/tree` depends on the Fluid runtime (various packages in `@fluidframework/*`)
+and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-experimental`).
+`@fluidframework/tree` is also complex,
 so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
 The goal of this internal structuring is to make evolution and maintenance easy.
 Some of the principles used to guide this are:
@@ -278,7 +302,7 @@ Some of the principles used to guide this are:
     This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
     which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
     If we instead took the pattern of putting the change rebasing policy in `Rebaser` subclasses,
-    this would violate this guiding principal and result in much harder to isolate and test policy logic.
+    this would violate this guiding principle and result in much harder to isolate and test policy logic.
 
     Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
@@ -292,41 +316,43 @@ Some of the principles used to guide this are:
     Additionally, this architectural approach can lead to smaller applications by not pulling in unneeded functionality.
 
 These approaches have led to a dependency structure that looks roughly like the diagram below.
-A more exact structure can be observed from the `fence.json` files which are enforced via [good-fences](https://www.npmjs.com/package/good-fences).
 In this diagram, some dependency arrows for dependencies which are already included transitively are omitted.
 
 ```mermaid
 flowchart
     direction TB
-    subgraph package ["@fluid-internal/tree"]
+    subgraph package ["@fluidframework/tree"]
         direction TB
         subgraph core ["core libraries"]
             direction TB
-            checkout-->rebase
+            schema-view
             forest-->schema-stored
-            change-family-->repair
-            edit-manager-->change-family
-            repair-->rebase
             rebase-->tree
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
-            transaction-->change-family
-            transaction-->checkout
             dependency-tracking
             forest-->tree
+            revertible-->rebase
         end
         core-->events-->util
         core-->id-compressor-->util
+        core-->codec-->util
         feature-->shared-tree-core
         shared-tree-core-->core
-        shared-tree-->feature
+        shared-tree-->simple-tree
+        simple-tree-->feature
+        external-utilities-->feature
         subgraph feature ["feature-libraries"]
             direction TB
-            editable-tree-->defaultFieldKinds
+            flex-tree-->contextuallyTyped
+            flex-tree-->node-key
             defaultRebaser
+            contextuallyTyped-->defaultFieldKinds
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
             modular-schema
+            node-key-->modular-schema
+            node-key-->defaultFieldKinds
             object-forest-->mapTreeCursor-->treeCursorUtils
             chunked-forest-->treeCursorUtils
             schemaIndex
@@ -335,7 +361,7 @@ flowchart
         subgraph domains
             JSON
         end
-        domains-->feature
+        domains-->simple-tree
     end
     package-->runtime["Fluid runtime"]
 ```

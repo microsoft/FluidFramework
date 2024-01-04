@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspUrlResolver } from "../urlResolver";
 
@@ -23,7 +23,7 @@ describe("Spo Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`,
+			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/`,
 			"fluid url does not match",
 		);
 	});
@@ -43,7 +43,7 @@ describe("Spo Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`,
+			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/`,
 			"fluid url does not match",
 		);
 	});

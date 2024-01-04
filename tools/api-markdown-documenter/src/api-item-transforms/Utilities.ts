@@ -2,52 +2,60 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, IResolveDeclarationReferenceResult } from "@microsoft/api-extractor-model";
-import { DocDeclarationReference } from "@microsoft/tsdoc";
+import {
+	type ApiItem,
+	type IResolveDeclarationReferenceResult,
+} from "@microsoft/api-extractor-model";
+import { type DocDeclarationReference } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
-import { Link } from "../Link";
-import { DocumentNode, SectionNode } from "../documentation-domain";
-import { getFilePathForApiItem, getLinkForApiItem } from "../utilities";
-import { DocNodeTransformOptions } from "./DocNodeTransforms";
+import { DocumentNode, type SectionNode } from "../documentation-domain";
+import { type Link } from "../Link";
+import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemTransformUtilities";
+import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
+import { type ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
 
 /**
- * Helper function for creating a {@link DocumentNode} for an API item and its generated documentation contents.
+ * Creates a {@link DocumentNode} representing the provided API item.
+ *
+ * @param documentItem - The API item to be documented.
+ * @param sections - An array of sections to be included in the document.
+ * @param config - The transformation configuration for the API item.
+ *
+ * @returns A {@link DocumentNode} representing the constructed document.
  */
 export function createDocument(
 	documentItem: ApiItem,
 	sections: SectionNode[],
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
-	let contents: SectionNode[] = sections;
+	// Wrap sections in a root section if top-level heading is requested.
+	const contents = config.includeTopLevelDocumentHeading
+		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
+		: sections;
 
-	// If a top-level heading was requested, we will wrap our document sections in a root section
-	// with the appropriate heading to ensure hierarchy is adjusted appropriately.
-	if (config.includeTopLevelDocumentHeading) {
-		contents = [wrapInSection(sections, { title: config.headingTitlePolicy(documentItem) })];
-	}
-
-	const frontMatter =
-		config.frontMatterPolicy === undefined ? undefined : config.frontMatterPolicy(documentItem);
+	const frontMatter = generateFrontMatter(documentItem, config);
 
 	return new DocumentNode({
+		apiItem: documentItem,
 		children: contents,
-		filePath: getFilePathForApiItem(documentItem, config),
+		documentPath: getDocumentPathForApiItem(documentItem, config),
 		frontMatter,
 	});
 }
 
 /**
- * Create {@link DocNodeTransformOptions} for the provided context API item and the system config.
+ * Create {@link TsdocNodeTransformOptions} for the provided context API item and the system config.
  *
- * @param contextApiItem - See {@link DocNodeTransformOptions.contextApiItem}.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @returns An option for {@link @microsoft/tsdoc#DocNode} transformations
  */
-export function getDocNodeTransformationOptions(
+export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
-): DocNodeTransformOptions {
+	config: Required<ApiItemTransformationConfiguration>,
+): TsdocNodeTransformOptions {
 	return {
 		contextApiItem,
 		resolveApiReference: (codeDestination): Link | undefined =>
@@ -57,16 +65,40 @@ export function getDocNodeTransformationOptions(
 }
 
 /**
+ * Helper function to generate the front matter based on the provided configuration.
+ */
+function generateFrontMatter(
+	documentItem: ApiItem,
+	config: Required<ApiItemTransformationConfiguration>,
+): string | undefined {
+	if (config.frontMatter === undefined) {
+		return undefined;
+	}
+
+	if (typeof config.frontMatter === "string") {
+		return config.frontMatter;
+	}
+
+	if (typeof config.frontMatter !== "function") {
+		throw new TypeError(
+			"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
+		);
+	}
+
+	return config.frontMatter(documentItem);
+}
+
+/**
  * Resolves a symbolic link and creates a URL to the target.
  *
- * @param contextApiItem - See {@link DocNodeTransformOptions.contextApiItem}.
+ * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param codeDestination - The link reference target.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 function resolveSymbolicLink(
 	contextApiItem: ApiItem,
 	codeDestination: DocDeclarationReference,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): Link | undefined {
 	const { apiModel, logger } = config;
 

@@ -4,27 +4,33 @@
  */
 
 export {
-	FieldSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
-	GlobalFieldKey,
-	TreeSchema,
-	TreeSchemaIdentifier,
-	LocalFieldKey,
-	NamedTreeSchema,
-	Named,
+	TreeNodeStoredSchema,
 	TreeTypeSet,
-	SchemaPolicy,
-	FieldKindIdentifier,
-	SchemaData,
-	NamedFieldSchema,
-} from "./schema";
+	FieldKindSpecifier,
+	TreeStoredSchema,
+	forbiddenFieldKindIdentifier,
+	storedEmptyFieldSchema,
+	StoredSchemaCollection,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	BrandedTreeNodeSchemaDataFormat,
+	decodeFieldSchema,
+	encodeFieldSchema,
+	storedSchemaDecodeDispatcher,
+	ErasedTreeNodeSchemaDataFormat,
+} from "./schema.js";
 export {
-	StoredSchemaRepository,
-	lookupGlobalFieldSchema,
-	lookupTreeSchema,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
+	MutableTreeStoredSchema,
+	TreeStoredSchemaRepository,
 	schemaDataIsEmpty,
-	SchemaDataAndPolicy,
 	SchemaEvents,
-} from "./storedSchemaRepository";
-export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";
+} from "./storedSchemaRepository.js";
+
+export { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format.js";
+
+import * as schemaFormat from "./format.js";
+export { schemaFormat };

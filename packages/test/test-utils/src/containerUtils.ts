@@ -5,21 +5,10 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IResponse } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { IDataStore } from "@fluidframework/runtime-definitions";
 import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtils";
-
-/**
- * Waits for the specified container to emit a 'connected' event.
- *
- * @deprecated Use waitForContainerConnection instead.
- * Note that an upcoming release will change the default parameters on that function to:
- * - failOnContainerClose = true
- * - timeoutOptions.durationMs = 1s
- */
-export async function ensureContainerConnected(container: IContainer): Promise<void> {
-	if (container.connectionState !== ConnectionState.Connected) {
-		return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-	}
-}
 
 /**
  * Utility function to wait for the specified Container to be in Connected state.
@@ -30,20 +19,22 @@ export async function ensureContainerConnected(container: IContainer): Promise<v
  * @param container - The container to wait for.
  * @param failOnContainerClose - If true, the returned Promise will be rejected if the container emits a 'closed' event
  * before a 'connected' event.
- * Defaults to false (but this will change in an upcoming version).
+ * Defaults to true.
  * @param timeoutOptions - Options related to the behavior of the timeout.
- * If not provided, no timeout will be applied and the promise will wait indefinitely for the Container to emit its
- * 'connected' (or 'closed, if failOnContainerClose === true) event.
- * @returns A Promise that resolves when the specified container emits a 'connected' event (or immediately if the
- * Container is already connected).
- * If failOnContainerClose === true and the container emits a 'closed' event before a 'connected' event, the Promise
- * is rejected with the error from the 'closed' event, if any.
- * If timeoutOptions is provided, the Promise will reject if the container hasn't emmited a relevant event before
- * timeoutOptions.durationMs (which defaults to 250ms if left undefined).
+ * If provided, the returned Promise will reject if the container hasn't emitted relevant events in timeoutOptions.durationMs.
+ * If not provided, the Promise will wait indefinitely for the Container to emit its 'connected' (or 'closed', if
+ * failOnContainerClose === true) event.
+ *
+ * @returns A Promise that either:
+ * - Resolves when the specified container emits a 'connected' event (or immediately if the Container is already connected).
+ * - Rejects if failOnContainerClose === true and the container emits a 'closed' event before a 'connected' event.
+ * - Rejects after timeoutOptions.durationMs if timeoutOptions !== undefined and the container does not emit relevant
+ * events, within that timeframe.
+ * @internal
  */
 export async function waitForContainerConnection(
 	container: IContainer,
-	failOnContainerClose: boolean = false,
+	failOnContainerClose: boolean = true,
 	timeoutOptions?: TimeoutWithError,
 ): Promise<void> {
 	if (container.connectionState !== ConnectionState.Connected) {
@@ -58,4 +49,42 @@ export async function waitForContainerConnection(
 			? new Promise(executor)
 			: timeoutPromise(executor, timeoutOptions);
 	}
+}
+
+/**
+ * This function should ONLY be used for back compat purposes
+ * LTS versions of the Loader/Container will not have the "getEntryPoint" method, so we need to fallback to "request"
+ * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
+ * @internal
+ */
+export async function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T> {
+	if (container.getEntryPoint !== undefined) {
+		const entryPoint = await container.getEntryPoint();
+		// Note: We need to also check if the result of `getEntryPoint()` is defined. This is because when running
+		// cross version compat testing scenarios, if we create with 1.X container and load with 2.X then the
+		// function container.getEntryPoint will be defined for the 2.X container. However, it will not return undefined
+		// since the container's runtime will be on version 1.X, which does not have an entry point defined.
+		if (entryPoint !== undefined) {
+			return entryPoint as T;
+		}
+	}
+	const response: IResponse = await (container as any).request({ url: "/" });
+	assert(response.status === 200, "requesting '/' should return default data object");
+	return response.value as T;
+}
+
+/**
+ * This function should ONLY be used for back compat purposes
+ * Older supported versions of IDataStore do not have the "entryPoint" property, so we need to fallback to "request"
+ * This function can be removed once back-compat support for IDataStore moves to 2.0.0-internal.7.0.0
+ *
+ * @internal
+ */
+export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T> {
+	if (dataStore.entryPoint !== undefined) {
+		return dataStore.entryPoint.get() as Promise<T>;
+	}
+	const response: IResponse = await (dataStore as any).request({ url: "" });
+	assert(response.status === 200, "empty request should return data object");
+	return response.value as T;
 }

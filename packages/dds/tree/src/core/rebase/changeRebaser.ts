@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "../../util";
-import { AnchorSet } from "../tree";
-import type { RevisionTag } from "./types";
+import { Invariant } from "../../util/index.js";
+import type { RevisionTag } from "./types.js";
 
 /**
  * Rebasing logic for a particular kind of change.
@@ -37,8 +36,6 @@ import type { RevisionTag } from "./types";
  * Would this cause decoherence (and thus be absolutely not ok),
  * or just minor semantic precision issues, which could be tolerated.
  * For now assume that such issues are not ok.
- *
- * @alpha
  */
 export interface ChangeRebaser<TChangeset> {
 	_typeCheck?: Invariant<TChangeset>;
@@ -50,12 +47,18 @@ export interface ChangeRebaser<TChangeset> {
 	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
 	/**
+	 * @param changes - The changes to invert.
+	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
+	 * performing a sandwich rebase.
+	 * This flag is relevant to merge semantics that are dependent on edit sequencing order:
+	 * - In the context of an undo, this function inverts a change that is sequenced and applied before the produced inverse.
+	 * - In the context of a rollback, this function inverts a change that is sequenced after but applied before the produced inverse.
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
 	 * See {@link ChangeRebaser} for details.
 	 */
-	invert(changes: TaggedChange<TChangeset>): TChangeset;
+	invert(changes: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
 
 	/**
 	 * Rebase `change` over `over`.
@@ -63,52 +66,91 @@ export interface ChangeRebaser<TChangeset> {
 	 * The resulting changeset should, as much as possible, replicate the same semantics as `change`,
 	 * except be valid to apply after `over` instead of before it.
 	 *
+	 * When rebasing `change` onto a new branch, `revisionMetadata` should include entries for all changesets
+	 * from the source which are being rebased onto the target branch.
+	 *
 	 * Requirements:
 	 * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
 	 * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
 	 * - `rebase(compose([a, b]), c)` is equal to
 	 * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
 	 * - `rebase(a, compose([]))` is equal to `a`.
-	 * - `rebase(compose([]), a)` is equal to `a`.
+	 * - `rebase(compose([]), a)` is equal to `compose([])`.
 	 */
-	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
-
-	// TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
-	// This isn't ideal, but it might be fine?
-	// Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
-	rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
+	rebase(
+		change: TChangeset,
+		over: TaggedChange<TChangeset>,
+		revisionMetadata: RevisionMetadataSource,
+	): TChangeset;
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface TaggedChange<TChangeset> {
 	readonly revision: RevisionTag | undefined;
-
 	/**
-	 * Whether this change represents the inverse of the specified revision.
-	 * Considered false if undefined.
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
 	 */
-	readonly isInverse?: boolean;
+	readonly rollbackOf?: RevisionTag;
 	readonly change: TChangeset;
 }
 
-export function tagChange<T>(
-	change: T,
-	tag: RevisionTag | undefined,
-	isInverse?: boolean,
-): TaggedChange<T> {
-	return { revision: tag, isInverse, change };
+export function mapTaggedChange<TIn, TOut>(
+	input: TaggedChange<TIn>,
+	change: TOut,
+): TaggedChange<TOut> {
+	return { ...input, change };
 }
 
-export function tagInverse<T>(
+/**
+ * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
+ * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
+ * compose or rebase operation.
+ *
+ * During composition, the index reflects the order of the changeset within the overall composed changeset that is
+ * being produced.
+ *
+ * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
+ * @internal
+ */
+export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
+
+/**
+ * @internal
+ */
+export interface RevisionMetadataSource {
+	readonly getIndex: RevisionIndexer;
+	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
+	readonly hasRollback: (tag: RevisionTag) => boolean;
+}
+
+/**
+ * @internal
+ */
+export interface RevisionInfo {
+	readonly revision: RevisionTag;
+	/**
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
+	 */
+	readonly rollbackOf?: RevisionTag;
+}
+
+export function tagChange<T>(change: T, revision: RevisionTag | undefined): TaggedChange<T> {
+	return { revision, change };
+}
+
+export function tagRollbackInverse<T>(
 	inverseChange: T,
-	invertedRevision: RevisionTag | undefined,
+	revision: RevisionTag | undefined,
+	rollbackOf: RevisionTag | undefined,
 ): TaggedChange<T> {
 	return {
-		revision: invertedRevision,
-		isInverse: true,
+		revision,
 		change: inverseChange,
+		rollbackOf,
 	};
 }
 

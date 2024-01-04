@@ -17,6 +17,7 @@
 
 export {
 	DirectoryFactory,
+	ICreateInfo,
 	IDirectoryClearOperation,
 	IDirectoryCreateSubDirectoryOperation,
 	IDirectoryDataObject,

@@ -6,21 +6,23 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
+// TODO:AB#6558: This should be provided based on the compatibility configuration.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeCompat,
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
-import { pkgVersion } from "../packageVersion";
+import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider) => {
 	describe("Compression", () => {
@@ -42,17 +44,13 @@ const compressionSuite = (getProvider) => {
 			provider = await getProvider();
 
 			const localContainer = await provider.makeTestContainer(testContainerConfig);
-			const localDataObject = await requestFluidObject<ITestFluidObject>(
-				localContainer,
-				"default",
-			);
+			const localDataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
 			localMap = await localDataObject.getSharedObject<SharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(testContainerConfig);
-			const remoteDataObject = await requestFluidObject<ITestFluidObject>(
-				remoteContainer,
-				"default",
-			);
+			const remoteDataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
 			remoteMap = await remoteDataObject.getSharedObject<SharedMap>("mapKey");
 		});
 
@@ -60,7 +58,11 @@ const compressionSuite = (getProvider) => {
 			provider.reset();
 		});
 
-		it("Can compress and process compressed op", async () => {
+		it("Can compress and process compressed op", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const values = [
 				generateRandomStringOfSize(100),
 				generateRandomStringOfSize(100),
@@ -78,7 +80,11 @@ const compressionSuite = (getProvider) => {
 			}
 		});
 
-		it("Processes ops that weren't worth compressing", async () => {
+		it("Processes ops that weren't worth compressing", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const value = generateRandomStringOfSize(5);
 			localMap.set("testKey", value);
 
@@ -89,7 +95,7 @@ const compressionSuite = (getProvider) => {
 	});
 };
 
-describeFullCompat("Op Compression", (getTestObjectProvider) =>
+describeCompat("Op Compression", "FullCompat", (getTestObjectProvider) =>
 	compressionSuite(async () => getTestObjectProvider()),
 );
 
@@ -98,16 +104,25 @@ describeInstallVersions(
 	{
 		requestAbsoluteVersions: [loaderWithoutCompressionField],
 	},
-	/* timeoutMs */ 50000,
+	/* timeoutMs: 3 minutes */ 180000,
 )("Op Compression self-healing with old loader", (getProvider) =>
 	compressionSuite(async () => {
 		const provider = getProvider();
+		// Ensure support for endpoint names for r11s driver. ODSP might need similar help at some point if we have
+		// scenarios that run into issues otherwise.
+		const driverConfig =
+			provider.driver.endpointName !== undefined
+				? {
+						r11s: { r11sEndpointName: provider.driver.endpointName },
+				  }
+				: undefined;
 		return getVersionedTestObjectProvider(
 			pkgVersion, // base version
 			loaderWithoutCompressionField, // loader version
 			{
 				type: provider.driver.type,
 				version: pkgVersion,
+				config: driverConfig,
 			}, // driver version
 			pkgVersion, // runtime version
 			pkgVersion, // datastore runtime version

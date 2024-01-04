@@ -4,30 +4,40 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { CSVFileLogger } from "./csvFileLogger";
 import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger";
 import { JSONFileLogger } from "./jsonFileLogger";
 
 /**
- * Create a ITelemetryLogger wrapped around provided IFileLogger
- * ! It is expected that all events be sent through the returned "logger" value
- * ! The "fileLogger" value should have its "close()" method called at the end of execution
- * Note: if an output format is not supplied, default is JSON
- * @returns - both the IFileLogger implementation and ITelemetryLogger wrapper to be called
+ * Create an {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
+ *
+ * @remarks
+ *
+ * It is expected that all events be sent through the returned "logger" value.
+ *
+ * The "fileLogger" value should have its "close()" method called at the end of execution.
+ *
+ * Note: if an output format is not supplied, default is JSON.
+ *
+ * @returns Both the `IFileLogger` implementation and `ITelemetryLoggerExt` wrapper to be called.
+ * @internal
  */
 export function createLogger(
 	filePath: string,
 	options?: ITelemetryOptions,
-): { logger: ITelemetryLogger; fileLogger: IFileLogger } {
+): { logger: ITelemetryLoggerExt; fileLogger: IFileLogger } {
 	const fileLogger =
 		options?.outputFormat === OutputFormat.CSV
 			? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)
 			: new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
 
-	const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp", {
-		all: { Event_Time: () => Date.now() },
+	const logger = createChildLogger({
+		logger: fileLogger,
+		namespace: "LocalSnapshotRunnerApp",
+		properties: {
+			all: { Event_Time: () => Date.now() },
+		},
 	});
 
 	return { logger, fileLogger };
@@ -36,6 +46,7 @@ export function createLogger(
 /**
  * Validate the telemetryFile command line argument
  * @param telemetryFile - path where telemetry will be written
+ * @internal
  */
 export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
 	if (!telemetryFile) {
@@ -56,6 +67,7 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
 export function validateAndParseTelemetryOptions(
 	format?: string,
 	props?: (string | number)[],
+	eventsPerFlush?: number,
 ): { success: false; error: string } | { success: true; telemetryOptions: ITelemetryOptions } {
 	let outputFormat: OutputFormat | undefined;
 	const defaultProps: Record<string, string | number> = {};
@@ -85,5 +97,12 @@ export function validateAndParseTelemetryOptions(
 		}
 	}
 
-	return { success: true, telemetryOptions: { outputFormat, defaultProps } };
+	if (eventsPerFlush !== undefined && isNaN(eventsPerFlush)) {
+		return {
+			success: false,
+			error: "Invalid eventsPerFlush",
+		};
+	}
+
+	return { success: true, telemetryOptions: { outputFormat, defaultProps, eventsPerFlush } };
 }

@@ -21,7 +21,9 @@ describe("RemoteChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
 	let sharedObjectRegistry: ISharedObjectRegistry;
 	const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
-		new FluidDataStoreRuntime(context, registry, /* existing */ false);
+		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
+			myProp: "myValue",
+		}));
 
 	beforeEach(() => {
 		dataStoreContext = new MockFluidDataStoreContext();
@@ -55,7 +57,7 @@ describe("RemoteChannelContext Tests", () => {
 			);
 		assert.throws(
 			codeBlock,
-			(e) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
+			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
 		);
 	});

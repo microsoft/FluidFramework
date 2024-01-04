@@ -12,7 +12,6 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { DOProviderContainerRuntimeFactory, FluidContainer } from "@fluidframework/fluid-static";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -25,6 +24,10 @@ import {
 
 import { DiceRollerController } from "../src/controller";
 import { makeAppView } from "../src/view";
+import {
+	IFluidContainer,
+	createDOProviderContainerRuntimeFactory,
+} from "@fluidframework/fluid-static";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -44,6 +47,7 @@ const urlResolver = new LocalResolver();
  * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
  * @param containerRuntimeFactory - The container factory to be loaded in the container
+ * @internal
  */
 export async function getSessionStorageContainer(
 	documentId: string,
@@ -52,9 +56,7 @@ export async function getSessionStorageContainer(
 ): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
 	let localServer = localServerMap.get(documentId);
 	if (localServer === undefined) {
-		localServer = LocalDeltaConnectionServer.create(
-			new LocalSessionStorageDbFactory(documentId),
-		);
+		localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 		localServerMap.set(documentId, localServer);
 	}
 
@@ -94,6 +96,9 @@ export async function getSessionStorageContainer(
 	return { container, attach };
 }
 
+/**
+ * @internal
+ */
 export const containerConfig = {
 	name: "dice-roller-container",
 	initialObjects: {
@@ -103,7 +108,7 @@ export const containerConfig = {
 	},
 };
 
-async function initializeNewContainer(container: FluidContainer): Promise<void> {
+async function initializeNewContainer(container: IFluidContainer): Promise<void> {
 	// We now get the first SharedMap from the container
 	const sharedMap1 = container.initialObjects.map1 as SharedMap;
 	const sharedMap2 = container.initialObjects.map2 as SharedMap;
@@ -116,6 +121,7 @@ async function initializeNewContainer(container: FluidContainer): Promise<void> 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
+ * @internal
  */
 export async function createContainerAndRenderInElement(
 	element: HTMLDivElement,
@@ -125,12 +131,12 @@ export async function createContainerAndRenderInElement(
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		documentId,
-		new DOProviderContainerRuntimeFactory(containerConfig),
+		createDOProviderContainerRuntimeFactory({ schema: containerConfig }),
 		createNewFlag,
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = (await container.request({ url: "/" })).value;
+	const fluidContainer = (await container.getEntryPoint()) as IFluidContainer;
 	if (createNewFlag) {
 		await initializeNewContainer(fluidContainer);
 		await attach?.();

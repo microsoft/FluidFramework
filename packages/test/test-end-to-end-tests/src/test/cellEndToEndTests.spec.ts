@@ -5,20 +5,20 @@
 
 import { strict as assert } from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
 	ITestFluidObject,
 	ChannelFactoryRegistry,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
-import { Container } from "@fluidframework/container-loader";
+import { describeCompat } from "@fluid-private/test-version-utils";
+
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullCompat("SharedCell", (getTestObjectProvider) => {
+describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -44,17 +44,17 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedCell1 = await dataObject1.getSharedObject<SharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedCell2 = await dataObject2.getSharedObject<SharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedCell3 = await dataObject3.getSharedObject<SharedCell>(cellId);
 
 		// Set a starting value in the cell
@@ -101,8 +101,11 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 
 	it("can create the cell in 3 containers correctly", async () => {
 		// Cell was created and populated in beforeEach
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.ok(sharedCell1, `Couldn't find the cell in container1, instead got ${sharedCell1}`);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.ok(sharedCell2, `Couldn't find the cell in container2, instead got ${sharedCell2}`);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.ok(sharedCell3, `Couldn't find the cell in container3, instead got ${sharedCell3}`);
 	});
 
@@ -298,17 +301,17 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
+describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
 	});
 
-	let container: Container;
+	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let sharedCell: SharedCell;
 	let containerRuntime: ContainerRuntime;
-	let changedEventData: Serializable[];
+	let changedEventData: Serializable<unknown>[];
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -324,8 +327,8 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
 				}),
 			},
 		};
-		container = (await provider.makeTestContainer(configWithFeatureGates)) as Container;
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		container = await provider.makeTestContainer(configWithFeatureGates);
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		changedEventData = [];

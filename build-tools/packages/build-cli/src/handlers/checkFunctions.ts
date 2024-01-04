@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
 
-import { execAsync, FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
 import {
@@ -21,7 +22,7 @@ import {
 } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
-import { isReleaseGroup } from "../releaseGroups";
+import { ReleaseSource, isReleaseGroup } from "../releaseGroups";
 import { getRunPolicyCheckDefault } from "../repoConfig";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
@@ -163,15 +164,15 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
 			choices: [
 				{
 					name: "main/lts",
-					value: "direct",
+					value: "direct" as ReleaseSource,
 				},
-				{ name: "release branch", value: "releaseBranches" },
+				{ name: "release branch", value: "releaseBranches" as ReleaseSource },
 			],
 			message: `The ${releaseGroup} release group can be released directly from main, or you can create a release branch. Would you like to release from main or a release branch? If in doubt, select 'release branch'.`,
 		};
 
 		const answers = await inquirer.prompt(branchToReleaseFrom);
-		releaseSource = answers.releaseType;
+		releaseSource = answers.releaseType as ReleaseSource;
 	}
 
 	if (releaseSource === "direct") {
@@ -240,7 +241,7 @@ export const checkDependenciesInstalled: StateHandlerFunction = async (
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		  [context.fullPackageMap.get(releaseGroup)!];
 
-	const installed = await FluidRepo.ensureInstalled(packagesToCheck, true);
+	const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
 	if (installed) {
 		BaseStateHandler.signalSuccess(machine, state);
@@ -311,16 +312,28 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, releaseGroup, releaseVersion } = data;
-	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
+	const { context, releaseGroup, releaseVersion, shouldCheckBranch } = data;
+	assert(context !== undefined, "Context is undefined.");
 
 	const currentBranch = await context.gitRepo.getCurrentBranchName();
+	if (!isReleaseGroup(releaseGroup)) {
+		// must be a package
+		assert(
+			context.fullPackageMap.has(releaseGroup),
+			`Package ${releaseGroup} not found in context.`,
+		);
+	}
+
 	const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
-	if (currentBranch === releaseBranch) {
-		BaseStateHandler.signalSuccess(machine, state);
+	if (shouldCheckBranch) {
+		if (currentBranch === releaseBranch) {
+			BaseStateHandler.signalSuccess(machine, state);
+		} else {
+			BaseStateHandler.signalFailure(machine, state);
+		}
 	} else {
-		BaseStateHandler.signalFailure(machine, state);
+		BaseStateHandler.signalSuccess(machine, state);
 	}
 
 	return true;
@@ -390,7 +403,7 @@ export const checkPolicy: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execAsync(`npm run policy-check`, {
+		const result = await execa.command(`npm run policy-check`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);
@@ -448,7 +461,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execAsync(`npm run policy-check:asserts`, {
+		const result = await execa.command(`npm run policy-check:asserts`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);
@@ -774,7 +787,7 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 
 	if (isReleaseGroup(releaseGroup)) {
 		BaseStateHandler.signalSuccess(machine, state);
-		// eslint-disable-next-line no-negated-condition
+		// eslint-disable-next-line unicorn/no-negated-condition
 	} else if (context.fullPackageMap.get(releaseGroup) !== undefined) {
 		BaseStateHandler.signalSuccess(machine, state);
 	} else {

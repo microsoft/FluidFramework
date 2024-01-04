@@ -5,57 +5,82 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+	IDocumentManager,
+} from "@fluidframework/server-services-core";
+import {
+	IThrottleMiddlewareOptions,
+	throttle,
+	getParam,
+} from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
+import { Constants } from "../../utils";
 
 export function create(
-    config: nconf.Provider,
-    tenantService: ITenantService,
-    throttler: IThrottler,
-    cache?: ICache,
-    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
-    const router: Router = Router();
+	config: nconf.Provider,
+	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
+	restTenantThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
+	cache?: ICache,
+	asyncLocalStorage?: AsyncLocalStorage<string>,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
+): Router {
+	const router: Router = Router();
 
-    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-        throttleIdSuffix: utils.Constants.throttleIdSuffix,
-    };
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
-    async function getCommits(
-        tenantId: string,
-        authorization: string,
-        sha: string,
-        count: number): Promise<git.ICommitDetails[]> {
-        const service = await utils.createGitService(
-            config,
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage);
-        return service.getCommits(sha, count);
-    }
+	async function getCommits(
+		tenantId: string,
+		authorization: string,
+		sha: string,
+		count: number,
+	): Promise<git.ICommitDetails[]> {
+		const service = await utils.createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager,
+			cache,
+			asyncLocalStorage,
+			denyList,
+		});
+		return service.getCommits(sha, count);
+	}
 
-    router.get("/repos/:ignored?/:tenantId/commits",
-        utils.validateRequestParams("sha"),
-        throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
-            const commitsP = getCommits(
-                request.params.tenantId,
-                request.get("Authorization"),
-                utils.queryParamToString(request.query.sha),
-                utils.queryParamToNumber(request.query.count));
+	router.get(
+		"/repos/:ignored?/:tenantId/commits",
+		validateRequestParams("sha"),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyToken(revokedTokenChecker),
+		(request, response, next) => {
+			const commitsP = getCommits(
+				request.params.tenantId,
+				request.get("Authorization"),
+				utils.queryParamToString(request.query.sha),
+				utils.queryParamToNumber(request.query.count),
+			);
 
-            utils.handleResponse(
-                commitsP,
-                response,
-                false);
-        });
+			utils.handleResponse(commitsP, response, false);
+		},
+	);
 
-    return router;
+	return router;
 }

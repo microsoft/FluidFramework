@@ -4,18 +4,10 @@
  */
 import { IRequest } from "@fluidframework/core-interfaces";
 
-export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
-
-export interface IResolvedUrlBase {
-	type: string;
-}
-
-export interface IWebResolvedUrl extends IResolvedUrlBase {
-	type: "web";
-	data: string;
-}
-
-export interface IFluidResolvedUrl extends IResolvedUrlBase {
+/**
+ * @alpha
+ */
+export interface IResolvedUrl {
 	type: "fluid";
 	/**
 	 * The id of the container this resolved url is for.
@@ -28,6 +20,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 
 /**
  * Container package info handed off to resolver.
+ * @alpha
  */
 export interface IContainerPackageInfo {
 	/**
@@ -36,6 +29,9 @@ export interface IContainerPackageInfo {
 	name: string;
 }
 
+/**
+ * @alpha
+ */
 export interface IUrlResolver {
 	// Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
 	// the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
@@ -59,6 +55,7 @@ export interface IUrlResolver {
 /**
  * Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
  * for driver compatibility and preload information.
+ * @alpha
  */
 export interface DriverPreCheckInfo {
 	/**
@@ -75,6 +72,7 @@ export interface DriverPreCheckInfo {
 
 /**
  * Additional key in the loader request header
+ * @alpha
  */
 export enum DriverHeader {
 	// Key to indicate whether the request for summarizer
@@ -83,6 +81,9 @@ export enum DriverHeader {
 	createNew = "createNew",
 }
 
+/**
+ * @internal
+ */
 export interface IDriverHeader {
 	[DriverHeader.summarizingClient]: boolean;
 	// TODO: Use something other than `any`.

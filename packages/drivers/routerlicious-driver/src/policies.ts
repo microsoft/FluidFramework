@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface IRouterliciousDriverPolicies {
 	/**
 	 * Enable prefetching entire snapshot tree into memory before it is loaded by the runtime.
@@ -20,14 +23,6 @@ export interface IRouterliciousDriverPolicies {
 	 */
 	maxConcurrentOrdererRequests: number;
 	/**
-	 * Give hosts the option to change blob aggregation behavior to suit their needs.
-	 * Larger number means fewer blob individual requests, but less blob-deduping.
-	 * Smaller number means more blob individual requests, but more blob-deduping.
-	 * Setting to `undefined` disables blob aggregration.
-	 * Default: undefined
-	 */
-	aggregateBlobsSmallerThanBytes: number | undefined;
-	/**
 	 * Enable uploading entire summary tree as a IWholeSummaryPayload to storage.
 	 * Default: false
 	 */
@@ -36,7 +31,7 @@ export interface IRouterliciousDriverPolicies {
 	 * Enable service endpoint discovery when creating or joining a session.
 	 * Default: false
 	 */
-	enableDiscovery?: boolean;
+	enableDiscovery: boolean;
 	/**
 	 * Enable using RestLess which avoids CORS preflight requests.
 	 * Default: true
@@ -48,4 +43,16 @@ export interface IRouterliciousDriverPolicies {
 	 * Default: true
 	 */
 	enableInternalSummaryCaching: boolean;
+	/**
+	 * Enable downgrading socket connection to long-polling
+	 * when websocket connection cannot be established.
+	 * Default: true
+	 */
+	enableLongPollingDowngrade: boolean;
+	/**
+	 * Indicates that the container is ephemeral.
+	 * Artifacts relates to the container are limited to container lifetime.
+	 * Default: false
+	 */
+	isEphemeralContainer: boolean;
 }

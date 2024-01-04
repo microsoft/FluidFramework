@@ -3,14 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { List, walkList } from "./collections";
+import { DoublyLinkedList, walkList } from "./collections";
+// eslint-disable-next-line import/no-deprecated
 import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
+/**
+ * @alpha
+ */
 export class SegmentGroupCollection {
-	private readonly segmentGroups: List<SegmentGroup>;
+	// eslint-disable-next-line import/no-deprecated
+	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
 
 	constructor(private readonly segment: ISegment) {
-		this.segmentGroups = new List<SegmentGroup>();
+		// eslint-disable-next-line import/no-deprecated
+		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
 	public get size() {
@@ -21,26 +27,30 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.empty;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public enqueue(segmentGroup: SegmentGroup) {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public dequeue(): SegmentGroup | undefined {
 		return this.segmentGroups.shift()?.data;
 	}
 
-	public pop?(): SegmentGroup | undefined {
-		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
+	// eslint-disable-next-line import/no-deprecated
+	public remove?(segmentGroup: SegmentGroup): boolean {
+		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
+		if (found === undefined) {
+			return false;
+		}
+		this.segmentGroups.remove(found);
+		return true;
 	}
 
-	/**
-	 * @deprecated - method is unused and will be removed.
-	 */
-	public clear() {
-		while (!this.segmentGroups.empty) {
-			this.segmentGroups.remove(this.segmentGroups.first);
-		}
+	// eslint-disable-next-line import/no-deprecated
+	public pop?(): SegmentGroup | undefined {
+		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
 	public copyTo(segment: ISegment) {
@@ -49,6 +59,7 @@ export class SegmentGroupCollection {
 		);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment) {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {

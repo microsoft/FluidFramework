@@ -11,7 +11,7 @@ export {
 	OrderedClientCollection,
 	OrderedClientElection,
 } from "./orderedClientElection";
-export { RunningSummarizer } from "./runningSummarizer";
+export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer";
 export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,
@@ -24,8 +24,14 @@ export {
 	SummarizerClientElection,
 	summarizerClientType,
 } from "./summarizerClientElection";
-export { SummarizerHandle } from "./summarizerHandle";
 export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics";
+export {
+	createRootSummarizerNode,
+	createRootSummarizerNodeWithGC,
+	IRefreshSummaryResult,
+	IRootSummarizerNode,
+	IRootSummarizerNodeWithGC,
+} from "./summarizerNode";
 export {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
@@ -50,12 +56,15 @@ export {
 	IGenerateSummaryTreeResult,
 	INackSummaryResult,
 	IOnDemandSummarizeOptions,
-	IProvideSummarizer,
 	ISubmitSummaryOpResult,
 	ISummarizeOptions,
 	ISummarizingWarning,
 	IUploadSummaryResult,
 	SummarizeResultPart,
+	SubmitSummaryFailureData,
+	SummaryStage,
+	IRetriableFailureResult,
+	ISummarizeEventProps,
 } from "./summarizerTypes";
 export {
 	IAckedSummary,
@@ -88,8 +97,9 @@ export {
 	rootHasIsolatedChannels,
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
+	idCompressorBlobName,
 } from "./summaryFormat";
-export { SummarizeReason } from "./summaryGenerator";
+export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator";
 export {
 	IConnectedEvents,
 	IConnectedState,

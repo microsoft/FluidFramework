@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: Writing a TokenProvider with an Azure Function"
-menuPosition: 3
+menuPosition: 6
 editor: sdeshpande3
 ---
 

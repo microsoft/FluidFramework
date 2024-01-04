@@ -11,7 +11,10 @@ export class SquaresBoard {
 	selectedSquare: Square | undefined;
 	canvas: HTMLCanvasElement;
 	wrapper: HTMLDivElement;
-	constructor(readonly squares: Square[], readonly elm: HTMLElement) {
+	constructor(
+		readonly squares: Square[],
+		readonly elm: HTMLElement,
+	) {
 		this.canvas = document.createElement("canvas");
 		this.wrapper = document.createElement("div");
 		this.wrapper.style.display = "flex";

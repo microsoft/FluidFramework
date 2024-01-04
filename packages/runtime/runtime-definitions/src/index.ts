@@ -7,6 +7,7 @@ export {
 	AttributionInfo,
 	AttributionKey,
 	DetachedAttributionKey,
+	LocalAttributionKey,
 	OpAttributionKey,
 } from "./attribution";
 export {
@@ -51,10 +52,7 @@ export {
 	channelsTreeName,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
-	IGarbageCollectionNodeData,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
-	IGarbageCollectionSummaryDetailsLegacy,
+	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,

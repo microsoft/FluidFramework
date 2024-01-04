@@ -4,96 +4,105 @@
  */
 
 import {
-    IConsumer,
-    IPartitionLambdaPlugin,
-    IPartitionLambdaFactory,
-    IResources,
-    IResourcesFactory,
-    ZookeeperClientConstructor,
+	IConsumer,
+	IPartitionLambdaPlugin,
+	IPartitionLambdaFactory,
+	IResources,
+	IResourcesFactory,
+	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
 import { RdkafkaConsumer } from "./rdkafkaConsumer";
 
+/**
+ * @internal
+ */
 export interface IRdkafkaResources extends IResources {
-    lambdaFactory: IPartitionLambdaFactory;
+	lambdaFactory: IPartitionLambdaFactory;
 
-    consumer: IConsumer;
+	consumer: IConsumer;
 
-    config: Provider;
+	config: Provider;
 }
 
+/**
+ * @internal
+ */
 export class RdkafkaResources implements IRdkafkaResources {
-    constructor(
-        public lambdaFactory: IPartitionLambdaFactory,
-        public consumer: IConsumer,
-        public config: Provider) {
-    }
+	constructor(
+		public lambdaFactory: IPartitionLambdaFactory,
+		public consumer: IConsumer,
+		public config: Provider,
+	) {}
 
-    public async dispose(): Promise<void> {
-        const consumerClosedP = this.consumer.close();
-        await Promise.all([consumerClosedP]);
-    }
+	public async dispose(): Promise<void> {
+		const consumerClosedP = this.consumer.close();
+		await Promise.all([consumerClosedP]);
+	}
 }
 
+/**
+ * @internal
+ */
 export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResources> {
-    constructor(
-        private readonly name: string,
-        private readonly lambdaModule: string | IPartitionLambdaPlugin,
-        private readonly zookeeperClientConstructor: ZookeeperClientConstructor) {
-    }
+	constructor(
+		private readonly name: string,
+		private readonly lambdaModule: string | IPartitionLambdaPlugin,
+		private readonly zookeeperClientConstructor: ZookeeperClientConstructor,
+	) {}
 
-    public async create(config: Provider): Promise<RdkafkaResources> {
-        const plugin: IPartitionLambdaPlugin = typeof this.lambdaModule === "string"
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            ? require(this.lambdaModule)
-            : this.lambdaModule;
-        const lambdaFactory = await plugin.create(config);
+	public async create(config: Provider): Promise<RdkafkaResources> {
+		const plugin: IPartitionLambdaPlugin =
+			typeof this.lambdaModule === "string"
+				? // eslint-disable-next-line @typescript-eslint/no-require-imports
+				  require(this.lambdaModule)
+				: this.lambdaModule;
 
-        // Inbound Kafka configuration
-        const kafkaEndpoint: string = config.get("kafka:lib:endpoint");
-        const zookeeperEndpoint: string = config.get("zookeeper:endpoint");
-        const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
-        const replicationFactor = config.get("kafka:lib:replicationFactor");
-        const optimizedRebalance = config.get("kafka:lib:rdkafkaOptimizedRebalance");
-        const automaticConsume = config.get("kafka:lib:rdkafkaAutomaticConsume");
-        const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
-        const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
-        const sslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const customizations = await (plugin.customize ? plugin.customize(config) : undefined);
+		const lambdaFactory = await plugin.create(config, customizations);
 
-        // Receive topic and group - for now we will assume an entry in config mapping
-        // to the given name. Later though the lambda config will likely be split from the stream config
-        const streamConfig = config.get(`lambdas:${this.name}`);
-        const groupId = streamConfig.group;
-        const receiveTopic = streamConfig.topic;
+		// Inbound Kafka configuration
+		const kafkaEndpoint: string = config.get("kafka:lib:endpoint");
+		const zookeeperEndpoint: string = config.get("zookeeper:endpoint");
+		const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+		const replicationFactor = config.get("kafka:lib:replicationFactor");
+		const optimizedRebalance = config.get("kafka:lib:rdkafkaOptimizedRebalance");
+		const automaticConsume = config.get("kafka:lib:rdkafkaAutomaticConsume");
+		const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
+		const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
+		const sslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+		const customRestartOnKafkaErrorCodes = config.get("kafka:customRestartOnKafkaErrorCodes");
 
-        const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
+		// Receive topic and group - for now we will assume an entry in config mapping
+		// to the given name. Later though the lambda config will likely be split from the stream config
+		const streamConfig = config.get(`lambdas:${this.name}`);
+		const groupId = streamConfig.group;
+		const receiveTopic = streamConfig.topic;
 
-        const endpoints = {
-            kafka: kafkaEndpoint ? kafkaEndpoint.split(",") : [],
-            zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
-        };
+		const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
 
-        const consumer = new RdkafkaConsumer(
-            endpoints,
-            clientId,
-            receiveTopic,
-            groupId,
-            {
-                numberOfPartitions,
-                replicationFactor,
-                optimizedRebalance,
-                automaticConsume,
-                consumeTimeout,
-                maxConsumerCommitRetries,
-                sslCACertFilePath,
-                zooKeeperClientConstructor: this.zookeeperClientConstructor,
-            },
-        );
+		const endpoints = {
+			kafka: kafkaEndpoint ? kafkaEndpoint.split(",") : [],
+			zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
+		};
 
-        return new RdkafkaResources(
-            lambdaFactory,
-            consumer,
-            config);
-    }
+		const options = {
+			numberOfPartitions,
+			replicationFactor,
+			optimizedRebalance,
+			automaticConsume,
+			consumeTimeout,
+			maxConsumerCommitRetries,
+			sslCACertFilePath,
+			zooKeeperClientConstructor: this.zookeeperClientConstructor,
+			eventHubConnString,
+			restartOnKafkaErrorCodes: customRestartOnKafkaErrorCodes,
+		};
+
+		const consumer = new RdkafkaConsumer(endpoints, clientId, receiveTopic, groupId, options);
+
+		return new RdkafkaResources(lambdaFactory, consumer, config);
+	}
 }

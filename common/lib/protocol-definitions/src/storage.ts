@@ -5,6 +5,9 @@
 
 import { IsoDate } from "./date";
 
+/**
+ * @alpha
+ */
 export interface IDocumentAttributes {
 	/**
 	 * Sequence number at which the snapshot was taken
@@ -15,13 +18,11 @@ export interface IDocumentAttributes {
 	 * Minimum sequence number when the snapshot was taken
 	 */
 	minimumSequenceNumber: number;
-
-	/**
-	 * Term number at which the snapshot was taken
-	 */
-	term: number | undefined;
 }
 
+/**
+ * @alpha
+ */
 export enum FileMode {
 	File = "100644",
 	Executable = "100755",
@@ -30,7 +31,8 @@ export enum FileMode {
 }
 
 /**
- * Raw blob stored within the tree
+ * Raw blob stored within the tree.
+ * @alpha
  */
 export interface IBlob {
 	/**
@@ -41,19 +43,27 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	encoding: "utf-8" | "base64";
 }
 
+/**
+ * @alpha
+ */
 export interface IAttachment {
 	id: string;
 }
 
+/**
+ * @alpha
+ */
 export interface ICreateBlobResponse {
 	id: string;
 }
 
 /**
- * A tree entry wraps a path with a type of node
+ * A tree entry wraps a path with a type of node.
+ * @alpha
  */
 export type ITreeEntry = {
 	/**
@@ -82,7 +92,8 @@ export type ITreeEntry = {
 );
 
 /**
- * Type of entries that can be stored in a tree
+ * Type of entries that can be stored in a tree.
+ * @alpha
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -90,6 +101,9 @@ export enum TreeEntry {
 	Attachment = "Attachment",
 }
 
+/**
+ * @alpha
+ */
 export interface ITree {
 	entries: ITreeEntry[];
 
@@ -105,6 +119,9 @@ export interface ITree {
 	unreferenced?: true;
 }
 
+/**
+ * @alpha
+ */
 export interface ISnapshotTree {
 	id?: string;
 	blobs: { [path: string]: string };
@@ -116,13 +133,17 @@ export interface ISnapshotTree {
 	unreferenced?: true;
 }
 
+/**
+ * @internal
+ */
 export interface ISnapshotTreeEx extends ISnapshotTree {
 	id: string;
 	trees: { [path: string]: ISnapshotTreeEx };
 }
 
 /**
- * Represents a version of the snapshot of a data store
+ * Represents a version of the snapshot of a data store.
+ * @alpha
  */
 export interface IVersion {
 	/**

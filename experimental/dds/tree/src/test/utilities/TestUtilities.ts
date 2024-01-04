@@ -4,11 +4,12 @@
  */
 
 import { resolve } from 'path';
+import { assert } from '@fluidframework/core-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
+import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
-import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
-import { requestFluidObject } from '@fluidframework/runtime-utils';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -23,14 +24,17 @@ import {
 	createAndAttachContainer,
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
-import { LocalServerTestDriver } from '@fluidframework/test-drivers';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
-import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidCodeDetails,
+	IFluidHandle,
+	IRequestHeader,
+} from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { TelemetryNullLogger } from '@fluidframework/telemetry-utils';
-import { IRequest } from '@fluidframework/core-interfaces';
+import { createChildLogger } from '@fluidframework/telemetry-utils';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
 	DetachedSequenceId,
@@ -40,7 +44,7 @@ import {
 	SessionId,
 	StableNodeId,
 } from '../../Identifiers';
-import { assert, fail, identity, ReplaceRecursive } from '../../Common';
+import { fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
@@ -173,7 +177,7 @@ export function setUpTestSharedTree(
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
+	const tree = factory.create(componentRuntime, id ?? 'testSharedTree');
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -199,7 +203,7 @@ export function setUpTestSharedTree(
 	} else {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: componentRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(undefined),
 		};
 		tree.connect(services);
@@ -225,7 +229,7 @@ export interface LocalServerSharedTreeTestingComponents {
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 	/** The container created and set up. */
-	container: Container;
+	container: IContainer;
 	/** Handles to any blobs uploaded via `blobs` */
 	uploadedBlobs: IFluidHandle<ArrayBufferLike>[];
 }
@@ -270,6 +274,11 @@ export interface LocalServerSharedTreeTestingOptions {
 	 * If set, will be passed to the container on load
 	 */
 	pendingLocalState?: string;
+	/**
+	 * If set, will be added to the configProvider object passed to the loader
+	 * and will take effect for the duration of its lifetime
+	 */
+	featureGates?: Record<string, ConfigTypes>;
 }
 
 const testObjectProviders: TestObjectProvider[] = [];
@@ -303,6 +312,10 @@ export async function setUpLocalServerTestSharedTree(
 		pendingLocalState,
 	} = options;
 
+	const featureGates = options.featureGates ?? {};
+	featureGates['Fluid.Container.enableOfflineLoad'] = true;
+	featureGates['Fluid.ContainerRuntime.DisablePartialFlush'] = true;
+
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
 	if (writeFormat === WriteFormat.v0_0_2) {
@@ -316,29 +329,21 @@ export async function setUpLocalServerTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
 	const registry: ChannelFactoryRegistry = [[treeId, factory]];
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 
 	const runtimeFactory = () =>
-		new TestContainerRuntimeFactory(
-			TestDataStoreType,
-			new TestFluidObjectFactory(registry),
-			{
-				enableOfflineLoad: true,
-				summaryOptions: {
-					summaryConfigOverrides: {
-						...DefaultSummaryConfiguration,
-						...{
-							minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
-							maxIdleTime: 1000,
-							maxTime: 1000 * 12,
-							initialSummarizerDelayMs: 0,
-						},
+		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
+						maxIdleTime: 1000,
+						maxTime: 1000 * 12,
+						initialSummarizerDelayMs: 0,
 					},
 				},
 			},
-			[innerRequestHandler]
-		);
+		});
 
 	const defaultCodeDetails: IFluidCodeDetails = {
 		package: 'defaultTestPackage',
@@ -347,23 +352,25 @@ export async function setUpLocalServerTestSharedTree(
 
 	function makeTestLoader(provider: TestObjectProvider): IHostLoader {
 		const fluidEntryPoint = runtimeFactory();
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+
 		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
 			options: { maxClientLeaveWaitTime: 1000 },
+			configProvider: configProvider(featureGates),
 		});
 	}
 
 	let provider: TestObjectProvider;
-	let container: Container;
+	let container: IContainer;
 
 	if (testObjectProvider !== undefined) {
 		provider = testObjectProvider;
 		const driver = new LocalServerTestDriver();
 		const loader = makeTestLoader(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
-		container = (await loader.resolve(
-			{ url: await driver.createContainerUrl(treeId), headers },
-			pendingLocalState
-		)) as Container;
+		container = await loader.resolve({ url: await driver.createContainerUrl(treeId), headers }, pendingLocalState);
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
@@ -371,14 +378,10 @@ export async function setUpLocalServerTestSharedTree(
 		testObjectProviders.push(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.makeTestContainer` instead.
 		const loader = makeTestLoader(provider);
-		container = (await createAndAttachContainer(
-			defaultCodeDetails,
-			loader,
-			driver.createCreateNewRequest(treeId)
-		)) as Container;
+		container = await createAndAttachContainer(defaultCodeDetails, loader, driver.createCreateNewRequest(treeId));
 	}
 
-	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
+	const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 	const uploadedBlobs =
 		blobs === undefined ? [] : await Promise.all(blobs.map(async (blob) => dataObject.context.uploadBlob(blob)));
@@ -501,7 +504,7 @@ export const versionComparator = (versionA: string, versionB: string): number =>
 
 	assert(
 		versionASplit.length === versionBSplit.length && versionASplit.length === 3,
-		'Version numbers should follow semantic versioning.'
+		0x668 /* Version numbers should follow semantic versioning. */
 	);
 
 	for (let i = 0; i < 3; ++i) {
@@ -526,7 +529,7 @@ export const versionComparator = (versionA: string, versionB: string): number =>
 export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveValidation = false): TestTree {
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
 	if (source instanceof SharedTree) {
-		assert(source.edits.length === 0, 'tree must be a new SharedTree');
+		assert(source.edits.length === 0, 0x669 /* tree must be a new SharedTree */);
 		const getNormalizer = () => getIdNormalizerFromSharedTree(source);
 		const contextWrapper = {
 			normalizeToOpSpace: (id: NodeId) => getNormalizer().normalizeToOpSpace(id),
@@ -667,7 +670,7 @@ export function spyOnSubmittedOps<Op extends SharedTreeOp | SharedTreeOp_0_0_2>(
  */
 export async function waitForSummary(mainContainer: IContainer): Promise<string> {
 	const { deltaManager } = mainContainer;
-	const summaryCollection = new SummaryCollection(deltaManager, new TelemetryNullLogger());
+	const summaryCollection = new SummaryCollection(deltaManager, createChildLogger());
 	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
 	return ackedSummary.summaryAck.contents.handle;
 }
@@ -677,12 +680,13 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
  */
 export async function withContainerOffline<TReturn>(
 	provider: ITestObjectProvider,
-	container: IContainer,
+	container: IContainerExperimental,
 	action: () => TReturn
 ): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = container.closeAndGetPendingLocalState();
+	const pendingLocalState = await container.closeAndGetPendingLocalState?.();
+	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }

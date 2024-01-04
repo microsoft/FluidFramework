@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CharCode } from "./charcode";
+import { CharCode } from "./charcode.js";
 
 export function findToken(tokenList: string, token: string) {
 	if (tokenList) {

@@ -9,10 +9,9 @@
  * @packageDocumentation
  */
 
-export { AzureAudience } from "./AzureAudience";
 export { AzureClient } from "./AzureClient";
 export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
-export {
+export type {
 	AzureClientProps,
 	AzureConnectionConfig,
 	AzureConnectionConfigType,
@@ -24,9 +23,11 @@ export {
 	AzureRemoteConnectionConfig,
 	AzureUser,
 	IAzureAudience,
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
 } from "./interfaces";
 
-export { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-export { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
+export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
+export { ScopeType } from "@fluidframework/protocol-definitions";
+
+// Re-export so developers can build loggers without pulling in core-interfaces
+export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

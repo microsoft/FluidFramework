@@ -4,17 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -22,19 +21,17 @@ import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
-
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 const map1Id = "map1Key";
 const map2Id = "map2Key";
-const registry: ChannelFactoryRegistry = [
-	[map1Id, SharedMap.getFactory()],
-	[map2Id, SharedMap.getFactory()],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 // Function to yield a turn in the Javascript event loop.
 async function yieldJSTurn(): Promise<void> {
@@ -61,8 +58,11 @@ function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
 	const batchCount = batchMessages.length;
 	assert(batchCount !== 0, "No messages in the batch");
 
-	const batchBeginMetadata = batchMessages[0].metadata?.batch;
-	const batchEndMetadata = batchMessages[batchCount - 1].metadata?.batch;
+	const batchBeginMetadata = (batchMessages[0].metadata as { batch?: unknown } | undefined)
+		?.batch;
+	const batchEndMetadata = (
+		batchMessages[batchCount - 1].metadata as { batch?: unknown } | undefined
+	)?.batch;
 	if (batchCount === 1) {
 		assert.equal(
 			batchBeginMetadata,
@@ -91,13 +91,28 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
 	);
 }
 
-describeNoCompat("Flushing ops", (getTestObjectProvider) => {
+describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+	const registry: ChannelFactoryRegistry = [
+		[map1Id, SharedMap.getFactory()],
+		[map2Id, SharedMap.getFactory()],
+	];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
 	});
 
-	let container1: Container;
+	let container1: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let dataObject1map1: SharedMap;
@@ -109,16 +124,23 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.
-		container1 = (await provider.makeTestContainer(configCopy)) as Container;
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		container1 = await provider.makeTestContainer(configCopy);
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
+
+		// To precisely control batch boundary, we need to force the container into write mode upfront
+		// So that the first flush doesn't result in reconnect to write mode and cause batches
+		// to be "merged"
+
+		dataObject1map1.set("forceWrite", true);
+		dataObject2map2.set("forceWrite", true);
 
 		await waitForCleanContainers(dataObject1, dataObject2);
 		await provider.ensureSynchronized();
@@ -594,23 +616,6 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		afterEach(async () => {
 			dataObject1BatchMessages = [];
 			dataObject2BatchMessages = [];
-		});
-	});
-
-	describe("Batch validation when using getPendingLocalState()", () => {
-		beforeEach(async () => {
-			await setupContainers({ enableOfflineLoad: true });
-		});
-		it("cannot capture the pending local state during ordersequentially", async () => {
-			dataObject1.context.containerRuntime.orderSequentially(() => {
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-				assert.throws(() => {
-					container1.closeAndGetPendingLocalState();
-				}, "Should throw for incomplete batch");
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-			});
 		});
 	});
 

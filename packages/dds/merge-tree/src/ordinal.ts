@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 
 export function computeHierarchicalOrdinal(
 	maxCount: number,
@@ -28,10 +28,4 @@ export function computeHierarchicalOrdinal(
 	}
 
 	return ordinal;
-}
-
-export function computeNumericOrdinal(index: number) {
-	const prefixLen = Math.floor(index / 0xffff);
-	const prefix = String.fromCharCode(0xffff).repeat(prefixLen);
-	return `${prefix}${String.fromCharCode(index - prefixLen * 0xffff)}`;
 }

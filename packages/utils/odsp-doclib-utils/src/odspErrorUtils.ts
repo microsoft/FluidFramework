@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, TelemetryLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
 	AuthorizationError,
 	createGenericNetworkError,
@@ -17,7 +17,7 @@ import {
 	FluidInvalidSchemaError,
 } from "@fluidframework/driver-utils";
 import {
-	OdspErrorType,
+	OdspErrorTypes,
 	OdspError,
 	IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions";
@@ -27,11 +27,20 @@ import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 // no response, or can't parse response
+/**
+ * @internal
+ */
 export const fetchIncorrectResponse = 712;
 // Error code for when the server state is read only and client tries to write. This code is set by the server
 // and is not likely to change.
+/**
+ * @internal
+ */
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
+/**
+ * @internal
+ */
 export function getSPOAndGraphRequestIdsFromResponse(headers: {
 	get: (id: string) => string | undefined | null;
 }) {
@@ -52,8 +61,8 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 		{ headerName: "content-type", logName: "contentType" },
 	];
 	const additionalProps: ITelemetryProperties = {
-		sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
-		contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
+		sprequestduration: numberFromString(headers.get("sprequestduration")),
+		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {
 		const headerValue = headers.get(header.headerName);
@@ -93,22 +102,34 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 	return additionalProps;
 }
 
-/** Empirically-based model of error response inner error from ODSP */
+/**
+ * Empirically-based model of error response inner error from ODSP
+ *
+ * @internal
+ */
 export interface OdspErrorResponseInnerError {
 	code?: string;
 	innerError?: OdspErrorResponseInnerError;
 }
 
-/** Empirically-based model of error responses from ODSP */
+/**
+ * Empirically-based model of error responses from ODSP
+ *
+ * @internal
+ */
 export interface OdspErrorResponse {
 	error: OdspErrorResponseInnerError & {
 		message: string;
 	};
 }
 
-/** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
+/**
+ * Error encapsulating the error response from ODSP containing the redirect location when a resource has moved
+ *
+ * @internal
+ */
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
-	readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
+	readonly errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 	readonly canRetry = false;
 
 	constructor(
@@ -130,6 +151,9 @@ function isOdspErrorResponse(x: any): x is OdspErrorResponse {
 	);
 }
 
+/**
+ * @internal
+ */
 export function tryParseErrorResponse(
 	response: string | undefined,
 	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
@@ -145,6 +169,9 @@ export function tryParseErrorResponse(
 	return { success: false };
 }
 
+/**
+ * @internal
+ */
 export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
 	const stack: string[] = [];
 	let error: OdspErrorResponseInnerError | undefined = errorResponse.error;
@@ -157,6 +184,9 @@ export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
 	return stack;
 }
 
+/**
+ * @internal
+ */
 export function createOdspNetworkError(
 	errorMessage: string,
 	statusCode: number,
@@ -191,7 +221,7 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
@@ -202,7 +232,16 @@ export function createOdspNetworkError(
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
 				error = new RetryableError(
 					errorMessage,
-					OdspErrorType.serviceReadOnly,
+					OdspErrorTypes.serviceReadOnly,
+					driverProps,
+				);
+			} else if (
+				innerMostErrorCode === "blockedIPAddress" ||
+				innerMostErrorCode === "conditionalAccessPolicyEnforced"
+			) {
+				error = new NonRetryableError(
+					"IP Address is blocked",
+					OdspErrorTypes.blockedIPAddress,
 					driverProps,
 				);
 			} else {
@@ -229,19 +268,19 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
-				DriverErrorType.fileNotFoundOrAccessDeniedError,
+				DriverErrorTypes.fileNotFoundOrAccessDeniedError,
 				driverProps,
 			);
 			break;
 		case 406:
 			error = new NonRetryableError(
 				errorMessage,
-				DriverErrorType.unsupportedClientProtocolVersion,
+				DriverErrorTypes.unsupportedClientProtocolVersion,
 				driverProps,
 			);
 			break;
 		case 410:
-			error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, driverProps);
+			error = new NonRetryableError(errorMessage, OdspErrorTypes.cannotCatchUp, driverProps);
 			break;
 		case 409:
 			// This status code is sent by the server when the client and server epoch mismatches.
@@ -250,7 +289,7 @@ export function createOdspNetworkError(
 			// This indicates that the file/container has been modified externally.
 			error = new NonRetryableError(
 				errorMessage,
-				DriverErrorType.fileOverwrittenInStorage,
+				DriverErrorTypes.fileOverwrittenInStorage,
 				driverProps,
 			);
 			break;
@@ -259,25 +298,28 @@ export function createOdspNetworkError(
 			// Resubmitting same payload is not going to help, so this is non-recoverable failure!
 			error = new NonRetryableError(
 				errorMessage,
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
 		case 413:
-			error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, driverProps);
+			error = new NonRetryableError(errorMessage, OdspErrorTypes.snapshotTooBig, driverProps);
 			break;
 		case 414:
 			error = new NonRetryableError(
 				errorMessage,
-				OdspErrorType.invalidFileNameError,
+				OdspErrorTypes.invalidFileNameError,
 				driverProps,
 			);
 			break;
 		case 423: // File locked
-			if (innerMostErrorCode === "resourceLocked") {
+			if (
+				innerMostErrorCode === "resourceLocked" ||
+				innerMostErrorCode === "resourceCheckedOut"
+			) {
 				error = new NonRetryableError(
 					errorMessage,
-					DriverErrorType.fileIsLocked,
+					DriverErrorTypes.fileIsLocked,
 					driverProps,
 				);
 				break;
@@ -285,17 +327,21 @@ export function createOdspNetworkError(
 		case 500:
 			error = new RetryableError(
 				errorMessage,
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
 		case 501:
-			error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, driverProps);
+			error = new NonRetryableError(
+				errorMessage,
+				OdspErrorTypes.fluidNotEnabled,
+				driverProps,
+			);
 			break;
 		case 507:
 			error = new NonRetryableError(
 				errorMessage,
-				OdspErrorType.outOfStorageError,
+				DriverErrorTypes.outOfStorageError,
 				driverProps,
 			);
 			break;
@@ -303,7 +349,7 @@ export function createOdspNetworkError(
 			// Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
 			error = new NonRetryableError(
 				errorMessage,
-				DriverErrorType.incorrectServerResponse,
+				DriverErrorTypes.incorrectServerResponse,
 				driverProps,
 			);
 			break;
@@ -318,10 +364,15 @@ export function createOdspNetworkError(
 			break;
 	}
 
+	// Set this to true as createOdspNetworkError is called to handle error response from service.
+	error.addTelemetryProperties({ endpointReached: true });
 	enrichOdspError(error, response, facetCodes, undefined);
 	return error;
 }
 
+/**
+ * @internal
+ */
 export function enrichOdspError(
 	error: IFluidErrorBase & OdspError,
 	response?: Response,
@@ -349,6 +400,7 @@ export function enrichOdspError(
 
 /**
  * Throws network error - an object with a bunch of network related properties
+ * @internal
  */
 export function throwOdspNetworkError(
 	errorMessage: string,
@@ -383,6 +435,9 @@ function numberFromHeader(header: string | null): number | undefined {
 	return n;
 }
 
+/**
+ * @internal
+ */
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
 	return Array.isArray(x?.facetCodes);
 }

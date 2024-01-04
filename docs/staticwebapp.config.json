@@ -1,6 +1,0 @@
-{
-  "routes": [],
-  "globalHeaders": {
-    "cache-control": "must-revalidate, max-age=3600"
-  }
-}

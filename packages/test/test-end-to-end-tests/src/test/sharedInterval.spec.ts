@@ -5,17 +5,19 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-	IntervalCollection,
-	IntervalType,
+	IIntervalCollection,
+	IOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
-	ISerializedIntervalCollectionV2,
+	createOverlappingIntervalsIndex,
 } from "@fluidframework/sequence";
+// This is not in sequence's public API, but an e2e test in this file sniffs the summary.
+// eslint-disable-next-line import/no-internal-modules
+import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -23,18 +25,24 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
-const assertIntervalsHelper = (
+const assertSequenceIntervals = (
 	sharedString: SharedString,
-	intervalView: IntervalCollection<SequenceInterval>,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
+	validateOverlapping: boolean = true,
 ) => {
-	let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
-	if (sharedString.getLength() === 0) {
-		actual = Array.from<SequenceInterval>(intervalView);
+	const actual = Array.from(intervalCollection);
+	if (validateOverlapping && sharedString.getLength() > 0) {
+		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals(
+			0,
+			sharedString.getLength() - 1,
+		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
 	}
 	assert.strictEqual(
 		actual.length,
@@ -42,34 +50,22 @@ const assertIntervalsHelper = (
 		`findOverlappingIntervals() must return the expected number of intervals`,
 	);
 
-	for (const actualInterval of actual) {
-		const start = sharedString.localReferencePositionToPosition(actualInterval.start);
-		const end = sharedString.localReferencePositionToPosition(actualInterval.end);
-		let found = false;
-
-		// console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
-
-		for (const expectedInterval of expected) {
-			if (expectedInterval.start === start && expectedInterval.end === end) {
-				found = true;
-				break;
-			}
-		}
-
-		assert(
-			found,
-			`Unexpected interval [${start}..${end}) (expected ${JSON.stringify(expected)})`,
-		);
-	}
+	const actualPos = actual.map((interval) => {
+		assert(interval);
+		const start = sharedString.localReferencePositionToPosition(interval.start);
+		const end = sharedString.localReferencePositionToPosition(interval.end);
+		return { start, end };
+	});
+	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-function testIntervalOperations(intervalCollection: IntervalCollection<SequenceInterval>) {
+function testIntervalOperations(intervalCollection: IIntervalCollection<SequenceInterval>) {
 	const intervalArray: SequenceInterval[] = [];
 	let interval: SequenceInterval | undefined;
 	let id;
 
-	intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
-	intervalArray[1] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
+	intervalArray[0] = intervalCollection.add({ start: 0, end: 0 });
+	intervalArray[1] = intervalCollection.add({ start: 0, end: 0 });
 	assert.notStrictEqual(intervalArray[0], intervalArray[1], "Unique intervals not added");
 
 	id = intervalArray[0].getIntervalId();
@@ -88,15 +84,15 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
 	interval = intervalCollection.getIntervalById(id);
 	assert.strictEqual(interval, undefined, "Interval not removed");
 
-	intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
-	intervalArray[1] = intervalCollection.add(0, 1, IntervalType.SlideOnRemove);
-	intervalArray[2] = intervalCollection.add(0, 2, IntervalType.SlideOnRemove);
-	intervalArray[3] = intervalCollection.add(1, 0, IntervalType.SlideOnRemove);
-	intervalArray[4] = intervalCollection.add(1, 1, IntervalType.SlideOnRemove);
-	intervalArray[5] = intervalCollection.add(1, 2, IntervalType.SlideOnRemove);
-	intervalArray[6] = intervalCollection.add(2, 0, IntervalType.SlideOnRemove);
-	intervalArray[7] = intervalCollection.add(2, 1, IntervalType.SlideOnRemove);
-	intervalArray[8] = intervalCollection.add(2, 2, IntervalType.SlideOnRemove);
+	intervalArray[0] = intervalCollection.add({ start: 0, end: 0 });
+	intervalArray[1] = intervalCollection.add({ start: 0, end: 1 });
+	intervalArray[2] = intervalCollection.add({ start: 0, end: 2 });
+	intervalArray[3] = intervalCollection.add({ start: 1, end: 0 });
+	intervalArray[4] = intervalCollection.add({ start: 1, end: 1 });
+	intervalArray[5] = intervalCollection.add({ start: 1, end: 2 });
+	intervalArray[6] = intervalCollection.add({ start: 2, end: 0 });
+	intervalArray[7] = intervalCollection.add({ start: 2, end: 1 });
+	intervalArray[8] = intervalCollection.add({ start: 2, end: 2 });
 
 	let i: number;
 	let result;
@@ -251,7 +247,8 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
 		intervalCollection.removeIntervalById(id);
 	}
 }
-describeNoCompat("SharedInterval", (getTestObjectProvider) => {
+describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -260,11 +257,12 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		const stringId = "stringKey";
 
 		let sharedString: SharedString;
-		let intervals: IntervalCollection<SequenceInterval>;
+		let intervals: IIntervalCollection<SequenceInterval>;
+		let overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
 		const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
-			assertIntervalsHelper(sharedString, intervals, expected);
+			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
 		beforeEach(async () => {
@@ -277,17 +275,23 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
-			dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 			sharedString.insertText(0, "012");
 
 			intervals = sharedString.getIntervalCollection("intervals");
+			overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+			intervals.attachIndex(overlappingIntervalsIndex);
 			testIntervalOperations(intervals);
+		});
+
+		afterEach(() => {
+			intervals.detachIndex(overlappingIntervalsIndex);
 		});
 
 		it("replace all is included", async () => {
 			sharedString.insertText(3, ".");
-			intervals.add(0, 3, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 3 });
 			assertIntervals([{ start: 0, end: 3 }]);
 
 			sharedString.replaceText(0, 3, `xxx`);
@@ -296,7 +300,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("remove all yields empty range", async () => {
 			const len = sharedString.getLength();
-			intervals.add(0, len - 1, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: len - 1 });
 			assertIntervals([{ start: 0, end: len - 1 }]);
 
 			sharedString.removeRange(0, len);
@@ -305,7 +309,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("replace before is excluded", async () => {
-			intervals.add(1, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 1, end: 2 });
 			assertIntervals([{ start: 1, end: 2 }]);
 
 			sharedString.replaceText(0, 1, `x`);
@@ -313,7 +317,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert at first position is excluded", async () => {
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(0, ".");
@@ -322,7 +326,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace first is included", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.replaceText(0, 1, `x`);
@@ -331,7 +335,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace last is included", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.replaceText(1, 2, `x`);
@@ -339,7 +343,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert at last position is included", async () => {
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(2, ".");
@@ -347,7 +351,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert after last position is excluded", async () => {
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(3, ".");
@@ -355,7 +359,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("replace after", async () => {
-			intervals.add(0, 1, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 1 });
 			assertIntervals([{ start: 0, end: 1 }]);
 
 			sharedString.replaceText(1, 2, `x`);
@@ -364,7 +368,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("repeated replacement", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			for (let j = 0; j < 10; j++) {
@@ -395,32 +399,53 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "0123456789");
 			const intervals1 = sharedString1.getIntervalCollection("intervals");
-			intervals1.add(1, 7, IntervalType.SlideOnRemove);
-			assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+			intervals1.add({ start: 1, end: 7 });
+
+			const overlappingIntervalsIndex1 = createOverlappingIntervalsIndex(sharedString1);
+			intervals1.attachIndex(overlappingIntervalsIndex1);
+
+			assertSequenceIntervals(sharedString1, intervals1, overlappingIntervalsIndex1, [
+				{ start: 1, end: 7 },
+			]);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
 
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
-			assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+
+			const overlappingIntervalsIndex2 = createOverlappingIntervalsIndex(sharedString2);
+			intervals2.attachIndex(overlappingIntervalsIndex2);
+
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 7 },
+			]);
 
 			sharedString2.removeRange(4, 5);
-			assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 6 }]);
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 6 },
+			]);
 
 			sharedString2.insertText(4, "x");
-			assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 7 },
+			]);
 
 			await provider.ensureSynchronized();
-			assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+			assertSequenceIntervals(sharedString1, intervals1, overlappingIntervalsIndex1, [
+				{ start: 1, end: 7 },
+			]);
+
+			intervals1.detachIndex(overlappingIntervalsIndex1);
+			intervals2.detachIndex(overlappingIntervalsIndex2);
 		});
 
 		it("multi-client interval ops", async () => {
@@ -433,7 +458,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "012");
@@ -441,19 +466,19 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			const intervalArray: any[] = [];
 			let interval: SequenceInterval;
 
-			intervalArray[0] = intervals1.add(0, 0, IntervalType.SlideOnRemove);
-			intervalArray[1] = intervals1.add(0, 1, IntervalType.SlideOnRemove);
-			intervalArray[2] = intervals1.add(0, 2, IntervalType.SlideOnRemove);
-			intervalArray[3] = intervals1.add(1, 0, IntervalType.SlideOnRemove);
-			intervalArray[4] = intervals1.add(1, 1, IntervalType.SlideOnRemove);
-			intervalArray[5] = intervals1.add(1, 2, IntervalType.SlideOnRemove);
-			intervalArray[6] = intervals1.add(2, 0, IntervalType.SlideOnRemove);
-			intervalArray[7] = intervals1.add(2, 1, IntervalType.SlideOnRemove);
-			intervalArray[8] = intervals1.add(2, 2, IntervalType.SlideOnRemove);
+			intervalArray[0] = intervals1.add({ start: 0, end: 0 });
+			intervalArray[1] = intervals1.add({ start: 0, end: 1 });
+			intervalArray[2] = intervals1.add({ start: 0, end: 2 });
+			intervalArray[3] = intervals1.add({ start: 1, end: 0 });
+			intervalArray[4] = intervals1.add({ start: 1, end: 1 });
+			intervalArray[5] = intervals1.add({ start: 1, end: 2 });
+			intervalArray[6] = intervals1.add({ start: 2, end: 0 });
+			intervalArray[7] = intervals1.add({ start: 2, end: 1 });
+			intervalArray[8] = intervals1.add({ start: 2, end: 2 });
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
 
@@ -533,7 +558,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			for (interval of intervalArray) {
 				const id = interval.getIntervalId();
-				intervals2.removeIntervalById(id as string);
+				intervals2.removeIntervalById(id);
 			}
 
 			await provider.ensureSynchronized();
@@ -555,7 +580,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "01234");
@@ -565,18 +590,18 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			let id1;
 			let id2;
 
-			await provider.ensureSynchronized();
-
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
 
+			await provider.ensureSynchronized();
+
 			// Conflicting adds
-			interval1 = intervals1.add(0, 0, IntervalType.SlideOnRemove);
+			interval1 = intervals1.add({ start: 0, end: 0 });
 			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add(0, 0, IntervalType.SlideOnRemove);
+			interval2 = intervals2.add({ start: 0, end: 0 });
 			id2 = interval2.getIntervalId();
 
 			await provider.ensureSynchronized();
@@ -622,16 +647,16 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			);
 
 			// Conflicting removes + add
-			interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
+			interval1 = intervals1.add({ start: 1, end: 1 });
 			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add(1, 1, IntervalType.SlideOnRemove);
+			interval2 = intervals2.add({ start: 1, end: 1 });
 			id2 = interval2.getIntervalId();
 
 			await provider.ensureSynchronized();
 
 			intervals2.removeIntervalById(id1);
 			intervals1.removeIntervalById(id2);
-			interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
+			interval1 = intervals1.add({ start: 1, end: 1 });
 			id1 = interval1.getIntervalId();
 
 			await provider.ensureSynchronized();
@@ -656,15 +681,15 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				typeof intervals2.change === "function"
 			) {
 				// Conflicting changes
-				intervals1.change(id1, 1, 2);
-				intervals2.change(id1, 2, 1);
+				intervals1.change(id1, { start: 1, end: 2 });
+				intervals2.change(id1, { start: 2, end: 1 });
 
 				await provider.ensureSynchronized();
 
 				assert.strictEqual(interval1?.getIntervalId(), id1);
 				assert.strictEqual(interval2?.getIntervalId(), id1);
 				for (interval1 of intervals1) {
-					const id: string = interval1?.getIntervalId() as string;
+					const id: string = interval1?.getIntervalId();
 					assert.strictEqual(
 						interval1?.start.getOffset(),
 						intervals2.getIntervalById(id)?.start.getOffset(),
@@ -677,7 +702,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 					);
 				}
 				for (interval2 of intervals2) {
-					const id: string = interval2?.getIntervalId() as string;
+					const id: string = interval2?.getIntervalId();
 					assert.strictEqual(
 						interval2?.start.getOffset(),
 						intervals1.getIntervalById(id)?.start.getOffset(),
@@ -689,54 +714,10 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 						"Conflicting changes",
 					);
 				}
-
-				intervals1.change(id1, 4, 4);
-				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, 2, undefined);
-				await provider.ensureSynchronized();
-
-				interval1 = intervals1.getIntervalById(id1);
-				assert.strictEqual(
-					interval1?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval1?.end.getOffset(), 4, "Conflicting transparent change");
-
-				interval2 = intervals2.getIntervalById(id1);
-				assert.strictEqual(
-					interval2?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval2?.end.getOffset(), 4, "Conflicting transparent change");
-
-				intervals1.change(id1, undefined, 3);
-				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, undefined, 2);
-
-				await provider.ensureSynchronized();
-
-				interval1 = intervals1.getIntervalById(id1);
-				assert.strictEqual(
-					interval1?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval1?.end.getOffset(), 2, "Conflicting transparent change");
-
-				interval2 = intervals2.getIntervalById(id1);
-				assert.strictEqual(
-					interval2?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval2?.end.getOffset(), 2, "Conflicting transparent change");
 			}
-
 			if (
-				typeof intervals1.changeProperties === "function" &&
-				typeof intervals2.changeProperties === "function"
+				typeof intervals1.change === "function" &&
+				typeof intervals2.change === "function"
 			) {
 				const assertPropertyChangedArg = (p: any, v: any, m: string) => {
 					// Check expected values of args passed to the propertyChanged event only if IntervalCollection
@@ -763,14 +744,14 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 						deltaArgs2 = propertyDeltas;
 					},
 				);
-				intervals1.changeProperties(id1, { prop1: "prop1" });
+				intervals1.change(id1, { props: { prop1: "prop1" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					null,
 					"Mismatch in property-changed event arg 1",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop2: "prop2" });
+				intervals2.change(id1, { props: { prop2: "prop2" } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop2,
 					null,
@@ -812,14 +793,14 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 					"Mismatch in changed properties 4",
 				);
 
-				intervals1.changeProperties(id1, { prop1: "no" });
+				intervals1.change(id1, { props: { prop1: "no" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"prop1",
 					"Mismatch in property-changed event arg 5",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop1: "yes" });
+				intervals2.change(id1, { props: { prop1: "yes" } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"prop1",
@@ -859,14 +840,14 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 					"Mismatch in changed properties 8",
 				);
 
-				intervals1.changeProperties(id1, { prop1: "maybe" });
+				intervals1.change(id1, { props: { prop1: "maybe" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"yes",
 					"Mismatch in property-changed event arg 9",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop1: null });
+				intervals2.change(id1, { props: { prop1: null } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"yes",
@@ -945,17 +926,17 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 		});
 
@@ -999,39 +980,47 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			const comment1Text = SharedString.create(dataObject1.runtime);
 			comment1Text.insertText(0, "a comment...");
-			intervalCollection1.add(0, 3, IntervalType.SlideOnRemove, {
-				story: comment1Text.handle,
+			intervalCollection1.add({
+				start: 0,
+				end: 3,
+				props: {
+					story: comment1Text.handle,
+				},
 			});
 			const comment2Text = SharedString.create(dataObject1.runtime);
 			comment2Text.insertText(0, "another comment...");
-			intervalCollection1.add(5, 7, IntervalType.SlideOnRemove, {
-				story: comment2Text.handle,
+			intervalCollection1.add({
+				start: 5,
+				end: 7,
+				props: {
+					story: comment2Text.handle,
+				},
 			});
 			const nestedMap = SharedMap.create(dataObject1.runtime);
 			nestedMap.set("nestedKey", "nestedValue");
-			intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
+			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();
 
-			const serialized1 = intervalCollection1.serializeInternal();
-			const serialized2 = intervalCollection2.serializeInternal();
-			const serialized3 = intervalCollection3.serializeInternal();
+			const serialized1 = Array.from(intervalCollection1);
+			const serialized2 = Array.from(intervalCollection2);
+			const serialized3 = Array.from(intervalCollection3);
 			assert.equal(
-				serialized1.intervals.length,
+				serialized1.length,
 				3,
 				"Incorrect interval collection size in container 1",
 			);
 			assert.equal(
-				serialized2.intervals.length,
+				serialized2.length,
 				3,
 				"Incorrect interval collection size in container 2",
 			);
 			assert.equal(
-				serialized3.intervals.length,
+				serialized3.length,
 				3,
 				"Incorrect interval collection size in container 3",
 			);
 
-			const interval1From3Properties = serialized3.intervals[0][4];
+			const interval1From3Properties = serialized3[0].properties;
 			assert(interval1From3Properties);
 			const comment1From3 = await (
 				interval1From3Properties.story as IFluidHandle<SharedString>
@@ -1041,7 +1030,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				"a comment...",
 				"Incorrect text in interval collection's shared string",
 			);
-			const interval3From3Properties = serialized3.intervals[2][4];
+			const interval3From3Properties = serialized3[2].properties;
 			assert(interval3From3Properties);
 			const mapFrom3 = await (
 				interval3From3Properties.story as IFluidHandle<SharedMap>

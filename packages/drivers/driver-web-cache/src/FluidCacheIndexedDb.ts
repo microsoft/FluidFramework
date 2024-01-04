@@ -5,8 +5,8 @@
 
 import { openDB, DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB } from "idb";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry";
 
 // The name of the database that we use for caching Fluid info.
@@ -46,7 +46,7 @@ export function getFluidCacheIndexedDbInstance(
 					// Catch any error done when attempting to delete the older version.
 					// If the object does not exist db will throw.
 					// We can now assume that the old version is no longer there regardless.
-					ChildLogger.create(logger).sendErrorEvent(
+					createChildLogger({ logger }).sendErrorEvent(
 						{
 							eventName: FluidCacheErrorEvent.FluidCacheDeleteOldDbError,
 						},
@@ -71,8 +71,12 @@ export function getFluidCacheIndexedDbInstance(
 	});
 }
 
-// Deletes the indexed DB instance.
-// Warning this can throw an error in Firefox incognito, where accessing storage is prohibited.
+/**
+ * Deletes the indexed DB instance.
+ *
+ * @remarks Warning this can throw an error in Firefox incognito, where accessing storage is prohibited.
+ * @alpha
+ */
 export function deleteFluidCacheIndexDbInstance(
 	deleteDBCallbacks?: DeleteDBCallbacks,
 ): Promise<void> {
@@ -127,6 +131,8 @@ export interface FluidCacheDBSchema extends DBSchema {
 			/**
 			 * The last time the cache entry was used.
 			 * This is initially set to the time the cache entry was created Measured as ms since unix epoch.
+			 * With the recent change, this won't be updated on read as it will not be used anywhere. Only keeping
+			 * so as to not upgrade the schema version.
 			 */
 			lastAccessTimeMs: number;
 		};

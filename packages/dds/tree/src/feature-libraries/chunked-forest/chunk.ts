@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	CursorLocationType,
-	GlobalFieldKeySymbol,
 	ITreeCursor,
 	ITreeCursorSynchronous,
-	rootFieldKeySymbol,
-} from "../../core";
-import { ReferenceCounted } from "../../util";
+	FieldKey,
+	rootFieldKey,
+} from "../../core/index.js";
+import { ReferenceCounted } from "../../util/index.js";
 
 /**
  * Contiguous part of the tree which get stored together in some data format.
@@ -45,7 +45,7 @@ export interface TreeChunk extends ReferenceCounted {
  *
  * For now this is using the document root key to ease testing/compatibility, but this may change.
  */
-export const dummyRoot: GlobalFieldKeySymbol = rootFieldKeySymbol;
+export const dummyRoot: FieldKey = rootFieldKey;
 
 /**
  * A symbol for extracting a TreeChunk from {@link ITreeCursor}.

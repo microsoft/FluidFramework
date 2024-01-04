@@ -1,5 +1,0 @@
-{
-	"tags": ["model"],
-	"exports": ["index"],
-	"imports": ["model-interface", "mock-external-data-service-interface", "utilities"]
-}

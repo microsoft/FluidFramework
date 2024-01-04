@@ -10,47 +10,60 @@ export {
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-} from "./comparison";
+} from "./comparison.js";
 export {
-	ChangesetLocalId,
+	addCrossFieldQuery,
 	CrossFieldManager,
+	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
-} from "./crossFieldQueries";
-export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
+	setInCrossFieldMap,
+} from "./crossFieldQueries.js";
 export {
-	IdAllocator,
-	isolatedFieldChangeRebaser,
-	FieldChange,
-	FieldChangeEncoder,
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	EncodedRevisionInfo,
+	EncodedModularChangeset,
+} from "./modularChangeFormat.js";
+export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind.js";
+export {
 	FieldChangeHandler,
-	FieldChangeMap,
 	FieldChangeRebaser,
-	FieldChangeset,
 	FieldEditor,
-	ModularChangeset,
+	getIntention,
 	NodeChangeComposer,
-	NodeChangeDecoder,
-	NodeChangeEncoder,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeset,
-	NodeReviver,
+	NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
-	RevisionIndexer,
-	RevisionInfo,
+	RebaseRevisionMetadata,
+	RelevantRemovedRootsFromChild,
 	ToDelta,
-	ValueChange,
-} from "./fieldChangeHandler";
+	NodeExistenceState,
+} from "./fieldChangeHandler.js";
+export {
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeChangeset,
+	NodeExistsConstraint,
+} from "./modularChangeTypes.js";
 export {
 	convertGenericChange,
-	EncodedGenericChange,
-	EncodedGenericChangeset,
-	GenericChange,
 	genericChangeHandler,
-	GenericChangeset,
 	genericFieldKind,
-} from "./genericFieldKind";
-export { ModularChangeFamily, ModularEditBuilder, EditDescription } from "./modularChangeFamily";
-export { typedTreeSchema, typedFieldSchema } from "./typedSchema";
-export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";
+} from "./genericFieldKind.js";
+export { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+export {
+	ModularChangeFamily,
+	ModularEditBuilder,
+	EditDescription,
+	GlobalEditDescription,
+	FieldEditDescription,
+	rebaseRevisionMetadataFromInfo,
+	intoDelta,
+	relevantRemovedRoots,
+} from "./modularChangeFamily.js";
+export { makeV0Codec } from "./modularChangeCodecs.js";

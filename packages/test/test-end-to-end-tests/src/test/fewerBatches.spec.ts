@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -16,12 +16,12 @@ import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 
-describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -62,15 +62,15 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(localContainer, "default");
+		dataObject1 = (await localContainer.getEntryPoint()) as ITestFluidObject;
 		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
+		dataObject2 = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-		await waitForContainerConnection(localContainer, true);
-		await waitForContainerConnection(remoteContainer, true);
+		await waitForContainerConnection(localContainer);
+		await waitForContainerConnection(remoteContainer);
 
 		localContainer.deltaManager.outbound.on("op", (batch: IDocumentMessage[]) => {
 			capturedBatches.push(batch);
@@ -178,8 +178,9 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
 		await setupContainers(testContainerConfig, featureGates);
 
-		// Force the container into write-mode
-		dataObject1map.set("key0", "0");
+		// Force the containers into write-mode
+		dataObject1map.set("Force write", "0");
+		dataObject2map.set("Force write", "0");
 		await provider.ensureSynchronized();
 
 		// Ignore the batch we just sent
@@ -213,7 +214,6 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 			minimumSequenceNumber: 0,
 			referenceSequenceNumber: 2,
 			sequenceNumber: 3,
-			term: 1,
 			timestamp: 1675197275171,
 			type: "op",
 			expHash1: "4d1a6431",

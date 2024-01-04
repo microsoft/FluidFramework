@@ -16,10 +16,6 @@ parameters:
   type: boolean
   default: false
 
-- name: nonScopedPackages
-  type: object
-  default: []
-
 - name: buildNumberInPatch
   type: string
 
@@ -27,8 +23,6 @@ variables:
 - group: prague-key-vault
 - name: skipComponentGovernanceDetection
   value: true
-- name: pnpmStorePath
-  value: $(Pipeline.Workspace)/.pnpm-store
 - name: testBuild
   value: ${{ lower(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}
 - name: shouldPublish
@@ -80,12 +74,6 @@ variables:
     and(
       eq(variables.pushImage, true),
       eq(parameters.releaseImage, true)
-    )}}
-- name: publishNonScopedPackages
-  value: ${{
-    ne(
-      length(parameters.nonScopedPackages),
-      0
     )}}
 
 # Forbids occurrences of `.only` through @fluidframework/mocha-test-setup common config

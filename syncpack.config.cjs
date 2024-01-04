@@ -26,6 +26,17 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// Workaround for compatibility issues.
+		// Ideally this section would be empty (and removed).
+		// Items should be removed from here when possible.
+		{
+			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			dependencies: ["@oclif/core"],
+			dependencyTypes: ["pnpmOverrides"],
+			packages: ["**"],
+			range: "~",
+		},
+
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
@@ -58,11 +69,23 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
+			label: "Overridden server dependencies should always be exact versions",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: [
+				"@fluidframework/gitresources",
+				"@fluidframework/protocol-base",
+				"@fluidframework/server-*",
+			],
+			packages: ["**"],
+			range: "",
+		},
+
+		{
+			label: "Deps in pnpm overrides can use whatever dependency ranges they need",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
-			range: "^",
+			isIgnored: true,
 		},
 
 		{
@@ -81,7 +104,6 @@ module.exports = {
 				"@types/url-parse",
 				"fake-indexeddb",
 				"json-stringify-safe",
-				"tinylicious",
 				"yargs",
 			],
 			packages: ["**"],
@@ -101,6 +123,12 @@ module.exports = {
 				"typescript",
 				"vue",
 				"webpack-dev-server",
+
+				// Required due to use of "unstable" tree component APIs
+				"@fluentui/react-components",
+
+				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
+				"@cerner/duplicate-package-checker-webpack-plugin",
 			],
 			packages: ["**"],
 			range: "~",
@@ -123,6 +151,16 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// Workaround for compatibility issues.
+		// Ideally this section would be empty (and removed).
+		// Items should be removed from here when possible.
+		{
+			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
@@ -156,6 +194,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",
@@ -164,6 +203,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",

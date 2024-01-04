@@ -4,23 +4,24 @@
  */
 
 import { strict as assert } from "assert";
+// TODO:AB#6558: This should be provided based on the compatibility configuration.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeInstallVersions,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const versionWithChunking = "0.56.0";
 
@@ -28,7 +29,7 @@ describeInstallVersions(
 	{
 		requestAbsoluteVersions: [versionWithChunking],
 	},
-	/* timeoutMs */ 50000,
+	/* timeoutMs: 3 minutes */ 180000,
 )("Legacy chunking", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let oldMap: SharedMap;
@@ -38,8 +39,6 @@ describeInstallVersions(
 	});
 	afterEach(async () => provider.reset());
 
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -59,11 +58,10 @@ describeInstallVersions(
 
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
 			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore_Old(
+		const oldRuntimeFactory = new (ContainerRuntimeFactoryWithDefaultDataStore_Old as any)(
 			oldDataObjectFactory,
 			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
 			undefined,
-			[innerRequestHandler],
 			{
 				// Chunking did not work with FlushMode.TurnBased,
 				// as it was breaking batching semantics. So we need
@@ -81,14 +79,12 @@ describeInstallVersions(
 
 	const setupContainers = async () => {
 		const oldContainer = await createOldContainer();
-		const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "default");
+		const oldDataObject =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(oldContainer);
 		oldMap = await oldDataObject.getSharedObject<SharedMap>(mapId);
 
 		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
-		const newDataObject = await requestFluidObject<ITestFluidObject>(
-			containerOnLatest,
-			"default",
-		);
+		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
 		newMap = await newDataObject.getSharedObject<SharedMap>(mapId);
 
 		await provider.ensureSynchronized();
@@ -97,7 +93,8 @@ describeInstallVersions(
 	const generateStringOfSize = (sizeInBytes: number): string =>
 		new Array(sizeInBytes + 1).join("0");
 
-	it("If an old container sends chunked ops, a new container is able to process them successfully", async () => {
+	// To be fixed in AB#6302 (the "old" container above is actually just an old runtime with the current version of loader/container)
+	it.skip("If an old container sends chunked ops, a new container is able to process them successfully", async () => {
 		await setupContainers();
 		const regularMessageSizeInBytes = 15 * 1024;
 		// Ops larger than 16k will end up chunked in older versions of fluid

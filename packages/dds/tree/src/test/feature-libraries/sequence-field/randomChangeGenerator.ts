@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { unreachableCase } from "@fluidframework/common-utils";
-import { singleTextCursor, SequenceField as SF, NodeChangeset } from "../../../feature-libraries";
-import { jsonNumber } from "../../../domains";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
+import { SequenceField as SF, NodeChangeset } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
 
 enum Operation {
 	EditChild = 0,
-	Delete = 1,
+	Remove = 1,
 	Insert = 2,
 }
 
@@ -34,15 +34,9 @@ export function generateRandomChange(
 				childChangeGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
 			);
 		case Operation.Insert:
-			return builder.insert(
-				random.integer(0, maxIndex),
-				singleTextCursor({
-					type: jsonNumber.name,
-					value: random.integer(0, Number.MAX_SAFE_INTEGER),
-				}),
-			);
-		case Operation.Delete:
-			return builder.delete(random.integer(0, maxIndex), random.integer(1, 10));
+			return builder.insert(random.integer(0, maxIndex), 1, brand(0));
+		case Operation.Remove:
+			return builder.remove(random.integer(0, maxIndex), random.integer(1, 10), brand(0));
 		default:
 			unreachableCase(operation);
 	}

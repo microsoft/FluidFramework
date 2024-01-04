@@ -7,6 +7,9 @@ import { strict as assert } from "assert";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
@@ -32,11 +35,30 @@ export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	}
 }
 
+const driversThatSupportBlobs: string[] = ["local", "odsp"];
+export function driverSupportsBlobs(driver: ITestDriver): boolean {
+	return driversThatSupportBlobs.includes(driver.type);
+}
+
 // TODO: #7684
-export const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string => {
-	assert(provider.driver.type === "odsp");
-	assert(itemId);
-	const url = (provider.driver as any).getUrlFromItemId(itemId);
-	assert(url && typeof url === "string");
-	return url;
+export const getUrlFromDetachedBlobStorage = async (
+	container: IContainer,
+	provider: ITestObjectProvider,
+): Promise<string> => {
+	switch (provider.driver.type) {
+		case "odsp": {
+			const itemId = (container.resolvedUrl as IOdspResolvedUrl).itemId;
+			const url = (provider.driver as any).getUrlFromItemId(itemId);
+			assert(url && typeof url === "string");
+			return url;
+		}
+		case "local": {
+			const url = await container.getAbsoluteUrl("");
+			assert(url && typeof url === "string");
+			return url;
+		}
+		default: {
+			throw new Error(`Provider type ${provider.driver.type} not supported`);
+		}
+	}
 };

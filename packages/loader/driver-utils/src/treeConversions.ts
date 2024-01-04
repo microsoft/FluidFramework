@@ -3,28 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree, ITree, ITreeEntry, SummaryType } from "@fluidframework/protocol-definitions";
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob";
+import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew";
 
 /**
  * Converts ISummaryTree to ITree format.
  * @param summaryTree - summary tree in ISummaryTree format
+ * @internal
  */
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
-	const protocolSummary = summaryTree.tree[".protocol"] as ISummaryTree;
-	const appSummary = summaryTree.tree[".app"] as ISummaryTree;
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	const adaptSumaryTree = protocolSummary && appSummary;
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	const allSummaryEntries = adaptSumaryTree
-		? [...Object.entries(protocolSummary.tree), ...Object.entries(appSummary.tree)]
+	const adaptSummaryTree = isCombinedAppAndProtocolSummary(summaryTree);
+	const allSummaryEntries = adaptSummaryTree
+		? [
+				...Object.entries(summaryTree.tree[".protocol"].tree),
+				...Object.entries(summaryTree.tree[".app"].tree),
+		  ]
 		: Object.entries(summaryTree.tree);
 
 	for (const [key, value] of allSummaryEntries) {
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		const k = adaptSumaryTree && ["attributes"].includes(key) ? `.${key}` : key;
+		const k = adaptSummaryTree && key === "attributes" ? ".attributes" : key;
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;

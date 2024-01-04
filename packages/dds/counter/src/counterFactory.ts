@@ -4,13 +4,13 @@
  */
 
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelFactory,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IChannelServices,
+	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedCounter } from "./counter";
-import { ISharedCounter } from "./interfaces";
+import { type ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**

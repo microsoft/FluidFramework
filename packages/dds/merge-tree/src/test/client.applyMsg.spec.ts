@@ -56,14 +56,9 @@ describe("client.applyMsg", () => {
 				case 2:
 				case 3: {
 					const pos2 = Math.max(Math.floor((len - pos1) / 3) - imod6 + pos1, pos1 + 1);
-					const op = client.annotateRangeLocal(
-						pos1,
-						pos2,
-						{
-							foo: `${i}`,
-						},
-						undefined,
-					);
+					const op = client.annotateRangeLocal(pos1, pos2, {
+						foo: `${i}`,
+					});
 					const msg = client.makeOpMessage(op, i + 1);
 					changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
 					break;
@@ -148,7 +143,7 @@ describe("client.applyMsg", () => {
 		const props = {
 			foo: "bar",
 		};
-		const op = client.annotateRangeLocal(0, 1, props, undefined);
+		const op = client.annotateRangeLocal(0, 1, props);
 
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
@@ -167,7 +162,7 @@ describe("client.applyMsg", () => {
 			foo: "bar",
 		};
 
-		const annotateOp = client.annotateRangeLocal(start, end, props, undefined);
+		const annotateOp = client.annotateRangeLocal(start, end, props);
 
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
@@ -181,7 +176,7 @@ describe("client.applyMsg", () => {
 		assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
-		client.applyMsg(client.makeOpMessage(removeOp, 18));
+		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
 		assert.equal(segmentInfo.segment?.removedSeq, 18);
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
@@ -196,7 +191,7 @@ describe("client.applyMsg", () => {
 				end: annotateEnd,
 				foo: "bar",
 			};
-			const annotateOp = client.annotateRangeLocal(0, annotateEnd, props, undefined);
+			const annotateOp = client.annotateRangeLocal(0, annotateEnd, props);
 
 			messages.push(client.makeOpMessage(annotateOp, ++sequenceNumber));
 
@@ -234,7 +229,7 @@ describe("client.applyMsg", () => {
 		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
 		assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
-		client.applyMsg(client.makeOpMessage(removeOp, 18));
+		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
 		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
 		assert(segmentInfo.segment?.segmentGroups.empty);
@@ -380,12 +375,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Local insert after acked local delete", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "ZZ", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-		);
+		const clients = createClientsAtInitialState({ initialState: "ZZ" }, "A", "B", "C");
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -462,12 +452,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Inconsistent shared string after pausing connection #9703", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "abcd", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-		);
+		const clients = createClientsAtInitialState({ initialState: "abcd" }, "A", "B", "C");
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -502,12 +487,7 @@ describe("client.applyMsg", () => {
 		const insertOp = clientA.makeOpMessage(clientA.insertTextLocal(0, "AAA"), ++seq);
 		[clientA, clientB].map((c) => c.applyMsg(insertOp));
 
-		const annotateOp = clientA.annotateRangeLocal(
-			0,
-			clientA.getLength(),
-			{ client: "A" },
-			undefined,
-		)!;
+		const annotateOp = clientA.annotateRangeLocal(0, clientA.getLength(), { client: "A" })!;
 		const seg = clientA.peekPendingSegmentGroups()!;
 
 		const removeOp = clientB.makeOpMessage(
@@ -594,14 +574,8 @@ describe("client.applyMsg", () => {
 	 * Client C does not match client A
 	 * ```
 	 */
-	it.skip("Concurrent insert into removed segment across block boundary", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-			"D",
-		);
+	it("Concurrent insert into removed segment across block boundary", () => {
+		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
 
 		const logger = new TestClientLogger([clients.A, clients.C]);
 		let seq = 0;

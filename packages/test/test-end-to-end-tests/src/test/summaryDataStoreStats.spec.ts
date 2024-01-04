@@ -9,7 +9,6 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
@@ -17,12 +16,10 @@ import {
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 class TestDataObject extends DataObject {
 	public get _root() {
@@ -38,7 +35,7 @@ class TestDataObject extends DataObject {
 	}
 }
 
-describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 
@@ -60,15 +57,11 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 			gcAllowed: true,
 		},
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 		runtimeOptions,
-	);
+	});
 
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject;
@@ -99,7 +92,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 			if (
 				event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate" &&
 				event.referenceSequenceNumber
-					? event.referenceSequenceNumber >= sequenceNumber
+					? (event.referenceSequenceNumber as number) >= sequenceNumber
 					: false
 			) {
 				return event;
@@ -118,16 +111,13 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 		// re-sent. Do it here so that the extra events don't mess with rest of the test.
-		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		mainDataStore._root.set("test", "value");
 
 		await provider.ensureSynchronized();
 
 		// Create and setup a summary collection that will be used to track and wait for summaries.
-		summaryCollection = new SummaryCollection(
-			mainContainer.deltaManager,
-			new TelemetryNullLogger(),
-		);
+		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 	});
 
 	it("should generate correct summary stats with summarizing once", async function () {

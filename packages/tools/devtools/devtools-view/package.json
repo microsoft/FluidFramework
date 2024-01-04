@@ -1,0 +1,146 @@
+{
+	"name": "@fluid-internal/devtools-view",
+	"version": "2.0.0-rc.1.0.0",
+	"private": true,
+	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/tools/devtools/devtools-view"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"main": "dist/index.js",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"build": "fluid-build . --task build",
+		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint src",
+		"eslint:fix": "eslint src --fix",
+		"format": "npm run prettier:fix",
+		"format-and-build": "npm run format && npm run build",
+		"format-and-compile": "npm run format && npm run build:compile",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"rebuild": "npm run clean && npm run build",
+		"test": "concurrently npm:test:jest npm:test:mocha",
+		"test:coverage": "npm run test:jest:coverage",
+		"test:jest": "jest",
+		"test:jest:coverage": "jest --coverage --ci",
+		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:screenshots": "npm run test:mocha",
+		"tsc": "tsc",
+		"tsc:watch": "tsc --watch"
+	},
+	"dependencies": {
+		"@fluentui/react": "^8.109.4",
+		"@fluentui/react-components": "~9.19.1",
+		"@fluentui/react-hooks": "^8.6.24",
+		"@fluentui/react-icons": "^2.0.201",
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/devtools-core": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"react": "^17.0.1",
+		"react-dom": "^17.0.1",
+		"react-split-pane": "^0.1.92",
+		"recharts": "^2.7.2",
+		"scheduler": "^0.20.0"
+	},
+	"devDependencies": {
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.29.0-227332",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@microsoft/api-extractor": "^7.38.3",
+		"@previewjs/api": "^13.0.0",
+		"@previewjs/chromeless": "^7.0.3",
+		"@previewjs/core": "^23.0.0",
+		"@previewjs/plugin-react": "^11.0.0",
+		"@testing-library/dom": "^8.2.0",
+		"@testing-library/jest-dom": "^5.16.5",
+		"@testing-library/react": "^12.0.0",
+		"@testing-library/user-event": "^14.4.3",
+		"@types/chai": "^4.0.0",
+		"@types/jest": "29.5.3",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "^18.19.0",
+		"@types/react": "^17.0.44",
+		"@types/react-dom": "^17.0.18",
+		"@types/recharts": "^1.8.24",
+		"@types/testing-library__jest-dom": "^5.14.5",
+		"chai": "^4.2.0",
+		"chalk": "^2.4.2",
+		"concurrently": "^8.2.1",
+		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
+		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
+		"eslint-plugin-jest": "~27.4.2",
+		"eslint-plugin-react": "~7.33.2",
+		"eslint-plugin-react-hooks": "~4.6.0",
+		"globby": "^13.2.2",
+		"jest": "^29.6.2",
+		"jest-junit": "^10.0.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
+		"playwright": "^1.36.0",
+		"prettier": "~3.0.3",
+		"prop-types": "^15.8.1",
+		"rimraf": "^4.4.0",
+		"simple-git": "^3.19.1",
+		"ts-jest": "^29.1.1",
+		"typescript": "~5.1.6",
+		"vite": "^4.4.3"
+	},
+	"fluid": {
+		"browser": {
+			"umd": {
+				"files": [
+					"dist/main.bundle.js"
+				],
+				"library": "main"
+			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs"
+				],
+				"script": false
+			}
+		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
+	}
+}

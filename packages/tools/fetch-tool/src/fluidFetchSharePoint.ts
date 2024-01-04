@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import child_process from "child_process";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
@@ -20,7 +21,6 @@ import {
 	OdspTokenConfig,
 	IOdspTokenManagerCacheKey,
 } from "@fluidframework/tool-utils";
-import { fluidFetchWebNavigator } from "./fluidFetchInit";
 import { getForceTokenReauth } from "./fluidFetchArgs";
 
 export async function resolveWrapper<T>(
@@ -59,7 +59,7 @@ export async function resolveWrapper<T>(
 		}
 		return result;
 	} catch (e: any) {
-		if (e.errorType === DriverErrorType.authorizationError && !forceTokenReauth) {
+		if (e.errorType === DriverErrorTypes.authorizationError && !forceTokenReauth) {
 			// Re-auth
 			return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
 		}
@@ -67,7 +67,7 @@ export async function resolveWrapper<T>(
 	}
 }
 
-export async function resolveDriveItemByServerRelativePath(
+async function resolveDriveItemByServerRelativePath(
 	server: string,
 	serverRelativePath: string,
 	clientConfig: IClientConfig,
@@ -147,3 +147,13 @@ export async function getSingleSharePointFile(server: string, drive: string, ite
 		clientConfig,
 	);
 }
+
+const fluidFetchWebNavigator = (url: string) => {
+	let message = "Please open browser and navigate to this URL:";
+	if (process.platform === "win32") {
+		child_process.exec(`start "fluid-fetch" /B "${url}"`);
+		message =
+			"Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
+	}
+	console.log(`${message}\n  ${url}`);
+};

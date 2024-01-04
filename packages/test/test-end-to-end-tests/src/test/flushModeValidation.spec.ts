@@ -4,10 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
-import { SharedMap } from "@fluidframework/map";
+
+import type { SharedMap } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -15,15 +14,17 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 	waitForContainerConnection,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 /**
  * This test validates that changing the FlushMode does not hit any validation errors in PendingStateManager.
  * It also validates the scenario in this bug - https://github.com/microsoft/FluidFramework/issues/9398.
  */
-describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
+describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const map1Id = "map1Key";
 	const registry: ChannelFactoryRegistry = [[map1Id, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -46,12 +47,12 @@ describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.
-		const container1 = (await provider.makeTestContainer(configCopy)) as Container;
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const container1 = await provider.makeTestContainer(configCopy);
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		// Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
 		dataObject1map1.set("key", "value");
-		await waitForContainerConnection(container1, true);
+		await waitForContainerConnection(container1);
 		await provider.ensureSynchronized();
 	}
 

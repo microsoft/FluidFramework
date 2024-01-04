@@ -4,14 +4,11 @@
  */
 
 import {
-	IDisposable,
 	IEvent,
 	IEventProvider,
 	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
-import {
+	IDisposable,
 	IFluidHandleContext,
-	IFluidRouter,
 	IFluidHandle,
 	FluidObject,
 } from "@fluidframework/core-interfaces";
@@ -26,12 +23,14 @@ import {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	IInboundSignalMessage,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
-import { IChannel } from ".";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
+import { IChannel } from "./channel";
 
+/**
+ * Events emitted by {@link IFluidDataStoreRuntime}.
+ * @public
+ */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
@@ -41,12 +40,11 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
+ * @public
  */
 export interface IFluidDataStoreRuntime
-	extends IFluidRouter,
-		IEventProvider<IFluidDataStoreRuntimeEvents>,
-		IDisposable,
-		Partial<IProvideFluidDataStoreRegistry> {
+	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
+		IDisposable {
 	readonly id: string;
 
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -69,6 +67,8 @@ export interface IFluidDataStoreRuntime
 	 * Indicates the attachment state of the data store to a host service.
 	 */
 	readonly attachState: AttachState;
+
+	readonly idCompressor?: IIdCompressor;
 
 	/**
 	 * Returns the channel with the given id
@@ -103,14 +103,15 @@ export interface IFluidDataStoreRuntime
 	 * Api to upload a blob of data.
 	 * @param blob - blob to be uploaded.
 	 */
-	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * Returns the current quorum.
@@ -129,12 +130,7 @@ export interface IFluidDataStoreRuntime
 
 	/**
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
-	 * with it. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a
-	 * particular scenario) fall back to the current approach of requesting the root object through the request pattern.
-	 *
-	 * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality, this property
-	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
-	 * the data store's entryPoint.
+	 * with it.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 }

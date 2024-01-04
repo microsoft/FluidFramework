@@ -5,7 +5,7 @@
 
 /**
  * Parses the given value into a boolean
+ * @internal
  */
 export const parseBoolean = (value: any): boolean =>
-    typeof value === "boolean" ? value : value === "true";
-    
+	typeof value === "boolean" ? value : value === "true";

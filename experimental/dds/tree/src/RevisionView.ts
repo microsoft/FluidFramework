@@ -13,7 +13,7 @@ import { HasVariadicTraits } from './ChangeTypes';
 
 /**
  * An immutable view of a distributed tree.
- * @public
+ * @alpha
  */
 export class RevisionView extends TreeView {
 	/**
@@ -86,7 +86,7 @@ export class RevisionView extends TreeView {
 
 /**
  * An view of a distributed tree that is part of an ongoing transaction between `RevisionView`s.
- * @public
+ * @alpha
  */
 export class TransactionView extends TreeView {
 	/** Conclude a transaction by generating an immutable `RevisionView` from this view */
@@ -156,7 +156,7 @@ export class TransactionView extends TreeView {
  */
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
-	TOut extends TreeViewNode = TreeViewNode
+	TOut extends TreeViewNode = TreeViewNode,
 >(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'>): TOut[];
 
 /**
@@ -166,7 +166,7 @@ export function convertTreeNodesToViewNodes<
  */
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
-	TOut extends TreeViewNode = TreeViewNode
+	TOut extends TreeViewNode = TreeViewNode,
 >(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined;
 
 /**
@@ -178,7 +178,7 @@ export function convertTreeNodesToViewNodes<
  */
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
-	TOut extends TreeViewNode = TreeViewNode
+	TOut extends TreeViewNode = TreeViewNode,
 >(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined {
 	const convertedRoot = convert(root) as Mutable<TOut>;
 	if (convertedRoot === undefined || root.traits === undefined) {

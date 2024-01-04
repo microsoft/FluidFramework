@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
+import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
 /**
  * Subset of Map interface.
- * @alpha
  */
 export interface MapGetSet<K, V> {
 	get(key: K): V | undefined;
-	set(key: K, value: V): this;
+	set(key: K, value: V): void;
 }
 
 /**
@@ -26,12 +27,28 @@ export type RecursiveReadonly<T> = {
  */
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
-export function clone<T>(original: T): T {
-	return structuredClone(original);
-}
+/**
+ * Make all field required and omits fields whose ony valid value would be `undefined`.
+ * This is analogous to `Required<T>` except it tolerates 'optional undefined'.
+ */
+export type Populated<T> = {
+	[P in keyof T as Exclude<P, T[P] extends undefined ? P : never>]-?: T[P];
+};
 
 /**
- * @alpha
+ * Casts a readonly object to a mutable one.
+ * Better than casting to `Mutable<Foo>` because it doesn't risk casting a non-`Foo` to a `Mutable<Foo>`.
+ * @param readonly - The object with readonly fields.
+ * @returns The same object but with a type that makes all fields mutable.
+ */
+export function asMutable<T>(readonly: T): Mutable<T> {
+	return readonly as Mutable<T>;
+}
+
+export const clone = structuredClone;
+
+/**
+ * @internal
  */
 export function fail(message: string): never {
 	throw new Error(message);
@@ -39,6 +56,9 @@ export function fail(message: string): never {
 
 /**
  * Checks whether or not the given object is a `readonly` array.
+ *
+ * Note that this does NOT indicate if a given array should be treated as readonly.
+ * This instead indicates if an object is an Array, and is typed to tolerate the readonly case.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
 	// `Array.isArray()` does not properly narrow `readonly` array types by itself,
@@ -58,31 +78,6 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 		array.push(filler(i));
 	}
 	return array;
-}
-
-/**
- * Compare two arrays and return true if their elements are equivalent and in the same order.
- * @param arrayA - The first array to compare
- * @param arrayB - The second array to compare
- * @param elementComparator - The function used to check if two `T`s are equivalent.
- * Defaults to `Object.is()` equality (a shallow compare)
- */
-export function compareArrays<T>(
-	arrayA: readonly T[],
-	arrayB: readonly T[],
-	elementComparator: (a: T, b: T) => boolean = Object.is,
-): boolean {
-	if (arrayA.length !== arrayB.length) {
-		return false;
-	}
-
-	for (let i = 0; i < arrayA.length; i++) {
-		if (!elementComparator(arrayA[i], arrayB[i])) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
@@ -187,7 +182,7 @@ export function* zipIterables<T, U>(
 	const iteratorB = iterableB[Symbol.iterator]();
 	for (
 		let nextA = iteratorA.next(), nextB = iteratorB.next();
-		!nextA.done && !nextB.done;
+		nextA.done !== true && nextB.done !== true;
 		nextA = iteratorA.next(), nextB = iteratorB.next()
 	) {
 		yield [nextA.value, nextB.value];
@@ -199,7 +194,7 @@ export function* zipIterables<T, U>(
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatible =
 	| string
@@ -215,16 +210,16 @@ export type JsonCompatible =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
-export type JsonCompatibleObject = { [P in string]: JsonCompatible };
+export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
 
 /**
  * Use for readonly view of Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @internal
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -233,7 +228,17 @@ export type JsonCompatibleReadOnly =
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| readonly JsonCompatibleReadOnly[]
-	| { readonly [P in string]: JsonCompatibleReadOnly | undefined };
+	| { readonly [P in string]?: JsonCompatibleReadOnly };
+
+/**
+ * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
+ * of alternatives.
+ *
+ * True "arbitrary serializable data" is probably fine, but some persisted types declarations might be better
+ * expressed using composition of schemas for runtime validation, even if we don't think making the types
+ * generic is worth the maintenance cost.
+ */
+export const JsonCompatibleReadOnlySchema = Type.Any();
 
 /**
  * Returns if a particular json compatible value is an object.
@@ -241,6 +246,216 @@ export type JsonCompatibleReadOnly =
  */
 export function isJsonObject(
 	value: JsonCompatibleReadOnly,
-): value is { readonly [P in string]: JsonCompatibleReadOnly | undefined } {
+): value is { readonly [P in string]?: JsonCompatibleReadOnly } {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Verifies that the supplied indices are valid within the supplied array.
+ * @param startIndex - The starting index in the range. Must be in [0, length).
+ * @param endIndex - The ending index in the range. Must be within (start, length].
+ * @param array - The array the indices refer to
+ */
+export function assertValidRangeIndices(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+) {
+	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
+	assertValidIndex(startIndex, array, false);
+	assertValidIndex(endIndex, array, true);
+}
+
+export function assertValidIndex(
+	index: number,
+	array: { readonly length: number },
+	allowOnePastEnd: boolean = false,
+) {
+	assertNonNegativeSafeInteger(index);
+	if (allowOnePastEnd) {
+		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
+	} else {
+		assert(index < array.length, 0x379 /* index must be less than length */);
+	}
+}
+
+export function assertValidRange(
+	{ start, end }: { start: number; end: number },
+	array: { readonly length: number },
+) {
+	assertNonNegativeSafeInteger(start);
+	assertNonNegativeSafeInteger(end);
+	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
+	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
+}
+
+export function assertNonNegativeSafeInteger(index: number) {
+	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
+	assert(index >= 0, 0x377 /* index must be non-negative */);
+}
+
+/**
+ * Assume that `TInput` is a `TAssumeToBe`.
+ *
+ * @remarks
+ * This is useful in generic code when it is impractical (or messy)
+ * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
+ * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
+ * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
+ * it will behave like `TInput` was used directly.
+ *
+ * @internal
+ */
+export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
+
+/**
+ * Convert an object into a Map.
+ *
+ * This function must only be used with objects specifically intended to encode map like information.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
+ * (including but not limited to unintended access to __proto__ and other non-owned keys).
+ * This function helps these few cases get into using an actual map in as safe of was as is practical.
+ */
+export function objectToMap<MapKey extends string | number | symbol, MapValue>(
+	objectMap: Record<MapKey, MapValue>,
+): Map<MapKey, MapValue> {
+	const map = new Map<MapKey, MapValue>();
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		map.set(key as MapKey, element);
+	}
+	return map;
+}
+
+/**
+ * Convert an object used as a map into a new object used like a map.
+ *
+ * @remarks
+ * This function must only be used with objects specifically intended to encode map like information.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
+ * (including but not limited to unintended access to __proto__ and other non-owned keys).
+ * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
+ */
+export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
+	objectMap: Record<MapKey, MapValue>,
+	transformer: (value: MapValue, key: MapKey) => NewMapValue,
+): Record<MapKey, MapValue> {
+	const output: Record<MapKey, MapValue> = Object.create(null);
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		Object.defineProperty(output, key, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: transformer(element, key as MapKey),
+		});
+	}
+	return output;
+}
+
+/**
+ * Make an inverted copy of a map.
+ *
+ * @returns a map which can look up the keys from the values of the original map.
+ */
+export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
+	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
+	assert(result.size === input.size, "all values in a map must be unique to invert it");
+	return result;
+}
+
+/**
+ * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ * @internal
+ */
+export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
+	if (set === undefined) {
+		return undefined;
+	}
+	if (set.size !== 1) {
+		return undefined;
+	}
+	for (const item of set) {
+		return item;
+	}
+}
+
+/**
+ * Type with a name describing what it is.
+ * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
+ * @internal
+ */
+export interface Named<TName> {
+	readonly name: TName;
+}
+
+/**
+ * Order {@link Named} objects by their name.
+ * @internal
+ */
+export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Placeholder for `Symbol.dispose`.
+ *
+ * Replace this with `Symbol.dispose` when it is available.
+ * @public
+ */
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
+
+/**
+ * An object with an explicit lifetime that can be ended.
+ * @privateRemarks
+ * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
+ * @public
+ */
+export interface IDisposable {
+	/**
+	 * Call to end the lifetime of this object.
+	 *
+	 * It is invalid to use this object after this,
+	 * except for operations which explicitly document they are valid after disposal.
+	 *
+	 * @remarks
+	 * May cleanup resources retained by this object.
+	 * Often includes un-registering from events and thus preventing other objects from retaining a reference to this indefinably.
+	 *
+	 * Usually the only operations allowed after disposal are querying if an object is already disposed,
+	 * but this can vary between implementations.
+	 */
+	[disposeSymbol](): void;
+}
+
+/**
+ * Capitalize a string.
+ */
+export function capitalize<S extends string>(s: S): Capitalize<S> {
+	// To avoid splitting characters which are made of multiple UTF-16 code units,
+	// use iteration instead of indexing to separate the first character.
+	const iterated = s[Symbol.iterator]().next();
+	if (iterated.done === true) {
+		// Empty string case.
+		return "" as Capitalize<S>;
+	}
+
+	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
+}
+
+/**
+ * Compares strings lexically to form a strict partial ordering.
+ */
+export function compareStrings<T extends string>(a: T, b: T): number {
+	return a > b ? 1 : a === b ? 0 : -1;
 }

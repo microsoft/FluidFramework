@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
+import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
@@ -26,8 +26,14 @@ export type TestOperation = (
 export const removeRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.removeRangeLocal(opStart, opEnd);
 
+export const obliterateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.obliterateRangeLocal(opStart, opEnd);
+
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
+	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,
@@ -89,11 +95,15 @@ export interface IConfigRange {
 
 export function doOverRange(
 	range: IConfigRange,
-	growthFunc: (input: number) => number,
+	defaultGrowthFunc: (input: number) => number,
 	doAction: (current: number) => void,
 ) {
 	let lastCurrent = Number.NaN;
-	for (let current = range.min; current <= range.max; current = growthFunc(current)) {
+	for (
+		let current = range.min;
+		current <= range.max;
+		current = (range.growthFunc ?? defaultGrowthFunc)(current)
+	) {
 		// let growth funcs be simple
 		// especially around 0 and 1
 		// if the value didn't change,
@@ -101,8 +111,10 @@ export function doOverRange(
 		if (current === lastCurrent) {
 			current++;
 		}
-		lastCurrent = current;
-		doAction(current);
+		if (current <= range.max) {
+			lastCurrent = current;
+			doAction(current);
+		}
 	}
 }
 
@@ -162,7 +174,7 @@ export function doOverRanges<T extends ProvidesGrowthFunc>(
 		if (selections.length === rangeEntries.length) {
 			const selectionsObj = {};
 			for (const [key, value] of selections) {
-				selections[key] = value;
+				selectionsObj[key] = value;
 			}
 			const description = selections.map(([key, value]) => `${key}:${value}`).join("_");
 			doAction(selectionsObj as PickFromRanges<T>, description);

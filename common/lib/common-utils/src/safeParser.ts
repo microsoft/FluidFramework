@@ -10,6 +10,9 @@
  *
  * @param json - The JSON string to parse
  * @returns The result from `JSON.parse` if successful, otherwise `undefined`.
+ *
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function safelyParseJSON(json: string): any | undefined {

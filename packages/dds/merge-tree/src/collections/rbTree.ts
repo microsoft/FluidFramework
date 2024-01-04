@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-
-/* Remove once strictNullCheck is enabled */
-
 /**
  * @internal
  */
@@ -18,7 +14,7 @@ export const RBColor = {
 /**
  * @internal
  */
-export type RBColor = typeof RBColor[keyof typeof RBColor];
+export type RBColor = (typeof RBColor)[keyof typeof RBColor];
 
 /**
  * @internal
@@ -132,8 +128,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		private readonly aug?: IRBAugmentation<TKey, TData>,
 	) {}
 
-	private makeNode(key: TKey, data: TData, color: RBColor, size: number) {
-		return <RBNode<TKey, TData>>{ key, data, color, size };
+	private makeNode(key: TKey, data: TData, color: RBColor, size: number): RBNode<TKey, TData> {
+		return { key, data, color, size } as any as RBNode<TKey, TData>;
 	}
 
 	private isRed(node: RBNode<TKey, TData> | undefined) {
@@ -600,7 +596,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		start?: TKey,
 		end?: TKey,
 	) {
-		this.nodeMap(this.root, action, start, end);
+		this.nodeMap(this.root, action, accum, start, end);
 	}
 
 	public map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
@@ -609,8 +605,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 	}
 
 	public keys() {
-		const keyList = <TKey[]>[];
-		const actions = <RBNodeActions<TKey, TData>>{
+		const keyList: TKey[] = [];
+		const actions: RBNodeActions<TKey, TData> = {
 			showStructure: true,
 			infix: (node) => {
 				keyList.push(node.key);
@@ -641,7 +637,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		let go = true;
 		if (node) {
 			if (actions.pre) {
-				if (actions.showStructure || node.color === RBColor.BLACK) {
+				if (!!actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.pre(node);
 				}
 			}
@@ -649,7 +645,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalk(node.left, actions);
 			}
 			if (go && actions.infix) {
-				if (actions.showStructure || node.color === RBColor.BLACK) {
+				if (!!actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.infix(node);
 				}
 			}
@@ -657,7 +653,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalk(node.right, actions);
 			}
 			if (go && actions.post) {
-				if (actions.showStructure || node.color === RBColor.BLACK) {
+				if (!!actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.post(node);
 				}
 			}
@@ -672,7 +668,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		let go = true;
 		if (node) {
 			if (actions.pre) {
-				if (actions.showStructure || node.color === RBColor.BLACK) {
+				if (!!actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.pre(node);
 				}
 			}
@@ -680,7 +676,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalkBackward(node.right, actions);
 			}
 			if (go && actions.infix) {
-				if (actions.showStructure || node.color === RBColor.BLACK) {
+				if (!!actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.infix(node);
 				}
 			}
@@ -688,7 +684,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalkBackward(node.left, actions);
 			}
 			if (go && actions.post) {
-				if (actions.showStructure || node.color === RBColor.BLACK) {
+				if (!!actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.post(node);
 				}
 			}

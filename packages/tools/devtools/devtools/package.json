@@ -1,0 +1,116 @@
+{
+	"name": "@fluidframework/devtools",
+	"version": "2.0.0-rc.1.0.0",
+	"description": "Fluid Framework developer tools",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/tools/devtools/devtools"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"main": "dist/index.js",
+	"module": "lib/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
+		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint src",
+		"eslint:fix": "eslint src --fix",
+		"format": "npm run prettier:fix",
+		"format-and-build": "npm run format && npm run build",
+		"format-and-compile": "npm run format && npm run build:compile",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"rebuild": "npm run clean && npm run build",
+		"test": "echo TODO: add tests",
+		"tsc": "tsc",
+		"tsc:watch": "tsc --watch",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"dist/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/devtools-core": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~"
+	},
+	"devDependencies": {
+		"@fluid-tools/build-cli": "0.29.0-227332",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.29.0-227332",
+		"@fluidframework/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.8.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@microsoft/api-extractor": "^7.38.3",
+		"@types/chai": "^4.0.0",
+		"@types/mocha": "^9.1.1",
+		"c8": "^8.0.1",
+		"chai": "^4.2.0",
+		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
+		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
+		"eslint-plugin-chai-expect": "~3.0.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			},
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
+	},
+	"typeValidation": {
+		"broken": {}
+	}
+}

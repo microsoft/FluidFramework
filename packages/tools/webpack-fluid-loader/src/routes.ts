@@ -8,7 +8,7 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
 import {
 	getMicrosoftConfiguration,
@@ -31,6 +31,7 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
 /**
  * @returns A portion of a webpack config needed to add support for the
  * webpack-dev-server to use the webpack-fluid-loader.
+ * @internal
  */
 export function devServerConfig(baseDir: string, env: RouteOptions) {
 	return {
@@ -51,12 +52,18 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
 	};
 }
 
+/**
+ * @internal
+ */
 export const before = (app: express.Application) => {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
 	app.get("/", (req, res) => res.redirect("/new"));
 };
 
+/**
+ * @internal
+ */
 export const after = (
 	app: express.Application,
 	server: WebpackDevServer,
@@ -104,6 +111,7 @@ export const after = (
 		options.bearerSecret = options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
 		if (options.mode !== "tinylicious") {
 			options.tenantId = options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "fluid";
+
 			options.enableWholeSummaryUpload =
 				options.enableWholeSummaryUpload ??
 				config.get("fluid:webpack:enableWholeSummaryUpload") ??
@@ -111,12 +119,22 @@ export const after = (
 			if (typeof options.enableWholeSummaryUpload === "string") {
 				options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
 			}
+
+			options.isEphemeralContainer =
+				options.isEphemeralContainer ??
+				config.get("fluid:webpack:isEphemeralContainer") ??
+				false;
+			if (typeof options.isEphemeralContainer === "string") {
+				options.isEphemeralContainer = options.isEphemeralContainer === "true";
+			}
+
 			options.tenantSecret =
 				options.mode === "docker"
 					? options.tenantSecret ??
 					  config.get("fluid:webpack:docker:tenantSecret") ??
 					  "create-new-tenants-if-going-to-production"
 					: options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
+
 			if (options.mode === "r11s") {
 				options.discoveryEndpoint =
 					options.discoveryEndpoint ?? config.get("fluid:webpack:discoveryEndpoint");

@@ -1,0 +1,4 @@
+{
+	"tags": ["background"],
+	"imports": ["globals", "messaging"]
+}

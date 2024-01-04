@@ -8,16 +8,17 @@ import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IDocumentServiceFactory,
-	IFluidResolvedUrl,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
+import {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	ITelemetryLogger,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
@@ -26,12 +27,18 @@ import {
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
+export interface ReplayToolContainerEntryPoint {
+	readonly containerRuntime: ContainerRuntime;
+	readonly ReplayToolContainerEntryPoint: ReplayToolContainerEntryPoint;
+}
+
 const normalizeOpts: ISnapshotNormalizerConfig = {
 	excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type),
 };
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
+ * @internal
  */
 export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
 	const normalizedSnapshot: IFileSnapshot = {
@@ -47,6 +54,9 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 	return normalizedSnapshot;
 }
 
+/**
+ * @internal
+ */
 export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
@@ -61,6 +71,7 @@ export function compareWithReferenceSnapshot(
 	 * package versions with X before we compare them.
 	 *
 	 * @example
+	 *
 	 * This is how it will look:
 	 * Before replace:
 	 *
@@ -98,15 +109,17 @@ export function compareWithReferenceSnapshot(
 	}
 }
 
+/**
+ * @internal
+ */
 export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: TelemetryLogger,
-	requestHandlers?: RuntimeRequestHandler[],
+	logger?: ITelemetryLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
-	const resolved: IFluidResolvedUrl = {
+	const resolved: IResolvedUrl = {
 		endpoints: {
 			deltaStorageUrl: "example.com",
 			ordererUrl: "example.com",
@@ -158,8 +171,18 @@ export async function loadContainer(
 		},
 	};
 	const codeLoader = new ReplayCodeLoader(
-		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),
+		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
 	);
+
+	// Add a config provider to the Loader to enable / disable features.
+	const settings: Record<string, ConfigTypes> = {};
+	const configProvider: IConfigProviderBase = {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	};
+	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
+	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
+	// Due to a bug where references added by an attach op are missed, we need to keep the old code for now.
+	settings["Fluid.GarbageCollection.DetectOutboundRoutesViaDDS"] = true;
 
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
@@ -170,14 +193,19 @@ export async function loadContainer(
 			? { ...loaderOptions, summarizeProtocolTree: true }
 			: { summarizeProtocolTree: true },
 		logger,
+		configProvider,
 	});
 
 	return loader.resolve({ url: resolved.url });
 }
 
+/**
+ * @internal
+ */
 export async function uploadSummary(container: IContainer) {
-	const response = await container.request({ url: "/containerRuntime" });
-	const runtime = response.value as ContainerRuntime;
+	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
+	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
+	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
 		trackState: false,

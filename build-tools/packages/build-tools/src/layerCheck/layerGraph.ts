@@ -2,15 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import assert from "assert";
-import { EOL as newline } from "os";
-import * as path from "path";
-
-import { defaultLogger } from "../common/logging";
+import assert from "node:assert";
+import { EOL as newline } from "node:os";
+import * as path from "node:path";
+import { readJsonSync } from "fs-extra";
 import { Package, Packages } from "../common/npmPackage";
-import { readJsonSync } from "../common/utils";
 
-const { verbose } = defaultLogger;
+import registerDebug from "debug";
+const traceLayerCheck = registerDebug("layer-check");
 
 interface ILayerInfo {
 	deps?: string[];
@@ -115,16 +114,16 @@ class LayerNode extends BaseNode {
 	 */
 	public verifyDependent(dep: PackageNode) {
 		if (this.packages.has(dep)) {
-			verbose(`Found: ${dep.name} in ${this.name}`);
+			traceLayerCheck(`Found: ${dep.name} in ${this.name}`);
 			return true;
 		}
 		if (this.allowedDependentPackageNodes.has(dep)) {
-			verbose(`Found: ${dep.name} in ${this.name}`);
+			traceLayerCheck(`Found: ${dep.name} in ${this.name}`);
 			return true;
 		}
 
 		for (const node of this.allowedDependentLayerNodes) {
-			verbose(`Traversing: ${this.name} -> ${node.name}`);
+			traceLayerCheck(`Traversing: ${this.name} -> ${node.name}`);
 			if (node.verifyDependent(dep)) {
 				return true;
 			}
@@ -139,7 +138,10 @@ type LayerDependencyNode = { node: LayerNode; orderedChildren: LayerNode[] };
 class GroupNode extends BaseNode {
 	public layerNodes: LayerNode[] = [];
 
-	constructor(name: string, private readonly groupInfo: ILayerGroupInfo) {
+	constructor(
+		name: string,
+		private readonly groupInfo: ILayerGroupInfo,
+	) {
 		super(name);
 	}
 
@@ -187,7 +189,10 @@ class PackageNode extends BaseNode {
 	private _indirectDependencies: Set<PackageNode> | undefined;
 	private _level: number | undefined;
 
-	constructor(name: string, public readonly layerNode: LayerNode) {
+	constructor(
+		name: string,
+		public readonly layerNode: LayerNode,
+	) {
 		super(name);
 	}
 
@@ -362,7 +367,7 @@ export class LayerGraph {
 			for (const dir of Object.keys(this.dirMapping)) {
 				if (pkg.directory.startsWith(dir)) {
 					const layerNode = this.dirMapping[dir];
-					verbose(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
+					traceLayerCheck(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
 					const packageNode = this.createPackageNode(pkg.name, layerNode);
 					packageNode.pkg = pkg;
 					matched = true;
@@ -409,7 +414,7 @@ export class LayerGraph {
 				success = false;
 			}
 
-			verbose(
+			traceLayerCheck(
 				`${packageNode.pkg.nameColored}: checking ${depPackageNode.name} from ${packageNode.layerName}`,
 			);
 			if (!packageNode.verifyDependent(depPackageNode)) {

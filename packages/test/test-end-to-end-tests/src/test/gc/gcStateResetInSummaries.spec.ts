@@ -7,21 +7,25 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import {
+	IContainerRuntimeBase,
+	channelsTreeName,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
+	mockConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+} from "@fluid-private/test-version-utils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that when GC is disabled on a document that had run GC previously, the GC state is removed from summary
@@ -30,9 +34,12 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils";
  * This validates scenarios where due to some bug the GC state in summary is incorrect and we need to quickly recover
  * documents. Disabling GC will ensure that we are not deleting / marking things unreferenced incorrectly.
  */
-describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
+describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
+	const settings = {
+		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
+	};
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
 	const createContainer = async (gcAllowed: boolean): Promise<IContainer> => {
@@ -44,6 +51,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 					gcAllowed,
 				},
 			},
+			loaderProps: { configProvider: mockConfigProvider(settings) },
 		};
 		return provider.makeTestContainer(testContainerConfig);
 	};
@@ -175,21 +183,23 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		}
 	});
 
+	async function createNewDataStore(containerRuntime: IContainerRuntimeBase) {
+		const newDataStore = await containerRuntime.createDataStore(TestDataObjectType);
+		return (await newDataStore.entryPoint.get()) as ITestDataObject;
+	}
+
 	it("removes GC state and marks all objects as referenced on disabling GC", async () => {
 		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
 		// throughout the lifetime of the document.
 		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC enabled as well.
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Mark the data store as unreferenced by deleting its handle from the DDS.
@@ -205,14 +215,11 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
 		// Load a new summarizer from the last summary with GC disabled.
 		summarizer1.close();
-		const { summarizer: summarizer2 } = await createSummarizer(
-			provider,
-			mainContainer,
-			summaryVersion,
-			{
-				disableGC: true,
+		const { summarizer: summarizer2 } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: {
+				gcOptions: { disableGC: true },
 			},
-		);
+		});
 
 		// Validate that GC does not run and the summary is regenerated because GC was disabled.
 		await summarizeAndValidateGCState(
@@ -234,22 +241,16 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
 		// throughout the lifetime of the document.
 		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
-		const { summarizer: summarizer1 } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			{ disableGC: true },
-		);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions: { disableGC: true } },
+		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Mark the data store as unreferenced by deleting its handle from the DDS.
@@ -267,6 +268,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryVersion,
 		);
 
@@ -293,10 +295,8 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer3 } = await createSummarizer(
 			provider,
 			mainContainer,
+			{ runtimeOptions: { gcOptions: { disableGC: true } } },
 			summaryVersion,
-			{
-				disableGC: true,
-			},
 		);
 		// Validate that GC does not run and the summary is regenerated.
 		await summarizeAndValidateGCState(
@@ -306,93 +306,19 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		);
 	});
 
-	/**
-	 * This test validates that the GC state is regenerated if needed when state is refreshed from a snapshot. If GC is
-	 * enabled and state is refreshed from a snapshot that had GC disabled, the GC state needs to be reset and a full
-	 * tree summary should happen.
-	 */
-	it("regenerates GC state on refreshing from snapshot that has GC disabled", async () => {
-		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
-		// throughout the lifetime of the document.
-		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
-		await waitForContainerConnection(mainContainer);
-
-		// Create a data store and mark it as unreferenced by storing and the removing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		mainDataStore._root.set("newDataStore", newDataStore.handle);
-		mainDataStore._root.delete("newDataStore");
-
-		// Create a summarizer with GC enabled and summarize.
-		const { summarizer: summarizerGCEnabled } = await createSummarizer(provider, mainContainer);
-
-		// Summarize with GC enabled and validate that GC ran.
-		let summaryVersion = await summarizeAndValidateGCState(
-			summarizerGCEnabled,
-			true /* shouldGCRun */,
-			true /* shouldRegenerateSummary */,
-			[newDataStore._context.id],
-		);
-
-		// Create a summarizer with GC disabled and another one with GC enabled from the above summary where GC was
-		// enabled.
-		const { container: containerGCDisabled, summarizer: summarizerGCDisabled } =
-			await createSummarizer(provider, mainContainer, summaryVersion, { disableGC: true });
-		const { container: containerGCEnabled2, summarizer: summarizerGCEnabled2 } =
-			await createSummarizer(provider, mainContainer, summaryVersion);
-
-		// Close the previous summarizer such that the summarizer with GC disabled is chosen as the current summarizer.
-		summarizerGCEnabled.close();
-		await reconnectSummarizerToBeElected(containerGCDisabled);
-
-		// Send an op so the next summary generated is newer than the previous one.
-		mainDataStore._root.set("key", "value");
-
-		// Summarize via the summarizer that has GC disabled. Since it loaded from a snapshot that had GC enabled, this
-		// should result in summary regeneration.
-		summaryVersion = await summarizeAndValidateGCState(
-			summarizerGCDisabled,
-			false /* shouldGCRun */,
-			true /* shouldRegenerateSummary */,
-		);
-
-		// Close the previous summarizer such that the summarizer with GC enabled is chosen as the current summarizer.
-		summarizerGCDisabled.close();
-		await reconnectSummarizerToBeElected(containerGCEnabled2);
-
-		// Now, this summarizer has GC enabled and was loaded from a snapshot that had GC enabled. So, summary need not
-		// be regenerated from that point. However, it will receive an ack for the summary from the summarizer with GC
-		// disabled and it will refresh state from it. This should result in summary regeneration.
-		await summarizeAndValidateGCState(
-			summarizerGCEnabled2,
-			true /* shouldGCRun */,
-			true /* shouldRegenerateSummary */,
-			[newDataStore._context.id],
-		);
-	});
-
 	it("keeps GC enabled throughout the lifetime of a document", async () => {
 		// Create a document with GC allowed.
 		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
-		const { summarizer } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			{ gcAllowed: false },
-		);
+		const { summarizer } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions: { gcAllowed: false } },
+		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Validate that GC ran even though gcAllowed was set to false. Whether GC runs or not is determined by the
@@ -407,22 +333,16 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 	it("keeps GC disabled throughout the lifetime of a document", async () => {
 		// Create a document with GC not allowed.
 		mainContainer = await createContainer(false /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Get a new summarizer that sets gcAllowed option to true.
-		const { summarizer } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			{ gcAllowed: true },
-		);
+		const { summarizer } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions: { gcAllowed: true } },
+		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Validate that GC did not run even though gcAllowed is set to true. Whether GC runs or not is determined by

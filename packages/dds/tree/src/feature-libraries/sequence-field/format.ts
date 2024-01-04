@@ -3,312 +3,179 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, RevisionTag } from "../../core";
-import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
+import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+import { RevisionTagSchema } from "../../core/index.js";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
+import { unionOptions } from "../../codec/index.js";
 
-export type NodeChangeType = NodeChangeset;
-export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
-
-export type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeChange>> = TMark[];
-
-export type Mark<TNodeChange = NodeChangeType> =
-	| InputSpanningMark<TNodeChange>
-	| OutputSpanningMark<TNodeChange>;
-
-export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
-
-/**
- * A mark that spans one or more cells.
- * The spanned cells may be populated (e.g., "Delete") or not (e.g., "Revive").
- */
-export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
-
-/**
- * A mark that spans one or more nodes in the input context of its changeset.
- */
-export type InputSpanningMark<TNodeChange> =
-	| Skip
-	| Detach<TNodeChange>
-	| Modify<TNodeChange>
-	| SkipLikeReattach<TNodeChange>;
-
-/**
- * A mark that spans one or more nodes in the output context of its changeset.
- */
-export type OutputSpanningMark<TNodeChange> =
-	| Skip
-	| NewAttach<TNodeChange>
-	| Modify<TNodeChange>
-	| Reattach<TNodeChange>;
-
-/**
- * A Reattach whose target nodes are already reattached and have not been detached by some other change.
- * Such a Reattach has no effect when applied and is therefore akin to a Skip mark.
- */
-export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> &
-	Conflicted & {
-		lastDeletedBy?: never;
-	};
-
-/**
- * A Detach with a conflicted destination.
- * Such a Detach has no effect when applied and is therefore akin to a Skip mark.
- */
-export type SkipLikeDetach<TNodeChange> = (MoveOut<TNodeChange> | ReturnFrom<TNodeChange>) & {
-	isDstConflicted: true;
-};
-
-export interface Conflicted {
+export enum DetachIdOverrideType {
 	/**
-	 * The revision of the concurrent change that the mark conflicts with.
-	 */
-	conflictsWith: RevisionTag;
-}
-
-export type CanConflict = Partial<Conflicted>;
-
-export interface Modify<TNodeChange = NodeChangeType> {
-	type: "Modify";
-	changes: TNodeChange;
-}
-
-export interface HasChanges<TNodeChange = NodeChangeType> {
-	changes?: TNodeChange;
-}
-
-export interface HasPlaceFields {
-	/**
-	 * Describes which kinds of concurrent slice operations should affect the target place.
+	 * The detach effect is the inverse of the prior attach characterized by the accompanying `CellId`'s revision and
+	 * local ID.
 	 *
-	 * The tuple allows this choice to be different for concurrent slices that are sequenced
-	 * either before (`heed[0]`) or after (`heed[1]`). For example, multiple concurrent updates
-	 * of a sequence with last-write-wins semantics would use a slice-delete over the whole
-	 * sequence, and an insert with the `heed` value `[Effects.None, Effects.All]`.
+	 * An override is needed in such a case to ensure that rollbacks and undos return tree content to the appropriate
+	 * detached root. It is also needed to ensure that cell comparisons work properly for undos.
+	 */
+	Unattach = 0,
+	/**
+	 * The detach effect is reapplying a prior detach.
 	 *
-	 * When the value for prior and ulterior concurrent slices is the same, that value can be
-	 * used directly instead of the corresponding tuple.
-	 *
-	 * Omit if `Effects.All` for terseness.
+	 * The accompanying cell ID is used in two ways:
+	 * - It indicates the location of the cell (including adjacent cell information) so that rebasing over this detach
+	 * can contribute the correct lineage information to the rebased mark.
+	 * - It specifies the revision and local ID that should be used to characterize the cell in the output context of
+	 * detach.
 	 */
-	heed?: Effects | [Effects, Effects];
-
-	/**
-	 * Record of relevant information about changes this mark has been rebased over.
-	 * Events are stored in the order in which they were rebased over.
-	 */
-	lineage?: LineageEvent[];
+	Redetach = 1,
 }
 
-export interface HasTiebreakPolicy extends HasPlaceFields {
-	/**
-	 * Omit if `Tiebreak.Right` for terseness.
-	 */
-	tiebreak?: Tiebreak;
-}
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-/**
- * Represents a position within a contiguous range of nodes detached by a single changeset.
- * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
- * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
- * same detach.
- */
-export interface LineageEvent {
-	readonly revision: RevisionTag;
+const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
 
-	/**
-	 * The position of this mark within a range of nodes which were detached in this revision.
-	 */
-	readonly offset: number;
-}
+const MoveId = ChangesetLocalIdSchema;
+const HasMoveId = Type.Object({ id: MoveId });
 
-export interface Insert<TNodeChange = NodeChangeType>
-	extends HasTiebreakPolicy,
+const LineageEvent = Type.Tuple([
+	RevisionTagSchema,
+	ChangesetLocalIdSchema,
+	/** count */
+	CellCount,
+	/** offset */
+	Type.Number({ multipleOf: 1, minimum: 0 }),
+]);
+
+const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
+
+const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
+
+const CellId = Type.Composite(
+	[
+		HasLineage,
+		Type.Object({
+			atom: EncodedChangeAtomId,
+			adjacentCells: Type.Optional(Type.Array(IdRange)),
+		}),
+	],
+	noAdditionalProps,
+);
+
+const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
+
+const Insert = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
+
+const HasMoveFields = Type.Composite([
+	HasMoveId,
+	HasRevisionTag,
+	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
+]);
+
+const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
+
+const DetachIdOverride = Type.Object(
+	{
+		type: Type.Enum(DetachIdOverrideType),
+		id: CellId,
+	},
+	noAdditionalProps,
+);
+
+const DetachFields = Type.Object({
+	idOverride: Type.Optional(DetachIdOverride),
+});
+
+const Remove = Type.Composite(
+	[
+		Type.Object({
+			id: ChangesetLocalIdSchema,
+		}),
 		HasRevisionTag,
-		HasChanges<TNodeChange> {
-	type: "Insert";
-	content: ProtoNode[];
-}
+		DetachFields,
+	],
+	noAdditionalProps,
+);
 
-export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, CanConflict {
-	type: "MoveIn";
-	/**
-	 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
-	 */
-	count: NodeCount;
-	/**
-	 * When true, the corresponding MoveOut has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
-}
+const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
 
-/**
- * An attach mark that allocates new cells.
- */
-export type NewAttach<TNodeChange = NodeChangeType> = Insert<TNodeChange> | MoveIn;
+const Attach = Type.Object(
+	{
+		insert: Type.Optional(Insert),
+		moveIn: Type.Optional(MoveIn),
+	},
+	unionOptions,
+);
 
-export type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach<TNodeChange>;
+const Detach = Type.Object(
+	{
+		// TODO:AB6715 rename to `remove`
+		delete: Type.Optional(Remove),
+		moveOut: Type.Optional(MoveOut),
+	},
+	unionOptions,
+);
 
-export type Detach<TNodeChange = NodeChangeType> =
-	| Delete<TNodeChange>
-	| MoveOut<TNodeChange>
-	| ReturnFrom<TNodeChange>;
+const AttachAndDetach = Type.Object({
+	attach: Attach,
+	detach: Detach,
+});
 
-export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
+const MarkEffect = Type.Object(
+	{
+		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
+		insert: Type.Optional(Insert),
+		moveIn: Type.Optional(MoveIn),
+		// TODO:AB6715 rename to `remove`
+		delete: Type.Optional(Remove),
+		moveOut: Type.Optional(MoveOut),
+		attachAndDetach: Type.Optional(AttachAndDetach),
+	},
+	unionOptions,
+);
 
-export interface Delete<TNodeChange = NodeChangeType>
-	extends HasRevisionTag,
-		HasChanges<TNodeChange>,
-		CanConflict {
-	type: "Delete";
-	count: NodeCount;
-}
+const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
+	tMark: TMark,
+	tNodeChange: TNodeChange,
+) =>
+	Type.Object(
+		{
+			// If undefined, indicates a Noop mark.
+			effect: Type.Optional(tMark),
+			cellId: Type.Optional(CellId),
+			changes: Type.Optional(tNodeChange),
+			count: CellCount,
+		},
+		noAdditionalProps,
+	);
 
-export interface MoveOut<TNodeChange = NodeChangeType>
-	extends HasRevisionTag,
-		HasMoveId,
-		HasChanges<TNodeChange>,
-		CanConflict {
-	type: "MoveOut";
-	count: NodeCount;
-	/**
-	 * When true, the corresponding MoveIn has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isDstConflicted?: true;
-}
+const Mark = <Schema extends TSchema>(tNodeChange: Schema) => CellMark(MarkEffect, tNodeChange);
 
-export interface HasReattachFields extends HasPlaceFields {
-	/**
-	 * The tag of the change that detached the data being reattached.
-	 *
-	 * Undefined when the reattach is the product of a tag-less change being inverted.
-	 * It is invalid to try convert such a reattach mark to a delta.
-	 */
-	detachedBy: RevisionTag | undefined;
-
-	/**
-	 * The original field index of the detached node(s).
-	 * "Original" here means before the change that detached them was applied.
-	 */
-	detachIndex: number;
-
-	/**
-	 * When true, the intent for the target nodes is as follows:
-	 * - In a "Revive" mark: the nodes should exist no matter how they were deleted.
-	 * - In a "Return" mark: the nodes, if they exist, should be located here no matter how they were moved.
-	 *
-	 * When undefined, the mark is solely intended to revert a prior change, and will therefore only take effect
-	 * if that change has taken effect.
-	 */
-	isIntention?: true;
-
-	/**
-	 * The changeset that last detached the nodes that this mark intends to revive.
-	 * For this property to be set, the target nodes must have been reattached by another changeset,
-	 * then detached by a changeset other than `Reattach.detachedBy`.
-	 *
-	 * This property should only be set or read when `Reattach.isIntention` is undefined.
-	 * This property should be `undefined` when it would otherwise be equivalent to `Reattach.detachedBy`.
-	 */
-	lastDetachedBy?: RevisionTag;
-}
-
-export interface Revive<TNodeChange = NodeChangeType>
-	extends HasReattachFields,
-		HasRevisionTag,
-		HasChanges<TNodeChange>,
-		CanConflict {
-	type: "Revive";
-	count: NodeCount;
-}
-
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CanConflict {
-	type: "ReturnTo";
-	count: NodeCount;
-	/**
-	 * When true, the corresponding ReturnFrom has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
-}
-
-export interface ReturnFrom<TNodeChange = NodeChangeType>
-	extends HasRevisionTag,
-		HasMoveId,
-		HasChanges<TNodeChange>,
-		CanConflict {
-	type: "ReturnFrom";
-	count: NodeCount;
-	/**
-	 * Needed for detecting the following:
-	 * - The mark is being composed with its inverse
-	 * - The mark should be no longer be conflicted
-	 *
-	 * Always kept consistent with `ReturnTo.detachedBy`.
-	 */
-	detachedBy: RevisionTag | undefined;
-
-	/**
-	 * Only populated when the mark is conflicted.
-	 * Indicates the index of the detach in the input context of the change with revision `conflictsWith`.
-	 */
-	detachIndex?: number;
-
-	/**
-	 * When true, the corresponding ReturnTo has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isDstConflicted?: true;
-}
-
-export interface PriorOp {
-	change: RevisionTag;
-}
-
-export enum RangeType {
-	Set = "Set",
-	Slice = "Slice",
-}
-
-export interface HasRevisionTag {
-	/**
-	 * The revision this mark is part of.
-	 * Only set for marks in fields which are a composition of multiple revisions.
-	 */
-	revision?: RevisionTag;
-}
+export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
+	Type.Array(Mark(tNodeChange));
 
 /**
- * A monotonically increasing positive integer assigned to an individual mark within the changeset.
- * MoveIds are scoped to a single changeset, so referring to MoveIds across changesets requires
- * qualifying them by change tag.
- *
- * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
+ * @privateRemarks - Many of these names are currently used in the sequence-field types. Putting them in a namespace makes codec code more readable.
  */
-export type MoveId = ChangesetLocalId;
+export namespace Encoded {
+	export type CellCount = Static<typeof CellCount>;
 
-export interface HasMoveId {
-	/**
-	 * The sequential ID assigned to a change within a transaction.
-	 */
-	id: MoveId;
-}
+	export type MoveId = Static<typeof MoveId>;
+	export type LineageEvent = Static<typeof LineageEvent>;
+	export type IdRange = Static<typeof IdRange>;
 
-/**
- * The contents of a node to be created
- */
-export type ProtoNode = JsonableTree;
+	export type CellId = Static<typeof CellId>;
 
-export type NodeCount = number;
-export type Skip = number;
-export enum Tiebreak {
-	Left,
-	Right,
-}
-export enum Effects {
-	All = "All",
-	Move = "Move",
-	Delete = "Delete",
-	None = "None",
+	export type Insert = Static<typeof Insert>;
+	export type MoveIn = Static<typeof MoveIn>;
+	export type Remove = Static<typeof Remove>;
+	export type MoveOut = Static<typeof MoveOut>;
+	export type Attach = Static<typeof Attach>;
+	export type Detach = Static<typeof Detach>;
+	export type AttachAndDetach = Static<typeof AttachAndDetach>;
+	export type MarkEffect = Static<typeof MarkEffect>;
+
+	export type CellMark<Schema extends TSchema, TNodeChange extends TSchema> = Static<
+		ReturnType<typeof CellMark<Schema, TNodeChange>>
+	>;
+	export type Mark<Schema extends TSchema> = Static<ReturnType<typeof Mark<Schema>>>;
+	export type Changeset<Schema extends TSchema> = Static<ReturnType<typeof Changeset<Schema>>>;
 }

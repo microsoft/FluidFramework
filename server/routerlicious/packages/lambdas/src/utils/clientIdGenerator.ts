@@ -4,4 +4,7 @@
  */
 import { v4 as uuid } from "uuid";
 
+/**
+ * @internal
+ */
 export const generateClientId = (): string => uuid();

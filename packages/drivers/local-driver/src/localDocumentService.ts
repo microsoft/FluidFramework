@@ -16,13 +16,14 @@ import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-	LocalDeltaStorageService,
-	LocalDocumentDeltaConnection,
-	LocalDocumentStorageService,
-} from ".";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { LocalDocumentStorageService } from "./localDocumentStorageService";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
+import { LocalDeltaStorageService } from "./localDeltaStorageService";
+
 /**
  * Basic implementation of a document service for local use.
+ * @internal
  */
 export class LocalDocumentService implements IDocumentService {
 	/**
@@ -40,6 +41,7 @@ export class LocalDocumentService implements IDocumentService {
 		private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
 		public readonly policies: IDocumentServicePolicies = {},
 		private readonly innerDocumentService?: IDocumentService,
+		private readonly logger?: ITelemetryBaseLogger,
 	) {}
 
 	public dispose() {}
@@ -54,9 +56,10 @@ export class LocalDocumentService implements IDocumentService {
 				new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase),
 			),
 			{
-				minBlobSize: 2048, // Test blob aggregation
 				maximumCacheDurationMs: 432_000_000, // 5 days in ms. Not actually enforced but shouldn't matter for any local driver scenario
 			},
+			this.localDeltaConnectionServer,
+			this.resolvedUrl,
 		);
 	}
 
@@ -95,6 +98,8 @@ export class LocalDocumentService implements IDocumentService {
 			ordererToken.jwt,
 			client,
 			this.localDeltaConnectionServer.webSocketServer,
+			undefined,
+			this.logger,
 		);
 		const clientId = documentDeltaConnection.clientId;
 
@@ -116,6 +121,7 @@ export class LocalDocumentService implements IDocumentService {
  * @param tokenProvider - token provider with a single token
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
+ * @internal
  */
 export function createLocalDocumentService(
 	resolvedUrl: IResolvedUrl,
@@ -126,6 +132,7 @@ export function createLocalDocumentService(
 	documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
 	policies?: IDocumentServicePolicies,
 	innerDocumentService?: IDocumentService,
+	logger?: ITelemetryBaseLogger,
 ): IDocumentService {
 	return new LocalDocumentService(
 		resolvedUrl,
@@ -136,5 +143,6 @@ export function createLocalDocumentService(
 		documentDeltaConnectionsMap,
 		policies,
 		innerDocumentService,
+		logger,
 	);
 }

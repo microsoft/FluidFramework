@@ -13,6 +13,7 @@ import { validateCommandLineArgs } from "./utils";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
+ * @internal
  */
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -65,6 +66,23 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							'Property to add to every telemetry entry. Formatted like "--telemetryProp prop1 value1 --telemetryProp prop2 \\"value 2\\"".',
 						type: "array",
 						demandOption: false,
+					})
+					.option("eventsPerFlush", {
+						describe:
+							"Number of telemetry events per flush to telemetryFile (only applicable for JSON format)",
+						type: "number",
+						demandOption: false,
+					})
+					.option("timeout", {
+						describe: "Allowed timeout in ms before process is automatically cancelled",
+						type: "number",
+						demandOption: false,
+					})
+					.option("disableNetworkFetch", {
+						describe: "Should network fetch calls be explicitly disabled?",
+						type: "boolean",
+						demandOption: false,
+						default: false,
 					}),
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (argv) => {
@@ -76,6 +94,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 				const telemetryOptionsResult = validateAndParseTelemetryOptions(
 					argv.telemetryFormat,
 					argv.telemetryProp,
+					argv.eventsPerFlush,
 				);
 				if (!telemetryOptionsResult.success) {
 					console.error(telemetryOptionsResult.error);
@@ -90,6 +109,8 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							argv.telemetryFile,
 							argv.options,
 							telemetryOptionsResult.telemetryOptions,
+							argv.timeout,
+							argv.disableNetworkFetch,
 					  )
 					: exportFile(
 							fluidFileConverter!,
@@ -98,6 +119,8 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							argv.telemetryFile,
 							argv.options,
 							telemetryOptionsResult.telemetryOptions,
+							argv.timeout,
+							argv.disableNetworkFetch,
 					  ));
 
 				if (!result.success) {

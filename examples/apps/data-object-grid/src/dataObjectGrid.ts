@@ -62,7 +62,7 @@ export interface IDataObjectGridItem {
 	/**
 	 * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
 	 */
-	readonly serializableData: Serializable;
+	readonly serializableData: Serializable<unknown>;
 	/**
 	 * The react grid layout of the item.
 	 */
@@ -73,9 +73,7 @@ export interface IDataObjectGridItem {
  * DataObjectGrid manages multiple subcomponents and their layouts.
  */
 export class DataObjectGrid extends DataObject implements IDataObjectGrid {
-	public static get ComponentName() {
-		return "@fluid-example/data-object-grid";
-	}
+	public static readonly ComponentName = "@fluid-example/data-object-grid";
 
 	private static readonly factory = new DataObjectFactory(
 		DataObjectGrid.ComponentName,

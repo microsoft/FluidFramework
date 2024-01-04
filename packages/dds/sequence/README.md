@@ -1,5 +1,22 @@
 # @fluidframework/sequence
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+## Description
+
 The **@fluidframework/sequence** package supports distributed data structures which are list-like.
 Its main export is [SharedString][], a DDS for storing and simultaneously editing a sequence of text.
 
@@ -328,8 +345,8 @@ The following example illustrates these properties and highlights the major APIs
 
 const comments = sharedString.getIntervalCollection("comments");
 const comment = comments.add(
-	3,
-	7, // (inclusive range): references "world"
+	3, // (inclusive)
+	8, // (exclusive): references "world"
 	IntervalType.SlideOnRemove,
 	{
 		creator: "my-user-id",
@@ -338,7 +355,7 @@ const comment = comments.add(
 );
 //   content: hi world!
 // positions: 012345678
-//   comment:    [   ]
+//   comment:    [    )
 
 // Interval collection supports iterating over all intervals via Symbol.iterator or `.map()`:
 const allIntervalsInCollection = Array.from(comments);
@@ -347,14 +364,14 @@ const allProperties = comments.map((comment) => comment.properties);
 const intervalsOverlappingFirstHalf = comments.findOverlappingIntervals(0, 4);
 
 // Interval endpoints are LocalReferencePositions, so all APIs in the above section can be used:
-const startPosition = sharedString.localReferencePositionToPosition(comment.start);
-const endPosition = sharedString.localReferencePositionToPosition(comment.end);
+const startPosition = sharedString.localReferencePositionToPosition(comment.start); // returns 3
+const endPosition = sharedString.localReferencePositionToPosition(comment.end); // returns 8: note this is exclusive!
 
 // Intervals can be modified:
 comments.change(comment.getIntervalId(), 0, 1);
 //   content: hi world!
 // positions: 012345678
-//   comment: []
+//   comment: [)
 
 // their properties can be changed:
 comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
@@ -363,6 +380,132 @@ comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
 // and they can be removed:
 comments.removeIntervalById(comment.getIntervalId());
 ```
+
+### Interval stickiness
+
+"Stickiness" refers to the behavior of intervals when text is inserted on either
+side of the interval. A "sticky" interval is one which expands to include text
+inserted directly adjacent to it.
+
+A "start sticky" interval is one which expands only to include text inserted to
+the start of it. An "end sticky" interval is the same, but with regard to text
+inserted adjacent to the end.
+
+For example, let's look at the string "abc". If we have an interval on the
+character "b", what happens when we insert text on either side of it? In the
+below diagrams, we represent an interval by putting a caret directly underneath
+the characters it contains.
+
+#### Example
+
+##### Original string
+
+```typescript
+abc
+ ^
+```
+
+##### No stickiness
+
+```typescript
+aXbYc
+  ^
+```
+
+The interval does not expand to include the newly inserted characters `X` and `Y`.
+
+##### Start stickiness
+
+```typescript
+aXbYc
+ ^^
+```
+
+##### End stickiness
+
+```typescript
+aXbYc
+  ^^
+```
+
+##### Full stickiness
+
+```typescript
+aXbYc
+ ^^^
+```
+
+#### Concrete Implementation
+
+The above is a description of the abstract semantics of the concept of stickiness.
+In practice, this is implemented using the concept of "sides."
+
+For a given sequence of N characters, there are 2N + 2 positions which can be
+referenced: the position immediately before and after each character, and two
+special endpoint segments denoting the position before and after the start and
+end of the sequence respectively.
+
+By placing the endpoints of an interval either before or after a character, it
+is possible to make the endpoints inclusive or exclusive. An exclusive endpoint
+in a given direction implies stickiness in that direction. Whether an endpoint
+is inclusive or exclusive depends on both the Side and if it is the start or the
+end.
+
+Given the string "ABCD":
+
+```typescript
+// Refers to "BC". If any content is inserted before B or after C, this
+// interval will include that content
+//
+// Picture:
+// {start} - A[- B - C -]D - {end}
+// {start} - A - B - C - D - {end}
+collection.add(
+	{ pos: 0, side: Side.After },
+	{ pos: 3, side: Side.Before },
+	IntervalType.SlideOnRemove,
+);
+// Equivalent to specifying the same positions and Side.Before.
+// Refers to "ABC". Content inserted after C will be included in the
+// interval, but content inserted before A will not.
+// {start} -[A - B - C -]D - {end}
+// {start} - A - B - C - D - {end}
+collection.add(0, 3, IntervalType.SlideOnRemove);
+```
+
+In the case of the first interval shown, if text is deleted,
+
+```typescript
+// Delete the character "B"
+string.removeRange(1, 2);
+```
+
+The start point of the interval will slide to the position immediately before
+"C", and the same will be true.
+
+```typescript
+{start} - A[- C -]D - {end}
+```
+
+In this case, text inserted immediately before "C" would be included in the
+interval.
+
+```typescript
+string.insertText(1, "EFG");
+```
+
+With the string now being,
+
+```typescript
+{start} - A[- E - F - G - C -]D - {end}
+```
+
+Note that the endpoint continues to remain with the associated character, except
+when the character is removed. When content containing endpoints is removed,
+`After` endpoints move backward and `Before` endpoints move forward to maintain their
+side value and inclusive/exclusive behavior.
+
+<!-- This line ends the content that is copied to the sequences.md README -->
 
 ## SharedString
 
@@ -430,12 +573,14 @@ Next, enable the `"Fluid.Attribution.EnableOnNewFile"` config flag to start trac
 const { segment, offset } = sharedString.getContainingSegment(5);
 const key = segment.attribution.getAtOffset(offset);
 // `key` can be used with an IAttributor to recover user/timestamp info about the insertion of the character at offset 5.
-// See the @fluidframework/attributor package for more details.
+// See the @fluid-experimental/attributor package for more details.
 ```
 
-For further reading on attribution, see the [@fluidframework/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
+For further reading on attribution, see the [@fluid-experimental/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
 
 There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
+
+<!-- This line begins the content that is copied to the string.md README -->
 
 ### Examples
 
@@ -452,6 +597,8 @@ There are plans to make attribution policies more flexible, for example tracking
 -   Plain Text Editor Implementations
     -   [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeTextArea.tsx)
     -   [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeInput.tsx)
+
+<!-- This line ends the content that is copied to the string.md README -->
 
 [sharedmap]: https://fluidframework.com/docs/data-structures/map/
 [sharedstring]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts

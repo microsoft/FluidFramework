@@ -12,29 +12,31 @@ import * as winston from "winston";
 import { runService } from "@fluidframework/server-services-shared";
 
 export function execute(
-    factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
-    configOrPath: nconf.Provider | string) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const packageDetails = require("../../package.json");
+	factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
+	configOrPath: nconf.Provider | string,
+) {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+	const packageDetails = require("../../package.json");
 
-    let action = false;
-    commander
-        .version(packageDetails.version)
-        .arguments("<name> <lambda>")
-        .action((name: string, lambda: string) => {
-            configureLogging(configOrPath);
-            action = true;
+	let action = false;
+	commander
+		.version(packageDetails.version)
+		.arguments("<name> <lambda>")
+		.action((name: string, lambda: string) => {
+			configureLogging(configOrPath);
+			action = true;
 
-            runService(
-                factoryFn(name, lambda),
-                new KafkaRunnerFactory(),
-                winston,
-                name,
-                configOrPath);
-        })
-        .parse(process.argv);
+			runService(
+				factoryFn(name, lambda),
+				new KafkaRunnerFactory(),
+				winston,
+				name,
+				configOrPath,
+			);
+		})
+		.parse(process.argv);
 
-    if (!action) {
-        commander.help();
-    }
+	if (!action) {
+		commander.help();
+	}
 }

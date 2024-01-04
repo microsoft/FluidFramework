@@ -3,17 +3,411 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { Mutable } from "../../util/index.js";
+import {
+	ChangeRebaser,
+	RevisionInfo,
+	RevisionMetadataSource,
+	TaggedChange,
+	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
+} from "./changeRebaser.js";
+import { GraphCommit, mintCommit, RevisionTag } from "./types.js";
 
+/**
+ * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
+ * @remarks
+ * ```text
+ * Consider the commit graph below containing two branches, X and Y, with head commits C and E, respectively.
+ * Branch Y branches off of Branch X at their common ancestor commit A, i.e. "Y is based off of X at commit A".
+ *
+ *   A ─ B ─ C ← Branch X
+ *   └─ D ─ E ← Branch Y
+ *
+ * Branch Y is then rebased onto Branch X. This results in the following commit graph:
+ *
+ *   A ─ B ─ C ← Branch X
+ *           └─ D'─ E'← Branch Y
+ *
+ * Commits D' and E' are the rebased versions of commits D and E, respectively. This results in:
+ * deletedSourceCommits: [D, E],
+ * targetCommits: [B, C],
+ * sourceCommits: [D', E']
+ * ```
+ */
+export interface RebasedCommits<TChange> {
+	/**
+	 * The commits on the original source branch that were rebased. These are no longer referenced by the source branch and have
+	 * been replaced with new versions on the new source branch, see {@link sourceCommits}. In the case that the source
+	 * branch was already ahead of the target branch before the rebase, this list will be empty.
+	 */
+	deletedSourceCommits: GraphCommit<TChange>[];
+	/**
+	 * All commits on the target branch that the source branch's commits were rebased over. These are now the direct
+	 * ancestors of {@link sourceCommits}. In the case that the source branch was already ahead of the target branch
+	 * before the rebase, this list will be empty.
+	 */
+	targetCommits: GraphCommit<TChange>[];
+	/**
+	 * All commits on the source branch that are not also on the target branch after the rebase operation. In the case that the
+	 * source branch was already ahead of the target branch before the rebase, these are the same commits that were already on
+	 * the source branch before the rebase, otherwise these are the new, rebased versions of {@link deletedSourceCommits}.
+	 */
+	sourceCommits: GraphCommit<TChange>[];
+}
+
+export interface BranchRebaseResult<TChange> {
+	/**
+	 * The head of a rebased source branch.
+	 */
+	readonly newSourceHead: GraphCommit<TChange>;
+	/**
+	 * A thunk that computes the cumulative change to the source branch (undefined if no change occurred)
+	 */
+	readonly sourceChange: TChange | undefined;
+	/**
+	 * Details about how the commits on the source branch changed
+	 */
+	readonly commits: RebasedCommits<TChange>;
+}
+
+/**
+ * Rebases a source branch onto another commit in a target branch.
+ *
+ * A "branch" is defined as a "head" commit and all ancestors of that commit, i.e. one linked list in a graph of commits.
+ *
+ * The source and target branch must share an ancestor.
+ * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
+ * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
+ * @param targetHead - the commit to rebase the source branch onto
+ * @returns a {@link BranchRebaseResult}
+ * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
+ * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
+ * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. For example:
+ * ```
+ * // (A)-(B)-(C) <- Branch X
+ * //   \
+ * //   (B')-(D) <- Branch Y
+ * //
+ * // As Branch Y is rebased onto Branch X, commits B and B' cancel out so there is no version of B on the new rebased source branch
+ * //
+ * // (A)-(B)-(C) <- Branch X
+ * //           \
+ * //           (D') <- Branch Y'
+ * //
+ * ```
+ */
+export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
+	changeRebaser: ChangeRebaser<TChange>,
+	sourceHead: GraphCommit<TChange>,
+	targetHead: GraphCommit<TChange>,
+): BranchRebaseResult<TChange>;
+
+/**
+ * Rebases a source branch onto another commit in a target branch.
+ *
+ * A "branch" is defined as a "head" commit and all ancestors of that commit, i.e. one linked list in a graph of commits.
+ *
+ * The source and target branch must share an ancestor.
+ * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
+ * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
+ * @param targetCommit - the commit on the target branch to rebase the source branch onto.
+ * @param targetHead - the head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
+ * @returns a {@link BranchRebaseResult}
+ * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
+ * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
+ * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. Additionally, this function will rebase
+ * the source branch _farther_ than `newBase` if the source branch's next commits after `newBase` match those on the target branch.
+ * For example:
+ * ```
+ * // (A)-(B)-(C)-(D)-(E) <- Branch X
+ * //   \
+ * //   (B')-(D')-(F) <- Branch Y
+ * //
+ * // If Branch Y is rebased onto commit C of Branch X, the branches must at least look like this afterwards (B was cancelled out):
+ * //
+ * // (A)-(B)-(C)-(D)-(E) <- Branch X
+ * //           \
+ * //           (D'')-(F') <- Branch Y'
+ * //
+ * // But this function will recognize that B is equivalent to B' and D is equivalent to D', and instead produce:
+ * //
+ * // (A)-(B)-(C)-(D)-(E) <- Branch X
+ * //               \
+ * //               (F') <- Branch Y'
+ * ```
+ */
+export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
+	changeRebaser: ChangeRebaser<TChange>,
+	sourceHead: GraphCommit<TChange>,
+	targetCommit: GraphCommit<TChange>,
+	targetHead: GraphCommit<TChange>,
+): BranchRebaseResult<TChange>;
+export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
+	changeRebaser: ChangeRebaser<TChange>,
+	sourceHead: GraphCommit<TChange>,
+	targetCommit: GraphCommit<TChange>,
+	targetHead = targetCommit,
+): BranchRebaseResult<TChange> {
+	// Get both source and target as path arrays
+	const sourcePath: GraphCommit<TChange>[] = [];
+	const targetPath: GraphCommit<TChange>[] = [];
+	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
+	assert(ancestor !== undefined, 0x675 /* branches must be related */);
+
+	// Find where `targetCommit` is in the target branch
+	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
+	if (targetCommitIndex === -1) {
+		// If the targetCommit is not in the target path, then it is either disjoint from `target` or it is behind/at
+		// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
+		// TODO: Ideally, this would be an "assertExpensive"
+		assert(
+			findCommonAncestor(targetCommit, targetHead) !== undefined,
+			0x676 /* target commit is not in target branch */,
+		);
+		return {
+			newSourceHead: sourceHead,
+			sourceChange: undefined,
+			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
+		};
+	}
+
+	// Iterate through the target path and look for commits that are also present on the source branch (i.e. they
+	// have matching tags). Each commit found in the target branch can be skipped when processing the source branch
+	// because it has already been rebased onto the target. In the case that one or more of these commits are present
+	// directly after `targetCommit`, then the new base can be advanced further without having to do any work.
+	const sourceSet = new Set(sourcePath.map((r) => r.revision));
+	let newBaseIndex = targetCommitIndex;
+
+	for (let i = 0; i < targetPath.length; i += 1) {
+		const { revision } = targetPath[i];
+		if (sourceSet.has(revision)) {
+			sourceSet.delete(revision);
+			newBaseIndex = Math.max(newBaseIndex, i);
+		} else if (i > targetCommitIndex) {
+			break;
+		}
+	}
+
+	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
+	const newBase = targetPath[newBaseIndex];
+	// Figure out how much of the trunk to start rebasing over.
+	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
+	const deletedSourceCommits = [...sourcePath];
+
+	// If the source and target rebase path begin with a range that has all the same revisions, remove it; it is
+	// equivalent on both branches and doesn't need to be rebased.
+	const targetRebasePath = [...targetCommits];
+	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
+	for (let i = 0; i < minLength; i++) {
+		if (sourcePath[0].revision === targetRebasePath[0].revision) {
+			sourcePath.shift();
+			targetRebasePath.shift();
+		}
+	}
+
+	const sourceCommits: GraphCommit<TChange>[] = [];
+
+	// If all commits that are about to be rebased over on the target branch already comprise the start of the source branch,
+	// are in the same order, and have no other commits interleaving them, then no rebasing needs to occur. Those commits can
+	// simply be removed from the source branch, and the remaining commits on the source branch are reparented off of the new
+	// base commit.
+	if (targetRebasePath.length === 0) {
+		for (const c of sourcePath) {
+			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
+		}
+		return {
+			newSourceHead: sourceCommits[sourceCommits.length - 1] ?? newBase,
+			sourceChange: undefined,
+			commits: {
+				deletedSourceCommits,
+				targetCommits,
+				sourceCommits,
+			},
+		};
+	}
+
+	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
+	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
+	let newHead = newBase;
+	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
+	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
+	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
+	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
+	for (const c of sourcePath) {
+		const editsToCompose: TaggedChange<TChange>[] = [
+			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
+			currentComposedEdit,
+		];
+		if (sourceSet.has(c.revision)) {
+			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
+			newHead = {
+				revision: c.revision,
+				change,
+				parent: newHead,
+			};
+			sourceCommits.push(newHead);
+			editsToCompose.push(tagChange(change, c.revision));
+		}
+		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
+	}
+
+	return {
+		newSourceHead: newHead,
+		sourceChange: currentComposedEdit.change,
+		commits: {
+			deletedSourceCommits,
+			targetCommits,
+			sourceCommits,
+		},
+	};
+}
+
+/**
+ * "Sandwich/Horseshoe Rebase" a change over the given source and target branches
+ * @param changeRebaser - the change rebaser responsible for rebasing the change over the commits in each branch
+ * @param change - the change to rebase
+ * @param sourceHead - the head of the branch that `change` is based on
+ * @param targetHead - the branch to rebase `change` onto
+ * @returns the rebased change
+ *
+ * @remarks inverses will be cached.
+ */
+export function rebaseChange<TChange>(
+	changeRebaser: ChangeRebaser<TChange>,
+	change: TChange,
+	sourceHead: GraphCommit<TChange>,
+	targetHead: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
+): TChange {
+	const sourcePath: GraphCommit<TChange>[] = [];
+	const targetPath: GraphCommit<TChange>[] = [];
+	assert(
+		findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]) !== undefined,
+		0x576 /* branch A and branch B must be related */,
+	);
+
+	const inverses = sourcePath.map((commit) =>
+		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
+	);
+	inverses.reverse();
+	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
+}
+
+/**
+ * @internal
+ */
+export function revisionMetadataSourceFromInfo(
+	revInfos: readonly RevisionInfo[],
+): RevisionMetadataSource {
+	const getIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		return index >= 0 ? index : undefined;
+	};
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
+	};
+
+	const hasRollback = (revision: RevisionTag): boolean => {
+		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
+	};
+
+	return { getIndex, tryGetInfo, hasRollback };
+}
+
+export function rebaseChangeOverChanges<TChange>(
+	changeRebaser: ChangeRebaser<TChange>,
+	changeToRebase: TChange,
+	changesToRebaseOver: TaggedChange<TChange>[],
+) {
+	const revisionMetadata = revisionMetadataSourceFromInfo(
+		getRevInfoFromTaggedChanges(changesToRebaseOver),
+	);
+
+	return changesToRebaseOver.reduce(
+		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
+		changeToRebase,
+	);
+}
+
+// TODO: Deduplicate
+function getRevInfoFromTaggedChanges(changes: TaggedChange<unknown>[]): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	for (const taggedChange of changes) {
+		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	return revInfos;
+}
+
+// TODO: Deduplicate
+function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	if (taggedChange.revision !== undefined) {
+		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
+		if (taggedChange.rollbackOf !== undefined) {
+			info.rollbackOf = taggedChange.rollbackOf;
+		}
+		revInfos.push(info);
+	}
+	return revInfos;
+}
+
+function inverseFromCommit<TChange>(
+	changeRebaser: ChangeRebaser<TChange>,
+	commit: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
+	cache?: boolean,
+): TaggedChange<TChange> {
+	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);
+	if (cache === true && commit.inverse === undefined) {
+		commit.inverse = inverse;
+	}
+
+	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
+}
+
+/**
+ * Find the furthest ancestor of some descendant.
+ * @param descendant - a descendant. If an empty `path` array is included, it will be populated
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the furthest ancestor,
+ * but otherwise including `descendant`).
+ * @returns the furthest ancestor of `descendant`, or `descendant` itself if `descendant` has no ancestors.
+ */
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T, path?: T[]],
+): T;
+/**
+ * Find the furthest ancestor of some descendant.
+ * @param descendant - a descendant. If an empty `path` array is included, it will be populated
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the furthest ancestor,
+ * but otherwise including `descendant`).
+ * @returns the furthest ancestor of `descendant`, or `descendant` itself if `descendant` has no ancestors. Returns
+ * `undefined` if `descendant` is undefined.
+ */
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
+): T | undefined;
 /**
  * Find an ancestor of some descendant.
  * @param descendant - a descendant. If an empty `path` array is included, it will be populated
- * with the chain of ancestry for `descendant` from most distant to closest (including `descendant`,
- * but not including the ancestor found by `predicate`).
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the ancestor found by `predicate`,
+ * but otherwise including `descendant`).
  * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   id: string;
  *   parent?: Parented;
@@ -28,8 +422,12 @@ import { assert } from "@fluidframework/common-utils";
  * ```
  */
 export function findAncestor<T extends { parent?: T }>(
-	descendant: T | [descendant: T, path?: T[]] | undefined,
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
 	predicate: (t: T) => boolean,
+): T | undefined;
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
+	predicate: (t: T) => boolean = (t) => t.parent === undefined,
 ): T | undefined {
 	let d: T | undefined;
 	let path: T[] | undefined;
@@ -40,9 +438,10 @@ export function findAncestor<T extends { parent?: T }>(
 	}
 	for (let cur = d; cur !== undefined; cur = cur.parent) {
 		if (predicate(cur)) {
+			path?.reverse();
 			return cur;
 		}
-		path?.unshift(cur);
+		path?.push(cur);
 	}
 
 	if (path !== undefined) {
@@ -58,8 +457,10 @@ export function findAncestor<T extends { parent?: T }>(
  * @param descendantB - another descendant. If an empty `path` array is included, it will be populated
  * with the chain of commits from the ancestor to `descendantB` (not including the ancestor).
  * @returns the common ancestor of `descendantA` and `descendantB`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   parent?: Parented;
  * }
@@ -98,31 +499,36 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		return a;
 	}
 
+	const reversePaths = () => {
+		pathA?.reverse();
+		pathB?.reverse();
+	};
+
 	const visited = new Set();
 	while (a !== undefined || b !== undefined) {
 		if (a !== undefined) {
 			if (visited.has(a)) {
 				if (pathB !== undefined) {
-					const indexInPathB = pathB.findIndex((r) => Object.is(r, a));
-					pathB.splice(0, indexInPathB + 1);
+					pathB.length = pathB.findIndex((r) => Object.is(r, a));
 				}
+				reversePaths();
 				return a;
 			}
 			visited.add(a);
-			pathA?.unshift(a);
+			pathA?.push(a);
 			a = a.parent;
 		}
 
 		if (b !== undefined) {
 			if (visited.has(b)) {
 				if (pathA !== undefined) {
-					const indexInPathA = pathA.findIndex((r) => Object.is(r, b));
-					pathA.splice(0, indexInPathA + 1);
+					pathA.length = pathA.findIndex((r) => Object.is(r, b));
 				}
+				reversePaths();
 				return b;
 			}
 			visited.add(b);
-			pathB?.unshift(b);
+			pathB?.push(b);
 			b = b.parent;
 		}
 	}

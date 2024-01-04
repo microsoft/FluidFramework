@@ -3,26 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ISocketIoRedisConnection, ISocketIoRedisSubscriptionConnection } from "./redisSocketIoAdapter";
+import {
+	ISocketIoRedisConnection,
+	ISocketIoRedisSubscriptionConnection,
+} from "./redisSocketIoAdapter";
 
 /**
  * Simple implementation of ISocketIoRedisConnection, which wraps a redis client
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-    constructor(protected readonly client: Redis) {
-        client.on("error", (err) => {
-            winston.error("Error with Redis:", err);
-            Lumberjack.error("Error with Redis:", undefined, err);
-        });
-    }
+	constructor(protected readonly client: Redis.default) {
+		client.on("error", (err) => {
+			winston.error("Error with Redis:", err);
+			Lumberjack.error("Error with Redis:", undefined, err);
+		});
+	}
 
-    public async publish(channel: string, message: string) {
-        await this.client.publish(channel, message);
-    }
+	public async publish(channel: string, message: string) {
+		await this.client.publish(channel, message);
+	}
 }
 
 /**
@@ -30,66 +33,69 @@ export class SocketIORedisConnection implements ISocketIoRedisConnection {
  * and provides both pub and sub functionality
  */
 export class SocketIoRedisSubscriptionConnection
-        extends SocketIORedisConnection
-        implements ISocketIoRedisSubscriptionConnection {
-    /**
-     * Map of pubsub callbacks
-     */
-    private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> = new Map();
+	extends SocketIORedisConnection
+	implements ISocketIoRedisSubscriptionConnection
+{
+	/**
+	 * Map of pubsub callbacks
+	 */
+	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> =
+		new Map();
 
-    constructor(client: Redis) {
-        super(client);
+	constructor(client: Redis.default) {
+		super(client);
 
-        client.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
-            const channel = channelBuffer.toString();
+		client.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
+			const channel = channelBuffer.toString();
 
-            const callback = this.subscriptions.get(channel);
-            if (!callback) {
-                return;
-            }
+			const callback = this.subscriptions.get(channel);
+			if (!callback) {
+				return;
+			}
 
-            callback(channel, messageBuffer);
-        });
-    }
+			callback(channel, messageBuffer);
+		});
+	}
 
-    public async subscribe(
-        channels: string | string[],
-        callback: (channel: string, messageBuffer: Buffer) => void,
-        forceSubscribe?: boolean) {
-        let channelsArray = Array.isArray(channels) ? channels : [channels];
-        const subscriptionsMap = this.subscriptions;
+	public async subscribe(
+		channels: string | string[],
+		callback: (channel: string, messageBuffer: Buffer) => void,
+		forceSubscribe?: boolean,
+	) {
+		let channelsArray = Array.isArray(channels) ? channels : [channels];
+		const subscriptionsMap = this.subscriptions;
 
-        if (!forceSubscribe) {
-            channelsArray = channelsArray.filter((channel) => !subscriptionsMap.has(channel));
-            if (channelsArray.length === 0) {
-                return;
-            }
-        }
+		if (!forceSubscribe) {
+			channelsArray = channelsArray.filter((channel) => !subscriptionsMap.has(channel));
+			if (channelsArray.length === 0) {
+				return;
+			}
+		}
 
-        await this.client.subscribe(...channelsArray);
+		await this.client.subscribe(...channelsArray);
 
-        for (const channel of channelsArray) {
-            subscriptionsMap.set(channel, callback);
-        }
-    }
+		for (const channel of channelsArray) {
+			subscriptionsMap.set(channel, callback);
+		}
+	}
 
-    public async unsubscribe(channels: string | string[]) {
-        let channelsArray = Array.isArray(channels) ? channels : [channels];
-        const subscriptionsMap = this.subscriptions;
+	public async unsubscribe(channels: string | string[]) {
+		let channelsArray = Array.isArray(channels) ? channels : [channels];
+		const subscriptionsMap = this.subscriptions;
 
-        channelsArray = channelsArray.filter((channel) => subscriptionsMap.has(channel));
-        if (channelsArray.length === 0) {
-            return;
-        }
+		channelsArray = channelsArray.filter((channel) => subscriptionsMap.has(channel));
+		if (channelsArray.length === 0) {
+			return;
+		}
 
-        await this.client.unsubscribe(channelsArray);
+		await this.client.unsubscribe(...channelsArray);
 
-        for (const channel of channelsArray) {
-            subscriptionsMap.delete(channel);
-        }
-    }
+		for (const channel of channelsArray) {
+			subscriptionsMap.delete(channel);
+		}
+	}
 
-    public isSubscribed(channel: string): boolean {
-        return this.subscriptions.has(channel);
-    }
+	public isSubscribed(channel: string): boolean {
+		return this.subscriptions.has(channel);
+	}
 }

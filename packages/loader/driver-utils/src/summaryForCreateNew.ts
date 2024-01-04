@@ -12,40 +12,56 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * Combine the app summary and protocol summary in 1 tree.
- * @param appSummary - Summary of the app.
- * @param protocolSummary - Summary of the protocol.
+ * Defines the current layout of an .app + .protocol summary tree
+ * this is used internally for create new, and single commit summary
+ * @internal
  */
-export function combineAppAndProtocolSummary(
-	appSummary: ISummaryTree,
-	protocolSummary: ISummaryTree,
-): ISummaryTree {
-	const createNewSummary: ISummaryTree = {
-		type: SummaryType.Tree,
-		tree: {
-			".protocol": protocolSummary,
-			".app": appSummary,
-		},
+export interface CombinedAppAndProtocolSummary extends ISummaryTree {
+	tree: {
+		[".app"]: ISummaryTree;
+		[".protocol"]: ISummaryTree;
 	};
-	return createNewSummary;
+}
+
+/**
+ * Validates the current layout of an .app + .protocol summary tree
+ * this is used internally for create new, and single commit summary
+ * @internal
+ */
+export function isCombinedAppAndProtocolSummary(
+	summary: ISummaryTree | undefined,
+	...optionalRootTrees: string[]
+): summary is CombinedAppAndProtocolSummary {
+	if (
+		summary?.tree === undefined ||
+		summary.tree?.[".app"]?.type !== SummaryType.Tree ||
+		summary.tree?.[".protocol"]?.type !== SummaryType.Tree
+	) {
+		return false;
+	}
+	const treeKeys = Object.keys(summary.tree).filter((t) => !optionalRootTrees.includes(t));
+	if (treeKeys.length !== 2) {
+		return false;
+	}
+	return true;
 }
 
 /**
  * Extract the attributes from the protocol summary.
  * @param protocolSummary - protocol summary from which the values are to be extracted.
+ * @internal
  */
 export function getDocAttributesFromProtocolSummary(
 	protocolSummary: ISummaryTree,
 ): IDocumentAttributes {
 	const attributesBlob = protocolSummary.tree.attributes as ISummaryBlob;
-	const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
-	documentAttributes.term = documentAttributes.term ?? 1;
-	return documentAttributes;
+	return JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
 }
 
 /**
  * Extract quorum values from the protocol summary.
  * @param protocolSummary - protocol summary from which the values are to be extracted.
+ * @internal
  */
 export function getQuorumValuesFromProtocolSummary(
 	protocolSummary: ISummaryTree,

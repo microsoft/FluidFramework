@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import type { EditLog } from './EditLog';
 import type { ChangeInternal, EditChunkContents, FluidEditHandle } from './persisted-types';
 import type { SharedTree } from './SharedTree';
@@ -49,7 +49,7 @@ export async function getUploadedEditChunkContents(sharedTree: SharedTree): Prom
 /**
  * Returns a serialized description of blob paths and their associated contents for all uploaded edit chunks in the given edit log.
  * @deprecated Edit virtualization is no longer supported. Do not use this.
- * @public
+ * @internal
  */
 export async function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string> {
 	return JSON.stringify(await getUploadedEditChunkContents(sharedTree));

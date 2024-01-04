@@ -200,17 +200,22 @@ const defaultInstanceMonitor = {
 	 * Sets the basic auth params for services that require basic authentication, such as the
 	 * LoggerController. Classes that implement the base server call this method after loading
 	 * the credentials from the settings, like in the example.
+	 *
 	 * @example
-	 *  SomeServer.prototype.init = function() {
-	 *    var that = this;
-	 *    return BaseServer.prototype.init.call(this)
-	 *      .then(function() {
-	 *        that.setBasicAuth({
-	 *          username: settings.get('basicAuthName'),
-	 *          password: settings.get('basicAuthPassword'),
-	 *          passwordList: settings.get('basicAuthPasswordList'),
-	 *        });
-	 *      });
+	 *
+	 * ```javascript
+	 * SomeServer.prototype.init = function() {
+	 *   var that = this;
+	 *   return BaseServer.prototype.init.call(this)
+	 *     .then(function() {
+	 *       that.setBasicAuth({
+	 *         username: settings.get('basicAuthName'),
+	 *         password: settings.get('basicAuthPassword'),
+	 *         passwordList: settings.get('basicAuthPasswordList'),
+	 *       });
+	 *     });
+	 * ```
+	 *
 	 * @param {Object} basicAuthParams The basic auth parameters.
 	 * @param {string} basicAuthParams.username The username to use for authentication.
 	 * @param {Object[]} basicAuthParams.passwordList The password list to use for authentication

@@ -13,9 +13,12 @@ import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { pkgVersion } from "./packageVersion";
 import { SharedString, SharedStringSegment } from "./sharedString";
 
+/**
+ * @alpha
+ */
 export class SharedStringFactory implements IChannelFactory {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-	// load code
+	// load code (UPDATE: paparazzi is gone... anything to do here?)
 	public static Type = "https://graph.microsoft.com/types/mergeTree";
 
 	public static readonly Attributes: IChannelAttributes = {

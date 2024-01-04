@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
-	DataCorruptionError,
-	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+	ITelemetryBaseLogger,
+	IDisposable,
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -32,28 +32,27 @@ import {
 	convertToSummaryTree,
 	create404Response,
 	createResponseError,
+	GCDataBuilder,
+	isSerializedHandle,
 	responseToException,
 	SummaryTreeBuilder,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
-	loggerToMonitoringContext,
+	createChildMonitoringContext,
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	LoggingError,
 	MonitoringContext,
-	TelemetryDataTag,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import {
-	ContainerRuntime,
-	defaultRuntimeHeaderData,
-	RuntimeHeaderData,
-	TombstoneResponseHeaderKey,
-} from "./containerRuntime";
+import { ContainerRuntime, defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime";
 import {
 	FluidDataStoreContext,
 	RemoteFluidDataStoreContext,
@@ -63,18 +62,8 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import {
-	GCNodeType,
-	sweepDatastoresKey,
-	throwOnTombstoneLoadKey,
-	sendGCUnexpectedUsageEvent,
-} from "./gc";
-import {
-	summarizerClientType,
-	IContainerRuntimeMetadata,
-	nonDataStorePaths,
-	rootHasIsolatedChannels,
-} from "./summary";
+import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
+import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -102,8 +91,6 @@ export class DataStores implements IDisposable {
 	// Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
 	// root data stores that are added.
 	private dataStoresSinceLastGC: string[] = [];
-	/** If true, throw an error when a tombstone data store is retrieved. */
-	private readonly throwOnTombstoneLoad: boolean;
 	// The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
 	// the container runtime to other nodes.
 	private readonly containerRuntimeHandle: IFluidHandle;
@@ -115,7 +102,7 @@ export class DataStores implements IDisposable {
 	constructor(
 		private readonly baseSnapshot: ISnapshotTree | undefined,
 		private readonly runtime: ContainerRuntime,
-		private readonly submitAttachFn: (attachContent: any) => void,
+		private readonly submitAttachFn: (attachContent: IAttachMessage) => void,
 		private readonly getCreateChildSummarizerNodeFn: (
 			id: string,
 			createParam: CreateChildSummarizerNodeParam,
@@ -131,18 +118,12 @@ export class DataStores implements IDisposable {
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
-		this.mc = loggerToMonitoringContext(ChildLogger.create(baseLogger));
+		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.containerRuntimeHandle = new FluidObjectHandle(
 			this.runtime,
 			"/",
 			this.runtime.IFluidHandleContext,
 		);
-
-		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneLoad =
-			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
-			this.runtime.gcTombstoneEnforcementAllowed &&
-			this.runtime.clientDetails.type !== summarizerClientType;
 
 		// Extract stores stored inside the snapshot
 		const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -210,7 +191,7 @@ export class DataStores implements IDisposable {
 
 	public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
 		const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
-		return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
+		return pendingAliasPromise ?? "Success";
 	}
 
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -237,10 +218,7 @@ export class DataStores implements IDisposable {
 				"Duplicate DataStore created with existing id",
 				{
 					...extractSafePropertiesFromMessage(message),
-					dataStoreId: {
-						value: attachMessage.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
+					...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
 				},
 			);
 			throw error;
@@ -299,6 +277,19 @@ export class DataStores implements IDisposable {
 		}
 
 		const context = this.contexts.get(aliasMessage.internalId);
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case a deleted data store accidentally submitted a signal.
+		if (
+			this.checkAndLogIfDeleted(
+				aliasMessage.internalId,
+				context,
+				"Changed",
+				"processAliasMessageCore",
+			)
+		) {
+			return false;
+		}
+
 		if (context === undefined) {
 			this.mc.logger.sendErrorEvent({
 				eventName: "AliasFluidDataStoreNotFound",
@@ -398,23 +389,45 @@ export class DataStores implements IDisposable {
 	}
 	public readonly dispose = () => this.disposeOnce.value;
 
-	public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
-		const envelope = content as IEnvelope;
+	public resubmitDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
+		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
+		// deleted data store, it can otherwise lead to inconsistent state when compared to other clients.
+		if (
+			this.checkAndLogIfDeleted(envelope.address, context, "Changed", "resubmitDataStoreOp")
+		) {
+			throw new DataCorruptionError("Context is deleted!", {
+				callSite: "resubmitDataStoreOp",
+				...tagCodeArtifacts({ id: envelope.address }),
+			});
+		}
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
 		context.reSubmit(envelope.contents, localOpMetadata);
 	}
 
-	public rollbackDataStoreOp(content: any, localOpMetadata: unknown) {
-		const envelope = content as IEnvelope;
+	public rollbackDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
+		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
+		// deleted data store, it can otherwise lead to inconsistent state when compared to other clients.
+		if (
+			this.checkAndLogIfDeleted(envelope.address, context, "Changed", "rollbackDataStoreOp")
+		) {
+			throw new DataCorruptionError("Context is deleted!", {
+				callSite: "rollbackDataStoreOp",
+				...tagCodeArtifacts({ id: envelope.address }),
+			});
+		}
 		assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
 		context.rollback(envelope.contents, localOpMetadata);
 	}
 
-	public async applyStashedOp(content: any): Promise<unknown> {
-		const envelope = content as IEnvelope;
+	public async applyStashedOp(envelope: IEnvelope): Promise<unknown> {
 		const context = this.contexts.get(envelope.address);
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case the data store that stashed the op is deleted.
+		if (this.checkAndLogIfDeleted(envelope.address, context, "Changed", "applyStashedOp")) {
+			return undefined;
+		}
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
 		return context.applyStashedOp(envelope.contents);
 	}
@@ -429,14 +442,34 @@ export class DataStores implements IDisposable {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localMessageMetadata: unknown,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	) {
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
-		const request = { url: envelope.address };
-		this.validateNotDeleted(envelope.address, request);
 		const context = this.contexts.get(envelope.address);
+
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case a deleted data store accidentally submitted an op.
+		if (
+			this.checkAndLogIfDeleted(
+				envelope.address,
+				context,
+				"Changed",
+				"processFluidDataStoreOp",
+			)
+		) {
+			return;
+		}
+
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
+
+		// By default, we use the new behavior of detecting outbound routes here.
+		// If this setting is true, then DataStoreContext would be notifying GC instead.
+		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true) {
+			// Notify GC of any outbound references that were added by this op.
+			detectOutboundReferences(envelope, addedOutboundReference);
+		}
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
@@ -452,114 +485,105 @@ export class DataStores implements IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 	): Promise<FluidDataStoreContext> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
-		const request = { url: id };
-
-		this.validateNotDeleted(id, request, headerData);
+		if (
+			this.checkAndLogIfDeleted(
+				id,
+				this.contexts.get(id),
+				"Requested",
+				"getDataStore",
+				requestHeaderData,
+			)
+		) {
+			// The requested data store has been deleted by gc. Create a 404 response exception.
+			const request: IRequest = { url: id };
+			throw responseToException(
+				createResponseError(404, "DataStore was deleted", request),
+				request,
+			);
+		}
 
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
+			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
-
-		this.validateNotTombstoned(context, request, requestHeaderData);
-
 		return context;
 	}
 
 	/**
-	 * Validate that the data store had not been deleted by GC.
-	 *
-	 * @param id - data store id
-	 * @param request - the request information to log if the validation detects the data store has been deleted
-	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been deleted
+	 * Returns the data store requested with the given id if available. Otherwise, returns undefined.
 	 */
-	private validateNotDeleted(
+	public async getDataStoreIfAvailable(
 		id: string,
-		request: IRequest,
-		requestHeaderData?: RuntimeHeaderData,
-	) {
-		const dataStoreNodePath = `/${id}`;
-		if (this.isDataStoreDeleted(dataStoreNodePath)) {
-			assert(
-				!this.contexts.has(id),
-				0x570 /* Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime. */,
-			);
-			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const error = responseToException(
-				createResponseError(404, "DataStore was deleted", request),
-				request,
-			);
-			sendGCUnexpectedUsageEvent(
-				this.mc,
-				{
-					eventName: "GC_Deleted_DataStore_Requested",
-					category: "error",
-					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-					headers: JSON.stringify(requestHeaderData),
-					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-				},
-				undefined /** packagePath */,
-				error,
-			);
-			throw error;
+		requestHeaderData: RuntimeHeaderData,
+	): Promise<FluidDataStoreContext | undefined> {
+		// If the data store has been deleted, log an error and return undefined.
+		if (
+			this.checkAndLogIfDeleted(
+				id,
+				this.contexts.get(id),
+				"Requested",
+				"getDataStoreIfAvailable",
+				requestHeaderData,
+			)
+		) {
+			return undefined;
 		}
+		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
+		if (context === undefined) {
+			return undefined;
+		}
+		return context;
 	}
 
 	/**
-	 * Validates that the data store context requested has not been marked as tombstone by GC.
-	 *
-	 * @param context - the data store context in question
-	 * @param request - the request information to log if the validation detects the data store has been tombstoned
-	 * @param headerData - the request header information to log if the validation detects the data store has been tombstoned
+	 * Checks if the data store has been deleted by GC. If so, log an error.
+	 * @param id - The data store's id.
+	 * @param context - The data store context.
+	 * @param callSite - The function name this is called from.
+	 * @param requestHeaderData - The request header information to log if the data store is deleted.
+	 * @returns true if the data store is deleted. Otherwise, returns false.
 	 */
-	private validateNotTombstoned(
-		context: FluidDataStoreContext,
-		request: IRequest,
-		headerData: RuntimeHeaderData,
+	private checkAndLogIfDeleted(
+		id: string,
+		context: FluidDataStoreContext | undefined,
+		deletedLogSuffix: string,
+		callSite: string,
+		requestHeaderData?: RuntimeHeaderData,
 	) {
-		if (context.tombstoned) {
-			const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
-
-			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const error = responseToException(
-				createResponseError(404, "DataStore was deleted", request, {
-					[TombstoneResponseHeaderKey]: true,
-				}),
-				request,
-			);
-			sendGCUnexpectedUsageEvent(
-				this.mc,
-				{
-					eventName: "GC_Tombstone_DataStore_Requested",
-					category: shouldFail ? "error" : "generic",
-					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-					headers: JSON.stringify(headerData),
-					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-				},
-				context.isLoaded ? context.packagePath : undefined,
-				error,
-			);
-
-			if (shouldFail) {
-				throw error;
-			}
+		const dataStoreNodePath = `/${id}`;
+		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
+			return false;
 		}
+
+		this.mc.logger.sendErrorEvent({
+			eventName: `GC_Deleted_DataStore_${deletedLogSuffix}`,
+			...tagCodeArtifacts({ id }),
+			callSite,
+			headers: JSON.stringify(requestHeaderData),
+			exists: context !== undefined,
+		});
+		return true;
 	}
 
-	public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
-		const request = { url: address };
-		this.validateNotDeleted(address, request);
-		const context = this.contexts.get(address);
+	public processSignal(fluidDataStoreId: string, message: IInboundSignalMessage, local: boolean) {
+		const context = this.contexts.get(fluidDataStoreId);
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case a deleted data store accidentally submitted a signal.
+		if (this.checkAndLogIfDeleted(fluidDataStoreId, context, "Changed", "processSignal")) {
+			return;
+		}
+
 		if (!context) {
 			// Attach message may not have been processed yet
 			assert(!local, 0x163 /* "Missing datastore for local signal" */);
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SignalFluidDataStoreNotFound",
-				fluidDataStoreId: {
-					value: address,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
+				...tagCodeArtifacts({
+					fluidDataStoreId,
+				}),
 			});
 			return;
 		}
@@ -568,7 +592,7 @@ export class DataStores implements IDisposable {
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		for (const [fluidDataStore, context] of this.contexts) {
+		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
 				context.setConnectionState(connected, clientId);
 			} catch (error) {
@@ -576,7 +600,9 @@ export class DataStores implements IDisposable {
 					{
 						eventName: "SetConnectionStateError",
 						clientId,
-						fluidDataStore,
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
 						details: JSON.stringify({
 							runtimeConnected: this.runtime.connected,
 							connected,
@@ -614,11 +640,16 @@ export class DataStores implements IDisposable {
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
 					// Summarizer works only with clients with no local changes. A data store in attaching
-					// state indicates an op was sent to attach a local data store.
-					assert(
-						context.attachState !== AttachState.Attaching,
-						0x588 /* Local data store detected in attaching state during summarize */,
-					);
+					// state indicates an op was sent to attach a local data store, and the the attach op
+					// had not yet round tripped back to the client.
+					if (context.attachState === AttachState.Attaching) {
+						// Formerly assert 0x588
+						const error = DataProcessingError.create(
+							"Local data store detected in attaching state during summarize",
+							"summarize",
+						);
+						throw error;
+					}
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -716,11 +747,17 @@ export class DataStores implements IDisposable {
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
 					// Summarizer client and hence GC works only with clients with no local changes. A data store in
-					// attaching state indicates an op was sent to attach a local data store.
-					assert(
-						context.attachState !== AttachState.Attaching,
-						0x589 /* Local data store detected in attaching state while running GC */,
-					);
+					// attaching state indicates an op was sent to attach a local data store, and the the attach op
+					// had not yet round tripped back to the client.
+					// Formerly assert 0x589
+					if (context.attachState === AttachState.Attaching) {
+						const error = DataProcessingError.create(
+							"Local data store detected in attaching state while running GC",
+							"getGCData",
+						);
+						throw error;
+					}
+
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -740,7 +777,7 @@ export class DataStores implements IDisposable {
 	 * After GC has run, called to notify this Container's data stores of routes that are used in it.
 	 * @param usedRoutes - The routes that are used in all data stores in this Container.
 	 */
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: readonly string[]) {
 		// Get a map of data store ids to routes used in it.
 		const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -762,7 +799,7 @@ export class DataStores implements IDisposable {
 	 * This is called to update objects whose routes are unused. The unused objects are deleted.
 	 * @param unusedRoutes - The routes that are unused in all data stores in this Container.
 	 */
-	public updateUnusedRoutes(unusedRoutes: string[]) {
+	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
 		for (const route of unusedRoutes) {
 			const pathParts = route.split("/");
 			// Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
@@ -783,34 +820,39 @@ export class DataStores implements IDisposable {
 	 * Delete data stores and its objects that are sweep ready.
 	 * @param sweepReadyDataStoreRoutes - The routes of data stores and its objects that are sweep ready and should
 	 * be deleted.
-	 * @returns - The routes of data stores and its objects that were deleted.
+	 * @returns The routes of data stores and its objects that were deleted.
 	 */
-	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[] {
 		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
+		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
 			return [];
 		}
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
-			// TODO: GC:Validation - Skip any routes already deleted
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
 			if (pathParts.length > 2) {
 				continue;
 			}
 
-			if (!this.contexts.has(dataStoreId)) {
-				this.mc.logger.sendErrorEvent({
+			const dataStoreContext = this.contexts.get(dataStoreId);
+			if (dataStoreContext === undefined) {
+				// If the data store hasn't already been deleted, log an error because this should never happen.
+				// If the data store has already been deleted, log a telemetry event. This can happen because multiple GC
+				// sweep ops can contain the same data store. It would be interesting to track how often this happens.
+				const alreadyDeleted = this.isDataStoreDeleted(`/${dataStoreId}`);
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "DeletedDataStoreNotFound",
-					dataStoreId,
+					category: alreadyDeleted ? "generic" : "error",
+					...tagCodeArtifacts({ id: dataStoreId }),
+					details: { alreadyDeleted },
 				});
+				continue;
 			}
 
-			const dataStore = this.contexts.get(dataStoreId);
-			assert(dataStore !== undefined, 0x571 /* Attempting to delete unknown dataStore */);
-			dataStore.delete();
+			dataStoreContext.delete();
 
 			// Delete the contexts of sweep ready data stores.
 			this.contexts.delete(dataStoreId);
@@ -821,11 +863,14 @@ export class DataStores implements IDisposable {
 	}
 
 	/**
-	 * This is called to update objects whose routes are tombstones. Tombstoned datastore contexts enable testing
-	 * scenarios with accessing deleted content without actually deleting content from summaries.
+	 * This is called to update objects whose routes are tombstones.
+	 *
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
+	 *
 	 * @param tombstonedRoutes - The routes that are tombstones in all data stores in this Container.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
 		const tombstonedDataStoresSet: Set<string> = new Set();
 		for (const route of tombstonedRoutes) {
 			const pathParts = route.split("/");
@@ -913,4 +958,43 @@ export function getSummaryForDatastores(
 			trees: datastoresTrees,
 		};
 	}
+}
+
+/**
+ * Traverse this op's contents and detect any outbound routes that were added by this op.
+ */
+export function detectOutboundReferences(
+	envelope: IEnvelope,
+	addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+): void {
+	// These will be built up as we traverse the envelope contents
+	const outboundPaths: string[] = [];
+	let ddsAddress: string | undefined;
+
+	function recursivelyFindHandles(obj: unknown) {
+		if (typeof obj === "object" && obj !== null) {
+			for (const [key, value] of Object.entries(obj)) {
+				// If 'value' is a serialized IFluidHandle, it represents a new outbound route.
+				if (isSerializedHandle(value)) {
+					outboundPaths.push(value.url);
+				}
+
+				// NOTE: This is taking a hard dependency on the fact that in our DataStore implementation,
+				// the address of the DDS is stored in a property called "address".  This is not ideal.
+				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
+				if (key === "address" && ddsAddress === undefined) {
+					ddsAddress = value;
+				}
+
+				recursivelyFindHandles(value);
+			}
+		}
+	}
+
+	recursivelyFindHandles(envelope.contents);
+
+	// GC node paths are all absolute paths, hence the "" prefix.
+	// e.g. this will yield "/dataStoreId/ddsId"
+	const fromPath = ["", envelope.address, ddsAddress].join("/");
+	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -18,13 +18,13 @@ import {
 	IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
+import { Interval, ISerializableInterval } from "./intervals";
 import {
-	Interval,
 	IntervalCollection,
+	IIntervalCollection,
 	IntervalCollectionValueType,
-	ISerializableInterval,
 } from "./intervalCollection";
-import { DefaultMap } from "./defaultMap";
+import { DefaultMap, IMapOperation } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
 import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 
@@ -33,6 +33,7 @@ const snapshotFileName = "header";
 /**
  * The factory that defines the SharedIntervalCollection.
  * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
+ * @internal
  */
 export class SharedIntervalCollectionFactory implements IChannelFactory {
 	public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -74,12 +75,16 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 	}
 }
 
+/**
+ * @alpha
+ */
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-	getIntervalCollection(label: string): IntervalCollection<TInterval>;
+	getIntervalCollection(label: string): IIntervalCollection<TInterval>;
 }
 
 /**
  * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
+ * @internal
  */
 export class SharedIntervalCollection
 	extends SharedObject
@@ -122,10 +127,11 @@ export class SharedIntervalCollection
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new IntervalCollectionValueType(),
+			runtime.options,
 		);
 	}
 
-	public getIntervalCollection(label: string): IntervalCollection<Interval> {
+	public getIntervalCollection(label: string): IIntervalCollection<Interval> {
 		const realLabel = this.getIntervalCollectionPath(label);
 		const sharedCollection = this.intervalCollections.get(realLabel);
 		return sharedCollection;
@@ -163,7 +169,7 @@ export class SharedIntervalCollection
 	) {
 		if (message.type === MessageType.Operation) {
 			this.intervalCollections.tryProcessMessage(
-				message.contents,
+				message.contents as IMapOperation,
 				local,
 				message,
 				localOpMetadata,

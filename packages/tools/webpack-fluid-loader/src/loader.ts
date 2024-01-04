@@ -5,7 +5,7 @@
 
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
 	IFluidCodeResolver,
@@ -22,24 +22,23 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
-import {
-	extractPackageIdentifierDetails,
-	resolveFluidPackageEnvironment,
-	WebCodeLoader,
-} from "@fluidframework/web-code-loader";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
 import { OdspUrlResolver } from "./odspUrlResolver";
+import {
+	extractPackageIdentifierDetails,
+	resolveFluidPackageEnvironment,
+	WebCodeLoader,
+} from "./webCodeLoader";
 
 export interface IDevServerUser extends IUser {
 	name: string;
@@ -61,6 +60,7 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
 	tenantSecret?: string;
 	bearerSecret?: string;
 	enableWholeSummaryUpload?: boolean;
+	isEphemeralContainer?: boolean;
 }
 
 export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
@@ -71,6 +71,7 @@ export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
 	tenantSecret?: string;
 	bearerSecret?: string;
 	enableWholeSummaryUpload?: boolean;
+	isEphemeralContainer?: boolean;
 }
 
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
@@ -288,7 +289,7 @@ export async function start(
 				async () => options.odspAccessToken ?? null,
 				odspPersistantCache,
 				false /** forceAccessTokenViaAuthorizationHeader */,
-				new BaseTelemetryNullLogger(),
+				createChildLogger(),
 				undefined,
 			);
 			assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
@@ -319,10 +320,6 @@ export async function start(
 
 	// Load and render the Fluid object.
 	await getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv);
-	// Handle the code upgrade scenario (which fires contextChanged)
-	container1.on("contextChanged", () => {
-		getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv).catch(() => {});
-	});
 
 	// We have rendered the Fluid object. If the container is detached, attach it now.
 	if (container1.attachState === AttachState.Detached) {
@@ -364,27 +361,33 @@ export async function start(
 		containers.push(container2);
 
 		await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
-		// Handle the code upgrade scenario (which fires contextChanged)
-		container2.on("contextChanged", () => {
-			assert(rightDiv !== undefined, 0x31c /* rightDiv is undefined */);
-			getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => {});
-		});
 	}
 }
 
-async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
-	const response = await container.request({
-		headers: {
-			mountableView: true,
-		},
-		url,
-	});
+/**
+ * Webpack Fluid Loader assumes/knows the shape of the entryPoint
+ */
+interface IFluidMountableViewEntryPoint {
+	getDefaultDataObject(): Promise<FluidObject>;
+	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
+}
 
-	if (response.status !== 200 || !(response.mimeType === "fluid/object")) {
-		return false;
+async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
+	const entryPoint = await container.getEntryPoint();
+
+	let fluidObject: FluidObject<IFluidMountableView>;
+	if (
+		entryPoint === undefined ||
+		(entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView === undefined
+	) {
+		throw new Error("entryPoint was not defined or is not properly formatted");
+	} else {
+		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView(
+			// Remove starting "//"
+			url.slice(2),
+		);
 	}
 
-	const fluidObject: FluidObject<IFluidMountableView> = response.value;
 	if (fluidObject === undefined) {
 		return;
 	}
@@ -392,20 +395,11 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 	// We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
 	// remove it from the DOM if needed.
 	const mountableView = fluidObject.IFluidMountableView;
-	if (mountableView !== undefined) {
-		mountableView.mount(div);
-		return;
+	if (mountableView === undefined) {
+		throw new Error("Could not mount the view");
 	}
 
-	// If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
-	// if the response is a React-based Fluid object using hooks) and is not the preferred path, but sometimes it
-	// can work.
-	console.warn(
-		`Container returned a non-IFluidMountableView.  This can cause errors when mounting Fluid objects ` +
-			`with React hooks across bundle boundaries.  URL: ${url}`,
-	);
-	const view = new HTMLViewAdapter(fluidObject);
-	view.render(div, { display: "block" });
+	mountableView.mount(div);
 }
 
 /**
@@ -435,7 +429,9 @@ async function attachContainer(
 			// as opposed to the ID requested on the client prior to attaching the container.
 			// NOTE: in case of an odsp container, the ID in the resolved URL cannot be used for
 			// referring/opening the attached container.
-			ensureFluidResolvedUrl(resolvedUrl);
+			if (resolvedUrl === undefined) {
+				throw new Error("resolvedUrl must be defined");
+			}
 			docUrl = url.replace(documentId, resolvedUrl.id);
 			title = resolvedUrl.id;
 		}
@@ -491,12 +487,6 @@ async function attachContainer(
 				currentLeftDiv = newLeftDiv;
 				// Load and render the component.
 				await getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv);
-				// Handle the code upgrade scenario (which fires contextChanged)
-				currentContainer.on("contextChanged", () => {
-					getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv).catch(
-						() => {},
-					);
-				});
 			};
 		};
 

@@ -8,6 +8,7 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
+ * @alpha
  */
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();

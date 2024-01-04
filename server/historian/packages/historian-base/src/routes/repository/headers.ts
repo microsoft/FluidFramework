@@ -5,80 +5,119 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { IHeader } from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	IRevokedTokenChecker,
+	IDocumentManager,
+} from "@fluidframework/server-services-core";
+import {
+	IThrottleMiddlewareOptions,
+	throttle,
+	getParam,
+} from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
+import { Constants } from "../../utils";
 
 export function create(
-    config: nconf.Provider,
-    tenantService: ITenantService,
-    throttler: IThrottler,
-    cache?: ICache,
-    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
-    const router: Router = Router();
+	config: nconf.Provider,
+	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
+	restTenantThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
+	cache?: ICache,
+	asyncLocalStorage?: AsyncLocalStorage<string>,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
+): Router {
+	const router: Router = Router();
 
-    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-        throttleIdSuffix: utils.Constants.throttleIdSuffix,
-    };
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
-    async function getHeader(
-        tenantId: string,
-        authorization: string,
-        sha: string,
-        useCache: boolean): Promise<IHeader> {
-        const service = await utils.createGitService(
-            config,
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage);
-        return service.getHeader(sha, useCache);
-    }
+	async function getHeader(
+		tenantId: string,
+		authorization: string,
+		sha: string,
+		useCache: boolean,
+	): Promise<IHeader> {
+		const service = await utils.createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager,
+			cache,
+			asyncLocalStorage,
+			denyList,
+		});
+		return service.getHeader(sha, useCache);
+	}
 
-    async function getTree(
-        tenantId: string,
-        authorization: string,
-        sha: string,
-        useCache: boolean): Promise<any> {
-        const service = await utils.createGitService(
-            config,
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage);
-        return service.getFullTree(sha, useCache);
-    }
+	async function getTree(
+		tenantId: string,
+		authorization: string,
+		sha: string,
+		useCache: boolean,
+	): Promise<any> {
+		const service = await utils.createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager,
+			cache,
+			asyncLocalStorage,
+			denyList,
+		});
+		return service.getFullTree(sha, useCache);
+	}
 
-    router.get("/repos/:ignored?/:tenantId/headers/:sha",
-        utils.validateRequestParams("tenantId", "sha"),
-        throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
-            const useCache = !("disableCache" in request.query);
-            const headerP = getHeader(
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.params.sha, useCache);
-            utils.handleResponse(headerP, response, useCache);
-        });
+	router.get(
+		"/repos/:ignored?/:tenantId/headers/:sha",
+		validateRequestParams("tenantId", "sha"),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyToken(revokedTokenChecker),
+		(request, response, next) => {
+			const useCache = !("disableCache" in request.query);
+			const headerP = getHeader(
+				request.params.tenantId,
+				request.get("Authorization"),
+				request.params.sha,
+				useCache,
+			);
+			utils.handleResponse(headerP, response, useCache);
+		},
+	);
 
-    router.get("/repos/:ignored?/:tenantId/tree/:sha",
-        utils.validateRequestParams("tenantId", "sha"),
-        throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
-            const useCache = !("disableCache" in request.query);
-            const headerP = getTree(
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.params.sha, useCache);
-            utils.handleResponse(headerP, response, useCache);
-        });
+	router.get(
+		"/repos/:ignored?/:tenantId/tree/:sha",
+		validateRequestParams("tenantId", "sha"),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyToken(revokedTokenChecker),
+		(request, response, next) => {
+			const useCache = !("disableCache" in request.query);
+			const headerP = getTree(
+				request.params.tenantId,
+				request.get("Authorization"),
+				request.params.sha,
+				useCache,
+			);
+			utils.handleResponse(headerP, response, useCache);
+		},
+	);
 
-    return router;
+	return router;
 }

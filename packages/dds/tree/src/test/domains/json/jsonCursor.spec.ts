@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { singleJsonCursor, cursorToJsonObject } from "../../..";
-import { JsonCompatible } from "../../../util";
-import { testSpecializedCursor } from "../../cursorTestSuite";
+// eslint-disable-next-line import/no-internal-modules
+import { singleJsonCursor, cursorToJsonObject } from "../../../domains/json/index.js";
+import { JsonCompatible } from "../../../util/index.js";
+import { testSpecializedCursor } from "../../cursorTestSuite.js";
 
 const testCases: readonly [string, readonly JsonCompatible[]][] = [
 	["null", [null]],
@@ -18,8 +19,8 @@ const testCases: readonly [string, readonly JsonCompatible[]][] = [
 	// ["non-finite", [NaN, -Infinity, +Infinity]],
 	// ["minus zero", [-0]],
 	["string", ["", '\\"\b\f\n\r\t', "😀"]],
-	["object", [{}, { one: "field" }, { nested: { depth: 1 } }]],
-	["array", [[], ["oneItem"], [["nested depth 1"]]]],
+	["object", [{}, { one: "field" }, { nested: { depth: 1 } }, { emptyArray: [] }]],
+	["array", [[], [[]], ["oneItem"], [["nested depth 1"]]]],
 	[
 		"composite",
 		[
@@ -63,7 +64,7 @@ testSpecializedCursor({
 	dataFromCursor: cursorToJsonObject,
 	testData: cursors,
 	builders: {
-		withLocalKeys: (keys) => {
+		withKeys: (keys) => {
 			const obj = {};
 			for (const key of keys) {
 				Object.defineProperty(obj, key, {

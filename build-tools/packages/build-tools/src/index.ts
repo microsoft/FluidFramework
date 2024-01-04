@@ -3,34 +3,32 @@
  * Licensed under the MIT License.
  */
 
+export { Context } from "./common/context";
+export { GitRepo } from "./common/gitRepo";
 export {
-	getSimpleVersion,
-	getVersionsFromStrings,
-	getIsLatest,
-} from "./buildVersion/buildVersionLib";
-export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
-export { bumpRepo } from "./bumpVersion/bumpVersion";
-export { Context } from "./bumpVersion/context";
-export { createReleaseBump } from "./bumpVersion/createReleaseBump";
-export { GitRepo } from "./bumpVersion/gitRepo";
-export { releaseVersion } from "./bumpVersion/releaseVersion";
-export { exec, execNoError } from "./bumpVersion/utils";
-export { VersionBag } from "./bumpVersion/versionBag";
-export { FluidRepo, VersionDetails } from "./common/fluidRepo";
-export { getResolvedFluidRoot } from "./common/fluidUtils";
-export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
+	type BrokenCompatTypes,
+	type ITypeValidationConfig,
+	FluidRepo,
+	type VersionDetails,
+} from "./common/fluidRepo";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
+export type { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
-export { Package, PackageJson } from "./common/npmPackage";
-export { LayerGraph } from "./layerCheck/layerGraph";
-export { Timer } from "./common/timer";
 export {
-	execAsync,
-	execWithErrorAsync,
-	readJsonAsync,
-	readFileAsync,
-	writeFileAsync,
-} from "./common/utils";
-export { Handler } from "./repoPolicyCheck/common";
+	Package,
+	type PackageJson,
+	type FluidPackageJson,
+	updatePackageJsonFile,
+} from "./common/npmPackage";
+export { Timer } from "./common/timer";
+export { VersionBag } from "./common/versionBag";
+export { LayerGraph } from "./layerCheck/layerGraph";
+export { type Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
-export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";
-export { type PreviousVersionStyle } from "./common/fluidRepo";
+export type {
+	IFluidBuildConfig,
+	IFluidRepoPackage,
+	PackageNamePolicyConfig,
+	PolicyConfig,
+	PreviousVersionStyle,
+} from "./common/fluidRepo";

@@ -7,71 +7,86 @@ import { defaultHash } from "@fluidframework/server-services-client";
 import * as testUtils from "@fluidframework/server-test-utils";
 import { CheckpointContext } from "../../deli/checkpointContext";
 import {
-    createDeliCheckpointManagerFromCollection,
-    ICheckpointParams,
+	createDeliCheckpointManagerFromCollection,
+	ICheckpointParams,
 } from "../../deli/checkpointManager";
 import { CheckpointReason } from "../../utils";
+import Sinon from "sinon";
 
 describe("Routerlicious", () => {
-    describe("Deli", () => {
-        describe("CheckpointContext", () => {
-            const testId = "test";
-            const testTenant = "test";
-            let testCheckpointContext: CheckpointContext;
-            let testCollection: testUtils.TestCollection;
-            let testContext: testUtils.TestContext;
+	describe("Deli", () => {
+		describe("CheckpointContext", () => {
+			const testId = "test";
+			const testTenant = "test";
+			let testCheckpointContext: CheckpointContext;
+			let testDocumentRepository: testUtils.TestNotImplementedDocumentRepository;
+			let testCheckpointService: testUtils.TestNotImplementedCheckpointService;
+			let testContext: testUtils.TestContext;
 
-            function createCheckpoint(logOffset: number, sequenceNumber: number): ICheckpointParams {
-                const queuedMessage = {
-                    offset: logOffset,
-                    partition: 1,
-                    topic: "topic",
-                    value: "",
-                };
+			function createCheckpoint(
+				logOffset: number,
+				sequenceNumber: number,
+			): ICheckpointParams {
+				const queuedMessage = {
+					offset: logOffset,
+					partition: 1,
+					topic: "topic",
+					value: "",
+				};
 
-                return {
-                    reason: CheckpointReason.EveryMessage,
-                    deliState: {
-                        clients: undefined,
-                        durableSequenceNumber: 0,
-                        epoch: 0,
-                        expHash1: defaultHash,
-                        logOffset,
-                        sequenceNumber,
-                        signalClientConnectionNumber: 0,
-                        term: 1,
-                        lastSentMSN: 0,
-                        nackMessages: undefined,
-                        successfullyStartedLambdas: [],
-                        checkpointTimestamp: Date.now(),
-                    },
-                    deliCheckpointMessage: queuedMessage,
-                    kafkaCheckpointMessage: queuedMessage,
-                };
-            }
+				return {
+					reason: CheckpointReason.EveryMessage,
+					deliState: {
+						clients: undefined,
+						durableSequenceNumber: 0,
+						expHash1: defaultHash,
+						logOffset,
+						sequenceNumber,
+						signalClientConnectionNumber: 0,
+						lastSentMSN: 0,
+						nackMessages: undefined,
+						successfullyStartedLambdas: [],
+						checkpointTimestamp: Date.now(),
+					},
+					deliCheckpointMessage: queuedMessage,
+					kafkaCheckpointMessage: queuedMessage,
+				};
+			}
 
-            beforeEach(() => {
-                testContext = new testUtils.TestContext();
-                testCollection = new testUtils.TestCollection([{ documentId: testId, tenantId: testTenant }]);
+			beforeEach(() => {
+				testContext = new testUtils.TestContext();
+				testDocumentRepository = new testUtils.TestNotImplementedDocumentRepository();
+				testCheckpointService = new testUtils.TestNotImplementedCheckpointService();
+				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake());
+				Sinon.replace(testCheckpointService, "writeCheckpoint", Sinon.fake());
+				const checkpointManager = createDeliCheckpointManagerFromCollection(
+					testTenant,
+					testId,
+					testCheckpointService,
+				);
+				testCheckpointContext = new CheckpointContext(
+					testTenant,
+					testId,
+					checkpointManager,
+					testContext,
+					testCheckpointService,
+				);
+			});
 
-                const checkpointManager = createDeliCheckpointManagerFromCollection(testTenant, testId, testCollection);
-                testCheckpointContext = new CheckpointContext(testTenant, testId, checkpointManager, testContext);
-            });
+			describe(".checkpoint", () => {
+				it("Should be able to submit a new checkpoint", async () => {
+					testCheckpointContext.checkpoint(createCheckpoint(0, 0));
+					await testContext.waitForOffset(0);
+				});
 
-            describe(".checkpoint", () => {
-                it("Should be able to submit a new checkpoint", async () => {
-                    testCheckpointContext.checkpoint(createCheckpoint(0, 0));
-                    await testContext.waitForOffset(0);
-                });
-
-                it("Should be able to submit multiple checkpoints", async () => {
-                    let i;
-                    for (i = 0; i < 10; i++) {
-                        testCheckpointContext.checkpoint(createCheckpoint(i, i));
-                    }
-                    await testContext.waitForOffset(i - 1);
-                });
-            });
-        });
-    });
+				it("Should be able to submit multiple checkpoints", async () => {
+					let i;
+					for (i = 0; i < 10; i++) {
+						testCheckpointContext.checkpoint(createCheckpoint(i, i));
+					}
+					await testContext.waitForOffset(i - 1);
+				});
+			});
+		});
+	});
 });

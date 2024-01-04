@@ -3,17 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { RevisionTag } from "../../core";
-import { IdAllocator } from "../modular-schema";
-import { InputSpanningMark, Mark } from "./format";
-import {
-	applyMoveEffectsToMark,
-	MoveEffectTable,
-	splitMarkOnInput,
-	splitMarkOnOutput,
-} from "./moveEffectTable";
-import { isBlockedReattach, isInputSpanningMark, isOutputSpanningMark } from "./utils";
+import { assert } from "@fluidframework/core-utils";
+import { RevisionTag, TaggedChange } from "../../core/index.js";
+import { IdAllocator } from "../../util/index.js";
+import { Mark } from "./types.js";
+import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable.js";
+import { splitMark } from "./utils.js";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];
@@ -25,7 +20,7 @@ export class MarkQueue<T> {
 		private readonly moveEffects: MoveEffectTable<T>,
 		private readonly consumeEffects: boolean,
 		private readonly genId: IdAllocator,
-		private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
+		private readonly composeChanges?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 	) {
 		this.list = list;
 	}
@@ -74,41 +69,13 @@ export class MarkQueue<T> {
 	 * The caller must verify that the next mark (as returned by peek) is longer than this length.
 	 * @param length - The length to dequeue, measured in the input context.
 	 */
-	public dequeueInput(length: number): InputSpanningMark<T> {
+	public dequeueUpTo(length: number): Mark<T> {
 		const mark = this.dequeue();
-		assert(isInputSpanningMark(mark), 0x4e3 /* Can only split sized marks on input */);
-		const [mark1, mark2] = splitMarkOnInput<T, InputSpanningMark<T>>(
-			mark,
-			this.revision,
-			length,
-			this.genId,
-			this.moveEffects,
-			!this.consumeEffects,
-		);
-		this.stack.push(mark2);
-		return mark1;
-	}
+		if (mark.count <= length) {
+			return mark;
+		}
 
-	/**
-	 * Dequeues the first `length` sized portion of the next mark.
-	 * The caller must verify that the next mark (as returned by peek) is longer than this length.
-	 * @param length - The length to dequeue, measured in the output context.
-	 * @param includeBlockedCells - If true, blocked marks that target empty cells will note be treated as 0-length.
-	 */
-	public dequeueOutput(length: number, includeBlockedCells: boolean = false): Mark<T> {
-		const mark = this.dequeue();
-		assert(
-			isOutputSpanningMark(mark) || (includeBlockedCells && isBlockedReattach(mark)),
-			0x4e4 /* Should only dequeue output if the next mark has output length > 0 */,
-		);
-		const [mark1, mark2] = splitMarkOnOutput(
-			mark,
-			this.revision,
-			length,
-			this.genId,
-			this.moveEffects,
-			!this.consumeEffects,
-		);
+		const [mark1, mark2] = splitMark(mark, length);
 		this.stack.push(mark2);
 		return mark1;
 	}

@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { ChangeEncoder } from "./changeEncoder";
-export { ChangeFamily } from "./changeFamily";
-export { ProgressiveEditBuilder, ProgressiveEditBuilderBase } from "./progressiveEditBuilder";
+export {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeEncodingContext,
+	ChangeFamilyCodec,
+} from "./changeFamily.js";
+export { EditBuilder } from "./editBuilder.js";

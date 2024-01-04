@@ -3,30 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
-import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
-import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored/index.js";
+import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util/index.js";
 
 /**
- * Either LocalFieldKey or GlobalFieldKey.
- *
- * To avoid collisions, we can not abstract over local and global field keys using the same format for each
- * (that would make telling them apart impossible).
- * Thus global field keys are using their symbols instead.
- * @alpha
+ * @internal
  */
-export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
-
-export function isLocalKey(key: FieldKey): key is LocalFieldKey {
-	return typeof key === "string";
-}
-
-/**
- * @alpha
- */
-export type TreeType = TreeSchemaIdentifier;
+export type TreeType = TreeNodeSchemaIdentifier;
 
 /**
  * The empty key ("") is used for unnamed relationships, such as the indexer
@@ -36,33 +20,30 @@ export type TreeType = TreeSchemaIdentifier;
  * and in some abstractions the APIs for this field should be inlined onto the node.
  *
  * TODO:
- * This has to be a LocalFieldKey since different nodes will have different FieldSchema for it.
+ * This has to be a FieldKey since different nodes will have different TreeFieldStoredSchema for it.
  * This makes it prone to collisions and suggests
- * that this intention may be better conveyed by metadata on the TreeViewSchema.
- * @alpha
+ * that this intention may be better conveyed by metadata on the ITreeSchema.
+ * @internal
  */
-export const EmptyKey: LocalFieldKey = brand("");
+export const EmptyKey: FieldKey = brand("");
 
 /**
- * GlobalFieldKey to use for the root of documents.
+ * FieldKey to use for the root of documents in places that need to refer to detached sequences or the root.
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
- * @alpha
+ * @internal
  */
-export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
+export const rootFieldKey: FieldKey = brand("rootFieldKey");
+
 /**
- * @alpha
+ * @internal
  */
-export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
-/**
- * @alpha
- */
-export const rootField = keyAsDetachedField(rootFieldKeySymbol);
+export const rootField = keyAsDetachedField(rootFieldKey);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
  *
- * @alpha
+ * @internal
  */
 export interface ChildLocation {
 	readonly container: ChildCollection;
@@ -71,7 +52,7 @@ export interface ChildLocation {
 
 /**
  * Wrapper around DetachedField that can be detected at runtime.
- * @alpha
+ * @internal
  */
 export interface RootField {
 	readonly key: DetachedField;
@@ -79,7 +60,7 @@ export interface RootField {
 
 /**
  * Identifier for a child collection, either on a node/tree or at the root of a forest.
- * @alpha
+ * @internal
  */
 export type ChildCollection = FieldKey | RootField;
 
@@ -93,12 +74,9 @@ export type ChildCollection = FieldKey | RootField;
  * any additional content inserted before or after contents of this range will be included in the range.
  * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
  *
- * DetachedFields are not valid to use as across edits:
- * they are only valid within the edit in which they were created.
- *
- * In some APIs DetachedFields are used as LocalFieldKeys on a special implicit root node
+ * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
- * @alpha
+ * @internal
  */
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
 
@@ -107,41 +85,27 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * This maps detached field to field keys for thus use.
  *
  * @returns `field` as a {@link FieldKey} usable on a special root node serving as a parent of detached fields.
- * @alpha
+ * @internal
  */
 export function detachedFieldAsKey(field: DetachedField): FieldKey {
-	if (field === rootField) {
-		return rootFieldKeySymbol;
-	}
 	return brand(extractFromOpaque(field));
 }
 
 /**
  * The inverse of {@link detachedFieldAsKey}.
- * Thus must only be used on {@link LocalFieldKey}s which were produced via {@link detachedFieldAsKey},
+ * Thus must only be used on {@link FieldKey}s which were produced via {@link detachedFieldAsKey},
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
- * @alpha
+ * @internal
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
-	if (isLocalKey(key)) {
-		assert(
-			key !== (rootFieldKey as string),
-			0x3be /* Root is field key must be a global field key */,
-		);
-		return brand(key);
-	}
-	assert(
-		key === rootFieldKeySymbol,
-		0x3bf /* Root is only allowed global field key as detached field */,
-	);
-	return brand(rootFieldKey);
+	return brand(key);
 }
 
 /**
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
  * TODO: make families of changes per field kind. Build editing APIs from that.
  * TODO: factor ChangeRebaser implementations to support adding new field kinds.
- * @alpha
+ * @internal
  */
 export interface FieldKind {
 	readonly name: string;
@@ -151,27 +115,34 @@ export interface FieldKind {
 }
 
 /**
- * Value that may be stored on a node.
- *
- * TODO: `Serializable` is not really the right type to use here,
- * since many types (including functions) are "Serializable" (according to the type) despite not being serializable.
- *
- * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
- *
- * This is a named interface instead of a Type alias so tooling (ex: refactors) will not replace it with `any`.
- * @alpha
+ * Value that may be stored on a leaf node.
+ * @internal
  */
-export interface TreeValue extends Serializable {}
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+	{
+		[ValueSchema.Number]: number;
+		[ValueSchema.String]: string;
+		[ValueSchema.Boolean]: boolean;
+		[ValueSchema.FluidHandle]: IFluidHandle;
+		// eslint-disable-next-line @rushstack/no-new-null
+		[ValueSchema.Null]: null;
+	}[TSchema],
+][_InlineTrick];
 
 /**
  * Value stored on a node.
- * @alpha
+ * @internal
  */
 export type Value = undefined | TreeValue;
 
 /**
  * The fields required by a node in a tree.
- * @alpha
+ *
+ * @privateRemarks A forked version of this type is used in `persistedTreeTextFormat.ts`.
+ * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
+ * See persistedTreeTextFormat's module documentation for more details.
+ *
+ * @internal
  */
 export interface NodeData {
 	/**
@@ -186,7 +157,14 @@ export interface NodeData {
 	/**
 	 * The meaning of this node.
 	 * Provides contexts/semantics for this node and its content.
-	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+	 * Typically used to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
 	 */
-	readonly type: TreeSchemaIdentifier;
+	readonly type: TreeNodeSchemaIdentifier;
 }
+
+/**
+ * Use this type to indicate that a node sits above the detached fields, and thus is not a real node and who's type should not matter.
+ */
+export const aboveRootPlaceholder: TreeNodeSchemaIdentifier = brand(
+	"com.fluidframework.placeholder.aboveRoot",
+);

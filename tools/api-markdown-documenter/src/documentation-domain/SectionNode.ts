@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 import {
-	DocumentationNode,
+	type DocumentationNode,
 	DocumentationParentNodeBase,
-	MultiLineDocumentationNode,
+	type MultiLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
-import { HeadingNode } from "./HeadingNode";
+import { type HeadingNode } from "./HeadingNode";
 
 /**
  * Represents a hierarchically nested section.
@@ -32,6 +32,8 @@ import { HeadingNode } from "./HeadingNode";
  * 	Section contents...
  * </section>
  * ```
+ *
+ * @public
  */
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
 	/**

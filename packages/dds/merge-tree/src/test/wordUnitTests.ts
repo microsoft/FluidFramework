@@ -7,8 +7,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
-import random from "random-js";
-import { Trace } from "@fluidframework/common-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { Trace } from "@fluid-internal/client-utils";
 import { ReferenceType } from "../ops";
 import { createMap, extend, MapLike } from "../properties";
 import { ReferencePosition } from "../referencePositions";
@@ -122,12 +122,11 @@ export function propertyCopy() {
 }
 
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const bookmarks: ReferencePosition[] = [];
 	const len = client.getLength();
 	for (let i = 0; i < bookmarkCount; i++) {
-		const pos = random.integer(0, len - 1)(mt);
+		const pos = random.integer(0, len - 1);
 		const segoff = client.getContainingSegment(pos);
 		let refType = ReferenceType.Simple;
 		if (i & 1) {
@@ -153,20 +152,13 @@ function measureFetch(startFile: string, withBookmarks = false) {
 		console.log(`inserting ${bookmarkCount} refs into text`);
 	}
 	const reps = 20;
-	let clockStart = clock();
+	const clockStart = clock();
 	let count = 0;
 	for (let i = 0; i < reps; i++) {
 		for (let pos = 0; pos < client.getLength(); ) {
-			// let prevPG = client.findTile(pos, "pg");
-			// let caBegin: number;
-			// if (prevPG) {
-			//     caBegin = prevPG.pos;
-			// } else {
-			//     caBegin = 0;
-			// }
 			// curPG.pos is ca end
-			const curPG = client.findTile(pos, "pg", false)!;
-			const properties = curPG.tile.properties!;
+			const curPG = client.searchForMarker(pos, "pg", true)!;
+			const properties = curPG.properties!;
 			const curSegOff = client.getContainingSegment(pos)!;
 			const curSeg = curSegOff.segment!;
 			// Combine paragraph and direct properties
@@ -175,19 +167,12 @@ function measureFetch(startFile: string, withBookmarks = false) {
 			count++;
 		}
 	}
-	let et = elapsedMicroseconds(clockStart);
+	const et = elapsedMicroseconds(clockStart);
 	console.log(
 		`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(
 			et / count
 		).toFixed(1)} microseconds per run`,
 	);
-	// Bonus: measure clone
-	clockStart = clock();
-	for (let i = 0; i < reps; i++) {
-		client.mergeTree.clone();
-	}
-	et = elapsedMicroseconds(clockStart);
-	console.log(`naive clone took ${(et / (1000 * reps)).toFixed(1)} milliseconds`);
 }
 
 const baseDir = "../../src/test/literature";

@@ -18,6 +18,4 @@
  * @packageDocumentation
  */
 
-export { HTMLViewAdapter } from "./htmlview";
 export { MountableView } from "./mountableview";
-export { IReactViewAdapterProps, ReactViewAdapter } from "./react";

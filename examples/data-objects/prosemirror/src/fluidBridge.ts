@@ -5,22 +5,18 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { createInsertSegmentOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
 import {
-	createInsertSegmentOp,
+	SharedString,
+	SequenceDeltaEvent,
+	ISequenceDeltaRange,
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
 	reservedRangeLabelsKey,
 	TextSegment,
 	ISegment,
-	IMergeTreeDeltaOp,
-} from "@fluidframework/merge-tree";
-import {
-	SharedString,
-	// ISequenceDeltaRange,
-	SequenceDeltaEvent,
-	ISequenceDeltaRange,
 } from "@fluidframework/sequence";
 import {
 	Schema,
@@ -88,7 +84,11 @@ export class ProseMirrorTransactionBuilder {
 
 	private readonly things = new Array<IThing>();
 
-	constructor(state: EditorState, private readonly schema: Schema, sharedString: SharedString) {
+	constructor(
+		state: EditorState,
+		private readonly schema: Schema,
+		sharedString: SharedString,
+	) {
 		this.transaction = state.tr;
 		this.transaction.setMeta("fluid-local", true);
 
@@ -483,7 +483,7 @@ function sliceToGroupOpsInternal(
 				},
 			};
 
-			const marker = new Marker(ReferenceType.NestBegin);
+			const marker = new Marker(ReferenceType.Simple);
 			marker.addProperties(beginProps);
 			ops.push(createInsertSegmentOp(from + offset, marker));
 
@@ -514,7 +514,7 @@ function sliceToGroupOpsInternal(
 				},
 			};
 
-			const marker = new Marker(ReferenceType.NestEnd);
+			const marker = new Marker(ReferenceType.Simple);
 			marker.addProperties(endProps);
 			ops.push(createInsertSegmentOp(from + offset, marker));
 
@@ -528,8 +528,6 @@ function sliceToGroupOpsInternal(
 function generateFragment(segments: ISegment[]) {
 	const nodeStack = new Array<IProseMirrorNode>();
 	nodeStack.push({ type: "doc", content: [] });
-
-	let openTop: IProseMirrorNode | undefined;
 
 	// TODO should I pre-seed the data structure based on the nodes to the left of the open?
 
@@ -554,45 +552,7 @@ function generateFragment(segments: ISegment[]) {
 
 			top.content!.push(nodeJson);
 		} else if (Marker.is(segment)) {
-			const nodeType = segment.properties![nodeTypeKey];
 			switch (segment.refType) {
-				case ReferenceType.NestBegin:
-					// Special case the open top
-					if (openTop) {
-						top.content!.push(openTop);
-						openTop = undefined;
-					}
-					// Create the new node, add it to the top's content, and push it on the stack
-					const newNode = {
-						type: nodeType,
-						content: [] as IProseMirrorNode[],
-						_open: true,
-					};
-					top.content!.push(newNode);
-					nodeStack.push(newNode);
-					break;
-
-				case ReferenceType.NestEnd:
-					if (top.type === nodeType) {
-						top._open = false;
-						// Matching open
-						nodeStack.pop();
-					} else {
-						// Unmatched open
-						const newNode2 = {
-							type: nodeType,
-							content: [] as IProseMirrorNode[],
-							_open: true,
-						};
-						if (openTop) {
-							newNode2.content.push(openTop);
-						}
-
-						openTop = newNode2;
-					}
-
-					break;
-
 				case ReferenceType.Simple:
 					// TODO consolidate the text segment and simple references
 					const nodeJson: IProseMirrorNode = {

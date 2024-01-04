@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
+import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	bufferToString,
 	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
-	unreachableCase,
-} from "@fluidframework/common-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
+} from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
 	ITree,
 	SummaryType,
@@ -20,19 +20,21 @@ import {
 	ISummaryBlob,
 	TreeEntry,
 	ITreeEntry,
-	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
 	ISummaryStats,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 
 /**
  * Combines summary stats by adding their totals together.
  * Returns empty stats if called without args.
  * @param stats - stats to merge
+ * @internal
  */
 export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 	const results = {
@@ -52,6 +54,9 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 	return results;
 }
 
+/**
+ * @internal
+ */
 export function utf8ByteLength(str: string): number {
 	// returns the byte length of an utf8 string
 	let s = str.length;
@@ -69,6 +74,9 @@ export function utf8ByteLength(str: string): number {
 	return s;
 }
 
+/**
+ * @internal
+ */
 export function getBlobSize(content: ISummaryBlob["content"]): number {
 	return typeof content === "string" ? utf8ByteLength(content) : content.byteLength;
 }
@@ -96,12 +104,18 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
 	}
 }
 
+/**
+ * @internal
+ */
 export function calculateStats(summary: SummaryObject): ISummaryStats {
 	const stats = mergeStats();
 	calculateStatsCore(summary, stats);
 	return stats;
 }
 
+/**
+ * @internal
+ */
 export function addBlobToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -116,6 +130,9 @@ export function addBlobToSummary(
 	summary.stats.totalBlobSize += getBlobSize(content);
 }
 
+/**
+ * @internal
+ */
 export function addTreeToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -125,6 +142,9 @@ export function addTreeToSummary(
 	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
 
+/**
+ * @internal
+ */
 export function addSummarizeResultToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -134,6 +154,9 @@ export function addSummarizeResultToSummary(
 	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
 
+/**
+ * @alpha
+ */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
 
@@ -202,6 +225,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @alpha
  */
 export function convertToSummaryTreeWithStats(
 	snapshot: ITree,
@@ -248,6 +272,7 @@ export function convertToSummaryTreeWithStats(
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @internal
  */
 export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): ISummarizeResult {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -271,13 +296,16 @@ export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false)
  * Converts ISnapshotTree to ISummaryTree format and tracks stats. This snapshot tree was
  * was taken by serialize api in detached container.
  * @param snapshot - snapshot in ISnapshotTree format
+ * @internal
  */
-export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats {
+export function convertSnapshotTreeToSummaryTree(
+	snapshot: ISnapshotTreeWithBlobContents,
+): ISummaryTreeWithStats {
 	const builder = new SummaryTreeBuilder();
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
-		if ((snapshot as any).blobsContents !== undefined) {
-			const content: ArrayBufferLike = (snapshot as any).blobsContents[id];
+		if (snapshot.blobsContents !== undefined) {
+			const content: ArrayBufferLike = snapshot.blobsContents[id];
 			if (content !== undefined) {
 				decoded = bufferToString(content, "utf-8");
 			}
@@ -304,6 +332,7 @@ export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISumm
 /**
  * Converts ISummaryTree to ITree format. This is needed for back-compat while we get rid of snapshot.
  * @param summaryTree - summary tree in ISummaryTree format
+ * @internal
  */
 export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
@@ -346,6 +375,9 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	};
 }
 
+/**
+ * @internal
+ */
 export class TelemetryContext implements ITelemetryContext {
 	private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
 
@@ -386,5 +418,84 @@ export class TelemetryContext implements ITelemetryContext {
 			jsonObject[key] = value;
 		});
 		return JSON.stringify(jsonObject);
+	}
+}
+
+/**
+ * Trims the leading slashes from the given string.
+ * @param str - A string that may contain leading slashes.
+ * @returns A new string without leading slashes.
+ */
+function trimLeadingSlashes(str: string) {
+	return str.replace(/^\/+/g, "");
+}
+
+/**
+ * Trims the trailing slashes from the given string.
+ * @param str - A string that may contain trailing slashes.
+ * @returns A new string without trailing slashes.
+ */
+function trimTrailingSlashes(str: string) {
+	return str.replace(/\/+$/g, "");
+}
+
+/**
+ * Helper class to build the garbage collection data of a node by combining the data from multiple nodes.
+ * @internal
+ */
+export class GCDataBuilder implements IGarbageCollectionData {
+	private readonly gcNodesSet: { [id: string]: Set<string> } = {};
+	public get gcNodes(): { [id: string]: string[] } {
+		const gcNodes = {};
+		for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
+			gcNodes[nodeId] = [...outboundRoutes];
+		}
+		return gcNodes;
+	}
+
+	public addNode(id: string, outboundRoutes: string[]) {
+		this.gcNodesSet[id] = new Set(outboundRoutes);
+	}
+
+	/**
+	 * Adds the given GC nodes. It does the following:
+	 * - Normalizes the ids of the given nodes.
+	 * - Prefixes the given `prefixId` to the given nodes' ids.
+	 * - Adds the outbound routes of the nodes against the normalized and prefixed id.
+	 */
+	public prefixAndAddNodes(prefixId: string, gcNodes: { [id: string]: string[] }) {
+		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+			// Remove any leading slashes from the id.
+			let normalizedId = trimLeadingSlashes(id);
+			// Prefix the given id to the normalized id.
+			normalizedId = `/${prefixId}/${normalizedId}`;
+			// Remove any trailing slashes from the normalized id. Note that the trailing slashes are removed after
+			// adding the prefix for handling the special case where id is "/".
+			normalizedId = trimTrailingSlashes(normalizedId);
+
+			// Add the outbound routes against the normalized and prefixed id without duplicates.
+			this.gcNodesSet[normalizedId] = new Set(outboundRoutes);
+		}
+	}
+
+	public addNodes(gcNodes: { [id: string]: string[] }) {
+		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+			this.gcNodesSet[id] = new Set(outboundRoutes);
+		}
+	}
+
+	/**
+	 * Adds the given outbound route to the outbound routes of all GC nodes.
+	 */
+	public addRouteToAllNodes(outboundRoute: string) {
+		for (const outboundRoutes of Object.values(this.gcNodesSet)) {
+			outboundRoutes.add(outboundRoute);
+		}
+	}
+
+	public getGCData(): IGarbageCollectionData {
+		return {
+			gcNodes: this.gcNodes,
+		};
 	}
 }

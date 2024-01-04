@@ -3,7 +3,7 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-FROM node:14.19.1-buster-slim AS base
+FROM node:18.17.1-buster-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ COPY scripts/*.* ./scripts/
 COPY packages/historian/package.json packages/historian/
 COPY packages/historian-base/package.json packages/historian-base/
 
-RUN npm install --global pnpm
+RUN corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files

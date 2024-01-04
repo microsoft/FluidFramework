@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	ISequencedDocumentMessage,
@@ -13,20 +14,16 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
+import { DeltaManager } from "@fluidframework/container-loader/test/deltaManager";
 // eslint-disable-next-line import/no-internal-modules
-import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
+import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/test/contracts";
 // eslint-disable-next-line import/no-internal-modules
-import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionManager";
-import {
-	MockDocumentDeltaConnection,
-	MockDocumentService,
-} from "@fluidframework/test-loader-utils";
+import { ConnectionManager } from "@fluidframework/container-loader/test/connectionManager";
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
-import { ScheduleManager } from "@fluidframework/container-runtime/dist/scheduleManager";
+import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
 // eslint-disable-next-line import/no-internal-modules
-import { DeltaScheduler } from "@fluidframework/container-runtime/dist/deltaScheduler";
+import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
 
 describe("Container Runtime", () => {
 	/**
@@ -46,7 +43,7 @@ describe("Container Runtime", () => {
 		const startDeltaManager = async (): Promise<void> =>
 			new Promise((resolve) => {
 				deltaManager.on("connect", resolve);
-				deltaManager.connect({ reason: "test" });
+				deltaManager.connect({ reason: { text: "test" } });
 			});
 
 		// Function to yield control in the Javascript event loop.
@@ -101,14 +98,15 @@ describe("Container Runtime", () => {
 
 			deltaManager = new DeltaManager<ConnectionManager>(
 				() => service,
-				DebugLogger.create("fluid:testDeltaManager"),
+				createChildLogger({ namespace: "fluid:testDeltaManager" }),
 				() => false,
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service,
+						() => false,
 						client as IClient,
 						false,
-						DebugLogger.create("fluid:testConnectionManager"),
+						createChildLogger({ namespace: "fluid:testConnectionManager" }),
 						props,
 					),
 			);
@@ -118,7 +116,7 @@ describe("Container Runtime", () => {
 				deltaManager,
 				emitter,
 				() => "test-client", // clientId,
-				DebugLogger.create("fluid:testScheduleManager"),
+				createChildLogger({ namespace: "fluid:testScheduleManager" }),
 			);
 
 			emitter.on("batchBegin", () => {
@@ -143,7 +141,7 @@ describe("Container Runtime", () => {
 				);
 			});
 
-			await deltaManager.attachOpHandler(0, 0, 1, {
+			await deltaManager.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};
@@ -303,18 +301,19 @@ describe("Container Runtime", () => {
 
 			const deltaManager2 = new DeltaManager<ConnectionManager>(
 				() => service2,
-				DebugLogger.create("fluid:testDeltaManager"),
+				createChildLogger({ namespace: "fluid:testDeltaManager" }),
 				() => true,
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service2,
+						() => false,
 						client as IClient,
 						true,
-						DebugLogger.create("fluid:testConnectionManager"),
+						createChildLogger({ namespace: "fluid:testConnectionManager" }),
 						props,
 					),
 			);
-			await deltaManager2.attachOpHandler(0, 0, 1, {
+			await deltaManager2.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};
@@ -323,7 +322,7 @@ describe("Container Runtime", () => {
 			});
 			await new Promise((resolve) => {
 				deltaManager2.on("connect", resolve);
-				deltaManager2.connect({ reason: "test" });
+				deltaManager2.connect({ reason: { text: "test" } });
 			});
 
 			assert.strictEqual(
@@ -338,7 +337,6 @@ describe("Container Runtime", () => {
 				minimumSequenceNumber: 0,
 				sequenceNumber: seq++,
 				type: MessageType.ClientLeave,
-				term: 1,
 				clientSequenceNumber: 1,
 				referenceSequenceNumber: 1,
 				contents: "",

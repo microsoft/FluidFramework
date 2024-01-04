@@ -5,72 +5,86 @@
 
 import crypto from "crypto";
 import fs from "fs";
-import random from "random-js";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import {
+	createFluidTestDriver,
+	generateOdspHostStoragePolicy,
+	OdspTestDriver,
+} from "@fluid-private/test-drivers";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryBaseEvent,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import {
-	createFluidTestDriver,
-	generateOdspHostStoragePolicy,
-	OdspTestDriver,
-} from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
+	getOptionOverride,
 } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
-	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
-		if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-			await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-			const logger = getTestLogger?.();
-			assert(logger !== undefined, "Expected getTestLogger to return something");
-			return new FileLogger(logger);
-		} else {
-			return new FileLogger();
-		}
-	});
+class FileLogger implements ITelemetryBufferedLogger {
+	private static readonly loggerP = (minLogLevel?: LogLevel) =>
+		new LazyPromise<FileLogger>(async () => {
+			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
+				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+				const logger = getTestLogger?.();
+				assert(logger !== undefined, "Expected getTestLogger to return something");
+				return new FileLogger(logger, minLogLevel);
+			} else {
+				return new FileLogger(undefined, minLogLevel);
+			}
+		});
 
-	public static async createLogger(dimensions: {
-		driverType: string;
-		driverEndpointName: string | undefined;
-		profile: string | undefined;
-		runId: number | undefined;
-	}) {
-		return ChildLogger.create(await this.loggerP, undefined, {
-			all: dimensions,
+	public static async createLogger(
+		dimensions: {
+			driverType: string;
+			driverEndpointName: string | undefined;
+			profile: string;
+			runId: number | undefined;
+		},
+		minLogLevel: LogLevel = LogLevel.default,
+	) {
+		const logger = await this.loggerP(minLogLevel);
+		return createChildLogger({
+			logger,
+			properties: {
+				all: dimensions,
+			},
 		});
 	}
 
 	public static async flushLogger(runInfo?: { url: string; runId?: number }) {
-		await (await this.loggerP).flush(runInfo);
+		await (await this.loggerP()).flush(runInfo);
 	}
 
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
 
-	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
-	}
+	private constructor(
+		private readonly baseLogger?: ITelemetryBufferedLogger,
+		public readonly minLogLevel?: LogLevel,
+	) {}
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
@@ -88,6 +102,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 			const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
 			const data = logs.reduce(
 				(file, event) =>
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
 				schema.join(","),
 			);
@@ -108,7 +123,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		) {
 			event.category = "generic";
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+		this.baseLogger?.send({ ...event, hostName: pkgName, testVersion: pkgVersion });
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
@@ -157,36 +172,39 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
-	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
+	profileName: string,
 	testIdn?: string,
-	profileName?: string,
 ) {
-	const randEng = random.engines.mt19937();
-	randEng.seed(seed);
-	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
-	const loaderOptions = random.pick(
-		randEng,
-		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
-	);
-	const containerOptions = random.pick(
-		randEng,
-		generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container),
-	);
+	const random = makeRandom(seed);
+	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
+
+	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
+	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
 	const configurations = random.pick(
-		randEng,
-		generateConfigurations(
-			seed,
-			testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-		),
+		generateConfigurations(seed, optionsOverride?.configurations),
 	);
 
-	const logger = await createLogger({
-		driverType: testDriver.type,
-		driverEndpointName: testDriver.endpointName,
-		profile: profileName,
-		runId: undefined,
+	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
+	const logger = await createLogger(
+		{
+			driverType: testDriver.type,
+			driverEndpointName: testDriver.endpointName,
+			profile: profileName,
+			runId: undefined,
+		},
+		minLogLevel,
+	);
+
+	logger.sendTelemetryEvent({
+		eventName: "RunConfigOptions",
+		details: JSON.stringify({
+			loaderOptions,
+			containerOptions,
+			configurations: { ...globalConfigurations, ...configurations },
+			logLevel: minLogLevel,
+		}),
 	});
 
 	// Construct the loader
@@ -197,40 +215,29 @@ export async function initialize(
 		logger,
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
-		configProvider: {
-			getRawConfig(name) {
-				return configurations[name];
-			},
-		},
+		configProvider: configProvider(configurations),
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
-	(container as Container).on("error", (error) => {
-		console.log(error);
-		process.exit(-1);
-	});
-
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
-		const ds = await requestFluidObject<ILoadTest>(container, "/");
-		const dsm = await ds.detached({ testConfig, verbose, randEng, logger });
+		const ds = (await container.getEntryPoint()) as ILoadTest;
+		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(
 			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
 		);
 	}
 
-	// Currently odsp binary snapshot format only works for special file names. This won't affect any other test
-	// since we have a unique dateId as prefix. So we can just add the required suffix.
-	const testId = testIdn ?? `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
+	const testId = testIdn ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);
 	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
-	container.close();
+	container.dispose();
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
 		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);
@@ -288,3 +295,26 @@ export async function safeExit(code: number, url: string, runId?: number) {
 
 	process.exit(code);
 }
+
+/**
+ * Global feature gates for all tests. They can be overwritten by individual test configs.
+ */
+export const globalConfigurations: Record<string, ConfigTypes> = {
+	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
+	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+};
+
+/**
+ * Config provider to be used for managing feature gates in the stress tests.
+ * It will return values based on the configs supplied as parameters if they are not found
+ * in the global test configuration {@link globalConfigurations}.
+ *
+ * @param configs - the supplied configs
+ * @returns - an instance of a config provider
+ */
+export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
+	};
+};

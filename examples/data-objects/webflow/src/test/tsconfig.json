@@ -8,6 +8,7 @@
 		"declaration": false,
 		"declarationMap": false,
 		"strictNullChecks": false,
+		"module": "esnext",
 	},
 	"include": ["./**/*"],
 	"references": [

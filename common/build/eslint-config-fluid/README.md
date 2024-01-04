@@ -53,21 +53,20 @@ ESLint provides a way to print the config that would apply to a file (`--print-c
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
-<!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCRIPTS) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Scripts
 
 | Script | Description |
 |--------|-------------|
 | `build` | `npm run print-config` |
+| `build:readme` | `markdown-magic --files "**/*.md"` |
+| `clean` | `rimraf --glob nyc` |
 | `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
 | `format` | `npm run prettier:fix` |
-| `lint` | `npm run prettier` |
-| `lint:fix` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
 | `print-config` | Print all the eslint configs. |
@@ -77,6 +76,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
 | `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
 | `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
+| `test` | `mocha src/test` |
 
 <!-- prettier-ignore-end -->
 

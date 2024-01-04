@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -20,9 +20,9 @@ function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntim
 		id,
 		SharedObjectSequenceFactory.Attributes,
 	);
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(undefined),
 	};
 	sequence.connect(services);

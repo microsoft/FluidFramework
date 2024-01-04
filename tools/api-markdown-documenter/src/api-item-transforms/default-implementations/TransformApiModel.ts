@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createTableWithHeading } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for `Model` items.
+ * Default documentation transform for `Model` items.
  */
 export function transformApiModel(
 	apiModel: ApiModel,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	if (apiModel.packages.length === 0) {
 		// If no packages under model, print simple note.

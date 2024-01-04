@@ -1,0 +1,1 @@
+This PR requires a changeset, but none is present. You should add one before you merge. See the documentation [in the wiki](https://github.com/microsoft/FluidFramework/wiki/Changesets#adding-a-changeset-to-a-pr) for more information about changesets and how to create them.

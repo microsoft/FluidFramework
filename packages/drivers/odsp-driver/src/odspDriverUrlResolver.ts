@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	DriverErrorType,
 	DriverHeader,
 	IContainerPackageInfo,
 	IResolvedUrl,
@@ -13,6 +12,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
+	OdspErrorTypes,
 	ShareLinkTypes,
 	ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions";
@@ -80,10 +80,14 @@ function removeBeginningSlash(str: string): string {
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format. Ex: `${siteUrl}?driveId=${driveId}&itemId=${itemId}&path=${path}`
+ * @alpha
  */
 export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}
 
+	/**
+	 * @alpha
+	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
 			const [siteURL, queryString] = request.url.split("?");
@@ -94,10 +98,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
 			const createLinkType = searchParams.get("createLinkType");
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- false positive
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(
 					"Proper new file params should be there!!",
-					DriverErrorType.genericError,
+					OdspErrorTypes.genericError,
 					{ driverVersion: pkgVersion },
 				);
 			}
@@ -141,21 +146,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 		const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
 		assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
-		let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
+		const documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
 			path,
 		)}`;
 
-		if (request.url.length > 0) {
-			// In case of any additional parameters add them back to the url
-			const requestURL = new URL(request.url);
-			const searchParams = requestURL.search;
-			if (searchParams) {
-				documentUrl += searchParams;
-			}
-		}
-
 		const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
-
 		return {
 			type: "fluid",
 			odspResolvedUrl: true,

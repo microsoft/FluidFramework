@@ -2,18 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
-import { SectionNode } from "../../documentation-domain";
-import { ApiFunctionLike } from "../../utilities";
+import { type SectionNode } from "../../documentation-domain";
+import { type ApiFunctionLike } from "../../utilities";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSection, createReturnsSection } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for function-like API items
- * (constructors, functions, methods).
+ * Default documentation transform for function-like API items (constructors, functions, methods).
  */
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 
@@ -29,5 +28,5 @@ export function transformApiFunctionLike(
 		childSections.push(renderedReturnsSection);
 	}
 
-	return config.createChildContentSections(apiFunctionLike, childSections, config);
+	return config.createDefaultLayout(apiFunctionLike, childSections, config);
 }

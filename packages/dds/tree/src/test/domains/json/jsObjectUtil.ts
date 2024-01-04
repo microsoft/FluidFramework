@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonCompatible, JsonCompatibleObject } from "../../../util";
+import { JsonCompatible, JsonCompatibleObject } from "../../../util/index.js";
 
 function cloneObject(obj: JsonCompatibleObject | JsonCompatible[]): JsonCompatible {
 	if (Array.isArray(obj)) {
@@ -19,7 +19,7 @@ function cloneObject(obj: JsonCompatibleObject | JsonCompatible[]): JsonCompatib
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value: clone(obj[key]),
+				value: clone(obj[key] as JsonCompatible),
 			});
 		}
 		return result;

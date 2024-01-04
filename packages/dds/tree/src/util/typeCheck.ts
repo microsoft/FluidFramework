@@ -5,20 +5,21 @@
 
 // Normally we would put tests in the test directory.
 // However in this case,
-// its important that the tests are run with the same compiler settings this library is being used with,
+// it's important that the tests are run with the same compiler settings this library is being used with,
 // since this library does not work for some configurations (ex: with strictNullChecks disabled).
 // Since the tests don't generate any JS: they only produce types,
 // importing them here gets us the validation of the compiler settings we want, with no JS size overhead.
-export type { EnforceTypeCheckTests } from "./typeCheckTests";
+export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
 
 /**
  * Utilities for manipulating the typescript typechecker.
  *
  * @remarks
- * Note: much of this library (the variance parts)
- * will be able to be replaced with Typescript 4.7 explicit variance annotations.
+ * While it appears the the variance parts of this library are made obsolete by TypeScript 4.7's explicit variance annotations,
+ * many cases still type check with incorrect variance even when using the explicit annotations,
+ * and are fixed by using the patterns in this library.
  *
- * Typescript uses structural typing if there are no private or protected members,
+ * TypeScript uses structural typing if there are no private or protected members,
  * and variance of generic type parameters depends on their usages.
  * Thus when trying to constrain code by adding extra type information,
  * it often fails to actually constrain as desired, and these utilities can help with those cases.
@@ -38,7 +39,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * If compiled with a TypeScript configuration that is not strict enough for these features to work,
  * the test suite should fail to build.
  *
- * Classes in typescript by default allow all assignments:
+ * Classes in TypeScript by default allow all assignments:
  * its only though adding members that any type constraints actually get applied.
  * This library provides types that can be used on a protected member of a class to add the desired constraints.
  *
@@ -71,14 +72,17 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
 /**
  * Use this as the type of a protected field to cause a type to use nominal typing instead of structural.
  *
- * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
- *
+ * @remarks
+ * Using nominal typing in this way prevents assignment of objects which are not instances of this class to values of this class's type.
+ * Classes which are used with "instanceof", or are supposed to be instantiated in particular ways (not just made with object literals)
+ * can use this to prevent undesired assignments.
  * @example
  * ```typescript
  * protected _typeCheck?: MakeNominal;
  * ```
- *
- * @alpha
+ * @privateRemarks
+ * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
+ * @public
  */
 export interface MakeNominal {}
 
@@ -86,13 +90,14 @@ export interface MakeNominal {}
  * Constrain generic type parameters to Contravariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Contravariant<T>;
  * ```
  *
- * @alpha
+ * @internal
  */
-export interface Contravariant<T> {
+export interface Contravariant<in T> {
 	_removeCovariance?: (_: T) => void;
 }
 
@@ -100,55 +105,36 @@ export interface Contravariant<T> {
  * Constrain generic type parameters to Covariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Covariant<T>;
  * ```
  *
- * @alpha
+ * @internal
  */
-export interface Covariant<T> {
+export interface Covariant<out T> {
 	_removeContravariance?: T;
-}
-
-/**
- * Constrain generic type parameters to Bivariant.
- * Unused Generic type parameters don't constrain a type at all:
- * Adding Bivariant does the most minimal constraint:
- * it only prevents assignment between types when neither of the two Ts extends the
- * other.
- *
- * @example
- * ```typescript
- * protected _typeCheck?: Bivariant<T>;
- * ```
- *
- * @alpha
- */
-export interface Bivariant<T> {
-	/**
-	 * See {@link Bivariant}
-	 */
-	_constrainToBivariant?(_: T): void;
 }
 
 /**
  * Constrain generic type parameters to Invariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Invariant<T>;
  * ```
  *
- * @alpha
+ * @internal
  */
-export interface Invariant<T> extends Contravariant<T>, Covariant<T> {}
+export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
 
 /**
  * Compile time assert that X is True.
  * To use, simply define a type:
  * `type _check = requireTrue<your type check>;`
  *
- * @alpha
+ * @internal
  */
 export type requireTrue<_X extends true> = true;
 
@@ -157,25 +143,24 @@ export type requireTrue<_X extends true> = true;
  * To use, simply define a type:
  * `type _check = requireFalse<your type check>;`
  *
- * @alpha
+ * @internal
  */
 export type requireFalse<_X extends false> = true;
 
 /**
  * Returns a type parameter that is true iff Source is assignable to Destination.
  *
- * @alpha
+ * @privateRemarks
+ * Use of [] in the extends clause prevents unions from being distributed over this conditional and returning `boolean` in some cases.
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
+ * @internal
  */
-export type isAssignableTo<Source, Destination> = isAny<Source> extends true
-	? true
-	: Source extends Destination
-	? true
-	: false;
+export type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
 
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
  *
- * @alpha
+ * @internal
  */
 export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
 	? false
@@ -187,7 +172,7 @@ export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> 
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
  * This is useful for checking if the output of a type meta-function is the expected type.
  *
- * @alpha
+ * @internal
  */
 export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 	? false
@@ -198,23 +183,26 @@ export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 /**
  * Returns a type parameter that is true iff A is any or B is any.
  *
- * @alpha
+ * @internal
  */
 export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
 
 /**
  * Returns a type parameter that is true iff T is any.
  *
- * @alpha
+ * @privateRemarks
+ * Only `never` is assignable to `never` (`any` isn't),
+ * but `any` distributes over the `extends` here while nothing else should.
+ * This can be used to detect `any`.
+ * @internal
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
 /**
  * Compile time assert that A is assignable to (extends) B.
  * To use, simply define a type:
  * `type _check = requireAssignableTo<T, Expected>;`
  *
- * @alpha
+ * @internal
  */
-export type requireAssignableTo<A extends B, B> = true;
+export type requireAssignableTo<_A extends B, B> = true;

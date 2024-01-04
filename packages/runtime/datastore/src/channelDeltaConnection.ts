@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
@@ -21,10 +21,10 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	}
 
 	constructor(
-		public objectId: string,
 		private _connected: boolean,
-		public readonly submit: (message: IDocumentMessage, localOpMetadata: unknown) => void,
+		public readonly submit: (content: any, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
+		/** @deprecated There is no replacement for this, its functionality is no longer needed at this layer. */
 		public readonly addedGCOutboundReference: (
 			srcHandle: IFluidHandle,
 			outboundHandle: IFluidHandle,
@@ -65,7 +65,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		this.handler.rollback(content, localOpMetadata);
 	}
 
-	public applyStashedOp(message: ISequencedDocumentMessage): unknown {
-		return this.handler.applyStashedOp(message);
+	public applyStashedOp(content: any): unknown {
+		return this.handler.applyStashedOp(content);
 	}
 }

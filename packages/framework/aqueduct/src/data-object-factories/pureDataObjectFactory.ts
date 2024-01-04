@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import { IRequest, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
@@ -23,19 +23,13 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
+	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
-	DependencyContainer,
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
-/*
- * Useful interface in places where it's useful to do type erasure for PureDataObject generic
- */
-export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
-	createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
-}
 
 /**
  * Proxy over PureDataObject
@@ -59,24 +53,21 @@ async function createDataObject<
 	// request mixin in
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-			const maybeRouter: FluidObject<IFluidRouter> | undefined =
-				await runtimeArg.entryPoint?.get();
+			// The provideEntryPoint callback below always returns TObj, so this cast is safe
+			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
-				maybeRouter !== undefined,
-				0x468 /* entryPoint should have been initialized by now */,
+				dataObject.request !== undefined,
+				0x795 /* Data store runtime entryPoint does not have request */,
 			);
-			assert(
-				maybeRouter?.IFluidRouter !== undefined,
-				0x469 /* Data store runtime entryPoint is not an IFluidRouter */,
-			);
-			return maybeRouter?.IFluidRouter.request(request);
+			return dataObject.request(request);
 		},
 		runtimeClass,
 	);
 
-	// Create a new runtime for our data store
+	// Create a new runtime for our data store, as if via new FluidDataStoreRuntime,
+	// but using the runtimeClass that's been augmented with mixins
 	// The runtime is what Fluid uses to create DDS' and route to your data store
-	const runtime: FluidDataStoreRuntime = new runtimeClass(
+	const runtime: FluidDataStoreRuntime = new runtimeClass( // calls new FluidDataStoreRuntime(...)
 		context,
 		sharedObjectRegistry,
 		existing,
@@ -87,7 +78,7 @@ async function createDataObject<
 			// Without this I ran into issues with the load-existing flow not working correctly.
 			await instance.finishInitialization(true);
 			return instance;
-		},
+		} /* provideEntryPoint */,
 	);
 
 	// Create object right away.
@@ -96,8 +87,14 @@ async function createDataObject<
 	// access DDSes or other services of runtime as objects are not fully initialized.
 	// In order to use object, we need to go through full initialization by calling finishInitialization().
 	const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
-	const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
-	const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
+	const providers =
+		scope.IFluidDependencySynthesizer?.synthesize<I["OptionalProviders"]>(
+			optionalProviders,
+			{},
+		) ??
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		({} as AsyncFluidObjectProvider<never>);
+
 	const instance = new ctor({ runtime, context, providers, initProps });
 
 	// if it's a newly created object, we need to wait for it to finish initialization
@@ -123,14 +120,13 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
+ * @alpha
  */
 export class PureDataObjectFactory<
-	TObj extends PureDataObject<I>,
-	I extends DataObjectTypes = DataObjectTypes,
-> implements
-		IFluidDataStoreFactory,
-		Partial<IProvideFluidDataStoreRegistry>,
-		IRootDataObjectFactory
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;

@@ -10,11 +10,12 @@ describe("canvas", () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
 		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
+		await page.waitForFunction(() => window["fluidStarted"]);
 	}, 45000);
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	it("can be drawn upon with a computer mouse input peripheral", async () => {
@@ -37,7 +38,7 @@ describe("canvas", () => {
 		await page.mouse.down();
 		await page.mouse.move(126, 19);
 		await page.mouse.up();
-		await page.waitFor(() => window["FluidLoader"].isSynchronized());
+		await page.waitForFunction(() => window["FluidLoader"].isSynchronized());
 
 		// compare canvases
 		const result = await page.evaluate(() => {

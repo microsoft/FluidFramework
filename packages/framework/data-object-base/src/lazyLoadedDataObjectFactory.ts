@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IProvideFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -18,9 +19,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
+/**
+ * @internal
+ */
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	implements IFluidDataStoreFactory
 {
@@ -32,6 +35,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		private readonly ctor: new (
 			context: IFluidDataStoreContext,
 			runtime: IFluidDataStoreRuntime,
+			// eslint-disable-next-line @typescript-eslint/no-shadow
 			root: ISharedObject,
 		) => T,
 		public readonly root: IChannelFactory,
@@ -62,17 +66,13 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	): Promise<FluidDataStoreRuntime> {
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				const maybeRouter: FluidObject<IProvideFluidRouter> | undefined =
-					await rt.entryPoint?.get();
+				// The provideEntryPoint callback below always returns T, so this cast is safe
+				const dataObject = (await rt.entryPoint.get()) as T;
 				assert(
-					maybeRouter !== undefined,
-					0x46c /* entryPoint should have been initialized by now */,
+					dataObject.request !== undefined,
+					0x796 /* Data store runtime entryPoint does not have request */,
 				);
-				assert(
-					maybeRouter?.IFluidRouter !== undefined,
-					0x46d /* Data store runtime entryPoint is not an IFluidRouter */,
-				);
-				return maybeRouter.IFluidRouter.request(request);
+				return dataObject.request(request);
 			},
 		);
 
@@ -88,11 +88,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		const { containerRuntime, packagePath } = parentContext;
 
 		const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
-		const entryPoint = await dataStore.entryPoint?.get();
-		// This data object factory should always be setting the entryPoint. Need the non-null assertion
-		// while we're plumbing it everywhere and entryPoint could still be undefined.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return entryPoint!;
+		return dataStore.entryPoint.get();
 	}
 
 	private instantiate(

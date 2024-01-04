@@ -4,8 +4,8 @@
  */
 import {
 	DocumentationParentNodeBase,
-	MultiLineDocumentationNode,
-	SingleLineDocumentationNode,
+	type MultiLineDocumentationNode,
+	type SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";
@@ -33,6 +33,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * 	<li>Baz</li>
  * </ul>
  * ```
+ *
+ * @public
  */
 export class UnorderedListNode
 	extends DocumentationParentNodeBase<SingleLineDocumentationNode>

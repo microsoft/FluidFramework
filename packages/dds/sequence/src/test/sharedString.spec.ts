@@ -24,6 +24,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { getTextAndMarkers, SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -46,7 +47,7 @@ describe("SharedString", () => {
 			dataStoreRuntime1.local = true;
 		});
 
-		// Creates a new SharedString and loads it from the passed snaphost tree.
+		// Creates a new SharedString and loads it from the passed snapshot tree.
 		async function CreateStringAndCompare(summaryTree: ISummaryTree): Promise<void> {
 			const services: IChannelServices = {
 				deltaConnection: new MockEmptyDeltaConnection(),
@@ -170,6 +171,23 @@ describe("SharedString", () => {
 			}
 		});
 
+		it("can handle empty annotations in text", async () => {
+			const text = "hello world";
+			const startingProps = Object.entries({});
+			sharedString.insertText(0, text, startingProps);
+			for (let i = 0; i < text.length; i++) {
+				const actualProps = sharedString.getPropertiesAtPosition(i);
+				assert(
+					actualProps !== undefined,
+					"Properties are undefined when they should be empty",
+				);
+				assert(
+					startingProps.toString() === Object.entries(actualProps).toString(),
+					`Properties are not empty at position ${i}`,
+				);
+			}
+		});
+
 		it("can insert marker", () => {
 			sharedString.insertText(0, "hello world");
 			// Insert a simple marker.
@@ -185,7 +203,7 @@ describe("SharedString", () => {
 			assert.equal(
 				simpleMarker?.properties?.markerSimpleType,
 				"markerKeyValue",
-				"markerSimpleType is incorrrect",
+				"markerSimpleType is incorrect",
 			);
 
 			// Insert a tile marker.
@@ -219,6 +237,91 @@ describe("SharedString", () => {
 			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
 		});
 
+		it("fails when the marker id is updated with a new string", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker.
+			const props = { color: "blue" };
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			sharedString.annotateMarker(simpleMarker, props);
+			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
+			// Annotate the marker's ID.
+			const newIdProps = { [reservedMarkerIdKey]: "newIdValue" };
+			assert.throws(
+				() => {
+					sharedString.annotateMarker(simpleMarker, newIdProps);
+				},
+				(e: Error) =>
+					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				"Error from attempting to update marker was not thrown or was not the expected error",
+			);
+		});
+
+		it("fails when the marker id is updated with null", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker's ID.
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			const newIdProps = { [reservedMarkerIdKey]: null };
+
+			assert.throws(
+				() => {
+					sharedString.annotateMarker(simpleMarker, newIdProps);
+				},
+				(e: Error) =>
+					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				"Error from attempting to update marker was not thrown or was not the expected error",
+			);
+		});
+
+		it("fails when the marker id is updated with undefined", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker's ID.
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			const newIdProps = { [reservedMarkerIdKey]: undefined };
+
+			assert.throws(
+				() => {
+					sharedString.annotateMarker(simpleMarker, newIdProps);
+				},
+				(e: Error) =>
+					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				"Error from attempting to update marker was not thrown or was not the expected error",
+			);
+		});
+
+		it("allows the markerId to be updated with the existing value", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker's ID.
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			const newIdProps = { [reservedMarkerIdKey]: "markerId" };
+			sharedString.annotateMarker(simpleMarker, newIdProps);
+			assert.equal(
+				sharedString.getMarkerFromId("markerId"),
+				simpleMarker,
+				"Could not update marker with the existing id value",
+			);
+			assert.equal(
+				"markerId",
+				simpleMarker.properties?.[reservedMarkerIdKey],
+				`Actual value of marker id property - ${simpleMarker.properties?.[reservedMarkerIdKey]} - does not match the expected value`,
+			);
+		});
+
 		it("replace zero range", async () => {
 			sharedString.insertText(0, "123");
 			sharedString.replaceText(1, 1, "\u00e4\u00c4");
@@ -243,7 +346,7 @@ describe("SharedString", () => {
 				sharedString.insertText(0, `${insertText}${i}`);
 			}
 
-			// Verify that summary data is correcy.
+			// Verify that summary data is correct.
 			let summaryTree = verifyAndReturnSummaryTree();
 
 			// Load a new SharedString from the snapshot and verify it is loaded correctly.
@@ -282,7 +385,7 @@ describe("SharedString", () => {
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(
 					sharedString.getAttachSummary().summary,
 				),
@@ -300,7 +403,7 @@ describe("SharedString", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(undefined),
 			};
 			sharedString.connect(services1);
@@ -349,7 +452,7 @@ describe("SharedString", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -360,7 +463,7 @@ describe("SharedString", () => {
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
@@ -460,7 +563,7 @@ describe("SharedString", () => {
 				);
 			}
 
-			// Annote the properties.
+			// Annotate the properties.
 			const colorProps = { color: "green" };
 			sharedString.annotateRange(6, text.length, colorProps);
 
@@ -493,12 +596,12 @@ describe("SharedString", () => {
 				assert.equal(
 					marker.properties.markerSimpleType,
 					simpleKey,
-					"markerSimpleType is incorrrect",
+					"markerSimpleType is incorrect",
 				);
 				assert.equal(
 					marker.properties.referenceTileLabels[0],
 					label,
-					"markerSimpleType is incorrrect",
+					"markerSimpleType is incorrect",
 				);
 			};
 
@@ -567,7 +670,7 @@ describe("SharedString", () => {
 			// Connect the first SharedString.
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -582,7 +685,7 @@ describe("SharedString", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();
@@ -605,6 +708,43 @@ describe("SharedString", () => {
 
 			// Verify that the changes were correctly received by the second SharedString
 			assert.equal(sharedString2.getText(), "hello friend");
+		});
+
+		it("insert in middle of multibyte character", async () => {
+			let base = "🎉";
+
+			sharedString.insertText(0, "🎉");
+
+			assert.equal(sharedString.getText(), base);
+			assert.equal(sharedString.getLength(), base.length);
+
+			containerRuntimeFactory.processAllMessages();
+
+			base = `${base.slice(0, 1)}a${base.slice(1)}`;
+			sharedString.insertText(1, "a");
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedString.getText(), base); // not 🎉a
+			assert.equal(sharedString.getLength(), base.length);
+		});
+
+		it("insert in middle of surrogate pair", async () => {
+			let base = "👨🏻‍🦱";
+			sharedString.insertText(0, "👨🏻‍🦱");
+
+			assert.equal(sharedString.getText(), base);
+			assert.equal(sharedString.getLength(), base.length);
+
+			containerRuntimeFactory.processAllMessages();
+
+			base = `${base.slice(0, 2)}a${base.slice(2)}`;
+			sharedString.insertText(2, "a");
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedString.getText(), base); // not 👨🏻‍🦱a
+			assert.equal(sharedString.getLength(), base.length);
 		});
 
 		it("can store ops in disconnected state and resend them on reconnection", async () => {
@@ -632,7 +772,7 @@ describe("SharedString", () => {
 		it("insert", () => {
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
-				appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles),
+				appendToMergeTreeDeltaRevertibles(event.deltaArgs, revertibles),
 			);
 			for (let i = 0; i < 10; i++) {
 				sharedString.insertText(sharedString.getLength(), i.toString());
@@ -652,7 +792,7 @@ describe("SharedString", () => {
 			sharedString.insertText(sharedString.getLength(), "hello world");
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
-				appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles),
+				appendToMergeTreeDeltaRevertibles(event.deltaArgs, revertibles),
 			);
 			while (sharedString.getLength() > 0) {
 				const middle = Math.floor(sharedString.getLength() / 2);
@@ -677,7 +817,7 @@ describe("SharedString", () => {
 
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
-				appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles),
+				appendToMergeTreeDeltaRevertibles(event.deltaArgs, revertibles),
 			);
 
 			for (let i = 0; i < sharedString.getLength(); i++) {

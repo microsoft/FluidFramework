@@ -2,43 +2,44 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import {
+	DriverError,
+	IDriverErrorBase,
+	DriverErrorTypes,
+} from "@fluidframework/driver-definitions";
 
 /**
  * ODSP Error types.
  * Different error types that may be thrown by the ODSP driver.
+ * @alpha
  */
-export enum OdspErrorType {
-	/**
-	 * Storage is out of space
-	 */
-	outOfStorageError = "outOfStorageError",
+export const OdspErrorTypes = {
+	// Inherit base driver error types
+	...DriverErrorTypes,
 
 	/**
 	 * Invalid file name (at creation of the file)
 	 */
-	invalidFileNameError = "invalidFileNameError",
+	invalidFileNameError: "invalidFileNameError",
 
 	/**
 	 * Snapshot is too big. Host application specified limit for snapshot size, and snapshot was bigger
 	 * that that limit, thus request failed. Hosting application is expected to have fall-back behavior for
 	 * such case.
 	 */
-	snapshotTooBig = "snapshotTooBig",
+	snapshotTooBig: "snapshotTooBig",
 
 	/**
 	 * Maximum time limit to fetch reached. Host application specified limit for fetching of snapshot, when
 	 * that limit is reached, request fails. Hosting application is expected to have fall-back behavior for
 	 * such case.
 	 */
-	fetchTimeout = "fetchTimeout",
+	fetchTimeout: "fetchTimeout",
 
 	/**
 	 * SPO admin toggle: fluid service is not enabled.
 	 */
-	fluidNotEnabled = "fluidNotEnabled",
-
-	fetchTokenError = "fetchTokenError",
+	fluidNotEnabled: "fluidNotEnabled",
 
 	/**
 	 * This error will be raised when client is too behind with no way to catch up.
@@ -47,15 +48,27 @@ export enum OdspErrorType {
 	 * This condition will result in any local changes being lost (i.e. only way to save state is by user
 	 * copying it over manually)
 	 */
-	cannotCatchUp = "cannotCatchUp",
+	cannotCatchUp: "cannotCatchUp",
 
 	/**
 	 * SPO can occasionally return 403 for r/w operations on document when there is a fail over to another data center.
 	 * So to preserve integrity of the data, the data becomes readonly.
 	 */
-	serviceReadOnly = "serviceReadOnly",
-}
+	serviceReadOnly: "serviceReadOnly",
 
+	/**
+	 * Due to organizational policies, you can't access server resources from the current network location.
+	 */
+	blockedIPAddress: "blockedIPAddress",
+} as const;
+/**
+ * @alpha
+ */
+export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
+
+/**
+ * @alpha
+ */
 export interface IOdspErrorAugmentations {
 	/**
 	 * Server epoch indicates when the file was last modified.
@@ -78,9 +91,13 @@ export interface IOdspErrorAugmentations {
 /**
  * Base interface for all errors and warnings
  * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
+ * @alpha
  */
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
-	readonly errorType: OdspErrorType;
+	readonly errorType: OdspErrorTypes;
 }
 
+/**
+ * @alpha
+ */
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);

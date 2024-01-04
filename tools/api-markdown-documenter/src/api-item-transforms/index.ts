@@ -8,13 +8,36 @@
  */
 
 export {
-	ApiItemTransformationConfiguration,
-	CreateChildContentSections,
-	defaultApiItemTransformations,
-	TransformApiItemWithChildren,
-	TransformApiItemWithoutChildren,
-} from "./Configuration";
-export { transformDocNode } from "./DocNodeTransforms";
+	doesItemRequireOwnDocument,
+	filterItems,
+	getHeadingForApiItem,
+	getLinkForApiItem,
+	shouldItemBeIncluded,
+} from "./ApiItemTransformUtilities";
+export {
+	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
+	type DefaultDocumentationSuiteOptions,
+	type DocumentationSuiteOptions,
+	type DocumentBoundaries,
+	getApiItemTransformationConfigurationWithDefaults,
+	type HierarchyBoundaries,
+	type TransformApiItemWithChildren,
+	type TransformApiItemWithoutChildren,
+} from "./configuration";
+export {
+	createBreadcrumbParagraph,
+	createDeprecationNoticeSection,
+	createExamplesSection,
+	createParametersSection,
+	createRemarksSection,
+	createReturnsSection,
+	createSeeAlsoSection,
+	createSignatureSection,
+	createSummaryParagraph,
+	createThrowsSection,
+	createTypeParametersSection,
+} from "./helpers";
+export { transformTsdocNode } from "./TsdocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
-export { apiPackageToDocument } from "./TransformApiPackage";
-export { apiModelToDocument } from "./TransformModel";
+export { transformApiModel } from "./TransformApiModel";

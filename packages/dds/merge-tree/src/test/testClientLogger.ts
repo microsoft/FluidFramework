@@ -12,7 +12,8 @@ import { TextSegment } from "../textSegment";
 import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { matchProperties, PropertySet } from "../properties";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk";
-import { Marker, toRemovalInfo } from "../mergeTreeNodes";
+import { Marker, seqLTE, toRemovalInfo } from "../mergeTreeNodes";
+import { IMergeTreeOptions } from "..";
 import { TestClient } from "./testClient";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {
@@ -46,14 +47,17 @@ function matchPropertiesHandleEmpty(a: PropertySet | undefined, b: PropertySet |
 	return matchProperties(a, b) || (arePropsEmpty(a) && arePropsEmpty(b));
 }
 
-type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
+type ClientMap<TClientName extends string> = Partial<Record<TClientName, TestClient>>;
 
-export function createClientsAtInitialState<TClients extends ClientMap>(
+export function createClientsAtInitialState<
+	TClients extends ClientMap<TClientName>,
+	TClientName extends string = string & keyof TClients,
+>(
 	opts: {
 		initialState: string;
-		options?: PropertySet;
+		options?: IMergeTreeOptions & PropertySet;
 	},
-	...clientIds: (string & keyof TClients)[]
+	...clientIds: TClientName[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[] } {
 	const setup = (c: TestClient) => {
 		c.insertTextLocal(0, opts.initialState);
@@ -114,7 +118,10 @@ export class TestClientLogger {
 		this.disposeCallbacks.length = 0;
 	}
 
-	constructor(private readonly clients: readonly TestClient[], private readonly title?: string) {
+	constructor(
+		private readonly clients: readonly TestClient[],
+		private readonly title?: string,
+	) {
 		const logHeaders: string[] = [];
 		clients.forEach((c, i) => {
 			logHeaders.push("op");
@@ -278,7 +285,7 @@ export class TestClientLogger {
 		if (!excludeHeader) {
 			str +=
 				`_: Local State\n` +
-				`-: Deleted\n` +
+				`-: Deleted    ~:Deleted <= MinSeq\n` +
 				`*: Unacked Insert and Delete\n` +
 				`${this.clients[0].getCollabWindow().minSeq}: msn/offset\n` +
 				`Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>\n` +
@@ -327,15 +334,22 @@ export class TestClientLogger {
 						? "¶"
 						: undefined;
 					if (text !== undefined) {
-						if (node.removedSeq) {
-							if (node.removedSeq === UnassignedSequenceNumber) {
+						const removedNode = toRemovalInfo(node);
+						if (removedNode !== undefined) {
+							if (removedNode.removedSeq === UnassignedSequenceNumber) {
 								acked += "_".repeat(text.length);
 								local +=
 									node.seq === UnassignedSequenceNumber
 										? "*".repeat(text.length)
 										: "-".repeat(text.length);
 							} else {
-								acked += "-".repeat(text.length);
+								const removedSymbol = seqLTE(
+									removedNode.removedSeq,
+									client.getCollabWindow().minSeq,
+								)
+									? "~"
+									: "-";
+								acked += removedSymbol.repeat(text.length);
 								local += " ".repeat(text.length);
 							}
 						} else {

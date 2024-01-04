@@ -37,7 +37,8 @@ describe("fluid-runner from command line", () => {
 					`--inputFile=${snapshot}`,
 					`--outputFile=${outputFilePath}`,
 					`--telemetryFile=${telemetryFile}`,
-					`--telemetryFormat=CSV`,
+					"--telemetryFormat=CSV",
+					"--eventsPerFlush=-2",
 				],
 				{ encoding: "utf-8" },
 			);
@@ -103,6 +104,89 @@ describe("fluid-runner from command line", () => {
 			]);
 
 			assert.notStrictEqual(fs.statSync(outputFilePath).size, 0, "Expect some result file");
+		});
+
+		it("Process exits with code 1 when timeout occurs", () => {
+			const timeoutCodeLoader = path.join(
+				__dirname,
+				"sampleCodeLoaders",
+				"timeoutCodeLoader.js",
+			);
+			const exportFile = spawnSync(
+				"node",
+				[
+					command,
+					"exportFile",
+					`--codeLoader=${timeoutCodeLoader}`,
+					`--inputFile=${snapshot}`,
+					`--outputFile=${outputFilePath}`,
+					`--telemetryFile=${telemetryFile}`,
+					"--timeout=1",
+				],
+				{ encoding: "utf-8" },
+			);
+
+			assert.strictEqual(
+				exportFile.status,
+				1,
+				`Process was not exited with code 1. Error: [${exportFile.stderr}]`,
+			);
+			assert.notStrictEqual(exportFile.stderr, "", "Expect some error output");
+		});
+
+		it("Process exits with code 1 when disallowed network call occurs", () => {
+			const networkFetchCodeLoader = path.join(
+				__dirname,
+				"sampleCodeLoaders",
+				"networkFetchCodeLoader.js",
+			);
+			const exportFile = spawnSync(
+				"node",
+				[
+					command,
+					"exportFile",
+					`--codeLoader=${networkFetchCodeLoader}`,
+					`--inputFile=${snapshot}`,
+					`--outputFile=${outputFilePath}`,
+					`--telemetryFile=${telemetryFile}`,
+					`--disableNetworkFetch=true`,
+				],
+				{ encoding: "utf-8" },
+			);
+
+			assert.strictEqual(
+				exportFile.status,
+				1,
+				`Process was not exited with code 1. Error: [${exportFile.stderr}]`,
+			);
+			assert.notStrictEqual(exportFile.stderr, "", "Expect some error output");
+		});
+
+		it("Process exits with code 0 when allowed network call occurs", () => {
+			const networkFetchCodeLoader = path.join(
+				__dirname,
+				"sampleCodeLoaders",
+				"networkFetchCodeLoader.js",
+			);
+			const exportFile = spawnSync(
+				"node",
+				[
+					command,
+					"exportFile",
+					`--codeLoader=${networkFetchCodeLoader}`,
+					`--inputFile=${snapshot}`,
+					`--outputFile=${outputFilePath}`,
+					`--telemetryFile=${telemetryFile}`,
+					`--disableNetworkFetch=false`,
+				],
+				{ encoding: "utf-8" },
+			);
+
+			assert.strictEqual(
+				exportFile.status,
+				0,
+				`Process was not exited with code 0. Error: [${exportFile.stderr}]`,
+			);
 		});
 	});
 });

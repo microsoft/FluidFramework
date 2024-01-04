@@ -16,71 +16,80 @@ import winston from "winston";
 import safeStringify from "json-stringify-safe";
 
 export function normalizePort(val) {
-    const normalizedPort = parseInt(val, 10);
+	const normalizedPort = parseInt(val, 10);
 
-    if (isNaN(normalizedPort)) {
-        // named pipe
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return val;
-    }
+	if (isNaN(normalizedPort)) {
+		// named pipe
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return val;
+	}
 
-    if (normalizedPort >= 0) {
-        // port number
-        return normalizedPort;
-    }
+	if (normalizedPort >= 0) {
+		// port number
+		return normalizedPort;
+	}
 
-    return false;
+	return false;
 }
 
+export const Constants = Object.freeze({
+	historianRestThrottleIdSuffix: "HistorianRest",
+	createSummaryThrottleIdPrefix: "createSummary",
+	getSummaryThrottleIdPrefix: "getSummary",
+	generalRestCallThrottleIdPrefix: "generalRestCall",
+	IsEphemeralContainer: "Is-Ephemeral-Container",
+	isInitialSummary: "isInitialSummary",
+});
+
 export function getTokenLifetimeInSec(token: string): number {
-    const claims = decode(token) as ITokenClaims;
-    if (claims?.exp) {
-        return (claims.exp - Math.round((new Date().getTime()) / 1000));
-    }
-    return undefined;
+	const claims = decode(token) as ITokenClaims;
+	if (claims?.exp) {
+		return claims.exp - Math.round(new Date().getTime() / 1000);
+	}
+	return undefined;
 }
 
 export function getTenantIdFromRequest(params: Params) {
-    const tenantId = getParam(params, "tenantId");
-    if (tenantId !== undefined) {
-        return tenantId;
-    }
-    const id = getParam(params, "id");
-    if (id !== undefined) {
-        return id;
-    }
+	const tenantId = getParam(params, "tenantId");
+	if (tenantId !== undefined) {
+		return tenantId;
+	}
+	const id = getParam(params, "id");
+	if (id !== undefined) {
+		return id;
+	}
 
-    return "-";
+	return "-";
 }
 
 export function getDocumentIdFromRequest(tenantId: string, authorization: string) {
-    try {
-        const token = parseToken(tenantId, authorization);
-        const decoded = decode(token) as ITokenClaims;
-        return decoded.documentId;
-    } catch (err) {
-        return "-";
-    }
+	try {
+		const token = parseToken(tenantId, authorization);
+		const decoded = decode(token) as ITokenClaims;
+		return decoded.documentId;
+	} catch (err) {
+		return "-";
+	}
 }
 
 export function parseToken(tenantId: string, authorization: string): string {
-    let token: string;
-    if (authorization) {
-        const base64TokenMatch = authorization.match(/Basic (.+)/);
-        if (!base64TokenMatch) {
-            throw new NetworkError(403, "Malformed authorization token");
-        }
-        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+	let token: string;
+	if (authorization) {
+		const base64TokenMatch = authorization.match(/Basic (.+)/);
+		if (!base64TokenMatch) {
+			throw new NetworkError(403, "Malformed authorization token");
+		}
+		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
 
-        const tokenMatch = encoded.match(/(.+):(.+)/);
-        if (!tokenMatch || tenantId !== tokenMatch[1]) {
-            throw new NetworkError(403, "Malformed authorization token");
-        }
+		const tokenMatch = encoded.match(/(.+):(.+)/);
+		if (!tokenMatch || tenantId !== tokenMatch[1]) {
+			throw new NetworkError(403, "Malformed authorization token");
+		}
 
-        token = tokenMatch[2];
-    }
+		token = tokenMatch[2];
+	}
 
-    return token;
+	return token;
 }
 
 /**
@@ -88,8 +97,8 @@ export function parseToken(tenantId: string, authorization: string): string {
  * TODO: replace with containsPathTraversal from services-shared
  */
 export function containsPathTraversal(path: string): boolean {
-    const parsedPath = parse(path);
-    return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
+	const parsedPath = parse(path);
+	return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
 }
 
 /**
@@ -99,32 +108,45 @@ export function containsPathTraversal(path: string): boolean {
  * @param lumberProperties - Collection of Lumberjack telemetry properties associated with the request
  */
 export function getRequestErrorTranslator(
-    url: string,
-    method: string,
-    lumberProperties?: Map<string, any> | Record<string, any>): (error: any) => never {
-    const standardLogErrorMessage = `[${method}] Request to [${url}] failed`;
-    const requestErrorTranslator = (error: any): never => {
-        if (typeof error === "object" && error instanceof Error && error.name === "NetworkError") {
-            // BasicRestWrapper throws NetworkErrors that describe the error details associated with the network call.
-            // Here, we log information associated with the error for debugging purposes, and re-throw.
-            const networkError = error as NetworkError;
-            winston.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`);
-            Lumberjack.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`, lumberProperties);
-            throw error;
-        } else if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10))) {
-            // The legacy implementation of BasicRestWrapper used to throw status codes only, when status codes
-            // were available. Here, we deal with that legacy scenario, logging the error information and throwing
-            // a new NetworkError based on it.
-            const errorCode = typeof error === "number" ? error : Number.parseInt(error, 10);
-            winston.error(`${standardLogErrorMessage}: [statusCode: ${errorCode}]`);
-            Lumberjack.error(`${standardLogErrorMessage}: [statusCode: ${errorCode}]`, lumberProperties);
-            throw new NetworkError(errorCode, "Internal Service Request Failed");
-        }
+	url: string,
+	method: string,
+	lumberProperties?: Map<string, any> | Record<string, any>,
+): (error: any) => never {
+	const standardLogErrorMessage = `[${method}] Request to [${url}] failed`;
+	const requestErrorTranslator = (error: any): never => {
+		if (typeof error === "object" && error instanceof Error && error.name === "NetworkError") {
+			// BasicRestWrapper throws NetworkErrors that describe the error details associated with the network call.
+			// Here, we log information associated with the error for debugging purposes, and re-throw.
+			const networkError = error as NetworkError;
+			winston.error(
+				`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${
+					safeStringify(networkError.details) ?? "undefined"
+				}]`,
+			);
+			Lumberjack.error(
+				`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${
+					safeStringify(networkError.details) ?? "undefined"
+				}]`,
+				lumberProperties,
+			);
+			throw error;
+		} else if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10))) {
+			// The legacy implementation of BasicRestWrapper used to throw status codes only, when status codes
+			// were available. Here, we deal with that legacy scenario, logging the error information and throwing
+			// a new NetworkError based on it.
+			const errorCode = typeof error === "number" ? error : Number.parseInt(error, 10);
+			winston.error(`${standardLogErrorMessage}: [statusCode: ${errorCode}]`);
+			Lumberjack.error(
+				`${standardLogErrorMessage}: [statusCode: ${errorCode}]`,
+				lumberProperties,
+			);
+			throw new NetworkError(errorCode, "Internal Service Request Failed");
+		}
 
-        // Treat anything else as an internal error, but log for debugging purposes
-        winston.error(`${standardLogErrorMessage}: ${safeStringify(error)}`);
-        Lumberjack.error(standardLogErrorMessage, lumberProperties, error);
-        throw new NetworkError(500, "Internal Server Error");
-    };
-    return requestErrorTranslator;
+		// Treat anything else as an internal error, but log for debugging purposes
+		winston.error(`${standardLogErrorMessage}: ${safeStringify(error)}`);
+		Lumberjack.error(standardLogErrorMessage, lumberProperties, error);
+		throw new NetworkError(500, "Internal Server Error");
+	};
+	return requestErrorTranslator;
 }

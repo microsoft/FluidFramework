@@ -2,6 +2,21 @@
 
 An Ioc type library for synthesizing a FluidObject based on FluidObject providers.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 It allows for the creation of a `DependencyContainer` that can have FluidObjects registered with it
 based on their interface Symbol. So for example if I wanted to register something as `IFoo` I would
 need to provide and object that implements `IFoo` along side it.
@@ -13,8 +28,8 @@ So if I wanted an object with an optional `IFoo` and a required `IBar` I would g
 
 ```typescript
 {
-    IFoo: Promise<IFoo | undefined>
-    IBar: Promise<IBar>
+	IFoo: Promise<IFoo | undefined>;
+	IBar: Promise<IBar>;
 }
 ```
 
@@ -145,8 +160,8 @@ If I wanted an object with an optional `IFoo` and a required `IBar` I would get 
 
 ```typescript
 {
-    IFoo: Promise<IFoo | undefined>
-    IBar: Promise<IBar>
+	IFoo: Promise<IFoo | undefined>;
+	IBar: Promise<IBar>;
 }
 ```
 
@@ -224,3 +239,20 @@ console.log(bar.bar);
 
 The `DependencyContainer` takes one optional parameter which is the `parent`. When resolving providers the `DependencyContainer` will first
 check the current container then look in the parent.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

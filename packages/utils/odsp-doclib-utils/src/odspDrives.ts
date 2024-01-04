@@ -47,6 +47,9 @@ interface IOdspDriveInfo {
 	quota: IOdspDriveQuota;
 }
 
+/**
+ * @internal
+ */
 export interface IOdspDriveItem {
 	path: string;
 	name: string;
@@ -55,6 +58,9 @@ export interface IOdspDriveItem {
 	isFolder: boolean;
 }
 
+/**
+ * @internal
+ */
 export async function getDriveItemByRootFileName(
 	server: string,
 	account: string | undefined,
@@ -76,6 +82,9 @@ export async function getDriveItemByRootFileName(
 	return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
+/**
+ * @internal
+ */
 export async function getDriveItemByServerRelativePath(
 	server: string,
 	serverRelativePath: string,
@@ -88,7 +97,7 @@ export async function getDriveItemByServerRelativePath(
 		pathParts.shift();
 	}
 	if (pathParts.length === 0) {
-		return Promise.reject(new Error(`Invalid serverRelativePath ${serverRelativePath}`));
+		throw new Error(`Invalid serverRelativePath ${serverRelativePath}`);
 	}
 	if (
 		pathParts.length >= 2 &&
@@ -108,6 +117,9 @@ export async function getDriveItemByServerRelativePath(
 	return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
+/**
+ * @internal
+ */
 export async function getDriveItemFromDriveAndItem(
 	server: string,
 	drive: string,
@@ -118,6 +130,9 @@ export async function getDriveItemFromDriveAndItem(
 	return getDriveItem(url, authRequestInfo, false);
 }
 
+/**
+ * @internal
+ */
 export async function getChildrenByDriveItem(
 	driveItem: IOdspDriveItem,
 	server: string,
@@ -186,6 +201,9 @@ async function getDriveItem(
 	return toIODSPDriveItem(getDriveItemResult);
 }
 
+/**
+ * @alpha
+ */
 export async function getDriveId(
 	server: string,
 	account: string,

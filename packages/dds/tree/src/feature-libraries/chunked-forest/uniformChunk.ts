@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	CursorLocationType,
 	FieldUpPath,
 	UpPath,
 	TreeValue,
 	Value,
 	PathRootPrefix,
-} from "../../core";
-import { compareArrays, fail, ReferenceCountedBase } from "../../util";
-import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
+} from "../../core/index.js";
+import { fail, ReferenceCountedBase } from "../../util/index.js";
+import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
+import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk.js";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -41,7 +41,10 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	 * @param shape - describes the semantics and layout of `values`.
 	 * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
 	 */
-	public constructor(public shape: ChunkShape, public values: TreeValue[]) {
+	public constructor(
+		public shape: ChunkShape,
+		public values: TreeValue[],
+	) {
 		super();
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
@@ -89,7 +92,7 @@ export class TreeShape {
 	public readonly positions: readonly NodePositionInfo[];
 
 	public constructor(
-		public readonly type: TreeSchemaIdentifier,
+		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly hasValue: boolean,
 		public readonly fieldsArray: readonly FieldShape[],
 	) {
@@ -114,7 +117,7 @@ export class TreeShape {
 		this.fieldsOffsetArray = [...fields.values()];
 	}
 
-	equals(other: TreeShape): boolean {
+	public equals(other: TreeShape): boolean {
 		// TODO: either dedup instances and/or store a collision resistant hash for fast compare.
 
 		if (
@@ -129,7 +132,7 @@ export class TreeShape {
 		return this.type === other.type && this.hasValue === other.hasValue;
 	}
 
-	withTopLevelLength(topLevelLength: number): ChunkShape {
+	public withTopLevelLength(topLevelLength: number): ChunkShape {
 		return new ChunkShape(this, topLevelLength);
 	}
 }
@@ -188,19 +191,19 @@ export class ChunkShape {
 		this.positions = positions;
 	}
 
-	equals(other: ChunkShape): boolean {
+	public equals(other: ChunkShape): boolean {
 		// TODO: either dedup instances and/or store a collision resistant hash for fast compare.
 		return this.topLevelLength === other.topLevelLength && this.treeShape === other.treeShape;
 	}
 }
 
 /**
- * Shape of a field (like `FieldShape`) but with information about how it would be offset withing a chunk because of its parents.
+ * Shape of a field (like `FieldShape`) but with information about how it would be offset within a chunk because of its parents.
  */
 class OffsetShape {
 	/**
 	 * @param shape - the shape of each child in this field
-	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field withing a chunk, or top level chunk)
+	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field within a chunk, or top level chunk)
 	 * @param offset - number of nodes before this in the parent's subtree
 	 * @param key - field key
 	 * @param indexOfParentField - index of node with this shape
@@ -253,7 +256,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private readonly shape: ChunkShape;
 	private readonly positions: readonly (NodePositionInfo | undefined)[];
 
-	mode: CursorLocationType = CursorLocationType.Fields;
+	public mode: CursorLocationType = CursorLocationType.Fields;
 
 	// Undefined when not in fields mode.
 	private fieldKey?: FieldKey;
@@ -296,7 +299,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	/**
-	 * Change the current node withing the chunk.
+	 * Change the current node within the chunk.
 	 * See `nodeInfo` for getting data about the current node.
 	 *
 	 * @param positionIndex - index of the position of the newly selected node in `positions`.
@@ -333,7 +336,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return this.nodePositionInfo;
 	}
 
-	nextField(): boolean {
+	public nextField(): boolean {
 		this.indexOfField++;
 		const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
 		if (this.indexOfField < fields.length) {
@@ -344,18 +347,18 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return false;
 	}
 
-	exitField(): void {
+	public exitField(): void {
 		assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
 		assert(this.nodePositionInfo !== undefined, 0x563 /* can not exit root field */);
 		this.fieldKey = undefined;
 		this.mode = CursorLocationType.Nodes;
 	}
 
-	getFieldKey(): FieldKey {
+	public getFieldKey(): FieldKey {
 		return this.fieldKey ?? fail("not in a field");
 	}
 
-	getFieldLength(): number {
+	public getFieldLength(): number {
 		assert(
 			this.mode === CursorLocationType.Fields,
 			0x53f /* tried to access cursor when in wrong mode */,
@@ -370,7 +373,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return fieldInfo[2];
 	}
 
-	firstNode(): boolean {
+	public firstNode(): boolean {
 		assert(
 			this.mode === CursorLocationType.Fields,
 			0x540 /* tried to access cursor when in wrong mode */,
@@ -385,7 +388,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		}
 	}
 
-	enterNode(childIndex: number): void {
+	public enterNode(childIndex: number): void {
 		assert(
 			this.mode === CursorLocationType.Fields,
 			0x541 /* tried to access cursor when in wrong mode */,
@@ -432,30 +435,28 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
 	}
 
-	getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		return prefixFieldPath(prefix, {
 			field: this.getFieldKey(),
 			parent: this.nodePositionInfo,
 		});
 	}
 
-	getPath(prefix?: PathRootPrefix): UpPath | undefined {
+	public getPath(prefix?: PathRootPrefix): UpPath | undefined {
 		return prefixPath(prefix, this.nodeInfo(CursorLocationType.Nodes));
 	}
 
-	get fieldIndex(): number {
+	public get fieldIndex(): number {
 		return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
 	}
 
-	public get chunkStart(): number {
-		return 0;
-	}
+	public readonly chunkStart: number = 0;
 
 	public get chunkLength(): number {
 		return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;
 	}
 
-	seekNodes(offset: number): boolean {
+	public seekNodes(offset: number): boolean {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		const index = offset + info.parentIndex;
 		if (index >= 0 && index < info.topLevelLength) {
@@ -466,7 +467,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return false;
 	}
 
-	nextNode(): boolean {
+	public nextNode(): boolean {
 		// This is the same as `return this.seekNodes(1);` but slightly faster.
 
 		const info = this.nodeInfo(CursorLocationType.Nodes);
@@ -479,7 +480,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return true;
 	}
 
-	exitNode(): void {
+	public exitNode(): void {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		this.indexOfField =
 			info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
@@ -490,7 +491,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		); // TODO
 	}
 
-	firstField(): boolean {
+	public firstField(): boolean {
 		const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape.fieldsArray;
 		if (fieldsArray.length === 0) {
 			return false;
@@ -501,7 +502,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return true;
 	}
 
-	enterField(key: FieldKey): void {
+	public enterField(key: FieldKey): void {
 		const fieldMap = this.nodeInfo(CursorLocationType.Nodes).shape.fields;
 		const fieldInfo = fieldMap.get(key);
 		this.indexOfField =
@@ -512,11 +513,11 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.mode = CursorLocationType.Fields;
 	}
 
-	get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		return this.nodeInfo(CursorLocationType.Nodes).shape.type;
 	}
 
-	get value(): Value {
+	public get value(): Value {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
 	}

@@ -7,37 +7,53 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import {
 	ITreeCursor,
-	singleJsonCursor,
 	jsonableTreeFromCursor,
 	EmptyKey,
-	cursorToJsonObject,
-	jsonSchemaData,
 	JsonCompatible,
-} from "../../..";
+	brand,
+} from "../../../index.js";
+import {
+	singleJsonCursor,
+	cursorToJsonObject,
+	jsonSchema,
+	jsonRoot,
+	SchemaBuilder,
+} from "../../../domains/index.js";
 import {
 	buildForest,
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
-	singleMapTreeCursor,
-	singleTextCursor,
+	cursorForMapTreeNode,
+	cursorForJsonableTreeNode,
 	buildChunkedForest,
-} from "../../../feature-libraries";
+	intoStoredSchema,
+} from "../../../feature-libraries/index.js";
 import {
+	FieldKey,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	JsonableTree,
 	moveToDetachedField,
-} from "../../../core";
+	TreeStoredSchemaRepository,
+} from "../../../core/index.js";
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
+	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree";
-import { Canada, generateCanada } from "./canada";
-import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
-import { CitmCatalog, generateCitmJson } from "./citm";
-import { clone } from "./jsObjectUtil";
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
+import { testIdCompressor } from "../../utils.js";
+import { Canada, generateCanada } from "./canada.js";
+import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
+import { generateTwitterJsonByByteSize } from "./twitter.js";
+import { CitmCatalog, generateCitmJson } from "./citm.js";
+import { clone } from "./jsObjectUtil.js";
+
+// Shared tree keys that map to the type used by the Twitter type/dataset
+export const TwitterKey = {
+	statuses: brand<FieldKey>("statuses"),
+	retweetCount: brand<FieldKey>("retweet_count"),
+	favoriteCount: brand<FieldKey>("favorite_count"),
+};
 
 /**
  * Performance test suite that measures a variety of access patterns using ITreeCursor.
@@ -49,7 +65,11 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
 	}[],
 ) {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
+	const schemaCollection = new SchemaBuilder({
+		scope: "JsonCursor benchmark",
+		libraries: [jsonSchema],
+	}).intoSchema(SchemaBuilder.optional(jsonRoot));
+	const schema = new TreeStoredSchemaRepository(intoStoredSchema(schemaCollection));
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;
@@ -78,16 +98,23 @@ function bench(
 
 			const cursorFactories: [string, () => ITreeCursor][] = [
 				["JsonCursor", () => singleJsonCursor(json)],
-				["TextCursor", () => singleTextCursor(encodedTree)],
+				["TextCursor", () => cursorForJsonableTreeNode(encodedTree)],
 				[
 					"MapCursor",
-					() => singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(encodedTree))),
+					() =>
+						cursorForMapTreeNode(
+							mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree)),
+						),
 				],
 				[
 					"object-forest Cursor",
 					() => {
-						const forest = buildForest(schema);
-						initializeForest(forest, [singleTextCursor(encodedTree)]);
+						const forest = buildForest();
+						initializeForest(
+							forest,
+							[cursorForJsonableTreeNode(encodedTree)],
+							testIdCompressor,
+						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						assert(cursor.firstNode());
@@ -97,7 +124,7 @@ function bench(
 				[
 					"BasicChunkCursor",
 					() => {
-						const input = singleTextCursor(encodedTree);
+						const input = cursorForJsonableTreeNode(encodedTree);
 						const chunk = basicChunkTree(input, defaultChunkPolicy);
 						const cursor = chunk.cursor();
 						cursor.enterNode(0);
@@ -107,8 +134,14 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(schema);
-						initializeForest(forest, [singleTextCursor(encodedTree)]);
+						const forest = buildChunkedForest(
+							makeTreeChunker(schema, defaultSchemaPolicy),
+						);
+						initializeForest(
+							forest,
+							[cursorForJsonableTreeNode(encodedTree)],
+							testIdCompressor,
+						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						assert(cursor.firstNode());
@@ -216,18 +249,18 @@ function extractAvgValsFromTwitter(
 	cursor: ITreeCursor,
 	calculate: (x: number, y: number) => void,
 ): void {
-	cursor.enterField(Twitter.SharedTreeFieldKey.statuses); // move from root to field
+	cursor.enterField(TwitterKey.statuses); // move from root to field
 	cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
 	cursor.enterField(EmptyKey); // enter the array field at the node,
 
 	for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-		cursor.enterField(Twitter.SharedTreeFieldKey.retweetCount);
+		cursor.enterField(TwitterKey.retweetCount);
 		cursor.enterNode(0);
 		const retweetCount = cursor.value as number;
 		cursor.exitNode();
 		cursor.exitField();
 
-		cursor.enterField(Twitter.SharedTreeFieldKey.favoriteCount);
+		cursor.enterField(TwitterKey.favoriteCount);
 		cursor.enterNode(0);
 		const favoriteCount = cursor.value;
 		cursor.exitNode();

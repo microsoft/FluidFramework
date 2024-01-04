@@ -5,7 +5,10 @@
 
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
+import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	NamedFluidDataStoreRegistryEntries,
 	IFluidDataStoreFactory,
@@ -14,19 +17,34 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
+/**
+ * @internal
+ */
 export class RuntimeFactory extends RuntimeFactoryHelper {
 	private readonly registry: NamedFluidDataStoreRegistryEntries;
 
-	constructor(
-		private readonly defaultStoreFactory: IFluidDataStoreFactory,
-		storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
-		private readonly requestHandlers: RuntimeRequestHandler[] = [],
-	) {
+	private readonly defaultStoreFactory: IFluidDataStoreFactory;
+	private readonly requestHandlers: RuntimeRequestHandler[];
+	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+
+	constructor(props: {
+		defaultStoreFactory: IFluidDataStoreFactory;
+		storeFactories: IFluidDataStoreFactory[];
+		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		requestHandlers?: RuntimeRequestHandler[];
+		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	}) {
 		super();
+
+		this.defaultStoreFactory = props.defaultStoreFactory;
+		this.provideEntryPoint = props.provideEntryPoint;
+		this.requestHandlers = props.requestHandlers ?? [];
+		const storeFactories = props.storeFactories ?? [this.defaultStoreFactory];
+
 		this.registry = (
-			storeFactories.includes(defaultStoreFactory)
+			storeFactories.includes(this.defaultStoreFactory)
 				? storeFactories
-				: storeFactories.concat(defaultStoreFactory)
+				: storeFactories.concat(this.defaultStoreFactory)
 		).map((factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
 	}
 
@@ -39,14 +57,14 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<ContainerRuntime> {
-		const runtime: ContainerRuntime = await ContainerRuntime.load(
+		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
 			context,
-			this.registry,
-			buildRuntimeRequestHandler(...this.requestHandlers),
-			undefined, // runtimeOptions
-			undefined, // containerScope
+			registryEntries: this.registry,
 			existing,
-		);
+			// eslint-disable-next-line import/no-deprecated
+			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
+			provideEntryPoint: this.provideEntryPoint,
+		});
 
 		return runtime;
 	}

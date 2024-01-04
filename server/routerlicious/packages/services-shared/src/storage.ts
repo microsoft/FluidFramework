@@ -5,411 +5,499 @@
 
 import { ICommit, ICommitDetails, ICreateCommitParams } from "@fluidframework/gitresources";
 import {
-    IDocumentAttributes,
-    ICommittedProposal,
-    ISequencedDocumentMessage,
-    ISummaryTree,
-    SummaryType,
+	IDocumentAttributes,
+	ICommittedProposal,
+	ISequencedDocumentMessage,
+	ISummaryTree,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-    IGitCache,
-    SummaryTreeUploadManager,
-    WholeSummaryUploadManager,
-    ISession,
+	IGitCache,
+	SummaryTreeUploadManager,
+	WholeSummaryUploadManager,
+	ISession,
+	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import {
-    ICollection,
-    IDeliState,
-    IDatabaseManager,
-    IDocumentDetails,
-    IDocumentStorage,
-    IScribe,
-    ITenantManager,
-    SequencedOperationType,
-    IDocument,
-    ISequencedOperationMessage,
+	ICollection,
+	IDeliState,
+	IDocument,
+	IDocumentDetails,
+	IDocumentRepository,
+	IDocumentStorage,
+	IScribe,
+	ISequencedOperationMessage,
+	IStorageNameAllocator,
+	ITenantManager,
+	SequencedOperationType,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
-import { BaseTelemetryProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	CommonProperties,
+	LumberEventName,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export class DocumentStorage implements IDocumentStorage {
-    constructor(
-        private readonly databaseManager: IDatabaseManager,
-        private readonly tenantManager: ITenantManager,
-        private readonly enableWholeSummaryUpload: boolean,
-    ) { }
+	constructor(
+		private readonly documentRepository: IDocumentRepository,
+		private readonly tenantManager: ITenantManager,
+		private readonly enableWholeSummaryUpload: boolean,
+		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
+		private readonly storageNameAssigner: IStorageNameAllocator,
+	) {}
 
-    /**
-     * Retrieves database details for the given document
-     */
-    public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
-        const collection = await this.databaseManager.getDocumentCollection();
-        return collection.findOne({ documentId, tenantId });
-    }
+	/**
+	 * Retrieves database details for the given document
+	 */
+	public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
+		return this.documentRepository.readOne({ tenantId, documentId });
+	}
 
-    public async getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails> {
-        const getOrCreateP = this.getOrCreateObject(tenantId, documentId);
+	public async getOrCreateDocument(
+		tenantId: string,
+		documentId: string,
+	): Promise<IDocumentDetails> {
+		const getOrCreateP = this.getOrCreateObject(tenantId, documentId);
 
-        return getOrCreateP;
-    }
+		return getOrCreateP;
+	}
 
-    private createInitialProtocolTree(
-        documentId: string,
-        sequenceNumber: number,
-        term: number,
-        values: [string, ICommittedProposal][],
-    ): ISummaryTree {
-        const documentAttributes: IDocumentAttributes = {
-            minimumSequenceNumber: sequenceNumber,
-            sequenceNumber,
-            term,
-        };
+	private createInitialProtocolTree(
+		sequenceNumber: number,
+		values: [string, ICommittedProposal][],
+	): ISummaryTree {
+		const documentAttributes: IDocumentAttributes = {
+			minimumSequenceNumber: sequenceNumber,
+			sequenceNumber,
+		};
 
-        const summary: ISummaryTree = {
-            tree: {
-                attributes: {
-                    content: JSON.stringify(documentAttributes),
-                    type: SummaryType.Blob,
-                },
-                quorumMembers: {
-                    content: JSON.stringify([]),
-                    type: SummaryType.Blob,
-                },
-                quorumProposals: {
-                    content: JSON.stringify([]),
-                    type: SummaryType.Blob,
-                },
-                quorumValues: {
-                    content: JSON.stringify(values),
-                    type: SummaryType.Blob,
-                },
-            },
-            type: SummaryType.Tree,
-        };
+		const summary: ISummaryTree = {
+			tree: {
+				attributes: {
+					content: JSON.stringify(documentAttributes),
+					type: SummaryType.Blob,
+				},
+				quorumMembers: {
+					content: JSON.stringify([]),
+					type: SummaryType.Blob,
+				},
+				quorumProposals: {
+					content: JSON.stringify([]),
+					type: SummaryType.Blob,
+				},
+				quorumValues: {
+					content: JSON.stringify(values),
+					type: SummaryType.Blob,
+				},
+			},
+			type: SummaryType.Tree,
+		};
 
-        return summary;
-    }
+		return summary;
+	}
 
-    private createFullTree(appTree: ISummaryTree, protocolTree: ISummaryTree): ISummaryTree {
-        return this.enableWholeSummaryUpload
-            ? {
-                type: SummaryType.Tree,
-                tree: {
-                    ".protocol": protocolTree,
-                    ".app": appTree,
-                },
-            } : {
-                type: SummaryType.Tree,
-                tree: {
-                    ".protocol": protocolTree,
-                    ...appTree.tree,
-                },
-            };
-    }
+	private createFullTree(appTree: ISummaryTree, protocolTree: ISummaryTree): ISummaryTree {
+		return this.enableWholeSummaryUpload
+			? {
+					type: SummaryType.Tree,
+					tree: {
+						".protocol": protocolTree,
+						".app": appTree,
+					},
+			  }
+			: {
+					type: SummaryType.Tree,
+					tree: {
+						".protocol": protocolTree,
+						...appTree.tree,
+					},
+			  };
+	}
 
-    public async createDocument(
-        tenantId: string,
-        documentId: string,
-        appTree: ISummaryTree,
-        sequenceNumber: number,
-        term: number,
-        initialHash: string,
-        ordererUrl: string,
-        historianUrl: string,
-        deltaStreamUrl: string,
-        values: [string, ICommittedProposal][],
-        enableDiscovery: boolean = false,
-    ): Promise<IDocumentDetails> {
-        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+	public async createDocument(
+		tenantId: string,
+		documentId: string,
+		appTree: ISummaryTree,
+		sequenceNumber: number,
+		initialHash: string,
+		ordererUrl: string,
+		historianUrl: string,
+		deltaStreamUrl: string,
+		values: [string, ICommittedProposal][],
+		enableDiscovery: boolean = false,
+		isEphemeralContainer: boolean = false,
+		messageBrokerId?: string,
+	): Promise<IDocumentDetails> {
+		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
+		const gitManager = await this.tenantManager.getTenantGitManager(
+			tenantId,
+			documentId,
+			storageName,
+			false /* includeDisabledTenant */,
+			isEphemeralContainer,
+		);
 
-        const lumberjackProperties = {
-            [BaseTelemetryProperties.tenantId]: tenantId,
-            [BaseTelemetryProperties.documentId]: documentId,
-        };
+		const storageNameAssignerEnabled = !!this.storageNameAssigner;
+		const lumberjackProperties = {
+			[BaseTelemetryProperties.tenantId]: tenantId,
+			[BaseTelemetryProperties.documentId]: documentId,
+			storageName,
+			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
+			storageNameAssignerExists: storageNameAssignerEnabled,
+			isEphemeralContainer,
+		};
+		if (storageNameAssignerEnabled && !storageName) {
+			// Using a warning instead of an error just in case there are some outliers that we don't know about.
+			Lumberjack.warning(
+				"Failed to get storage name for new document.",
+				lumberjackProperties,
+			);
+		}
 
-        const protocolTree = this.createInitialProtocolTree(documentId, sequenceNumber, term, values);
-        const fullTree = this.createFullTree(appTree, protocolTree);
+		const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
+		const fullTree = this.createFullTree(appTree, protocolTree);
 
-        const blobsShaCache = new Map<string, string>();
-        const uploadManager = this.enableWholeSummaryUpload ?
-            new WholeSummaryUploadManager(gitManager) :
-            new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
+		const blobsShaCache = new Map<string, string>();
+		const uploadManager = this.enableWholeSummaryUpload
+			? new WholeSummaryUploadManager(gitManager)
+			: new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
 
-        const initialSummaryUploadMetric =
-            Lumberjack.newLumberMetric(LumberEventName.CreateDocInitialSummaryWrite, lumberjackProperties);
-        try {
-            const handle = await uploadManager.writeSummaryTree(
-                fullTree, /* summaryTree */
-                "", /* parentHandle */
-                "container", /* summaryType */
-                0, /* sequenceNumber */
-                true, /* initial */
-            );
-            let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
+		const initialSummaryUploadMetric = Lumberjack.newLumberMetric(
+			LumberEventName.CreateDocInitialSummaryWrite,
+			lumberjackProperties,
+		);
+		let initialSummaryVersionId: string;
+		try {
+			const handle = await uploadManager.writeSummaryTree(
+				fullTree /* summaryTree */,
+				"" /* parentHandle */,
+				"container" /* summaryType */,
+				0 /* sequenceNumber */,
+				true /* initial */,
+			);
 
-            if (!this.enableWholeSummaryUpload) {
-                const commitParams: ICreateCommitParams = {
-                    author: {
-                        date: new Date().toISOString(),
-                        email: "dummy@microsoft.com",
-                        name: "Routerlicious Service",
-                    },
-                    message: "New document",
-                    parents: [],
-                    tree: handle,
-                };
+			let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
-                const commit = await gitManager.createCommit(commitParams);
-                await gitManager.createRef(documentId, commit.sha);
-                initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(commit.sha)}`;
-            }
-            initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
-        } catch (error: any) {
-            initialSummaryUploadMetric.error("Error during initial summary upload", error);
-            throw error;
-        }
+			if (!this.enableWholeSummaryUpload) {
+				const commitParams: ICreateCommitParams = {
+					author: {
+						date: new Date().toISOString(),
+						email: "dummy@microsoft.com",
+						name: "Routerlicious Service",
+					},
+					message: "New document",
+					parents: [],
+					tree: handle,
+				};
 
-        const deli: Omit<IDeliState, "epoch"> = {
-            clients: undefined,
-            durableSequenceNumber: sequenceNumber,
-            expHash1: initialHash,
-            logOffset: -1,
-            sequenceNumber,
-            signalClientConnectionNumber: 0,
-            term: 1,
-            lastSentMSN: 0,
-            nackMessages: undefined,
-            successfullyStartedLambdas: [],
-            checkpointTimestamp: Date.now(),
-        };
+				const commit = await gitManager.createCommit(commitParams);
+				await gitManager.createRef(documentId, commit.sha);
+				initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(
+					commit.sha,
+				)}`;
+				// In the case of ShreddedSummary Upload, summary version is always the commit sha.
+				initialSummaryVersionId = commit.sha;
+			} else {
+				// In the case of WholeSummary Upload, summary tree handle is actually commit sha or version id.
+				initialSummaryVersionId = handle;
+			}
+			initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
+		} catch (error: any) {
+			initialSummaryUploadMetric.error("Error during initial summary upload", error);
+			throw error;
+		}
 
-        const scribe: IScribe = {
-            logOffset: -1,
-            minimumSequenceNumber: sequenceNumber,
-            protocolState: {
-                members: [],
-                minimumSequenceNumber: sequenceNumber,
-                proposals: [],
-                sequenceNumber,
-                values,
-            },
-            sequenceNumber,
-            lastClientSummaryHead: undefined,
-            lastSummarySequenceNumber: 0,
-        };
+		// Storage is known to take too long sometimes. Check timeout before continuing.
+		getGlobalTimeoutContext().checkTimeout();
 
-        const session: ISession = {
-            ordererUrl,
-            historianUrl,
-            deltaStreamUrl,
-            isSessionAlive: true,
-            isSessionActive: false,
-        };
+		const deli: IDeliState = {
+			clients: undefined,
+			durableSequenceNumber: sequenceNumber,
+			expHash1: initialHash,
+			logOffset: -1,
+			sequenceNumber,
+			signalClientConnectionNumber: 0,
+			lastSentMSN: 0,
+			nackMessages: undefined,
+			successfullyStartedLambdas: [],
+			checkpointTimestamp: Date.now(),
+		};
 
-        Lumberjack.info(
-            `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`,
-            lumberjackProperties);
+		const scribe: IScribe = {
+			logOffset: -1,
+			minimumSequenceNumber: sequenceNumber,
+			protocolState: {
+				members: [],
+				minimumSequenceNumber: sequenceNumber,
+				proposals: [],
+				sequenceNumber,
+				values,
+			},
+			sequenceNumber,
+			lastClientSummaryHead: undefined,
+			lastSummarySequenceNumber: 0,
+			// Add initialSummaryVersionId as a valid parent summary. There is no summaryAck for initial summary,
+			// and it is possible for a sumarizer to load from the initial summary, while a service summary is being written.
+			// If the summarizer then proposes the initial summary as a parent summary after the service summary is written,
+			// the initial summary would not be accepted as a valid parent because lastClientSummaryHead is undefined and latest
+			// summary is a service summary. However, initial summary _is_ a valid parent in this scenario.
+			validParentSummaries: [initialSummaryVersionId],
+			isCorrupt: false,
+		};
 
-        const updateDocumentCollectionMetric =
-            Lumberjack.newLumberMetric(LumberEventName.CreateDocumentUpdateDocumentCollection, lumberjackProperties);
+		const session: ISession = {
+			ordererUrl,
+			historianUrl,
+			deltaStreamUrl,
+			isSessionAlive: true,
+			isSessionActive: false,
+		};
 
-        try {
-            const collection = await this.databaseManager.getDocumentCollection();
-            const result = await collection.findOrCreate(
-                {
-                    documentId,
-                    tenantId,
-                },
-                {
-                    createTime: Date.now(),
-                    deli: JSON.stringify(deli),
-                    documentId,
-                    session,
-                    scribe: JSON.stringify(scribe),
-                    tenantId,
-                    version: "0.1",
-                });
-            updateDocumentCollectionMetric.success("Successfully updated document collection");
-            return result;
-        } catch (error: any) {
-            updateDocumentCollectionMetric.error("Error updating document collection", error);
-            throw error;
-        }
-    }
+		// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
+		if (messageBrokerId) {
+			session.messageBrokerId = messageBrokerId;
+		}
 
-    public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
-        const versions = await this.getVersions(tenantId, documentId, 1);
-        if (!versions.length) {
-            return (null as unknown) as ICommit;
-        }
+		Lumberjack.info(
+			`Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`,
+			lumberjackProperties,
+		);
 
-        const latest = versions[0];
-        return {
-            author: latest.commit.author,
-            committer: latest.commit.committer,
-            message: latest.commit.message,
-            parents: latest.parents,
-            sha: latest.sha,
-            tree: latest.commit.tree,
-            url: latest.url,
-        };
-    }
+		const createDocumentCollectionMetric = Lumberjack.newLumberMetric(
+			LumberEventName.CreateDocumentUpdateDocumentCollection,
+			lumberjackProperties,
+		);
 
-    public async getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]> {
-        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+		try {
+			const result = await this.documentRepository.findOneOrCreate(
+				{
+					documentId,
+					tenantId,
+				},
+				{
+					createTime: Date.now(),
+					deli: JSON.stringify(deli),
+					documentId,
+					session,
+					scribe: JSON.stringify(scribe),
+					tenantId,
+					version: "0.1",
+					storageName,
+					isEphemeralContainer,
+				},
+			);
+			createDocumentCollectionMetric.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
+			);
+			createDocumentCollectionMetric.success("Successfully created document");
+			return result;
+		} catch (error: any) {
+			createDocumentCollectionMetric.error("Error create document", error);
+			throw error;
+		}
+	}
 
-        return gitManager.getCommits(documentId, count);
-    }
+	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
+		const versions = await this.getVersions(tenantId, documentId, 1);
+		if (!versions.length) {
+			return null as unknown as ICommit;
+		}
 
-    public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
-        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+		const latest = versions[0];
+		return {
+			author: latest.commit.author,
+			committer: latest.commit.committer,
+			message: latest.commit.message,
+			parents: latest.parents,
+			sha: latest.sha,
+			tree: latest.commit.tree,
+			url: latest.url,
+		};
+	}
 
-        return gitManager.getCommit(sha);
-    }
+	public async getVersions(
+		tenantId: string,
+		documentId: string,
+		count: number,
+	): Promise<ICommitDetails[]> {
+		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }> {
-        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
-        const versions = await gitManager.getCommits(documentId, 1);
-        if (versions.length === 0) {
-            return {
-                cache: { blobs: [], commits: [], refs: { [documentId]: (null as unknown) as string }, trees: [] },
-                code: (null as unknown) as string,
-            };
-        }
+		return gitManager.getCommits(documentId, count);
+	}
 
-        const fullTree = await gitManager.getFullTree(versions[0].sha);
+	public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
+		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
-        let code: string = (null as unknown) as string;
-        if (fullTree.quorumValues) {
-            let quorumValues;
-            for (const blob of fullTree.blobs) {
-                if (blob.sha === fullTree.quorumValues) {
-                    quorumValues = JSON.parse(toUtf8(blob.content, blob.encoding)) as
-                        [string, { value: string; }][];
+		return gitManager.getCommit(sha);
+	}
 
-                    for (const quorumValue of quorumValues) {
-                        if (quorumValue[0] === "code") {
-                            code = quorumValue[1].value;
-                            break;
-                        }
-                    }
+	public async getFullTree(
+		tenantId: string,
+		documentId: string,
+	): Promise<{ cache: IGitCache; code: string }> {
+		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+		const versions = await gitManager.getCommits(documentId, 1);
+		if (versions.length === 0) {
+			return {
+				cache: {
+					blobs: [],
+					commits: [],
+					refs: { [documentId]: null as unknown as string },
+					trees: [],
+				},
+				code: null as unknown as string,
+			};
+		}
 
-                    break;
-                }
-            }
-        }
+		const fullTree = await gitManager.getFullTree(versions[0].sha);
 
-        return {
-            cache: {
-                blobs: fullTree.blobs,
-                commits: fullTree.commits,
-                refs: { [documentId]: versions[0].sha },
-                trees: fullTree.trees,
-            },
-            code,
-        };
-    }
+		let code: string = null as unknown as string;
+		if (fullTree.quorumValues) {
+			let quorumValues;
+			for (const blob of fullTree.blobs) {
+				if (blob.sha === fullTree.quorumValues) {
+					quorumValues = JSON.parse(toUtf8(blob.content, blob.encoding)) as [
+						string,
+						{ value: string },
+					][];
 
-    private async createObject(
-        collection: ICollection<IDocument>,
-        tenantId: string,
-        documentId: string,
-        deli?: string,
-        scribe?: string,
-        session?: ISession): Promise<IDocument> {
-        const value: IDocument = {
-            createTime: Date.now(),
-            deli: (deli as unknown) as string,
-            documentId,
-            session: (session as unknown) as ISession,
-            scribe: (scribe as unknown) as string,
-            tenantId,
-            version: "0.1",
-        };
-        await collection.insertOne(value);
-        return value;
-    }
+					for (const quorumValue of quorumValues) {
+						if (quorumValue[0] === "code") {
+							code = quorumValue[1].value;
+							break;
+						}
+					}
 
-    // Looks up the DB and summary for the document.
-    private async getOrCreateObject(tenantId: string, documentId: string): Promise<IDocumentDetails> {
-        const collection = await this.databaseManager.getDocumentCollection();
-        const document = await collection.findOne({ documentId, tenantId });
-        if (document === null) {
-            // Guard against storage failure. Returns false if storage is unresponsive.
-            const foundInSummaryP = this.readFromSummary(tenantId, documentId).then((result) => {
-                return result;
-            }, (err) => {
-                winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
-                winston.error(err);
-                const lumberjackProperties = {
-                    [BaseTelemetryProperties.tenantId]: tenantId,
-                    [BaseTelemetryProperties.documentId]: documentId,
-                };
-                Lumberjack.error(`Error while fetching summary`, lumberjackProperties);
-                return false;
-            });
+					break;
+				}
+			}
+		}
 
-            const inSummary = await foundInSummaryP;
+		return {
+			cache: {
+				blobs: fullTree.blobs,
+				commits: fullTree.commits,
+				refs: { [documentId]: versions[0].sha },
+				trees: fullTree.trees,
+			},
+			code,
+		};
+	}
 
-            // Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
-            const value = inSummary ?
-                await this.createObject(collection, tenantId, documentId, "", "") :
-                await this.createObject(collection, tenantId, documentId);
+	private async createObject(
+		tenantId: string,
+		documentId: string,
+		deli?: string,
+		scribe?: string,
+		session?: ISession,
+	): Promise<IDocument> {
+		const value: IDocument = {
+			createTime: Date.now(),
+			deli: deli as unknown as string,
+			documentId,
+			session: session as unknown as ISession,
+			scribe: scribe as unknown as string,
+			tenantId,
+			version: "0.1",
+		};
+		await this.documentRepository.create(value);
+		return value;
+	}
 
-            return {
-                value,
-                existing: inSummary,
-            };
-        } else {
-            return {
-                value: document,
-                existing: true,
-            };
-        }
-    }
+	// Looks up the DB and summary for the document.
+	private async getOrCreateObject(
+		tenantId: string,
+		documentId: string,
+	): Promise<IDocumentDetails> {
+		const document = await this.documentRepository.readOne({ documentId, tenantId });
+		if (document === null) {
+			// Guard against storage failure. Returns false if storage is unresponsive.
+			const foundInSummaryP = this.readFromSummary(tenantId, documentId)
+				.then((result) => {
+					return result;
+				})
+				.catch((err) => {
+					winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
+					winston.error(err);
+					const lumberjackProperties = {
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
+					};
+					Lumberjack.error(`Error while fetching summary`, lumberjackProperties);
+					return false;
+				});
 
-    private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
-        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
-        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
-        if (existingRef) {
-            // Fetch ops from logTail and insert into deltas collection.
-            // TODO: Make the rest endpoint handle this case.
-            const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
-            const ops = JSON.parse(
-                Buffer.from(
-                    opsContent.content,
-                    Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
-                ).toString(),
-            ) as ISequencedDocumentMessage[];
-            const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
-                return {
-                    documentId,
-                    operation: op,
-                    tenantId,
-                    type: SequencedOperationType,
-                    mongoTimestamp: new Date(op.timestamp),
-                };
-            });
-            const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
-            await opsCollection
-                .insertMany(dbOps, false)
-                .catch(async (error) => {
-                    // Duplicate key errors are ignored
-                    if (error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return Promise.reject(error);
-                    }
-                });
-            winston.info(`Inserted ${dbOps.length} ops into deltas DB`);
-            const lumberjackProperties = {
-                [BaseTelemetryProperties.tenantId]: tenantId,
-                [BaseTelemetryProperties.documentId]: documentId,
-            };
-            Lumberjack.info(`Inserted ${dbOps.length} ops into deltas DB`, lumberjackProperties);
-            return true;
-        } else {
-            return false;
-        }
-    }
+			const inSummary = await foundInSummaryP;
+			Lumberjack.warning("Backfilling document from summary!", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				[BaseTelemetryProperties.documentId]: documentId,
+			});
+
+			// Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
+			const value = inSummary
+				? await this.createObject(tenantId, documentId, "", "")
+				: await this.createObject(tenantId, documentId);
+
+			return {
+				value,
+				existing: inSummary,
+			};
+		} else {
+			return {
+				value: document,
+				existing: true,
+			};
+		}
+	}
+
+	private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
+		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+		const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
+		if (existingRef) {
+			// Fetch ops from logTail and insert into deltas collection.
+			// TODO: Make the rest endpoint handle this case.
+			const opsContent = await gitManager.getContent(
+				existingRef.object.sha,
+				".logTail/logTail",
+			);
+			const ops = JSON.parse(
+				Buffer.from(
+					opsContent.content,
+					Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
+				).toString(),
+			) as ISequencedDocumentMessage[];
+			const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
+				return {
+					documentId,
+					operation: op,
+					tenantId,
+					type: SequencedOperationType,
+					mongoTimestamp: new Date(op.timestamp),
+				};
+			});
+			await this.opsCollection.insertMany(dbOps, false).catch(async (error) => {
+				// Duplicate key errors are ignored
+				if (error.code !== 11000) {
+					// Needs to be a full rejection here
+					throw error;
+				}
+			});
+			winston.info(`Inserted ${dbOps.length} ops into deltas DB`);
+			const lumberjackProperties = {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				[BaseTelemetryProperties.documentId]: documentId,
+			};
+			Lumberjack.info(`Inserted ${dbOps.length} ops into deltas DB`, lumberjackProperties);
+			return true;
+		} else {
+			return false;
+		}
+	}
 }

@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import path from "path";
 import { strict as assert } from "assert";
-import { isJsonSnapshot, validateCommandLineArgs } from "../utils";
+import { isJsonSnapshot, timeoutPromise, validateCommandLineArgs } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 
@@ -65,6 +65,21 @@ describe("utils", () => {
 					assert.strictEqual(result, undefined, `unexpected error [${result}]`);
 				}
 			});
+		});
+	});
+
+	describe("timeoutPromise", () => {
+		it("resolves", async () => {
+			await timeoutPromise((resolve) => resolve(), 100);
+		});
+
+		it("rejects on timeout", async () => {
+			try {
+				await timeoutPromise((resolve) => setTimeout(resolve, 100), 1);
+				assert.fail("expect timeout exception");
+			} catch (error) {
+				assert((error as Error).message.includes("Timed out"), "unexpected exception");
+			}
 		});
 	});
 });

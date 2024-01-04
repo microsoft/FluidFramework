@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { ReferencePosition } from "@fluidframework/merge-tree";
-import { SequenceInterval } from "@fluidframework/sequence";
+import { assert } from "@fluidframework/core-utils";
+import { SequenceInterval, ReferencePosition } from "@fluidframework/sequence";
 
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 
@@ -19,6 +18,9 @@ export function colNameToIndex(colName: string) {
 }
 
 // Convert a 0-based column index into an Excel-like column name (e.g., 0 -> 'A')
+/**
+ * @internal
+ */
 export function colIndexToName(colIndex: number) {
 	let name = "";
 
@@ -32,6 +34,9 @@ export function colIndexToName(colIndex: number) {
 	return name;
 }
 
+/**
+ * @internal
+ */
 export function parseRange(range: string) {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const matches = rangeExpr.exec(range)!;

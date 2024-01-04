@@ -12,11 +12,18 @@ import {
 import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { makeModelRequestHandler } from "./modelLoader";
+
+/**
+ * @internal
+ */
+export interface IModelContainerRuntimeEntryPoint<T> {
+	getModel(container: IContainer): Promise<T>;
+}
 
 /**
  * ModelContainerRuntimeFactory is an abstract class that gives a basic structure for container runtime initialization.
  * It also requires a createModel method to returns the expected model type.
+ * @internal
  */
 export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
 	public get IRuntimeFactory() {
@@ -36,17 +43,21 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const fromExisting = existing ?? context.existing ?? false;
-		const runtime = await ContainerRuntime.load(
+		const runtime = await ContainerRuntime.loadRuntime({
 			context,
-			this.registryEntries,
-			makeModelRequestHandler(this.createModel.bind(this)),
-			this.runtimeOptions,
-			undefined, // scope
+			registryEntries: this.registryEntries,
+			provideEntryPoint: async (
+				containerRuntime: IContainerRuntime,
+			): Promise<IModelContainerRuntimeEntryPoint<ModelType>> => ({
+				getModel: async (container: IContainer) =>
+					this.createModel(containerRuntime, container),
+			}),
+			runtimeOptions: this.runtimeOptions,
 			existing,
-		);
+			containerScope: context.scope,
+		});
 
-		if (!fromExisting) {
+		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);
 		}
 		await this.containerHasInitialized(runtime);

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import {
-	DocumentationNode,
+	type DocumentationNode,
 	DocumentationParentNodeBase,
-	MultiLineDocumentationNode,
+	type MultiLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { createNodesFromPlainText } from "./Utilities";
@@ -33,6 +33,8 @@ import { createNodesFromPlainText } from "./Utilities";
  * 	Some more content...
  * </p>
  * ```
+ *
+ * @public
  */
 export class ParagraphNode
 	extends DocumentationParentNodeBase

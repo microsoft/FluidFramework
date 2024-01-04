@@ -19,9 +19,11 @@ const {
 const { Int64Property, Uint64Property } = require("../properties/intProperties");
 const { _castFunctors } = require("./primitiveTypeCasts");
 const { ArrayProperty } = require("./arrayProperty");
+const { BaseProperty } = require("./baseProperty");
 
 /**
  * An array property which stores primitive values
+ * @internal
  */
 export class ValueArrayProperty extends ArrayProperty {
 	/**
@@ -64,7 +66,7 @@ export class ValueArrayProperty extends ArrayProperty {
 	 * @param {String} in_segment - The path segment to resolve
 	 * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
 	 *
-	 * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
+	 * @return {BaseProperty | undefined} The child property that has been resolved
 	 * @protected
 	 */
 	_resolvePathSegment(in_segment, in_segmentType) {

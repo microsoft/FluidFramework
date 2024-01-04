@@ -5,16 +5,16 @@
 
 /*
  * Rejects if a promise is not fulfilled within <mSec> milliseconds.
-*/
+ */
+/**
+ * @internal
+ */
 export async function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any> {
-    const timeout = new Promise((resolve, reject) => {
-        const id = setTimeout(() => {
-            clearTimeout(id);
-            reject(new Error(`Timed out in ${mSec} milliseconds.`));
-        }, mSec);
-    });
-    return Promise.race([
-        promise,
-        timeout,
-    ]);
+	const timeout = new Promise((resolve, reject) => {
+		const id = setTimeout(() => {
+			clearTimeout(id);
+			reject(new Error(`Timed out in ${mSec} milliseconds.`));
+		}, mSec);
+	});
+	return Promise.race([promise, timeout]);
 }

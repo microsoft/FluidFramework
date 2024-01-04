@@ -3,17 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay, performance } from "@fluidframework/common-utils";
-import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	generateStack,
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+	normalizeError,
+	overwriteStack,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { assert, delay } from "@fluidframework/core-utils";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import * as api from "@fluidframework/protocol-definitions";
-import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
+import { promiseRaceWithWinner } from "@fluidframework/driver-base";
+import { ISummaryContext, FetchSource } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
@@ -25,6 +33,7 @@ import {
 } from "./contracts";
 import {
 	downloadSnapshot,
+	evalBlobsAndTrees,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 	SnapshotFormatSupportType,
@@ -41,17 +50,6 @@ import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
-// An implementation of Promise.race that gives you the winner of the promise race
-async function promiseRaceWithWinner<T>(
-	promises: Promise<T>[],
-): Promise<{ index: number; value: T }> {
-	return new Promise((resolve, reject) => {
-		promises.forEach((p, index) => {
-			p.then((v) => resolve({ index, value: v })).catch(reject);
-		});
-	});
-}
-
 interface GetVersionsTelemetryProps {
 	cacheEntryAge?: number;
 	cacheSummarizerExpired?: boolean;
@@ -63,7 +61,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 
 	private firstVersionCall = true;
-
+	private _isFirstSnapshotFromNetwork: boolean | undefined;
 	private readonly documentId: string;
 	private readonly snapshotUrl: string | undefined;
 	private readonly attachmentPOSTUrl: string | undefined;
@@ -83,7 +81,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
 		private readonly cache: IOdspCache,
 		private readonly hostPolicy: HostStoragePolicyInternal,
@@ -98,6 +96,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
 		this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
 		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
+	}
+
+	public get isFirstSnapshotFromNetwork() {
+		return this._isFirstSnapshotFromNetwork;
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
@@ -236,6 +238,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				{ eventName: "ObtainSnapshot", fetchSource },
 				async (event: PerformanceEvent) => {
 					const props: GetVersionsTelemetryProps = {};
+					let cacheLookupTimeInSerialFetch = 0;
 					let retrievedSnapshot:
 						| ISnapshotContents
 						| IPrefetchSnapshotContents
@@ -282,7 +285,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 									return snapshotCachedEntry;
 								});
-
 						// Based on the concurrentSnapshotFetch policy:
 						// Either retrieve both the network and cache snapshots concurrently and pick the first to return,
 						// or grab the cache value and then the network value if the cache value returns undefined.
@@ -313,21 +315,39 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							if (retrievedSnapshot === undefined) {
 								// if network failed -> wait for cache ( then return network failure)
 								// If cache returned empty or failed -> wait for network (success of failure)
-								if (promiseRaceWinner.index === 1) {
-									retrievedSnapshot = await cachedSnapshotP;
-									method = "cache";
-								}
-								if (retrievedSnapshot === undefined) {
-									retrievedSnapshot = await networkSnapshotP;
-									method = "network";
+								try {
+									if (promiseRaceWinner.index === 1) {
+										retrievedSnapshot = await cachedSnapshotP;
+										method = "cache";
+									}
+									if (retrievedSnapshot === undefined) {
+										retrievedSnapshot = await networkSnapshotP;
+										method = "network";
+									}
+								} catch (err: unknown) {
+									// The call stacks of any errors thrown by cached snapshot or network snapshot aren't very useful:
+									// they get truncated at this stack frame due to the promise race and how v8 tracks async stack traces--
+									// see https://v8.dev/docs/stack-trace-api#async-stack-traces and the "zero-cost async stack traces" document
+									// linked there. https://v8.dev/blog/fast-async#await-under-the-hood may also be helpful for context on internals.
+									// Regenerating the stack at this level provides more information for logged errors.
+									// Once FF uses an ES2021 target, we could convert the above promise race to use `Promise.any` + AggregateError and
+									// get similar quality stacks with less hand-crafted code.
+									const innerStack = (err as Error).stack;
+									const normalizedError = normalizeError(err);
+									normalizedError.addTelemetryProperties({ innerStack });
+
+									const newStack = `<<STACK TRUNCATED: see innerStack property>> \n${generateStack()}`;
+									overwriteStack(normalizedError, newStack);
+
+									throw normalizedError;
 								}
 							}
 						} else {
 							// Note: There's a race condition here - another caller may come past the undefined check
 							// while the first caller is awaiting later async code in this block.
-
+							const startTime = performance.now();
 							retrievedSnapshot = await cachedSnapshotP;
-
+							cacheLookupTimeInSerialFetch = performance.now() - startTime;
 							method = retrievedSnapshot !== undefined ? "cache" : "network";
 
 							if (retrievedSnapshot === undefined) {
@@ -342,6 +362,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					if (method === "network") {
 						props.cacheEntryAge = undefined;
 					}
+					if (this.firstVersionCall) {
+						this._isFirstSnapshotFromNetwork = method === "cache" ? false : true;
+					}
 					const prefetchStartTime: number | undefined = (
 						retrievedSnapshot as IPrefetchSnapshotContents
 					).prefetchStartTime;
@@ -349,6 +372,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						...props,
 						method,
 						avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
+						...evalBlobsAndTrees(retrievedSnapshot),
+						cacheLookupTimeInSerialFetch,
 						prefetchSavedDuration:
 							prefetchStartTime !== undefined && method !== "cache"
 								? prefetchWaitStartTime - prefetchStartTime
@@ -358,8 +383,17 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				},
 			);
 
+			const stTime = performance.now();
 			// Don't override ops which were fetched during initial load, since we could still need them.
 			const id = this.initializeFromSnapshot(odspSnapshotCacheValue, this.firstVersionCall);
+			this.logger.sendTelemetryEvent(
+				{
+					eventName: "SnapshotInitializeTime",
+					duration: performance.now() - stTime,
+				},
+				undefined,
+				LogLevel.verbose,
+			);
 			this.firstVersionCall = false;
 
 			return id ? [{ id, treeId: undefined! }] : [];
@@ -393,14 +427,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			if (!versionsResponse) {
 				throw new NonRetryableError(
 					"No response from /versions endpoint",
-					DriverErrorType.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
 			if (!Array.isArray(versionsResponse.value)) {
 				throw new NonRetryableError(
 					"Incorrect response from /versions endpoint, expected an array",
-					DriverErrorType.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
@@ -442,6 +476,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const result = await this.cache.snapshotPrefetchResultCache
 				?.get(prefetchCacheKey)
 				?.then(async (response) => {
+					// Remove it from cache once used.
+					this.cache.snapshotPrefetchResultCache.remove(prefetchCacheKey);
 					// Validate the epoch from the prefetched snapshot result.
 					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
 					return response;
@@ -518,7 +554,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const errorType = error.errorType;
 			// If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
 			if (
-				errorType === OdspErrorType.snapshotTooBig &&
+				errorType === OdspErrorTypes.snapshotTooBig &&
 				hostSnapshotOptions?.mds !== undefined &&
 				this.hostPolicy.summarizerClient !== true
 			) {
@@ -526,8 +562,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 			// If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
 			if (
-				(errorType === OdspErrorType.snapshotTooBig ||
-					errorType === OdspErrorType.fetchTimeout) &&
+				(errorType === OdspErrorTypes.snapshotTooBig ||
+					errorType === OdspErrorTypes.fetchTimeout) &&
 				snapshotOptions.blobs
 			) {
 				this.logger.sendErrorEvent({
@@ -623,7 +659,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private async getDelayLoadedSummaryManager() {
 		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
 		const module = await import(
-			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager"
+			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager.js"
 		)
 			.then((m) => {
 				this.logger.sendTelemetryEvent({ eventName: "SummaryModuleLoaded" });
@@ -648,7 +684,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.snapshotUrl) {
 			throw new NonRetryableError(
 				"Method failed because no snapshot url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -658,7 +694,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentPOSTUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment POST url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -668,7 +704,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentGETUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment GET url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}

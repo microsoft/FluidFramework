@@ -51,9 +51,9 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
 
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(undefined),
 		};
 

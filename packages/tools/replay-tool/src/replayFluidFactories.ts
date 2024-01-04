@@ -6,8 +6,6 @@
 import { SharedCell } from "@fluidframework/cell";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { Ink } from "@fluidframework/ink";
@@ -15,7 +13,6 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
@@ -23,7 +20,7 @@ import {
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import {
@@ -31,20 +28,15 @@ import {
 	SharedObjectSequence,
 	SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { UnknownChannelFactory } from "./unknownChannel";
-
-async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime) {
-	return request.url === "/containerRuntime"
-		? { mimeType: "fluid/object", status: 200, value: runtime }
-		: create404Response(request);
-}
+import { ReplayToolContainerEntryPoint } from "./helpers";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 	constructor(
 		private readonly runtimeOptions: IContainerRuntimeOptions,
 		private readonly registries: NamedFluidDataStoreRegistryEntries,
-		private readonly requestHandlers: RuntimeRequestHandler[] = [],
 	) {
 		super();
 	}
@@ -53,14 +45,27 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<ContainerRuntime> {
-		return ContainerRuntime.load(
+		return ContainerRuntime.loadRuntime({
 			context,
-			this.registries,
-			buildRuntimeRequestHandler(...this.requestHandlers, runtimeRequestHandler),
-			this.runtimeOptions,
-			undefined, // containerScope
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				// For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
+				// can use it. This is an anti-pattern, and is *not* what an actual application should do (it should
+				// expose an object with a defined API that allows hosts that consume the container to interact with it).
+				// In our tests and internal tools it might sometimes be ok to use this anti-pattern for simplicity,
+				// where we might need to use/validate internal bits. In this case the replay tool reaches into our
+				// implementation of the container runtime to trigger summarization (see uploadSummary() in helpers.ts).
+				const entryPoint: ReplayToolContainerEntryPoint = {
+					containerRuntime: containerRuntime as ContainerRuntime,
+					get ReplayToolContainerEntryPoint() {
+						return this as ReplayToolContainerEntryPoint;
+					},
+				};
+				return entryPoint;
+			},
 			existing,
-		);
+			runtimeOptions: this.runtimeOptions,
+			registryEntries: this.registries,
+		});
 	}
 }
 // these dds don't have deterministic content, or the
@@ -121,6 +126,10 @@ export class ReplayDataStoreFactory
 			context,
 			new Map(allDdsFactories.map((factory) => [factory.type, factory])),
 			true /* existing */,
+			() => {
+				// TODO: AB#4779
+				throw new Error("TODO");
+			},
 		);
 	}
 }

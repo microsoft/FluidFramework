@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { List, walkList } from "../collections";
+import { DoublyLinkedList, walkList } from "../collections";
 
-describe("Collections.List", () => {
+describe("Collections.DoublyLinkedList", () => {
 	const listCount = 5;
-	let list: List<number>;
+	let list: DoublyLinkedList<number>;
 
 	beforeEach(() => {
-		list = new List<number>();
+		list = new DoublyLinkedList<number>();
 		for (let i = 0; i < listCount; i++) {
 			list.unshift(i);
 		}
@@ -77,5 +77,43 @@ describe("Collections.List", () => {
 				"The list count doesn't match the expected count.",
 			);
 		});
+	});
+
+	describe(".splice", () => {
+		for (const splicePos of [-1, 0, 1, Math.floor(listCount / 2), listCount, listCount - 1]) {
+			it(`splice at position ${splicePos}`, () => {
+				const nodesArray = [...list];
+				// negative numbers for the start move back from the end
+				// see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice#syntax
+				const spliceIndex = splicePos < 0 ? nodesArray.length + splicePos : splicePos;
+				// capture the node for the list splice
+				const spliceNode = nodesArray[spliceIndex];
+				const arraySplice = nodesArray.splice(spliceIndex);
+
+				const listSplice =
+					spliceNode === undefined ? new DoublyLinkedList() : list.splice(spliceNode);
+
+				assert.equal(list.length, nodesArray.length, "remaining lengths don't match");
+				assert.equal(listSplice.length, arraySplice.length, "spliced lengths don't match");
+
+				const listNodes = [...list];
+				for (let i = 0; i < listNodes.length; i++) {
+					assert.equal(
+						listNodes[i],
+						nodesArray[i],
+						`remaining node mismatch at pos ${i}`,
+					);
+				}
+
+				const listSpliceNodes = [...listSplice];
+				for (let i = 0; i < listSpliceNodes.length; i++) {
+					assert.equal(
+						listSpliceNodes[i],
+						arraySplice[i],
+						`splice node mismatch at pos ${i}`,
+					);
+				}
+			});
+		}
 	});
 });

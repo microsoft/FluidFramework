@@ -3,90 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, mapFromNamed, namedTreeSchema } from "../../feature-libraries";
+// Adding this unused import makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
+// Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
+// which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
+// TODO: Understand and/or remove the need for this workaround.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+import { ValueSchema } from "../../core/index.js";
+
 import {
-	ValueSchema,
-	FieldSchema,
-	TreeSchemaIdentifier,
-	NamedTreeSchema,
-	fieldSchema,
-	SchemaData,
-	EmptyKey,
-} from "../../core";
-import { brand } from "../../util";
+	AllowedTypes,
+	FieldKinds,
+	TreeFieldSchema,
+	SchemaBuilderInternal,
+} from "../../feature-libraries/index.js";
+import { requireAssignableTo } from "../../util/index.js";
+import { leaf } from "../leafDomain.js";
+
+const builder = new SchemaBuilderInternal({
+	scope: "com.fluidframework.json",
+	libraries: [leaf.library],
+});
+
+const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
 
 /**
  * Types allowed as roots of Json content.
- * Since the Json domain is recursive, this set is declared,
- * then used in the schema, then populated below.
  */
-const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
+export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] as const;
 
-/**
- * @alpha
- */
-export const jsonObject: NamedTreeSchema = namedTreeSchema({
-	name: brand("Json.Object"),
-	extraLocalFields: fieldSchema(FieldKinds.optional, jsonTypes),
-});
+{
+	// Recursive objects don't get this type checking automatically, so confirm it
+	type _check = requireAssignableTo<typeof jsonRoot, AllowedTypes>;
+}
 
-/**
- * @alpha
- */
-export const jsonArray: NamedTreeSchema = namedTreeSchema({
-	name: brand("Json.Array"),
-	localFields: { [EmptyKey]: fieldSchema(FieldKinds.sequence, jsonTypes) },
-});
+export const jsonObject = builder.mapRecursive(
+	"object",
+	TreeFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
+);
 
-/**
- * @alpha
- */
-export const jsonNumber: NamedTreeSchema = namedTreeSchema({
-	name: brand("Json.Number"),
-	value: ValueSchema.Number,
-});
+export const jsonArray = builder.fieldNodeRecursive(
+	"array",
+	TreeFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+);
 
-/**
- * @alpha
- */
-export const jsonString: NamedTreeSchema = namedTreeSchema({
-	name: brand("Json.String"),
-	value: ValueSchema.String,
-});
-
-/**
- * @alpha
- */
-export const jsonNull: NamedTreeSchema = namedTreeSchema({
-	name: brand("Json.Null"),
-});
-
-/**
- * @alpha
- */
-export const jsonBoolean: NamedTreeSchema = namedTreeSchema({
-	name: brand("Json.Boolean"),
-	value: ValueSchema.Boolean,
-});
-
-/**
- * @alpha
- */
-export const jsonSchemaData: SchemaData = {
-	treeSchema: mapFromNamed([
-		jsonObject,
-		jsonArray,
-		jsonNumber,
-		jsonString,
-		jsonNull,
-		jsonBoolean,
-	]),
-	globalFieldSchema: new Map(),
-};
-
-jsonSchemaData.treeSchema.forEach((_, key) => jsonTypes.add(key));
-
-/**
- * @alpha
- */
-export const jsonRoot: FieldSchema = fieldSchema(FieldKinds.value, jsonTypes);
+export const jsonSchema = builder.intoLibrary();

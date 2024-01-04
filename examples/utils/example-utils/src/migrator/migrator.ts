@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import type {
 	DataTransformationCallback,
 	IMigratableModel,
@@ -13,6 +14,9 @@ import type {
 } from "../migrationInterfaces";
 import type { IModelLoader, IDetachedModel } from "../modelLoader";
 
+/**
+ * @internal
+ */
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
 	private _currentModel: IMigratableModel;
 	public get currentModel(): IMigratableModel {

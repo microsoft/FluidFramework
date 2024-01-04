@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, performance } from "@fluidframework/common-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { canRetryOnError, getRetryDelayFromError } from "./network";
+import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network";
 import { pkgVersion } from "./packageVersion";
-import { NonRetryableError } from ".";
 
 /**
  * Interface describing an object passed to various network APIs.
  * It allows caller to control cancellation, as well as learn about any delays.
+ * @internal
  */
 export interface IProgress {
 	/**
@@ -42,15 +43,19 @@ export interface IProgress {
 	onRetry?(delayInMs: number, error: any): void;
 }
 
+/**
+ * @internal
+ */
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
 	fetchCallName: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	progress: IProgress,
 ): Promise<T> {
 	let result: T | undefined;
 	let success = false;
-	let retryAfterMs = 1000; // has to be positive!
+	// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+	let retryAfterMs = 500; // has to be positive!
 	let numRetries = 0;
 	const startTime = performance.now();
 	let lastError: any;
@@ -80,13 +85,18 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performance.now() - startTime,
 						fetchCallName,
+						reason: progress.cancel.reason,
 					},
 					err,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
-					DriverErrorType.genericError,
-					{ driverVersion: pkgVersion, fetchCallName },
+					DriverErrorTypes.genericError,
+					{
+						driverVersion: pkgVersion,
+						fetchCallName,
+						reason: progress.cancel.reason,
+					},
 				);
 			}
 
@@ -106,9 +116,8 @@ export async function runWithRetry<T>(
 
 			numRetries++;
 			lastError = err;
-			// If the error is throttling error, then wait for the specified time before retrying.
-			// If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-			retryAfterMs = getRetryDelayFromError(err) ?? Math.min(retryAfterMs * 2, 8000);
+			// Wait for the calculated time before retrying.
+			retryAfterMs = calculateMaxWaitTime(retryAfterMs, err);
 			if (progress.onRetry) {
 				progress.onRetry(retryAfterMs, err);
 			}
@@ -128,4 +137,29 @@ export async function runWithRetry<T>(
 	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return result!;
+}
+
+const MaxReconnectDelayInMsWhenEndpointIsReachable = 60000;
+const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
+
+/**
+ * Calculates time to wait for after an error based on the error and wait time for previous iteration.
+ * In case endpoint(service or socket) is not reachable, then we maybe offline or may have got some
+ * transient error not related to endpoint, in that case we want to try at faster pace and hence the
+ * max wait is lesser 8s as compared to when endpoint is reachable in which case it is 60s.
+ * @param delayMs - wait time for previous iteration
+ * @param error - error based on which we decide wait time.
+ * @returns Wait time to wait for.
+ * @internal
+ */
+export function calculateMaxWaitTime(delayMs: number, error: unknown): number {
+	const retryDelayFromError = getRetryDelayFromError(error);
+	let newDelayMs = Math.max(retryDelayFromError ?? 0, delayMs * 2);
+	newDelayMs = Math.min(
+		newDelayMs,
+		isFluidError(error) && error.getTelemetryProperties().endpointReached === true
+			? MaxReconnectDelayInMsWhenEndpointIsReachable
+			: MaxReconnectDelayInMsWhenEndpointIsNotReachable,
+	);
+	return newDelayMs;
 }

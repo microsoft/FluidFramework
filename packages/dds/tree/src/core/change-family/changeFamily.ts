@@ -3,28 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeRebaser } from "../rebase";
-import { ReadonlyRepairDataStore } from "../repair";
-import { AnchorSet, Delta } from "../tree";
-import { ChangeEncoder } from "./changeEncoder";
+import { SessionId } from "@fluidframework/id-compressor";
+import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import { ChangeRebaser } from "../rebase/index.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
 
-/**
- * @alpha
- */
-export interface ChangeFamily<TEditor, TChange> {
-	buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
-
-	/**
-	 * @param change - The change to convert into a delta.
-	 * @param repairStore - The store to query for repair data.
-	 * If undefined, dummy data will be created instead.
-	 */
-	intoDelta(
-		change: TChange,
-		// TODO: make the repair store mandatory when all usages of this method have repair data support.
-		repairStore?: ReadonlyRepairDataStore,
-	): Delta.Root;
+export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
+	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly encoder: ChangeEncoder<TChange>;
+	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;
+}
+
+export interface ChangeEncodingContext {
+	readonly originatorId: SessionId;
+}
+
+export type ChangeFamilyCodec<TChange> = IJsonCodec<
+	TChange,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+>;
+
+export interface ChangeFamilyEditor {
+	/**
+	 * Must be called when a new transaction starts.
+	 *
+	 * Note: transactions are an optional feature. It is valid to make edits outside of a transaction.
+	 *
+	 * For each call to this function, a matching call to `exitTransaction` must be made at a later time.
+	 * Can be called repeatedly to indicate the start of nesting transactions.
+	 */
+	enterTransaction(): void;
+
+	/**
+	 * Must be called when a transaction ends.
+	 *
+	 * Note: transactions are an optional feature. It is valid to make edits outside of a transaction.
+	 *
+	 * For each call to this function, a matching call to `enterTransaction` must be made at an earlier time.
+	 * Can be called repeatedly to indicate the end of nesting transactions.
+	 */
+	exitTransaction(): void;
 }

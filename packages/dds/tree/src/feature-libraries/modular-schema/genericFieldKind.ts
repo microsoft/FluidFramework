@@ -3,62 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
-import { brand, fail, JsonCompatibleReadOnly } from "../../util";
-import { CrossFieldManager } from "./crossFieldQueries";
+import {
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaMark,
+	makeAnonChange,
+	RevisionMetadataSource,
+	tagChange,
+	TaggedChange,
+} from "../../core/index.js";
+import { fail, IdAllocator } from "../../util/index.js";
+import { Multiplicity } from "../multiplicity.js";
+import { CrossFieldManager } from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
-	NodeChangeset,
 	ToDelta,
-	NodeChangeEncoder,
-	NodeChangeDecoder,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	IdAllocator,
-	isolatedFieldChangeRebaser,
-	RevisionIndexer,
-} from "./fieldChangeHandler";
-import { FieldKind, Multiplicity } from "./fieldKind";
-
-/**
- * A field-kind-agnostic change to a single node within a field.
- */
-export interface GenericChange {
-	/**
-	 * Index within the field of the changed node.
-	 */
-	index: number;
-	/**
-	 * Change to the node.
-	 */
-	nodeChange: NodeChangeset;
-}
-
-/**
- * Encoded version of {@link GenericChange}
- */
-export interface EncodedGenericChange {
-	index: number;
-	// TODO: this format needs more documentation (ideally in the form of more specific types).
-	nodeChange: JsonCompatibleReadOnly;
-}
-
-/**
- * A field-agnostic set of changes to the elements of a field.
- */
-export type GenericChangeset = GenericChange[];
-
-/**
- * Encoded version of {@link GenericChangeset}
- */
-export type EncodedGenericChangeset = EncodedGenericChange[];
+	RelevantRemovedRootsFromChild,
+	NodeChangePruner,
+} from "./fieldChangeHandler.js";
+import { FieldKindWithEditor } from "./fieldKind.js";
+import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
+import { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+import { NodeChangeset } from "./modularChangeTypes.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
  */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
-	rebaser: isolatedFieldChangeRebaser({
+	rebaser: {
 		compose: (
 			changes: TaggedChange<GenericChangeset>[],
 			composeChildren: NodeChangeComposer,
@@ -98,6 +73,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			return composed;
 		},
+		amendCompose: () => fail("Not implemented"),
 		invert: (
 			{ change }: TaggedChange<GenericChangeset>,
 			invertChild: NodeChangeInverter,
@@ -109,86 +85,99 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				}),
 			);
 		},
-		rebase: (
-			change: GenericChangeset,
-			{ change: over }: TaggedChange<GenericChangeset>,
-			rebaseChild: NodeChangeRebaser,
-		): GenericChangeset => {
-			const rebased: GenericChangeset = [];
-			let iChange = 0;
-			let iOver = 0;
-			while (iChange < change.length && iOver < over.length) {
-				const a = change[iChange];
-				const b = over[iOver];
-				if (a.index === b.index) {
-					rebased.push({
-						index: a.index,
-						nodeChange: rebaseChild(a.nodeChange, b.nodeChange),
-					});
-					iChange += 1;
-					iOver += 1;
-				} else if (a.index < b.index) {
-					rebased.push(a);
-					iChange += 1;
-				} else {
-					iOver += 1;
-				}
-			}
-			rebased.push(...change.slice(iChange));
-			return rebased;
-		},
-	}),
-	encoder: {
-		encodeForJson(
-			formatVersion: number,
-			change: GenericChangeset,
-			encodeChild: NodeChangeEncoder,
-		): JsonCompatibleReadOnly {
-			const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset = change.map(
-				({ index, nodeChange }) => ({ index, nodeChange: encodeChild(nodeChange) }),
-			);
-			return encoded;
-		},
-		decodeJson: (
-			formatVersion: number,
-			change: JsonCompatibleReadOnly,
-			decodeChild: NodeChangeDecoder,
-		): GenericChangeset => {
-			const encoded = change as JsonCompatibleReadOnly[] & EncodedGenericChangeset;
-			return encoded.map(
-				({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
-					index,
-					nodeChange: decodeChild(nodeChange),
-				}),
-			);
-		},
+		rebase: rebaseGenericChange,
+		prune: pruneGenericChange,
 	},
+	codecsFactory: makeGenericChangeCodec,
 	editor: {
 		buildChildChange(index, change): GenericChangeset {
 			return [{ index, nodeChange: change }];
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.MarkList => {
+	intoDelta: (
+		{ change }: TaggedChange<GenericChangeset>,
+		deltaFromChild: ToDelta,
+	): DeltaFieldChanges => {
 		let nodeIndex = 0;
-		const delta: Delta.Mark[] = [];
+		const markList: DeltaMark[] = [];
 		for (const { index, nodeChange } of change) {
 			if (nodeIndex < index) {
 				const offset = index - nodeIndex;
-				delta.push(offset);
+				markList.push({ count: offset });
 				nodeIndex = index;
 			}
-			delta.push(deltaFromChild(nodeChange, index));
+			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return delta;
+		return { local: markList };
 	},
+	relevantRemovedRoots,
+	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
+
+function rebaseGenericChange(
+	change: GenericChangeset,
+	{ change: over }: TaggedChange<GenericChangeset>,
+	rebaseChild: NodeChangeRebaser,
+): GenericChangeset {
+	const rebased: GenericChangeset = [];
+	let iChange = 0;
+	let iOver = 0;
+	while (iChange < change.length || iOver < over.length) {
+		const a = change[iChange];
+		const b = over[iOver];
+		const aIndex = a?.index ?? Infinity;
+		const bIndex = b?.index ?? Infinity;
+		let nodeChangeA: NodeChangeset | undefined;
+		let nodeChangeB: NodeChangeset | undefined;
+		let index: number;
+		if (aIndex === bIndex) {
+			index = a.index;
+			nodeChangeA = a.nodeChange;
+			nodeChangeB = b.nodeChange;
+			iChange += 1;
+			iOver += 1;
+		} else if (aIndex < bIndex) {
+			index = a.index;
+			nodeChangeA = a.nodeChange;
+			iChange += 1;
+		} else {
+			index = b.index;
+			nodeChangeB = b.nodeChange;
+			iOver += 1;
+		}
+
+		const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
+		if (nodeChange !== undefined) {
+			rebased.push({
+				index,
+				nodeChange,
+			});
+		}
+	}
+
+	return rebased;
+}
+
+function pruneGenericChange(
+	changeset: GenericChangeset,
+	pruneChild: NodeChangePruner,
+): GenericChangeset {
+	const pruned: GenericChangeset = [];
+	for (const change of changeset) {
+		const prunedNode = pruneChild(change.nodeChange);
+		if (prunedNode !== undefined) {
+			pruned.push({ ...change, nodeChange: prunedNode });
+		}
+	}
+	return pruned;
+}
 
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
-export const genericFieldKind: FieldKind = new FieldKind(
-	brand("ModularEditBuilder.Generic"),
+export const genericFieldKind: FieldKindWithEditor = new FieldKindWithEditor(
+	"ModularEditBuilder.Generic",
 	Multiplicity.Sequence,
 	genericChangeHandler,
 	(types, other) => false,
@@ -207,7 +196,7 @@ export function convertGenericChange<TChange>(
 	target: FieldChangeHandler<TChange>,
 	composeChild: NodeChangeComposer,
 	genId: IdAllocator,
-	revisionIndexer: RevisionIndexer,
+	revisionMetadata: RevisionMetadataSource,
 ): TChange {
 	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
@@ -218,12 +207,25 @@ export function convertGenericChange<TChange>(
 		composeChild,
 		genId,
 		invalidCrossFieldManager,
-		revisionIndexer,
+		revisionMetadata,
 	);
 }
 
 const invalidFunc = () => fail("Should not be called when converting generic changes");
 const invalidCrossFieldManager: CrossFieldManager = {
-	getOrCreate: invalidFunc,
+	set: invalidFunc,
 	get: invalidFunc,
 };
+
+export function newGenericChangeset(): GenericChangeset {
+	return [];
+}
+
+function* relevantRemovedRoots(
+	{ change }: TaggedChange<GenericChangeset>,
+	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+): Iterable<DeltaDetachedNodeId> {
+	for (const { nodeChange } of change) {
+		yield* relevantRemovedRootsFromChild(nodeChange);
+	}
+}

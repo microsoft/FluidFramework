@@ -4,23 +4,31 @@
  */
 
 export {
-	assertIsRevisionTag,
-	mintRevisionTag,
-	isRevisionTag,
+	areEqualChangeAtomIds,
 	mintCommit,
 	GraphCommit,
 	RevisionTag,
-	SessionId,
-} from "./types";
+	RevisionTagSchema,
+	EncodedRevisionTag,
+	EncodedChangeAtomId,
+	ChangesetLocalId,
+	ChangeAtomId,
+	ChangeAtomIdMap,
+	SessionIdSchema,
+} from "./types.js";
+export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {
 	ChangeRebaser,
 	FinalChange,
 	FinalChangeStatus,
 	makeAnonChange,
 	tagChange,
-	tagInverse,
+	mapTaggedChange,
+	tagRollbackInverse,
 	TaggedChange,
-} from "./changeRebaser";
+	RevisionMetadataSource,
+	RevisionInfo,
+} from "./changeRebaser.js";
 export {
 	Exception,
 	Failure,
@@ -28,6 +36,13 @@ export {
 	OutputType,
 	verifyChangeRebaser,
 	Violation,
-} from "./verifyChangeRebaser";
-export { Rebaser } from "./rebaser";
-export { findAncestor, findCommonAncestor } from "./utils";
+} from "./verifyChangeRebaser.js";
+export {
+	findAncestor,
+	findCommonAncestor,
+	rebaseBranch,
+	BranchRebaseResult,
+	rebaseChange,
+	rebaseChangeOverChanges,
+	revisionMetadataSourceFromInfo,
+} from "./utils.js";

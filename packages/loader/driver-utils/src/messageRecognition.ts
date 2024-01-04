@@ -12,54 +12,25 @@ import {
  * Tells if message was sent by container runtime
  * @privateRemarks ADO #1385: To be moved to container-definitions
  * @returns whether the message is a runtime message
+ * @internal
  */
 export function isRuntimeMessage(message: { type: string }): boolean {
 	return message.type === MessageType.Operation;
 }
 
-enum RuntimeMessage {
-	FluidDataStoreOp = "component",
-	Attach = "attach",
-	ChunkedOp = "chunkedOp",
-	BlobAttach = "blobAttach",
-	Rejoin = "rejoin",
-	Alias = "alias",
-	Operation = "op",
-}
-
 /**
- * Determines whether or not the message type is one of the following: (legacy)
- *
- * - "component"
- *
- * - "attach"
- *
- * - "chunkedOp"
- *
- * - "blobAttach"
- *
- * - "rejoin"
- *
- * - "alias"
- *
- * - "op"
- *
- * @deprecated This API should not be used.
+ * @privateRemarks ADO #1385: staging code changes across layers.
+ * Eventually to be replaced by MessageType.accept
+ * @internal
  */
-export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-	if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
-		return true;
-	}
-	return false;
-}
-
-// ADO #1385: staging code changes across layers.
-// Eventually to be replaced by MessageType.accept
 export enum MessageType2 {
 	Accept = "accept",
 }
 
-// ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
+/**
+ * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
+ * @internal
+ */
 export function canBeCoalescedByService(
 	message: ISequencedDocumentMessage | IDocumentMessage,
 ): boolean {

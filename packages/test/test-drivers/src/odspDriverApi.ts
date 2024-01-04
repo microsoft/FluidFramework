@@ -4,6 +4,12 @@
  */
 
 import {
+	booleanCases,
+	generatePairwiseOptions,
+	OptionsMatrix,
+	numberCases,
+} from "@fluid-private/test-pairwise-generator";
+import {
 	OdspDocumentServiceFactory,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
@@ -15,14 +21,11 @@ import {
 	IOpsCachingPolicy,
 	ICollabSessionOptions,
 } from "@fluidframework/odsp-driver-definitions";
-import {
-	booleanCases,
-	generatePairwiseOptions,
-	OptionsMatrix,
-	numberCases,
-} from "@fluidframework/test-pairwise-generator";
 import { pkgVersion } from "./packageVersion";
 
+/**
+ * @internal
+ */
 export const OdspDriverApi = {
 	version: pkgVersion,
 	OdspDocumentServiceFactory,
@@ -31,6 +34,9 @@ export const OdspDriverApi = {
 	createOdspUrl, // REVIEW: does this need to be back compat?
 };
 
+/**
+ * @internal
+ */
 export type OdspDriverApiType = typeof OdspDriverApi;
 
 const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
@@ -52,6 +58,9 @@ const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
 	forceAccessTokenViaAuthorizationHeader: [undefined],
 };
 
+/**
+ * @internal
+ */
 export const generateOdspHostStoragePolicy = (seed: number) => {
 	const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
 		concurrentSnapshotFetch: booleanCases,

@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { convertSummaryTreeToITree, listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.
+ * @alpha
  */
 export class MockStorage implements IChannelStorageService {
 	public static createFromSummary(summaryTree: ISummaryTree) {

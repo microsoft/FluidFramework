@@ -10,15 +10,17 @@ import {
 	IDocumentMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
 import type { Socket } from "socket.io-client";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Represents a connection to a stream of delta updates
+ * @internal
  */
 export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
@@ -38,6 +40,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		client: IClient,
 		webSocketServer: IWebSocketServer,
 		timeoutMs = 60000,
+		logger?: ITelemetryBaseLogger,
 	): Promise<LocalDocumentDeltaConnection> {
 		const socket = (webSocketServer as LocalWebSocketServer).createConnection();
 
@@ -45,7 +48,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		// but should be fine because this delta connection is for local use only.
 		const socketWithListener = socket as unknown as Socket;
 
-		const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id);
+		const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id, logger);
 
 		const connectMessage: IConnect = {
 			client,
@@ -59,12 +62,8 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		return deltaConnection;
 	}
 
-	constructor(socket: Socket, documentId: string) {
-		super(socket, documentId, new TelemetryNullLogger());
-	}
-
-	protected submitCore(type: string, messages: IDocumentMessage[]) {
-		this.emitMessages(type, [messages]);
+	constructor(socket: Socket, documentId: string, logger?: ITelemetryBaseLogger) {
+		super(socket, documentId, createChildLogger({ logger }));
 	}
 
 	/**
@@ -74,7 +73,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		// We use a promise resolve to force a turn break given message processing is sync
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		Promise.resolve().then(() => {
-			this.submitCore("submitOp", messages);
+			this.emitMessages("submitOp", [messages]);
 		});
 	}
 
@@ -82,7 +81,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Submits a new signal to the server
 	 */
 	public submitSignal(message: any): void {
-		this.submitCore("submitSignal", [message]);
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { assert, bufferToString } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -40,17 +40,17 @@ export class SnapshotV1 {
 	private readonly segments: JsonSegmentSpecs[];
 	private readonly segmentLengths: number[];
 	private readonly attributionCollections: IAttributionCollection<AttributionKey>[];
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly getLongClientId: (id: number) => string,
 		public filename?: string,
 		public onCompletion?: () => void,
 	) {
-		this.logger = ChildLogger.create(logger, "Snapshot");
+		this.logger = createChildLogger({ logger, namespace: "Snapshot" });
 		this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
 
 		const { currentSeq, minSeq } = mergeTree.collabWindow;
@@ -197,6 +197,13 @@ export class SnapshotV1 {
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
 		const pushSeg = (segment?: ISegment) => {
 			if (segment) {
+				if (
+					segment.properties !== undefined &&
+					Object.keys(segment.properties).length === 0
+				) {
+					segment.properties = undefined;
+					segment.propertyManager = undefined;
+				}
 				pushSegRaw(segment.toJSONObject(), segment.cachedLength, segment.attribution);
 			}
 		};
@@ -209,8 +216,13 @@ export class SnapshotV1 {
 			//      there is a pending insert op that will deliver the segment on reconnection.
 			//   b) The segment was removed at or below the MSN.  Pending ops can no longer reference this
 			//      segment, and therefore we can discard it.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (segment.seq === UnassignedSequenceNumber || segment.removedSeq! <= minSeq) {
+			if (
+				segment.seq === UnassignedSequenceNumber ||
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segment.removedSeq! <= minSeq ||
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segment.movedSeq! <= minSeq
+			) {
 				return true;
 			}
 
@@ -221,7 +233,8 @@ export class SnapshotV1 {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				segment.seq! <= minSeq && // Segment is below the MSN, and...
 				(segment.removedSeq === undefined || // .. Segment has not been removed, or...
-					segment.removedSeq === UnassignedSequenceNumber) // .. Removal op to be delivered on reconnect
+					segment.removedSeq === UnassignedSequenceNumber) && // .. Removal op to be delivered on reconnect
+				(segment.movedSeq === undefined || segment.movedSeq === UnassignedSequenceNumber)
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
 				// coalesce the new segment with the previous (if any).
@@ -248,7 +261,16 @@ export class SnapshotV1 {
 				pushSeg(prev);
 				prev = undefined;
 
-				const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
+				if (
+					segment.properties !== undefined &&
+					Object.keys(segment.properties).length === 0
+				) {
+					segment.properties = undefined;
+					segment.propertyManager = undefined;
+				}
+				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
+					json: segment.toJSONObject(),
+				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				if (segment.seq! > minSeq) {
@@ -276,10 +298,27 @@ export class SnapshotV1 {
 					);
 				}
 
-				// Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
+				if (segment.movedSeq !== undefined) {
+					assert(
+						segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq > minSeq,
+						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
+					);
+					raw.movedSeq = segment.movedSeq;
+					raw.movedSeqs = segment.movedSeqs;
+					raw.movedClientIds = segment.movedClientIds?.map((id) =>
+						this.getLongClientId(id),
+					);
+				}
+
+				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.
 				assert(
 					(raw.seq !== undefined && raw.client !== undefined) ||
-						(raw.removedSeq !== undefined && raw.removedClient !== undefined),
+						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined) ||
+						(raw.movedSeq !== undefined &&
+							raw.movedClientIds !== undefined &&
+							raw.movedClientIds.length > 0 &&
+							raw.movedSeqs !== undefined &&
+							raw.movedSeqs.length > 0),
 					0x066 /* "Corrupted preservation of segment metadata!" */,
 				);
 
@@ -300,7 +339,7 @@ export class SnapshotV1 {
 	public static async loadChunk(
 		storage: IChannelStorageService,
 		path: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): Promise<MergeTreeChunkV1> {
@@ -312,7 +351,7 @@ export class SnapshotV1 {
 	public static processChunk(
 		path: string,
 		chunk: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {

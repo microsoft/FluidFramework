@@ -3,68 +3,76 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDeliState, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
+import {
+	ICheckpointService,
+	IDeliState,
+	IQueuedMessage,
+} from "@fluidframework/server-services-core";
 import { CheckpointReason } from "../utils";
 
+/**
+ * @internal
+ */
 export interface IDeliCheckpointManager {
-    writeCheckpoint(checkpoint: IDeliState, reason: CheckpointReason): Promise<void>;
-    deleteCheckpoint(checkpointParams: ICheckpointParams): Promise<void>;
+	writeCheckpoint(
+		checkpoint: IDeliState,
+		isLocal: boolean,
+		reason: CheckpointReason,
+	): Promise<void>;
+	deleteCheckpoint(checkpointParams: ICheckpointParams, isLocal: boolean): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface ICheckpointParams {
-    /**
-     * The reason why this checkpoint was triggered
-     */
-    reason: CheckpointReason;
+	/**
+	 * The reason why this checkpoint was triggered
+	 */
+	reason: CheckpointReason;
 
-    /**
-     * The deli checkpoint state \@ deliCheckpointMessage
-     */
-    deliState: IDeliState;
+	/**
+	 * The deli checkpoint state \@ deliCheckpointMessage
+	 */
+	deliState: IDeliState;
 
-    /**
-     * The message to checkpoint for deli (mongodb)
-     */
-    deliCheckpointMessage: IQueuedMessage;
+	/**
+	 * The message to checkpoint for deli (mongodb)
+	 */
+	deliCheckpointMessage: IQueuedMessage;
 
-    /**
-     * The message to checkpoint for kafka
-     */
-    kafkaCheckpointMessage: IQueuedMessage | undefined;
+	/**
+	 * The message to checkpoint for kafka
+	 */
+	kafkaCheckpointMessage: IQueuedMessage | undefined;
 
-    /**
-     * Flag that decides if the deli checkpoint should be deleted
-     */
-    clear?: boolean;
+	/**
+	 * Flag that decides if the deli checkpoint should be deleted
+	 */
+	clear?: boolean;
 }
 
+/**
+ * @internal
+ */
 export function createDeliCheckpointManagerFromCollection(
-    tenantId: string,
-    documentId: string,
-    collection: ICollection<IDocument>): IDeliCheckpointManager {
-    const checkpointManager = {
-        writeCheckpoint: async (checkpoint: IDeliState) => {
-            return collection.update(
-                {
-                    documentId,
-                    tenantId,
-                },
-                {
-                    deli: JSON.stringify(checkpoint),
-                },
-                null);
-        },
-        deleteCheckpoint: async () => {
-            return collection.update(
-                {
-                    documentId,
-                    tenantId,
-                },
-                {
-                    deli: "",
-                },
-                null);
-        },
-    };
-    return checkpointManager;
+	tenantId: string,
+	documentId: string,
+	checkpointService: ICheckpointService,
+): IDeliCheckpointManager {
+	const checkpointManager = {
+		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
+			return checkpointService.writeCheckpoint(
+				documentId,
+				tenantId,
+				"deli",
+				checkpoint,
+				isLocal,
+			);
+		},
+		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
+			return checkpointService.clearCheckpoint(documentId, tenantId, "deli", isLocal);
+		},
+	};
+	return checkpointManager;
 }

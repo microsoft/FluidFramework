@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "2.0.0-internal.3.3.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,45 +11,68 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "commonjs",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./alpha": {
+			"types": "./dist/test-runtime-utils-alpha.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./beta": {
+			"types": "./dist/test-runtime-utils-beta.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./internal": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./public": {
+			"types": "./dist/test-runtime-utils-public.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
 	"main": "dist/index.js",
-	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
-		"build:genver": "gen-version",
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -60,47 +83,78 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/datastore-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/driver-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/driver-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/routerlicious-driver": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/runtime-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/runtime-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/telemetry-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"axios": "^0.26.0",
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"events": "^3.1.0",
 		"jsrsasign": "^10.5.25",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-135362",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-135362",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.3.2.0",
-		"@microsoft/api-extractor": "^7.22.2",
-		"@rushstack/eslint-config": "^2.5.1",
+		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-tools/build-cli": "0.29.0-227332",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.29.0-227332",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.8.0.0",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/jsrsasign": "^8.0.8",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.36",
-		"@types/uuid": "^8.3.0",
-		"concurrently": "^6.2.0",
+		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.2",
-		"eslint": "~8.6.0",
-		"mocha": "^10.0.0",
-		"nyc": "^15.0.0",
-		"prettier": "~2.6.2",
-		"rimraf": "^2.6.2",
-		"typescript": "~4.5.5"
+		"cross-env": "^7.0.3",
+		"eslint": "~8.50.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MockContainerRuntimeForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactory": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreContext": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

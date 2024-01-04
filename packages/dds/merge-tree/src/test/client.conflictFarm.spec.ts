@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	annotateRange,
 	doOverRange,
@@ -74,9 +74,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [
-				new TestClient({ mergeTreeUseNewLengthCalculations: true }),
-			];
+			const clients: TestClient[] = [new TestClient()];
 			clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 
 			let seq = 0;

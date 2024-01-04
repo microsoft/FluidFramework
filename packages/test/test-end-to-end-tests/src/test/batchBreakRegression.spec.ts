@@ -9,17 +9,17 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -44,7 +44,10 @@ type ProxyOverrides<T> = {
 		: OverrideFunction<T, P>;
 };
 
-function createFunctionOverrideProxy<T extends object>(obj: T, overrides: ProxyOverrides<T>): T {
+function createFunctionOverrideProxy<T extends Record<string, any>>(
+	obj: T,
+	overrides: ProxyOverrides<T>,
+): T {
 	return new Proxy(obj, {
 		get: (target: T, property: string) => {
 			const override = overrides[property as keyof T];
@@ -76,6 +79,7 @@ async function runAndValidateBatch(
 	provider: ITestObjectProvider,
 	proxyDsf: IDocumentServiceFactory,
 	timeout: number,
+	runtimeOptions?: IContainerRuntimeOptions,
 ) {
 	let containerUrl: string | undefined;
 	{
@@ -99,6 +103,7 @@ async function runAndValidateBatch(
 							summaryOptions: {
 								summaryConfigOverrides: { state: "disabled" },
 							},
+							...runtimeOptions,
 						},
 					}),
 				],
@@ -108,7 +113,7 @@ async function runAndValidateBatch(
 			},
 		);
 		const container = await loader.resolve({ url: containerUrl });
-		const testObject = await requestFluidObject<TestFluidObject>(container, "default");
+		const testObject = (await container.getEntryPoint()) as TestFluidObject;
 		// send batch
 		testObject.context.containerRuntime.orderSequentially(() => {
 			for (let i = 0; i < 10; i++) {
@@ -136,7 +141,7 @@ async function runAndValidateBatch(
 	}
 }
 
-describeNoCompat("Batching failures", (getTestObjectProvider) => {
+describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 	it("working proxy", async function () {
 		const provider = getTestObjectProvider({ resetAfterEach: true });
 
@@ -161,43 +166,53 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 		await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
 	});
 
-	it("contains batch metadata", async function () {
-		const provider = getTestObjectProvider({ resetAfterEach: true });
-		let batchesSent = 0;
-		const sentMessages: IDocumentMessage[][] = [];
+	[true, false].forEach((enableGroupedBatching) => {
+		it(`contains batch metadata groupedBatchingEnabled: ${enableGroupedBatching}`, async function () {
+			const provider = getTestObjectProvider({ resetAfterEach: true });
+			let batchesSent = 0;
+			const sentMessages: IDocumentMessage[][] = [];
 
-		const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-			provider.documentServiceFactory,
-			{
-				createDocumentService: {
-					connectToDeltaStream: {
-						submit: (ds) => (messages) => {
-							sentMessages.push([...messages]);
-							batchesSent++;
-							ds.submit(messages);
+			const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToDeltaStream: {
+							submit: (ds) => (messages) => {
+								sentMessages.push([...messages]);
+								batchesSent++;
+								ds.submit(messages);
+							},
 						},
 					},
 				},
-			},
-		);
-
-		await runAndValidateBatch(provider, proxyDsf, this.timeout());
-		assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
-
-		{
-			const batch = sentMessages[0];
-			assert.strictEqual(batch.length, 11, "expected 11 messages");
-			assert.strictEqual(
-				batch[0].metadata?.batch,
-				true,
-				"first message should contain batch metadata",
 			);
-			assert.strictEqual(
-				batch[10].metadata?.batch,
-				false,
-				"last message should contain batch metadata",
-			);
-		}
+
+			await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
+				enableGroupedBatching,
+			});
+			assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
+
+			{
+				let batch = sentMessages[0];
+				if (batch.length === 1) {
+					const contents = JSON.parse(batch[0].contents as string);
+					assert.strictEqual(contents.type, "groupedBatch");
+					batch = contents.contents;
+				}
+
+				assert.strictEqual(batch.length, 11, "expected 11 messages");
+				assert.strictEqual(
+					(batch[0].metadata as { batch?: unknown } | undefined)?.batch,
+					true,
+					"first message should contain batch metadata",
+				);
+				assert.strictEqual(
+					(batch[10].metadata as { batch?: unknown } | undefined)?.batch,
+					false,
+					"last message should contain batch metadata",
+				);
+			}
+		});
 	});
 
 	describe("client sends invalid batches ", () => {
@@ -215,13 +230,17 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchStartIndex = newMessages.findIndex(
-										(m) => m.metadata?.batch === true,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === true,
 									);
 									if (batchStartIndex >= 0) {
 										newMessages[batchStartIndex] = {
 											...newMessages[batchStartIndex],
 											metadata: {
-												...newMessages[batchStartIndex].metadata,
+												// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
+												// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+												...(newMessages[batchStartIndex].metadata as any),
 												batch: undefined,
 											},
 										};
@@ -255,13 +274,17 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => m.metadata?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 0) {
 									newMessages[batchEndIndex] = {
 										...newMessages[batchEndIndex],
 										metadata: {
-											...newMessages[batchEndIndex].metadata,
+											// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
+											// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+											...(newMessages[batchEndIndex].metadata as any),
 											batch: undefined,
 										},
 									};
@@ -292,7 +315,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => m.metadata?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 1) {
 									ds.submit(newMessages.slice(0, batchEndIndex - 1));
@@ -328,7 +353,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchEndIndex = newMessages.findIndex(
-										(m) => m.metadata?.batch === false,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === false,
 									);
 									if (batchEndIndex >= 1) {
 										// set reference seq number to below min seq so the server nacks the batch
@@ -350,21 +377,19 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert.strictEqual(e.errorType, FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);
 	});
 	describe("server sends invalid batch", () => {
+		// Batches are now all 1 message
 		itExpects(
 			"interleave system message",
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Received a system message during batch processing",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerDispose",
 					error: "Received a system message during batch processing",
 				},
 			],
@@ -393,7 +418,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 											| ISequencedDocumentSystemMessage
 										)[] = [...args[1]];
 										const batchEndIndex = newMessages.findIndex(
-											(m) => m.metadata?.batch === false,
+											(m) =>
+												(m.metadata as { batch?: unknown } | undefined)
+													?.batch === false,
 										);
 										if (batchEndIndex >= 0) {
 											args[1] = newMessages
@@ -426,11 +453,14 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					},
 				);
 				try {
-					await runAndValidateBatch(provider, proxyDsf, this.timeout());
+					await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
+						enableGroupedBatching: false,
+					});
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FieldChangeRebaser } from "../modular-schema";
-import { amendCompose, compose } from "./compose";
-import { Changeset } from "./format";
-import { amendInvert, invert } from "./invert";
-import { amendRebase, rebase } from "./rebase";
+import { FieldChangeRebaser } from "../modular-schema/index.js";
+import { amendCompose, compose } from "./compose.js";
+import { Changeset } from "./types.js";
+import { invert } from "./invert.js";
+import { rebase } from "./rebase.js";
+import { prune } from "./prune.js";
 
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 
@@ -15,7 +16,6 @@ export const sequenceFieldChangeRebaser = {
 	compose,
 	amendCompose,
 	invert,
-	amendInvert,
 	rebase,
-	amendRebase,
+	prune,
 };

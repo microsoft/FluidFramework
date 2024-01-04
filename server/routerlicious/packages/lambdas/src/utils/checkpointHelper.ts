@@ -5,29 +5,30 @@
 
 import { IQueuedMessage } from "@fluidframework/server-services-core";
 
- export enum CheckpointReason {
-    EveryMessage,
-    IdleTime,
-    MaxTime,
-    MaxMessages,
-    ClearCache,
-    NoClients,
+export enum CheckpointReason {
+	EveryMessage,
+	IdleTime,
+	MaxTime,
+	MaxMessages,
+	ClearCache,
+	NoClients,
+	MarkAsCorrupt,
 }
 
 // Used to control checkpoint logic
 export interface ICheckpoint {
-    currentCheckpointMessage?: IQueuedMessage;
-    currentKafkaCheckpointMessage?: IQueuedMessage;
+	currentCheckpointMessage?: IQueuedMessage;
+	currentKafkaCheckpointMessage?: IQueuedMessage;
 
-    // used for ensuring the lambda remains open while clients are connected
-    nextKafkaCheckpointMessage?: IQueuedMessage;
+	// used for ensuring the lambda remains open while clients are connected
+	nextKafkaCheckpointMessage?: IQueuedMessage;
 
-    // time fired due that should kick off a checkpoint when scribe is idle
-    idleTimer?: any;
+	// time fired due that should kick off a checkpoint when scribe is idle
+	idleTimer?: any;
 
-    // raw messages since the last checkpoint
-    rawMessagesSinceCheckpoint: number;
+	// raw messages since the last checkpoint
+	rawMessagesSinceCheckpoint: number;
 
-    // time in milliseconds since the last checkpoint
-    lastCheckpointTime: number;
+	// time in milliseconds since the last checkpoint
+	lastCheckpointTime: number;
 }

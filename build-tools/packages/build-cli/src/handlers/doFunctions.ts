@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
@@ -10,7 +10,7 @@ import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { bumpReleaseGroup, difference, getPreReleaseDependencies, npmCheckUpdates } from "../lib";
+import { difference, getPreReleaseDependencies, npmCheckUpdates, setVersion } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
@@ -75,7 +75,7 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 		if (pkg.monoRepo === undefined) {
 			updatedPkgs.add(pkg.name);
 		} else {
-			updatedReleaseGroups.add(pkg.monoRepo.kind);
+			updatedReleaseGroups.add(pkg.monoRepo.releaseGroup);
 		}
 	}
 
@@ -113,6 +113,13 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 	}
 
 	if (updatedPackages.length > 0) {
+		log?.verbose(`Running install if needed.`);
+		await FluidRepo.ensureInstalled(
+			isReleaseGroup(releaseGroup)
+				? context.packagesInReleaseGroup(releaseGroup)
+				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				  [context.fullPackageMap.get(releaseGroup)!],
+		);
 		// There were updates, which is considered a failure.
 		BaseStateHandler.signalFailure(machine, state);
 		context.repo.reload();
@@ -155,16 +162,20 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 	const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 
 	log.info(
-		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion} (${chalk.blue(
+		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion.version} (${chalk.blue(
 			bumpType,
 		)} bump)!`,
 	);
 
-	const bumpResults = await bumpReleaseGroup(context, bumpType, rgRepo, scheme);
-	log.verbose(`Raw bump results:`);
-	log.verbose(bumpResults);
+	await setVersion(
+		context,
+		rgRepo,
+		newVersion,
+		rgRepo instanceof MonoRepo ? rgRepo.interdependencyRange : undefined,
+		log,
+	);
 
-	if (shouldInstall === true && !(await FluidRepo.ensureInstalled(packages, false))) {
+	if (shouldInstall === true && !(await FluidRepo.ensureInstalled(packages))) {
 		log.errorLog("Install failed.");
 		BaseStateHandler.signalFailure(machine, state);
 		return true;

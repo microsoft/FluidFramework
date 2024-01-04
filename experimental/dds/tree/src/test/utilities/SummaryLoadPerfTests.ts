@@ -5,7 +5,7 @@
 
 import { join } from 'path';
 import * as fs from 'fs';
-import { takeAsync } from '@fluid-internal/stochastic-test-utils';
+import { takeAsync } from '@fluid-private/stochastic-test-utils';
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { SharedTree } from '../../SharedTree';
 import { WriteFormat } from '../../persisted-types';

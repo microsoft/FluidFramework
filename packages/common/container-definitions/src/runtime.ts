@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
+
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
 	IClientDetails,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -21,12 +20,13 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
  * service.  The transition from detached to attached state is a one-way transition.
+ * @public
  */
 export enum AttachState {
 	/**
@@ -50,13 +50,9 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
+ * @alpha
  */
 export interface IRuntime extends IDisposable {
-	/**
-	 * Executes a request against the runtime
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
 	/**
 	 * Notifies the runtime of a change in the connection state
 	 */
@@ -70,6 +66,8 @@ export interface IRuntime extends IDisposable {
 	/**
 	 * Processes the given signal
 	 */
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	processSignal(message: any, local: boolean);
 
 	/**
@@ -89,27 +87,27 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
-	 * @experimental
-	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(): unknown;
-
-	/**
-	 * Notify runtime that container is moving to "Attaching" state
-	 * @param snapshot - snapshot created at attach time
-	 * @deprecated - not necessary after op replay moved to Container
-	 */
-	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
 
 	/**
 	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
 	 * stashed ops) after having processed it.
 	 */
 	notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
+
+	/**
+	 * Exposes the entryPoint for the container runtime.
+	 * Use this as the primary way of getting access to the user-defined logic within the container runtime.
+	 *
+	 * @see {@link IContainer.getEntryPoint}
+	 */
+	getEntryPoint(): Promise<FluidObject>;
 }
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
+ * @alpha
  */
 export interface IBatchMessage {
 	contents?: string;
@@ -119,31 +117,34 @@ export interface IBatchMessage {
 }
 
 /**
- * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
- * This allows the Container to terminate the connection to the IRuntime.
- *
- * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
- * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
- * and the Container has created a new ContainerContext.
+ * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
+ * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
+ * if you intend them to be consumed/called from the runtime layer.
+ * @alpha
  */
-export interface IContainerContext extends IDisposable {
-	/** @deprecated Please pass in existing directly in instantiateRuntime */
-	readonly existing: boolean | undefined;
+export interface IContainerContext {
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
-	/** @deprecated Please use submitBatchFn & submitSummaryFn */
+	/**
+	 * @deprecated Please use submitBatchFn & submitSummaryFn
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
-	/** @returns clientSequenceNumber of last message in a batch */
+	/**
+	 * @returns clientSequenceNumber of last message in a batch
+	 */
 	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
 	readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	readonly submitSignalFn: (contents: any) => void;
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -160,7 +161,6 @@ export interface IContainerContext extends IDisposable {
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
-	readonly serviceConfiguration: IClientConfiguration | undefined;
 	pendingLocalState?: unknown;
 
 	/**
@@ -191,12 +191,23 @@ export interface IContainerContext extends IDisposable {
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
 	 * and scenarios which can change in the future.
+	 * @deprecated 2.0.0-internal.5.2.0 - The docId is already logged by the {@link IContainerContext.taggedLogger} for
+	 * telemetry purposes, so this is generally unnecessary for telemetry.
+	 * If the id is needed for other purposes it should be passed to the consumer explicitly.
+	 *
+	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
 }
 
+/**
+ * @alpha
+ */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
+/**
+ * @alpha
+ */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
 }
@@ -206,6 +217,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
+ * @alpha
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
@@ -216,4 +228,25 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	 * @param existing - whether to instantiate for the first time or from an existing context
 	 */
 	instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+}
+
+/**
+ * Defines list of properties expected for getPendingLocalState
+ * @alpha
+ */
+export interface IGetPendingLocalStateProps {
+	/**
+	 * Indicates the container will close after getting the pending state. Used internally
+	 * to wait for blobs to be attached to a DDS and collect generated ops before closing.
+	 */
+	readonly notifyImminentClosure: boolean;
+
+	/**
+	 * Abort signal to stop waiting for blobs to get attached to a DDS. When triggered,
+	 * only blobs attached will be collected in the pending state.
+	 * Intended to be used in the very rare scenario in which getLocalPendingState go stale due
+	 * to a blob failed to be referenced. Such a blob will be lost but the rest of the state will
+	 * be preserved and collected.
+	 */
+	readonly stopBlobAttachingSignal?: AbortSignal;
 }

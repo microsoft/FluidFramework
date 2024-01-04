@@ -4,8 +4,10 @@
  */
 
 import { EventEmitter } from "events";
-import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
+import { assert } from "@fluidframework/core-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -20,7 +22,6 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -40,6 +41,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
+	FlushMode,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -51,6 +53,7 @@ import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
+ * @alpha
  */
 export class MockDeltaConnection implements IDeltaConnection {
 	public get connected(): boolean {
@@ -93,9 +96,58 @@ export class MockDeltaConnection implements IDeltaConnection {
 }
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
+/**
+ * @alpha
+ */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
 	clientSequenceNumber: number;
+	localOpMetadata: unknown;
+}
+
+interface IMockContainerRuntimeIdAllocationMessage {
+	contents: {
+		type: "idAllocation";
+		contents: IdCreationRange;
+	};
+}
+
+/**
+ * Options for the container runtime mock.
+ * @alpha
+ */
+export interface IMockContainerRuntimeOptions {
+	/**
+	 * Configures the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
+	 * and then sent them as a single batch when `flush()` is called on the runtime.
+	 *
+	 * By default, flush mode is Immediate.
+	 */
+	readonly flushMode?: FlushMode;
+	/**
+	 * If configured, it will simulate group batching by forcing all ops within a batch to have
+	 * the same sequence number.
+	 *
+	 * By default, the value is `false`
+	 */
+	readonly enableGroupedBatching?: boolean;
+}
+
+const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
+	flushMode: FlushMode.Immediate,
+	enableGroupedBatching: false,
+};
+
+const makeContainerRuntimeOptions = (
+	mockContainerRuntimeOptions: IMockContainerRuntimeOptions,
+): Required<IMockContainerRuntimeOptions> => ({
+	...defaultMockContainerRuntimeOptions,
+	...mockContainerRuntimeOptions,
+});
+
+interface IInternalMockRuntimeMessage {
+	content: any;
 	localOpMetadata: unknown;
 }
 
@@ -103,63 +155,189 @@ export interface IMockContainerRuntimePendingMessage {
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
+ * @alpha
  */
 export class MockContainerRuntime {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
 	private readonly deltaManager: MockDeltaManager;
+	/**
+	 * @deprecated use the associated datastore to create the delta connection
+	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+	private readonly outbox: IInternalMockRuntimeMessage[] = [];
+	/**
+	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
+	 */
+	protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
+		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
+		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		this.deltaManager = new MockDeltaManager();
+		const msn = overrides?.minimumSequenceNumber;
+		if (msn !== undefined) {
+			this.deltaManager.lastSequenceNumber = msn;
+			this.deltaManager.minimumSequenceNumber = msn;
+		}
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
 		this.dataStoreRuntime.deltaManager = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
+		this.dataStoreRuntime.containerRuntime = this;
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
 		this.clientId = this.dataStoreRuntime.clientId ?? uuid();
 		factory.quorum.addMember(this.clientId, {});
+		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+		assert(
+			this.runtimeOptions.flushMode !== FlushMode.Immediate ||
+				!this.runtimeOptions.enableGroupedBatching,
+			"Grouped batching is not compatible with FlushMode.Immediate",
+		);
 	}
 
+	/**
+	 * @deprecated use the associated datastore to create the delta connection
+	 */
 	public createDeltaConnection(): MockDeltaConnection {
-		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown) =>
-				this.submit(messageContent, localOpMetadata),
-			() => this.dirty(),
-		);
+		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown): number {
-		const clientSequenceNumber = this.clientSequenceNumber++;
-		const msg: Partial<ISequencedDocumentMessage> = {
-			clientId: this.clientId,
-			clientSequenceNumber,
-			contents: messageContent,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-			type: MessageType.Operation,
-		};
-		this.factory.pushMessage(msg);
+	public getGeneratedIdRange(): IdCreationRange | undefined {
+		const range = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		return range?.ids === undefined ? undefined : range;
+	}
 
-		this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
+	public finalizeIdRange(range: IdCreationRange) {
+		assert(
+			this.dataStoreRuntime.idCompressor !== undefined,
+			"Shouldn't try to finalize IdRanges without an IdCompressor",
+		);
+		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
+	}
+
+	public submit(messageContent: any, localOpMetadata: unknown): number {
+		const clientSequenceNumber = this.clientSequenceNumber;
+		const message = {
+			content: messageContent,
+			localOpMetadata,
+		};
+
+		this.clientSequenceNumber++;
+		switch (this.runtimeOptions.flushMode) {
+			case FlushMode.Immediate: {
+				this.submitInternal(message, clientSequenceNumber);
+				break;
+			}
+
+			case FlushMode.TurnBased: {
+				this.outbox.push(message);
+				break;
+			}
+
+			default:
+				throw new Error(`Unsupported FlushMode ${this.runtimeOptions.flushMode}`);
+		}
 
 		return clientSequenceNumber;
 	}
 
 	public dirty(): void {}
 
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
+	 * this method was called. Otherwise, calling the method does nothing.
+	 */
+	public flush() {
+		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
+			return;
+		}
+
+		let fakeClientSequenceNumber = 1;
+		while (this.outbox.length > 0) {
+			this.submitInternal(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.outbox.shift()!,
+				// When grouped batching is used, the ops within the same grouped batch will have
+				// fake sequence numbers when they're ungrouped. The submit function will still
+				// return the clientSequenceNumber but this will ensure that the readers will always
+				// read the fake client sequence numbers.
+				this.runtimeOptions.enableGroupedBatching
+					? fakeClientSequenceNumber++
+					: this.clientSequenceNumber,
+			);
+		}
+	}
+
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will rebase the current batch by resubmitting them
+	 * to the data stores. Otherwise, calling the method does nothing.
+	 *
+	 * The method requires `runtimeOptions.enableGroupedBatching` to be enabled.
+	 */
+	public rebase() {
+		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
+			return;
+		}
+
+		assert(
+			this.runtimeOptions.enableGroupedBatching,
+			"Rebasing is not supported when group batching is disabled",
+		);
+
+		const messagesToRebase = this.outbox.slice();
+		this.outbox.length = 0;
+
+		messagesToRebase.forEach((message) =>
+			this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
+		);
+	}
+
+	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
+		// and sticking it in front of any op that might rely on that Id. It differs slightly in that
+		// in the actual runtime it would get put in its own separate batch
+		const idRange = this.getGeneratedIdRange();
+		if (idRange !== undefined) {
+			const idAllocationMessage = { type: "idAllocation", contents: idRange };
+			this.factory.pushMessage({
+				clientId: this.clientId,
+				clientSequenceNumber,
+				contents: idAllocationMessage,
+				referenceSequenceNumber: this.referenceSequenceNumber,
+				type: MessageType.Operation,
+			});
+			this.addPendingMessage(idAllocationMessage, undefined, clientSequenceNumber);
+		}
+
+		this.factory.pushMessage({
+			clientId: this.clientId,
+			clientSequenceNumber,
+			contents: message.content,
+			referenceSequenceNumber: this.referenceSequenceNumber,
+			type: MessageType.Operation,
+		});
+		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
+	}
+
 	public process(message: ISequencedDocumentMessage) {
 		this.deltaManager.lastSequenceNumber = message.sequenceNumber;
 		this.deltaManager.lastMessage = message;
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
-		this.deltaConnections.forEach((dc) => {
-			dc.process(message, local, localOpMetadata);
-		});
+
+		if (
+			(message as IMockContainerRuntimeIdAllocationMessage).contents.type === "idAllocation"
+		) {
+			this.finalizeIdRange((message as any).contents.contents as IdCreationRange);
+		} else {
+			this.dataStoreRuntime.process(message, local, localOpMetadata);
+		}
 	}
 
 	protected addPendingMessage(
@@ -182,11 +360,18 @@ export class MockContainerRuntime {
 			const pendingMessage = this.pendingMessages.shift();
 			assert(
 				pendingMessage?.clientSequenceNumber === message.clientSequenceNumber,
-				"Unexpected client sequence number from message",
+				"Unexpected message",
 			);
 			localOpMetadata = pendingMessage.localOpMetadata;
 		}
 		return [local, localOpMetadata];
+	}
+
+	/**
+	 * The current reference sequence number observed by this runtime instance.
+	 */
+	protected get referenceSequenceNumber() {
+		return this.deltaManager.lastSequenceNumber;
 	}
 }
 
@@ -196,6 +381,7 @@ export class MockContainerRuntime {
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
+ * @alpha
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
@@ -210,24 +396,67 @@ export class MockContainerRuntimeFactory {
 	protected messages: ISequencedDocumentMessage[] = [];
 	protected readonly runtimes: MockContainerRuntime[] = [];
 
+	/**
+	 * The container runtime options which will be provided to the all runtimes
+	 * created by this factory and also drive the way the ops are processed.
+	 *
+	 * See {@link IMockContainerRuntimeOptions}
+	 */
+	protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
+
+	constructor(
+		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
+	) {
+		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+	}
+
 	public get outstandingMessageCount() {
 		return this.messages.length;
 	}
 
+	/**
+	 * @returns a minimum sequence number for all connected clients.
+	 */
 	public getMinSeq(): number {
-		let minSeq: number | undefined;
-		for (const [, clientSeq] of this.minSeq) {
-			minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+		let minimumSequenceNumber: number | undefined;
+		for (const [client, clientSequenceNumber] of this.minSeq) {
+			// We have to make sure, a client is part of the quorum, when
+			// we compute the msn. We assume that the quorum accurately
+			// represents the currently connected clients. In some tests
+			// for reconnects, we will remove clients from the quorum
+			// to indicate they are currently not connected. In that case,
+			// they must no longer contribute to the msn computation.
+			if (this.quorum.getMember(client) !== undefined) {
+				minimumSequenceNumber =
+					minimumSequenceNumber === undefined
+						? clientSequenceNumber
+						: Math.min(minimumSequenceNumber, clientSequenceNumber);
+			}
 		}
-		return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
 	}
 
 	public createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 	): MockContainerRuntime {
-		const containerRuntime = new MockContainerRuntime(dataStoreRuntime, this);
+		const containerRuntime = new MockContainerRuntime(
+			dataStoreRuntime,
+			this,
+			this.runtimeOptions,
+		);
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
+	}
+
+	public synchronizeIdCompressors() {
+		for (const runtime of this.runtimes) {
+			const range = runtime.getGeneratedIdRange();
+			if (range !== undefined) {
+				for (const nestedRuntime of this.runtimes) {
+					nestedRuntime.finalizeIdRange(range);
+				}
+			}
+		}
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
@@ -241,6 +470,32 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
+	private lastProcessedMessage?: ISequencedDocumentMessage;
+	private processFirstMessage() {
+		assert(this.messages.length > 0, "The message queue should not be empty");
+
+		// Explicitly JSON clone the value to match the behavior of going thru the wire.
+		const message = JSON.parse(
+			JSON.stringify(this.messages.shift()),
+		) as ISequencedDocumentMessage;
+
+		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
+		if (
+			this.runtimeOptions.flushMode === FlushMode.Immediate ||
+			this.lastProcessedMessage?.clientId !== message.clientId
+		) {
+			this.sequenceNumber++;
+		}
+		message.sequenceNumber = this.sequenceNumber;
+		message.minimumSequenceNumber = this.getMinSeq();
+		this.lastProcessedMessage = message;
+		for (const runtime of this.runtimes) {
+			runtime.process(message);
+		}
+	}
+
 	/**
 	 * Process one of the queued messages.  Throws if no messages are queued.
 	 */
@@ -248,18 +503,9 @@ export class MockContainerRuntimeFactory {
 		if (this.messages.length === 0) {
 			throw new Error("Tried to process a message that did not exist");
 		}
+		this.lastProcessedMessage = undefined;
 
-		let msg = this.messages.shift();
-
-		// Explicitly JSON clone the value to match the behavior of going thru the wire.
-		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
-
-		this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
-		msg.sequenceNumber = ++this.sequenceNumber;
-		msg.minimumSequenceNumber = this.getMinSeq();
-		for (const runtime of this.runtimes) {
-			runtime.process(msg);
-		}
+		this.processFirstMessage();
 	}
 
 	/**
@@ -271,8 +517,10 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process more messages than exist");
 		}
 
+		this.lastProcessedMessage = undefined;
+
 		for (let i = 0; i < count; i++) {
-			this.processOneMessage();
+			this.processFirstMessage();
 		}
 	}
 
@@ -280,12 +528,16 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
+		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
-			this.processOneMessage();
+			this.processFirstMessage();
 		}
 	}
 }
 
+/**
+ * @alpha
+ */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	private readonly members: Map<string, ISequencedClient>;
 	private readonly eventEmitter = new EventEmitter();
@@ -382,18 +634,31 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
+ * @alpha
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter
 	implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext
 {
-	constructor(overrides?: { clientId?: string; entryPoint?: IFluidHandle<FluidObject> }) {
+	constructor(overrides?: {
+		clientId?: string;
+		entryPoint?: IFluidHandle<FluidObject>;
+		id?: string;
+		logger?: ITelemetryLoggerExt;
+		idCompressor?: IIdCompressor & IIdCompressorCore;
+	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
+		this.id = overrides?.id ?? uuid();
+		this.logger = createChildLogger({
+			logger: overrides?.logger,
+			namespace: "fluid:MockFluidDataStoreRuntime",
+		});
+		this.idCompressor = overrides?.idCompressor;
 	}
 
-	public readonly entryPoint?: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -408,12 +673,8 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
-	public get IFluidRouter() {
-		return this;
-	}
-
 	public readonly documentId: string = undefined as any;
-	public readonly id: string = uuid();
+	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
 	public options: ILoaderOptions = {};
 	public clientId: string;
@@ -421,10 +682,20 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLogger = DebugLogger.create(
-		"fluid:MockFluidDataStoreRuntime",
-	);
+	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
+	public containerRuntime?: MockContainerRuntime;
+	public idCompressor?: IIdCompressor & IIdCompressorCore;
+	private readonly deltaConnections: MockDeltaConnection[] = [];
+	public createDeltaConnection(): MockDeltaConnection {
+		const deltaConnection = new MockDeltaConnection(
+			(messageContent: any, localOpMetadata: unknown) =>
+				this.submitMessageInternal(messageContent, localOpMetadata),
+			() => this.setChannelDirty(),
+		);
+		this.deltaConnections.push(deltaConnection);
+		return deltaConnection;
+	}
 
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return callback();
@@ -517,12 +788,30 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
+		assert(
+			this.containerRuntime !== undefined,
+			"The container runtime has not been initialized",
+		);
+		return this.containerRuntime.submit(messageContent, localOpMetadata);
+	}
+
+	private setChannelDirty(): void {
+		assert(
+			this.containerRuntime !== undefined,
+			"The container runtime has not been initialized",
+		);
+		return this.containerRuntime.dirty();
+	}
+
 	public submitSignal(type: string, content: any) {
 		return null;
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean): void {
-		return;
+	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+		this.deltaConnections.forEach((dc) => {
+			dc.process(message, local, localOpMetadata);
+		});
 	}
 
 	public processSignal(message: any, local: boolean) {
@@ -534,6 +823,10 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		if (connected && clientId !== undefined) {
+			this.clientId = clientId;
+		}
+		this.deltaConnections.forEach((dc) => dc.setConnectionState(connected));
 		return;
 	}
 
@@ -545,6 +838,10 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
+	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 */
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
 	public async summarize(
@@ -599,12 +896,15 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
-		return;
+		this.deltaConnections.forEach((dc) => {
+			dc.reSubmit(content, localOpMetadata);
+		});
 	}
 
 	public async applyStashedOp(content: any) {
 		return;
 	}
+
 	public rollback?(message: any, localOpMetadata: unknown): void {
 		return;
 	}
@@ -612,6 +912,7 @@ export class MockFluidDataStoreRuntime
 
 /**
  * Mock implementation of IDeltaConnection
+ * @internal
  */
 export class MockEmptyDeltaConnection implements IDeltaConnection {
 	public connected = false;
@@ -628,6 +929,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
+ * @alpha
  */
 export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}
@@ -650,6 +952,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
+ * @alpha
  */
 export class MockSharedObjectServices implements IChannelServices {
 	public static createFromSummary(summaryTree: ISummaryTree) {

@@ -6,8 +6,7 @@
 export {
 	Adapters,
 	Compatibility,
-	FieldAdapter,
 	TreeAdapter,
-	ViewSchemaData,
 	AdaptedViewSchema,
-} from "./view";
+	AllowedUpdateType,
+} from "./view.js";

@@ -8,12 +8,12 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject, createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
+import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -62,18 +62,14 @@ describe("Ops on Reconnect", () => {
 
 		const defaultFactory = createDataStoreFactory("default", factory);
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
-			[
+			registryEntries: [
 				[defaultFactory.type, Promise.resolve(defaultFactory)],
 				[dataObject2Factory.type, Promise.resolve(dataObject2Factory)],
 			],
-			undefined,
-			[innerRequestHandler],
 			runtimeOptions,
-		);
+		});
 
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
@@ -100,29 +96,22 @@ describe("Ops on Reconnect", () => {
 	) {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
-		container1Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-			container1,
-			"default",
-		);
+		container1Object1 = (await container1.getEntryPoint()) as ITestFluidObject;
 
 		container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
 		container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
-		container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(
-			directoryId,
-		);
+		container1Object1Directory =
+			await container1Object1.getSharedObject<SharedDirectory>(directoryId);
 		container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
 	}
 
 	async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
 		const loader = await createLoader();
 		const container2 = await loader.resolve({ url: documentLoadUrl });
-		await waitForContainerConnection(container2, true);
+		await waitForContainerConnection(container2);
 
 		// Get dataStore1 on the second container.
-		const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-			container2,
-			"default",
-		);
+		const container2Object1 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 		container2Object1.context.containerRuntime.on(
 			"op",
@@ -131,7 +120,7 @@ describe("Ops on Reconnect", () => {
 					const envelope = message.contents as IEnvelope;
 					const address = envelope.contents.content.address;
 					const content = envelope.contents.content.contents;
-					const batch = message.metadata?.batch;
+					const batch = (message.metadata as { batch?: unknown } | undefined)?.batch;
 					let value1: string | number;
 					let value2: string;
 					// Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
@@ -191,7 +180,7 @@ describe("Ops on Reconnect", () => {
 			});
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -232,7 +221,7 @@ describe("Ops on Reconnect", () => {
 			});
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -279,7 +268,7 @@ describe("Ops on Reconnect", () => {
 			});
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -304,18 +293,15 @@ describe("Ops on Reconnect", () => {
 			await setupFirstContainer();
 
 			// Create dataObject2 in the first container.
-			const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-				await container1Object1.context.containerRuntime.createDataStore("dataObject2"),
-				"/",
-			);
+			const dataStore =
+				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
+			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
 
 			// Get the maps in dataStore2.
-			const container1Object2Map1 = await container1Object2.getSharedObject<SharedMap>(
-				map1Id,
-			);
-			const container1Object2Map2 = await container1Object2.getSharedObject<SharedMap>(
-				map2Id,
-			);
+			const container1Object2Map1 =
+				await container1Object2.getSharedObject<SharedMap>(map1Id);
+			const container1Object2Map2 =
+				await container1Object2.getSharedObject<SharedMap>(map2Id);
 
 			// Set the new dataStore's handle in a map so that a new container has access to it.
 			container1Object1.context.containerRuntime.orderSequentially(() => {
@@ -329,9 +315,8 @@ describe("Ops on Reconnect", () => {
 			const container2Object1 = await setupSecondContainersDataObject();
 
 			// Get dataObject2 in the second container.
-			const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(
-				map1Id,
-			);
+			const container2Object1Map1 =
+				await container2Object1.getSharedObject<SharedMap>(map1Id);
 			assert(container2Object1Map1);
 			const container2Object2Handle =
 				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
@@ -364,7 +349,7 @@ describe("Ops on Reconnect", () => {
 			});
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -413,7 +398,7 @@ describe("Ops on Reconnect", () => {
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -438,18 +423,15 @@ describe("Ops on Reconnect", () => {
 			await setupFirstContainer();
 
 			// Create dataObject2 in the first container.
-			const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-				await container1Object1.context.containerRuntime.createDataStore("dataObject2"),
-				"/",
-			);
+			const dataStore =
+				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
+			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
 
 			// Get the maps in dataStore2.
-			const container1Object2Map1 = await container1Object2.getSharedObject<SharedMap>(
-				map1Id,
-			);
-			const container1Object2Map2 = await container1Object2.getSharedObject<SharedMap>(
-				map2Id,
-			);
+			const container1Object2Map1 =
+				await container1Object2.getSharedObject<SharedMap>(map1Id);
+			const container1Object2Map2 =
+				await container1Object2.getSharedObject<SharedMap>(map2Id);
 
 			// Set the new dataStore's handle in a map so that a new container has access to it.
 			container1Object1.context.containerRuntime.orderSequentially(() => {
@@ -463,9 +445,8 @@ describe("Ops on Reconnect", () => {
 			const container2Object1 = await setupSecondContainersDataObject();
 
 			// Get dataObject2 in the second container.
-			const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(
-				map1Id,
-			);
+			const container2Object1Map1 =
+				await container2Object1.getSharedObject<SharedMap>(map1Id);
 			const container2Object2Handle =
 				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
 					"dataStore2Key",
@@ -497,7 +478,7 @@ describe("Ops on Reconnect", () => {
 			assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -551,7 +532,7 @@ describe("Ops on Reconnect", () => {
 			});
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -602,7 +583,7 @@ describe("Ops on Reconnect", () => {
 			});
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -646,7 +627,7 @@ describe("Ops on Reconnect", () => {
 			});
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();
@@ -688,7 +669,7 @@ describe("Ops on Reconnect", () => {
 			assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
 
 			// Wait for the Container to get reconnected.
-			await waitForContainerConnection(container1, true);
+			await waitForContainerConnection(container1);
 
 			// Wait for the ops to get processed by both the containers.
 			await loaderContainerTracker.ensureSynchronized();

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -90,7 +91,8 @@ type PendingResolve = (winner: boolean) => void;
 const snapshotFileName = "header";
 
 /**
- * Implementation of a consensus register collection
+ * {@inheritDoc IConsensusRegisterCollection}
+ * @alpha
  */
 export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>
@@ -227,7 +229,7 @@ export class ConsensusRegisterCollection<T>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op: IIncomingRegisterOperation<T> = message.contents;
+			const op = message.contents as IIncomingRegisterOperation<T>;
 			switch (op.type) {
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
@@ -320,7 +322,8 @@ export class ConsensusRegisterCollection<T>
 			);
 		} else if (data.versions.length > 0) {
 			assert(
-				sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
+				// seqNum should always be increasing, except for the case of grouped batches (seqNum will be the same)
+				sequenceNumber >= data.versions[data.versions.length - 1].sequenceNumber,
 				0x071 /* "Versions should naturally be ordered by sequenceNumber" */,
 			);
 		}

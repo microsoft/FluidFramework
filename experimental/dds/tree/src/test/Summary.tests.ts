@@ -4,10 +4,10 @@
  */
 import * as fs from 'fs';
 import { join } from 'path';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import { v5 } from 'uuid';
 import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { assert, fail, RecursiveMutable } from '../Common';
+import { fail, RecursiveMutable } from '../Common';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
 import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
 import { initialTree } from '../InitialTree';
@@ -469,7 +469,10 @@ class DeterministicIdGenerator {
 	private editIdCount = 0;
 	private readonly constantIdCompressor?: IdCompressor;
 
-	public constructor(public readonly writeFormat: WriteFormat, private readonly sharedTree: SharedTree) {
+	public constructor(
+		public readonly writeFormat: WriteFormat,
+		private readonly sharedTree: SharedTree
+	) {
 		if (this.writeFormat === WriteFormat.v0_1_1) {
 			assert(getIdNormalizerFromSharedTree(sharedTree).localSessionId === DeterministicIdGenerator.sessionId);
 		} else {

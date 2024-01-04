@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, NodeData } from "./types";
+import { FieldKey } from "../schema-stored/index.js";
+import { NodeData } from "./types.js";
 
 /**
  * This modules provides a simple in memory tree format.
@@ -12,7 +13,7 @@ import { FieldKey, NodeData } from "./types";
 /**
  * Simple in memory tree representation based on Maps.
  * MapTrees should not store empty fields.
- * @alpha
+ * @internal
  */
 export interface MapTree extends NodeData {
 	fields: Map<FieldKey, MapTree[]>;

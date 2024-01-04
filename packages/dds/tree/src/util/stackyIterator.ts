@@ -15,11 +15,11 @@ export class StackyIterator<T> implements Iterator<T>, Iterable<T> {
 		this.list = list;
 	}
 
-	[Symbol.iterator](): Iterator<T> {
+	public [Symbol.iterator](): Iterator<T> {
 		return this;
 	}
 
-	next(): IteratorResult<T> {
+	public next(): IteratorResult<T> {
 		if (this.done) {
 			return { value: undefined, done: true };
 		}

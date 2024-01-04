@@ -7,6 +7,5 @@ export {
 	IContainerRuntime,
 	IContainerRuntimeBaseWithCombinedEvents,
 	IContainerRuntimeEvents,
-	IDataStoreWithBindToContext_Deprecated,
-	IProvideContainerRuntime,
-} from "./containerRuntime";
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "./containerRuntime.js";

@@ -90,7 +90,7 @@ The intention preservation requirement dictates that all editing operations shou
 
 The mechanism in Shared Tree responsible for satisfying these criteria is called the Rebaser.
 Some of the resulting design documents can be found [here](../docs).
-The operations available in the editing API (e.g., insert, delete) are rolled out incrementally in future milestones.
+The operations available in the editing API (e.g., insert, remove) are rolled out incrementally in future milestones.
 
 ## UUID Compression Scheme
 
@@ -99,7 +99,8 @@ The operations available in the editing API (e.g., insert, delete) are rolled ou
 Supporting larger-than-memory data sets in the tree requires efficiently handling trees that contain large numbers of strong identifiers (UUIDs).
 To meet this requirement, Shared Tree leverages a novel distributed compression scheme that reduces the average storage cost of the identifiers to that of a small integer.
 This enables better scaling in scenarios where large numbers of these compressed IDs are needed (e.g., graph-like references).
-The documentation for this scheme can be found [here](../src/id-compressor/idCompressor.ts#L272).
+The ID compressor now lives in the Fluid container runtime.
+Its documentation can be found [here](../../../../packages/runtime/container-runtime/src/id-compressor/idCompressor.ts#L206).
 
 ## Data model specification
 
@@ -116,7 +117,7 @@ The specification can be found [here](../docs/data-model/README.md).
 
 For developers eager to start using the Shared Tree DDS, this milestone represents the point where they can do so for scenarios involving transient data.
 That is, at this stage developers can create a Shared Tree from other data and use it to sync that data between all clients.
-Insert, delete, and modify operations will be functional; however, the storage formats will not be final at this stage.
+Insert, remove, and modify operations will be functional; however, the storage formats will not be final at this stage.
 There will be no data migration strategy for the data stored in the Shared Tree DDS at this stage.
 The move operation is also not yet available.
 
@@ -126,11 +127,11 @@ The move operation is also not yet available.
 
 In most scenarios, the Shared Tree will construct an in-memory JavaScript representation of the tree.
 This milestone makes it possible to read and write data to the Shared Tree without creating (reifying) that in-memory JavaScript representation.
-This is particularly useful in scenarios where the client has memory constraints or wants to maintains a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
+This is particularly useful in scenarios where the client has memory constraints or wants to maintain a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
 It also allows clients/microservices to check permissions without loading the document and inspect changes without caring about the entire tree.
 
 To accomplish this, the underlying Shared Tree layer is built on a [cursor API](../src/core/tree/cursor.ts) that allows navigation of the tree by moving from node to node via explicit directional calls.
-Layers built on cursors are also able to remain agnostic to the structure of the tree it is navigating, allowing for flexible/multiple implementations.
+Layers built on cursors are also able to remain agnostic to the structure of the tree they are navigating, allowing for flexible/multiple implementations.
 This cursor API is intended to be an expert API as working with it is more cumbersome compared with the more ergonomic APIs exposed in future milestones.
 
 While this is an important architectural milestone to build in early, the benefits around reification will not be fully realized until the [Storage performance: incrementality and virtualization](#storage-performance-incrementality-and-virtualization) milestone, as downloading the entire tree on load is currently required.
@@ -179,7 +180,7 @@ In a future milestone, [alternative designs](../docs/undo) are explored that bet
 
 > In progress
 
-Conceptually, a move is simply a delete and an insert of the same data.
+Conceptually, a move is simply a remove and an insert of the same data.
 However, without proper semantics (and thus rebasing), concurrent changes can result in missing or duplicated data.
 The move operation preserves the identity of the nodes being moved and ensures that the outcome matches the developer's expectations.
 
@@ -247,7 +248,7 @@ however, the architecture allows easy extension in the future to include more do
 
 By default, edits (i.e., transactions) in Shared Tree will always succeed (never conflict) due to the high-quality automatic merge resolution.
 Transactions always guarantee atomicity (no interleaved changes from other transactions), but some changes may not have an effect due to concurrent edits that are applied first
-(e.g., a transaction that changes two nodes may only apply a subset of the changes due to one of the nodes being concurrently deleted).
+(e.g., a transaction that changes two nodes may only apply a subset of the changes due to one of the nodes being concurrently removed).
 While convenient and usually sufficient, this behavior may not appropriately uphold application invariants.
 
 This milestone enables a developer to declaratively specify what sorts of concurrent edits should cause a transaction to fail and be marked as conflicted.
@@ -324,7 +325,7 @@ This feature results in a much better integration with tooling, including autoco
 
 This milestone enables a more complex and semantic form of undo/redo.
 Under this design, undo modifies the document in a way which both inverts the effect of a given change and adjusts the effect of that change on changes which came after it.
-For example, retroactively undoing a deletion would also apply edits to the deleted content which had previously failed due to their target being deleted.
+For example, retroactively undoing a deletion would also apply edits to the removed content which had previously failed due to their target being removed.
 Retroactively undoing an edit might also cause the undoing of later transactions which would not have been valid if the original edit had not been made.
 One potential retroactive undo policy would be to set the document to the state it would have been in if the undone change had never been made.
 
@@ -398,7 +399,7 @@ For exceptionally large documents it is likely that the number of concurrently e
 This means that each client would receive, process, and ignore most edits—resulting in computational waste and bottlenecks.
 
 The [storage performance: incrementality and virtualization](#storage-performance-incrementality-and-virtualization) milestone ensures that document load times and summarization performance (both bandwidth and CPU time) are not limiting factors in these cases.
-This milestone introduces a _partial checkout_: a partial view of the tree registered with the server during document load.
+This milestone introduces a partial view of the tree registered with the server during document load.
 The view (a subset of the tree) is dynamic and can be expanded by navigating the tree.
 The server provides op filtering to ensure that a client only receives the edits that apply to the region of the tree that they are viewing.
 

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+import { strict as assert } from "node:assert";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockStorage,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
 import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
-import { ISharedCell, ICellOptions } from "../interfaces";
+import { type ISharedCell, type ICellOptions } from "../interfaces";
 
 function createConnectedCell(
 	id: string,
@@ -26,9 +26,9 @@ function createConnectedCell(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -37,7 +37,7 @@ function createConnectedCell(
 	return cell;
 }
 
-function createLocalCell(id: string, options?: ICellOptions): ISharedCell {
+function createDetachedCell(id: string, options?: ICellOptions): ISharedCell {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
@@ -51,7 +51,7 @@ function createCellForReconnection(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -61,11 +61,14 @@ function createCellForReconnection(
 }
 
 describe("Cell", () => {
-	describe("Local state", () => {
+	describe("Detached state", () => {
+		/* The aim of this section is to carry out a test on an individual cell that is not linked to any container.
+		 * Its objective is equivalent to the mocha tests labeled as "Local state" in other DDS.
+		 */
 		let cell: ISharedCell;
 
 		beforeEach(() => {
-			cell = createLocalCell("cell");
+			cell = createDetachedCell("cell");
 		});
 
 		describe("APIs", () => {
@@ -118,33 +121,33 @@ describe("Cell", () => {
 			});
 		});
 
-		describe("Op processing in local state", () => {
-			it("should correctly process a set operation sent in local state", async () => {
+		describe("Op processing in detached state", () => {
+			it("should correctly process a set operation sent in detached state", async () => {
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const cell1 = new SharedCell("cell1", dataStoreRuntime1, CellFactory.Attributes);
-				// Set a value in local state.
+				// Set a value in detached state.
 				const value = "testValue";
 				cell1.set(value);
 
 				// Load a new SharedCell in connected state from the snapshot of the first one.
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = MockSharedObjectServices.createFromSummary(
 					cell1.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
 				dataStoreRuntime1.local = false;
-				const containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
 				cell1.connect(services1);
@@ -154,7 +157,7 @@ describe("Cell", () => {
 				assert.equal(cell2.get(), value, "The second cell does not have the key");
 
 				// Set a new value in the second SharedCell.
-				const newValue = "newvalue";
+				const newValue = "newValue";
 				cell2.set(newValue);
 
 				// Process the message.
@@ -166,16 +169,19 @@ describe("Cell", () => {
 			});
 		});
 
-		describe("Summarization of the Attribution", () => {
-			it("should not retrive attribution in local state", async () => {
+		describe("Attributor", () => {
+			it("should retrieve proper attribution in detached state", async () => {
 				// overwrite the cell with attribution tracking enabled
 				const options: ICellOptions = { attribution: { track: true } };
-				cell = createLocalCell("cell", options);
+				cell = createDetachedCell("cell", options);
 				cell.set("value");
+
+				let key = cell.getAttribution();
+
 				assert.equal(
-					cell.getAttribution(),
-					undefined,
-					"the first cell should not have valid attribution",
+					key?.type,
+					"detached",
+					"the first cell should have detached attribution",
 				);
 
 				// load a cell from the snapshot
@@ -189,10 +195,12 @@ describe("Cell", () => {
 				);
 				await cell2.load(services);
 
+				key = cell2.getAttribution();
+
 				assert.equal(
-					cell2.getAttribution(),
-					undefined,
-					"the second cell should not have valid attribution",
+					key?.type,
+					"detached",
+					"the second cell should load the detached attribution from the first cell",
 				);
 			});
 		});
@@ -297,7 +305,7 @@ describe("Cell", () => {
 				cell2 = createConnectedCell("cell2", containerRuntimeFactory, options);
 			});
 
-			it("Retrive proper attribution information in connected state", () => {
+			it("Retrieve proper attribution information in connected state", () => {
 				const value1 = "value1";
 				const value2 = "value2";
 				cell1.set(value1);
@@ -316,9 +324,9 @@ describe("Cell", () => {
 				);
 
 				assert.equal(
-					key2,
-					undefined,
-					"the second cell has attribution with a pending local edit",
+					key2?.type,
+					"local",
+					"the second cell does not have valid local attribution while the local edit is pending",
 				);
 
 				containerRuntimeFactory.processSomeMessages(1);
@@ -353,6 +361,51 @@ describe("Cell", () => {
 					key2?.type === "op" && key2?.seq,
 					3,
 					"the second cell does not have valid attribution after clearing",
+				);
+			});
+
+			it("Retrieve proper attribution information after summarization/loading", async () => {
+				const value1 = "value1";
+				const value2 = "value2";
+				cell1.set(value1);
+				cell2.set(value2);
+
+				containerRuntimeFactory.processSomeMessages(1);
+
+				const service1 = MockSharedObjectServices.createFromSummary(
+					cell1.getAttachSummary().summary,
+				);
+				const cell3 = new SharedCell(
+					"cell3",
+					new MockFluidDataStoreRuntime(),
+					CellFactory.Attributes,
+				);
+				await cell3.load(service1);
+
+				const key3 = cell3.getAttribution();
+
+				assert.equal(
+					key3?.type === "op" && key3?.seq,
+					1,
+					"the third cell should have valid op attribution",
+				);
+
+				const service2 = MockSharedObjectServices.createFromSummary(
+					cell2.getAttachSummary().summary,
+				);
+				const cell4 = new SharedCell(
+					"cell4",
+					new MockFluidDataStoreRuntime(),
+					CellFactory.Attributes,
+				);
+				await cell4.load(service2);
+
+				const key4 = cell4.getAttribution();
+
+				assert.equal(
+					key4,
+					undefined,
+					"the fourth cell should not have local attribution after loading",
 				);
 			});
 		});
@@ -463,7 +516,7 @@ describe("Cell", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
 			public get sharedObject(): ISharedCell {
 				// Return the remote SharedCell because we want to verify its summary data.
@@ -471,24 +524,24 @@ describe("Cell", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
 			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
 			 */
 			public async addOutboundRoutes(): Promise<void> {
-				const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
+				const newSubCell = createDetachedCell(`subCell-${++this.subCellCount}`);
 				this.cell1.set(newSubCell.handle);
 				this._expectedRoutes = [newSubCell.handle.absolutePath];
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
 			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				this.cell2.delete();
@@ -497,11 +550,11 @@ describe("Cell", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
 			 */
 			public async addNestedHandles(): Promise<void> {
-				const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
-				const newSubCell2 = createLocalCell(`subCell-${++this.subCellCount}`);
+				const newSubCell = createDetachedCell(`subCell-${++this.subCellCount}`);
+				const newSubCell2 = createDetachedCell(`subCell-${++this.subCellCount}`);
 				const containingObject = {
 					subcellHandle: newSubCell.handle,
 					nestedObj: {
