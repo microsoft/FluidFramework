@@ -3,14 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware";
-import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
-import { Assume, FlattenKeys } from "../../util";
-import { LocalNodeKey, StableNodeKey } from "../node-key";
+import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
+import {
+	FieldKey,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+} from "../../core/index.js";
+import { Assume, FlattenKeys } from "../../util/index.js";
+import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import {
 	TreeFieldSchema,
 	LazyItem,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	AllowedTypes,
 	FieldNodeSchema,
 	LeafNodeSchema,
@@ -20,11 +25,11 @@ import {
 	Fields,
 	FlexListToUnion,
 	FlexList,
-} from "../typed-schema";
-import { FieldKinds } from "../default-schema";
-import { FieldKind } from "../modular-schema";
-import { EditableTreeEvents } from "./treeEvents";
-import { FlexTreeContext } from "./context";
+} from "../typed-schema/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import { FieldKind } from "../modular-schema/index.js";
+import { EditableTreeEvents } from "./treeEvents.js";
+import { FlexTreeContext } from "./context.js";
 
 /**
  * Indicates that an object is a flex tree.
@@ -150,7 +155,7 @@ export const onNextChange = Symbol("onNextChange");
  *
  * @internal
  */
-export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
+export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
 
 	/**
@@ -179,7 +184,7 @@ export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends TreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
+	is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
 
 	/**
 	 * Same as `this.schema.name`.
@@ -419,7 +424,7 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
  * - When polymorphism over {@link TreeFieldSchema} (and not just a union of {@link AllowedTypes}) is required.
  * For example when encoding a schema for a type like
  * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
- * Since this schema system only allows `|` of {@link TreeNodeSchema} (and only when declaring a {@link TreeFieldSchema}), see {@link SchemaBuilderBase.field},
+ * Since this schema system only allows `|` of {@link FlexTreeNodeSchema} (and only when declaring a {@link TreeFieldSchema}), see {@link SchemaBuilderBase.field},
  * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
  * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
  * - When a distinct merge identity is desired for a field.
@@ -924,15 +929,15 @@ export type FlexTreeTypedFieldInner<
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link AllowedTypes}.
  * @internal
  */
-export type FlexTreeTypedNodeUnion<T extends AllowedTypes> = T extends FlexList<TreeNodeSchema>
-	? FlexTreeTypedNode<Assume<FlexListToUnion<T>, TreeNodeSchema>>
+export type FlexTreeTypedNodeUnion<T extends AllowedTypes> = T extends FlexList<FlexTreeNodeSchema>
+	? FlexTreeTypedNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
 	: FlexTreeNode;
 
 /**
- * Schema aware specialization of {@link FlexTreeNode} for a given {@link TreeNodeSchema}.
+ * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexTreeNodeSchema}.
  * @internal
  */
-export type FlexTreeTypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
+export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema
 	? FlexTreeLeafNode<TSchema>
 	: TSchema extends MapNodeSchema
 	? FlexTreeMapNode<TSchema>
@@ -989,7 +994,7 @@ export type FlexTreeUnboxFieldInner<
 export type FlexTreeUnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
 	LazyItem<infer InnerType>,
 ]
-	? InnerType extends TreeNodeSchema
+	? InnerType extends FlexTreeNodeSchema
 		? FlexTreeUnboxNode<InnerType>
 		: InnerType extends Any
 		? FlexTreeNode
@@ -1018,7 +1023,7 @@ export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
  * Recursively unboxes that content as well if it does unboxing.
  * @internal
  */
-export type FlexTreeUnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
+export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
 	: TSchema extends MapNodeSchema
 	? FlexTreeMapNode<TSchema>

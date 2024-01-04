@@ -4,24 +4,30 @@
  */
 
 import { strict as assert } from "assert";
-import { DetachedFieldIndex, ForestRootId } from "../../core";
+import { IIdCompressor, SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { DetachedFieldIndex, ForestRootId } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes";
+import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
 import {
 	IdAllocator,
 	JsonCompatibleReadOnly,
 	brand,
-	generateStableId,
 	idAllocatorFromMaxId,
-	useDeterministicStableId,
-} from "../../util";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../util/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Format } from "../../core/tree/detachedFieldIndexFormat";
+import { Format } from "../../core/tree/detachedFieldIndexFormat.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec";
-import { RevisionTagCodec } from "../../shared-tree-core";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots";
+import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
+import { MockIdCompressor } from "../utils.js";
+
+const wellFormedIdCompressor = createIdCompressor();
+const mintedTag = wellFormedIdCompressor.generateCompressedId();
+wellFormedIdCompressor.finalizeCreationRange(wellFormedIdCompressor.takeNextCreationRange());
+const finalizedTag = wellFormedIdCompressor.normalizeToOpSpace(mintedTag);
+
+const malformedIdCompressor = createIdCompressor();
 
 const malformedData: [string, JsonCompatibleReadOnly][] = [
 	[
@@ -63,6 +69,14 @@ const malformedData: [string, JsonCompatibleReadOnly][] = [
 			maxId: -1,
 		}),
 	],
+	[
+		"Unfinalized id",
+		{
+			version: 1,
+			data: [[malformedIdCompressor.generateCompressedId(), 2, 3]],
+			maxId: -1,
+		},
+	],
 ];
 
 const validData: [string, Format][] = [
@@ -78,7 +92,7 @@ const validData: [string, Format][] = [
 		"revision with a single entry",
 		{
 			version: 1,
-			data: [[brand("beefbeef-beef-4000-8000-000000000001"), 0, brand(1)]],
+			data: [[brand(finalizedTag), 0, brand(1)]],
 			maxId: brand(-1),
 		},
 	],
@@ -88,7 +102,7 @@ const validData: [string, Format][] = [
 			version: 1,
 			data: [
 				[
-					brand("beefbeef-beef-4000-8000-000000000001"),
+					brand(finalizedTag),
 					[
 						[1, brand(0)],
 						[0, brand(1)],
@@ -100,8 +114,10 @@ const validData: [string, Format][] = [
 	],
 ];
 
-export function generateTestCases(): { name: string; data: DetachedFieldSummaryData }[] {
-	const revision = generateStableId();
+export function generateTestCases(
+	idCompressor: IIdCompressor,
+): { name: string; data: DetachedFieldSummaryData }[] {
+	const revision = idCompressor.generateCompressedId();
 	const maxId: ForestRootId = brand(42);
 	return [
 		{
@@ -160,8 +176,8 @@ describe("DetachedFieldIndex", () => {
 		const detachedFieldIndex = new DetachedFieldIndex(
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+			new MockIdCompressor(),
 			{ jsonValidator: typeboxValidator },
-			new RevisionTagCodec(),
 		);
 		const expected = {
 			version: 1,
@@ -171,10 +187,10 @@ describe("DetachedFieldIndex", () => {
 		assert.deepEqual(detachedFieldIndex.encode(), expected);
 	});
 	describe("round-trip through JSON", () => {
-		const codec = makeDetachedNodeToFieldCodec(new RevisionTagCodec(), {
+		const codec = makeDetachedNodeToFieldCodec(wellFormedIdCompressor, {
 			jsonValidator: typeboxValidator,
 		});
-		for (const { name, data } of generateTestCases()) {
+		for (const { name, data } of generateTestCases(wellFormedIdCompressor)) {
 			it(name, () => {
 				const encoded = codec.encode(data);
 				const decoded = codec.decode(encoded);
@@ -189,10 +205,10 @@ describe("DetachedFieldIndex", () => {
 					const detachedFieldIndex = new DetachedFieldIndex(
 						"test",
 						idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+						wellFormedIdCompressor,
 						{
 							jsonValidator: typeboxValidator,
 						},
-						new RevisionTagCodec(),
 					);
 					detachedFieldIndex.loadData(data as JsonCompatibleReadOnly);
 				});
@@ -205,28 +221,36 @@ describe("DetachedFieldIndex", () => {
 					const detachedFieldIndex = new DetachedFieldIndex(
 						"test",
 						id,
+						malformedIdCompressor,
 						{
 							jsonValidator: typeboxValidator,
 						},
-						new RevisionTagCodec(),
 					);
-					assert.throws(() => detachedFieldIndex.loadData(data), "malformed data");
+					assert.throws(
+						() => detachedFieldIndex.loadData(data),
+						"Expected malformed data to throw an error on decode, but it did not.",
+					);
 				});
 			}
 		});
 	});
 	describe("Snapshots", () => {
 		useSnapshotDirectory("detached-field-index");
-		const codec = makeDetachedNodeToFieldCodec(new RevisionTagCodec(), {
+		const snapshotIdCompressor = createIdCompressor(
+			"beefbeef-beef-4000-8000-000000000001" as SessionId,
+		);
+		const codec = makeDetachedNodeToFieldCodec(snapshotIdCompressor, {
 			jsonValidator: typeboxValidator,
 		});
-		useDeterministicStableId(() => {
-			for (const { name, data: change } of generateTestCases()) {
-				it(name, () => {
-					const encoded = codec.encode(change);
-					takeJsonSnapshot(encoded as JsonCompatibleReadOnly);
-				});
-			}
-		});
+
+		const testCases = generateTestCases(snapshotIdCompressor);
+		snapshotIdCompressor.finalizeCreationRange(snapshotIdCompressor.takeNextCreationRange());
+
+		for (const { name, data: change } of testCases) {
+			it(name, () => {
+				const encoded = codec.encode(change);
+				takeJsonSnapshot(encoded as JsonCompatibleReadOnly);
+			});
+		}
 	});
 });

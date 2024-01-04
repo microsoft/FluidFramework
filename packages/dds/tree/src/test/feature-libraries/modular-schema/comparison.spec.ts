@@ -14,7 +14,7 @@ import {
 	isNeverTree,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/modular-schema/comparison";
+} from "../../../feature-libraries/modular-schema/comparison.js";
 import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
@@ -28,9 +28,9 @@ import {
 	LeafNodeStoredSchema,
 	MutableTreeStoredSchema,
 	TreeStoredSchemaRepository,
-} from "../../../core";
-import { brand } from "../../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
 
 /**
  * APIs to help build schema.

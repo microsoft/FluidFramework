@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { brand } from "../../util";
+import { brand } from "../../util/index.js";
 import {
 	ISharedTree,
 	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
 	runSynchronous,
-} from "../../shared-tree";
+} from "../../shared-tree/index.js";
 import {
 	Any,
 	FieldKinds,
 	TreeFieldSchema,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	InsertableFlexNode,
 	intoStoredSchema,
-} from "../../feature-libraries";
-import { typeboxValidator } from "../../external-utilities";
+} from "../../feature-libraries/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	TestTreeProviderLite,
 	emptyJsonSequenceConfig,
@@ -31,7 +31,7 @@ import {
 	insert,
 	jsonSequenceRootSchema,
 	remove,
-} from "../utils";
+} from "../utils.js";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -40,8 +40,8 @@ import {
 	JsonableTree,
 	UpPath,
 	rootFieldKey,
-} from "../../core";
-import { leaf, SchemaBuilder } from "../../domains";
+} from "../../core/index.js";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
@@ -52,7 +52,6 @@ const rootNode: UpPath = {
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });
@@ -64,8 +63,13 @@ function generateCompleteTree(
 	height: number,
 	nodesPerField: number,
 ): ISharedTree {
+	const idCompressor = createIdCompressor(sessionId);
 	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+		new MockFluidDataStoreRuntime({
+			clientId: "test-client",
+			id: "test",
+			idCompressor,
+		}),
 		"test",
 	);
 	const view = tree.schematizeInternal({
@@ -74,6 +78,7 @@ function generateCompleteTree(
 		initialTree: [],
 	}).checkout;
 	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
+	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 	return tree;
 }
 
@@ -123,6 +128,15 @@ function generateTreeRecursively(
 	}
 }
 
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+// Note: trees which simulate attach scenarios using the mocks should finalize ids created
+// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
+// finalization when messages are processed.
+export const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees() {
 	const testTrees: {
@@ -141,10 +155,18 @@ export function generateTestTrees() {
 				const tree2 = provider.trees[1].view;
 
 				// NOTE: we're using the old tree editing APIs here as the new
-				// editable-tree-2 API doesn't support cross-field moves at the
+				// flex-tree API doesn't support cross-field moves at the
 				// time of writing
+
+				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
+				const nodeSchema = schemaBuilder.object("Node", {
+					foo: SchemaBuilder.sequence(leaf.string),
+					bar: SchemaBuilder.sequence(leaf.string),
+				});
+				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
+				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 				const initialState: JsonableTree = {
-					type: brand("Node"),
+					type: nodeSchema.name,
 					fields: {
 						foo: [
 							{ type: leaf.string.name, value: "a" },
@@ -158,14 +180,6 @@ export function generateTestTrees() {
 						],
 					},
 				};
-
-				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
-				const nodeSchema = schemaBuilder.object("Node", {
-					foo: SchemaBuilder.sequence(leaf.string),
-					bar: SchemaBuilder.sequence(leaf.string),
-				});
-				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
-				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 
 				tree1.updateSchema(intoStoredSchema(schema));
 
@@ -198,7 +212,7 @@ export function generateTestTrees() {
 			},
 		},
 		{
-			name: "insert-and-delete",
+			name: "insert-and-remove",
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2);
@@ -214,7 +228,7 @@ export function generateTestTrees() {
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
-				// Delete node
+				// Remove node
 				tree1.editableTree.removeAt(0);
 
 				provider.processMessages();
@@ -244,7 +258,7 @@ export function generateTestTrees() {
 				} as const;
 
 				// Enables below editing code to be slightly less verbose
-				const makeCursor = <T extends TreeNodeSchema>(
+				const makeCursor = <T extends FlexTreeNodeSchema>(
 					schema: T,
 					data: InsertableFlexNode<T>,
 				): ITreeCursorSynchronous =>
@@ -287,7 +301,7 @@ export function generateTestTrees() {
 			},
 		},
 		{
-			name: "competing-deletes",
+			name: "competing-removes",
 			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
 					const provider = new TestTreeProviderLite(4);
@@ -313,10 +327,13 @@ export function generateTestTrees() {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				const baseTree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
-					"test",
-				);
+				const idCompressor = createIdCompressor(sessionId);
+				const runtime = new MockFluidDataStoreRuntime({
+					clientId: "test-client",
+					id: "test",
+					idCompressor,
+				});
+				const baseTree = factory.create(runtime, "test");
 
 				const tree1 = baseTree.schematizeInternal({
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -334,6 +351,7 @@ export function generateTestTrees() {
 				tree2.rebaseOnto(tree1);
 				tree1.merge(tree2);
 
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, "tree2");
 
 				const expected = ["x", "y", "a", "b", "c"];
@@ -346,6 +364,7 @@ export function generateTestTrees() {
 				tree3.rebaseOnto(tree1);
 				tree1.merge(tree3);
 
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, "tree3");
 			},
 		},
@@ -375,8 +394,13 @@ export function generateTestTrees() {
 					schema: docSchema,
 					initialTree: undefined,
 				};
+				const idCompressor = createIdCompressor(sessionId);
 				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor,
+					}),
 					"test",
 				);
 				const view = tree.schematizeInternal(config).checkout;
@@ -389,6 +413,8 @@ export function generateTestTrees() {
 					cursorForJsonableTreeNode({ type: leaf.handle.name, value: tree.handle }),
 					true,
 				);
+
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");
 			},
 		},
@@ -410,8 +436,13 @@ export function generateTestTrees() {
 					initialTree: [],
 				};
 
+				const idCompressor = createIdCompressor(sessionId);
 				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor,
+					}),
 					"test",
 				);
 				const view = tree.schematizeInternal(config).checkout;
@@ -423,7 +454,7 @@ export function generateTestTrees() {
 						parent: undefined,
 						field: rootFieldKey,
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				// The nested change
 				view.editor
 					.sequenceField({
@@ -434,8 +465,9 @@ export function generateTestTrees() {
 						},
 						field: brand("foo"),
 					})
-					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
+					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				view.transaction.commit();
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, "final");
 			},
 		},

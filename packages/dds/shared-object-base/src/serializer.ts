@@ -6,27 +6,9 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, isSerializedHandle } from "@fluidframework/runtime-utils";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
-
-/**
- * JSON serialized form of an IFluidHandle
- * @internal
- */
-export interface ISerializedHandle {
-	// Marker to indicate to JSON.parse that the object is a Fluid handle
-	type: "__fluid_handle__";
-
-	// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
-	url: string;
-}
-
-/**
- * @internal
- */
-export const isSerializedHandle = (value: any): value is ISerializedHandle =>
-	value?.type === "__fluid_handle__";
 
 /**
  * @public
@@ -74,7 +56,7 @@ export class FluidSerializer implements IFluidSerializer {
 	public constructor(
 		private readonly context: IFluidHandleContext,
 		// To be called whenever a handle is parsed by this serializer.
-		private readonly handleParsedCb: (handle: IFluidHandle) => void,
+		private readonly handleParsedCb: (handle: IFluidHandle) => void = () => {},
 	) {
 		this.root = this.context;
 		while (this.root.routeContext !== undefined) {

@@ -11,19 +11,19 @@ import {
 	nodeKeyFieldKey,
 	AllowedTypes,
 	FieldKind,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context";
+import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	FieldAnchor,
 	IEditableForest,
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
-} from "../../../core";
-import { TreeContent } from "../../../shared-tree";
-import { forestWithContent } from "../../utils";
-import { brand } from "../../../util";
+} from "../../../core/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
+import { forestWithContent } from "../../utils.js";
+import { brand } from "../../../util/index.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
 	// This will error if someone tries to call mutation methods on it

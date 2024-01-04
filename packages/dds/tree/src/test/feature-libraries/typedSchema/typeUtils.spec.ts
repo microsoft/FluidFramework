@@ -7,8 +7,8 @@ import {
 	ArrayToUnion,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/typed-schema/typeUtils";
-import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../../util";
+} from "../../../feature-libraries/typed-schema/typeUtils.js";
+import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 

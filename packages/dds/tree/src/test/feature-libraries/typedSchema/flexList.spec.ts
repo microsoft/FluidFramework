@@ -18,8 +18,13 @@ import {
 	FlexListToUnion,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/typed-schema/flexList";
-import { areSafelyAssignable, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
+} from "../../../feature-libraries/typed-schema/flexList.js";
+import {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireFalse,
+	requireTrue,
+} from "../../../util/index.js";
 
 // Test ArrayHasFixedLength
 {

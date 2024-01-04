@@ -232,17 +232,11 @@ stages:
                 done
               fi
         - task: Npm@1
-          displayName: npm run build
+          displayName: npm run build:multi-version
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run build'
-          # # disable running multi-version until 2.0 release
-          # displayName: npm run build:multi-version
-          # inputs:
-          #   command: 'custom'
-          #   workingDir: $(Build.SourcesDirectory)/docs
-          #   customCommand: 'run build:multi-version'
+            customCommand: 'run build:multi-version'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'

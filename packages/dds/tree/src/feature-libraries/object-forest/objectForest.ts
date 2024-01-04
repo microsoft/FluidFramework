@@ -31,17 +31,17 @@ import {
 	ITreeCursorSynchronous,
 	aboveRootPlaceholder,
 	ProtoNodes,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	brand,
 	fail,
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
-} from "../../util";
-import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
-import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
-import { createEmitter } from "../../events";
+} from "../../util/index.js";
+import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor.js";
+import { createEmitter } from "../../events/index.js";
 
 function makeRoot(): MapTree {
 	return {
