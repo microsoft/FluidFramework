@@ -5,8 +5,8 @@
 
 import fs from "fs";
 import { strict as assert } from "assert";
-import { DriverError, DriverErrorType, IStream } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { DriverError, IStream } from "@fluidframework/driver-definitions";
+import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import {
 	IClient,
 	ISequencedDocumentMessage,
@@ -49,7 +49,7 @@ describe("Local Odsp driver", () => {
 	);
 
 	async function assertThrowsUsageError(fn: () => Promise<any>) {
-		await assert.rejects(fn, (e: DriverError) => e.errorType === DriverErrorType.usageError);
+		await assert.rejects(fn, (e: DriverError) => e.errorType === OdspErrorTypes.usageError);
 	}
 
 	describe("Local Odsp document service factory", () => {
