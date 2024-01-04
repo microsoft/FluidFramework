@@ -7,7 +7,6 @@ import {
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
-	SessionAwareCodec,
 	makeVersionedValidatedCodec,
 } from "../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
@@ -32,7 +31,12 @@ export function makeEditManagerCodec<TChangeset>(
 		JsonCompatibleReadOnly,
 		ChangeEncodingContext
 	>,
-	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
 	options: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>> {
 	const format = EncodedEditManager(
@@ -44,7 +48,7 @@ export function makeEditManagerCodec<TChangeset>(
 		context: ChangeEncodingContext,
 	) => ({
 		...commit,
-		revision: revisionTagCodec.encode(commit.revision, commit.sessionId),
+		revision: revisionTagCodec.encode(commit.revision, { originatorId: commit.sessionId }),
 		change: changeCodec.json.encode(commit.change, context),
 	});
 
@@ -53,7 +57,7 @@ export function makeEditManagerCodec<TChangeset>(
 		context: ChangeEncodingContext,
 	) => ({
 		...commit,
-		revision: revisionTagCodec.decode(commit.revision, commit.sessionId),
+		revision: revisionTagCodec.decode(commit.revision, { originatorId: commit.sessionId }),
 		change: changeCodec.json.decode(commit.change, context),
 	});
 
@@ -69,7 +73,7 @@ export function makeEditManagerCodec<TChangeset>(
 				branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
 					sessionId,
 					{
-						base: revisionTagCodec.encode(branch.base, sessionId),
+						base: revisionTagCodec.encode(branch.base, { originatorId: sessionId }),
 						commits: branch.commits.map((commit) =>
 							encodeCommit(commit, { originatorId: commit.sessionId }),
 						),
@@ -95,7 +99,7 @@ export function makeEditManagerCodec<TChangeset>(
 					mapIterable(json.branches, ([sessionId, branch]) => [
 						sessionId,
 						{
-							base: revisionTagCodec.decode(branch.base, sessionId),
+							base: revisionTagCodec.decode(branch.base, { originatorId: sessionId }),
 							commits: branch.commits.map((commit) =>
 								// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
 								decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
