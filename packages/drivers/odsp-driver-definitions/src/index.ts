@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	IOdspError,
-	IOdspErrorAugmentations,
-	OdspError,
-	OdspErrorType,
-	OdspErrorTypes,
-} from "./errors";
+export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorTypes } from "./errors";
 export {
 	HostStoragePolicy,
 	ICollabSessionOptions,

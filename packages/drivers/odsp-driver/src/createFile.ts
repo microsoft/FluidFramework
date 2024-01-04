@@ -10,13 +10,12 @@ import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry
 import {
 	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
-	OdspErrorType,
+	OdspErrorTypes,
 	ShareLinkInfoType,
 	ISharingLinkKind,
 	ShareLinkTypes,
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ICreateFileResponse } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -67,7 +66,7 @@ export async function createNewFluidFile(
 		throw new NonRetryableError(
 			// pre-0.58 error message: Invalid filename
 			"Invalid filename for createNew",
-			OdspErrorType.invalidFileNameError,
+			OdspErrorTypes.invalidFileNameError,
 			{ driverVersion },
 		);
 	}
@@ -232,7 +231,7 @@ export async function createNewEmptyFluidFile(
 					throw new NonRetryableError(
 						// pre-0.58 error message: ODSP CreateFile call returned no item ID
 						"ODSP CreateFile call returned no item ID (for empty file)",
-						DriverErrorType.incorrectServerResponse,
+						OdspErrorTypes.incorrectServerResponse,
 						{ driverVersion },
 					);
 				}
@@ -283,7 +282,7 @@ export async function createNewFluidFileFromSummary(
 			if (!content?.itemId) {
 				throw new NonRetryableError(
 					"ODSP CreateFile call returned no item ID",
-					DriverErrorType.incorrectServerResponse,
+					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion },
 				);
 			}
