@@ -36,8 +36,10 @@
 		"linkcheck": "start-server-and-test start http://localhost:1313 linkcheck:full",
 		"linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
 		"linkcheck:full": "npm run linkcheck:fast -- --external",
-		"lint": "markdownlint-cli2",
-		"lint:fix": "markdownlint-cli2-fix",
+		"lint": "npm run markdownlint && npm run prettier",
+		"lint:fix": "npm run markdownlint:fix && npm run prettier:fix",
+		"markdownlint": "markdownlint-cli2",
+		"markdownlint:fix": "markdownlint-cli2-fix",
 		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
 		"start": "hugo server"
