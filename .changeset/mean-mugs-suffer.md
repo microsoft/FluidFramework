@@ -1,18 +1,18 @@
 ---
-"@fluidframework/container-definitions": major
-"@fluidframework/container-loader": major
-"@fluidframework/container-runtime": major
-"@fluidframework/datastore": major
-"@fluidframework/driver-definitions": major
-"@fluidframework/driver-utils": major
-"fluid-framework": major
-"@fluidframework/odsp-doclib-utils": major
-"@fluidframework/odsp-driver": major
-"@fluidframework/odsp-driver-definitions": major
-"@fluidframework/routerlicious-driver": major
-"@fluidframework/telemetry-utils": major
-"@fluid-private/test-end-to-end-tests": major
-"@fluidframework/tinylicious-client": major
+"@fluidframework/container-definitions": minor
+"@fluidframework/container-loader": minor
+"@fluidframework/container-runtime": minor
+"@fluidframework/datastore": minor
+"@fluidframework/driver-definitions": minor
+"@fluidframework/driver-utils": minor
+"fluid-framework": minor
+"@fluidframework/odsp-doclib-utils": minor
+"@fluidframework/odsp-driver": minor
+"@fluidframework/odsp-driver-definitions": minor
+"@fluidframework/routerlicious-driver": minor
+"@fluidframework/telemetry-utils": minor
+"@fluid-private/test-end-to-end-tests": minor
+"@fluidframework/tinylicious-client": minor
 ---
 
 Removes a number of deprecated error related enums, and replace them with new object-based based enumerations.
