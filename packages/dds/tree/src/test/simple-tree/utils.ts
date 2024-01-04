@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	ImplicitFieldSchema,
@@ -10,10 +11,10 @@ import {
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
-} from "../../class-tree";
-import { TreeFactory } from "../../treeFactory";
-import { typeboxValidator } from "../../external-utilities";
-import { ForestType } from "../../shared-tree";
+} from "../../simple-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { ForestType } from "../../shared-tree/index.js";
 
 /**
  * Helper for making small test schemas.
@@ -47,7 +48,12 @@ export function getRoot<TSchema extends ImplicitFieldSchema>(
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,
 	});
-	const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+	const tree = factory.create(
+		new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+		}),
+		"tree",
+	);
 	const root = tree.schematize(config).root;
 	return root;
 }

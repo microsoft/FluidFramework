@@ -10,9 +10,9 @@ import {
 	FieldKindIdentifier,
 	RevisionInfo,
 	RevisionTag,
-} from "../../core";
-import { Brand } from "../../util";
-import { TreeChunk } from "../chunked-forest";
+} from "../../core/index.js";
+import { Brand } from "../../util/index.js";
+import { TreeChunk } from "../chunked-forest/index.js";
 
 /**
  * @internal

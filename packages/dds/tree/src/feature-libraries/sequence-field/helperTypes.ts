@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId } from "../../core";
+import { ChangeAtomId } from "../../core/index.js";
 import {
 	CellId,
 	HasMarkFields,
@@ -13,7 +13,7 @@ import {
 	AttachAndDetach,
 	MoveIn,
 	MoveOut,
-} from "./types";
+} from "./types.js";
 
 export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
 
@@ -32,7 +32,7 @@ export type CellRename = AttachAndDetach | DetachOfRemovedNodes;
  * move that has since been cancelled out. This is needed so we can send and apply effects to such marks.
  * This information may be set on the following mark types:
  * - Noop
- * - Delete
+ * - Remove
  * - MoveOut
  *
  * Note that in the case of MoveOut, this makes the mark a potential receiver of effects from

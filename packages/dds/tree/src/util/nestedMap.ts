@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MapGetSet } from "./utils";
+import { MapGetSet } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).

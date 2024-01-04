@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	AnchorLocator,
 	IForestSubscription,
@@ -12,7 +13,6 @@ import {
 	AnchorSet,
 	IEditableForest,
 	TreeStoredSchemaRepository,
-	assertIsRevisionTag,
 	combineVisitors,
 	visitDelta,
 	DetachedFieldIndex,
@@ -23,15 +23,22 @@ import {
 	TreeStoredSchema,
 	TreeStoredSchemaSubscription,
 	JsonableTree,
-} from "../core";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { buildForest, intoDelta, jsonableTreeFromCursor } from "../feature-libraries";
-import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
-import { TransactionResult, fail } from "../util";
-import { noopValidator } from "../codec";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
-import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+	RevisionTagCodec,
+} from "../core/index.js";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import {
+	buildForest,
+	intoDelta,
+	FieldBatchCodec,
+	jsonableTreeFromCursor,
+	makeFieldBatchCodec,
+} from "../feature-libraries/index.js";
+import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
+import { TransactionResult, fail } from "../util/index.js";
+import { noopValidator } from "../codec/index.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link TreeView}.
@@ -164,29 +171,40 @@ export interface ITreeCheckout extends AnchorLocator {
  * @remarks This does not create a {@link SharedTree}, but rather a view with the minimal state
  * and functionality required to implement {@link ITreeCheckout}.
  */
-export function createTreeCheckout(args?: {
-	branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
-	changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
-	schema?: TreeStoredSchemaRepository;
-	forest?: IEditableForest;
-	events?: ISubscribable<CheckoutEvents> &
-		IEmitter<CheckoutEvents> &
-		HasListeners<CheckoutEvents>;
-	removedRoots?: DetachedFieldIndex;
-}): TreeCheckout {
+export function createTreeCheckout(
+	idCompressor: IIdCompressor,
+	args?: {
+		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
+		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
+		schema?: TreeStoredSchemaRepository;
+		forest?: IEditableForest;
+		fieldBatchCodec?: FieldBatchCodec;
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+		removedRoots?: DetachedFieldIndex;
+	},
+): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
+	const schema = args?.schema ?? new TreeStoredSchemaRepository();
+	const defaultCodecOptions = { jsonValidator: noopValidator };
 	const changeFamily =
-		args?.changeFamily ?? new SharedTreeChangeFamily({ jsonValidator: noopValidator });
+		args?.changeFamily ??
+		new SharedTreeChangeFamily(
+			idCompressor,
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
+			{ jsonValidator: noopValidator },
+		);
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
 			{
 				change: changeFamily.rebaser.compose([]),
-				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
+				revision: "root",
 			},
 			changeFamily,
+			() => idCompressor.generateCompressedId(),
 		);
-	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const events = args?.events ?? createEmitter();
 
 	const transaction = new Transaction(branch);
@@ -198,6 +216,7 @@ export function createTreeCheckout(args?: {
 		schema,
 		forest,
 		events,
+		idCompressor,
 		args?.removedRoots,
 	);
 }
@@ -298,7 +317,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
-		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
+		private readonly idCompressor: IIdCompressor,
+		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			idCompressor,
+		),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
@@ -371,6 +394,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			storedSchema,
 			forest,
 			createEmitter(),
+			this.idCompressor,
 			this.removedRoots.clone(),
 		);
 	}
@@ -412,6 +436,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		const revisionTagCodec = new RevisionTagCodec(this.idCompressor);
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
 		const cursor = this.forest.allocateCursor();
 		for (const { id, root } of this.removedRoots.entries()) {
@@ -422,7 +447,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			);
 			const tree = jsonableTreeFromCursor(cursor);
 			if (tree !== undefined) {
-				trees.push([id.major, id.minor, tree]);
+				// This method is used for tree consistency comparison.
+				const { major, minor } = id;
+				const finalizedMajor = major !== undefined ? revisionTagCodec.encode(major) : major;
+				trees.push([finalizedMajor, minor, tree]);
 			}
 		}
 		cursor.free();

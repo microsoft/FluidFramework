@@ -5,37 +5,38 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { TSchema } from "@sinclair/typebox";
-import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec";
-import { JsonCompatibleReadOnly } from "../../util";
-import { Versioned } from "./format";
+import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { Versioned } from "./format.js";
 
 export function makeVersionedCodec<
 	TDecoded,
 	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
 	TValidate = TEncoded,
+	TContext = void,
 >(
 	supportedVersions: Set<number>,
 	{ jsonValidator: validator }: ICodecOptions,
-	inner: IJsonCodec<TDecoded, TEncoded, TValidate>,
-): IJsonCodec<TDecoded, TEncoded, TValidate> {
+	inner: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
+): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
 	return withSchemaValidation(
 		Versioned,
 		{
-			encode: (data: TDecoded): TEncoded => {
-				const encoded = inner.encode(data);
+			encode: (data: TDecoded, context: TContext): TEncoded => {
+				const encoded = inner.encode(data, context);
 				assert(
 					supportedVersions.has(encoded.version),
 					"version being encoded should be supported",
 				);
 				return encoded;
 			},
-			decode: (data: TValidate): TDecoded => {
+			decode: (data: TValidate, context: TContext): TDecoded => {
 				const versioned = data as Versioned; // Validated by withSchemaValidation
 				assert(
 					supportedVersions.has(versioned.version),
 					"version being decoded is not supported",
 				);
-				const decoded = inner.decode(data);
+				const decoded = inner.decode(data, context);
 				return decoded;
 			},
 		},
@@ -48,12 +49,13 @@ export function makeVersionedValidatedCodec<
 	TDecoded,
 	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
 	TValidate = TEncoded,
+	TContext = void,
 >(
 	options: ICodecOptions,
 	supportedVersions: Set<number>,
 	schema: EncodedSchema,
-	codec: IJsonCodec<TDecoded, TEncoded, TValidate>,
-): IJsonCodec<TDecoded, TEncoded, TValidate> {
+	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
+): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
 	return makeVersionedCodec(
 		supportedVersions,
 		options,
