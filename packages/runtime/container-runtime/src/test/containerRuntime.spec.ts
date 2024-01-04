@@ -51,6 +51,7 @@ import {
 	ContainerMessageType,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
 } from "../messageTypes";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -1086,6 +1087,92 @@ describe("Runtime", () => {
 						),
 					"Cannot submit container runtime message with compatDetails",
 				);
+			});
+
+			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				(containerRuntime as any).dataStores = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					resubmitDataStoreOp: (envelope, localOpMetadata) => {
+						containerRuntime.submitDataStoreOp(
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} as DataStores;
+
+				containerRuntime.setConnectionState(false);
+
+				containerRuntime.submitDataStoreOp("1", "test");
+				containerRuntime.submitDataStoreOp("2", "test");
+				(
+					containerRuntime as unknown as {
+						submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					}
+				).submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
+				});
+				containerRuntime.submitDataStoreOp("4", "test");
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Connect, which will trigger resubmit
+				containerRuntime.setConnectionState(true);
+
+				assert.strictEqual(
+					submittedOps.length,
+					3,
+					"Only 3 messages should be sent - Do not resubmit the future/unknown op",
+				);
+			});
+
+			it("Op with unrecognized type and no compat behavior causes resubmit to throw", async () => {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				(containerRuntime as any).dataStores = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					resubmitDataStoreOp: (envelope, localOpMetadata) => {
+						containerRuntime.submitDataStoreOp(
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} as DataStores;
+
+				containerRuntime.setConnectionState(false);
+
+				(
+					containerRuntime as unknown as {
+						submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					}
+				).submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+					// No compatDetails so it will throw on resubmit.
+				});
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Note: hitting this error case in practice would require a new op type to be deployed,
+				// one such op to be stashed, then a new session loads on older code that is unaware
+				// of the new op type.
+				assert.throws(() => {
+					// Connect, which will trigger resubmit
+					containerRuntime.setConnectionState(true);
+				}, "Expected resubmit to throw");
 			});
 
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
