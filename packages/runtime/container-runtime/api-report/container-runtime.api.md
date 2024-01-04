@@ -857,6 +857,12 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // @internal
+export interface UnknownContainerRuntimeMessage extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
+    contents: unknown;
+    type: "__unknown_container_message_type__never_use_as_value__";
+}
+
+// @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // (No @packageDocumentation comment for this package)

@@ -17,8 +17,7 @@ import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframe
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
 	ContainerRuntime,
-	ContainerMessageType,
-	ContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -593,6 +592,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
 		let opsSent = 0;
 		let largeOpsSent = 0;
+		let futureOpsSent = 0;
 
 		const reportOpCount = (reason: string, error?: Error) => {
 			config.logger.sendTelemetryEvent(
@@ -603,6 +603,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					documentOpCount: dataModel.counter.value,
 					localOpCount: opsSent,
 					localLargeOpCount: largeOpsSent,
+					localFutureOpCount: futureOpsSent,
 				},
 				error,
 			);
@@ -639,20 +640,21 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				largeOpsSent++;
 			}
 
-			dataModel.counter.increment(1);
-			opsSent++;
-
 			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
 				(
 					this.context.containerRuntime as unknown as {
-						submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
+						submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 					}
 				).submit({
-					type: "FUTURE_TYPE" as ContainerMessageType,
+					type: "FUTURE_TYPE" as any,
 					contents: "Hello",
-					compatDetails: { behavior: "Ignore" },
+					compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed, even upon resubmit if that happens
 				});
+				futureOpsSent++;
 			}
+
+			dataModel.counter.increment(1);
+			opsSent++;
 		};
 
 		const enableQuickRampDown = () => {
