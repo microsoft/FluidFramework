@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { TestChange } from "../../testChange.js";

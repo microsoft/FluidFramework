@@ -23,11 +23,13 @@ import {
 	SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
+	FieldBatchEncodingContext,
 	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	FieldChangeMap,
 	FieldChangeset,
@@ -45,6 +47,11 @@ import {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
+
+const chunkEncodingContext: FieldBatchEncodingContext = {
+	encodeType: TreeCompressionStrategy.Compressed,
+	// TODO: provide a schema when encoding so schema based compression can actually happen.
+};
 
 export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
@@ -227,7 +234,10 @@ export function makeV0Codec(
 		);
 		return buildsArray.length === 0
 			? undefined
-			: { builds: buildsArray, trees: fieldsCodec.encode(treesToEncode) };
+			: {
+					builds: buildsArray,
+					trees: fieldsCodec.encode(treesToEncode, chunkEncodingContext),
+			  };
 	}
 
 	function decodeBuilds(
@@ -238,7 +248,7 @@ export function makeV0Codec(
 			return undefined;
 		}
 
-		const chunks = fieldsCodec.decode(encoded.trees);
+		const chunks = fieldsCodec.decode(encoded.trees, chunkEncodingContext);
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, "out of bounds index for build chunk");
 			return chunkFieldSingle(chunks[index], defaultChunkPolicy);

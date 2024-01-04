@@ -12,7 +12,7 @@ import {
 	SchemaFactoryRecursive,
 	TreeConfiguration,
 	TreeView,
-} from "../../class-tree/index.js";
+} from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, disposeSymbol, requireTrue } from "../../util/index.js";
 import { ListRecursive, MapRecursive } from "./testRecursiveSchema.js";

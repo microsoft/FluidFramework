@@ -11,7 +11,7 @@ import {
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
-} from "../../class-tree/index.js";
+} from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { ForestType } from "../../shared-tree/index.js";
