@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from "@tylerbu/sorted-btree-es6";
+import { BTree } from "sorted-btree";
 import { createEmitter, ISubscribable } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
 import {
