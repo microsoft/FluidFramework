@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
-import { cursorForJsonableTreeNode } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	FieldKey,
@@ -15,12 +15,12 @@ import {
 	TaggedChange,
 	RevisionMetadataSource,
 	ChangeEncodingContext,
-} from "../core";
-import { brand } from "../util";
-import { TestChange } from "./testChange";
-import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
-import { deepFreeze, mintRevisionTag } from "./utils";
+} from "../core/index.js";
+import { brand } from "../util/index.js";
+import { TestChange } from "./testChange.js";
+import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
+import { deepFreeze, mintRevisionTag } from "./utils.js";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -104,64 +104,64 @@ describe("TestChange", () => {
 		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
 		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));
 	});
-});
 
-type TestChangeTestState = FieldStateTree<number[], TestChange>;
+	type TestChangeTestState = FieldStateTree<number[], TestChange>;
 
-function rebaseComposed(
-	metadata: RevisionMetadataSource,
-	change: TestChange,
-	...baseChanges: TaggedChange<TestChange>[]
-): TestChange {
-	baseChanges.forEach((base) => deepFreeze(base));
-	deepFreeze(change);
+	function rebaseComposed(
+		metadata: RevisionMetadataSource,
+		change: TestChange,
+		...baseChanges: TaggedChange<TestChange>[]
+	): TestChange {
+		baseChanges.forEach((base) => deepFreeze(base));
+		deepFreeze(change);
 
-	const composed = TestChange.compose(baseChanges);
-	const rebaseResult = TestChange.rebase(change, composed);
-	assert(rebaseResult !== undefined, "Shouldn't get undefined.");
-	return rebaseResult;
-}
+		const composed = TestChange.compose(baseChanges);
+		const rebaseResult = TestChange.rebase(change, composed);
+		assert(rebaseResult !== undefined, "Shouldn't get undefined.");
+		return rebaseResult;
+	}
 
-/**
- * See {@link ChildStateGenerator}
- */
-const generateChildStates: ChildStateGenerator<number[], TestChange> = function* (
-	state: TestChangeTestState,
-	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
-): Iterable<TestChangeTestState> {
-	const context = state.content;
-	const intention = mintIntention();
-	const change = TestChange.mint(context, intention);
-	yield {
-		content: change.outputContext,
-		mostRecentEdit: {
-			changeset: tagChange(change, tagFromIntention(intention)),
-			description: JSON.stringify(intention),
-			intention,
-		},
-		parent: state,
-	};
-};
-
-describe("TestChange - Rebaser Axioms", () => {
-	describe("Exhaustive suite", () => {
-		runExhaustiveComposeRebaseSuite(
-			[{ content: [] }],
-			generateChildStates,
-			{
-				rebase: (change, base) => {
-					return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
-				},
-				compose: (changes) => {
-					return TestChange.compose(changes);
-				},
-				invert: (change) => {
-					return TestChange.invert(change.change);
-				},
-				rebaseComposed,
+	/**
+	 * See {@link ChildStateGenerator}
+	 */
+	const generateChildStates: ChildStateGenerator<number[], TestChange> = function* (
+		state: TestChangeTestState,
+		tagFromIntention: (intention: number) => RevisionTag,
+		mintIntention: () => number,
+	): Iterable<TestChangeTestState> {
+		const context = state.content;
+		const intention = mintIntention();
+		const change = TestChange.mint(context, intention);
+		yield {
+			content: change.outputContext,
+			mostRecentEdit: {
+				changeset: tagChange(change, tagFromIntention(intention)),
+				description: JSON.stringify(intention),
+				intention,
 			},
-			{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
-		);
+			parent: state,
+		};
+	};
+
+	describe("Rebaser Axioms", () => {
+		describe("Exhaustive suite", () => {
+			runExhaustiveComposeRebaseSuite(
+				[{ content: [] }],
+				generateChildStates,
+				{
+					rebase: (change, base) => {
+						return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+					},
+					compose: (changes) => {
+						return TestChange.compose(changes);
+					},
+					invert: (change) => {
+						return TestChange.invert(change.change);
+					},
+					rebaseComposed,
+				},
+				{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
+			);
+		});
 	});
 });

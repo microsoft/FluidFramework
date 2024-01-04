@@ -4,11 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { makeAnonChange, RevisionTag, tagChange, TaggedChange, tagRollbackInverse } from "../core";
-import { fail } from "../util";
+import {
+	makeAnonChange,
+	RevisionTag,
+	tagChange,
+	TaggedChange,
+	tagRollbackInverse,
+} from "../core/index.js";
+import { fail } from "../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema";
-import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils";
+import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema/index.js";
+import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils.js";
 import {
 	FieldStateTree,
 	generatePossibleSequenceOfEdits,
@@ -16,7 +22,7 @@ import {
 	BoundFieldChangeRebaser,
 	makeIntentionMinter,
 	NamedChangeset,
-} from "./exhaustiveRebaserUtils";
+} from "./exhaustiveRebaserUtils.js";
 
 interface ExhaustiveSuiteOptions {
 	skipRebaseOverCompose?: boolean;

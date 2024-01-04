@@ -6,16 +6,20 @@
 import { SessionId } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
-import { DiscriminatedUnionDispatcher, SessionAwareCodec, makeCodecFamily } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { makeChangeAtomIdCodec } from "../changeAtomIdCodec";
+import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	SessionAwareCodec,
+	makeCodecFamily,
+} from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	Attach,
 	AttachAndDetach,
 	CellId,
 	Changeset,
-	Delete,
+	Remove,
 	Detach,
 	Insert,
 	Mark,
@@ -23,9 +27,9 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
-} from "./types";
-import { Changeset as ChangesetSchema, Encoded } from "./format";
-import { isNoopMark } from "./utils";
+} from "./types.js";
+import { Changeset as ChangesetSchema, Encoded } from "./format.js";
+import { isNoopMark } from "./utils.js";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(
 	childCodec: SessionAwareCodec<TNodeChange>,
@@ -67,7 +71,7 @@ function makeV0Codec<TNodeChange>(
 							id: effect.id,
 						},
 					};
-				case "Delete":
+				case "Remove":
 					return {
 						delete: {
 							revision:
@@ -165,10 +169,10 @@ function makeV0Codec<TNodeChange>(
 			}
 			return mark;
 		},
-		delete(encoded: Encoded.Delete, originatorId: SessionId): Delete {
+		delete(encoded: Encoded.Remove, originatorId: SessionId): Remove {
 			const { id, revision, idOverride } = encoded;
-			const mark: Mutable<Delete> = {
-				type: "Delete",
+			const mark: Mutable<Remove> = {
+				type: "Remove",
 				id,
 			};
 			if (revision !== undefined) {

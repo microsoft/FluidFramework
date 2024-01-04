@@ -4,13 +4,13 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core";
+import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core/index.js";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
-} from "../../util";
-import { EncodedFieldBatch } from "../chunked-forest";
+} from "../../util/index.js";
+import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

@@ -5,8 +5,8 @@
 
 import { Type, TSchema } from "@sinclair/typebox";
 import { SessionId } from "@fluidframework/id-compressor";
-import { JsonCompatibleReadOnly } from "../util";
-import { EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core";
+import { JsonCompatibleReadOnly } from "../util/index.js";
+import { EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 
 /**
  * The format of messages that SharedTree sends and receives.

@@ -67,9 +67,9 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-225750",
+		"@fluid-tools/build-cli": "0.29.0-227332",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/build-tools": "0.29.0-227332",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
@@ -93,11 +93,49 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IIdCompressorCore": {
-				"forwardCompat": false
+			"RemovedInterfaceDeclaration_IIdCompressorCore": {
+				"forwardCompat": false,
+				"backCompat": false
 			},
-			"ClassDeclaration_IdCompressor": {
-				"forwardCompat": false
+			"RemovedClassDeclaration_IdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_OpSpaceCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedIdCompressorWithNoSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SessionId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SessionSpaceCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_StableId": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

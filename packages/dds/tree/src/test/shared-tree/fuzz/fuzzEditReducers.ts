@@ -12,22 +12,22 @@ import {
 	FlexTreeNode,
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
-} from "../../../feature-libraries";
-import { fail } from "../../../util";
-import { validateTreeConsistency } from "../../utils";
-import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { Revertible } from "../../../core";
+} from "../../../feature-libraries/index.js";
+import { fail } from "../../../util/index.js";
+import { validateTreeConsistency } from "../../utils.js";
+import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { Revertible } from "../../../core/index.js";
 import {
 	FieldEdit,
-	FuzzDelete,
+	FuzzRemove,
 	FuzzFieldChange,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
-} from "./operationTypes";
-import { fuzzNode, fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
-import { FuzzTestState, viewFromState } from "./fuzzEditGenerators";
+} from "./operationTypes.js";
+import { fuzzNode, fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import { FuzzTestState, viewFromState } from "./fuzzEditGenerators.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
@@ -112,7 +112,7 @@ function applySequenceFieldEdit(
 			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
 			break;
 		}
-		case "delete": {
+		case "remove": {
 			const firstNode = navigateToNode(tree, change.firstNode);
 			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
 			const { parent: field, index } = firstNode.parentField;
@@ -197,7 +197,7 @@ function navigateToNode(
 
 function applyOptionalFieldEdit(
 	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzSet | FuzzDelete,
+	change: FuzzSet | FuzzRemove,
 ): void {
 	switch (change.type) {
 		case "set": {
@@ -211,7 +211,7 @@ function applyOptionalFieldEdit(
 			}
 			break;
 		}
-		case "delete": {
+		case "remove": {
 			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
 			assert(field?.is(fuzzNode.objectNodeFieldsObject.optionalChild));
 			field.content = undefined;

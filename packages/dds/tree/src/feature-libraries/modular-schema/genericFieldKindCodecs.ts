@@ -5,10 +5,10 @@
 
 import { Type } from "@sinclair/typebox";
 import { SessionId } from "@fluidframework/id-compressor";
-import { ICodecFamily, SessionAwareCodec, makeCodecFamily } from "../../codec";
-import type { NodeChangeset } from "../modular-schema";
-import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
-import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+import { ICodecFamily, SessionAwareCodec, makeCodecFamily } from "../../codec/index.js";
+import type { NodeChangeset } from "../modular-schema/index.js";
+import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
+import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 
 export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
 	childCodec: SessionAwareCodec<TChildChange>,

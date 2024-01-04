@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/runtime-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	AnchorLocator,
 	IForestSubscription,
@@ -24,8 +24,8 @@ import {
 	TreeStoredSchemaSubscription,
 	JsonableTree,
 	RevisionTagCodec,
-} from "../core";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
+} from "../core/index.js";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
 	buildForest,
 	intoDelta,
@@ -33,13 +33,13 @@ import {
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 	TreeCompressionStrategy,
-} from "../feature-libraries";
-import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
-import { TransactionResult, fail } from "../util";
-import { noopValidator } from "../codec";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
-import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+} from "../feature-libraries/index.js";
+import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
+import { TransactionResult, fail } from "../util/index.js";
+import { noopValidator } from "../codec/index.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link TreeView}.
@@ -195,7 +195,12 @@ export function createTreeCheckout(
 			idCompressor,
 			args?.fieldBatchCodec ??
 				makeFieldBatchCodec(defaultCodecOptions, {
-					// TODO: provide schema here to enable schema based compression.
+					// TODO: Currently unsure which schema should be passed if an op contains a schema edit, so it is not enabled.
+					// This should eventually handle that case, and pass in the correct schema accordingly.
+					// schema: {
+					// 	schema,
+					// 	policy: defaultSchemaPolicy,
+					// },
 					encodeType: TreeCompressionStrategy.Compressed,
 				}),
 			{ jsonValidator: noopValidator },

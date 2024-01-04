@@ -10,10 +10,10 @@ import {
 	UpPath,
 	PathRootPrefix,
 	CursorMarker,
-} from "../../core";
-import { fail } from "../../util";
-import { prefixFieldPath } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
+} from "../../core/index.js";
+import { fail } from "../../util/index.js";
+import { prefixFieldPath } from "../treeCursorUtils.js";
+import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk.js";
 
 /**
  * Chunk that is empty.

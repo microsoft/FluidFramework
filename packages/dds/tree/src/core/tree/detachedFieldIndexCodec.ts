@@ -5,11 +5,16 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec";
-import { EncodedRevisionTag, RevisionTagCodec } from "../rebase";
-import { EncodedRootsForRevision, Format, RootRanges, version } from "./detachedFieldIndexFormat";
-import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes";
-import { ForestRootId } from "./detachedFieldIndex";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import {
+	EncodedRootsForRevision,
+	Format,
+	RootRanges,
+	version,
+} from "./detachedFieldIndexFormat.js";
+import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
+import { ForestRootId } from "./detachedFieldIndex.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	private readonly revisionTagCodec: RevisionTagCodec;

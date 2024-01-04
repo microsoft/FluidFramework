@@ -8,5 +8,5 @@ export {
 	ChangeFamilyEditor,
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
-} from "./changeFamily";
-export { EditBuilder } from "./editBuilder";
+} from "./changeFamily.js";
+export { EditBuilder } from "./editBuilder.js";

@@ -5,15 +5,15 @@
 
 /* eslint-disable no-inner-declarations */
 
-import { SchemaBuilder } from "../../../domains";
+import { SchemaBuilder } from "../../../domains/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	FieldKinds,
 	InsertableFlexNode,
 	TreeFieldSchema,
-	TreeNodeSchema,
-} from "../../../feature-libraries";
-import { requireAssignableTo } from "../../../util";
+	FlexTreeNodeSchema,
+} from "../../../feature-libraries/index.js";
+import { requireAssignableTo } from "../../../util/index.js";
 
 const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 
@@ -29,7 +29,7 @@ export const listTaskSchema = builder.objectRecursive("ListTask", {
 
 {
 	// Recursive objects don't get this type checking automatically, so confirm it
-	type _check = requireAssignableTo<typeof listTaskSchema, TreeNodeSchema>;
+	type _check = requireAssignableTo<typeof listTaskSchema, FlexTreeNodeSchema>;
 }
 
 export const rootFieldSchema = SchemaBuilder.required([stringTaskSchema, listTaskSchema]);

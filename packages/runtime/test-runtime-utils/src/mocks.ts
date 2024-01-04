@@ -838,6 +838,10 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
+	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 */
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
 	public async summarize(

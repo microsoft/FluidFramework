@@ -10,11 +10,11 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
-import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
-import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
+import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
+import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -41,7 +41,7 @@ describe("Fuzz - Top-Level", () => {
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 5,
-		delete: 5,
+		remove: 5,
 		move: 5,
 		start: 1,
 		commit: 1,

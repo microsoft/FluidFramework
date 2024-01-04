@@ -9,18 +9,18 @@ import {
 	ITreeCursorSynchronous,
 	TreeNodeSchemaIdentifier,
 	forEachField,
-} from "../../../core";
-import { brand, fail } from "../../../util";
-import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric";
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
-import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format";
+} from "../../../core/index.js";
+import { brand, fail } from "../../../util/index.js";
+import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
+import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
+import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
 import {
 	NodeEncoder,
 	KeyedFieldEncoder,
 	FieldEncoder,
 	EncoderCache,
 	encodeValue,
-} from "./compressedEncode";
+} from "./compressedEncode.js";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.

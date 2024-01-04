@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { makeSchemaCodec } from "../schema-index";
-import { EncodedSchemaChange } from "./schemaChangeFormat";
-import { SchemaChange } from "./schemaChangeTypes";
+import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import { makeSchemaCodec } from "../schema-index/index.js";
+import { EncodedSchemaChange } from "./schemaChangeFormat.js";
+import { SchemaChange } from "./schemaChangeTypes.js";
 
 export function makeSchemaChangeCodec({
 	jsonValidator: validator,

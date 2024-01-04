@@ -391,7 +391,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     });
     // (undocumented)
     get absolutePath(): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<void>;

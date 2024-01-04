@@ -19,10 +19,16 @@ import {
 	SharedTreeFactory,
 	TreeContent,
 	ITreeViewFork,
-} from "../../../shared-tree";
-import { brand, fail, getOrCreate } from "../../../util";
-import { AllowedUpdateType, FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
-import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries";
+} from "../../../shared-tree/index.js";
+import { brand, fail, getOrCreate } from "../../../util/index.js";
+import {
+	AllowedUpdateType,
+	FieldKey,
+	FieldUpPath,
+	JsonableTree,
+	UpPath,
+} from "../../../core/index.js";
+import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -39,8 +45,8 @@ import {
 	TreeEdit,
 	UndoOp,
 	UndoRedo,
-} from "./operationTypes";
-import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils";
+} from "./operationTypes.js";
+import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	/**
@@ -84,7 +90,7 @@ export function viewFromState(
  *
  * When a field needs to be selected, the fuzz test generator walks down the tree from the root field, randomly selecting
  * one of the below options. If the selected option is not valid (e.g. the field is empty and the generator is trying to
- * select a node to delete), field selection will automatically re-sample excluding this option.
+ * select a node to remove), field selection will automatically re-sample excluding this option.
  *
  * Each weight is used throughout the field selection process.
  *
@@ -129,7 +135,7 @@ const defaultFieldSelectionWeights: FieldSelectionWeights = {
 
 export interface EditGeneratorOpWeights {
 	insert: number;
-	delete: number;
+	remove: number;
 	start: number;
 	commit: number;
 	abort: number;
@@ -143,7 +149,7 @@ export interface EditGeneratorOpWeights {
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
-	delete: 0,
+	remove: 0,
 	start: 0,
 	commit: 0,
 	abort: 0,
@@ -156,7 +162,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 
 export interface EditGeneratorOptions {
 	weights: Partial<EditGeneratorOpWeights>;
-	maxDeleteCount: number;
+	maxRemoveCount: number;
 }
 
 export const makeEditGenerator = (
@@ -236,7 +242,7 @@ export const makeEditGenerator = (
 		fieldInfo.type !== "required" &&
 		(weights.fieldSelection.filter?.(fieldInfo) ?? true);
 
-	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
+	const removeContent = (state: FuzzTestState): FieldEditTypes => {
 		const fieldInfo = selectTreeField(
 			viewFromState(state),
 			state.random,
@@ -247,7 +253,7 @@ export const makeEditGenerator = (
 			case "optional": {
 				const { content: field } = fieldInfo;
 				const { content } = field;
-				// Note: if we ever decide to generate deletes for currently empty optional fields, the logic
+				// Note: if we ever decide to generate removals for currently empty optional fields, the logic
 				// in the reducer needs to be adjusted (it hard-codes `wasEmpty` to `false`).
 				assert(
 					content !== undefined,
@@ -257,7 +263,7 @@ export const makeEditGenerator = (
 				return {
 					type: "optional",
 					edit: {
-						type: "delete",
+						type: "remove",
 						firstNode: downPathFromNode(content),
 						count: 1,
 					},
@@ -280,7 +286,7 @@ export const makeEditGenerator = (
 				return {
 					type: "sequence",
 					edit: {
-						type: "delete",
+						type: "remove",
 						firstNode: downPathFromNode(node),
 						count,
 					},
@@ -303,18 +309,9 @@ export const makeEditGenerator = (
 		const { content: field } = fieldInfo;
 		assert(field.length > 0, "Sequence must have at least one element to perform a move");
 
-		// This can be done in O(1) but it's more clear this way:
-		// Valid move indices are any index before or equal to the start of the sequence
-		// and after the end of the sequence.
 		const start = state.random.integer(0, field.length - 1);
 		const count = state.random.integer(1, field.length - start);
-		const validMoveIndices: number[] = [];
-		for (let i = 0; i < field.length; i++) {
-			if (i <= start || i > start + count) {
-				validMoveIndices.push(i);
-			}
-		}
-		const moveIndex = state.random.pick(validMoveIndices);
+		const dstIndex = state.random.integer(0, field.length);
 		const node = field.at(start);
 		assert(node !== undefined, "Node should be defined at chosen index");
 
@@ -322,7 +319,7 @@ export const makeEditGenerator = (
 			type: "sequence",
 			edit: {
 				type: "move",
-				dstIndex: moveIndex,
+				dstIndex,
 				count,
 				firstNode: downPathFromNode(node),
 			},
@@ -342,8 +339,8 @@ export const makeEditGenerator = (
 				) !== "no-valid-fields",
 		],
 		[
-			deleteContent,
-			weights.delete,
+			removeContent,
+			weights.remove,
 			(state) =>
 				trySelectTreeField(
 					viewFromState(state),
@@ -457,9 +454,8 @@ export function makeOpGenerator(
 		...defaultEditGeneratorOpWeights,
 		...weightsArg,
 	};
-	// note: 'delete' is a JS keyword so isn't shorthanded in this destructure.
-	const { insert, abort, commit, start, undo, redo } = weights;
-	const editWeight = sumWeights([weights.delete, insert]);
+	const { insert, remove, abort, commit, start, undo, redo } = weights;
+	const editWeight = sumWeights([remove, insert]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);
 
