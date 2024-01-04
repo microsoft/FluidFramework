@@ -4,16 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeStatus } from "../../../feature-libraries";
-import { FieldKey, AnchorSet, rootFieldKey, keyAsDetachedField } from "../../../core";
-import { brand } from "../../../util";
+import { TreeStatus } from "../../../feature-libraries/index.js";
+import { FieldKey, AnchorSet, rootFieldKey, keyAsDetachedField } from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
 import {
 	detachedFieldSlot,
 	treeStatusFromAnchorCache,
 	treeStatusFromDetachedField,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-tree/utilities";
-import { applyTestDelta } from "../../utils";
+} from "../../../feature-libraries/flex-tree/utilities.js";
+import { applyTestDelta } from "../../utils.js";
 
 describe("flex-tree utilities", () => {
 	describe("treeStatusFromAnchorCache", () => {

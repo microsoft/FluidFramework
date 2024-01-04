@@ -232,6 +232,41 @@ describe("Garbage Collection Tests", () => {
 		);
 	});
 
+	describe("addedOutboundReference", () => {
+		it("ignores target relative URLs", () => {
+			const garbageCollector = createGarbageCollector();
+			const spies = {
+				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
+			};
+			garbageCollector.addedOutboundReference("/from", "to/relative/url");
+			mockLogger.assertMatch(
+				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute", category: "error" }],
+				"Expected error log",
+			);
+			assert.equal(
+				spies.telemetryTracker.nodeUsed.callCount,
+				0,
+				"nodeUsed should not be called",
+			);
+		});
+		it("tracks target absolute URLs", () => {
+			const garbageCollector = createGarbageCollector();
+			const spies = {
+				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
+			};
+			garbageCollector.addedOutboundReference("/from", "/to/absolute/url");
+			mockLogger.assertMatchNone(
+				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute" }],
+				"unexpected events logged",
+			);
+			assert.equal(
+				spies.telemetryTracker.nodeUsed.callCount,
+				1,
+				"nodeUsed should have been called",
+			);
+		});
+	});
+
 	describe("runSweepPhase", () => {
 		it("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes

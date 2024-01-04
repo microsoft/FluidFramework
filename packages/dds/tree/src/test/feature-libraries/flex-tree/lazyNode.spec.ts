@@ -7,7 +7,7 @@
 
 import { strict as assert, fail } from "assert";
 
-import { noopValidator } from "../../../codec";
+import { noopValidator } from "../../../codec/index.js";
 import {
 	LazyFieldNode,
 	LazyLeaf,
@@ -15,7 +15,7 @@ import {
 	LazyObjectNode,
 	LazyTreeNode,
 	buildLazyObjectNode,
-} from "../../../feature-libraries/flex-tree/lazyNode";
+} from "../../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	Any,
 	isTreeValue,
@@ -31,14 +31,14 @@ import {
 	FieldKind,
 	AllowedTypes,
 	typeNameSymbol,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	DefaultChangeset,
 	cursorForJsonableTreeNode,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	Anchor,
 	AnchorNode,
@@ -50,25 +50,30 @@ import {
 	TreeNavigationResult,
 	TreeValue,
 	rootFieldKey,
-} from "../../../core";
-import { RestrictiveReadonlyRecord, brand } from "../../../util";
+} from "../../../core/index.js";
+import { RestrictiveReadonlyRecord, brand } from "../../../util/index.js";
 import {
 	LazyField,
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
-} from "../../../feature-libraries/flex-tree/lazyField";
+} from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	FlexTreeEntity,
 	boxedIterator,
 	visitIterableTree,
-} from "../../../feature-libraries/flex-tree";
-import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context";
-import { TreeContent } from "../../../shared-tree";
-import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
-import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { forestWithContent, flexTreeViewWithContent } from "../../utils";
-import { contextWithContentReadonly } from "./utils";
+} from "../../../feature-libraries/flex-tree/index.js";
+import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
+import { TreeContent } from "../../../shared-tree/index.js";
+import { leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
+import { testTrees, treeContentFromTestTree } from "../../testTrees.js";
+import {
+	forestWithContent,
+	flexTreeViewWithContent,
+	testIdCompressor,
+	failCodec,
+} from "../../utils.js";
+import { contextWithContentReadonly } from "./utils.js";
 
 function collectPropertyNames(obj: object): Set<string> {
 	if (obj == null) {
@@ -115,7 +120,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 /**
  * Test {@link LazyTreeNode} implementation.
  */
-class TestLazyTree<TSchema extends TreeNodeSchema> extends LazyTreeNode<TSchema> {}
+class TestLazyTree<TSchema extends FlexTreeNodeSchema> extends LazyTreeNode<TSchema> {}
 
 /**
  * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
@@ -366,7 +371,7 @@ describe("LazyMap", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},
@@ -461,7 +466,7 @@ describe("LazyObjectNode", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { ITreeCursorSynchronous, JsonableTree } from "../core";
+import { ITreeCursorSynchronous, JsonableTree } from "../core/index.js";
 import {
 	Any,
 	FieldKinds,
@@ -14,20 +14,20 @@ import {
 	FullSchemaPolicy,
 	Multiplicity,
 	SchemaLibrary,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
 	intoStoredSchemaCollection,
-} from "../feature-libraries";
-import { TreeContent } from "../shared-tree";
-import { leaf, SchemaBuilder } from "../domains";
+} from "../feature-libraries/index.js";
+import { TreeContent } from "../shared-tree/index.js";
+import { leaf, SchemaBuilder } from "../domains/index.js";
 
 interface TestTree {
 	readonly name: string;
@@ -36,7 +36,7 @@ interface TestTree {
 	readonly treeFactory: () => JsonableTree[];
 }
 
-function testTree<T extends TreeNodeSchema>(
+function testTree<T extends FlexTreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
@@ -61,8 +61,8 @@ function testField<T extends TreeFieldSchema>(
 		name,
 		schemaData: schema,
 		treeFactory: () => {
-			const cursors = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
-			return cursors.map(jsonableTreeFromCursor);
+			const cursor = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
+			return jsonableTreeFromFieldCursor(cursor);
 		},
 		policy: defaultSchemaPolicy,
 	};
