@@ -17,7 +17,6 @@ import {
 	Any,
 	FieldKinds,
 	TreeFieldSchema,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
 	FlexTreeNodeSchema,
@@ -53,7 +52,6 @@ const rootNode: UpPath = {
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });
