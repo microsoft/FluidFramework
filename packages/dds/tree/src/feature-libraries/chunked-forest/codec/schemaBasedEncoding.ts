@@ -83,7 +83,7 @@ export function treeShaper(
 	fieldHandler: FieldShaper,
 	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
-	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing schema");
+	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing node schema");
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
