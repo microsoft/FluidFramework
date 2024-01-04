@@ -32,7 +32,7 @@ import {
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
 import { ICodecOptions, noopValidator } from "../../codec/index.js";
-import { FieldBatchCodec } from "../chunked-forest/index.js";
+import { FieldBatchEncodingContext, FieldBatchCodec } from "../chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -52,10 +52,14 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly codec: ForestCodec;
 
+	/**
+	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
+	 */
 	public constructor(
 		private readonly forest: IEditableForest,
 		private readonly idCompressor: IIdCompressor,
 		fieldBatchCodec: FieldBatchCodec,
+		private readonly encoderContext: FieldBatchEncodingContext,
 		options: ICodecOptions = { jsonValidator: noopValidator },
 	) {
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
@@ -84,7 +88,7 @@ export class ForestSummarizer implements Summarizable {
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
-		const encoded = this.codec.encode(fieldMap);
+		const encoded = this.codec.encode(fieldMap, this.encoderContext);
 
 		fieldMap.forEach((value) => value.free());
 		return stringify(encoded);
@@ -127,7 +131,10 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = this.codec.decode(parse(treeBufferString) as Format);
+			const fields = this.codec.decode(
+				parse(treeBufferString) as Format,
+				this.encoderContext,
+			);
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 			const build: DetachedNodeBuild[] = [];

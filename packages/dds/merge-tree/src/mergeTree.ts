@@ -29,7 +29,7 @@ import {
 	CollaborationWindow,
 	IHierBlock,
 	IMergeBlock,
-	IMergeLeaf,
+	ISegmentLeaf,
 	IMergeNode,
 	IMoveInfo,
 	InsertContext,
@@ -79,12 +79,6 @@ import { zamboniSegments } from "./zamboni";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
-
-/**
- * someday we may split tree leaves from segments, but for now they are the same
- * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
- */
-export type ISegmentLeaf = ISegment & IMergeLeaf;
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -643,7 +637,7 @@ export class MergeTree {
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
-	private addToLRUSet(leaf: IMergeLeaf, seq: number) {
+	private addToLRUSet(leaf: ISegmentLeaf, seq: number) {
 		// If the parent node has not yet been marked for scour (i.e., needsScour is not false or undefined),
 		// add the segment and mark the mark the node now.
 
@@ -786,7 +780,7 @@ export class MergeTree {
 
 			if (maybeEndpoint) {
 				const endpoint = maybeEndpoint === "start" ? this.startOfTree : this.endOfTree;
-				const localRefs = (endpoint.localRefs ??= new LocalReferenceCollection(endpoint));
+				const localRefs = LocalReferenceCollection.setOrGet(endpoint);
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(...endpointRefsToAdd);
 				} else {
@@ -795,8 +789,7 @@ export class MergeTree {
 			}
 
 			if (currentSlideDestination !== undefined) {
-				const localRefs = (currentSlideDestination.localRefs ??=
-					new LocalReferenceCollection(currentSlideDestination));
+				const localRefs = LocalReferenceCollection.setOrGet(currentSlideDestination);
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(...nonEndpointRefsToAdd);
 				} else {
@@ -1099,7 +1092,7 @@ export class MergeTree {
 		let foundMarker: Marker | undefined;
 
 		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
-		const segWithParent: IMergeLeaf | undefined = segment;
+		const segWithParent: ISegmentLeaf | undefined = segment;
 		if (segWithParent?.parent === undefined) {
 			return undefined;
 		}
@@ -1169,7 +1162,7 @@ export class MergeTree {
 					const locallyMovedSegments = this.locallyMovedSegments.get(localMovedSeq);
 
 					if (locallyMovedSegments) {
-						for (const segment of locallyMovedSegments.segments) {
+						locallyMovedSegments.segments.forEach((segment: ISegmentLeaf) => {
 							segment.localMovedSeq = undefined;
 
 							if (!nodesToUpdate.includes(segment.parent!)) {
@@ -1179,7 +1172,7 @@ export class MergeTree {
 							if (segment.movedSeq === UnassignedSequenceNumber) {
 								segment.movedSeq = seq;
 							}
-						}
+						});
 
 						this.locallyMovedSegments.delete(localMovedSeq);
 					}
@@ -2293,8 +2286,7 @@ export class MergeTree {
 			segment = _segment;
 		}
 
-		const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
-		segment.localRefs = localRefs;
+		const localRefs = LocalReferenceCollection.setOrGet(segment);
 
 		const segRef = localRefs.createLocalRef(
 			offset,

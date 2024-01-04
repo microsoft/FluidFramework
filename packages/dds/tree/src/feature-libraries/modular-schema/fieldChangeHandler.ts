@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import {
 	TaggedChange,
 	RevisionTag,
@@ -12,9 +11,10 @@ import {
 	DeltaFieldChanges,
 	DeltaDetachedNodeId,
 	EncodedRevisionTag,
+	ChangeEncodingContext,
 } from "../../core/index.js";
-import { fail, IdAllocator, Invariant } from "../../util/index.js";
-import { ICodecFamily, SessionAwareCodec } from "../../codec/index.js";
+import { fail, IdAllocator, Invariant, JsonCompatibleReadOnly } from "../../util/index.js";
+import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import { NodeChangeset } from "./modularChangeTypes.js";
@@ -30,9 +30,19 @@ export interface FieldChangeHandler<
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (
-		childCodec: SessionAwareCodec<NodeChangeset>,
-		revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
-	) => ICodecFamily<TChangeset, SessionId>;
+		childCodec: IJsonCodec<
+			NodeChangeset,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			ChangeEncodingContext
+		>,
+		revisionTagCodec: IJsonCodec<
+			RevisionTag,
+			EncodedRevisionTag,
+			EncodedRevisionTag,
+			ChangeEncodingContext
+		>,
+	) => ICodecFamily<TChangeset, ChangeEncodingContext>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,

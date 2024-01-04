@@ -32,7 +32,6 @@ import {
 	FieldBatchCodec,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
@@ -193,11 +192,7 @@ export function createTreeCheckout(
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			idCompressor,
-			args?.fieldBatchCodec ??
-				makeFieldBatchCodec(defaultCodecOptions, {
-					// TODO: provide schema here to enable schema based compression.
-					encodeType: TreeCompressionStrategy.Compressed,
-				}),
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
 			{ jsonValidator: noopValidator },
 		);
 	const branch =
