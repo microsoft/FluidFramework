@@ -17,7 +17,6 @@ import {
 	Any,
 	FieldKinds,
 	TreeFieldSchema,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
 	FlexTreeNodeSchema,
@@ -53,7 +52,6 @@ const rootNode: UpPath = {
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });
@@ -157,10 +155,18 @@ export function generateTestTrees() {
 				const tree2 = provider.trees[1].view;
 
 				// NOTE: we're using the old tree editing APIs here as the new
-				// editable-tree-2 API doesn't support cross-field moves at the
+				// flex-tree API doesn't support cross-field moves at the
 				// time of writing
+
+				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
+				const nodeSchema = schemaBuilder.object("Node", {
+					foo: SchemaBuilder.sequence(leaf.string),
+					bar: SchemaBuilder.sequence(leaf.string),
+				});
+				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
+				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 				const initialState: JsonableTree = {
-					type: brand("Node"),
+					type: nodeSchema.name,
 					fields: {
 						foo: [
 							{ type: leaf.string.name, value: "a" },
@@ -174,14 +180,6 @@ export function generateTestTrees() {
 						],
 					},
 				};
-
-				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
-				const nodeSchema = schemaBuilder.object("Node", {
-					foo: SchemaBuilder.sequence(leaf.string),
-					bar: SchemaBuilder.sequence(leaf.string),
-				});
-				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
-				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 
 				tree1.updateSchema(intoStoredSchema(schema));
 

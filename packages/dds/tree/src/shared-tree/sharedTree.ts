@@ -192,24 +192,34 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const fieldBatchCodec = makeFieldBatchCodec(options, {
-			// TODO: provide schema here to enable schema based compression.
+		const opFieldBatchCodec = makeFieldBatchCodec(options, {
+			// TODO: Currently unsure which schema should be passed if an op contains a schema edit, so it is not enabled.
+			// This should eventually handle that case, and pass in the correct schema accordingly.
 			// schema: {
 			// 	schema,
 			// 	policy: defaultSchemaPolicy,
 			// },
-			encodeType: TreeCompressionStrategy.Compressed,
+			encodeType: options.summaryEncodeType,
+		});
+
+		// Separate field batch codec created as summarization does not need to handle the case of an op containing a schema edit.
+		const summaryFieldBatchCodec = makeFieldBatchCodec(options, {
+			schema: {
+				schema,
+				policy: defaultSchemaPolicy,
+			},
+			encodeType: options.summaryEncodeType,
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			runtime.idCompressor,
-			fieldBatchCodec,
+			summaryFieldBatchCodec,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			runtime.idCompressor,
-			fieldBatchCodec,
+			opFieldBatchCodec,
 			options,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
@@ -250,7 +260,7 @@ export class SharedTree
 			changeFamily,
 			schema,
 			forest,
-			fieldBatchCodec,
+			fieldBatchCodec: opFieldBatchCodec,
 			events: this._events,
 			removedRoots,
 		});
