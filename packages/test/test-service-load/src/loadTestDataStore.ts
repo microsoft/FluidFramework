@@ -559,9 +559,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
 		const futureOpPeriod =
-			config.testConfig.futureOpRate !== undefined && config.testConfig.futureOpRate > 0
-				? 1 / config.testConfig.futureOpRate
-				: undefined;
+			config.testConfig.futureOpRatePerMin === undefined ||
+			config.testConfig.futureOpRatePerMin <= 0
+				? undefined
+				: Math.floor(config.testConfig.opRatePerMin / config.testConfig.futureOpRatePerMin);
 		const opSizeinBytes =
 			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
