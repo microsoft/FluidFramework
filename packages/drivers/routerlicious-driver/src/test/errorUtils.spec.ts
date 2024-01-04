@@ -16,7 +16,7 @@ import {
 describe("ErrorUtils", () => {
 	/**
 	 * Checks if the input is an {@link IThrottlingWarning}.
-	 * */
+	 */
 	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
 		return (
 			input !== undefined &&
