@@ -161,7 +161,7 @@ export interface IDriverErrorBase {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IThrottlingWarning extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.throttlingError;
@@ -169,7 +169,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IGenericNetworkError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.genericNetworkError;
@@ -177,7 +177,7 @@ export interface IGenericNetworkError extends IDriverErrorBase {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.authorizationError;
@@ -186,7 +186,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ILocationRedirectionError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.locationRedirection;
@@ -196,7 +196,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 /**
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
- * @internal
+ * @alpha
  */
 export interface IDriverBasicError extends IDriverErrorBase {
 	readonly errorType:
@@ -217,7 +217,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type DriverError =
 	| IThrottlingWarning

@@ -24,7 +24,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
 // @public
@@ -83,7 +83,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: string;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
     readonly claims?: string;
@@ -191,7 +191,7 @@ export interface IDocumentStorageServicePolicies {
     readonly maximumCacheDurationMs?: FiveDaysMs;
 }
 
-// @internal
+// @alpha
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: typeof DriverErrorTypes.genericError | typeof DriverErrorTypes.fileNotFoundOrAccessDeniedError | typeof DriverErrorTypes.offlineError | typeof DriverErrorTypes.unsupportedClientProtocolVersion | typeof DriverErrorTypes.writeError | typeof DriverErrorTypes.fetchFailure | typeof DriverErrorTypes.fetchTokenError | typeof DriverErrorTypes.incorrectServerResponse | typeof DriverErrorTypes.fileOverwrittenInStorage | typeof DriverErrorTypes.fluidInvalidSchema | typeof DriverErrorTypes.usageError | typeof DriverErrorTypes.fileIsLocked | typeof DriverErrorTypes.outOfStorageError;
@@ -216,7 +216,7 @@ export interface IDriverHeader {
     [DriverHeader.createNew]: any;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IGenericNetworkError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: typeof DriverErrorTypes.genericNetworkError;
@@ -224,7 +224,7 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ILocationRedirectionError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: typeof DriverErrorTypes.locationRedirection;
@@ -271,7 +271,7 @@ export interface ISummaryContext {
     readonly referenceSequenceNumber: number;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IThrottlingWarning extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: typeof DriverErrorTypes.throttlingError;
