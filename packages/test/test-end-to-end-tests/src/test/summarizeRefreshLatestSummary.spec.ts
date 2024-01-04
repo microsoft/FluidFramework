@@ -94,6 +94,7 @@ describeCompat(
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
 				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
 			]);
+			mockLogger.clear();
 
 			const twoSummariesDeferred = new Deferred<void>();
 			const summaryVersions: string[] = [];

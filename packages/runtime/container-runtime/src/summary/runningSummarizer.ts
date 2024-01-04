@@ -255,9 +255,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			},
 			async (options: IRefreshSummaryAckOptions) => {
 				if (immediatelyRefreshLatestSummaryAck) {
-					await this.refreshLatestSummaryAckCallback(options).catch(async (error) =>
-						this.handleRefreshSummaryAckError(options, error),
-					);
+					await this.refreshLatestSummaryAckAndHandleError(options);
 				}
 			},
 			this.summaryWatcher,
@@ -313,9 +311,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 						summaryRefSeq: refSequenceNumber,
 						summaryLogger,
 					};
-					await this.refreshLatestSummaryAckCallback(options).catch(async (error) =>
-						this.handleRefreshSummaryAckError(options, error),
-					);
+					await this.refreshLatestSummaryAckAndHandleError(options);
 				},
 				() => {},
 			);
@@ -324,32 +320,33 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		return refSequenceNumber;
 	}
 
-	private readonly handleRefreshSummaryAckError = async (
+	private readonly refreshLatestSummaryAckAndHandleError = async (
 		options: IRefreshSummaryAckOptions,
-		error: any,
 	) => {
-		// If the error is 404, so maybe the fetched version no longer exists on server. We just
-		// ignore this error in that case, as that means we will have another summaryAck for the
-		// latest version with which we will refresh the state. However in case of single commit
-		// summary, we might be missing a summary ack, so in that case we are still fine as the
-		// code in `submitSummary` function in container runtime, will refresh the latest state
-		// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
-		// updated state and be fine.
-		const isIgnoredError =
-			isFluidError(error) &&
-			error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
+		return this.refreshLatestSummaryAckCallback(options).catch(async (error) => {
+			// If the error is 404, so maybe the fetched version no longer exists on server. We just
+			// ignore this error in that case, as that means we will have another summaryAck for the
+			// latest version with which we will refresh the state. However in case of single commit
+			// summary, we might be missing a summary ack, so in that case we are still fine as the
+			// code in `submitSummary` function in container runtime, will refresh the latest state
+			// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
+			// updated state and be fine.
+			const isIgnoredError =
+				isFluidError(error) &&
+				error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 
-		options.summaryLogger.sendTelemetryEvent(
-			{
-				eventName: isIgnoredError
-					? "HandleSummaryAckErrorIgnored"
-					: "HandleLastSummaryAckError",
-				referenceSequenceNumber: options.summaryRefSeq,
-				proposalHandle: options.proposalHandle,
-				ackHandle: options.ackHandle,
-			},
-			error,
-		);
+			options.summaryLogger.sendTelemetryEvent(
+				{
+					eventName: isIgnoredError
+						? "HandleSummaryAckErrorIgnored"
+						: "HandleLastSummaryAckError",
+					referenceSequenceNumber: options.summaryRefSeq,
+					proposalHandle: options.proposalHandle,
+					ackHandle: options.ackHandle,
+				},
+				error,
+			);
+		});
 	};
 
 	/**
