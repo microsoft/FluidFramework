@@ -117,7 +117,6 @@ export interface IDeltaManagerEvents extends IEvent {
 	 * - `reason`: Describes the reason for which the delta manager was disconnected.
 	 * - `error` : error if any for the disconnect.
 	 *
-	 * @alpha
 	 */
 	(event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void);
 

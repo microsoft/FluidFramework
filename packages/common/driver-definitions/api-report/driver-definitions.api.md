@@ -77,7 +77,7 @@ export enum FetchSource {
 // @alpha (undocumented)
 export type FiveDaysMs = 432000000;
 
-// @alpha
+// @public
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;

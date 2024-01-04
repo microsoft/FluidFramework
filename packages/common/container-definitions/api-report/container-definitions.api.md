@@ -251,7 +251,6 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     (event: "pong", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    // @alpha
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
         reason: string;
