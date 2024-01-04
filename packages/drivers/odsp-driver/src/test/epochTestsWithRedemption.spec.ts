@@ -6,8 +6,12 @@
 import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/core-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl, IEntry, snapshotKey } from "@fluidframework/odsp-driver-definitions";
+import {
+	OdspErrorTypes,
+	IOdspResolvedUrl,
+	IEntry,
+	snapshotKey,
+} from "@fluidframework/odsp-driver-definitions";
 import { EpochTrackerWithRedemption } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
@@ -127,7 +131,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 					} catch (error: any) {
 						assert.strictEqual(
 							error.errorType,
-							DriverErrorType.fileNotFoundOrAccessDeniedError,
+							OdspErrorTypes.fileNotFoundOrAccessDeniedError,
 							"Error should be file not found or access denied error",
 						);
 					}
@@ -141,7 +145,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				success = false;
 				assert.strictEqual(
 					error.errorType,
-					DriverErrorType.fileNotFoundOrAccessDeniedError,
+					OdspErrorTypes.fileNotFoundOrAccessDeniedError,
 					"Error should be file not found or access denied error",
 				);
 			}

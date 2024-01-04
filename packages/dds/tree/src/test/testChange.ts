@@ -4,7 +4,6 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -16,8 +15,9 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 	ChangeFamilyCodec,
+	ChangeEncodingContext,
 } from "../core/index.js";
-import { SessionAwareCodec, makeCodecFamily } from "../codec/index.js";
+import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
 import { deepFreeze } from "./utils.js";
 
@@ -183,7 +183,13 @@ export interface AnchorRebaseData {
 }
 
 const emptyChange: TestChange = { intentions: [] };
-const codec: SessionAwareCodec<TestChange> & ChangeFamilyCodec<TestChange> = {
+const codec: IJsonCodec<
+	TestChange,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+> &
+	ChangeFamilyCodec<TestChange> = {
 	encode: (x) => x as unknown as JsonCompatibleReadOnly,
 	decode: (x) => x as unknown as TestChange,
 };
@@ -286,7 +292,7 @@ export function testChangeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		codecs: makeCodecFamily<TestChange, { originatorId: SessionId }>([[0, TestChange.codec]]),
+		codecs: makeCodecFamily<TestChange, ChangeEncodingContext>([[0, TestChange.codec]]),
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
