@@ -5,11 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/driver-definitions";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 import io from "socket.io-client";
 import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { RouterliciousErrorTypes } from "./errorUtils";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
@@ -221,7 +221,7 @@ export class DocumentService implements api.IDocumentService {
 										(errorMessage) =>
 											new NetworkErrorBasic(
 												`The Host-provided token fetcher threw an error`,
-												DriverErrorTypes.fetchTokenError,
+												RouterliciousErrorTypes.fetchTokenError,
 												canRetryOnError(error),
 												{ errorMessage, driverVersion },
 											),

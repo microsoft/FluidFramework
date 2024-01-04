@@ -5,7 +5,6 @@
 
 import { TUnsafe, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import { SessionId } from "@fluidframework/id-compressor";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -16,7 +15,11 @@ import {
 import { Mutable, fail } from "../../../util/index.js";
 import { makeCodecFamily } from "../../../codec/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
-import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core/index.js";
+import {
+	ChangeEncodingContext,
+	DeltaFieldChanges,
+	makeDetachedNodeId,
+} from "../../../core/index.js";
 import { Multiplicity } from "../../../feature-libraries/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
@@ -80,7 +83,9 @@ export type ValueChangeset = ReplaceOp<number>;
 export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>, SessionId>(Type.Any())]]),
+		makeCodecFamily([
+			[0, makeValueCodec<TUnsafe<ValueChangeset>, ChangeEncodingContext>(Type.Any())],
+		]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: ({ change, revision }): DeltaFieldChanges => {

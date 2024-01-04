@@ -22,6 +22,7 @@ import {
 	FlexTreeNodeSchema,
 	InsertableFlexNode,
 	intoStoredSchema,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
@@ -52,6 +53,7 @@ const rootNode: UpPath = {
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });

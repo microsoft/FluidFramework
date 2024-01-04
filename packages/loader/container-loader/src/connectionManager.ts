@@ -16,8 +16,7 @@ import {
 	IDocumentService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-	// eslint-disable-next-line import/no-deprecated
-	DriverErrorType,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
 import {
 	canRetryOnError,
@@ -612,8 +611,7 @@ export class ConnectionManager implements IConnectionManager {
 					break;
 				} else if (
 					isFluidError(origError) &&
-					// eslint-disable-next-line import/no-deprecated
-					origError.errorType === DriverErrorType.outOfStorageError
+					origError.errorType === DriverErrorTypes.outOfStorageError
 				) {
 					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
 					// that user can at least load the container.
