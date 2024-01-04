@@ -28,15 +28,15 @@ const { createHugoFrontMatter } = require("./front-matter");
  * @param {string} inputDir - The directory path containing the API model to be processed.
  * @param {string} outputDir - The directory path under which the generated documentation suite will be saved.
  * @param {string} uriRootDir - The base for all links between API members.
- * @param {string} version - The API model version string used to differentiate different major versions of the
+ * @param {string} apiVersionNum - The API model version string used to differentiate different major versions of the
  * framework for which API documentation is presented on the website.
  */
-async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) {
+async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersionNum) {
 	/**
 	 * Logs a progress message, prefaced with the API version number to help differentiate parallel logging output.
 	 */
 	function logProgress(message) {
-		console.log(`(${version}) ${message}`);
+		console.log(`(${apiVersionNum}) ${message}`);
 	}
 
 	/**
@@ -44,7 +44,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) 
 	 * logging output, and re-throws the error.
 	 */
 	function logErrorAndRethrow(message, error) {
-		console.error(chalk.red(`(${version}) ${message}:`));
+		console.error(chalk.red(`(${apiVersionNum}) ${message}:`));
 		console.error(error);
 		throw error;
 	}
@@ -99,7 +99,8 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) 
 				}
 			}
 		},
-		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers, version),
+		frontMatter: (apiItem) =>
+			createHugoFrontMatter(apiItem, config, customRenderers, apiVersionNum),
 		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.
 		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
@@ -116,7 +117,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, version) 
 	logProgress("Generating nav bar contents...");
 
 	try {
-		await buildNavBar(documents, version);
+		await buildNavBar(documents, apiVersionNum);
 	} catch (error) {
 		logErrorAndRethrow("Encountered an error while saving nav bar yaml files", error);
 	}
