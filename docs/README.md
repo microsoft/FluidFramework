@@ -341,6 +341,7 @@ The following npm scripts are supported in this directory:
 | `build:md-magic:code` | `node markdown-magic-code.js` |
 | `build:md-magic:website` | `node markdown-magic-website.js` |
 | `build:multi-version` | Build the site; outputs to `public/` by default. Includes API content from all major release branches. |
+| `build:redirects` | `node ./build-redirects.js` |
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `build:website` | Build the website (including generating API docs and running markdown-magic) |
 | `build:website:multi-version` | `Build the website (including generating API docs and running markdown-magic). Includes API content from all major release branches. |
@@ -356,8 +357,10 @@ The following npm scripts are supported in this directory:
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
 | `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
 | `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
-| `lint` | `markdownlint-cli2` |
-| `lint:fix` | `markdownlint-cli2-fix` |
+| `lint` | `npm run markdownlint && npm run prettier` |
+| `lint:fix` | `npm run markdownlint:fix && npm run prettier:fix` |
+| `markdownlint` | `markdownlint-cli2` |
+| `markdownlint:fix` | `markdownlint-cli2-fix` |
 | `prettier` | `prettier --check . --ignore-path ../.prettierignore` |
 | `prettier:fix` | `prettier --write . --ignore-path ../.prettierignore` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
