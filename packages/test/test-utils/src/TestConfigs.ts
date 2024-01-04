@@ -19,7 +19,7 @@ export interface ITestConfigProvider extends IConfigProviderBase {
 }
 
 /**
- * Creates a mock config provider with the ability to set configs values and clear all config values.
+ * Creates a test config provider with the ability to set configs values and clear all config values.
  * @internal
  */
 export const createTestConfigProvider = (): ITestConfigProvider => {
