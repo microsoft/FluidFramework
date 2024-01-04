@@ -9,6 +9,7 @@
 		"url": "https://github.com/microsoft/FluidFramework.git",
 		"directory": "packages/tools/devtools/devtools-example"
 	},
+	"type": "module",
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
