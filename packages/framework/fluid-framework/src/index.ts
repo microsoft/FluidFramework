@@ -72,6 +72,8 @@ export type {
 	TreeViewEvents,
 	Unhydrated,
 	WithType,
+} from "@fluidframework/tree";
+export {
 	disposeSymbol,
 	FieldKind,
 	FieldSchema,
