@@ -41,7 +41,7 @@ import {
 	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-import { testIdCompressor } from "../../utils.js";
+import { testRevisionTagCodec } from "../../utils.js";
 import { Canada, generateCanada } from "./canada.js";
 import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
@@ -113,7 +113,7 @@ function bench(
 						initializeForest(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
-							testIdCompressor,
+							testRevisionTagCodec,
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
@@ -140,7 +140,7 @@ function bench(
 						initializeForest(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
-							testIdCompressor,
+							testRevisionTagCodec,
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
