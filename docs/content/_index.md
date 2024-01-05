@@ -45,7 +45,7 @@ summary: "An open-source client technology stack that enables real-time collabor
     <div class="row customers-list text-center">
         <div class="col-xs-6 col-sm-3 col-md-2">
             <div class="row">
-                <img height="50" width="50" alt="Hexagon" src="images/Autodesk_logo.png">
+                <img height="50" width="50" alt="Autodesk" src="images/Autodesk_logo.png">
             </div>
             <div class="row">
                 <h3>Autodesk</h3>
@@ -116,35 +116,58 @@ summary: "An open-source client technology stack that enables real-time collabor
     {{<swimlane
         id="easy-to-use"
         title="Easy to Use"
-        subTitle="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-        img="/images/first-value-prop.png"
+        subTitle="Transform your collaborative experience with our developer friendly framework – where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software."
+        img="/images/581062-200.png"
         imgAlt="easy to use image"
       >}}
     {{<swimlane
         id="open-source"
         title="Open Source"
         subTitle="We believe that an <strong>open, inclusive, and respectful </strong>community will help shape a better future for this project. That's why Fluid Framework is made available for <strong>FREE</strong> as an <strong>Open Source project</strong> under the MIT license."
-        img="/images/github-mark.svg"
+        img="/images/unlock.svg"
         imgAlt="github logo"
         pos="right"
       >}}
     {{<swimlane
         id="perf"
         title="Industry-leading speed & performance"
-        subTitle="Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."
-        img="/images/1F680.svg"
+        subTitle="Unleash unparalleled speed and performance with our cutting-edge solution for building real-time collaborative applications. Collaborative features are only successful if they are fast, scale to large data and user bases. Fluid offers an approachable programming model that leverages mainstream web technology while delivering best-in-class performance." 
+        img="/images/PngItem_1400021.png"
         imgAlt="speed and performance image"
       >}}
 {{</swimlane_container>}}
 
-<div class="row">
-    <div class="col-md-6">
-        <h1>Sample Code</h1>
+{{<swimlane_container fullPage="yes">}}
+<div class="row title" style="text-align: center;">
+<h2><strong>See how it works</strong></h2>
+    <div class="col-md-6" >
+        <h2>Sample Code</h2>
+         <p>
+            <pre>
+                <code>
+                        import { SharedMap } from "fluid-framework";
+                        import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+
+                        export const diceValueKey = "dice-value-key";
+
+                        const client = new TinyliciousClient();
+
+                        const containerSchema = {
+                        initialObjects: { diceMap: SharedMap }
+                        };
+
+                        const root = document.getElementById("content");
+                </code>
+            </pre>
+        </p>
     </div>
     <div class="col-md-6">
-        <h1>Sample Output</h1>
+        <h2>Sample Output</h2>
+    {{< fluid_bundle_loader idPrefix="dice-roller"
+        bundleName="dice-roller.2021-09-24.js" >}}
     </div>
 </div>
+{{</swimlane_container>}}
 
 {{<swimlane_container fullPage="yes">}}
 <div class="swimlane availableServices">
@@ -175,7 +198,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                                         <h2>Sharepoint Embedded</h2>
                                     </div>
                                     <div>
-                                        <p>Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. SharePoint Embedded is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
+                                        <p>Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
                                     </div>
                                     <div>
                                         <a href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview">Learn more...</a>
