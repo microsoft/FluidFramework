@@ -79,7 +79,7 @@
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@2.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/async": "^3.2.9",

@@ -17,7 +17,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/common-definitions-previous': npm:@fluidframework/common-definitions@0.20.1
-      '@fluidframework/eslint-config-fluid': ^3.2.0
+      '@fluidframework/eslint-config-fluid': ^3.3.0
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^16.18.38
       concurrently: ^6.2.0
@@ -35,7 +35,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/common-definitions-previous': /@fluidframework/common-definitions/0.20.1
-      '@fluidframework/eslint-config-fluid': 3.2.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 3.3.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@16.18.38
       '@types/node': 16.18.38
       concurrently: 6.5.1
@@ -337,8 +337,8 @@ packages:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
     dev: true
 
-  /@fluidframework/eslint-config-fluid/3.2.0_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {integrity: sha512-As6k5Jj5dMAUKM5ejyGMdXo+AEYPAg7WOQEisL8eyyoPqjpjlz/D3CCs/nCGL7X+gbsXts50l89F98r626k9jg==}
+  /@fluidframework/eslint-config-fluid/3.3.0_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-k5csFtow2nNTQjzuKQlVGO6MfBf36qJnp1xTk3Ye1WH8p2+2ZMQvu4GWM5Yp399EPBUYLrKOXxuxEVOyT9TkjA==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0

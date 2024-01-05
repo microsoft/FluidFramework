@@ -899,6 +899,12 @@
         "no-magic-numbers": [
             "off"
         ],
+        "no-member-release-tags": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
         "no-misleading-character-class": [
             "error"
         ],

@@ -10,7 +10,7 @@ importers:
       '@fluid-tools/markdown-magic': file:../markdown-magic
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid
+      '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@microsoft/api-documenter': 7.23.9
       '@microsoft/api-extractor': ^7.38.3
@@ -49,7 +49,7 @@ importers:
       '@fluid-tools/markdown-magic': file:../markdown-magic_@types+node@18.15.11
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.1_@types+node@18.15.11
-      '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 3.3.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
       '@microsoft/api-extractor': 7.38.3_@types+node@18.15.11
       '@types/chai': 4.3.4
@@ -274,6 +274,35 @@ packages:
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
       '@fluidframework/protocol-definitions': 1.2.0
+    dev: true
+
+  /@fluidframework/eslint-config-fluid/3.3.0_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-k5csFtow2nNTQjzuKQlVGO6MfBf36qJnp1xTk3Ye1WH8p2+2ZMQvu4GWM5Yp399EPBUYLrKOXxuxEVOyT9TkjA==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@rushstack/eslint-patch': 1.4.0
+      '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
+      '@rushstack/eslint-plugin-security': 0.7.1_bpztyfltmpuv6lhsgzfwtmxhte
+      '@typescript-eslint/eslint-plugin': 6.7.5_gutmsi6rpbyypn46fpwnxcekni
+      '@typescript-eslint/parser': 6.7.5_bpztyfltmpuv6lhsgzfwtmxhte
+      eslint-config-prettier: 9.0.0_eslint@8.55.0
+      eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
+      eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
+      eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0
+      eslint-plugin-promise: 6.1.1_eslint@8.55.0
+      eslint-plugin-react: 7.33.2_eslint@8.55.0
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.55.0
+      eslint-plugin-tsdoc: 0.2.17
+      eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
+      eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
+      ts-morph: 20.0.0
+    transitivePeerDependencies:
+      - eslint
+      - eslint-import-resolver-node
+      - eslint-import-resolver-webpack
+      - supports-color
+      - typescript
     dev: true
 
   /@fluidframework/mocha-test-setup/2.0.0-internal.6.2.0:
@@ -6503,37 +6532,6 @@ packages:
 
   /zwitch/1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
-    dev: true
-
-  file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {directory: ../../common/build/eslint-config-fluid, type: directory}
-    id: file:../../common/build/eslint-config-fluid
-    name: '@fluidframework/eslint-config-fluid'
-    version: 3.1.0
-    dependencies:
-      '@rushstack/eslint-patch': 1.4.0
-      '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
-      '@rushstack/eslint-plugin-security': 0.7.1_bpztyfltmpuv6lhsgzfwtmxhte
-      '@typescript-eslint/eslint-plugin': 6.7.5_gutmsi6rpbyypn46fpwnxcekni
-      '@typescript-eslint/parser': 6.7.5_bpztyfltmpuv6lhsgzfwtmxhte
-      eslint-config-prettier: 9.0.0_eslint@8.55.0
-      eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
-      eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
-      eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0
-      eslint-plugin-promise: 6.1.1_eslint@8.55.0
-      eslint-plugin-react: 7.33.2_eslint@8.55.0
-      eslint-plugin-react-hooks: 4.6.0_eslint@8.55.0
-      eslint-plugin-tsdoc: 0.2.17
-      eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
-      eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
-      ts-morph: 20.0.0
-    transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-node
-      - eslint-import-resolver-webpack
-      - supports-color
-      - typescript
     dev: true
 
   file:../markdown-magic_@types+node@18.15.11:

@@ -65,6 +65,16 @@ module.exports = {
 	],
 	rules: {
 		/**
+		 * Forbids adding release tag inside member class / interface.
+		 */
+		"no-member-release-tags": [
+			"error",
+			{
+				allowWholeFile: true,
+			},
+		],
+
+		/**
 		 * The @rushstack rules are documented in the package README:
 		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
 		 */
