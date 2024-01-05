@@ -383,7 +383,7 @@ function shallowCompatibilityTest(
 ): boolean {
 	assert(
 		data !== undefined,
-		"undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData.",
+		0x889 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	if (isTreeValue(data)) {
 		return schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, data);

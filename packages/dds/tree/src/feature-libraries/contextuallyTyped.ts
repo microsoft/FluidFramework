@@ -432,7 +432,7 @@ export function applyTypesFromContext(
 		);
 		return { value, type: schema.name, fields: new Map() };
 	}
-	assert(!isTreeValue(data), "leaf value for non leaf");
+	assert(!isTreeValue(data), 0x880 /* leaf value for non leaf */);
 	if (schema instanceof FieldNodeSchema) {
 		if (isArrayLike(data)) {
 			const children = applyFieldTypesFromContext(context, schema.getFieldSchema(), data);
@@ -443,7 +443,7 @@ export function applyTypesFromContext(
 			};
 		}
 	}
-	assert(!isArrayLike(data), "array for non field node");
+	assert(!isArrayLike(data), 0x881 /* array for non field node */);
 	if (
 		schema instanceof MapNodeSchema ||
 		schema instanceof ObjectNodeSchema ||

@@ -20,7 +20,7 @@ export class RevisionTagCodec implements SessionAwareCodec<RevisionTag, EncodedR
 		if (tag === "root") {
 			return tag;
 		}
-		assert(typeof tag === "number", "String revision tag must be the literal 'root'");
+		assert(typeof tag === "number", 0x88d /* String revision tag must be the literal 'root' */);
 		return this.idCompressor.normalizeToSessionSpace(tag, originatorId);
 	}
 }

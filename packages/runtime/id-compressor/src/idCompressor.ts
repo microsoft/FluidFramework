@@ -227,7 +227,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public takeNextCreationRange(): IdCreationRange {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a6 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		const count = this.localGenCount - (this.nextRangeBaseGenCount - 1);
 		if (count === 0) {
@@ -264,7 +264,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public finalizeCreationRange(range: IdCreationRange): void {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a7 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		// Check if the range has IDs
 		if (range.ids === undefined) {
@@ -351,7 +351,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {
 		assert(
 			!this.ongoingGhostSession?.cluster,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a8 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		const newCluster = session.addNewCluster(
 			this.finalSpace.getAllocatedIdLimit(),
@@ -518,7 +518,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public serialize(hasLocalState: boolean): SerializedIdCompressor {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a9 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		const { normalizer, finalSpace, sessions } = this;
 		const sessionIndexMap = new Map<Session, number>();
