@@ -153,8 +153,8 @@ export function generateTestTrees() {
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(2);
-				const tree1 = provider.trees[0].view;
-				const tree2 = provider.trees[1].view;
+				const tree1 = provider.trees[0].checkout;
+				const tree2 = provider.trees[1].checkout;
 
 				// NOTE: we're using the old tree editing APIs here as the new
 				// flex-tree API doesn't support cross-field moves at the

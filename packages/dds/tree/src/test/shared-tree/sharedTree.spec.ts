@@ -127,7 +127,7 @@ describe("SharedTree", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"the tree",
 			) as SharedTree;
-			tree.view.updateSchema(storedSchema);
+			tree.checkout.updateSchema(storedSchema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
 			const schematized = tree.schematizeInternal({
@@ -144,7 +144,7 @@ describe("SharedTree", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"the tree",
 			) as SharedTree;
-			tree.view.updateSchema(storedSchemaGeneralized);
+			tree.checkout.updateSchema(storedSchemaGeneralized);
 			assert.throws(() => {
 				tree.schematizeInternal({
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -159,7 +159,7 @@ describe("SharedTree", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"the tree",
 			) as SharedTree;
-			tree.view.updateSchema(storedSchema);
+			tree.checkout.updateSchema(storedSchema);
 			const schematized = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
@@ -192,9 +192,9 @@ describe("SharedTree", () => {
 		}).intoSchema(TreeFieldSchema.empty);
 
 		function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
-			tree.view.updateSchema(intoStoredSchema(schema));
+			tree.checkout.updateSchema(intoStoredSchema(schema));
 			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
-			tree.view.events.emit("afterBatch");
+			tree.checkout.events.emit("afterBatch");
 		}
 
 		it("empty", () => {
@@ -345,7 +345,7 @@ describe("SharedTree", () => {
 		await provider.summarize();
 		await provider.ensureSynchronized();
 		const loadingTree = await provider.createTree();
-		validateTreeContent(loadingTree.view, {
+		validateTreeContent(loadingTree.checkout, {
 			schema: jsonSequenceRootSchema,
 			initialTree: [value],
 		});
@@ -461,7 +461,7 @@ describe("SharedTree", () => {
 
 				await provider.ensureSynchronized();
 				const tree1 = provider.trees[0];
-				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				tree1.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				await provider.ensureSynchronized();
 				await provider.summarize();
@@ -495,7 +495,7 @@ describe("SharedTree", () => {
 
 				await provider.ensureSynchronized();
 				const tree1 = provider.trees[0];
-				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				tree1.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
@@ -509,7 +509,7 @@ describe("SharedTree", () => {
 					SummaryType.Handle,
 				);
 
-				tree1.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				tree1.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 				await provider.ensureSynchronized();
 				validateSchemaStringType(
 					(await provider.summarize()).summaryTree,
@@ -613,7 +613,7 @@ describe("SharedTree", () => {
 
 		await provider.ensureSynchronized();
 
-		validateTreeContent(loadingTree.view, {
+		validateTreeContent(loadingTree.checkout, {
 			schema: stringSequenceRootSchema,
 			initialTree: ["b", "c"],
 		});
@@ -629,13 +629,15 @@ describe("SharedTree", () => {
 			initialTree: ["a", "b", "c"],
 		});
 
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+			summarizingTree.checkout.events,
+		);
 
 		summarizingTree.editor
 			.sequenceField({ parent: undefined, field: rootFieldKey })
 			.remove(0, 1);
 
-		validateTreeContent(summarizingTree.view, {
+		validateTreeContent(summarizingTree.checkout, {
 			schema: stringSequenceRootSchema,
 			initialTree: ["b", "c"],
 		});
@@ -649,14 +651,14 @@ describe("SharedTree", () => {
 		assert(revertible !== undefined, "expected undo stack to have an entry");
 		revertible.revert();
 
-		validateTreeContent(summarizingTree.view, {
+		validateTreeContent(summarizingTree.checkout, {
 			schema: stringSequenceRootSchema,
 			initialTree: ["a", "b", "c"],
 		});
 
 		await provider.ensureSynchronized();
 
-		validateTreeContent(loadingTree.view, {
+		validateTreeContent(loadingTree.checkout, {
 			schema: stringSequenceRootSchema,
 			initialTree: ["a", "b", "c"],
 		});
@@ -723,8 +725,8 @@ describe("SharedTree", () => {
 	// TODO: above mentioned task is done, but this still fails. Fix it.
 	it.skip("can tolerate incomplete transactions when attaching", async () => {
 		const onCreate = (tree: SharedTree) => {
-			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
-			tree.view.transaction.start();
+			tree.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			tree.checkout.transaction.start();
 			const view = assertSchema(tree, stringSequenceRootSchema).flexTree;
 			view.insertAtStart(["A"]);
 			view.insertAt(1, ["C"]);
@@ -1252,7 +1254,7 @@ describe("SharedTree", () => {
 				initialTree: [0, 1, 2],
 			});
 
-			const tree = provider.trees[0].view;
+			const tree = provider.trees[0].checkout;
 
 			const cursor = tree.forest.allocateCursor();
 			moveToDetachedField(tree.forest, cursor);
@@ -1404,12 +1406,12 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
 
 			const tree = provider.trees[0];
-			const { undoStack } = createTestUndoRedoStacks(tree.view.events);
+			const { undoStack } = createTestUndoRedoStacks(tree.checkout.events);
 
-			tree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			tree.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
 
-			tree.view.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			tree.checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 			expectSchemaEqual(tree.storedSchema, intoStoredSchema(jsonSequenceRootSchema));
 
 			const revertible = undoStack.pop();
@@ -1430,7 +1432,7 @@ describe("SharedTree", () => {
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
-			pausedTree.view.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			pausedTree.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
@@ -1461,7 +1463,7 @@ describe("SharedTree", () => {
 					jsonValidator: typeboxValidator,
 				}),
 			);
-			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
+			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
 		});
 
 		it("ForestType.Reference uses ObjectForest", () => {
@@ -1472,7 +1474,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
+			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1483,7 +1485,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Optimized,
 				}),
 			);
-			assert.equal(trees[0].view.forest instanceof ChunkedForest, true);
+			assert.equal(trees[0].checkout.forest instanceof ChunkedForest, true);
 		});
 	});
 });
