@@ -1035,7 +1035,8 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = events.on("newRevertible", (revertible) => {
+	const unsubscribe1 = events.on("newRevertible", (revertible) => {
+		revertible.retain();
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {
@@ -1043,6 +1044,15 @@ export function createTestUndoRedoStacks(
 		}
 	});
 
+	const unsubscribe = () => {
+		unsubscribe1();
+		for (const revertible of undoStack) {
+			revertible.discard();
+		}
+		for (const revertible of redoStack) {
+			revertible.discard();
+		}
+	};
 	return { undoStack, redoStack, unsubscribe };
 }
 

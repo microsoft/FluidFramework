@@ -228,7 +228,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this is not part of a transaction, emit a revertible event
 		if (!this.isTransacting()) {
-			this.emit("newRevertible", this.makeSharedTreeRevertible(newHead, revertibleKind));
+			this.emitNewRevertible(newHead, revertibleKind);
 		}
 
 		this.emit("afterChange", changeEvent);
@@ -305,10 +305,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this transaction is not nested, emit a revertible event
 		if (!this.isTransacting()) {
-			this.emit(
-				"newRevertible",
-				this.makeSharedTreeRevertible(newHead, RevertibleKind.Default),
-			);
+			this.emitNewRevertible(newHead, RevertibleKind.Default);
 		}
 
 		this.emit("afterChange", changeEvent);
@@ -395,12 +392,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 	}
 
-	private makeSharedTreeRevertible(
-		commit: GraphCommit<TChange>,
-		kind: RevertibleKind,
-	): Revertible {
-		this._revertibleCommits.set(commit.revision, commit);
-		let referenceCount = 0;
+	private emitNewRevertible(commit: GraphCommit<TChange>, kind: RevertibleKind): void {
+		if (!this.hasListeners("newRevertible")) {
+			// No point generating revertibles if no one cares about them
+			return;
+		}
+		let referenceCount = 1;
+		let status = RevertibleStatus.Valid;
 		const revertible = {
 			kind,
 			origin: {
@@ -408,10 +406,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				isLocal: true,
 			},
 			get status(): RevertibleStatus {
-				return referenceCount > 0 ? RevertibleStatus.Valid : RevertibleStatus.Disposed;
+				return status;
 			},
 			revert: () => {
-				if (revertible.status === RevertibleStatus.Valid) {
+				if (status === RevertibleStatus.Valid) {
 					this.revert(commit.revision, kind);
 					revertible.dispose();
 					return RevertibleResult.Success;
@@ -419,14 +417,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				return RevertibleResult.Failure;
 			},
 			retain: () => {
-				if (revertible.status === RevertibleStatus.Valid) {
+				if (status === RevertibleStatus.Valid) {
 					referenceCount += 1;
 					return RevertibleResult.Success;
 				}
 				return RevertibleResult.Failure;
 			},
 			discard: () => {
-				if (revertible.status === RevertibleStatus.Valid) {
+				if (status === RevertibleStatus.Valid) {
 					referenceCount -= 1;
 					if (referenceCount === 0) {
 						revertible.dispose();
@@ -437,18 +435,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			},
 			dispose: () => {
 				assert(
-					revertible.status === RevertibleStatus.Valid,
+					status === RevertibleStatus.Valid,
 					"Cannot dispose already disposed revertible",
 				);
 				// TODO: delete the repair data from the forest
 				this._revertibleCommits.delete(commit.revision);
 				this.revertibles.delete(revertible);
 				referenceCount = 0;
+				status = RevertibleStatus.Disposed;
 				this.emit("revertibleDisposed", revertible, commit.revision);
 			},
 		};
+		this._revertibleCommits.set(commit.revision, commit);
 		this.revertibles.add(revertible);
-		return revertible;
+		this.emit("newRevertible", revertible);
+		// Decrements the ref count for the revertible.
+		// This ensures that the revertible is disposed if no listener has retained it.
+		revertible.discard();
 	}
 
 	private revert(
