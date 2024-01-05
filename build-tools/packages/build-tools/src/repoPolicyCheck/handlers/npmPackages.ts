@@ -13,7 +13,7 @@ import sortPackageJson from "sort-package-json";
 import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
-import { PackageNamePolicyConfig } from "../../common/fluidRepo";
+import { PackageNamePolicyConfig, ScriptRequirement } from "../../common/fluidRepo";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -1420,102 +1420,121 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
-		// Verify that non-private packages are configured correctly for API-Extractor by checking for the following:
-		// - dev dependency on `@microsoft/api-extractor`
-		// - `build:docs` script
-		// - `check:release-tags` script
-		name: "api-extractor-public-packages",
+		// TODO: docs
+		name: "public-package-requirements",
 		match,
-		handler: async (file) => {
-			let json: PackageJson;
+		handler: async (packageJsonFilePath, rootDirectoryPath) => {
+			let packageJson: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
+				packageJson = JSON.parse(readFile(packageJsonFilePath));
 			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				return "Error parsing JSON file: " + packageJsonFilePath;
 			}
 
-			const packageName = json.name;
-
-			if (json.private || packageName.startsWith("@fluid-private")) {
+			if (packageJson.private) {
 				// If the package is private, we have nothing to validate.
+				return;
+			}
+
+			const requirements =
+				getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+			if (requirements === undefined) {
+				// If no requirements have been specified, we have nothing to validate.
 				return;
 			}
 
 			const errors: string[] = [];
 
-			// Ensure the package has a dev dependency on `@microsoft/api-extractor`
-			const devDependencies = Object.keys(json.devDependencies ?? {});
-			if (!devDependencies.includes("@microsoft/api-extractor")) {
-				errors.push(`Missing dev dependency: "@microsoft/api-extractor"`);
+			// Ensure the package has all required dev dependencies specified in the config.
+			if (requirements.requiredDevDependencies !== undefined) {
+				const devDependencies = Object.keys(packageJson.devDependencies ?? {});
+				for (const requiredDevDependency of requirements.requiredDevDependencies) {
+					if (!devDependencies.includes(requiredDevDependency)) {
+						errors.push(`Missing dev dependency: "${requiredDevDependency}"`);
+					}
+				}
 			}
 
-			/**
-			 * Creates an error string noting the package.json is missing a script of the provided name.
-			 * @param missingScriptName - The name of the missing script.
-			 */
-			function createMissingScriptErrorString(missingScriptName): string {
-				return `Missing script: "${missingScriptName}"`;
+			// Ensure the package has all required scripts specified in the config.
+			if (requirements.requiredScripts !== undefined) {
+				const scriptNames = Object.keys(packageJson.scripts ?? {});
+				for (const requiredScript of requirements.requiredScripts) {
+					if (!scriptNames.includes(requiredScript.name)) {
+						// Enforce the script is present
+						errors.push(`Missing script: "${requiredScript.name}"`);
+					} else if (
+						requiredScript.bodyMustMatch === true &&
+						packageJson.scripts[requiredScript.name] !== requiredScript.body
+					) {
+						// Enforce that script body matches policy
+						errors.push(
+							`Expected body of script "${requiredScript.name}" to be "${
+								requiredScript.body
+							}". Found "${packageJson.scripts[requiredScript.name]}".`,
+						);
+					}
+				}
 			}
-
-			const scripts = Object.keys(json.scripts ?? {});
-
-			// Ensure `build:docs` script exists
-			if (!scripts.includes("build:docs")) {
-				errors.push(createMissingScriptErrorString("build:docs"));
-			}
-
-			// Ensure `check:release-tags` script exists
-			if (!scripts.includes("check:release-tags")) {
-				errors.push(createMissingScriptErrorString("check:release-tags"));
-			}
-
-			// Ensure `ci:build:docs` script exists
-			if (!scripts.includes("ci:build:docs")) {
-				errors.push(createMissingScriptErrorString("ci:build:docs"));
-			}
-
-			// TODO: any other scripts to check? `apis`? `api-extractor:*`?
 
 			if (errors.length > 0) {
 				return [
-					`API-Extractor violations for public package "${json.name}":`,
+					`API-Extractor violations for public package "${packageJson.name}":`,
 					...errors,
 				].join(`${newline}* `);
 			}
 		},
-		// Fixes the following issues:
-		// - Adds missing `build:docs` script
-		// - Adds missing `check:release-tags` script
-		// TODO: we don't currently have a nice mechanism for auto-installing missing deps from here,
-		// but we could in theory install a version that matches what's in the base package.json or something.
-		resolver: (file) => {
+		resolver: (packageJsonFilePath, rootDirectoryPath) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
 				// If the package is private, there is nothing to fix.
-				if (json.private === true || json.name.startsWith("@fluid-private")) {
+				if (packageJson.private === true) {
+					return result;
+				}
+
+				const requirements =
+					getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+				if (requirements === undefined) {
+					// If no requirements have been specified, we have nothing to validate.
 					return;
 				}
 
-				const scripts = json.scripts;
-
 				/**
-				 * Creates an error string noting the package.json is missing a script of the provided name.
-				 * @param scriptName - The name of the script.
-				 * @param scriptBodyToInsert - The script body to insert if the script is missing.
+				 * Updates the package.json contents to ensure the requirements of the specified script are met.
 				 */
-				function addScriptIfMissing(scriptName: string, scriptBodyToInsert: string): void {
-					if (scripts[scriptName] === undefined) {
-						scripts[scriptName] = scriptBodyToInsert;
+				function applyScriptCorrection(script: ScriptRequirement): void {
+					// If the script is missing, or if it exists but its body doesn't satisfy the requirement,
+					// apply the correct script configuration.
+					if (
+						packageJson.scripts[script.name] === undefined ||
+						script.bodyMustMatch === true
+					) {
+						packageJson.scripts[script.name] = script.body;
 					}
 				}
 
-				// Add missing scripts.
-				addScriptIfMissing("build:docs", "fluid-build . --task api");
-				addScriptIfMissing(
-					"check:release-tags",
-					"api-extractor run --local --config ./api-extractor-lint.json",
-				);
-				addScriptIfMissing("ci:build:docs", "api-extractor run");
+				if (requirements.requiredScripts !== undefined) {
+					// Ensure scripts body exists
+					if (packageJson.scripts === undefined) {
+						packageJson.scripts = {};
+					}
+
+					// Applies script corrections as needed for all script requirements
+					requirements.requiredScripts.forEach(applyScriptCorrection);
+				}
+
+				// If there are any missing required dev dependencies, report that the issues were not resolved (and
+				// the dependencies need to be added manually).
+				// TODO: In the future, we could consider having this code actually run the pnpm commands to install
+				// the missing deps.
+				if (requirements.requiredDevDependencies !== undefined) {
+					const devDependencies = Object.keys(packageJson.devDependencies ?? {});
+					for (const requiredDevDependency of requirements.requiredDevDependencies) {
+						if (!devDependencies.includes(requiredDevDependency)) {
+							result.resolved = false;
+							break;
+						}
+					}
+				}
 			});
 
 			return result;
