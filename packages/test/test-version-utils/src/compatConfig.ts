@@ -187,9 +187,9 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(codeVersion, true, true);
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 
-	// Here we check if the release is an "rc" release. If so, we also need to account for internal releases when
-	// generating back compat configs. This is done by adding to the total number of majors we need to generate.
-	// getRequestedVersion() will handle converting the requested RC release into an internal release if necessary.
+	// Here we check if the release is an RC release. If so, we also need to account for internal releases when
+	// generating back compat configs. For back compat purposes, we consider RC major release 1 to be treated as internal
+	// major release 9. This will ensure we generate back compat configs for all RC and internal major releases.
 	const greatestInternalMajor = 8;
 	const greatestMajor =
 		prereleaseIndentifier === "rc"
