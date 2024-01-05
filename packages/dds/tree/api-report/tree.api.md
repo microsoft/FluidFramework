@@ -338,10 +338,6 @@ export interface DeltaDetachedNodeRename {
 
 // @internal
 export interface DeltaFieldChanges<TTree = DeltaProtoNode> {
-    // @deprecated
-    readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
-    // @deprecated
-    readonly destroy?: readonly DeltaDetachedNodeDestruction[];
     readonly global?: readonly DeltaDetachedNodeChanges<TTree>[];
     readonly local?: readonly DeltaMark<TTree>[];
     readonly rename?: readonly DeltaDetachedNodeRename[];
