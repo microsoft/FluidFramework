@@ -192,34 +192,26 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const opFieldBatchCodec = makeFieldBatchCodec(options, {
-			// TODO: Currently unsure which schema should be passed if an op contains a schema edit, so it is not enabled.
-			// This should eventually handle that case, and pass in the correct schema accordingly.
-			// schema: {
-			// 	schema,
-			// 	policy: defaultSchemaPolicy,
-			// },
-			encodeType: options.summaryEncodeType,
-		});
+		const fieldBatchCodec = makeFieldBatchCodec(options);
 
-		// Separate field batch codec created as summarization does not need to handle the case of an op containing a schema edit.
-		const summaryFieldBatchCodec = makeFieldBatchCodec(options, {
+		const encoderContext = {
 			schema: {
 				schema,
 				policy: defaultSchemaPolicy,
 			},
-			encodeType: options.summaryEncodeType,
-		});
+			encodeType: options.treeEncodeType,
+		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			runtime.idCompressor,
-			summaryFieldBatchCodec,
+			fieldBatchCodec,
+			encoderContext,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			runtime.idCompressor,
-			opFieldBatchCodec,
+			fieldBatchCodec,
 			options,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
@@ -260,7 +252,7 @@ export class SharedTree
 			changeFamily,
 			schema,
 			forest,
-			fieldBatchCodec: opFieldBatchCodec,
+			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
 		});
@@ -408,7 +400,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
 	 */
 	forest?: ForestType;
-	summaryEncodeType?: TreeCompressionStrategy;
+	treeEncodeType?: TreeCompressionStrategy;
 }
 
 /**
@@ -431,7 +423,7 @@ export enum ForestType {
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 };
 
 /**

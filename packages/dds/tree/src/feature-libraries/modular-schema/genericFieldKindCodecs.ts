@@ -4,40 +4,56 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { SessionId } from "@fluidframework/id-compressor";
-import { ICodecFamily, SessionAwareCodec, makeCodecFamily } from "../../codec/index.js";
+import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { ChangeEncodingContext } from "../../core/index.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 
 export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
-	childCodec: SessionAwareCodec<TChildChange>,
-): ICodecFamily<GenericChangeset<TChildChange>, SessionId> {
+	childCodec: IJsonCodec<
+		TChildChange,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		ChangeEncodingContext
+	>,
+): ICodecFamily<GenericChangeset<TChildChange>, ChangeEncodingContext> {
 	return makeCodecFamily([[0, makeV0Codec(childCodec)]]);
 }
 
 function makeV0Codec<TChildChange = NodeChangeset>(
-	childCodec: SessionAwareCodec<TChildChange>,
-): SessionAwareCodec<GenericChangeset<TChildChange>, EncodedGenericChangeset> {
+	childCodec: IJsonCodec<
+		TChildChange,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		ChangeEncodingContext
+	>,
+): IJsonCodec<
+	GenericChangeset<TChildChange>,
+	EncodedGenericChangeset,
+	EncodedGenericChangeset,
+	ChangeEncodingContext
+> {
 	return {
 		encode: (
 			change: GenericChangeset<TChildChange>,
-			originatorId: SessionId,
+			context: ChangeEncodingContext,
 		): EncodedGenericChangeset => {
 			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => [
 				index,
-				childCodec.encode(nodeChange, originatorId),
+				childCodec.encode(nodeChange, context),
 			]);
 			return encoded;
 		},
 		decode: (
 			encoded: EncodedGenericChangeset,
-			originatorId: SessionId,
+			context: ChangeEncodingContext,
 		): GenericChangeset<TChildChange> => {
 			return encoded.map(
 				([index, nodeChange]: EncodedGenericChange): GenericChange<TChildChange> => ({
 					index,
-					nodeChange: childCodec.decode(nodeChange, originatorId),
+					nodeChange: childCodec.decode(nodeChange, context),
 				}),
 			);
 		},

@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
 import {
-	Context,
+	FieldBatchEncodingContext,
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
@@ -254,14 +254,14 @@ describe("schemaBasedEncoding", () => {
 				const cache = buildCache(storedSchema, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
-				const context: Context = {
+				const context: FieldBatchEncodingContext = {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, context);
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator });
 				// End to end test
-				const encoded = codec.encode([cursorForJsonableTreeField(tree)]);
-				const result = codec.decode(encoded);
+				const encoded = codec.encode([cursorForJsonableTreeField(tree)], context);
+				const result = codec.decode(encoded, context);
 				const resultTree = result.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual(resultTree, [tree]);
 
