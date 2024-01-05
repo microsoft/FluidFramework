@@ -202,7 +202,7 @@ export function buildTreeConfiguration<T extends TreeFieldSchema>(config: Initia
 // @internal
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
-// @public
+// @internal
 export interface CheckoutEvents {
     afterBatch(): void;
     revertible(revertible: Revertible): void;
@@ -1885,8 +1885,13 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
-    readonly events: ISubscribable<CheckoutEvents>;
+    readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+}
+
+// @public
+export interface TreeViewEvents {
+    afterBatch(): void;
 }
 
 // @public
