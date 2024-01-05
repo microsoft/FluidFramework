@@ -42,13 +42,13 @@ steps:
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
       echo "Artifact path: ${{ parameters.artifactPath }}"
-      tag="--tag rc"
+      tag="--tag canary"
       if [[ "$(release)" == "release" ]]; then
         if [ "$(isLatest)" = "true" ]; then
           tag="--tag latest"
         fi
       elif [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
-        tag="--tag dev"
+        tag="--tag next"
       fi
       echo Tag: $tag
       cp .npmrc ~/.npmrc
