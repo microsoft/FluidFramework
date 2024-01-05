@@ -192,7 +192,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	// major release 9. This will ensure we generate back compat configs for all RC and internal major releases.
 	const greatestInternalMajor = 8;
 	const greatestMajor =
-		prereleaseIndentifier === "rc"
+		prereleaseIndentifier === "rc" || prereleaseIndentifier === "dev-rc"
 			? semverInternal.major + greatestInternalMajor
 			: semverInternal.major;
 
