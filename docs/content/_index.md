@@ -94,22 +94,6 @@ summary: "An open-source client technology stack that enables real-time collabor
     </div>
 </div>
 
-<div class="swimlane">
-    <div class="row customer-quotes text-center">
-        <div class="col-md-4">
-            <h3><i>"Super awesome"</i><br/>
-            <small>-- Joe at Partner1</small></h3>
-        </div>
-        <div class="col-md-4">
-            <h3><i>"Like Magic"</i><br/>
-            <small>-- Suganda Kapoor, Engineering Director, Loop application at Microsoft</small><h3>
-        </div>
-        <div class="col-md-4">
-            <h3><i>"It gives my life meaning. Without Fluid I'm not sure what my team would be doing - probably begging for change next to the highway"</i><br/>
-            <small>-- Mary at Partner3</small><h3>
-        </div>
-    </div>
-</div>
 {{</swimlane_container>}}
 
 {{<swimlane_container fullPage="yes">}}
@@ -117,14 +101,14 @@ summary: "An open-source client technology stack that enables real-time collabor
         id="easy-to-use"
         title="Easy to Use"
         subTitle="Transform your collaborative experience with our developer friendly framework – where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software."
-        img="/images/581062-200.png"
+        img="/images/E1C1.svg"
         imgAlt="easy to use image"
       >}}
     {{<swimlane
         id="open-source"
         title="Open Source"
         subTitle="We believe that an <strong>open, inclusive, and respectful </strong>community will help shape a better future for this project. That's why Fluid Framework is made available for <strong>FREE</strong> as an <strong>Open Source project</strong> under the MIT license."
-        img="/images/unlock.png"
+        img="/images/1F513.svg"
         imgAlt="github logo"
         pos="right"
       >}}
@@ -132,7 +116,7 @@ summary: "An open-source client technology stack that enables real-time collabor
         id="perf"
         title="Industry-leading speed & performance"
         subTitle="Unleash unparalleled speed and performance with our cutting-edge solution for building real-time collaborative applications. Collaborative features are only successful if they are fast, scale to large data and user bases. Fluid offers an approachable programming model that leverages mainstream web technology while delivering best-in-class performance." 
-        img="/images/PngItem_1400021.png"
+        img="/images/1F680.svg"
         imgAlt="speed and performance image"
       >}}
 {{</swimlane_container>}}
@@ -217,18 +201,3 @@ const root = document.getElementById("content");
 </div>
 {{</swimlane_container>}}
 
-<div class="swimlane releases">
-    <div class="container">
-        <div class="row" style="text-align: center;">
-            <div class="row title" style="text-align: center;">
-                <h2><strong>What's Next</strong></h2>
-            </div>
-            <div class="subtext">
-                <p>We are constantly evolving the Fluid Framework to improve its capabilities and features. If you're interested in learning about what we're currently working on, please click <a href="">here</a>.
-                </p>
-                <p>Additionally, if you would like to view the release notes for previous versions of the Fluid Framework, you can do so by visiting <a href="https://github.com/microsoft/FluidFramework/releases">this page</a>.
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
