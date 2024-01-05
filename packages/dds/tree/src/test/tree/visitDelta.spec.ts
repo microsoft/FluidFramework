@@ -18,9 +18,10 @@ import {
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
 	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import { deepFreeze, testRevisionTagCodec } from "../utils.js";
+import { deepFreeze, rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
 
 function visit(
 	delta: DeltaRoot,
@@ -82,7 +83,7 @@ function testTreeVisit(
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
 	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DetachedNodeDestruction[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(new Map([[rootKey, marks]]), build, destroy);
 	testVisit(rootDelta, expected, detachedFieldIndex);

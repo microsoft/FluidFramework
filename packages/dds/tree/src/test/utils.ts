@@ -113,6 +113,7 @@ import {
 	DeltaRoot,
 	RevisionTagCodec,
 	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
 } from "../core/index.js";
 import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
@@ -128,8 +129,6 @@ import {
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachedNodeDestruction } from "../core/tree/delta.js";
 
 // Testing utilities
 
@@ -1008,7 +1007,7 @@ export function applyTestDelta(
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DetachedNodeDestruction[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
@@ -1023,7 +1022,7 @@ export function announceTestDelta(
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DetachedNodeDestruction[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
@@ -1036,7 +1035,7 @@ export function announceTestDelta(
 export function rootFromDeltaFieldMap(
 	delta: DeltaFieldMap,
 	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DetachedNodeDestruction[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): Mutable<DeltaRoot> {
 	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
 	if (build !== undefined) {
