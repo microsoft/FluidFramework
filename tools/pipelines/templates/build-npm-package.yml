@@ -71,17 +71,9 @@ parameters:
   type: boolean
   default: false
 
-- name: namespace
-  type: boolean
-  default: true
-
 - name: buildNumberInPatch
   type: string
   default:
-
-- name: nonScopedPackages
-  type: object
-  default: []
 
 - name: publishOverride
   type: string
@@ -91,6 +83,10 @@ parameters:
 
 - name: tagName
   type: string
+
+- name: isReleaseGroup
+  type: boolean
+  default: false
 
 - name: includeInternalVersions
   type: boolean
@@ -145,7 +141,6 @@ variables:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      nonScopedPackages: ${{ parameters.nonScopedPackages }}
   # Absolute path to the folder that contains the source code for the telemetry-generator package, which is used in a few
   # places in the pipeline to push custom telemetry to Kusto.
   - name: absolutePathToTelemetryGenerator
@@ -171,6 +166,17 @@ stages:
       # Job - Build
       - job: build
         displayName: Build
+        ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+          timeoutInMinutes: 60
+        ${{ else }}:
+          # CI builds run more aggressive compat configurations which can take longer.
+          # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
+          # At the time of adding this comment, the full compat config is on the smaller side and so
+          # CI builds consistently pass with a 60 minutes timeout. However, it will naturally grow
+          # over time and it might be necessary to bump it.
+          # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
+          # a focus on e2e tests)
+          timeoutInMinutes: 60
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
@@ -214,10 +220,9 @@ stages:
 
               Variables:
                 absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-                BuildReason=$(variables['Build.Reason'])
+                BuildReason=${{ variables['Build.Reason'] }}
 
               Publish Parameters:
-                nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
                 packageTypesOverride='${{ parameters.packageTypesOverride }}'
 
@@ -226,7 +231,6 @@ stages:
                 componentDetection=${{ variables.componentDetection }}
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
-                publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
                 pnpmStorePath=${{ variables.pnpmStorePath }}
 
                 release=$(release)"
@@ -318,6 +322,7 @@ stages:
               parameters:
                 taskTestStep: ${{ taskTestStep }}
                 buildDirectory: ${{ parameters.buildDirectory }}
+                testCoverage: ${{ eq(variables['testCoverage'], true) }}
 
           # Test - Upload coverage results
           # Some webpacked file using externals introduce file name with quotes in them
@@ -372,23 +377,12 @@ stages:
             displayName: npm pack
             env:
               PACKAGE_MANAGER: ${{ parameters.packageManager }}
-              PUBLISH_NON_SCOPED: ${{ variables.publishNonScopedPackages }}
               RELEASE_GROUP: ${{ parameters.tagName }}
               STAGING_PATH: $(Build.ArtifactStagingDirectory)
             inputs:
               targetType: 'filePath'
               workingDirectory: ${{ parameters.buildDirectory }}
               filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
-
-          - ${{ if eq(variables.publishNonScopedPackages, true) }}:
-            - ${{ each parameter in parameters.nonScopedPackages }}:
-              - task: Bash@3
-                displayName: Move Non-Scoped Package ${{parameter}}
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: ${{ parameters.buildDirectory }}
-                  script: |
-                    mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - pack
@@ -551,48 +545,62 @@ stages:
   - ${{ if eq(variables.publish, true) }}:
     - template: include-publish-npm-package.yml
       parameters:
-        namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
-        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
+        isReleaseGroup: ${{ parameters.isReleaseGroup }}
 
   # Capture per-pipeline stage results
-  - stage: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
-    condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
-    dependsOn:
-      - build
+  # Capture pipeline stage results
+  - ${{ if eq(parameters.telemetry, true) }}:
+    - stage: upload_run_telemetry
+      displayName: Upload pipeline run telemetry to Kusto
+      condition: succeededOrFailed()
+      dependsOn:
+        - build
+        # NOTE: This is brittle; we need to only apply these stage dependencies when the corresponding stages actually
+        # get created in the pipeline, in the include-publish-npm-package.yml file, so we want to match the compile-time
+        # conditions *and exact stage names* that exist there. At some point it might be preferable to always create the
+        # stages, control their execution with 'condition:', and update this stage to always depend on all previous
+        # stages (while still running if some of the dependencies were skipped).
+        - ${{ if eq(variables.publish, true) }}:
+          - ${{ if eq(variables['testBuild'], true) }}:
+            - publish_npm_internal_test
+          - ${{ if eq(variables['testBuild'], false) }}:
+            - publish_npm_internal_build
+          - ${{ if and(eq(variables['testBuild'], false), eq(parameters.isReleaseGroup, true)) }}:
+            - publish_npm_internal_dev
+          - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
+            - publish_npm_public
+      jobs:
+        - job: upload_run_telemetry
+          displayName: Upload pipeline run telemetry to Kusto
+          pool: Small
+          variables:
+          - name: pipelineTelemetryWorkdir
+            value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
 
-    jobs:
-      - job: upload_run_telemetry
-        displayName: Upload pipeline run telemetry to Kusto
-        pool: Small
-        variables:
-        - name: pipelineTelemetryWorkdir
-          value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+          steps:
+          - template: include-telemetry-setup.yml
+            parameters:
+              devFeedUrl: $(ado-feeds-dev)
+              officeFeedUrl: $(ado-feeds-office)
+              isCheckoutNeeded: true
 
-        steps:
-        - template: include-telemetry-setup.yml
-          parameters:
-            devFeedUrl: $(ado-feeds-dev)
-            officeFeedUrl: $(ado-feeds-office)
-            isCheckoutNeeded: true
-
-        - task: Bash@3
-          displayName: Retrieve buildId results
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
-            script: |
-              echo "Creating output folder ..."
-              mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
-              echo "Retrieving pipeline run timeline data ..."
-              echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-              curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
-              pwd;
-              ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-              cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            ADO_API_TOKEN: $(System.AccessToken)
-            PIPELINE: 'BuildClient'
+          - task: Bash@3
+            displayName: Retrieve buildId results
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(absolutePathToTelemetryGenerator)
+              script: |
+                echo "Creating output folder ..."
+                mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
+                echo "Retrieving pipeline run timeline data ..."
+                echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+                curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
+                pwd;
+                ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
+                cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
+            env:
+              BUILD_ID: $(Build.BuildId)
+              ADO_API_TOKEN: $(System.AccessToken)
+              PIPELINE: 'BuildClient'

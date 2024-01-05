@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { cursorFromContextualData } from "@fluid-experimental/tree2";
 import { ClientWrapper } from "./client";
-import { ClientsField, FlexClient, FlexBubble, rootAppStateSchema } from "./schema";
+import { ClientsField, FlexClient, FlexBubble } from "./schema";
 
 export class AppState implements IAppState {
 	readonly localClient: ClientWrapper;
@@ -16,18 +15,11 @@ export class AppState implements IAppState {
 		public height: number,
 		numBubbles: number,
 	) {
-		clientsSequence.insertNodes(
-			clientsSequence.length,
-			cursorFromContextualData(
-				{
-					schema: clientsSequence.context.schema,
-					fieldSource: () => undefined,
-				},
-				rootAppStateSchema.types,
-				this.createInitialClientNode(numBubbles),
-			),
-		);
-		this.localClient = new ClientWrapper(clientsSequence[clientsSequence.length - 1]);
+		clientsSequence.insertAtEnd([this.createInitialClientNode(numBubbles)]);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const lastCLient = clientsSequence.boxedAt(clientsSequence.length - 1)!;
+
+		this.localClient = new ClientWrapper(lastCLient);
 
 		console.log(
 			`created client with id ${this.localClient.clientId} and color ${this.localClient.color}`,

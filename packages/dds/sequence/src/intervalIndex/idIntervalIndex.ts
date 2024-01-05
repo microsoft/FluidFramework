@@ -10,7 +10,7 @@ import { IntervalIndex } from "./intervalIndex";
 const reservedIntervalIdKey = "intervalId";
 
 /**
- * @public
+ * @internal
  */
 export interface IIdIntervalIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval>,
@@ -55,7 +55,7 @@ class IdIntervalIndex<TInterval extends ISerializableInterval>
 }
 
 /**
- * @public
+ * @internal
  */
 export function createIdIntervalIndex<
 	TInterval extends ISerializableInterval,

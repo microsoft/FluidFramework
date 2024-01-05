@@ -262,7 +262,7 @@ export class OdspDocumentService implements IDocumentService {
 	private async getDelayLoadedDeltaStream() {
 		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);
 		const module = await import(
-			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream"
+			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
 		)
 			.then((m) => {
 				this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });
@@ -289,7 +289,7 @@ export class OdspDocumentService implements IDocumentService {
 
 	public dispose(error?: any) {
 		// Error might indicate mismatch between client & server knowledge about file
-		// (DriverErrorType.fileOverwrittenInStorage).
+		// (OdspErrorTypes.fileOverwrittenInStorage).
 		// For example, file might have been overwritten in storage without generating new epoch
 		// In such case client cached info is stale and has to be removed.
 		if (error !== undefined) {

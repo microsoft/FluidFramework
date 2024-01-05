@@ -4,8 +4,8 @@
  */
 import {
 	DocumentationParentNodeBase,
-	MultiLineDocumentationNode,
-	SingleLineDocumentationNode,
+	type MultiLineDocumentationNode,
+	type SingleLineDocumentationNode,
 } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { PlainTextNode } from "./PlainTextNode";

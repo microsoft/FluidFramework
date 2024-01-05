@@ -178,7 +178,12 @@ export abstract class LeafTask extends Task {
 			console.error(this.getExecErrors(ret));
 			return this.execDone(startTime, BuildResult.Failed);
 		}
-		if (ret.stderr) {
+		if (
+			ret.stderr &&
+			// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
+			// Otherwise fluid-build spams warnings for all tsc-multi tasks.
+			!ret.stderr.includes("Found 0 errors")
+		) {
 			// no error code but still error messages, treat them is non fatal warnings
 			console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
 			console.warn(this.getExecErrors(ret));
@@ -364,6 +369,9 @@ export abstract class LeafTask extends Task {
 	}
 
 	protected getPackageFileFullPath(filePath: string): string {
+		if (path.isAbsolute(filePath)) {
+			return filePath;
+		}
 		return path.join(this.node.pkg.directory, filePath);
 	}
 
@@ -482,14 +490,16 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
-				this.traceTrigger("mismatched compare file");
+				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
 				traceTaskTrigger(doneFileExpectedContent);
 				traceTaskTrigger(doneFileContent);
 			} else {
-				this.traceTrigger("unable to generate done file expected content");
+				this.traceTrigger(
+					"unable to generate done file expected content (getDoneFileContent returned undefined)",
+				);
 			}
 		} catch {
-			this.traceTrigger("unable to read compare file");
+			this.traceTrigger(`unable to read compare file: ${doneFileFullPath}`);
 		}
 		return false;
 	}
@@ -532,16 +542,37 @@ export class UnknownLeafTask extends LeafTask {
 }
 
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
+	/**
+	 * @returns the list of files that this task depends on. The files are relative to the package directory.
+	 */
 	protected abstract getInputFiles(): Promise<string[]>;
+	/**
+	 * @returns the list of files that this task generates. The files are relative to the package directory.
+	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
+	protected get useHashes(): boolean {
+		return false;
+	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
+		if (this.useHashes) {
+			return this.getHashDoneFileContent();
+		}
+
 		// Gather the file information
 		try {
 			const srcFiles = await this.getInputFiles();
 			const dstFiles = await this.getOutputFiles();
-			const srcTimesP = Promise.all(srcFiles.map((match) => statAsync(match)));
-			const dstTimesP = Promise.all(dstFiles.map((match) => statAsync(match)));
+			const srcTimesP = Promise.all(
+				srcFiles
+					.map((match) => this.getPackageFileFullPath(match))
+					.map((match) => statAsync(match)),
+			);
+			const dstTimesP = Promise.all(
+				dstFiles
+					.map((match) => this.getPackageFileFullPath(match))
+					.map((match) => statAsync(match)),
+			);
 			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
 			const srcInfo = srcTimes.map((srcTime) => {
@@ -554,6 +585,33 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
+			return undefined;
+		}
+	}
+
+	private async getHashDoneFileContent(): Promise<string | undefined> {
+		const mapHash = async (name: string) => {
+			const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				this.getPackageFileFullPath(name),
+			);
+			return { name, hash };
+		};
+
+		try {
+			const srcFiles = await this.getInputFiles();
+			const dstFiles = await this.getOutputFiles();
+			const srcHashesP = Promise.all(srcFiles.map(mapHash));
+			const dstHashesP = Promise.all(dstFiles.map(mapHash));
+
+			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+			const output = JSON.stringify({
+				srcHashes,
+				dstHashes,
+			});
+			return output;
+		} catch (e: any) {
+			this.traceError(`error calculating file hashes: ${e.message}`);
+			this.traceTrigger("failed to get file hash");
 			return undefined;
 		}
 	}

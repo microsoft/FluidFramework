@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ISequencedDocumentMessage,
@@ -17,9 +17,9 @@ import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { Trace } from "@fluid-internal/client-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
-import { List } from "../collections";
+import { DoublyLinkedList } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, IMergeLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
+import { IMergeBlock, ISegmentLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
@@ -31,7 +31,7 @@ import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
 import { MergeTreeRevertibleDriver } from "../revertibles";
-import { ReferencePosition } from "..";
+import { IMergeTreeOptions, ReferencePosition } from "..";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -121,11 +121,10 @@ export class TestClient extends Client {
 	): Promise<TestClient> {
 		const client2 = new TestClient(options, specToSeg);
 		const { catchupOpsP } = await client2.load(
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			{
 				logger: client2.logger,
 				clientId: newLongClientId,
-			} as IFluidDataStoreRuntime,
+			} as any as IFluidDataStoreRuntime,
 			storage,
 			TestClient.serializer,
 		);
@@ -135,11 +134,12 @@ export class TestClient extends Client {
 
 	public readonly mergeTree: MergeTree;
 
-	public readonly checkQ: List<string> = new List<string>();
-	protected readonly q: List<ISequencedDocumentMessage> = new List<ISequencedDocumentMessage>();
+	public readonly checkQ: DoublyLinkedList<string> = new DoublyLinkedList<string>();
+	protected readonly q: DoublyLinkedList<ISequencedDocumentMessage> =
+		new DoublyLinkedList<ISequencedDocumentMessage>();
 
 	private readonly textHelper: MergeTreeTextHelper;
-	constructor(options?: PropertySet, specToSeg = specToSegment) {
+	constructor(options?: IMergeTreeOptions & PropertySet, specToSeg = specToSegment) {
 		super(specToSeg, createChildLogger({ namespace: "fluid:testClient" }), options);
 		this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
 		this.textHelper = new MergeTreeTextHelper(this.mergeTree);
@@ -149,7 +149,7 @@ export class TestClient extends Client {
 			// assert.notEqual(d.deltaSegments.length, 0);
 			d.deltaSegments.forEach((s) => {
 				if (d.operation === MergeTreeDeltaType.INSERT) {
-					const seg: IMergeLeaf = s.segment;
+					const seg: ISegmentLeaf = s.segment;
 					assert.notEqual(seg.parent, undefined);
 				}
 			});
@@ -176,11 +176,7 @@ export class TestClient extends Client {
 		overwrite?: boolean;
 		opArgs: IMergeTreeDeltaOpArgs;
 	}): void {
-		this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
-	}
-
-	public obliterateRangeLocal(start: number, end: number) {
-		return this.removeRangeLocal(start, end);
+		this.mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
 	}
 
 	public getText(start?: number, end?: number): string {
@@ -260,12 +256,7 @@ export class TestClient extends Client {
 		longClientId: string,
 	) {
 		this.applyMsg(
-			this.makeOpMessage(
-				createAnnotateRangeOp(start, end, props, undefined),
-				seq,
-				refSeq,
-				longClientId,
-			),
+			this.makeOpMessage(createAnnotateRangeOp(start, end, props), seq, refSeq, longClientId),
 		);
 	}
 
@@ -428,7 +419,10 @@ export class TestClient extends Client {
 			removedSeq !== undefined &&
 			(removedSeq !== UnassignedSequenceNumber ||
 				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
-
+		const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegment) =>
+			movedSeq !== undefined &&
+			(movedSeq !== UnassignedSequenceNumber ||
+				(localMovedSeq !== undefined && localMovedSeq <= localSeq));
 		/*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -445,15 +439,16 @@ export class TestClient extends Client {
 			//
 			// Note that all ACKed / remote ops are applied and we only need concern ourself with
 			// determining if locally pending ops fall before/after the given 'localSeq'.
-			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+			if (isInsertedInView(seg) && !isRemovedFromView(seg) && !isMovedFromView(seg)) {
 				segmentPosition += seg.cachedLength;
 			}
 
 			return true;
 		});
 
-		assert(
-			fasterComputedPosition === segmentPosition,
+		assert.equal(
+			fasterComputedPosition,
+			segmentPosition,
 			"Expected fast-path computation to match result from walk all segments",
 		);
 		return segmentPosition;
@@ -524,7 +519,8 @@ export class TestClient extends Client {
 		let foundMarker: Marker | undefined;
 
 		const { segment } = this.getContainingSegment(startPos);
-		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const segWithParent: ISegmentLeaf = segment!;
 
 		if (Marker.is(segWithParent)) {
 			if (refHasTileLabel(segWithParent, markerLabel)) {
@@ -571,7 +567,7 @@ export const createRevertDriver = (client: TestClient): TestClientRevertibleDriv
 			this.submitOpCallback?.(op);
 		},
 		annotateRange(start: number, end: number, props: PropertySet) {
-			const op = client.annotateRangeLocal(start, end, props, undefined);
+			const op = client.annotateRangeLocal(start, end, props);
 			this.submitOpCallback?.(op);
 		},
 		insertFromSpec(pos: number, spec: IJSONSegment) {

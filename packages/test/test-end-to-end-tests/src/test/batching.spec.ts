@@ -11,10 +11,9 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -22,31 +21,17 @@ import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 const map1Id = "map1Key";
 const map2Id = "map2Key";
-const registry: ChannelFactoryRegistry = [
-	[map1Id, SharedMap.getFactory()],
-	[map2Id, SharedMap.getFactory()],
-];
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 // Function to yield a turn in the Javascript event loop.
 async function yieldJSTurn(): Promise<void> {
@@ -106,7 +91,22 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
 	);
 }
 
-describeNoCompat("Flushing ops", (getTestObjectProvider) => {
+describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+	const registry: ChannelFactoryRegistry = [
+		[map1Id, SharedMap.getFactory()],
+		[map2Id, SharedMap.getFactory()],
+	];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -125,13 +125,13 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(configCopy);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 

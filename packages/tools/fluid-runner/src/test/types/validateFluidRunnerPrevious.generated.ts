@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ICodeLoaderBundle():
     TypeOnly<old.ICodeLoaderBundle>;
 declare function use_current_InterfaceDeclaration_ICodeLoaderBundle(
-    use: TypeOnly<current.ICodeLoaderBundle>);
+    use: TypeOnly<current.ICodeLoaderBundle>): void;
 use_current_InterfaceDeclaration_ICodeLoaderBundle(
     get_old_InterfaceDeclaration_ICodeLoaderBundle());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ICodeLoaderBundle(
 declare function get_current_InterfaceDeclaration_ICodeLoaderBundle():
     TypeOnly<current.ICodeLoaderBundle>;
 declare function use_old_InterfaceDeclaration_ICodeLoaderBundle(
-    use: TypeOnly<old.ICodeLoaderBundle>);
+    use: TypeOnly<old.ICodeLoaderBundle>): void;
 use_old_InterfaceDeclaration_ICodeLoaderBundle(
     get_current_InterfaceDeclaration_ICodeLoaderBundle());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ICodeLoaderBundle(
 declare function get_old_TypeAliasDeclaration_IExportFileResponse():
     TypeOnly<old.IExportFileResponse>;
 declare function use_current_TypeAliasDeclaration_IExportFileResponse(
-    use: TypeOnly<current.IExportFileResponse>);
+    use: TypeOnly<current.IExportFileResponse>): void;
 use_current_TypeAliasDeclaration_IExportFileResponse(
     get_old_TypeAliasDeclaration_IExportFileResponse());
 
@@ -65,7 +65,7 @@ use_current_TypeAliasDeclaration_IExportFileResponse(
 declare function get_current_TypeAliasDeclaration_IExportFileResponse():
     TypeOnly<current.IExportFileResponse>;
 declare function use_old_TypeAliasDeclaration_IExportFileResponse(
-    use: TypeOnly<old.IExportFileResponse>);
+    use: TypeOnly<old.IExportFileResponse>): void;
 use_old_TypeAliasDeclaration_IExportFileResponse(
     get_current_TypeAliasDeclaration_IExportFileResponse());
 
@@ -77,7 +77,7 @@ use_old_TypeAliasDeclaration_IExportFileResponse(
 declare function get_old_InterfaceDeclaration_IFluidFileConverter():
     TypeOnly<old.IFluidFileConverter>;
 declare function use_current_InterfaceDeclaration_IFluidFileConverter(
-    use: TypeOnly<current.IFluidFileConverter>);
+    use: TypeOnly<current.IFluidFileConverter>): void;
 use_current_InterfaceDeclaration_IFluidFileConverter(
     get_old_InterfaceDeclaration_IFluidFileConverter());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IFluidFileConverter(
 declare function get_current_InterfaceDeclaration_IFluidFileConverter():
     TypeOnly<current.IFluidFileConverter>;
 declare function use_old_InterfaceDeclaration_IFluidFileConverter(
-    use: TypeOnly<old.IFluidFileConverter>);
+    use: TypeOnly<old.IFluidFileConverter>): void;
 use_old_InterfaceDeclaration_IFluidFileConverter(
     get_current_InterfaceDeclaration_IFluidFileConverter());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IFluidFileConverter(
 declare function get_old_InterfaceDeclaration_ITelemetryOptions():
     TypeOnly<old.ITelemetryOptions>;
 declare function use_current_InterfaceDeclaration_ITelemetryOptions(
-    use: TypeOnly<current.ITelemetryOptions>);
+    use: TypeOnly<current.ITelemetryOptions>): void;
 use_current_InterfaceDeclaration_ITelemetryOptions(
     get_old_InterfaceDeclaration_ITelemetryOptions());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ITelemetryOptions(
 declare function get_current_InterfaceDeclaration_ITelemetryOptions():
     TypeOnly<current.ITelemetryOptions>;
 declare function use_old_InterfaceDeclaration_ITelemetryOptions(
-    use: TypeOnly<old.ITelemetryOptions>);
+    use: TypeOnly<old.ITelemetryOptions>): void;
 use_old_InterfaceDeclaration_ITelemetryOptions(
     get_current_InterfaceDeclaration_ITelemetryOptions());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ITelemetryOptions(
 declare function get_old_EnumDeclaration_OutputFormat():
     TypeOnly<old.OutputFormat>;
 declare function use_current_EnumDeclaration_OutputFormat(
-    use: TypeOnly<current.OutputFormat>);
+    use: TypeOnly<current.OutputFormat>): void;
 use_current_EnumDeclaration_OutputFormat(
     get_old_EnumDeclaration_OutputFormat());
 
@@ -137,7 +137,7 @@ use_current_EnumDeclaration_OutputFormat(
 declare function get_current_EnumDeclaration_OutputFormat():
     TypeOnly<current.OutputFormat>;
 declare function use_old_EnumDeclaration_OutputFormat(
-    use: TypeOnly<old.OutputFormat>);
+    use: TypeOnly<old.OutputFormat>): void;
 use_old_EnumDeclaration_OutputFormat(
     get_current_EnumDeclaration_OutputFormat());
 
@@ -149,7 +149,7 @@ use_old_EnumDeclaration_OutputFormat(
 declare function get_old_FunctionDeclaration_createContainerAndExecute():
     TypeOnly<typeof old.createContainerAndExecute>;
 declare function use_current_FunctionDeclaration_createContainerAndExecute(
-    use: TypeOnly<typeof current.createContainerAndExecute>);
+    use: TypeOnly<typeof current.createContainerAndExecute>): void;
 use_current_FunctionDeclaration_createContainerAndExecute(
     get_old_FunctionDeclaration_createContainerAndExecute());
 
@@ -161,7 +161,7 @@ use_current_FunctionDeclaration_createContainerAndExecute(
 declare function get_current_FunctionDeclaration_createContainerAndExecute():
     TypeOnly<typeof current.createContainerAndExecute>;
 declare function use_old_FunctionDeclaration_createContainerAndExecute(
-    use: TypeOnly<typeof old.createContainerAndExecute>);
+    use: TypeOnly<typeof old.createContainerAndExecute>): void;
 use_old_FunctionDeclaration_createContainerAndExecute(
     get_current_FunctionDeclaration_createContainerAndExecute());
 
@@ -173,7 +173,7 @@ use_old_FunctionDeclaration_createContainerAndExecute(
 declare function get_old_FunctionDeclaration_createLogger():
     TypeOnly<typeof old.createLogger>;
 declare function use_current_FunctionDeclaration_createLogger(
-    use: TypeOnly<typeof current.createLogger>);
+    use: TypeOnly<typeof current.createLogger>): void;
 use_current_FunctionDeclaration_createLogger(
     get_old_FunctionDeclaration_createLogger());
 
@@ -185,7 +185,7 @@ use_current_FunctionDeclaration_createLogger(
 declare function get_current_FunctionDeclaration_createLogger():
     TypeOnly<typeof current.createLogger>;
 declare function use_old_FunctionDeclaration_createLogger(
-    use: TypeOnly<typeof old.createLogger>);
+    use: TypeOnly<typeof old.createLogger>): void;
 use_old_FunctionDeclaration_createLogger(
     get_current_FunctionDeclaration_createLogger());
 
@@ -197,7 +197,7 @@ use_old_FunctionDeclaration_createLogger(
 declare function get_old_FunctionDeclaration_exportFile():
     TypeOnly<typeof old.exportFile>;
 declare function use_current_FunctionDeclaration_exportFile(
-    use: TypeOnly<typeof current.exportFile>);
+    use: TypeOnly<typeof current.exportFile>): void;
 use_current_FunctionDeclaration_exportFile(
     get_old_FunctionDeclaration_exportFile());
 
@@ -209,7 +209,7 @@ use_current_FunctionDeclaration_exportFile(
 declare function get_current_FunctionDeclaration_exportFile():
     TypeOnly<typeof current.exportFile>;
 declare function use_old_FunctionDeclaration_exportFile(
-    use: TypeOnly<typeof old.exportFile>);
+    use: TypeOnly<typeof old.exportFile>): void;
 use_old_FunctionDeclaration_exportFile(
     get_current_FunctionDeclaration_exportFile());
 
@@ -221,7 +221,7 @@ use_old_FunctionDeclaration_exportFile(
 declare function get_old_FunctionDeclaration_fluidRunner():
     TypeOnly<typeof old.fluidRunner>;
 declare function use_current_FunctionDeclaration_fluidRunner(
-    use: TypeOnly<typeof current.fluidRunner>);
+    use: TypeOnly<typeof current.fluidRunner>): void;
 use_current_FunctionDeclaration_fluidRunner(
     get_old_FunctionDeclaration_fluidRunner());
 
@@ -233,7 +233,7 @@ use_current_FunctionDeclaration_fluidRunner(
 declare function get_current_FunctionDeclaration_fluidRunner():
     TypeOnly<typeof current.fluidRunner>;
 declare function use_old_FunctionDeclaration_fluidRunner(
-    use: TypeOnly<typeof old.fluidRunner>);
+    use: TypeOnly<typeof old.fluidRunner>): void;
 use_old_FunctionDeclaration_fluidRunner(
     get_current_FunctionDeclaration_fluidRunner());
 
@@ -245,7 +245,7 @@ use_old_FunctionDeclaration_fluidRunner(
 declare function get_old_FunctionDeclaration_getSnapshotFileContent():
     TypeOnly<typeof old.getSnapshotFileContent>;
 declare function use_current_FunctionDeclaration_getSnapshotFileContent(
-    use: TypeOnly<typeof current.getSnapshotFileContent>);
+    use: TypeOnly<typeof current.getSnapshotFileContent>): void;
 use_current_FunctionDeclaration_getSnapshotFileContent(
     get_old_FunctionDeclaration_getSnapshotFileContent());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_getSnapshotFileContent(
 declare function get_current_FunctionDeclaration_getSnapshotFileContent():
     TypeOnly<typeof current.getSnapshotFileContent>;
 declare function use_old_FunctionDeclaration_getSnapshotFileContent(
-    use: TypeOnly<typeof old.getSnapshotFileContent>);
+    use: TypeOnly<typeof old.getSnapshotFileContent>): void;
 use_old_FunctionDeclaration_getSnapshotFileContent(
     get_current_FunctionDeclaration_getSnapshotFileContent());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_getSnapshotFileContent(
 declare function get_old_FunctionDeclaration_getTelemetryFileValidationError():
     TypeOnly<typeof old.getTelemetryFileValidationError>;
 declare function use_current_FunctionDeclaration_getTelemetryFileValidationError(
-    use: TypeOnly<typeof current.getTelemetryFileValidationError>);
+    use: TypeOnly<typeof current.getTelemetryFileValidationError>): void;
 use_current_FunctionDeclaration_getTelemetryFileValidationError(
     get_old_FunctionDeclaration_getTelemetryFileValidationError());
 
@@ -281,7 +281,7 @@ use_current_FunctionDeclaration_getTelemetryFileValidationError(
 declare function get_current_FunctionDeclaration_getTelemetryFileValidationError():
     TypeOnly<typeof current.getTelemetryFileValidationError>;
 declare function use_old_FunctionDeclaration_getTelemetryFileValidationError(
-    use: TypeOnly<typeof old.getTelemetryFileValidationError>);
+    use: TypeOnly<typeof old.getTelemetryFileValidationError>): void;
 use_old_FunctionDeclaration_getTelemetryFileValidationError(
     get_current_FunctionDeclaration_getTelemetryFileValidationError());
 
@@ -293,7 +293,7 @@ use_old_FunctionDeclaration_getTelemetryFileValidationError(
 declare function get_old_FunctionDeclaration_parseBundleAndExportFile():
     TypeOnly<typeof old.parseBundleAndExportFile>;
 declare function use_current_FunctionDeclaration_parseBundleAndExportFile(
-    use: TypeOnly<typeof current.parseBundleAndExportFile>);
+    use: TypeOnly<typeof current.parseBundleAndExportFile>): void;
 use_current_FunctionDeclaration_parseBundleAndExportFile(
     get_old_FunctionDeclaration_parseBundleAndExportFile());
 
@@ -305,7 +305,7 @@ use_current_FunctionDeclaration_parseBundleAndExportFile(
 declare function get_current_FunctionDeclaration_parseBundleAndExportFile():
     TypeOnly<typeof current.parseBundleAndExportFile>;
 declare function use_old_FunctionDeclaration_parseBundleAndExportFile(
-    use: TypeOnly<typeof old.parseBundleAndExportFile>);
+    use: TypeOnly<typeof old.parseBundleAndExportFile>): void;
 use_old_FunctionDeclaration_parseBundleAndExportFile(
     get_current_FunctionDeclaration_parseBundleAndExportFile());
 
@@ -317,7 +317,7 @@ use_old_FunctionDeclaration_parseBundleAndExportFile(
 declare function get_old_FunctionDeclaration_validateAndParseTelemetryOptions():
     TypeOnly<typeof old.validateAndParseTelemetryOptions>;
 declare function use_current_FunctionDeclaration_validateAndParseTelemetryOptions(
-    use: TypeOnly<typeof current.validateAndParseTelemetryOptions>);
+    use: TypeOnly<typeof current.validateAndParseTelemetryOptions>): void;
 use_current_FunctionDeclaration_validateAndParseTelemetryOptions(
     get_old_FunctionDeclaration_validateAndParseTelemetryOptions());
 
@@ -329,6 +329,6 @@ use_current_FunctionDeclaration_validateAndParseTelemetryOptions(
 declare function get_current_FunctionDeclaration_validateAndParseTelemetryOptions():
     TypeOnly<typeof current.validateAndParseTelemetryOptions>;
 declare function use_old_FunctionDeclaration_validateAndParseTelemetryOptions(
-    use: TypeOnly<typeof old.validateAndParseTelemetryOptions>);
+    use: TypeOnly<typeof old.validateAndParseTelemetryOptions>): void;
 use_old_FunctionDeclaration_validateAndParseTelemetryOptions(
     get_current_FunctionDeclaration_validateAndParseTelemetryOptions());

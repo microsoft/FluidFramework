@@ -11,15 +11,13 @@
  * @example
  *
  * "Canvas Container"
- *
- * @public
+ * @alpha
  */
 export type ContainerKey = string;
 
 /**
  * Common interface for data associated with a particular Container registered with the Devtools.
- *
- * @public
+ * @alpha
  */
 export interface HasContainerKey {
 	/**
@@ -81,6 +79,7 @@ export const EditType = {
 } as const;
 
 /**
+ * {@inheritDoc (EditType:variable)}
  * @internal
  */
 export type EditType = (typeof EditType)[keyof typeof EditType];

@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_BasicRestWrapper():
     TypeOnly<old.BasicRestWrapper>;
 declare function use_current_ClassDeclaration_BasicRestWrapper(
-    use: TypeOnly<current.BasicRestWrapper>);
+    use: TypeOnly<current.BasicRestWrapper>): void;
 use_current_ClassDeclaration_BasicRestWrapper(
     get_old_ClassDeclaration_BasicRestWrapper());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_BasicRestWrapper(
 declare function get_current_ClassDeclaration_BasicRestWrapper():
     TypeOnly<current.BasicRestWrapper>;
 declare function use_old_ClassDeclaration_BasicRestWrapper(
-    use: TypeOnly<old.BasicRestWrapper>);
+    use: TypeOnly<old.BasicRestWrapper>): void;
 use_old_ClassDeclaration_BasicRestWrapper(
     get_current_ClassDeclaration_BasicRestWrapper());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_BasicRestWrapper(
 declare function get_old_VariableDeclaration_CorrelationIdHeaderName():
     TypeOnly<typeof old.CorrelationIdHeaderName>;
 declare function use_current_VariableDeclaration_CorrelationIdHeaderName(
-    use: TypeOnly<typeof current.CorrelationIdHeaderName>);
+    use: TypeOnly<typeof current.CorrelationIdHeaderName>): void;
 use_current_VariableDeclaration_CorrelationIdHeaderName(
     get_old_VariableDeclaration_CorrelationIdHeaderName());
 
@@ -65,7 +65,7 @@ use_current_VariableDeclaration_CorrelationIdHeaderName(
 declare function get_current_VariableDeclaration_CorrelationIdHeaderName():
     TypeOnly<typeof current.CorrelationIdHeaderName>;
 declare function use_old_VariableDeclaration_CorrelationIdHeaderName(
-    use: TypeOnly<typeof old.CorrelationIdHeaderName>);
+    use: TypeOnly<typeof old.CorrelationIdHeaderName>): void;
 use_old_VariableDeclaration_CorrelationIdHeaderName(
     get_current_VariableDeclaration_CorrelationIdHeaderName());
 
@@ -77,7 +77,7 @@ use_old_VariableDeclaration_CorrelationIdHeaderName(
 declare function get_old_VariableDeclaration_DocDeleteScopeType():
     TypeOnly<typeof old.DocDeleteScopeType>;
 declare function use_current_VariableDeclaration_DocDeleteScopeType(
-    use: TypeOnly<typeof current.DocDeleteScopeType>);
+    use: TypeOnly<typeof current.DocDeleteScopeType>): void;
 use_current_VariableDeclaration_DocDeleteScopeType(
     get_old_VariableDeclaration_DocDeleteScopeType());
 
@@ -89,7 +89,7 @@ use_current_VariableDeclaration_DocDeleteScopeType(
 declare function get_current_VariableDeclaration_DocDeleteScopeType():
     TypeOnly<typeof current.DocDeleteScopeType>;
 declare function use_old_VariableDeclaration_DocDeleteScopeType(
-    use: TypeOnly<typeof old.DocDeleteScopeType>);
+    use: TypeOnly<typeof old.DocDeleteScopeType>): void;
 use_old_VariableDeclaration_DocDeleteScopeType(
     get_current_VariableDeclaration_DocDeleteScopeType());
 
@@ -101,7 +101,7 @@ use_old_VariableDeclaration_DocDeleteScopeType(
 declare function get_old_VariableDeclaration_DriverVersionHeaderName():
     TypeOnly<typeof old.DriverVersionHeaderName>;
 declare function use_current_VariableDeclaration_DriverVersionHeaderName(
-    use: TypeOnly<typeof current.DriverVersionHeaderName>);
+    use: TypeOnly<typeof current.DriverVersionHeaderName>): void;
 use_current_VariableDeclaration_DriverVersionHeaderName(
     get_old_VariableDeclaration_DriverVersionHeaderName());
 
@@ -113,7 +113,7 @@ use_current_VariableDeclaration_DriverVersionHeaderName(
 declare function get_current_VariableDeclaration_DriverVersionHeaderName():
     TypeOnly<typeof current.DriverVersionHeaderName>;
 declare function use_old_VariableDeclaration_DriverVersionHeaderName(
-    use: TypeOnly<typeof old.DriverVersionHeaderName>);
+    use: TypeOnly<typeof old.DriverVersionHeaderName>): void;
 use_old_VariableDeclaration_DriverVersionHeaderName(
     get_current_VariableDeclaration_DriverVersionHeaderName());
 
@@ -125,7 +125,7 @@ use_old_VariableDeclaration_DriverVersionHeaderName(
 declare function get_old_TypeAliasDeclaration_ExtendedSummaryObject():
     TypeOnly<old.ExtendedSummaryObject>;
 declare function use_current_TypeAliasDeclaration_ExtendedSummaryObject(
-    use: TypeOnly<current.ExtendedSummaryObject>);
+    use: TypeOnly<current.ExtendedSummaryObject>): void;
 use_current_TypeAliasDeclaration_ExtendedSummaryObject(
     get_old_TypeAliasDeclaration_ExtendedSummaryObject());
 
@@ -137,7 +137,7 @@ use_current_TypeAliasDeclaration_ExtendedSummaryObject(
 declare function get_current_TypeAliasDeclaration_ExtendedSummaryObject():
     TypeOnly<current.ExtendedSummaryObject>;
 declare function use_old_TypeAliasDeclaration_ExtendedSummaryObject(
-    use: TypeOnly<old.ExtendedSummaryObject>);
+    use: TypeOnly<old.ExtendedSummaryObject>): void;
 use_old_TypeAliasDeclaration_ExtendedSummaryObject(
     get_current_TypeAliasDeclaration_ExtendedSummaryObject());
 
@@ -149,7 +149,7 @@ use_old_TypeAliasDeclaration_ExtendedSummaryObject(
 declare function get_old_ClassDeclaration_GitManager():
     TypeOnly<old.GitManager>;
 declare function use_current_ClassDeclaration_GitManager(
-    use: TypeOnly<current.GitManager>);
+    use: TypeOnly<current.GitManager>): void;
 use_current_ClassDeclaration_GitManager(
     get_old_ClassDeclaration_GitManager());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_GitManager(
 declare function get_current_ClassDeclaration_GitManager():
     TypeOnly<current.GitManager>;
 declare function use_old_ClassDeclaration_GitManager(
-    use: TypeOnly<old.GitManager>);
+    use: TypeOnly<old.GitManager>): void;
 use_old_ClassDeclaration_GitManager(
     get_current_ClassDeclaration_GitManager());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_GitManager(
 declare function get_old_ClassDeclaration_Historian():
     TypeOnly<old.Historian>;
 declare function use_current_ClassDeclaration_Historian(
-    use: TypeOnly<current.Historian>);
+    use: TypeOnly<current.Historian>): void;
 use_current_ClassDeclaration_Historian(
     get_old_ClassDeclaration_Historian());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_Historian(
 declare function get_current_ClassDeclaration_Historian():
     TypeOnly<current.Historian>;
 declare function use_old_ClassDeclaration_Historian(
-    use: TypeOnly<old.Historian>);
+    use: TypeOnly<old.Historian>): void;
 use_old_ClassDeclaration_Historian(
     get_current_ClassDeclaration_Historian());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_Historian(
 declare function get_old_InterfaceDeclaration_IAlfredTenant():
     TypeOnly<old.IAlfredTenant>;
 declare function use_current_InterfaceDeclaration_IAlfredTenant(
-    use: TypeOnly<current.IAlfredTenant>);
+    use: TypeOnly<current.IAlfredTenant>): void;
 use_current_InterfaceDeclaration_IAlfredTenant(
     get_old_InterfaceDeclaration_IAlfredTenant());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IAlfredTenant(
 declare function get_current_InterfaceDeclaration_IAlfredTenant():
     TypeOnly<current.IAlfredTenant>;
 declare function use_old_InterfaceDeclaration_IAlfredTenant(
-    use: TypeOnly<old.IAlfredTenant>);
+    use: TypeOnly<old.IAlfredTenant>): void;
 use_old_InterfaceDeclaration_IAlfredTenant(
     get_current_InterfaceDeclaration_IAlfredTenant());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IAlfredTenant(
 declare function get_old_InterfaceDeclaration_ICreateRefParamsExternal():
     TypeOnly<old.ICreateRefParamsExternal>;
 declare function use_current_InterfaceDeclaration_ICreateRefParamsExternal(
-    use: TypeOnly<current.ICreateRefParamsExternal>);
+    use: TypeOnly<current.ICreateRefParamsExternal>): void;
 use_current_InterfaceDeclaration_ICreateRefParamsExternal(
     get_old_InterfaceDeclaration_ICreateRefParamsExternal());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_ICreateRefParamsExternal(
 declare function get_current_InterfaceDeclaration_ICreateRefParamsExternal():
     TypeOnly<current.ICreateRefParamsExternal>;
 declare function use_old_InterfaceDeclaration_ICreateRefParamsExternal(
-    use: TypeOnly<old.ICreateRefParamsExternal>);
+    use: TypeOnly<old.ICreateRefParamsExternal>): void;
 use_old_InterfaceDeclaration_ICreateRefParamsExternal(
     get_current_InterfaceDeclaration_ICreateRefParamsExternal());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_ICreateRefParamsExternal(
 declare function get_old_InterfaceDeclaration_ICredentials():
     TypeOnly<old.ICredentials>;
 declare function use_current_InterfaceDeclaration_ICredentials(
-    use: TypeOnly<current.ICredentials>);
+    use: TypeOnly<current.ICredentials>): void;
 use_current_InterfaceDeclaration_ICredentials(
     get_old_InterfaceDeclaration_ICredentials());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_ICredentials(
 declare function get_current_InterfaceDeclaration_ICredentials():
     TypeOnly<current.ICredentials>;
 declare function use_old_InterfaceDeclaration_ICredentials(
-    use: TypeOnly<old.ICredentials>);
+    use: TypeOnly<old.ICredentials>): void;
 use_old_InterfaceDeclaration_ICredentials(
     get_current_InterfaceDeclaration_ICredentials());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_ICredentials(
 declare function get_old_InterfaceDeclaration_IEmbeddedSummaryHandle():
     TypeOnly<old.IEmbeddedSummaryHandle>;
 declare function use_current_InterfaceDeclaration_IEmbeddedSummaryHandle(
-    use: TypeOnly<current.IEmbeddedSummaryHandle>);
+    use: TypeOnly<current.IEmbeddedSummaryHandle>): void;
 use_current_InterfaceDeclaration_IEmbeddedSummaryHandle(
     get_old_InterfaceDeclaration_IEmbeddedSummaryHandle());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_IEmbeddedSummaryHandle(
 declare function get_current_InterfaceDeclaration_IEmbeddedSummaryHandle():
     TypeOnly<current.IEmbeddedSummaryHandle>;
 declare function use_old_InterfaceDeclaration_IEmbeddedSummaryHandle(
-    use: TypeOnly<old.IEmbeddedSummaryHandle>);
+    use: TypeOnly<old.IEmbeddedSummaryHandle>): void;
 use_old_InterfaceDeclaration_IEmbeddedSummaryHandle(
     get_current_InterfaceDeclaration_IEmbeddedSummaryHandle());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_IEmbeddedSummaryHandle(
 declare function get_old_InterfaceDeclaration_IGetRefParamsExternal():
     TypeOnly<old.IGetRefParamsExternal>;
 declare function use_current_InterfaceDeclaration_IGetRefParamsExternal(
-    use: TypeOnly<current.IGetRefParamsExternal>);
+    use: TypeOnly<current.IGetRefParamsExternal>): void;
 use_current_InterfaceDeclaration_IGetRefParamsExternal(
     get_old_InterfaceDeclaration_IGetRefParamsExternal());
 
@@ -305,7 +305,7 @@ use_current_InterfaceDeclaration_IGetRefParamsExternal(
 declare function get_current_InterfaceDeclaration_IGetRefParamsExternal():
     TypeOnly<current.IGetRefParamsExternal>;
 declare function use_old_InterfaceDeclaration_IGetRefParamsExternal(
-    use: TypeOnly<old.IGetRefParamsExternal>);
+    use: TypeOnly<old.IGetRefParamsExternal>): void;
 use_old_InterfaceDeclaration_IGetRefParamsExternal(
     get_current_InterfaceDeclaration_IGetRefParamsExternal());
 
@@ -317,7 +317,7 @@ use_old_InterfaceDeclaration_IGetRefParamsExternal(
 declare function get_old_InterfaceDeclaration_IGitCache():
     TypeOnly<old.IGitCache>;
 declare function use_current_InterfaceDeclaration_IGitCache(
-    use: TypeOnly<current.IGitCache>);
+    use: TypeOnly<current.IGitCache>): void;
 use_current_InterfaceDeclaration_IGitCache(
     get_old_InterfaceDeclaration_IGitCache());
 
@@ -329,7 +329,7 @@ use_current_InterfaceDeclaration_IGitCache(
 declare function get_current_InterfaceDeclaration_IGitCache():
     TypeOnly<current.IGitCache>;
 declare function use_old_InterfaceDeclaration_IGitCache(
-    use: TypeOnly<old.IGitCache>);
+    use: TypeOnly<old.IGitCache>): void;
 use_old_InterfaceDeclaration_IGitCache(
     get_current_InterfaceDeclaration_IGitCache());
 
@@ -341,7 +341,7 @@ use_old_InterfaceDeclaration_IGitCache(
 declare function get_old_InterfaceDeclaration_IGitManager():
     TypeOnly<old.IGitManager>;
 declare function use_current_InterfaceDeclaration_IGitManager(
-    use: TypeOnly<current.IGitManager>);
+    use: TypeOnly<current.IGitManager>): void;
 use_current_InterfaceDeclaration_IGitManager(
     get_old_InterfaceDeclaration_IGitManager());
 
@@ -353,7 +353,7 @@ use_current_InterfaceDeclaration_IGitManager(
 declare function get_current_InterfaceDeclaration_IGitManager():
     TypeOnly<current.IGitManager>;
 declare function use_old_InterfaceDeclaration_IGitManager(
-    use: TypeOnly<old.IGitManager>);
+    use: TypeOnly<old.IGitManager>): void;
 use_old_InterfaceDeclaration_IGitManager(
     get_current_InterfaceDeclaration_IGitManager());
 
@@ -365,7 +365,7 @@ use_old_InterfaceDeclaration_IGitManager(
 declare function get_old_InterfaceDeclaration_IGitService():
     TypeOnly<old.IGitService>;
 declare function use_current_InterfaceDeclaration_IGitService(
-    use: TypeOnly<current.IGitService>);
+    use: TypeOnly<current.IGitService>): void;
 use_current_InterfaceDeclaration_IGitService(
     get_old_InterfaceDeclaration_IGitService());
 
@@ -377,7 +377,7 @@ use_current_InterfaceDeclaration_IGitService(
 declare function get_current_InterfaceDeclaration_IGitService():
     TypeOnly<current.IGitService>;
 declare function use_old_InterfaceDeclaration_IGitService(
-    use: TypeOnly<old.IGitService>);
+    use: TypeOnly<old.IGitService>): void;
 use_old_InterfaceDeclaration_IGitService(
     get_current_InterfaceDeclaration_IGitService());
 
@@ -389,7 +389,7 @@ use_old_InterfaceDeclaration_IGitService(
 declare function get_old_InterfaceDeclaration_IHistorian():
     TypeOnly<old.IHistorian>;
 declare function use_current_InterfaceDeclaration_IHistorian(
-    use: TypeOnly<current.IHistorian>);
+    use: TypeOnly<current.IHistorian>): void;
 use_current_InterfaceDeclaration_IHistorian(
     get_old_InterfaceDeclaration_IHistorian());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_IHistorian(
 declare function get_current_InterfaceDeclaration_IHistorian():
     TypeOnly<current.IHistorian>;
 declare function use_old_InterfaceDeclaration_IHistorian(
-    use: TypeOnly<old.IHistorian>);
+    use: TypeOnly<old.IHistorian>): void;
 use_old_InterfaceDeclaration_IHistorian(
     get_current_InterfaceDeclaration_IHistorian());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_IHistorian(
 declare function get_old_InterfaceDeclaration_INetworkErrorDetails():
     TypeOnly<old.INetworkErrorDetails>;
 declare function use_current_InterfaceDeclaration_INetworkErrorDetails(
-    use: TypeOnly<current.INetworkErrorDetails>);
+    use: TypeOnly<current.INetworkErrorDetails>): void;
 use_current_InterfaceDeclaration_INetworkErrorDetails(
     get_old_InterfaceDeclaration_INetworkErrorDetails());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_INetworkErrorDetails(
 declare function get_current_InterfaceDeclaration_INetworkErrorDetails():
     TypeOnly<current.INetworkErrorDetails>;
 declare function use_old_InterfaceDeclaration_INetworkErrorDetails(
-    use: TypeOnly<old.INetworkErrorDetails>);
+    use: TypeOnly<old.INetworkErrorDetails>): void;
 use_old_InterfaceDeclaration_INetworkErrorDetails(
     get_current_InterfaceDeclaration_INetworkErrorDetails());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_INetworkErrorDetails(
 declare function get_old_InterfaceDeclaration_INormalizedWholeSummary():
     TypeOnly<old.INormalizedWholeSummary>;
 declare function use_current_InterfaceDeclaration_INormalizedWholeSummary(
-    use: TypeOnly<current.INormalizedWholeSummary>);
+    use: TypeOnly<current.INormalizedWholeSummary>): void;
 use_current_InterfaceDeclaration_INormalizedWholeSummary(
     get_old_InterfaceDeclaration_INormalizedWholeSummary());
 
@@ -449,7 +449,7 @@ use_current_InterfaceDeclaration_INormalizedWholeSummary(
 declare function get_current_InterfaceDeclaration_INormalizedWholeSummary():
     TypeOnly<current.INormalizedWholeSummary>;
 declare function use_old_InterfaceDeclaration_INormalizedWholeSummary(
-    use: TypeOnly<old.INormalizedWholeSummary>);
+    use: TypeOnly<old.INormalizedWholeSummary>): void;
 use_old_InterfaceDeclaration_INormalizedWholeSummary(
     get_current_InterfaceDeclaration_INormalizedWholeSummary());
 
@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_INormalizedWholeSummary(
 declare function get_old_InterfaceDeclaration_IPatchRefParamsExternal():
     TypeOnly<old.IPatchRefParamsExternal>;
 declare function use_current_InterfaceDeclaration_IPatchRefParamsExternal(
-    use: TypeOnly<current.IPatchRefParamsExternal>);
+    use: TypeOnly<current.IPatchRefParamsExternal>): void;
 use_current_InterfaceDeclaration_IPatchRefParamsExternal(
     get_old_InterfaceDeclaration_IPatchRefParamsExternal());
 
@@ -473,7 +473,7 @@ use_current_InterfaceDeclaration_IPatchRefParamsExternal(
 declare function get_current_InterfaceDeclaration_IPatchRefParamsExternal():
     TypeOnly<current.IPatchRefParamsExternal>;
 declare function use_old_InterfaceDeclaration_IPatchRefParamsExternal(
-    use: TypeOnly<old.IPatchRefParamsExternal>);
+    use: TypeOnly<old.IPatchRefParamsExternal>): void;
 use_old_InterfaceDeclaration_IPatchRefParamsExternal(
     get_current_InterfaceDeclaration_IPatchRefParamsExternal());
 
@@ -485,7 +485,7 @@ use_old_InterfaceDeclaration_IPatchRefParamsExternal(
 declare function get_old_InterfaceDeclaration_ISession():
     TypeOnly<old.ISession>;
 declare function use_current_InterfaceDeclaration_ISession(
-    use: TypeOnly<current.ISession>);
+    use: TypeOnly<current.ISession>): void;
 use_current_InterfaceDeclaration_ISession(
     get_old_InterfaceDeclaration_ISession());
 
@@ -497,7 +497,7 @@ use_current_InterfaceDeclaration_ISession(
 declare function get_current_InterfaceDeclaration_ISession():
     TypeOnly<current.ISession>;
 declare function use_old_InterfaceDeclaration_ISession(
-    use: TypeOnly<old.ISession>);
+    use: TypeOnly<old.ISession>): void;
 use_old_InterfaceDeclaration_ISession(
     get_current_InterfaceDeclaration_ISession());
 
@@ -509,7 +509,7 @@ use_old_InterfaceDeclaration_ISession(
 declare function get_old_InterfaceDeclaration_ISummaryTree():
     TypeOnly<old.ISummaryTree>;
 declare function use_current_InterfaceDeclaration_ISummaryTree(
-    use: TypeOnly<current.ISummaryTree>);
+    use: TypeOnly<current.ISummaryTree>): void;
 use_current_InterfaceDeclaration_ISummaryTree(
     get_old_InterfaceDeclaration_ISummaryTree());
 
@@ -521,7 +521,7 @@ use_current_InterfaceDeclaration_ISummaryTree(
 declare function get_current_InterfaceDeclaration_ISummaryTree():
     TypeOnly<current.ISummaryTree>;
 declare function use_old_InterfaceDeclaration_ISummaryTree(
-    use: TypeOnly<old.ISummaryTree>);
+    use: TypeOnly<old.ISummaryTree>): void;
 use_old_InterfaceDeclaration_ISummaryTree(
     get_current_InterfaceDeclaration_ISummaryTree());
 
@@ -533,7 +533,7 @@ use_old_InterfaceDeclaration_ISummaryTree(
 declare function get_old_InterfaceDeclaration_ISummaryUploadManager():
     TypeOnly<old.ISummaryUploadManager>;
 declare function use_current_InterfaceDeclaration_ISummaryUploadManager(
-    use: TypeOnly<current.ISummaryUploadManager>);
+    use: TypeOnly<current.ISummaryUploadManager>): void;
 use_current_InterfaceDeclaration_ISummaryUploadManager(
     get_old_InterfaceDeclaration_ISummaryUploadManager());
 
@@ -545,7 +545,7 @@ use_current_InterfaceDeclaration_ISummaryUploadManager(
 declare function get_current_InterfaceDeclaration_ISummaryUploadManager():
     TypeOnly<current.ISummaryUploadManager>;
 declare function use_old_InterfaceDeclaration_ISummaryUploadManager(
-    use: TypeOnly<old.ISummaryUploadManager>);
+    use: TypeOnly<old.ISummaryUploadManager>): void;
 use_old_InterfaceDeclaration_ISummaryUploadManager(
     get_current_InterfaceDeclaration_ISummaryUploadManager());
 
@@ -557,7 +557,7 @@ use_old_InterfaceDeclaration_ISummaryUploadManager(
 declare function get_old_InterfaceDeclaration_IWholeFlatSummary():
     TypeOnly<old.IWholeFlatSummary>;
 declare function use_current_InterfaceDeclaration_IWholeFlatSummary(
-    use: TypeOnly<current.IWholeFlatSummary>);
+    use: TypeOnly<current.IWholeFlatSummary>): void;
 use_current_InterfaceDeclaration_IWholeFlatSummary(
     get_old_InterfaceDeclaration_IWholeFlatSummary());
 
@@ -569,7 +569,7 @@ use_current_InterfaceDeclaration_IWholeFlatSummary(
 declare function get_current_InterfaceDeclaration_IWholeFlatSummary():
     TypeOnly<current.IWholeFlatSummary>;
 declare function use_old_InterfaceDeclaration_IWholeFlatSummary(
-    use: TypeOnly<old.IWholeFlatSummary>);
+    use: TypeOnly<old.IWholeFlatSummary>): void;
 use_old_InterfaceDeclaration_IWholeFlatSummary(
     get_current_InterfaceDeclaration_IWholeFlatSummary());
 
@@ -581,7 +581,7 @@ use_old_InterfaceDeclaration_IWholeFlatSummary(
 declare function get_old_InterfaceDeclaration_IWholeFlatSummaryBlob():
     TypeOnly<old.IWholeFlatSummaryBlob>;
 declare function use_current_InterfaceDeclaration_IWholeFlatSummaryBlob(
-    use: TypeOnly<current.IWholeFlatSummaryBlob>);
+    use: TypeOnly<current.IWholeFlatSummaryBlob>): void;
 use_current_InterfaceDeclaration_IWholeFlatSummaryBlob(
     get_old_InterfaceDeclaration_IWholeFlatSummaryBlob());
 
@@ -593,7 +593,7 @@ use_current_InterfaceDeclaration_IWholeFlatSummaryBlob(
 declare function get_current_InterfaceDeclaration_IWholeFlatSummaryBlob():
     TypeOnly<current.IWholeFlatSummaryBlob>;
 declare function use_old_InterfaceDeclaration_IWholeFlatSummaryBlob(
-    use: TypeOnly<old.IWholeFlatSummaryBlob>);
+    use: TypeOnly<old.IWholeFlatSummaryBlob>): void;
 use_old_InterfaceDeclaration_IWholeFlatSummaryBlob(
     get_current_InterfaceDeclaration_IWholeFlatSummaryBlob());
 
@@ -605,7 +605,7 @@ use_old_InterfaceDeclaration_IWholeFlatSummaryBlob(
 declare function get_old_InterfaceDeclaration_IWholeFlatSummaryTree():
     TypeOnly<old.IWholeFlatSummaryTree>;
 declare function use_current_InterfaceDeclaration_IWholeFlatSummaryTree(
-    use: TypeOnly<current.IWholeFlatSummaryTree>);
+    use: TypeOnly<current.IWholeFlatSummaryTree>): void;
 use_current_InterfaceDeclaration_IWholeFlatSummaryTree(
     get_old_InterfaceDeclaration_IWholeFlatSummaryTree());
 
@@ -617,7 +617,7 @@ use_current_InterfaceDeclaration_IWholeFlatSummaryTree(
 declare function get_current_InterfaceDeclaration_IWholeFlatSummaryTree():
     TypeOnly<current.IWholeFlatSummaryTree>;
 declare function use_old_InterfaceDeclaration_IWholeFlatSummaryTree(
-    use: TypeOnly<old.IWholeFlatSummaryTree>);
+    use: TypeOnly<old.IWholeFlatSummaryTree>): void;
 use_old_InterfaceDeclaration_IWholeFlatSummaryTree(
     get_current_InterfaceDeclaration_IWholeFlatSummaryTree());
 
@@ -629,7 +629,7 @@ use_old_InterfaceDeclaration_IWholeFlatSummaryTree(
 declare function get_old_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry():
     TypeOnly<old.IWholeFlatSummaryTreeEntry>;
 declare function use_current_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry(
-    use: TypeOnly<current.IWholeFlatSummaryTreeEntry>);
+    use: TypeOnly<current.IWholeFlatSummaryTreeEntry>): void;
 use_current_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry(
     get_old_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry());
 
@@ -641,7 +641,7 @@ use_current_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry(
 declare function get_current_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry():
     TypeOnly<current.IWholeFlatSummaryTreeEntry>;
 declare function use_old_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry(
-    use: TypeOnly<old.IWholeFlatSummaryTreeEntry>);
+    use: TypeOnly<old.IWholeFlatSummaryTreeEntry>): void;
 use_old_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry(
     get_current_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry());
 
@@ -653,7 +653,7 @@ use_old_TypeAliasDeclaration_IWholeFlatSummaryTreeEntry(
 declare function get_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob():
     TypeOnly<old.IWholeFlatSummaryTreeEntryBlob>;
 declare function use_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob(
-    use: TypeOnly<current.IWholeFlatSummaryTreeEntryBlob>);
+    use: TypeOnly<current.IWholeFlatSummaryTreeEntryBlob>): void;
 use_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob(
     get_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob());
 
@@ -665,7 +665,7 @@ use_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob(
 declare function get_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob():
     TypeOnly<current.IWholeFlatSummaryTreeEntryBlob>;
 declare function use_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob(
-    use: TypeOnly<old.IWholeFlatSummaryTreeEntryBlob>);
+    use: TypeOnly<old.IWholeFlatSummaryTreeEntryBlob>): void;
 use_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob(
     get_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob());
 
@@ -677,7 +677,7 @@ use_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryBlob(
 declare function get_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree():
     TypeOnly<old.IWholeFlatSummaryTreeEntryTree>;
 declare function use_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree(
-    use: TypeOnly<current.IWholeFlatSummaryTreeEntryTree>);
+    use: TypeOnly<current.IWholeFlatSummaryTreeEntryTree>): void;
 use_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree(
     get_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree());
 
@@ -689,7 +689,7 @@ use_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree(
 declare function get_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree():
     TypeOnly<current.IWholeFlatSummaryTreeEntryTree>;
 declare function use_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree(
-    use: TypeOnly<old.IWholeFlatSummaryTreeEntryTree>);
+    use: TypeOnly<old.IWholeFlatSummaryTreeEntryTree>): void;
 use_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree(
     get_current_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree());
 
@@ -701,7 +701,7 @@ use_old_InterfaceDeclaration_IWholeFlatSummaryTreeEntryTree(
 declare function get_old_InterfaceDeclaration_IWholeSummaryBlob():
     TypeOnly<old.IWholeSummaryBlob>;
 declare function use_current_InterfaceDeclaration_IWholeSummaryBlob(
-    use: TypeOnly<current.IWholeSummaryBlob>);
+    use: TypeOnly<current.IWholeSummaryBlob>): void;
 use_current_InterfaceDeclaration_IWholeSummaryBlob(
     get_old_InterfaceDeclaration_IWholeSummaryBlob());
 
@@ -713,7 +713,7 @@ use_current_InterfaceDeclaration_IWholeSummaryBlob(
 declare function get_current_InterfaceDeclaration_IWholeSummaryBlob():
     TypeOnly<current.IWholeSummaryBlob>;
 declare function use_old_InterfaceDeclaration_IWholeSummaryBlob(
-    use: TypeOnly<old.IWholeSummaryBlob>);
+    use: TypeOnly<old.IWholeSummaryBlob>): void;
 use_old_InterfaceDeclaration_IWholeSummaryBlob(
     get_current_InterfaceDeclaration_IWholeSummaryBlob());
 
@@ -725,7 +725,7 @@ use_old_InterfaceDeclaration_IWholeSummaryBlob(
 declare function get_old_InterfaceDeclaration_IWholeSummaryPayload():
     TypeOnly<old.IWholeSummaryPayload>;
 declare function use_current_InterfaceDeclaration_IWholeSummaryPayload(
-    use: TypeOnly<current.IWholeSummaryPayload>);
+    use: TypeOnly<current.IWholeSummaryPayload>): void;
 use_current_InterfaceDeclaration_IWholeSummaryPayload(
     get_old_InterfaceDeclaration_IWholeSummaryPayload());
 
@@ -737,7 +737,7 @@ use_current_InterfaceDeclaration_IWholeSummaryPayload(
 declare function get_current_InterfaceDeclaration_IWholeSummaryPayload():
     TypeOnly<current.IWholeSummaryPayload>;
 declare function use_old_InterfaceDeclaration_IWholeSummaryPayload(
-    use: TypeOnly<old.IWholeSummaryPayload>);
+    use: TypeOnly<old.IWholeSummaryPayload>): void;
 use_old_InterfaceDeclaration_IWholeSummaryPayload(
     get_current_InterfaceDeclaration_IWholeSummaryPayload());
 
@@ -749,7 +749,7 @@ use_old_InterfaceDeclaration_IWholeSummaryPayload(
 declare function get_old_TypeAliasDeclaration_IWholeSummaryPayloadType():
     TypeOnly<old.IWholeSummaryPayloadType>;
 declare function use_current_TypeAliasDeclaration_IWholeSummaryPayloadType(
-    use: TypeOnly<current.IWholeSummaryPayloadType>);
+    use: TypeOnly<current.IWholeSummaryPayloadType>): void;
 use_current_TypeAliasDeclaration_IWholeSummaryPayloadType(
     get_old_TypeAliasDeclaration_IWholeSummaryPayloadType());
 
@@ -761,7 +761,7 @@ use_current_TypeAliasDeclaration_IWholeSummaryPayloadType(
 declare function get_current_TypeAliasDeclaration_IWholeSummaryPayloadType():
     TypeOnly<current.IWholeSummaryPayloadType>;
 declare function use_old_TypeAliasDeclaration_IWholeSummaryPayloadType(
-    use: TypeOnly<old.IWholeSummaryPayloadType>);
+    use: TypeOnly<old.IWholeSummaryPayloadType>): void;
 use_old_TypeAliasDeclaration_IWholeSummaryPayloadType(
     get_current_TypeAliasDeclaration_IWholeSummaryPayloadType());
 
@@ -773,7 +773,7 @@ use_old_TypeAliasDeclaration_IWholeSummaryPayloadType(
 declare function get_old_InterfaceDeclaration_IWholeSummaryTree():
     TypeOnly<old.IWholeSummaryTree>;
 declare function use_current_InterfaceDeclaration_IWholeSummaryTree(
-    use: TypeOnly<current.IWholeSummaryTree>);
+    use: TypeOnly<current.IWholeSummaryTree>): void;
 use_current_InterfaceDeclaration_IWholeSummaryTree(
     get_old_InterfaceDeclaration_IWholeSummaryTree());
 
@@ -785,7 +785,7 @@ use_current_InterfaceDeclaration_IWholeSummaryTree(
 declare function get_current_InterfaceDeclaration_IWholeSummaryTree():
     TypeOnly<current.IWholeSummaryTree>;
 declare function use_old_InterfaceDeclaration_IWholeSummaryTree(
-    use: TypeOnly<old.IWholeSummaryTree>);
+    use: TypeOnly<old.IWholeSummaryTree>): void;
 use_old_InterfaceDeclaration_IWholeSummaryTree(
     get_current_InterfaceDeclaration_IWholeSummaryTree());
 
@@ -797,7 +797,7 @@ use_old_InterfaceDeclaration_IWholeSummaryTree(
 declare function get_old_InterfaceDeclaration_IWholeSummaryTreeBaseEntry():
     TypeOnly<old.IWholeSummaryTreeBaseEntry>;
 declare function use_current_InterfaceDeclaration_IWholeSummaryTreeBaseEntry(
-    use: TypeOnly<current.IWholeSummaryTreeBaseEntry>);
+    use: TypeOnly<current.IWholeSummaryTreeBaseEntry>): void;
 use_current_InterfaceDeclaration_IWholeSummaryTreeBaseEntry(
     get_old_InterfaceDeclaration_IWholeSummaryTreeBaseEntry());
 
@@ -809,7 +809,7 @@ use_current_InterfaceDeclaration_IWholeSummaryTreeBaseEntry(
 declare function get_current_InterfaceDeclaration_IWholeSummaryTreeBaseEntry():
     TypeOnly<current.IWholeSummaryTreeBaseEntry>;
 declare function use_old_InterfaceDeclaration_IWholeSummaryTreeBaseEntry(
-    use: TypeOnly<old.IWholeSummaryTreeBaseEntry>);
+    use: TypeOnly<old.IWholeSummaryTreeBaseEntry>): void;
 use_old_InterfaceDeclaration_IWholeSummaryTreeBaseEntry(
     get_current_InterfaceDeclaration_IWholeSummaryTreeBaseEntry());
 
@@ -821,7 +821,7 @@ use_old_InterfaceDeclaration_IWholeSummaryTreeBaseEntry(
 declare function get_old_InterfaceDeclaration_IWholeSummaryTreeHandleEntry():
     TypeOnly<old.IWholeSummaryTreeHandleEntry>;
 declare function use_current_InterfaceDeclaration_IWholeSummaryTreeHandleEntry(
-    use: TypeOnly<current.IWholeSummaryTreeHandleEntry>);
+    use: TypeOnly<current.IWholeSummaryTreeHandleEntry>): void;
 use_current_InterfaceDeclaration_IWholeSummaryTreeHandleEntry(
     get_old_InterfaceDeclaration_IWholeSummaryTreeHandleEntry());
 
@@ -833,7 +833,7 @@ use_current_InterfaceDeclaration_IWholeSummaryTreeHandleEntry(
 declare function get_current_InterfaceDeclaration_IWholeSummaryTreeHandleEntry():
     TypeOnly<current.IWholeSummaryTreeHandleEntry>;
 declare function use_old_InterfaceDeclaration_IWholeSummaryTreeHandleEntry(
-    use: TypeOnly<old.IWholeSummaryTreeHandleEntry>);
+    use: TypeOnly<old.IWholeSummaryTreeHandleEntry>): void;
 use_old_InterfaceDeclaration_IWholeSummaryTreeHandleEntry(
     get_current_InterfaceDeclaration_IWholeSummaryTreeHandleEntry());
 
@@ -845,7 +845,7 @@ use_old_InterfaceDeclaration_IWholeSummaryTreeHandleEntry(
 declare function get_old_InterfaceDeclaration_IWholeSummaryTreeValueEntry():
     TypeOnly<old.IWholeSummaryTreeValueEntry>;
 declare function use_current_InterfaceDeclaration_IWholeSummaryTreeValueEntry(
-    use: TypeOnly<current.IWholeSummaryTreeValueEntry>);
+    use: TypeOnly<current.IWholeSummaryTreeValueEntry>): void;
 use_current_InterfaceDeclaration_IWholeSummaryTreeValueEntry(
     get_old_InterfaceDeclaration_IWholeSummaryTreeValueEntry());
 
@@ -857,7 +857,7 @@ use_current_InterfaceDeclaration_IWholeSummaryTreeValueEntry(
 declare function get_current_InterfaceDeclaration_IWholeSummaryTreeValueEntry():
     TypeOnly<current.IWholeSummaryTreeValueEntry>;
 declare function use_old_InterfaceDeclaration_IWholeSummaryTreeValueEntry(
-    use: TypeOnly<old.IWholeSummaryTreeValueEntry>);
+    use: TypeOnly<old.IWholeSummaryTreeValueEntry>): void;
 use_old_InterfaceDeclaration_IWholeSummaryTreeValueEntry(
     get_current_InterfaceDeclaration_IWholeSummaryTreeValueEntry());
 
@@ -869,7 +869,7 @@ use_old_InterfaceDeclaration_IWholeSummaryTreeValueEntry(
 declare function get_old_InterfaceDeclaration_IWriteSummaryResponse():
     TypeOnly<old.IWriteSummaryResponse>;
 declare function use_current_InterfaceDeclaration_IWriteSummaryResponse(
-    use: TypeOnly<current.IWriteSummaryResponse>);
+    use: TypeOnly<current.IWriteSummaryResponse>): void;
 use_current_InterfaceDeclaration_IWriteSummaryResponse(
     get_old_InterfaceDeclaration_IWriteSummaryResponse());
 
@@ -881,7 +881,7 @@ use_current_InterfaceDeclaration_IWriteSummaryResponse(
 declare function get_current_InterfaceDeclaration_IWriteSummaryResponse():
     TypeOnly<current.IWriteSummaryResponse>;
 declare function use_old_InterfaceDeclaration_IWriteSummaryResponse(
-    use: TypeOnly<old.IWriteSummaryResponse>);
+    use: TypeOnly<old.IWriteSummaryResponse>): void;
 use_old_InterfaceDeclaration_IWriteSummaryResponse(
     get_current_InterfaceDeclaration_IWriteSummaryResponse());
 
@@ -893,7 +893,7 @@ use_old_InterfaceDeclaration_IWriteSummaryResponse(
 declare function get_old_VariableDeclaration_LatestSummaryId():
     TypeOnly<typeof old.LatestSummaryId>;
 declare function use_current_VariableDeclaration_LatestSummaryId(
-    use: TypeOnly<typeof current.LatestSummaryId>);
+    use: TypeOnly<typeof current.LatestSummaryId>): void;
 use_current_VariableDeclaration_LatestSummaryId(
     get_old_VariableDeclaration_LatestSummaryId());
 
@@ -905,7 +905,7 @@ use_current_VariableDeclaration_LatestSummaryId(
 declare function get_current_VariableDeclaration_LatestSummaryId():
     TypeOnly<typeof current.LatestSummaryId>;
 declare function use_old_VariableDeclaration_LatestSummaryId(
-    use: TypeOnly<typeof old.LatestSummaryId>);
+    use: TypeOnly<typeof old.LatestSummaryId>): void;
 use_old_VariableDeclaration_LatestSummaryId(
     get_current_VariableDeclaration_LatestSummaryId());
 
@@ -917,7 +917,7 @@ use_old_VariableDeclaration_LatestSummaryId(
 declare function get_old_ClassDeclaration_NetworkError():
     TypeOnly<old.NetworkError>;
 declare function use_current_ClassDeclaration_NetworkError(
-    use: TypeOnly<current.NetworkError>);
+    use: TypeOnly<current.NetworkError>): void;
 use_current_ClassDeclaration_NetworkError(
     get_old_ClassDeclaration_NetworkError());
 
@@ -929,7 +929,7 @@ use_current_ClassDeclaration_NetworkError(
 declare function get_current_ClassDeclaration_NetworkError():
     TypeOnly<current.NetworkError>;
 declare function use_old_ClassDeclaration_NetworkError(
-    use: TypeOnly<old.NetworkError>);
+    use: TypeOnly<old.NetworkError>): void;
 use_old_ClassDeclaration_NetworkError(
     get_current_ClassDeclaration_NetworkError());
 
@@ -941,7 +941,7 @@ use_old_ClassDeclaration_NetworkError(
 declare function get_old_ClassDeclaration_RestLessClient():
     TypeOnly<old.RestLessClient>;
 declare function use_current_ClassDeclaration_RestLessClient(
-    use: TypeOnly<current.RestLessClient>);
+    use: TypeOnly<current.RestLessClient>): void;
 use_current_ClassDeclaration_RestLessClient(
     get_old_ClassDeclaration_RestLessClient());
 
@@ -953,7 +953,7 @@ use_current_ClassDeclaration_RestLessClient(
 declare function get_current_ClassDeclaration_RestLessClient():
     TypeOnly<current.RestLessClient>;
 declare function use_old_ClassDeclaration_RestLessClient(
-    use: TypeOnly<old.RestLessClient>);
+    use: TypeOnly<old.RestLessClient>): void;
 use_old_ClassDeclaration_RestLessClient(
     get_current_ClassDeclaration_RestLessClient());
 
@@ -965,7 +965,7 @@ use_old_ClassDeclaration_RestLessClient(
 declare function get_old_EnumDeclaration_RestLessFieldNames():
     TypeOnly<old.RestLessFieldNames>;
 declare function use_current_EnumDeclaration_RestLessFieldNames(
-    use: TypeOnly<current.RestLessFieldNames>);
+    use: TypeOnly<current.RestLessFieldNames>): void;
 use_current_EnumDeclaration_RestLessFieldNames(
     get_old_EnumDeclaration_RestLessFieldNames());
 
@@ -977,7 +977,7 @@ use_current_EnumDeclaration_RestLessFieldNames(
 declare function get_current_EnumDeclaration_RestLessFieldNames():
     TypeOnly<current.RestLessFieldNames>;
 declare function use_old_EnumDeclaration_RestLessFieldNames(
-    use: TypeOnly<old.RestLessFieldNames>);
+    use: TypeOnly<old.RestLessFieldNames>): void;
 use_old_EnumDeclaration_RestLessFieldNames(
     get_current_EnumDeclaration_RestLessFieldNames());
 
@@ -989,7 +989,7 @@ use_old_EnumDeclaration_RestLessFieldNames(
 declare function get_old_ClassDeclaration_RestWrapper():
     TypeOnly<old.RestWrapper>;
 declare function use_current_ClassDeclaration_RestWrapper(
-    use: TypeOnly<current.RestWrapper>);
+    use: TypeOnly<current.RestWrapper>): void;
 use_current_ClassDeclaration_RestWrapper(
     get_old_ClassDeclaration_RestWrapper());
 
@@ -1001,7 +1001,7 @@ use_current_ClassDeclaration_RestWrapper(
 declare function get_current_ClassDeclaration_RestWrapper():
     TypeOnly<current.RestWrapper>;
 declare function use_old_ClassDeclaration_RestWrapper(
-    use: TypeOnly<old.RestWrapper>);
+    use: TypeOnly<old.RestWrapper>): void;
 use_old_ClassDeclaration_RestWrapper(
     get_current_ClassDeclaration_RestWrapper());
 
@@ -1013,7 +1013,7 @@ use_old_ClassDeclaration_RestWrapper(
 declare function get_old_ClassDeclaration_SummaryTreeUploadManager():
     TypeOnly<old.SummaryTreeUploadManager>;
 declare function use_current_ClassDeclaration_SummaryTreeUploadManager(
-    use: TypeOnly<current.SummaryTreeUploadManager>);
+    use: TypeOnly<current.SummaryTreeUploadManager>): void;
 use_current_ClassDeclaration_SummaryTreeUploadManager(
     get_old_ClassDeclaration_SummaryTreeUploadManager());
 
@@ -1025,7 +1025,7 @@ use_current_ClassDeclaration_SummaryTreeUploadManager(
 declare function get_current_ClassDeclaration_SummaryTreeUploadManager():
     TypeOnly<current.SummaryTreeUploadManager>;
 declare function use_old_ClassDeclaration_SummaryTreeUploadManager(
-    use: TypeOnly<old.SummaryTreeUploadManager>);
+    use: TypeOnly<old.SummaryTreeUploadManager>): void;
 use_old_ClassDeclaration_SummaryTreeUploadManager(
     get_current_ClassDeclaration_SummaryTreeUploadManager());
 
@@ -1037,7 +1037,7 @@ use_old_ClassDeclaration_SummaryTreeUploadManager(
 declare function get_old_VariableDeclaration_TokenRevokeScopeType():
     TypeOnly<typeof old.TokenRevokeScopeType>;
 declare function use_current_VariableDeclaration_TokenRevokeScopeType(
-    use: TypeOnly<typeof current.TokenRevokeScopeType>);
+    use: TypeOnly<typeof current.TokenRevokeScopeType>): void;
 use_current_VariableDeclaration_TokenRevokeScopeType(
     get_old_VariableDeclaration_TokenRevokeScopeType());
 
@@ -1049,7 +1049,7 @@ use_current_VariableDeclaration_TokenRevokeScopeType(
 declare function get_current_VariableDeclaration_TokenRevokeScopeType():
     TypeOnly<typeof current.TokenRevokeScopeType>;
 declare function use_old_VariableDeclaration_TokenRevokeScopeType(
-    use: TypeOnly<typeof old.TokenRevokeScopeType>);
+    use: TypeOnly<typeof old.TokenRevokeScopeType>): void;
 use_old_VariableDeclaration_TokenRevokeScopeType(
     get_current_VariableDeclaration_TokenRevokeScopeType());
 
@@ -1061,7 +1061,7 @@ use_old_VariableDeclaration_TokenRevokeScopeType(
 declare function get_old_TypeAliasDeclaration_WholeSummaryTreeEntry():
     TypeOnly<old.WholeSummaryTreeEntry>;
 declare function use_current_TypeAliasDeclaration_WholeSummaryTreeEntry(
-    use: TypeOnly<current.WholeSummaryTreeEntry>);
+    use: TypeOnly<current.WholeSummaryTreeEntry>): void;
 use_current_TypeAliasDeclaration_WholeSummaryTreeEntry(
     get_old_TypeAliasDeclaration_WholeSummaryTreeEntry());
 
@@ -1073,7 +1073,7 @@ use_current_TypeAliasDeclaration_WholeSummaryTreeEntry(
 declare function get_current_TypeAliasDeclaration_WholeSummaryTreeEntry():
     TypeOnly<current.WholeSummaryTreeEntry>;
 declare function use_old_TypeAliasDeclaration_WholeSummaryTreeEntry(
-    use: TypeOnly<old.WholeSummaryTreeEntry>);
+    use: TypeOnly<old.WholeSummaryTreeEntry>): void;
 use_old_TypeAliasDeclaration_WholeSummaryTreeEntry(
     get_current_TypeAliasDeclaration_WholeSummaryTreeEntry());
 
@@ -1085,7 +1085,7 @@ use_old_TypeAliasDeclaration_WholeSummaryTreeEntry(
 declare function get_old_TypeAliasDeclaration_WholeSummaryTreeValue():
     TypeOnly<old.WholeSummaryTreeValue>;
 declare function use_current_TypeAliasDeclaration_WholeSummaryTreeValue(
-    use: TypeOnly<current.WholeSummaryTreeValue>);
+    use: TypeOnly<current.WholeSummaryTreeValue>): void;
 use_current_TypeAliasDeclaration_WholeSummaryTreeValue(
     get_old_TypeAliasDeclaration_WholeSummaryTreeValue());
 
@@ -1097,7 +1097,7 @@ use_current_TypeAliasDeclaration_WholeSummaryTreeValue(
 declare function get_current_TypeAliasDeclaration_WholeSummaryTreeValue():
     TypeOnly<current.WholeSummaryTreeValue>;
 declare function use_old_TypeAliasDeclaration_WholeSummaryTreeValue(
-    use: TypeOnly<old.WholeSummaryTreeValue>);
+    use: TypeOnly<old.WholeSummaryTreeValue>): void;
 use_old_TypeAliasDeclaration_WholeSummaryTreeValue(
     get_current_TypeAliasDeclaration_WholeSummaryTreeValue());
 
@@ -1109,7 +1109,7 @@ use_old_TypeAliasDeclaration_WholeSummaryTreeValue(
 declare function get_old_ClassDeclaration_WholeSummaryUploadManager():
     TypeOnly<old.WholeSummaryUploadManager>;
 declare function use_current_ClassDeclaration_WholeSummaryUploadManager(
-    use: TypeOnly<current.WholeSummaryUploadManager>);
+    use: TypeOnly<current.WholeSummaryUploadManager>): void;
 use_current_ClassDeclaration_WholeSummaryUploadManager(
     get_old_ClassDeclaration_WholeSummaryUploadManager());
 
@@ -1121,7 +1121,7 @@ use_current_ClassDeclaration_WholeSummaryUploadManager(
 declare function get_current_ClassDeclaration_WholeSummaryUploadManager():
     TypeOnly<current.WholeSummaryUploadManager>;
 declare function use_old_ClassDeclaration_WholeSummaryUploadManager(
-    use: TypeOnly<old.WholeSummaryUploadManager>);
+    use: TypeOnly<old.WholeSummaryUploadManager>): void;
 use_old_ClassDeclaration_WholeSummaryUploadManager(
     get_current_ClassDeclaration_WholeSummaryUploadManager());
 
@@ -1133,7 +1133,7 @@ use_old_ClassDeclaration_WholeSummaryUploadManager(
 declare function get_old_VariableDeclaration_buildTreePath():
     TypeOnly<typeof old.buildTreePath>;
 declare function use_current_VariableDeclaration_buildTreePath(
-    use: TypeOnly<typeof current.buildTreePath>);
+    use: TypeOnly<typeof current.buildTreePath>): void;
 use_current_VariableDeclaration_buildTreePath(
     get_old_VariableDeclaration_buildTreePath());
 
@@ -1145,7 +1145,7 @@ use_current_VariableDeclaration_buildTreePath(
 declare function get_current_VariableDeclaration_buildTreePath():
     TypeOnly<typeof current.buildTreePath>;
 declare function use_old_VariableDeclaration_buildTreePath(
-    use: TypeOnly<typeof old.buildTreePath>);
+    use: TypeOnly<typeof old.buildTreePath>): void;
 use_old_VariableDeclaration_buildTreePath(
     get_current_VariableDeclaration_buildTreePath());
 
@@ -1157,7 +1157,7 @@ use_old_VariableDeclaration_buildTreePath(
 declare function get_old_VariableDeclaration_canDeleteDoc():
     TypeOnly<typeof old.canDeleteDoc>;
 declare function use_current_VariableDeclaration_canDeleteDoc(
-    use: TypeOnly<typeof current.canDeleteDoc>);
+    use: TypeOnly<typeof current.canDeleteDoc>): void;
 use_current_VariableDeclaration_canDeleteDoc(
     get_old_VariableDeclaration_canDeleteDoc());
 
@@ -1169,7 +1169,7 @@ use_current_VariableDeclaration_canDeleteDoc(
 declare function get_current_VariableDeclaration_canDeleteDoc():
     TypeOnly<typeof current.canDeleteDoc>;
 declare function use_old_VariableDeclaration_canDeleteDoc(
-    use: TypeOnly<typeof old.canDeleteDoc>);
+    use: TypeOnly<typeof old.canDeleteDoc>): void;
 use_old_VariableDeclaration_canDeleteDoc(
     get_current_VariableDeclaration_canDeleteDoc());
 
@@ -1181,7 +1181,7 @@ use_old_VariableDeclaration_canDeleteDoc(
 declare function get_old_VariableDeclaration_canRead():
     TypeOnly<typeof old.canRead>;
 declare function use_current_VariableDeclaration_canRead(
-    use: TypeOnly<typeof current.canRead>);
+    use: TypeOnly<typeof current.canRead>): void;
 use_current_VariableDeclaration_canRead(
     get_old_VariableDeclaration_canRead());
 
@@ -1193,7 +1193,7 @@ use_current_VariableDeclaration_canRead(
 declare function get_current_VariableDeclaration_canRead():
     TypeOnly<typeof current.canRead>;
 declare function use_old_VariableDeclaration_canRead(
-    use: TypeOnly<typeof old.canRead>);
+    use: TypeOnly<typeof old.canRead>): void;
 use_old_VariableDeclaration_canRead(
     get_current_VariableDeclaration_canRead());
 
@@ -1205,7 +1205,7 @@ use_old_VariableDeclaration_canRead(
 declare function get_old_VariableDeclaration_canRevokeToken():
     TypeOnly<typeof old.canRevokeToken>;
 declare function use_current_VariableDeclaration_canRevokeToken(
-    use: TypeOnly<typeof current.canRevokeToken>);
+    use: TypeOnly<typeof current.canRevokeToken>): void;
 use_current_VariableDeclaration_canRevokeToken(
     get_old_VariableDeclaration_canRevokeToken());
 
@@ -1217,7 +1217,7 @@ use_current_VariableDeclaration_canRevokeToken(
 declare function get_current_VariableDeclaration_canRevokeToken():
     TypeOnly<typeof current.canRevokeToken>;
 declare function use_old_VariableDeclaration_canRevokeToken(
-    use: TypeOnly<typeof old.canRevokeToken>);
+    use: TypeOnly<typeof old.canRevokeToken>): void;
 use_old_VariableDeclaration_canRevokeToken(
     get_current_VariableDeclaration_canRevokeToken());
 
@@ -1229,7 +1229,7 @@ use_old_VariableDeclaration_canRevokeToken(
 declare function get_old_VariableDeclaration_canSummarize():
     TypeOnly<typeof old.canSummarize>;
 declare function use_current_VariableDeclaration_canSummarize(
-    use: TypeOnly<typeof current.canSummarize>);
+    use: TypeOnly<typeof current.canSummarize>): void;
 use_current_VariableDeclaration_canSummarize(
     get_old_VariableDeclaration_canSummarize());
 
@@ -1241,7 +1241,7 @@ use_current_VariableDeclaration_canSummarize(
 declare function get_current_VariableDeclaration_canSummarize():
     TypeOnly<typeof current.canSummarize>;
 declare function use_old_VariableDeclaration_canSummarize(
-    use: TypeOnly<typeof old.canSummarize>);
+    use: TypeOnly<typeof old.canSummarize>): void;
 use_old_VariableDeclaration_canSummarize(
     get_current_VariableDeclaration_canSummarize());
 
@@ -1253,7 +1253,7 @@ use_old_VariableDeclaration_canSummarize(
 declare function get_old_VariableDeclaration_canWrite():
     TypeOnly<typeof old.canWrite>;
 declare function use_current_VariableDeclaration_canWrite(
-    use: TypeOnly<typeof current.canWrite>);
+    use: TypeOnly<typeof current.canWrite>): void;
 use_current_VariableDeclaration_canWrite(
     get_old_VariableDeclaration_canWrite());
 
@@ -1265,7 +1265,7 @@ use_current_VariableDeclaration_canWrite(
 declare function get_current_VariableDeclaration_canWrite():
     TypeOnly<typeof current.canWrite>;
 declare function use_old_VariableDeclaration_canWrite(
-    use: TypeOnly<typeof old.canWrite>);
+    use: TypeOnly<typeof old.canWrite>): void;
 use_old_VariableDeclaration_canWrite(
     get_current_VariableDeclaration_canWrite());
 
@@ -1277,7 +1277,7 @@ use_old_VariableDeclaration_canWrite(
 declare function get_old_VariableDeclaration_choose():
     TypeOnly<typeof old.choose>;
 declare function use_current_VariableDeclaration_choose(
-    use: TypeOnly<typeof current.choose>);
+    use: TypeOnly<typeof current.choose>): void;
 use_current_VariableDeclaration_choose(
     get_old_VariableDeclaration_choose());
 
@@ -1289,7 +1289,7 @@ use_current_VariableDeclaration_choose(
 declare function get_current_VariableDeclaration_choose():
     TypeOnly<typeof current.choose>;
 declare function use_old_VariableDeclaration_choose(
-    use: TypeOnly<typeof old.choose>);
+    use: TypeOnly<typeof old.choose>): void;
 use_old_VariableDeclaration_choose(
     get_current_VariableDeclaration_choose());
 
@@ -1301,7 +1301,7 @@ use_old_VariableDeclaration_choose(
 declare function get_old_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree():
     TypeOnly<typeof old.convertFirstSummaryWholeSummaryTreeToSummaryTree>;
 declare function use_current_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree(
-    use: TypeOnly<typeof current.convertFirstSummaryWholeSummaryTreeToSummaryTree>);
+    use: TypeOnly<typeof current.convertFirstSummaryWholeSummaryTreeToSummaryTree>): void;
 use_current_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree(
     get_old_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree());
 
@@ -1313,7 +1313,7 @@ use_current_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree
 declare function get_current_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree():
     TypeOnly<typeof current.convertFirstSummaryWholeSummaryTreeToSummaryTree>;
 declare function use_old_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree(
-    use: TypeOnly<typeof old.convertFirstSummaryWholeSummaryTreeToSummaryTree>);
+    use: TypeOnly<typeof old.convertFirstSummaryWholeSummaryTreeToSummaryTree>): void;
 use_old_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree(
     get_current_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree());
 
@@ -1325,7 +1325,7 @@ use_old_FunctionDeclaration_convertFirstSummaryWholeSummaryTreeToSummaryTree(
 declare function get_old_FunctionDeclaration_convertSortedNumberArrayToRanges():
     TypeOnly<typeof old.convertSortedNumberArrayToRanges>;
 declare function use_current_FunctionDeclaration_convertSortedNumberArrayToRanges(
-    use: TypeOnly<typeof current.convertSortedNumberArrayToRanges>);
+    use: TypeOnly<typeof current.convertSortedNumberArrayToRanges>): void;
 use_current_FunctionDeclaration_convertSortedNumberArrayToRanges(
     get_old_FunctionDeclaration_convertSortedNumberArrayToRanges());
 
@@ -1337,7 +1337,7 @@ use_current_FunctionDeclaration_convertSortedNumberArrayToRanges(
 declare function get_current_FunctionDeclaration_convertSortedNumberArrayToRanges():
     TypeOnly<typeof current.convertSortedNumberArrayToRanges>;
 declare function use_old_FunctionDeclaration_convertSortedNumberArrayToRanges(
-    use: TypeOnly<typeof old.convertSortedNumberArrayToRanges>);
+    use: TypeOnly<typeof old.convertSortedNumberArrayToRanges>): void;
 use_old_FunctionDeclaration_convertSortedNumberArrayToRanges(
     get_current_FunctionDeclaration_convertSortedNumberArrayToRanges());
 
@@ -1349,7 +1349,7 @@ use_old_FunctionDeclaration_convertSortedNumberArrayToRanges(
 declare function get_old_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree():
     TypeOnly<typeof old.convertSummaryTreeToWholeSummaryTree>;
 declare function use_current_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree(
-    use: TypeOnly<typeof current.convertSummaryTreeToWholeSummaryTree>);
+    use: TypeOnly<typeof current.convertSummaryTreeToWholeSummaryTree>): void;
 use_current_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree(
     get_old_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree());
 
@@ -1361,7 +1361,7 @@ use_current_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree(
 declare function get_current_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree():
     TypeOnly<typeof current.convertSummaryTreeToWholeSummaryTree>;
 declare function use_old_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree(
-    use: TypeOnly<typeof old.convertSummaryTreeToWholeSummaryTree>);
+    use: TypeOnly<typeof old.convertSummaryTreeToWholeSummaryTree>): void;
 use_old_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree(
     get_current_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree());
 
@@ -1373,7 +1373,7 @@ use_old_FunctionDeclaration_convertSummaryTreeToWholeSummaryTree(
 declare function get_old_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs():
     TypeOnly<typeof old.convertWholeFlatSummaryToSnapshotTreeAndBlobs>;
 declare function use_current_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs(
-    use: TypeOnly<typeof current.convertWholeFlatSummaryToSnapshotTreeAndBlobs>);
+    use: TypeOnly<typeof current.convertWholeFlatSummaryToSnapshotTreeAndBlobs>): void;
 use_current_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     get_old_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs());
 
@@ -1385,7 +1385,7 @@ use_current_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 declare function get_current_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs():
     TypeOnly<typeof current.convertWholeFlatSummaryToSnapshotTreeAndBlobs>;
 declare function use_old_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs(
-    use: TypeOnly<typeof old.convertWholeFlatSummaryToSnapshotTreeAndBlobs>);
+    use: TypeOnly<typeof old.convertWholeFlatSummaryToSnapshotTreeAndBlobs>): void;
 use_old_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     get_current_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs());
 
@@ -1397,7 +1397,7 @@ use_old_FunctionDeclaration_convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 declare function get_old_FunctionDeclaration_createFluidServiceNetworkError():
     TypeOnly<typeof old.createFluidServiceNetworkError>;
 declare function use_current_FunctionDeclaration_createFluidServiceNetworkError(
-    use: TypeOnly<typeof current.createFluidServiceNetworkError>);
+    use: TypeOnly<typeof current.createFluidServiceNetworkError>): void;
 use_current_FunctionDeclaration_createFluidServiceNetworkError(
     get_old_FunctionDeclaration_createFluidServiceNetworkError());
 
@@ -1409,7 +1409,7 @@ use_current_FunctionDeclaration_createFluidServiceNetworkError(
 declare function get_current_FunctionDeclaration_createFluidServiceNetworkError():
     TypeOnly<typeof current.createFluidServiceNetworkError>;
 declare function use_old_FunctionDeclaration_createFluidServiceNetworkError(
-    use: TypeOnly<typeof old.createFluidServiceNetworkError>);
+    use: TypeOnly<typeof old.createFluidServiceNetworkError>): void;
 use_old_FunctionDeclaration_createFluidServiceNetworkError(
     get_current_FunctionDeclaration_createFluidServiceNetworkError());
 
@@ -1421,7 +1421,7 @@ use_old_FunctionDeclaration_createFluidServiceNetworkError(
 declare function get_old_VariableDeclaration_defaultHash():
     TypeOnly<typeof old.defaultHash>;
 declare function use_current_VariableDeclaration_defaultHash(
-    use: TypeOnly<typeof current.defaultHash>);
+    use: TypeOnly<typeof current.defaultHash>): void;
 use_current_VariableDeclaration_defaultHash(
     get_old_VariableDeclaration_defaultHash());
 
@@ -1433,7 +1433,7 @@ use_current_VariableDeclaration_defaultHash(
 declare function get_current_VariableDeclaration_defaultHash():
     TypeOnly<typeof current.defaultHash>;
 declare function use_old_VariableDeclaration_defaultHash(
-    use: TypeOnly<typeof old.defaultHash>);
+    use: TypeOnly<typeof old.defaultHash>): void;
 use_old_VariableDeclaration_defaultHash(
     get_current_VariableDeclaration_defaultHash());
 
@@ -1445,7 +1445,7 @@ use_old_VariableDeclaration_defaultHash(
 declare function get_old_FunctionDeclaration_generateServiceProtocolEntries():
     TypeOnly<typeof old.generateServiceProtocolEntries>;
 declare function use_current_FunctionDeclaration_generateServiceProtocolEntries(
-    use: TypeOnly<typeof current.generateServiceProtocolEntries>);
+    use: TypeOnly<typeof current.generateServiceProtocolEntries>): void;
 use_current_FunctionDeclaration_generateServiceProtocolEntries(
     get_old_FunctionDeclaration_generateServiceProtocolEntries());
 
@@ -1457,7 +1457,7 @@ use_current_FunctionDeclaration_generateServiceProtocolEntries(
 declare function get_current_FunctionDeclaration_generateServiceProtocolEntries():
     TypeOnly<typeof current.generateServiceProtocolEntries>;
 declare function use_old_FunctionDeclaration_generateServiceProtocolEntries(
-    use: TypeOnly<typeof old.generateServiceProtocolEntries>);
+    use: TypeOnly<typeof old.generateServiceProtocolEntries>): void;
 use_old_FunctionDeclaration_generateServiceProtocolEntries(
     get_current_FunctionDeclaration_generateServiceProtocolEntries());
 
@@ -1469,7 +1469,7 @@ use_old_FunctionDeclaration_generateServiceProtocolEntries(
 declare function get_old_FunctionDeclaration_generateToken():
     TypeOnly<typeof old.generateToken>;
 declare function use_current_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof current.generateToken>);
+    use: TypeOnly<typeof current.generateToken>): void;
 use_current_FunctionDeclaration_generateToken(
     get_old_FunctionDeclaration_generateToken());
 
@@ -1481,7 +1481,7 @@ use_current_FunctionDeclaration_generateToken(
 declare function get_current_FunctionDeclaration_generateToken():
     TypeOnly<typeof current.generateToken>;
 declare function use_old_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof old.generateToken>);
+    use: TypeOnly<typeof old.generateToken>): void;
 use_old_FunctionDeclaration_generateToken(
     get_current_FunctionDeclaration_generateToken());
 
@@ -1493,7 +1493,7 @@ use_old_FunctionDeclaration_generateToken(
 declare function get_old_FunctionDeclaration_generateUser():
     TypeOnly<typeof old.generateUser>;
 declare function use_current_FunctionDeclaration_generateUser(
-    use: TypeOnly<typeof current.generateUser>);
+    use: TypeOnly<typeof current.generateUser>): void;
 use_current_FunctionDeclaration_generateUser(
     get_old_FunctionDeclaration_generateUser());
 
@@ -1505,7 +1505,7 @@ use_current_FunctionDeclaration_generateUser(
 declare function get_current_FunctionDeclaration_generateUser():
     TypeOnly<typeof current.generateUser>;
 declare function use_old_FunctionDeclaration_generateUser(
-    use: TypeOnly<typeof old.generateUser>);
+    use: TypeOnly<typeof old.generateUser>): void;
 use_old_FunctionDeclaration_generateUser(
     get_current_FunctionDeclaration_generateUser());
 
@@ -1517,7 +1517,7 @@ use_old_FunctionDeclaration_generateUser(
 declare function get_old_VariableDeclaration_getAuthorizationTokenFromCredentials():
     TypeOnly<typeof old.getAuthorizationTokenFromCredentials>;
 declare function use_current_VariableDeclaration_getAuthorizationTokenFromCredentials(
-    use: TypeOnly<typeof current.getAuthorizationTokenFromCredentials>);
+    use: TypeOnly<typeof current.getAuthorizationTokenFromCredentials>): void;
 use_current_VariableDeclaration_getAuthorizationTokenFromCredentials(
     get_old_VariableDeclaration_getAuthorizationTokenFromCredentials());
 
@@ -1529,7 +1529,7 @@ use_current_VariableDeclaration_getAuthorizationTokenFromCredentials(
 declare function get_current_VariableDeclaration_getAuthorizationTokenFromCredentials():
     TypeOnly<typeof current.getAuthorizationTokenFromCredentials>;
 declare function use_old_VariableDeclaration_getAuthorizationTokenFromCredentials(
-    use: TypeOnly<typeof old.getAuthorizationTokenFromCredentials>);
+    use: TypeOnly<typeof old.getAuthorizationTokenFromCredentials>): void;
 use_old_VariableDeclaration_getAuthorizationTokenFromCredentials(
     get_current_VariableDeclaration_getAuthorizationTokenFromCredentials());
 
@@ -1541,7 +1541,7 @@ use_old_VariableDeclaration_getAuthorizationTokenFromCredentials(
 declare function get_old_FunctionDeclaration_getNextHash():
     TypeOnly<typeof old.getNextHash>;
 declare function use_current_FunctionDeclaration_getNextHash(
-    use: TypeOnly<typeof current.getNextHash>);
+    use: TypeOnly<typeof current.getNextHash>): void;
 use_current_FunctionDeclaration_getNextHash(
     get_old_FunctionDeclaration_getNextHash());
 
@@ -1553,7 +1553,7 @@ use_current_FunctionDeclaration_getNextHash(
 declare function get_current_FunctionDeclaration_getNextHash():
     TypeOnly<typeof current.getNextHash>;
 declare function use_old_FunctionDeclaration_getNextHash(
-    use: TypeOnly<typeof old.getNextHash>);
+    use: TypeOnly<typeof old.getNextHash>): void;
 use_old_FunctionDeclaration_getNextHash(
     get_current_FunctionDeclaration_getNextHash());
 
@@ -1565,7 +1565,7 @@ use_old_FunctionDeclaration_getNextHash(
 declare function get_old_FunctionDeclaration_getOrCreateRepository():
     TypeOnly<typeof old.getOrCreateRepository>;
 declare function use_current_FunctionDeclaration_getOrCreateRepository(
-    use: TypeOnly<typeof current.getOrCreateRepository>);
+    use: TypeOnly<typeof current.getOrCreateRepository>): void;
 use_current_FunctionDeclaration_getOrCreateRepository(
     get_old_FunctionDeclaration_getOrCreateRepository());
 
@@ -1577,7 +1577,7 @@ use_current_FunctionDeclaration_getOrCreateRepository(
 declare function get_current_FunctionDeclaration_getOrCreateRepository():
     TypeOnly<typeof current.getOrCreateRepository>;
 declare function use_old_FunctionDeclaration_getOrCreateRepository(
-    use: TypeOnly<typeof old.getOrCreateRepository>);
+    use: TypeOnly<typeof old.getOrCreateRepository>): void;
 use_old_FunctionDeclaration_getOrCreateRepository(
     get_current_FunctionDeclaration_getOrCreateRepository());
 
@@ -1589,7 +1589,7 @@ use_old_FunctionDeclaration_getOrCreateRepository(
 declare function get_old_FunctionDeclaration_getQuorumTreeEntries():
     TypeOnly<typeof old.getQuorumTreeEntries>;
 declare function use_current_FunctionDeclaration_getQuorumTreeEntries(
-    use: TypeOnly<typeof current.getQuorumTreeEntries>);
+    use: TypeOnly<typeof current.getQuorumTreeEntries>): void;
 use_current_FunctionDeclaration_getQuorumTreeEntries(
     get_old_FunctionDeclaration_getQuorumTreeEntries());
 
@@ -1601,7 +1601,7 @@ use_current_FunctionDeclaration_getQuorumTreeEntries(
 declare function get_current_FunctionDeclaration_getQuorumTreeEntries():
     TypeOnly<typeof current.getQuorumTreeEntries>;
 declare function use_old_FunctionDeclaration_getQuorumTreeEntries(
-    use: TypeOnly<typeof old.getQuorumTreeEntries>);
+    use: TypeOnly<typeof old.getQuorumTreeEntries>): void;
 use_old_FunctionDeclaration_getQuorumTreeEntries(
     get_current_FunctionDeclaration_getQuorumTreeEntries());
 
@@ -1613,7 +1613,7 @@ use_old_FunctionDeclaration_getQuorumTreeEntries(
 declare function get_old_VariableDeclaration_getRandomInt():
     TypeOnly<typeof old.getRandomInt>;
 declare function use_current_VariableDeclaration_getRandomInt(
-    use: TypeOnly<typeof current.getRandomInt>);
+    use: TypeOnly<typeof current.getRandomInt>): void;
 use_current_VariableDeclaration_getRandomInt(
     get_old_VariableDeclaration_getRandomInt());
 
@@ -1625,7 +1625,7 @@ use_current_VariableDeclaration_getRandomInt(
 declare function get_current_VariableDeclaration_getRandomInt():
     TypeOnly<typeof current.getRandomInt>;
 declare function use_old_VariableDeclaration_getRandomInt(
-    use: TypeOnly<typeof old.getRandomInt>);
+    use: TypeOnly<typeof old.getRandomInt>): void;
 use_old_VariableDeclaration_getRandomInt(
     get_current_VariableDeclaration_getRandomInt());
 
@@ -1637,7 +1637,7 @@ use_old_VariableDeclaration_getRandomInt(
 declare function get_old_FunctionDeclaration_getRandomName():
     TypeOnly<typeof old.getRandomName>;
 declare function use_current_FunctionDeclaration_getRandomName(
-    use: TypeOnly<typeof current.getRandomName>);
+    use: TypeOnly<typeof current.getRandomName>): void;
 use_current_FunctionDeclaration_getRandomName(
     get_old_FunctionDeclaration_getRandomName());
 
@@ -1649,7 +1649,7 @@ use_current_FunctionDeclaration_getRandomName(
 declare function get_current_FunctionDeclaration_getRandomName():
     TypeOnly<typeof current.getRandomName>;
 declare function use_old_FunctionDeclaration_getRandomName(
-    use: TypeOnly<typeof old.getRandomName>);
+    use: TypeOnly<typeof old.getRandomName>): void;
 use_old_FunctionDeclaration_getRandomName(
     get_current_FunctionDeclaration_getRandomName());
 
@@ -1661,7 +1661,7 @@ use_old_FunctionDeclaration_getRandomName(
 declare function get_old_FunctionDeclaration_isNetworkError():
     TypeOnly<typeof old.isNetworkError>;
 declare function use_current_FunctionDeclaration_isNetworkError(
-    use: TypeOnly<typeof current.isNetworkError>);
+    use: TypeOnly<typeof current.isNetworkError>): void;
 use_current_FunctionDeclaration_isNetworkError(
     get_old_FunctionDeclaration_isNetworkError());
 
@@ -1673,7 +1673,7 @@ use_current_FunctionDeclaration_isNetworkError(
 declare function get_current_FunctionDeclaration_isNetworkError():
     TypeOnly<typeof current.isNetworkError>;
 declare function use_old_FunctionDeclaration_isNetworkError(
-    use: TypeOnly<typeof old.isNetworkError>);
+    use: TypeOnly<typeof old.isNetworkError>): void;
 use_old_FunctionDeclaration_isNetworkError(
     get_current_FunctionDeclaration_isNetworkError());
 
@@ -1685,7 +1685,7 @@ use_old_FunctionDeclaration_isNetworkError(
 declare function get_old_FunctionDeclaration_mergeAppAndProtocolTree():
     TypeOnly<typeof old.mergeAppAndProtocolTree>;
 declare function use_current_FunctionDeclaration_mergeAppAndProtocolTree(
-    use: TypeOnly<typeof current.mergeAppAndProtocolTree>);
+    use: TypeOnly<typeof current.mergeAppAndProtocolTree>): void;
 use_current_FunctionDeclaration_mergeAppAndProtocolTree(
     get_old_FunctionDeclaration_mergeAppAndProtocolTree());
 
@@ -1697,7 +1697,7 @@ use_current_FunctionDeclaration_mergeAppAndProtocolTree(
 declare function get_current_FunctionDeclaration_mergeAppAndProtocolTree():
     TypeOnly<typeof current.mergeAppAndProtocolTree>;
 declare function use_old_FunctionDeclaration_mergeAppAndProtocolTree(
-    use: TypeOnly<typeof old.mergeAppAndProtocolTree>);
+    use: TypeOnly<typeof old.mergeAppAndProtocolTree>): void;
 use_old_FunctionDeclaration_mergeAppAndProtocolTree(
     get_current_FunctionDeclaration_mergeAppAndProtocolTree());
 
@@ -1709,7 +1709,7 @@ use_old_FunctionDeclaration_mergeAppAndProtocolTree(
 declare function get_old_FunctionDeclaration_promiseTimeout():
     TypeOnly<typeof old.promiseTimeout>;
 declare function use_current_FunctionDeclaration_promiseTimeout(
-    use: TypeOnly<typeof current.promiseTimeout>);
+    use: TypeOnly<typeof current.promiseTimeout>): void;
 use_current_FunctionDeclaration_promiseTimeout(
     get_old_FunctionDeclaration_promiseTimeout());
 
@@ -1721,7 +1721,7 @@ use_current_FunctionDeclaration_promiseTimeout(
 declare function get_current_FunctionDeclaration_promiseTimeout():
     TypeOnly<typeof current.promiseTimeout>;
 declare function use_old_FunctionDeclaration_promiseTimeout(
-    use: TypeOnly<typeof old.promiseTimeout>);
+    use: TypeOnly<typeof old.promiseTimeout>): void;
 use_old_FunctionDeclaration_promiseTimeout(
     get_current_FunctionDeclaration_promiseTimeout());
 
@@ -1733,7 +1733,7 @@ use_old_FunctionDeclaration_promiseTimeout(
 declare function get_old_FunctionDeclaration_throwFluidServiceNetworkError():
     TypeOnly<typeof old.throwFluidServiceNetworkError>;
 declare function use_current_FunctionDeclaration_throwFluidServiceNetworkError(
-    use: TypeOnly<typeof current.throwFluidServiceNetworkError>);
+    use: TypeOnly<typeof current.throwFluidServiceNetworkError>): void;
 use_current_FunctionDeclaration_throwFluidServiceNetworkError(
     get_old_FunctionDeclaration_throwFluidServiceNetworkError());
 
@@ -1745,7 +1745,7 @@ use_current_FunctionDeclaration_throwFluidServiceNetworkError(
 declare function get_current_FunctionDeclaration_throwFluidServiceNetworkError():
     TypeOnly<typeof current.throwFluidServiceNetworkError>;
 declare function use_old_FunctionDeclaration_throwFluidServiceNetworkError(
-    use: TypeOnly<typeof old.throwFluidServiceNetworkError>);
+    use: TypeOnly<typeof old.throwFluidServiceNetworkError>): void;
 use_old_FunctionDeclaration_throwFluidServiceNetworkError(
     get_current_FunctionDeclaration_throwFluidServiceNetworkError());
 
@@ -1757,7 +1757,7 @@ use_old_FunctionDeclaration_throwFluidServiceNetworkError(
 declare function get_old_FunctionDeclaration_validateTokenClaims():
     TypeOnly<typeof old.validateTokenClaims>;
 declare function use_current_FunctionDeclaration_validateTokenClaims(
-    use: TypeOnly<typeof current.validateTokenClaims>);
+    use: TypeOnly<typeof current.validateTokenClaims>): void;
 use_current_FunctionDeclaration_validateTokenClaims(
     get_old_FunctionDeclaration_validateTokenClaims());
 
@@ -1769,7 +1769,7 @@ use_current_FunctionDeclaration_validateTokenClaims(
 declare function get_current_FunctionDeclaration_validateTokenClaims():
     TypeOnly<typeof current.validateTokenClaims>;
 declare function use_old_FunctionDeclaration_validateTokenClaims(
-    use: TypeOnly<typeof old.validateTokenClaims>);
+    use: TypeOnly<typeof old.validateTokenClaims>): void;
 use_old_FunctionDeclaration_validateTokenClaims(
     get_current_FunctionDeclaration_validateTokenClaims());
 
@@ -1781,7 +1781,7 @@ use_old_FunctionDeclaration_validateTokenClaims(
 declare function get_old_FunctionDeclaration_validateTokenClaimsExpiration():
     TypeOnly<typeof old.validateTokenClaimsExpiration>;
 declare function use_current_FunctionDeclaration_validateTokenClaimsExpiration(
-    use: TypeOnly<typeof current.validateTokenClaimsExpiration>);
+    use: TypeOnly<typeof current.validateTokenClaimsExpiration>): void;
 use_current_FunctionDeclaration_validateTokenClaimsExpiration(
     get_old_FunctionDeclaration_validateTokenClaimsExpiration());
 
@@ -1793,6 +1793,6 @@ use_current_FunctionDeclaration_validateTokenClaimsExpiration(
 declare function get_current_FunctionDeclaration_validateTokenClaimsExpiration():
     TypeOnly<typeof current.validateTokenClaimsExpiration>;
 declare function use_old_FunctionDeclaration_validateTokenClaimsExpiration(
-    use: TypeOnly<typeof old.validateTokenClaimsExpiration>);
+    use: TypeOnly<typeof old.validateTokenClaimsExpiration>): void;
 use_old_FunctionDeclaration_validateTokenClaimsExpiration(
     get_current_FunctionDeclaration_validateTokenClaimsExpiration());

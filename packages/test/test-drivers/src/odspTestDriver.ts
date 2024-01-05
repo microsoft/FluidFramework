@@ -62,6 +62,9 @@ interface LoginTenants {
 	};
 }
 
+/**
+ * @internal
+ */
 export function assertOdspEndpoint(
 	endpoint: string | undefined,
 ): asserts endpoint is OdspEndpoint | undefined {
@@ -118,6 +121,9 @@ function getCredentials(
 	return creds;
 }
 
+/**
+ * @internal
+ */
 export class OdspTestDriver implements ITestDriver {
 	// Share the tokens and driverId across multiple instance of the test driver
 	private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);

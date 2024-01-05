@@ -33,6 +33,7 @@ trigger:
     - release/0.*
   paths:
     include:
+    - .prettierignore
     - common/lib/core-interfaces
     - tools/pipelines/build-core-interfaces.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -53,6 +54,7 @@ pr:
     - release/0.*
   paths:
     include:
+    - .prettierignore
     - common/lib/core-interfaces
     - tools/pipelines/build-core-interfaces.yml
     - tools/pipelines/templates/build-npm-package.yml

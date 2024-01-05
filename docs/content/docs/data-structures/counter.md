@@ -161,7 +161,7 @@ Since `updateCounterValueLabel` is listening for all `incremented` events, the v
 
 ## API documentation
 
-For a comprehensive view of the `counter` package's API documentation, see [the SharedCounter API docs]({{< ref "docs/apis/counter.md" >}}).
+For a comprehensive view of the `counter` package's API documentation, see [the SharedCounter API docs]({{< ref "docs/api/v1/counter.md" >}}).
 
 <!-- Links -->
 [increment]: {{< relref "isharedcounter-interface.md#increment-methodsignature" >}}

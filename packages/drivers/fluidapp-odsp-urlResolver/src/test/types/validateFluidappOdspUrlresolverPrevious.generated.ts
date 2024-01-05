@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_FluidAppOdspUrlResolver():
     TypeOnly<old.FluidAppOdspUrlResolver>;
 declare function use_current_ClassDeclaration_FluidAppOdspUrlResolver(
-    use: TypeOnly<current.FluidAppOdspUrlResolver>);
+    use: TypeOnly<current.FluidAppOdspUrlResolver>): void;
 use_current_ClassDeclaration_FluidAppOdspUrlResolver(
     get_old_ClassDeclaration_FluidAppOdspUrlResolver());
 
@@ -41,6 +41,6 @@ use_current_ClassDeclaration_FluidAppOdspUrlResolver(
 declare function get_current_ClassDeclaration_FluidAppOdspUrlResolver():
     TypeOnly<current.FluidAppOdspUrlResolver>;
 declare function use_old_ClassDeclaration_FluidAppOdspUrlResolver(
-    use: TypeOnly<old.FluidAppOdspUrlResolver>);
+    use: TypeOnly<old.FluidAppOdspUrlResolver>): void;
 use_old_ClassDeclaration_FluidAppOdspUrlResolver(
     get_current_ClassDeclaration_FluidAppOdspUrlResolver());

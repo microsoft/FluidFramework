@@ -238,8 +238,19 @@ PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
 Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
 removed once we have upgraded to Node 16 in the repo.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
 ## Trademark
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
-or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

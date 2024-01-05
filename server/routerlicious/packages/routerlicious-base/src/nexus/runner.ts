@@ -189,15 +189,15 @@ export class NexusRunner implements IRunner {
 	 * on all socket events: "upgrade", "close", "error".
 	 */
 	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
-		const metric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+		const metric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 			origin: "upgrade",
-			connections: socket.server._connections,
+			metricValue: socket.server._connections,
 		});
 		metric.success("WebSockets: connection upgraded");
 		socket.on("close", (hadError: boolean) => {
-			const closeMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			const closeMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 				origin: "close",
-				connections: socket.server._connections,
+				metricValue: socket.server._connections,
 				hadError: hadError.toString(),
 			});
 			closeMetric.success(
@@ -206,9 +206,9 @@ export class NexusRunner implements IRunner {
 			);
 		});
 		socket.on("error", (error) => {
-			const errorMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			const errorMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 				origin: "error",
-				connections: socket.server._connections,
+				metricValue: socket.server._connections,
 				bytesRead: socket.bytesRead,
 				bytesWritten: socket.bytesWritten,
 				error: error.toString(),

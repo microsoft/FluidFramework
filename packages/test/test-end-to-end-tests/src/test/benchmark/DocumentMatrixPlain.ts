@@ -9,14 +9,18 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ChannelFactoryRegistry,
@@ -28,12 +32,8 @@ import {
 	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
 	isDocumentMatrixPlainInfo,
-} from "@fluid-internal/test-version-utils";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
+} from "@fluid-private/test-version-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 // Tests usually make use of the default data object provided by the test object provider.
@@ -226,7 +226,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 			this.props.provider.defaultCodeDetails,
 		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.mainDataStore._root.set("mode", "write");
 
 		const matrixHandle = this.mainDataStore._root.get("matrix1");
@@ -285,7 +285,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		const container2 = await loader.resolve(request);
 
 		await this.props.provider.ensureSynchronized();
-		const dataStore = await requestFluidObject<TestDataObject>(container2, "/");
+		const dataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		const matrixHandle = dataStore._root.get(matrixId);
 		assert(matrixHandle !== undefined, "matrix not found");

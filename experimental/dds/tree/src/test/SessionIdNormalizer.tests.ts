@@ -16,7 +16,7 @@ import {
 	performFuzzActions,
 	take,
 	makeRandom,
-} from '@fluid-internal/stochastic-test-utils';
+} from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { fail } from '../Common';
 import { isFinalId, isLocalId } from '../id-compressor';

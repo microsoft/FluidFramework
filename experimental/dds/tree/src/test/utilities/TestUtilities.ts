@@ -7,10 +7,9 @@ import { resolve } from 'path';
 import { assert } from '@fluidframework/core-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
+import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
-import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -26,11 +25,16 @@ import {
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
-import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidCodeDetails,
+	IFluidHandle,
+	IRequestHeader,
+} from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { ConfigTypes, IConfigProviderBase, createChildLogger } from '@fluidframework/telemetry-utils';
-import { ITelemetryBaseLogger, IRequest } from '@fluidframework/core-interfaces';
+import { createChildLogger } from '@fluidframework/telemetry-utils';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
 	DetachedSequenceId,
@@ -325,28 +329,21 @@ export async function setUpLocalServerTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
 	const registry: ChannelFactoryRegistry = [[treeId, factory]];
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 
 	const runtimeFactory = () =>
-		new TestContainerRuntimeFactory(
-			TestDataStoreType,
-			new TestFluidObjectFactory(registry),
-			{
-				summaryOptions: {
-					summaryConfigOverrides: {
-						...DefaultSummaryConfiguration,
-						...{
-							minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
-							maxIdleTime: 1000,
-							maxTime: 1000 * 12,
-							initialSummarizerDelayMs: 0,
-						},
+		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
+						maxIdleTime: 1000,
+						maxTime: 1000 * 12,
+						initialSummarizerDelayMs: 0,
 					},
 				},
 			},
-			[innerRequestHandler]
-		);
+		});
 
 	const defaultCodeDetails: IFluidCodeDetails = {
 		package: 'defaultTestPackage',
@@ -384,7 +381,7 @@ export async function setUpLocalServerTestSharedTree(
 		container = await createAndAttachContainer(defaultCodeDetails, loader, driver.createCreateNewRequest(treeId));
 	}
 
-	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
+	const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 	const uploadedBlobs =
 		blobs === undefined ? [] : await Promise.all(blobs.map(async (blob) => dataObject.context.uploadBlob(blob)));

@@ -1,6 +1,23 @@
-# fluid-framework
+# @fluidframework/cell
 
-The `fluid-framework` package bundles a collection of Fluid Framework client packages for easy use when paired with a corresponding service client package (ex. `@fluidframework/azure-client` & `@fluidframework/tinylicious-client`).
+The `SharedCell` Distributed Data Structure (DDS) stores a single, shared value that can be edited or deleted.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i fluid-framework
+```
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
@@ -13,35 +30,69 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
+## API Documentation
+
+API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/api/v1/cell>.
 
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-## Contents
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
-The `fluid-framework` package consists primarily of two portions: the `IFluidContainer` and a selection of distributed data structures (DDSes).
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-### IFluidContainer
+## Contribution Guidelines
 
-The **[IFluidContainer][]** interface is the one of the types returned by calls to `createContainer()` and `getContainer()` on the service clients such as `AzureClient`. It includes functionality to retrieve the Fluid data contained within, as well as to inspect the state of the collaboration session connection.
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 
-### DDS packages
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-You'll use one or more DDS data structures in your container to model your collaborative data. The `fluid-framework` package comes with three data structures that cover a broad range of scenarios:
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
 
-1. **[SharedMap][]**, a map-like data structure for storing key/value pair data
-2. **[SharedDirectory][]**, a map-like data structure with ability to organize keys into subdirectories
-3. **[SharedString][]**, a data structure for string data
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-## Tutorial
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
-Check out the Hello World tutorial using the `fluid-framework` package [here](https://fluidframework.com/docs/start/tutorial/).
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Help
+
+Not finding what you're looking for in this README? Check out our [GitHub
+Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an
+issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
@@ -52,18 +103,10 @@ Check out the Hello World tutorial using the `fluid-framework` package [here](ht
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- Links -->
-
-[ifluidcontainer]: https://fluidframework.com/docs/apis/fluid-static/ifluidcontainer/
-[sharedmap]: https://fluidframework.com/docs/apis/map/sharedmap/
-[shareddirectory]: https://fluidframework.com/docs/apis/map/shareddirectory/
-[sharedstring]: https://fluidframework.com/docs/apis/sequence/sharedstring/

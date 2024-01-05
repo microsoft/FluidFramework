@@ -147,6 +147,9 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
 	return longestSequence;
 };
 
+/**
+ * @internal
+ */
 export class ArrayProperty extends AbstractStaticCollectionProperty {
 	/**
 	 * Default constructor for ArrayProperty

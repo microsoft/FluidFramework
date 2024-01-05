@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -31,7 +32,12 @@ import {
 	IRelaySessionAwareDriverFactory,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
+import {
+	INonPersistentCache,
+	IPrefetchSnapshotContents,
+	LocalPersistentCache,
+	NonPersistentCache,
+} from "./odspCache";
 import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import {
@@ -50,7 +56,7 @@ import {
  *
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
- * @public
+ * @alpha
  */
 export class OdspDocumentServiceFactoryCore
 	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
@@ -58,7 +64,7 @@ export class OdspDocumentServiceFactoryCore
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
-	public get snapshotPrefetchResultCache() {
+	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
@@ -170,7 +176,7 @@ export class OdspDocumentServiceFactoryCore
 				// while only happens once in lifetime of a document happens in the background after creation of
 				// detached container.
 				const module = await import(
-					/* webpackChunkName: "createNewModule" */ "./createNewModule"
+					/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
 				)
 					.then((m) => {
 						odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });

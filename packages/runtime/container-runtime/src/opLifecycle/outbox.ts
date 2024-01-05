@@ -20,7 +20,7 @@ import {
 	estimateSocketSize,
 	sequenceNumbersMatch,
 } from "./batchManager";
-import { BatchMessage, IBatch } from "./definitions";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 import { OpCompressor } from "./opCompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -30,7 +30,6 @@ export interface IOutboxConfig {
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
 	readonly disablePartialFlush: boolean;
-	readonly enableGroupedBatching: boolean;
 }
 
 export interface IOutboxParameters {
@@ -304,7 +303,10 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch();
-		if (rawBatch.hasReentrantOps === true && this.params.config.enableGroupedBatching) {
+		if (
+			rawBatch.hasReentrantOps === true &&
+			this.params.groupingManager.shouldGroup(rawBatch)
+		) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -460,8 +462,11 @@ export class Outbox {
 	}
 
 	public checkpoint() {
+		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
+		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
+		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
-			mainBatch: this.mainBatch.checkpoint(),
+			mainBatch,
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};

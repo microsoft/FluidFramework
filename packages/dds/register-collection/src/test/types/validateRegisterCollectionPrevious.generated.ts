@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_ConsensusRegisterCollection():
     TypeOnly<old.ConsensusRegisterCollection<any>>;
 declare function use_current_ClassDeclaration_ConsensusRegisterCollection(
-    use: TypeOnly<current.ConsensusRegisterCollection<any>>);
+    use: TypeOnly<current.ConsensusRegisterCollection<any>>): void;
 use_current_ClassDeclaration_ConsensusRegisterCollection(
     get_old_ClassDeclaration_ConsensusRegisterCollection());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_ConsensusRegisterCollection(
 declare function get_current_ClassDeclaration_ConsensusRegisterCollection():
     TypeOnly<current.ConsensusRegisterCollection<any>>;
 declare function use_old_ClassDeclaration_ConsensusRegisterCollection(
-    use: TypeOnly<old.ConsensusRegisterCollection<any>>);
+    use: TypeOnly<old.ConsensusRegisterCollection<any>>): void;
 use_old_ClassDeclaration_ConsensusRegisterCollection(
     get_current_ClassDeclaration_ConsensusRegisterCollection());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_ConsensusRegisterCollection(
 declare function get_old_ClassDeclaration_ConsensusRegisterCollectionFactory():
     TypeOnly<old.ConsensusRegisterCollectionFactory>;
 declare function use_current_ClassDeclaration_ConsensusRegisterCollectionFactory(
-    use: TypeOnly<current.ConsensusRegisterCollectionFactory>);
+    use: TypeOnly<current.ConsensusRegisterCollectionFactory>): void;
 use_current_ClassDeclaration_ConsensusRegisterCollectionFactory(
     get_old_ClassDeclaration_ConsensusRegisterCollectionFactory());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_ConsensusRegisterCollectionFactory(
 declare function get_current_ClassDeclaration_ConsensusRegisterCollectionFactory():
     TypeOnly<current.ConsensusRegisterCollectionFactory>;
 declare function use_old_ClassDeclaration_ConsensusRegisterCollectionFactory(
-    use: TypeOnly<old.ConsensusRegisterCollectionFactory>);
+    use: TypeOnly<old.ConsensusRegisterCollectionFactory>): void;
 use_old_ClassDeclaration_ConsensusRegisterCollectionFactory(
     get_current_ClassDeclaration_ConsensusRegisterCollectionFactory());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_ConsensusRegisterCollectionFactory(
 declare function get_old_InterfaceDeclaration_IConsensusRegisterCollection():
     TypeOnly<old.IConsensusRegisterCollection>;
 declare function use_current_InterfaceDeclaration_IConsensusRegisterCollection(
-    use: TypeOnly<current.IConsensusRegisterCollection>);
+    use: TypeOnly<current.IConsensusRegisterCollection>): void;
 use_current_InterfaceDeclaration_IConsensusRegisterCollection(
     get_old_InterfaceDeclaration_IConsensusRegisterCollection());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IConsensusRegisterCollection(
 declare function get_current_InterfaceDeclaration_IConsensusRegisterCollection():
     TypeOnly<current.IConsensusRegisterCollection>;
 declare function use_old_InterfaceDeclaration_IConsensusRegisterCollection(
-    use: TypeOnly<old.IConsensusRegisterCollection>);
+    use: TypeOnly<old.IConsensusRegisterCollection>): void;
 use_old_InterfaceDeclaration_IConsensusRegisterCollection(
     get_current_InterfaceDeclaration_IConsensusRegisterCollection());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollection(
 declare function get_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents():
     TypeOnly<old.IConsensusRegisterCollectionEvents>;
 declare function use_current_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
-    use: TypeOnly<current.IConsensusRegisterCollectionEvents>);
+    use: TypeOnly<current.IConsensusRegisterCollectionEvents>): void;
 use_current_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
     get_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
 declare function get_current_InterfaceDeclaration_IConsensusRegisterCollectionEvents():
     TypeOnly<current.IConsensusRegisterCollectionEvents>;
 declare function use_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
-    use: TypeOnly<old.IConsensusRegisterCollectionEvents>);
+    use: TypeOnly<old.IConsensusRegisterCollectionEvents>): void;
 use_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
     get_current_InterfaceDeclaration_IConsensusRegisterCollectionEvents());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
 declare function get_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory():
     TypeOnly<old.IConsensusRegisterCollectionFactory>;
 declare function use_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
-    use: TypeOnly<current.IConsensusRegisterCollectionFactory>);
+    use: TypeOnly<current.IConsensusRegisterCollectionFactory>): void;
 use_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
     get_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
 declare function get_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory():
     TypeOnly<current.IConsensusRegisterCollectionFactory>;
 declare function use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
-    use: TypeOnly<old.IConsensusRegisterCollectionFactory>);
+    use: TypeOnly<old.IConsensusRegisterCollectionFactory>): void;
 use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
     get_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
 declare function get_old_EnumDeclaration_ReadPolicy():
     TypeOnly<old.ReadPolicy>;
 declare function use_current_EnumDeclaration_ReadPolicy(
-    use: TypeOnly<current.ReadPolicy>);
+    use: TypeOnly<current.ReadPolicy>): void;
 use_current_EnumDeclaration_ReadPolicy(
     get_old_EnumDeclaration_ReadPolicy());
 
@@ -161,6 +161,6 @@ use_current_EnumDeclaration_ReadPolicy(
 declare function get_current_EnumDeclaration_ReadPolicy():
     TypeOnly<current.ReadPolicy>;
 declare function use_old_EnumDeclaration_ReadPolicy(
-    use: TypeOnly<old.ReadPolicy>);
+    use: TypeOnly<old.ReadPolicy>): void;
 use_old_EnumDeclaration_ReadPolicy(
     get_current_EnumDeclaration_ReadPolicy());

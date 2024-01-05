@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { IInventoryListAppModel } from "../modelInterfaces";
 import { InventoryListAppModel } from "./appModel";
@@ -15,10 +13,14 @@ import { InventoryList, InventoryListFactory } from "./inventoryList";
 
 export const inventoryListId = "inventory-list";
 
+/**
+ * @internal
+ */
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(
 			new Map([InventoryListFactory.registryEntry]), // registryEntries
+			{ enableRuntimeIdCompressor: true },
 		);
 	}
 
@@ -34,11 +36,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		// eslint-disable-next-line import/no-deprecated
-		const inventoryList = await requestFluidObject<InventoryList>(
-			await runtime.getRootDataStore(inventoryListId),
-			"",
-		);
+		const inventoryList = await getDataStoreEntryPoint<InventoryList>(runtime, inventoryListId);
 		return new InventoryListAppModel(inventoryList);
 	}
 }

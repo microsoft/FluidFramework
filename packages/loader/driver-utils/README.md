@@ -13,12 +13,6 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
-
 ## Installation
 
 To get started, install the package by running the following command:
@@ -29,7 +23,7 @@ npm i @fluidframework/driver-utils
 
 ## API Documentation
 
-API documentation for **@fluidframework/driver-utils** is available at <https://fluidframework.com/docs/apis/driver-utils>.
+API documentation for **@fluidframework/driver-utils** is available at <https://fluidframework.com/docs/api/v1/driver-utils>.
 
 ## Contribution Guidelines
 
@@ -63,8 +57,7 @@ Thank you!
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

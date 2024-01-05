@@ -8,12 +8,12 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject, createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
+import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -62,15 +62,12 @@ describe("Ops on Reconnect", () => {
 
 		const defaultFactory = createDataStoreFactory("default", factory);
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [
 				[defaultFactory.type, Promise.resolve(defaultFactory)],
 				[dataObject2Factory.type, Promise.resolve(dataObject2Factory)],
 			],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		});
 
@@ -99,10 +96,7 @@ describe("Ops on Reconnect", () => {
 	) {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
-		container1Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-			container1,
-			"default",
-		);
+		container1Object1 = (await container1.getEntryPoint()) as ITestFluidObject;
 
 		container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
 		container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
@@ -117,10 +111,7 @@ describe("Ops on Reconnect", () => {
 		await waitForContainerConnection(container2);
 
 		// Get dataStore1 on the second container.
-		const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-			container2,
-			"default",
-		);
+		const container2Object1 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 		container2Object1.context.containerRuntime.on(
 			"op",
@@ -302,10 +293,9 @@ describe("Ops on Reconnect", () => {
 			await setupFirstContainer();
 
 			// Create dataObject2 in the first container.
-			const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-				await container1Object1.context.containerRuntime.createDataStore("dataObject2"),
-				"/",
-			);
+			const dataStore =
+				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
+			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =
@@ -433,10 +423,9 @@ describe("Ops on Reconnect", () => {
 			await setupFirstContainer();
 
 			// Create dataObject2 in the first container.
-			const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-				await container1Object1.context.containerRuntime.createDataStore("dataObject2"),
-				"/",
-			);
+			const dataStore =
+				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
+			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =

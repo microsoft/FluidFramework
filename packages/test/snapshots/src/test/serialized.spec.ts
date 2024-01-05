@@ -53,9 +53,9 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 			// Check for default data store
-			const response = await container.request({ url: "/" });
-			assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
-			const defaultDataStore = response.value as TestFluidObject;
+			const entryPoint = await container.getEntryPoint();
+			assert.notStrictEqual(entryPoint, undefined, `Component should exist!!`);
+			const defaultDataStore = entryPoint as TestFluidObject;
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
@@ -97,9 +97,9 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree2);
 
 			// Check for default data store
-			const response = await container2.request({ url: "/" });
-			assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
-			const defaultDataStore = response.value as TestFluidObject;
+			const entryPoint = await container2.getEntryPoint();
+			assert.notStrictEqual(entryPoint, undefined, `Component should exist!!`);
+			const defaultDataStore = entryPoint as TestFluidObject;
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds

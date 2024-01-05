@@ -5,8 +5,7 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	createAndAttachContainer,
@@ -16,25 +15,15 @@ import {
 	DataObjectFactoryType,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
 const mapId = "map";
-const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 const lots = 30;
 const testValue = "test value";
@@ -45,40 +34,52 @@ type MapCallback = (
 	map: SharedMap,
 ) => void | Promise<void>;
 
-// load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
-	const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
-	await waitForContainerConnection(container);
-	const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
-	const map = await dataStore.getSharedObject<SharedMap>(mapId);
+describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
 
-	[...Array(lots).keys()].map((i) =>
-		dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
-	);
+	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
+	const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
+		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-	await args.ensureSynchronized();
-	await args.opProcessingController.pauseProcessing(container);
-	assert(dataStore.runtime.deltaManager.outbound.paused);
+		[...Array(lots).keys()].map((i) =>
+			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
+		);
 
-	await cb(container, dataStore, map);
-
-	let pendingState: string | undefined;
-	if (send) {
-		pendingState = await container.getPendingLocalState?.();
-		assert.strictEqual(container.closed, false);
 		await args.ensureSynchronized();
-		container.close();
-	} else {
-		pendingState = await container.closeAndGetPendingLocalState?.();
-	}
+		await args.opProcessingController.pauseProcessing(container);
+		assert(dataStore.runtime.deltaManager.outbound.paused);
 
-	args.opProcessingController.resumeProcessing();
+		await cb(container, dataStore, map);
 
-	assert.ok(pendingState);
-	return pendingState;
-};
+		let pendingState: string | undefined;
+		if (send) {
+			pendingState = await container.getPendingLocalState?.();
+			assert.strictEqual(container.closed, false);
+			await args.ensureSynchronized();
+			container.close();
+		} else {
+			pendingState = await container.closeAndGetPendingLocalState?.();
+		}
 
-describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
+		args.opProcessingController.resumeProcessing();
+
+		assert.ok(pendingState);
+		return pendingState;
+	};
+
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -89,7 +90,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 		const verifyDirtyStateTransitions = async (container: IContainer) => {
 			assert.strictEqual(container.isDirty, false, "Container should not be dirty");
 
-			const dataStore2 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore2 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 			map2.set("key", "value");
 
@@ -114,7 +115,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 			);
 			provider.updateDocumentId(container1.resolvedUrl);
 			url = await container1.getAbsoluteUrl("");
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 		});
 

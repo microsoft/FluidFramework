@@ -15,6 +15,10 @@ interface ISliderCoordinateViewProps {
 	model: ICoordinate;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (
 	props: ISliderCoordinateViewProps,
 ) => {

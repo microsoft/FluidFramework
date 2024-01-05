@@ -21,7 +21,6 @@ import { IBatchMetadata } from "./metadata";
  */
 export interface IPendingMessage {
 	type: "message";
-	clientSequenceNumber: number;
 	referenceSequenceNumber: number;
 	content: string;
 	localOpMetadata: unknown;
@@ -167,7 +166,6 @@ export class PendingStateManager implements IDisposable {
 	) {
 		const pendingMessage: IPendingMessage = {
 			type: "message",
-			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
 			referenceSequenceNumber,
 			content,
 			localOpMetadata,
@@ -333,6 +331,7 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
+	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 */
 	public replayPendingStates() {
 		assert(

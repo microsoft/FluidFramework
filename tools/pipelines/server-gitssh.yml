@@ -34,6 +34,8 @@ trigger:
     - lts
   paths:
     include:
+    - .prettierignore
+    - fluidBuild.config.cjs
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
     - tools/pipelines/templates/build-docker-service.yml
@@ -53,6 +55,8 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
+    - fluidBuild.config.cjs
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
     - tools/pipelines/templates/build-docker-service.yml

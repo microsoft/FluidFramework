@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ITaskManager():
     TypeOnly<old.ITaskManager>;
 declare function use_current_InterfaceDeclaration_ITaskManager(
-    use: TypeOnly<current.ITaskManager>);
+    use: TypeOnly<current.ITaskManager>): void;
 use_current_InterfaceDeclaration_ITaskManager(
     get_old_InterfaceDeclaration_ITaskManager());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ITaskManager(
 declare function get_current_InterfaceDeclaration_ITaskManager():
     TypeOnly<current.ITaskManager>;
 declare function use_old_InterfaceDeclaration_ITaskManager(
-    use: TypeOnly<old.ITaskManager>);
+    use: TypeOnly<old.ITaskManager>): void;
 use_old_InterfaceDeclaration_ITaskManager(
     get_current_InterfaceDeclaration_ITaskManager());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ITaskManager(
 declare function get_old_InterfaceDeclaration_ITaskManagerEvents():
     TypeOnly<old.ITaskManagerEvents>;
 declare function use_current_InterfaceDeclaration_ITaskManagerEvents(
-    use: TypeOnly<current.ITaskManagerEvents>);
+    use: TypeOnly<current.ITaskManagerEvents>): void;
 use_current_InterfaceDeclaration_ITaskManagerEvents(
     get_old_InterfaceDeclaration_ITaskManagerEvents());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_ITaskManagerEvents(
 declare function get_current_InterfaceDeclaration_ITaskManagerEvents():
     TypeOnly<current.ITaskManagerEvents>;
 declare function use_old_InterfaceDeclaration_ITaskManagerEvents(
-    use: TypeOnly<old.ITaskManagerEvents>);
+    use: TypeOnly<old.ITaskManagerEvents>): void;
 use_old_InterfaceDeclaration_ITaskManagerEvents(
     get_current_InterfaceDeclaration_ITaskManagerEvents());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_ITaskManagerEvents(
 declare function get_old_TypeAliasDeclaration_TaskEventListener():
     TypeOnly<old.TaskEventListener>;
 declare function use_current_TypeAliasDeclaration_TaskEventListener(
-    use: TypeOnly<current.TaskEventListener>);
+    use: TypeOnly<current.TaskEventListener>): void;
 use_current_TypeAliasDeclaration_TaskEventListener(
     get_old_TypeAliasDeclaration_TaskEventListener());
 
@@ -89,7 +89,7 @@ use_current_TypeAliasDeclaration_TaskEventListener(
 declare function get_current_TypeAliasDeclaration_TaskEventListener():
     TypeOnly<current.TaskEventListener>;
 declare function use_old_TypeAliasDeclaration_TaskEventListener(
-    use: TypeOnly<old.TaskEventListener>);
+    use: TypeOnly<old.TaskEventListener>): void;
 use_old_TypeAliasDeclaration_TaskEventListener(
     get_current_TypeAliasDeclaration_TaskEventListener());
 
@@ -101,7 +101,7 @@ use_old_TypeAliasDeclaration_TaskEventListener(
 declare function get_old_ClassDeclaration_TaskManager():
     TypeOnly<old.TaskManager>;
 declare function use_current_ClassDeclaration_TaskManager(
-    use: TypeOnly<current.TaskManager>);
+    use: TypeOnly<current.TaskManager>): void;
 use_current_ClassDeclaration_TaskManager(
     get_old_ClassDeclaration_TaskManager());
 
@@ -113,6 +113,6 @@ use_current_ClassDeclaration_TaskManager(
 declare function get_current_ClassDeclaration_TaskManager():
     TypeOnly<current.TaskManager>;
 declare function use_old_ClassDeclaration_TaskManager(
-    use: TypeOnly<old.TaskManager>);
+    use: TypeOnly<old.TaskManager>): void;
 use_old_ClassDeclaration_TaskManager(
     get_current_ClassDeclaration_TaskManager());

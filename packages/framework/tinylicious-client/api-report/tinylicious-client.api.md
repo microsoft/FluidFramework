@@ -5,7 +5,6 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -13,60 +12,53 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { ServiceAudience } from '@fluidframework/fluid-static';
 
 export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-// @public
+// @internal
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
-// @public
-export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> implements ITinyliciousAudience {
-    // @internal (undocumented)
-    protected createServiceMember(audienceMember: IClient): TinyliciousMember;
-}
-
-// @public
+// @internal
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
 }
 export { TinyliciousClient }
 export default TinyliciousClient;
 
-// @public
+// @internal
 export interface TinyliciousClientProps {
     connection?: TinyliciousConnectionConfig;
     logger?: ITelemetryBaseLogger;
 }
 
-// @public
+// @internal
 export interface TinyliciousConnectionConfig {
     domain?: string;
     port?: number;
     tokenProvider?: ITokenProvider;
 }
 
-// @public
+// @internal
 export interface TinyliciousContainerServices {
     audience: ITinyliciousAudience;
 }
 
-// @public
+// @internal
 export interface TinyliciousMember extends IMember {
     userName: string;
 }
 
-// @public
+// @internal
 export interface TinyliciousUser extends IUser {
     name: string;
 }

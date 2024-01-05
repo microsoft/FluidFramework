@@ -12,7 +12,7 @@ import {
 import { ISegment } from "./mergeTreeNodes";
 
 /**
- * @internal
+ * @alpha
  */
 export interface SequenceOffsets {
 	/**
@@ -27,12 +27,13 @@ export interface SequenceOffsets {
 	 * @remarks We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
+	// eslint-disable-next-line @rushstack/no-new-null
 	seqs: (number | AttributionKey | null)[];
 	posBreakpoints: number[];
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface SerializedAttributionCollection extends SequenceOffsets {
 	channels?: { [name: string]: SequenceOffsets };
@@ -41,22 +42,22 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttributionCollectionSpec<T> {
+	// eslint-disable-next-line @rushstack/no-new-null
 	root: Iterable<{ offset: number; key: T | null }>;
+	// eslint-disable-next-line @rushstack/no-new-null
 	channels?: { [name: string]: Iterable<{ offset: number; key: T | null }> };
 	length: number;
 }
 
 /**
- * @internal
+ * @alpha
  * @sealed
  */
 export interface IAttributionCollectionSerializer {
-	/**
-	 * @internal
-	 */
+	/***/
 	serializeAttributionCollections(
 		segments: Iterable<{
 			attribution?: IAttributionCollection<AttributionKey>;
@@ -66,7 +67,6 @@ export interface IAttributionCollectionSerializer {
 
 	/**
 	 * Populates attribution information on segments using the provided summary.
-	 * @internal
 	 */
 	populateAttributionCollections(
 		segments: Iterable<ISegment>,
@@ -96,17 +96,16 @@ export interface IAttributionCollection<T> {
 	 * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
 	 * `i+1`th offset.
 	 * The last entry's key applies to the open interval from the last entry's offset to this collection's length.
-	 * @internal
 	 */
 	getAll(): IAttributionCollectionSpec<T>;
 
-	/** @internal */
+	/***/
 	splitAt(pos: number): IAttributionCollection<T>;
 
-	/** @internal */
+	/***/
 	append(other: IAttributionCollection<T>): void;
 
-	/** @internal */
+	/***/
 	clone(): IAttributionCollection<T>;
 
 	/**
@@ -115,14 +114,15 @@ export interface IAttributionCollection<T> {
 	 * Updates apply only to the individual channel (i.e. if an attribution policy needs to update the root
 	 * channel and 4 other channels, it should call `.update` 5 times).
 	 * @param channel - Updated collection for that channel.
-	 * @internal
 	 */
-	update(name: string | undefined, channel: IAttributionCollection<T>);
+	update(name: string | undefined, channel: IAttributionCollection<T>): void;
 }
 
 // note: treats null and undefined as equivalent
 export function areEqualAttributionKeys(
+	// eslint-disable-next-line @rushstack/no-new-null
 	a: AttributionKey | null | undefined,
+	// eslint-disable-next-line @rushstack/no-new-null
 	b: AttributionKey | null | undefined,
 ): boolean {
 	if (!a && !b) {
@@ -162,6 +162,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	public constructor(
 		private _length: number,
+		// eslint-disable-next-line @rushstack/no-new-null
 		baseEntry?: AttributionKey | null,
 	) {
 		if (baseEntry !== undefined) {
@@ -258,9 +259,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	}
 
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
-		const root: IAttributionCollectionSpec<AttributionKey>["root"] = new Array(
-			this.keys.length,
-		);
+		type ExtractGeneric<T> = T extends Iterable<infer Q> ? Q : unknown;
+		const root: ExtractGeneric<IAttributionCollectionSpec<AttributionKey>["root"]>[] =
+			new Array(this.keys.length);
 		for (let i = 0; i < this.keys.length; i++) {
 			root[i] = { offset: this.offsets[i], key: this.keys[i] };
 		}
@@ -282,7 +283,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		copy.keys = this.keys.slice();
 		copy.offsets = this.offsets.slice();
 		if (this.channels !== undefined) {
-			const channelsCopy = {};
+			const channelsCopy: Record<string, AttributionCollection> = {};
 			for (const [key, collection] of this.channelEntries) {
 				channelsCopy[key] = collection.clone();
 			}

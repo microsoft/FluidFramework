@@ -3,17 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import random from "random-js";
+import { MersenneTwister19937, pick, Engine } from "random-js";
 
-// converts all properties of an object to arrays of the
-// properties potential values. This will be used by generatePairwiseOptions
-// to compute original objects that contain pairwise combinations
-// of all property values
+/**
+ * Converts all properties of an object to arrays of the
+ * properties potential values. This will be used by generatePairwiseOptions
+ * to compute original objects that contain pairwise combinations of all property values
+ * @internal
+ */
 export type OptionsMatrix<T extends Record<string, any>> = Required<{
 	[K in keyof T]: readonly T[K][];
 }>;
 
+/**
+ * @internal
+ */
 export const booleanCases: readonly boolean[] = [true, false];
+
+/**
+ * @internal
+ */
 export const numberCases: readonly (number | undefined)[] = [undefined];
 
 type PartialWithKeyCount<T extends Record<string, any>> = Partial<T> & {
@@ -21,7 +30,7 @@ type PartialWithKeyCount<T extends Record<string, any>> = Partial<T> & {
 };
 
 function applyPairToPartial<T extends Record<string, any>>(
-	randEng: random.Engine,
+	randEng: Engine,
 	keyCount: number,
 	partials: PartialWithKeyCount<T>[],
 	pair: { iKey: keyof T; jKey: keyof T; iVal: any; jVal: any },
@@ -58,7 +67,7 @@ function applyPairToPartial<T extends Record<string, any>>(
 		partial[pair.jKey] = pair.jVal;
 		partials.push(partial);
 	} else {
-		const found = random.pick(randEng, matchingPartials);
+		const found = pick(randEng, matchingPartials);
 		if (pair.iKey in found) {
 			found[pair.jKey] = pair.jVal;
 		} else {
@@ -69,12 +78,14 @@ function applyPairToPartial<T extends Record<string, any>>(
 	}
 }
 
+/**
+ * @internal
+ */
 export function generatePairwiseOptions<T extends Record<string, any>>(
 	optionsMatrix: OptionsMatrix<T>,
 	randomSeed: number = 0x35843,
 ): T[] {
-	const randEng = random.engines.mt19937();
-	randEng.seed(randomSeed);
+	const randEng = MersenneTwister19937.seed(randomSeed);
 
 	// sort keys biggest to smallest, and prune those with only an undefined option
 	const matrixKeys: (keyof T)[] = Object.keys(optionsMatrix)
@@ -117,7 +128,7 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
 		if (partial.__partialKeyCount !== matrixKeys.length) {
 			for (const key of matrixKeys) {
 				if (!(key in partial)) {
-					partial[key] = random.pick(randEng, optionsMatrix[key] as any[]);
+					partial[key] = pick(randEng, optionsMatrix[key] as any[]);
 				}
 			}
 		}
