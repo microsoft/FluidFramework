@@ -124,7 +124,7 @@ summary: "An open-source client technology stack that enables real-time collabor
         id="open-source"
         title="Open Source"
         subTitle="We believe that an <strong>open, inclusive, and respectful </strong>community will help shape a better future for this project. That's why Fluid Framework is made available for <strong>FREE</strong> as an <strong>Open Source project</strong> under the MIT license."
-        img="/images/unlock.svg"
+        img="/images/unlock.png"
         imgAlt="github logo"
         pos="right"
       >}}
