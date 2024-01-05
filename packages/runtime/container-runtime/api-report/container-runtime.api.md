@@ -18,6 +18,7 @@ import { IContainerRuntime } from '@fluidframework/container-runtime-definitions
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions';
+import { IDataStore2 } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -118,6 +119,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get connected(): boolean;
     // (undocumented)
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
+    // (undocumented)
+    createDataStore2(pkg: string | string[]): IDataStore2;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)

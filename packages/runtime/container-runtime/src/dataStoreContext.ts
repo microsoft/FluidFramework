@@ -1199,6 +1199,19 @@ export class LocalDetachedFluidDataStoreContext
 		this.detachedRuntimeCreation = true;
 	}
 
+	public get channelValue(): IFluidDataStoreChannel {
+		if (this.detachedRuntimeCreation) {
+			throw new Error(
+				"Detached Fluid Data Store context needs an attached runtime! Please attach runtime first!",
+			);
+		}
+		assert(
+			this.channel !== undefined,
+			"Channel should have been set after context is attached to a runtime!",
+		);
+		return this.channel;
+	}
+
 	public async attachRuntime(
 		registry: IProvideFluidDataStoreFactory,
 		dataStoreChannel: IFluidDataStoreChannel,

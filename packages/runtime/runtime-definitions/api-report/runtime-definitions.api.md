@@ -151,6 +151,12 @@ export interface IDataStore {
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
+// @alpha (undocumented)
+export interface IDataStore2 extends IDataStore {
+    // (undocumented)
+    readonly context: IFluidDataStoreContextDetached;
+}
+
 // @alpha
 export interface IEnvelope {
     address: string;

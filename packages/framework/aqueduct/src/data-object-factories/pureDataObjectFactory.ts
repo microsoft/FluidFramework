@@ -9,7 +9,7 @@ import {
 	ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+import { ContainerRuntime, FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
 	IFluidDataStoreContext,
 	IContainerRuntimeBase,
@@ -259,8 +259,10 @@ export class PureDataObjectFactory<
 		runtime: IContainerRuntime,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
-		return this.createInstanceCore(context, initialState);
+		const dataStore = (runtime as ContainerRuntime).createDataStore2([this.type]);
+		const instance = await this.createInstanceCore(dataStore.context, initialState);
+		await dataStore.trySetAlias(rootDataStoreId);
+		return instance;
 	}
 
 	protected async createNonRootInstanceCore(

@@ -160,6 +160,13 @@ export interface IDataStore {
 }
 
 /**
+ * @alpha
+ */
+export interface IDataStore2 extends IDataStore {
+	readonly context: IFluidDataStoreContextDetached;
+}
+
+/**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  * @alpha

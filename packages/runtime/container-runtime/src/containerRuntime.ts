@@ -85,6 +85,7 @@ import {
 	channelsTreeName,
 	IDataStore,
 	ITelemetryContext,
+	IDataStore2,
 } from "@fluidframework/runtime-definitions";
 import type {
 	SerializedIdCompressorWithNoSession,
@@ -169,7 +170,12 @@ import {
 	IGCStats,
 	trimLeadingAndTrailingSlashes,
 } from "./gc";
-import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
+import {
+	channelToDataStore,
+	DataStore2,
+	IDataStoreAliasMessage,
+	isDataStoreAliasMessage,
+} from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ScheduleManager } from "./scheduleManager";
 import {
@@ -2507,6 +2513,14 @@ export class ContainerRuntime
 			this.dataStores,
 			this.mc.logger,
 		);
+	}
+
+	public createDataStore2(pkg: string | string[]): IDataStore2 {
+		const context = this.dataStores.createDetachedDataStoreCore(
+			Array.isArray(pkg) ? pkg : [pkg],
+			false,
+		);
+		return new DataStore2(context, context.id, this, this.dataStores, this.mc.logger);
 	}
 
 	/**

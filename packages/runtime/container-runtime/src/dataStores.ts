@@ -19,7 +19,6 @@ import {
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
-	IFluidDataStoreContextDetached,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	InboundAttachMessage,
@@ -344,7 +343,7 @@ export class DataStores implements IDisposable {
 		pkg: Readonly<string[]>,
 		isRoot: boolean,
 		id = uuid(),
-	): IFluidDataStoreContextDetached {
+	): LocalDetachedFluidDataStoreContext {
 		assert(!id.includes("/"), 0x30c /* Id cannot contain slashes */);
 
 		const context = new LocalDetachedFluidDataStoreContext({

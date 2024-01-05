@@ -10,10 +10,13 @@ import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	AliasResult,
 	IDataStore,
+	IDataStore2,
 	IFluidDataStoreChannel,
+	IFluidDataStoreContextDetached,
 } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
+import { LocalDetachedFluidDataStoreContext } from "./dataStoreContext";
 
 /**
  * Interface for an op to be used for assigning an
@@ -200,5 +203,40 @@ class DataStore implements IDataStore {
 		}).finally(() => {
 			this.runtime.off("dispose", rejectBecauseDispose);
 		});
+	}
+}
+
+export class DataStore2 implements IDataStore2 {
+	private _dataStore?: IDataStore;
+	public get context(): IFluidDataStoreContextDetached {
+		return this.fluidDatastoreContext;
+	}
+	constructor(
+		private readonly fluidDatastoreContext: LocalDetachedFluidDataStoreContext,
+		private readonly internalId: string,
+		private readonly runtime: ContainerRuntime,
+		private readonly datastores: DataStores,
+		private readonly logger: ITelemetryLoggerExt,
+	) {}
+
+	public get dataStore(): IDataStore {
+		if (this._dataStore === undefined) {
+			this._dataStore = channelToDataStore(
+				this.fluidDatastoreContext.channelValue,
+				this.internalId,
+				this.runtime,
+				this.datastores,
+				this.logger,
+			);
+		}
+		return this._dataStore;
+	}
+
+	public get entryPoint(): IFluidHandle<FluidObject> {
+		return this.dataStore.entryPoint;
+	}
+
+	public async trySetAlias(alias: string): Promise<AliasResult> {
+		return this.dataStore.trySetAlias(alias);
 	}
 }
