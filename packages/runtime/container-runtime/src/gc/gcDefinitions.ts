@@ -272,10 +272,20 @@ export interface ISweepMessage {
 }
 
 /**
+ * The GC TombstoneLoaded message.
+ * @internal
+ */
+export interface ITombstoneLoadedMessage {
+	type: "TombstoneLoaded";
+	// The id of Tombstoned node that was loaded.
+	contents: { nodePath: string };
+}
+
+/**
  * Type for a message to be used for sending / received garbage collection messages.
  * @internal
  */
-export type GarbageCollectionMessage = ISweepMessage;
+export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.

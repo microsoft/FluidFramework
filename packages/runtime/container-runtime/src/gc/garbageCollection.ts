@@ -856,21 +856,28 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param local - Whether it was send by this client.
 	 */
 	public processMessage(message: ContainerRuntimeGCMessage, local: boolean) {
-		switch (message.contents.type) {
+		const gcMessageType = message.contents.type;
+		switch (gcMessageType) {
 			case "Sweep": {
 				// Delete the nodes whose ids are present in the contents.
 				this.deleteSweepReadyNodes(message.contents.deletedNodeIds);
 				break;
 			}
+			case "TombstoneLoaded": {
+				// Mark the node as referenced to ensure it isn't Swept
+				const tombstoneMessageContents = message.contents.contents;
+				this.unreferencedNodesState.delete(tombstoneMessageContents.nodePath);
+				break;
+			}
 			default: {
 				if (
 					!compatBehaviorAllowsGCMessageType(
-						message.contents.type,
+						gcMessageType,
 						message.compatDetails?.behavior,
 					)
 				) {
 					const error = DataProcessingError.create(
-						`Garbage collection message of unknown type ${message.contents.type}`,
+						`Garbage collection message of unknown type ${gcMessageType}`,
 						"processMessage",
 					);
 					throw error;
@@ -967,15 +974,19 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		const errorRequest: IRequest = request ?? { url: nodePath };
-		// If the object is tombstoned and tombstone enforcement is configured, throw an error.
-		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
-			// The requested data store is removed by gc. Create a 404 gc response exception.
-			throw responseToException(
-				createResponseError(404, `${nodeType} was tombstoned`, errorRequest, {
-					[TombstoneResponseHeaderKey]: true,
-				}),
-				errorRequest,
-			);
+		if (isTombstoned) {
+			this.onTombstoneLoaded(nodePath);
+
+			// If tombstone enforcement is configured and allowTombstone is not true, throw an error
+			if (this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
+				// The requested data store is removed by gc. Create a 404 gc response exception.
+				throw responseToException(
+					createResponseError(404, `${nodeType} was tombstoned`, errorRequest, {
+						[TombstoneResponseHeaderKey]: true,
+					}),
+					errorRequest,
+				);
+			}
 		}
 
 		// If the object is inactive and inactive enforcement is configured, throw an error.
@@ -993,6 +1004,21 @@ export class GarbageCollector implements IGarbageCollector {
 				);
 			}
 		}
+	}
+
+	private onTombstoneLoaded(nodePath: string) {
+		const contents: GarbageCollectionMessage = {
+			type: "TombstoneLoaded",
+			contents: {
+				nodePath,
+			},
+		};
+		const containerGCMessage: ContainerRuntimeGCMessage = {
+			type: ContainerMessageType.GC,
+			contents,
+			compatDetails: { behavior: "Ignore" },
+		};
+		this.submitMessage(containerGCMessage);
 	}
 
 	/**
