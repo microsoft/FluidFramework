@@ -95,12 +95,6 @@ export function mapFieldChanges<TIn, TOut>(
 			fields: mapFieldsChanges(fields, func),
 		}));
 	}
-	if (fieldChanges.build !== undefined) {
-		out.build = fieldChanges.build.map(({ id, trees }) => ({
-			id,
-			trees: trees.map(func),
-		}));
-	}
 	if (fieldChanges.rename !== undefined) {
 		out.rename = fieldChanges.rename;
 	}

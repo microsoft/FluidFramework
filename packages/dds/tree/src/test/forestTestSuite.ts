@@ -192,10 +192,11 @@ export function testForest(config: ForestTestConfiguration): void {
 			assert(forest.isEmpty);
 
 			const insert: DeltaFieldChanges = {
-				build: [{ id: { minor: 1 }, trees: [singleJsonCursor([])] }],
 				local: [{ count: 1, attach: { minor: 1 } }],
 			};
-			applyTestDelta(new Map([[brand("different root"), insert]]), forest);
+			applyTestDelta(new Map([[brand("different root"), insert]]), forest, undefined, [
+				{ id: { minor: 1 }, trees: [singleJsonCursor([])] },
+			]);
 			assert(!forest.isEmpty);
 		});
 
@@ -399,11 +400,11 @@ export function testForest(config: ForestTestConfiguration): void {
 			cursor.clear();
 
 			const mark: DeltaMark = { count: 1, detach: detachId };
-			const delta: DeltaFieldMap = new Map([
-				[rootFieldKey, { local: [mark], destroy: [{ id: detachId, count: 1 }] }],
+			const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [mark] }]]);
+			applyTestDelta(delta, forest, undefined, undefined, [{ id: detachId, count: 1 }]);
+			applyTestDelta(delta, forest.anchors, undefined, undefined, [
+				{ id: detachId, count: 1 },
 			]);
-			applyTestDelta(delta, forest);
-			applyTestDelta(delta, forest.anchors);
 
 			assert.equal(
 				forest.tryMoveCursorToNode(firstNodeAnchor, cursor),
@@ -570,27 +571,23 @@ export function testForest(config: ForestTestConfiguration): void {
 						[
 							xField,
 							{
-								build: [
-									{
-										id: buildId,
-										trees: [
-											cursorForJsonableTreeNode({
-												type: leaf.boolean.name,
-												value: true,
-											}),
-										],
-									},
-								],
-								local: [
-									{ count: 1, detach: detachId },
-									{ count: 1, attach: buildId },
-								],
+								local: [{ count: 1, detach: detachId, attach: buildId }],
 							},
 						],
 					]),
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [setField] }]]);
-				applyTestDelta(delta, forest);
+				applyTestDelta(delta, forest, undefined, [
+					{
+						id: buildId,
+						trees: [
+							cursorForJsonableTreeNode({
+								type: leaf.boolean.name,
+								value: true,
+							}),
+						],
+					},
+				]);
 
 				const reader = forest.allocateCursor();
 				moveToDetachedField(forest, reader);
@@ -725,7 +722,6 @@ export function testForest(config: ForestTestConfiguration): void {
 					[
 						rootFieldKey,
 						{
-							build: [{ id: buildId, trees: [singleJsonCursor({ x: 0 })] }],
 							global: [
 								{
 									id: buildId,
@@ -737,7 +733,9 @@ export function testForest(config: ForestTestConfiguration): void {
 						},
 					],
 				]);
-				applyTestDelta(delta, forest);
+				applyTestDelta(delta, forest, undefined, [
+					{ id: buildId, trees: [singleJsonCursor({ x: 0 })] },
+				]);
 
 				const reader = forest.allocateCursor();
 				moveToDetachedField(forest, reader);
@@ -791,17 +789,6 @@ export function testForest(config: ForestTestConfiguration): void {
 					[
 						rootFieldKey,
 						{
-							build: [
-								{
-									id: buildId,
-									trees: [
-										cursorForJsonableTreeNode({
-											type: leaf.number.name,
-											value: 3,
-										}),
-									],
-								},
-							],
 							global: [
 								{
 									id: buildId,
@@ -809,17 +796,6 @@ export function testForest(config: ForestTestConfiguration): void {
 										[
 											brand("newField"),
 											{
-												build: [
-													{
-														id: buildId2,
-														trees: [
-															cursorForJsonableTreeNode({
-																type: leaf.number.name,
-																value: 4,
-															}),
-														],
-													},
-												],
 												local: [{ count: 1, attach: buildId2 }],
 											},
 										],
@@ -830,7 +806,26 @@ export function testForest(config: ForestTestConfiguration): void {
 						},
 					],
 				]);
-				applyTestDelta(delta, forest);
+				applyTestDelta(delta, forest, undefined, [
+					{
+						id: buildId,
+						trees: [
+							cursorForJsonableTreeNode({
+								type: leaf.number.name,
+								value: 3,
+							}),
+						],
+					},
+					{
+						id: buildId2,
+						trees: [
+							cursorForJsonableTreeNode({
+								type: leaf.number.name,
+								value: 4,
+							}),
+						],
+					},
+				]);
 
 				const reader = forest.allocateCursor();
 				moveToDetachedField(forest, reader);
