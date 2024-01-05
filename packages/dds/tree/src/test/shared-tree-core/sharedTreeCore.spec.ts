@@ -167,7 +167,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 
@@ -198,7 +198,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 
@@ -224,7 +224,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 

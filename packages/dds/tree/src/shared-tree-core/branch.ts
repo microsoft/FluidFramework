@@ -18,14 +18,13 @@ import {
 	makeAnonChange,
 	Revertible,
 	RevertibleKind,
-	RevertResult,
-	DiscardResult,
+	RevertibleResult,
+	RevertibleStatus,
 	BranchRebaseResult,
 	rebaseChangeOverChanges,
 	tagRollbackInverse,
 } from "../core/index.js";
 import { EventEmitter, ISubscribable } from "../events/index.js";
-import { fail } from "../util/index.js";
 import { TransactionStack } from "./transactionStack.js";
 
 /**
@@ -110,10 +109,13 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	/**
 	 * Fired when a revertible change is made to this branch.
 	 */
-	revertible(type: Revertible): void;
+	newRevertible(type: Revertible): void;
 
 	/**
 	 * Fired when a revertible made on this branch is disposed.
+	 *
+	 * @param revertible - The revertible that was disposed.
+	 * This revertible was previously passed to the `newRevertible` event.
 	 */
 	revertibleDispose(revision: RevisionTag): void;
 
@@ -225,7 +227,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this is not part of a transaction, emit a revertible event
 		if (!this.isTransacting()) {
-			this.emit("revertible", this.makeSharedTreeRevertible(newHead, revertibleKind));
+			this.emit("newRevertible", this.makeSharedTreeRevertible(newHead, revertibleKind));
 		}
 
 		this.emit("afterChange", changeEvent);
@@ -302,7 +304,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this transaction is not nested, emit a revertible event
 		if (!this.isTransacting()) {
-			this.emit("revertible", this.makeSharedTreeRevertible(newHead, RevertibleKind.Default));
+			this.emit(
+				"newRevertible",
+				this.makeSharedTreeRevertible(newHead, RevertibleKind.Default),
+			);
 		}
 
 		this.emit("afterChange", changeEvent);
@@ -394,34 +399,51 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		kind: RevertibleKind,
 	): Revertible {
 		this._revertibleCommits.set(commit.revision, commit);
-		let discarded = false;
+		let referenceCount = 0;
 		const revertible = {
 			kind,
 			origin: {
 				// This is currently always the case, but we may want to support reverting remote ops
 				isLocal: true,
 			},
+			get status(): RevertibleStatus {
+				return referenceCount > 0 ? RevertibleStatus.Valid : RevertibleStatus.Disposed;
+			},
 			revert: () => {
-				if (discarded) {
-					fail("revertible has already been discarded");
+				if (revertible.status === RevertibleStatus.Valid) {
+					this.revert(commit.revision, kind);
+					revertible.dispose();
+					return RevertibleResult.Success;
 				}
-				const revertCommit = this.revert(commit.revision, kind);
-				if (revertCommit !== undefined) {
-					revertible.discard();
-					return RevertResult.Success;
+				return RevertibleResult.Failure;
+			},
+			retain: () => {
+				if (revertible.status === RevertibleStatus.Valid) {
+					referenceCount += 1;
+					return RevertibleResult.Success;
 				}
-				return RevertResult.Failure;
+				return RevertibleResult.Failure;
 			},
 			discard: () => {
-				if (discarded) {
-					fail("revertible has already been discarded");
+				if (revertible.status === RevertibleStatus.Valid) {
+					referenceCount -= 1;
+					if (referenceCount === 0) {
+						revertible.dispose();
+					}
+					return RevertibleResult.Success;
 				}
+				return RevertibleResult.Failure;
+			},
+			dispose: () => {
+				assert(
+					revertible.status === RevertibleStatus.Valid,
+					"Cannot dispose already disposed revertible",
+				);
 				// TODO: delete the repair data from the forest
 				this._revertibleCommits.delete(commit.revision);
 				this.revertibles.delete(revertible);
-				discarded = true;
+				referenceCount = 0;
 				this.emit("revertibleDispose", commit.revision);
-				return DiscardResult.Success;
 			},
 		};
 		this.revertibles.add(revertible);
@@ -431,7 +453,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private revert(
 		revision: RevisionTag,
 		revertibleKind: RevertibleKind,
-	): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		assert(!this.isTransacting(), 0x7cb /* Undo is not yet supported during transactions */);
 
 		const commit = this._revertibleCommits.get(revision);

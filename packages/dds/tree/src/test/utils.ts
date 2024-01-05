@@ -1026,7 +1026,7 @@ export function announceTestDelta(
 }
 
 export function createTestUndoRedoStacks(
-	events: ISubscribable<{ revertible(type: Revertible): void }>,
+	events: ISubscribable<{ newRevertible(type: Revertible): void }>,
 ): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
@@ -1035,7 +1035,7 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = events.on("revertible", (revertible) => {
+	const unsubscribe = events.on("newRevertible", (revertible) => {
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {
