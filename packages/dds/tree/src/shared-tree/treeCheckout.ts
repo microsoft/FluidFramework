@@ -41,8 +41,8 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
- * Events for {@link TreeView}.
- * @public
+ * Events for {@link ITreeCheckout}.
+ * @internal
  */
 export interface CheckoutEvents {
 	/**

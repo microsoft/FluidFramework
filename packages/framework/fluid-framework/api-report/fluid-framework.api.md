@@ -53,12 +53,6 @@ export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (inf
 
 export { AttachState }
 
-// @public
-export interface CheckoutEvents {
-    afterBatch(): void;
-    revertible(revertible: Revertible): void;
-}
-
 export { ConnectionState }
 
 export { ContainerErrorTypes }
@@ -66,12 +60,6 @@ export { ContainerErrorTypes }
 export { ContainerSchema }
 
 export { DataObjectClass }
-
-// @public
-export enum DiscardResult {
-    Failure = 1,
-    Success = 0
-}
 
 // @public
 export const disposeSymbol: unique symbol;
@@ -223,30 +211,6 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
-
-// @public
-export interface Revertible {
-    discard(): DiscardResult;
-    readonly kind: RevertibleKind;
-    readonly origin: {
-        readonly isLocal: boolean;
-    };
-    revert(): RevertResult;
-}
-
-// @public
-export enum RevertibleKind {
-    Default = 0,
-    Rebase = 3,
-    Redo = 2,
-    Undo = 1
-}
-
-// @public
-export enum RevertResult {
-    Failure = 1,
-    Success = 0
-}
 
 // @public @sealed
 export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
@@ -442,8 +406,13 @@ export enum TreeStatus {
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
-    readonly events: ISubscribable<CheckoutEvents>;
+    readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+}
+
+// @public
+export interface TreeViewEvents {
+    afterBatch(): void;
 }
 
 // @public
