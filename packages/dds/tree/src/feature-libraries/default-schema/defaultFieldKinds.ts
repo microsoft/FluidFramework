@@ -20,12 +20,13 @@ import {
 	referenceFreeFieldChangeRebaser,
 	FieldKindWithEditor,
 } from "../modular-schema/index.js";
-import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
+import { SequenceFieldEditor, sequenceFieldChangeHandler } from "../sequence-field/index.js";
 import {
 	noChangeCodecFamily,
 	OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
+	OptionalFieldEditor,
 } from "../optional-field/index.js";
 import { Multiplicity } from "../multiplicity.js";
 

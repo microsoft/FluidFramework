@@ -4,7 +4,7 @@
  */
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { createEmitter, ISubscribable } from "../../events/index.js";
+import { createEmitter, HasListeners, IEmitter, ISubscribable } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
 import {
 	StoredSchemaCollection,

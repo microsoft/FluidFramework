@@ -28,7 +28,7 @@ import {
 	Assume,
 	mapIterable,
 } from "../../util/index.js";
-import { FieldKinds } from "../default-schema/index.js";
+import { FieldKinds, Forbidden } from "../default-schema/index.js";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
 import { LazyItem } from "./flexList.js";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils.js";
