@@ -9843,18 +9843,23 @@ importers:
 
   packages/test/functional-tests:
     specifiers:
+      '@fluid-private/test-dds-utils': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
       '@fluid-tools/build-cli': 0.29.0-227332
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.29.0-227332
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
+      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.1.0-223007
+      '@fluidframework/register-collection': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -9876,18 +9881,23 @@ importers:
     dependencies:
       events: 3.3.0
     devDependencies:
+      '@fluid-private/test-dds-utils': link:../../dds/test-dds-utils
       '@fluid-private/test-loader-utils': link:../../loader/test-loader-utils
       '@fluid-tools/build-cli': 0.29.0-227332_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0-227332_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
+      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/map': link:../../dds/map
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@fluidframework/protocol-definitions': 3.1.0-223007
+      '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
