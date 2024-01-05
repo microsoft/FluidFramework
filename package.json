@@ -155,10 +155,10 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "0.29.0-227332",
+		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-227332",
+		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
@@ -180,7 +180,7 @@
 		"syncpack": "^9.8.4",
 		"typescript": "~5.1.6"
 	},
-	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
+	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
 	"engines": {
 		"node": ">=18.17.1",
 		"pnpm": "7"

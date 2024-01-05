@@ -83,7 +83,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-227332",
+		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/cors": "^2.8.4",
@@ -115,7 +115,7 @@
 		"start-server-and-test": "^1.11.7",
 		"stream-http": "^3.2.0",
 		"supertest": "^3.4.2",
-		"tinylicious": "^2.0.2",
+		"tinylicious": "^3.0.0",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.1.6",

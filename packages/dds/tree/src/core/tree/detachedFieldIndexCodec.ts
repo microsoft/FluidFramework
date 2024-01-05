@@ -53,7 +53,9 @@ class MajorCodec implements IJsonCodec<Major> {
 			major === "root" || major >= 0,
 			"Expected final id on decode of detached field index revision",
 		);
-		return this.revisionTagCodec.decode(major, this.idCompressor.localSessionId);
+		return this.revisionTagCodec.decode(major, {
+			originatorId: this.idCompressor.localSessionId,
+		});
 	}
 }
 
