@@ -27,7 +27,7 @@ However, a DDS is not *just* a local object. A DDS can also be changed by other 
 
 {{% callout tip %}}
 
-Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, *SharedString*,
+Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, 
 etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
@@ -214,7 +214,7 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 ### Specialized data structures
 
 *   [SharedCounter][] -- a distributed counter. (Deprecated in Fluid Framework 2.0.)
-*   [SharedString][] -- a specialized data structure for handling collaborative text.
+*   [SharedString][] -- a specialized data structure for handling collaborative text. (Deprecated in Fluid Framework 2.0.)
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
 
