@@ -25,7 +25,7 @@ import {
 	CompatApis,
 	getDriverApi,
 } from "./testApi.js";
-import { getAllFluidVersions } from "./versionUtils.js";
+
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
 
@@ -46,9 +46,8 @@ function createCompatSuite(
 		if (compatFilter !== undefined) {
 			configs = configs.filter((value) => compatFilter.includes(value.kind));
 		}
-		const allVersions = getAllFluidVersions();
 		for (const config of configs) {
-			if (minVersion && isCompatVersionBelowMinVersion(minVersion, allVersions, config)) {
+			if (minVersion && isCompatVersionBelowMinVersion(minVersion, config)) {
 				// skip current config if compat version is below min version supported for test suite
 				continue;
 			}

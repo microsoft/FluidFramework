@@ -137,10 +137,17 @@ export function resolveVersion(requested: string, installed: boolean) {
 		}
 		throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
 	} else {
-		const result = execSync(
-			`npm v @fluidframework/container-loader@"${requested}" version --json`,
-			{ encoding: "utf8" },
-		);
+		let result: string | undefined;
+		try {
+			result = execSync(
+				`npm v @fluidframework/container-loader@"${requested}" version --json`,
+				{ encoding: "utf8" },
+			);
+		} catch (error: any) {
+			throw new Error(
+				`Error while running: npm v @fluidframework/container-loader@"${requested}" version --json`,
+			);
+		}
 		if (result === "" || result === undefined) {
 			throw new Error(`No version published as ${requested}`);
 		}
@@ -158,22 +165,6 @@ export function resolveVersion(requested: string, installed: boolean) {
 
 		throw new Error(`No version found for ${requested}`);
 	}
-}
-
-/**
- * @internal
- */
-export function getAllFluidVersions(): string[] {
-	const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
-		encoding: "utf-8",
-	});
-	const allVersions: string[] = JSON.parse(allVersionsFromNpm).sort(semver.compare);
-	return allVersions;
-	// const allVersionsMap = new Map<string, number>();
-	// allVersions.forEach((value, index) => {
-	// 	allVersionsMap.set(value, index);
-	// });
-	// return allVersionsMap;
 }
 
 async function ensureModulePath(version: string, modulePath: string) {

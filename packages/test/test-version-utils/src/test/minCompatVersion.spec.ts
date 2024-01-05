@@ -5,17 +5,14 @@
 
 import { strict as assert } from "assert";
 import { CompatKind } from "../../compatOptions.cjs";
-import { getAllFluidVersions } from "../versionUtils.js";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
 import { baseVersion } from "../baseVersion.js";
 
 describe("Minimum Compat Version", () => {
-	const allVersions = getAllFluidVersions();
-
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
 		try {
-			isCompatVersionBelowMinVersion(invalidString, allVersions, {
+			isCompatVersionBelowMinVersion(invalidString, {
 				name: `test`,
 				kind: CompatKind.None,
 				compatVersion: "2.0.0-internal.8.0.0",
@@ -24,13 +21,11 @@ describe("Minimum Compat Version", () => {
 		} catch (error: any) {
 			assert.strictEqual(
 				error.message,
-				`Specified minimum version ${invalidString} not found in versions map`,
+				`Error while running: npm v @fluidframework/container-loader@"${invalidString}" version --json`,
 			);
 		}
 	});
 
-	// latest version found in allVersions is 2.0.0-internal.8.0.0
-	// (should be 2.0.0-rc.2.0.0?)
 	// N-1 version is 2.0.0-internal.8.0.0
 	// N-2 version is 2.0.0-internal.8.0.0 (bug?)
 	// therefore start testing on N-3
@@ -38,7 +33,7 @@ describe("Minimum Compat Version", () => {
 		it(`compatVersion N-${i} < latest version`, () => {
 			assert.strictEqual(
 				// using latest version found in allVersions array.
-				isCompatVersionBelowMinVersion(allVersions[allVersions.length - 1], allVersions, {
+				isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", {
 					name: `test`,
 					kind: CompatKind.None,
 					compatVersion: -i,
@@ -51,7 +46,7 @@ describe("Minimum Compat Version", () => {
 
 	it("cross compat", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", allVersions, {
+			isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "2.0.0-internal.8.0.0",
@@ -60,7 +55,7 @@ describe("Minimum Compat Version", () => {
 			true,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", allVersions, {
+			isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "1.3.7",
@@ -69,7 +64,7 @@ describe("Minimum Compat Version", () => {
 			true,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("1.3.7", allVersions, {
+			isCompatVersionBelowMinVersion("1.3.7", {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "2.0.0-internal.8.0.0",
@@ -78,7 +73,7 @@ describe("Minimum Compat Version", () => {
 			false,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("1.3.7", allVersions, {
+			isCompatVersionBelowMinVersion("1.3.7", {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "1.3.7",

@@ -4,6 +4,7 @@
  */
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
+import * as semver from "semver";
 import {
 	CompatKind,
 	compatKind,
@@ -200,30 +201,19 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
-export function isCompatVersionBelowMinVersion(
-	minVersion: string,
-	allVersions: string[],
-	config: CompatConfig,
-) {
+export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
 	let lowerVersion: string | number;
 	if (config.kind === CompatKind.CrossVersion) {
-		const compatV = allVersions.indexOf(config.compatVersion as string);
-		const loadV = allVersions.indexOf(config.loadVersion as string);
 		lowerVersion =
-			compatV < loadV ? (config.compatVersion as string) : (config.loadVersion as string);
+			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
+				? (config.loadVersion as string)
+				: config.compatVersion;
 	} else {
 		lowerVersion = config.compatVersion;
 	}
 	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
-	if (!allVersions.includes(minVersion)) {
-		throw new Error(`Specified minimum version ${minVersion} not found in versions map`);
-	}
-	if (!allVersions.includes(compatVersion)) {
-		throw new Error(`Compat version ${compatVersion} not found in versions map`);
-	}
-	const minVersionIndex: number = allVersions.indexOf(minVersion);
-	const compatVersionIndex: number = allVersions.indexOf(compatVersion);
-	return compatVersionIndex < minVersionIndex;
+	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
+	return semver.compare(minReqVersion, compatVersion) > 0;
 }
 
 /**
