@@ -419,15 +419,14 @@ function internalSchema(
 	prereleaseIdentifier: string,
 	requested: number,
 ): string {
+	if (requested === 0) {
+		return `${publicVersion}-${prereleaseIdentifier}.${internalVersion}`;
+	}
+
 	// Here we handle edge cases of converting the early rc/internal releases.
 	// We convert early rc releases to internal releases, and early internal releases to public releases.
 	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {
 		if (semver.eq(publicVersion, "2.0.0")) {
-			// Check for most common edge case first (N-1)
-			if (semver.lt(internalVersion, "2.0.0") && requested === -1) {
-				return "^2.0.0-internal.8.0.0";
-			}
-
 			const parsed = semver.parse(internalVersion);
 			assert(parsed !== null, "internalVersion should be parsable");
 			if (parsed.major + requested < 1) {
