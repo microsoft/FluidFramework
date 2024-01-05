@@ -33,6 +33,7 @@ export {
 } from "./messageTypes";
 export { IBlobManagerLoadInfo } from "./blobManager";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
+export { detectOutboundReferences } from "./dataStores";
 export {
 	GCNodeType,
 	IGCMetadata,
