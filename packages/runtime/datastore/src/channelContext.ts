@@ -213,7 +213,9 @@ export async function branchChannel(
 ) {
 	const services: ChannelServiceEndpoints = {
 		deltaConnection: ChannelDeltaConnection.clone(channelServices.deltaConnection, {
-			submit: () => {},
+			submit: () => {
+				throw new Error("Summarizer should never submit messages");
+			},
 			dirty: () => {},
 			addedGCOutboundReference: () => {},
 		}),

@@ -21,6 +21,7 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
+	summarizerClientType,
 } from "@fluidframework/runtime-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
@@ -28,8 +29,6 @@ import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
 import { timeoutAwait } from "./timeoutUtils";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
-
-const summarizerClientType = "summarizer";
 
 /**
  * This function should ONLY be used for back compat purposes

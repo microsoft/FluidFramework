@@ -103,7 +103,6 @@ export class RemoteChannelContext implements IChannelContext {
 			// Send all pending messages to the channel
 			assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
 			for (const message of this.pending) {
-				summarizer?.services.deltaConnection.process(message, false, undefined);
 				this.services.deltaConnection.process(
 					message,
 					false,
