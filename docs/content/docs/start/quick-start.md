@@ -1,6 +1,6 @@
 ---
-title: Quick Start
-menuPosition: 1
+title: Quick Start V.1
+menuPosition: 3
 codeCopyButton: true
 aliases:
   - "/docs/get-started/quick-start/"
@@ -11,6 +11,12 @@ aliases:
 
 In this Quick Start you will be getting a dice roller Fluid application up and running first on your computer's
 localhost.
+
+{{< callout note >}}
+
+The demo app uses Fluid Framework 1.0. For a quick start that uses version 2.0 preview, see [Quick Start V.2]({{< relref "quick-start-sharedtree.md" >}})
+
+{{< /callout >}}
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
     bundleName="dice-roller.2021-09-24.js" >}}
