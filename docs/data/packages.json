@@ -1,12 +1,18 @@
 {
 	"v1": {
-		"libraries": ["fluid-framework", "@fluidframework/counter"],
+		"container": ["@fluidframework/container-definitions", "@fluidframework/container-loader"],
+		"dds": ["@fluidframework/map"],
 		"serviceClients": ["@fluidframework/azure-client", "@fluidframework/tinylicious-client"],
-		"utilities": ["@fluidframework/azure-service-utils"]
+		"utilities": ["@fluidframework/driver-definitions", "@fluidframework/fluid-static"]
 	},
 	"v2": {
-		"libraries": ["fluid-framework"],
-		"serviceClients": ["@fluidframework/azure-client", "@fluid-experimental/odsp-client"],
-		"utilities": ["@fluidframework/azure-service-utils"]
+		"container": ["@fluidframework/container-definitions", "@fluidframework/container-loader"],
+		"dds": ["@fluidframework/map", "@fluidframework/tree"],
+		"serviceClients": [
+			"@fluidframework/azure-client",
+			"@fluidframework/tinylicious-client",
+			"@fluid-experimental/odsp-client"
+		],
+		"utilities": ["@fluidframework/driver-definitions", "@fluidframework/fluid-static"]
 	}
 }
