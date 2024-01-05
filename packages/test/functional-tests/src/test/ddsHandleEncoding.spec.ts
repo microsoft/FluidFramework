@@ -29,6 +29,9 @@ describe("DDS Handle Encoding", () => {
 	});
 
 	/**
+	 * This uses the same logic that the ContainerRuntime does when processing incoming messages
+	 * to detect handles in the op's object graph, for notifying GC of new references between objects.
+	 *
 	 * @returns The list of handles found in the given contents object
 	 */
 	function findAllHandles(contents: unknown) {
@@ -49,14 +52,14 @@ describe("DDS Handle Encoding", () => {
 	/** Each test case runs some code then declares the handles (if any) it expects to be included in the op payload */
 	interface ITestCase {
 		name: string;
-		doStuff(): void;
+		addHandleToDDS(): void;
 		expectedHandles: string[];
 	}
 
-	/** This takes care of creating the DDS behind the scenes so the testCase's code is ready to invoke */
+	/** This takes care of creating the DDS behind the scenes so the ITestCase's code is ready to invoke */
 	function createTestCase<T extends IChannel>(
 		factory: IChannelFactoryWithCreatedType<T>,
-		doStuff: (dds: T) => void,
+		addHandleToDDS: (dds: T) => void,
 		expectedHandles: string[],
 	): ITestCase {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -79,7 +82,7 @@ describe("DDS Handle Encoding", () => {
 
 		return {
 			name,
-			doStuff: () => doStuff(dds),
+			addHandleToDDS: () => addHandleToDDS(dds),
 			expectedHandles,
 		};
 	}
@@ -113,7 +116,7 @@ describe("DDS Handle Encoding", () => {
 	testCases.forEach((testCase) => {
 		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should" : "should not";
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
-			testCase.doStuff();
+			testCase.addHandleToDDS();
 
 			assert.equal(messages.length, 1, "Expected a single message to be submitted");
 			assert.deepEqual(
