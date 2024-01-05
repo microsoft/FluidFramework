@@ -127,6 +127,8 @@ import {
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachedNodeDestruction } from "../core/tree/delta.js";
 
 // Testing utilities
 
@@ -1005,11 +1007,9 @@ export function applyTestDelta(
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DetachedNodeDestruction[],
 ): void {
-	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
-	if (build !== undefined) {
-		rootDelta.build = build;
-	}
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
@@ -1021,13 +1021,30 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
 		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
 	);
+}
+
+export function rootFromDeltaFieldMap(
+	delta: DeltaFieldMap,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DetachedNodeDestruction[],
+): Mutable<DeltaRoot> {
+	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (build !== undefined) {
+		rootDelta.build = build;
+	}
+	if (destroy !== undefined) {
+		rootDelta.destroy = destroy;
+	}
+	return rootDelta;
 }
 
 export function createTestUndoRedoStacks(

@@ -17,9 +17,12 @@ import {
 	DeltaMark,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
+	DeltaDetachedNodeBuild,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import { deepFreeze, testIdCompressor } from "../utils.js";
+import { deepFreeze, rootFromDeltaFieldMap, testIdCompressor } from "../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachedNodeDestruction } from "../../core/tree/delta.js";
 
 function visit(
 	delta: DeltaRoot,
@@ -76,8 +79,11 @@ function testTreeVisit(
 	marks: DeltaFieldChanges,
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DetachedNodeDestruction[],
 ): void {
-	testVisit({ fields: new Map([[rootKey, marks]]) }, expected, detachedFieldIndex);
+	const rootDelta = rootFromDeltaFieldMap(new Map([[rootKey, marks]]), build, destroy);
+	testVisit(rootDelta, expected, detachedFieldIndex);
 }
 
 const rootKey: FieldKey = brand("root");
@@ -240,7 +246,6 @@ describe("visitDelta", () => {
 			attach: moveId,
 		};
 		const delta: DeltaFieldChanges = {
-			build: [{ id: { minor: 43 }, trees: [content] }],
 			global: [
 				{
 					id: { minor: 43 },
@@ -250,8 +255,8 @@ describe("visitDelta", () => {
 			local: [{ count: 1, attach: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
-			["enterField", rootKey],
 			["create", [content], field0],
+			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
@@ -269,7 +274,7 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index);
+		testTreeVisit(delta, expected, index, [{ id: { minor: 43 }, trees: [content] }]);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move node to the right", () => {
@@ -433,7 +438,6 @@ describe("visitDelta", () => {
 		};
 		const delta: DeltaFieldChanges = {
 			global: [nested],
-			destroy: [{ id: node1, count: 1 }],
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
@@ -456,7 +460,7 @@ describe("visitDelta", () => {
 			["exitField", field0],
 			["destroy", field0, 1],
 		];
-		testTreeVisit(delta, expected, index);
+		testTreeVisit(delta, expected, index, undefined, [{ id: node1, count: 1 }]);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("destroy (root level)", () => {
@@ -478,13 +482,11 @@ describe("visitDelta", () => {
 		const buildId = { minor: 42 };
 		const detachId = { minor: 43 };
 		const delta: DeltaFieldChanges = {
-			build: [{ id: buildId, trees: [content] }],
 			rename: [{ oldId: buildId, newId: detachId, count: 1 }],
-			destroy: [{ id: detachId, count: 1 }],
 		};
 		const expected: VisitScript = [
-			["enterField", rootKey],
 			["create", [content], field0],
+			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
@@ -493,7 +495,13 @@ describe("visitDelta", () => {
 			["exitField", rootKey],
 			["destroy", field1, 1],
 		];
-		testTreeVisit(delta, expected, index);
+		testTreeVisit(
+			delta,
+			expected,
+			index,
+			[{ id: buildId, trees: [content] }],
+			[{ id: detachId, count: 1 }],
+		);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("changes under move-out", () => {
@@ -632,12 +640,11 @@ describe("visitDelta", () => {
 	it("transient insert", () => {
 		const index = makeDetachedFieldIndex("", testIdCompressor);
 		const delta: DeltaFieldChanges = {
-			build: [{ id: { minor: 42 }, trees: [content] }],
 			rename: [{ oldId: { minor: 42 }, count: 1, newId: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
-			["enterField", rootKey],
 			["create", [content], field0],
+			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
@@ -645,7 +652,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index);
+		testTreeVisit(delta, expected, index, [{ id: { minor: 42 }, trees: [content] }]);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 43 }, root: 1 }]);
 	});
 	it("changes under transient", () => {
@@ -662,13 +669,12 @@ describe("visitDelta", () => {
 		const buildId = { minor: 42 };
 		const detachId = { minor: 43 };
 		const delta: DeltaFieldChanges = {
-			build: [{ id: buildId, trees: [content] }],
 			global: [{ id: buildId, fields: new Map([[barKey, { local: [moveOut, moveIn] }]]) }],
 			rename: [{ oldId: buildId, count: 1, newId: detachId }],
 		};
 		const expected: VisitScript = [
-			["enterField", rootKey],
 			["create", [content], field0], // field0: buildId
+			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
@@ -690,7 +696,7 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", field2],
 		];
-		testTreeVisit(delta, expected, index);
+		testTreeVisit(delta, expected, index, [{ id: buildId, trees: [content] }]);
 		assert.deepEqual(Array.from(index.entries()), [{ id: detachId, root: 2 }]);
 	});
 	it("restore", () => {
@@ -874,12 +880,11 @@ describe("visitDelta", () => {
 			newId: node1,
 		};
 		const delta = {
-			build: [{ id: buildId, trees: [content] }],
 			rename: [renameOldNode, renameNewNode],
 		};
 		const expected: VisitScript = [
-			["enterField", rootKey],
 			["create", [content], field1], // field1: buildId
+			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0], // field0: node1
 			["detach", { start: 0, end: 1 }, field2], // field2: detachId
@@ -890,7 +895,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index);
+		testTreeVisit(delta, expected, index, [{ id: buildId, trees: [content] }]);
 		assert.deepEqual(Array.from(index.entries()), [
 			{ id: detachId, root: 2 },
 			{ id: node1, root: 3 },

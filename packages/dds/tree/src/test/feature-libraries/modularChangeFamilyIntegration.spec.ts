@@ -598,12 +598,6 @@ function normalizeDeltaFieldChanges(
 	if (delta.local !== undefined && delta.local.length > 0) {
 		normalized.local = delta.local.map((mark) => normalizeDeltaMark(mark, genId, idMap));
 	}
-	if (delta.build !== undefined && delta.build.length > 0) {
-		normalized.build = delta.build.map(({ id, trees }) => ({
-			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
-			trees,
-		}));
-	}
 	if (delta.global !== undefined && delta.global.length > 0) {
 		normalized.global = delta.global.map(({ id, fields }) => ({
 			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
