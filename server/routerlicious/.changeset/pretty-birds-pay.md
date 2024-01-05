@@ -5,6 +5,6 @@
 "@fluidframework/server-services-shared": major
 ---
 
-server-services-client: `messageBrokerId` added to `ISession`
+server-services-client: New `messageBrokerId` property added to `ISession`
 
 The `ISession` interface was updated with new field `messageBrokerId` that would be assigned when message broker is set to Event Hubs.

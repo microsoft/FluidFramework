@@ -20,7 +20,6 @@ import {
 	ITreeCursor,
 	EmptyKey,
 	FieldUpPath,
-	deltaForSet,
 	DetachedFieldIndex,
 	ForestRootId,
 	DetachedField,
@@ -610,21 +609,21 @@ export function testForest(config: ForestTestConfiguration): void {
 				const setField: DeltaMark = {
 					count: 1,
 					fields: new Map([
-						[
-							xField,
-							deltaForSet(
-								cursorForJsonableTreeNode({
-									type: leaf.boolean.name,
-									value: true,
-								}),
-								buildId,
-								detachId,
-							),
-						],
+						[xField, { local: [{ count: 1, detach: detachId, attach: buildId }] }],
 					]),
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [setField] }]]);
-				applyTestDelta(delta, forest);
+				applyTestDelta(delta, forest, undefined, [
+					{
+						id: buildId,
+						trees: [
+							cursorForJsonableTreeNode({
+								type: leaf.boolean.name,
+								value: true,
+							}),
+						],
+					},
+				]);
 
 				const reader = forest.allocateCursor();
 				moveToDetachedField(forest, reader);
@@ -691,9 +690,11 @@ export function testForest(config: ForestTestConfiguration): void {
 				initializeForest(forest, content.map(singleJsonCursor), testRevisionTagCodec);
 
 				const delta: DeltaFieldMap = new Map([
-					[rootFieldKey, deltaForSet(singleJsonCursor(3), buildId)],
+					[rootFieldKey, { local: [{ count: 1, attach: buildId }] }],
 				]);
-				applyTestDelta(delta, forest);
+				applyTestDelta(delta, forest, undefined, [
+					{ id: buildId, trees: [singleJsonCursor(3)] },
+				]);
 
 				const reader = forest.allocateCursor();
 				moveToDetachedField(forest, reader);
@@ -892,7 +893,15 @@ export function testForest(config: ForestTestConfiguration): void {
 										fields: new Map([
 											[
 												fooField,
-												deltaForSet(singleJsonCursor(3), buildId, detachId),
+												{
+													local: [
+														{
+															count: 1,
+															detach: detachId,
+															attach: buildId,
+														},
+													],
+												},
 											],
 										]),
 									},
@@ -903,7 +912,9 @@ export function testForest(config: ForestTestConfiguration): void {
 					]),
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [mark] }]]);
-				applyTestDelta(delta, forest);
+				applyTestDelta(delta, forest, undefined, [
+					{ id: buildId, trees: [singleJsonCursor(3)] },
+				]);
 
 				const reader = forest.allocateCursor();
 				moveToDetachedField(forest, reader);

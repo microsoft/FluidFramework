@@ -112,8 +112,9 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 	RevisionTagCodec,
+	DeltaDetachedNodeBuild,
 } from "../core/index.js";
-import { JsonCompatible, brand, nestedMapFromFlatList } from "../util/index.js";
+import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -1004,8 +1005,12 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (build !== undefined) {
+		rootDelta.build = build;
+	}
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
