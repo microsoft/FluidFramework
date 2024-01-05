@@ -212,7 +212,7 @@ export function buildTreeConfiguration<T extends TreeFieldSchema>(config: Initia
 // @internal
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
-// @public
+// @internal
 export interface CheckoutEvents {
     afterBatch(): void;
     revertible(revertible: Revertible): void;
@@ -348,10 +348,6 @@ export interface DeltaDetachedNodeRename {
 
 // @internal
 export interface DeltaFieldChanges<TTree = DeltaProtoNode> {
-    // @deprecated
-    readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
-    // @deprecated
-    readonly destroy?: readonly DeltaDetachedNodeDestruction[];
     readonly global?: readonly DeltaDetachedNodeChanges<TTree>[];
     readonly local?: readonly DeltaMark<TTree>[];
     readonly rename?: readonly DeltaDetachedNodeRename[];
@@ -402,7 +398,7 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 // @internal
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
-// @public
+// @internal
 export enum DiscardResult {
     Failure = 1,
     Success = 0
@@ -1374,7 +1370,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @public
+// @internal
 export interface Revertible {
     discard(): DiscardResult;
     readonly kind: RevertibleKind;
@@ -1384,7 +1380,7 @@ export interface Revertible {
     revert(): RevertResult;
 }
 
-// @public
+// @internal
 export enum RevertibleKind {
     Default = 0,
     Rebase = 3,
@@ -1392,7 +1388,7 @@ export enum RevertibleKind {
     Undo = 1
 }
 
-// @public
+// @internal
 export enum RevertResult {
     Failure = 1,
     Success = 0
@@ -1895,8 +1891,13 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
-    readonly events: ISubscribable<CheckoutEvents>;
+    readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+}
+
+// @public
+export interface TreeViewEvents {
+    afterBatch(): void;
 }
 
 // @public
