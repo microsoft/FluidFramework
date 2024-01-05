@@ -8,7 +8,7 @@ summary: "An open-source client technology stack that enables real-time collabor
   <h1 class="display-4"><strong>Real-time. Multiuser. Collaboration.</strong></h1>
   <p class="lead">Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.</p>
   <p><iframe width="560" height="315" src="https://www.youtube.com/embed/1okQVFqlMxU?si=BlpSaIHaWY47_OFe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></p>
-  <p><a class="link-button" href="/docs/start/quick-start/">Get Started Now</a></p>
+  <p><a class="link-button" href="/docs/start/quick-start/">Get Started with Fluid Framework Now!</a></p>
 </div>
 
 <div class="value-props">
@@ -40,7 +40,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 {{<swimlane_container fullPage="yes">}}
 <div class="swimlane customers">
     <div class="row text-center">
-        <h2><strong>Customers</strong></h2>
+        <h2><strong>Who's using Fluid Framework</strong></h2>
     </div>
     <div class="row customers-list text-center">
         <div class="col-xs-6 col-sm-3 col-md-2">
@@ -69,7 +69,7 @@ summary: "An open-source client technology stack that enables real-time collabor
         </div>
         <div class="col-xs-6 col-sm-3 col-md-2">
             <div class="row">
-                <img height="50" width="50" alt="Teams" src="images/Teams_logo.jpg">
+                <svg width="50" height="50"><image xlink:href="images/Teams_logo.svg" width="50" height="50"></svg>
             </div>
             <div class="row">
                 <h3>Microsoft Teams</h3>
@@ -138,31 +138,29 @@ summary: "An open-source client technology stack that enables real-time collabor
 {{</swimlane_container>}}
 
 {{<swimlane_container fullPage="yes">}}
-<div class="row title" style="text-align: center;">
-<h2><strong>See how it works</strong></h2>
+<div class="row title">
+    <div class="text-center"><h2><strong>See How It Works</strong></h2></div>
     <div class="col-md-6" >
-        <h2>Sample Code</h2>
-         <p>
+        <h3 class="text-center">Sample Code</h3>
+        <p style="text-left">
             <pre>
-                <code>
-                        import { SharedMap } from "fluid-framework";
-                        import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { SharedMap } from "fluid-framework";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-                        export const diceValueKey = "dice-value-key";
+export const diceValueKey = "dice-value-key";
 
-                        const client = new TinyliciousClient();
+const client = new TinyliciousClient();
 
-                        const containerSchema = {
-                        initialObjects: { diceMap: SharedMap }
-                        };
+const containerSchema = {
+    initialObjects: { diceMap: SharedMap }
+};
 
-                        const root = document.getElementById("content");
-                </code>
+const root = document.getElementById("content");
             </pre>
         </p>
     </div>
-    <div class="col-md-6">
-        <h2>Sample Output</h2>
+    <div class="col-md-6 text-center">
+        <h3>Sample Output</h3>
     {{< fluid_bundle_loader idPrefix="dice-roller"
         bundleName="dice-roller.2021-09-24.js" >}}
     </div>
@@ -174,7 +172,14 @@ summary: "An open-source client technology stack that enables real-time collabor
     <div class="container">
         <div class="row">
             <div class="row title" style="text-align: center;">
-                <h2><strong>Available Fluid Services</strong></h2>
+                <h2><strong>Fluid Framework in the Cloud</strong></h2>
+            </div>
+            <div class="row diagram text-center">
+                <div class="row">
+                    <div class="col-md-12">
+                        <img height="450" width="850" alt="Architecture" src="images/FF Stack.png"><br/><br/><br/>
+                    </div>
+                </div>
             </div>
             <div class="row availableServices-list">
                 <div class="availableServices">
@@ -208,18 +213,22 @@ summary: "An open-source client technology stack that enables real-time collabor
                     </div>
                 </div>
             </div>
-                <div class="row text-center">
-                    <h2><strong>Achitecture Diagram</strong></h2>
-                 </div>
-                <div class="row diagram text-center">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <img height="450" width="850" alt="Architecture" src="images/FF Stack.png">
-                        </div>    
-                    </div>    
-                </div>
-            </div>   
+        </div>
+</div>
+{{</swimlane_container>}}
+
+<div class="swimlane releases">
+    <div class="container">
+        <div class="row" style="text-align: center;">
+            <div class="row title" style="text-align: center;">
+                <h2><strong>What's Next</strong></h2>
+            </div>
+            <div class="subtext">
+                <p>We are constantly evolving the Fluid Framework to improve its capabilities and features. If you're interested in learning about what we're currently working on, please click <a href="">here</a>.
+                </p>
+                <p>Additionally, if you would like to view the release notes for previous versions of the Fluid Framework, you can do so by visiting <a href="https://github.com/microsoft/FluidFramework/releases">this page</a>.
+                </p>
+            </div>
         </div>
     </div>
 </div>
-{{</swimlane_container>}}

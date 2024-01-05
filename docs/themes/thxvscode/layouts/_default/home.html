@@ -11,23 +11,6 @@
 
     {{ .Content }}
 
-        <div class="swimlane releases">
-            <div class="container">
-                <div class="row" style="text-align: center;">
-                    <div class="row title" style="text-align: center;">
-                        <h2><strong>What's coming next</strong></h2>
-                    </div>
-                    <div class="subtext">
-                        <p>We are constantly evolving the Fluid Framework to improve its capabilities and features. If you're interested in learning about what we're currently working on, please click <a href="">here</a>.
-                        </p>
-                        <p>Additionally, if you would like to view the release notes for previous versions of the Fluid Framework, you can do so by visiting <a href="https://github.com/microsoft/FluidFramework/releases">this page</a>.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
 {{- if templates.Exists "partials/extra-foot.html" -}}
 {{ partial "extra-foot.html" . }}
 {{- end }}
