@@ -60,7 +60,7 @@ import {
 	expectEqualFieldPaths,
 	expectEqualPaths,
 	jsonSequenceRootSchema,
-	testIdCompressor,
+	testRevisionTagCodec,
 } from "./utils.js";
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
 
@@ -130,7 +130,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					// Check schema is actually valid. If we forgot to add some required types this would fail.
 					assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
 
-					initializeForest(forest, [singleJsonCursor(data)], testIdCompressor);
+					initializeForest(forest, [singleJsonCursor(data)], testRevisionTagCodec);
 
 					const reader = forest.allocateCursor();
 					moveToDetachedField(forest, reader);
@@ -147,7 +147,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			const forest = factory(
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 			);
-			initializeForest(forest, [singleJsonCursor([1, 2])], testIdCompressor);
+			initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 
 			const reader = forest.allocateCursor();
 			moveToDetachedField(forest, reader);
@@ -181,7 +181,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
 			assert(forest.isEmpty);
-			initializeForest(forest, [singleJsonCursor([])], testIdCompressor);
+			initializeForest(forest, [singleJsonCursor([])], testRevisionTagCodec);
 			assert(!forest.isEmpty);
 		});
 
@@ -212,7 +212,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
 
-			initializeForest(forest, [singleJsonCursor([1, 2])], testIdCompressor);
+			initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 
 			const parentPath: UpPath = {
 				parent: undefined,
@@ -250,7 +250,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
 
-			initializeForest(forest, [singleJsonCursor([1, 2])], testIdCompressor);
+			initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 
 			const parentPath: FieldUpPath = {
 				parent: undefined,
@@ -289,7 +289,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 				);
-				initializeForest(forest, [singleJsonCursor([1, 2])], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 
 				const cursor = forest.allocateCursor();
 				const path: UpPath = {
@@ -307,7 +307,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			const forest = factory(
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
-			initializeForest(forest, [singleJsonCursor([1, 2])], testIdCompressor);
+			initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 
 			const forestCursor = forest.allocateCursor();
 			moveToDetachedField(forest, forestCursor);
@@ -323,7 +323,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			const forest = factory(
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
-			initializeForest(forest, [singleJsonCursor([1, 2])], testIdCompressor);
+			initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);
@@ -389,7 +389,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
 
-			initializeForest(forest, [singleJsonCursor([1, 2])], testIdCompressor);
+			initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
 
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);
@@ -417,7 +417,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
 			const content: JsonCompatible[] = [1, 2];
-			initializeForest(forest, content.map(singleJsonCursor), testIdCompressor);
+			initializeForest(forest, content.map(singleJsonCursor), testRevisionTagCodec);
 
 			const mark: DeltaMark = {
 				count: 1,
@@ -426,7 +426,8 @@ export function testForest(config: ForestTestConfiguration): void {
 			const detachedFieldIndex = new DetachedFieldIndex(
 				"test",
 				idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-				testIdCompressor,
+				testRevisionTagCodec,
+
 				{ jsonValidator: typeboxValidator },
 			);
 			const delta: DeltaFieldMap = new Map<FieldKey, DeltaFieldChanges>([
@@ -468,7 +469,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const schema = new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema));
 				const forest = factory(schema);
 				const content: JsonCompatible[] = [1, true, "test"];
-				initializeForest(forest, content.map(singleJsonCursor), testIdCompressor);
+				initializeForest(forest, content.map(singleJsonCursor), testRevisionTagCodec);
 
 				const clone = forest.clone(schema, forest.anchors);
 				const reader = clone.allocateCursor();
@@ -485,7 +486,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			it("multiple fields", () => {
 				const schema = new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema));
 				const forest = factory(schema);
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 
 				const clone = forest.clone(schema, forest.anchors);
 				const reader = clone.allocateCursor();
@@ -498,7 +499,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			it("with anchors", () => {
 				const schema = new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema));
 				const forest = factory(schema);
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 
 				const forestReader = forest.allocateCursor();
 				moveToDetachedField(forest, forestReader);
@@ -522,7 +523,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				{ type: leaf.boolean.name, value: true },
 				{ type: leaf.string.name, value: "test" },
 			];
-			initializeForest(forest, content.map(cursorForJsonableTreeNode), testIdCompressor);
+			initializeForest(forest, content.map(cursorForJsonableTreeNode), testRevisionTagCodec);
 
 			const clone = forest.clone(schema, forest.anchors);
 			const mark: DeltaMark = { count: 1, detach: detachId };
@@ -548,7 +549,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const forest = factory(
 						new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 					);
-					initializeForest(forest, [singleJsonCursor(1)], testIdCompressor);
+					initializeForest(forest, [singleJsonCursor(1)], testRevisionTagCodec);
 					const cursor = forest.allocateCursor();
 					moveToDetachedField(forest, cursor);
 
@@ -562,7 +563,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 				);
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 
 				const setField: DeltaMark = {
 					count: 1,
@@ -600,7 +601,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 				);
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 
 				const setField: DeltaMark = {
 					count: 1,
@@ -634,7 +635,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 				);
 				const content: JsonCompatible[] = [1, 2];
-				initializeForest(forest, content.map(singleJsonCursor), testIdCompressor);
+				initializeForest(forest, content.map(singleJsonCursor), testRevisionTagCodec);
 
 				const mark: DeltaMark = {
 					count: 1,
@@ -656,7 +657,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 				);
 				const content: JsonCompatible[] = [1, 2];
-				initializeForest(forest, content.map(singleJsonCursor), testIdCompressor);
+				initializeForest(forest, content.map(singleJsonCursor), testRevisionTagCodec);
 				const cursor = forest.allocateCursor();
 				moveToDetachedField(forest, cursor);
 				cursor.firstNode();
@@ -683,7 +684,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 				);
 				const content: JsonCompatible[] = [1, 2];
-				initializeForest(forest, content.map(singleJsonCursor), testIdCompressor);
+				initializeForest(forest, content.map(singleJsonCursor), testRevisionTagCodec);
 
 				const delta: DeltaFieldMap = new Map([
 					[rootFieldKey, { local: [{ count: 1, attach: buildId }] }],
@@ -747,7 +748,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 				);
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 
 				const moveId = { minor: 0 };
 				const moveOut: DeltaMark = {
@@ -782,7 +783,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 				);
 				const content: JsonCompatible[] = [1, 2];
-				initializeForest(forest, content.map(singleJsonCursor), testIdCompressor);
+				initializeForest(forest, content.map(singleJsonCursor), testRevisionTagCodec);
 
 				const delta: DeltaFieldMap = new Map([
 					[
@@ -846,7 +847,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 				);
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 
 				const moveId = { minor: 0 };
 				const mark: DeltaMark = {
@@ -871,7 +872,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 				);
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 
 				const moveId = { minor: 0 };
 				const mark: DeltaMark = {
@@ -958,7 +959,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					],
 				]);
 				const expected: JsonCompatible[] = [{ y: 1 }];
-				initializeForest(forest, [singleJsonCursor(nestedContent)], testIdCompressor);
+				initializeForest(forest, [singleJsonCursor(nestedContent)], testRevisionTagCodec);
 				applyTestDelta(delta, forest);
 				const readCursor = forest.allocateCursor();
 				moveToDetachedField(forest, readCursor);
@@ -983,7 +984,7 @@ export function testForest(config: ForestTestConfiguration): void {
 							y: [1],
 						}),
 					],
-					testIdCompressor,
+					testRevisionTagCodec,
 				);
 				const moveId = { minor: 0 };
 				const moveOut: DeltaMark = {
@@ -1023,7 +1024,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			const forest = factory(
 				new TreeStoredSchemaRepository(intoStoredSchema(testTreeSchema)),
 			);
-			initializeForest(forest, [cursorForJsonableTreeNode(data)], testIdCompressor);
+			initializeForest(forest, [cursorForJsonableTreeNode(data)], testRevisionTagCodec);
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);
 			assert(cursor.firstNode());

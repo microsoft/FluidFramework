@@ -34,7 +34,7 @@ import {
 	failCodec,
 	mintRevisionTag,
 	testChangeReceiver,
-	testIdCompressor,
+	testRevisionTagCodec,
 } from "../utils.js";
 import {
 	intoDelta,
@@ -55,7 +55,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, testIdCompressor, failCodec, {
+const family = new ModularChangeFamily(fieldKinds, testRevisionTagCodec, failCodec, {
 	jsonValidator: typeboxValidator,
 });
 

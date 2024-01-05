@@ -70,8 +70,8 @@ import { testTrees, treeContentFromTestTree } from "../../testTrees.js";
 import {
 	forestWithContent,
 	flexTreeViewWithContent,
-	testIdCompressor,
 	failCodec,
+	testRevisionTagCodec,
 } from "../../utils.js";
 import { contextWithContentReadonly } from "./utils.js";
 
@@ -371,7 +371,7 @@ describe("LazyMap", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testRevisionTagCodec, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},
@@ -466,7 +466,7 @@ describe("LazyObjectNode", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testRevisionTagCodec, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},

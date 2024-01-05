@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
 	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
 } from "../core/index.js";
@@ -43,13 +43,13 @@ export class SharedTreeChangeFamily
 	private readonly modularChangeFamily: ModularChangeFamily;
 
 	public constructor(
-		idCompressor: IIdCompressor,
+		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 	) {
 		this.modularChangeFamily = new ModularChangeFamily(
 			fieldKinds,
-			idCompressor,
+			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
 		);
