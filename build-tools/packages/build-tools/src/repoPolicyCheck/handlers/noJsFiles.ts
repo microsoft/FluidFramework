@@ -7,7 +7,7 @@ import { Handler } from "../common";
 /**
  * A policy handler that checks for JavaScript source files that just use the .js file extension. Such files may be
  * interpreted by node as either CommonJS or ESM based on the `type` field in the nearest package.json file. However
- * this is not determinstic. Using file extensions reduces ambiguity and makes the behavior deterministic.
+ * this is not deterministic. Using file extensions reduces ambiguity and makes the behavior deterministic.
  */
 export const handler: Handler = {
 	name: "no-js-file-extensions",
