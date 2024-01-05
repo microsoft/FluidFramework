@@ -21,6 +21,9 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		newTsconfigs: Flags.boolean({
 			description: "Enable new tsconfigs in the package.",
 		}),
+		ts2esm: Flags.boolean({
+			description: "Enable ts2esm in the package.",
+		}),
 		tscMulti: Flags.boolean({
 			description: "Enable tsc-multi in the package.",
 		}),
@@ -60,6 +63,10 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 		if (flags.attw) {
 			await this.addAttw(pkg);
+		}
+
+		if (flags.ts2esm) {
+			await this.addTs2Esm(pkg);
 		}
 	}
 
@@ -282,6 +289,21 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 			packageJson.scripts["check:are-the-types-wrong"] = "attw --pack";
 			packageJson.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
+		});
+	}
+
+	private async addTs2Esm(pkg: Package): Promise<void> {
+		if (pkg.getScript("ts2esm") !== undefined) {
+			return;
+		}
+
+		updatePackageJsonFile(pkg.directory, (packageJson) => {
+			if (packageJson.devDependencies === undefined) {
+				this.warning(`Package has no devDependencies: ${pkg.nameColored}`);
+				return;
+			}
+			packageJson.scripts.ts2esm = "ts2esm ./tsconfig.json ./src/test/tsconfig.json";
+			packageJson.devDependencies.ts2esm = "^1.1.0";
 		});
 	}
 
