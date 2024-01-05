@@ -27,8 +27,7 @@ However, a DDS is not *just* a local object. A DDS can also be changed by other 
 
 {{% callout tip %}}
 
-Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, 
-etc. This prefix indicates that the object is shared between multiple clients.
+Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
 
