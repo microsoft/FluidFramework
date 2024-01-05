@@ -344,7 +344,6 @@ The following npm scripts are supported in this directory:
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
 | `ci:start` | `http-server ./public --port 1313 --silent` |
 | `clean` | Remove all generated files. |
-| `download` | Download the latest API JSON files from `main` locally and runs a build. |
 | `download:api` | Download the latest API JSON files from `main` locally. |
 | `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
