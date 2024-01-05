@@ -864,9 +864,17 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case "TombstoneLoaded": {
+				//* Double-check that Tombstoned nodes are properly included in unreferenceNodesState
 				// Mark the node as referenced to ensure it isn't Swept
-				const tombstoneMessageContents = message.contents.contents;
-				this.unreferencedNodesState.delete(tombstoneMessageContents.nodePath);
+				const tombstonedNodePath = message.contents.nodePath;
+				this.unreferencedNodesState.delete(tombstonedNodePath);
+
+				//* Thought experiment: For summarizer, this will happen automatically on next GC run, right?
+				//* Check first that the node is in the list?  If not, indexOf gives -1 and we wrongly remove the last one
+				// Remove the node from the tombstones list and update the runtime's tombstoned routes.
+				this.tombstones.splice(this.tombstones.indexOf(tombstonedNodePath), 1);
+				this.runtime.updateTombstonedRoutes(this.tombstones);
+
 				break;
 			}
 			default: {
@@ -975,7 +983,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		const errorRequest: IRequest = request ?? { url: nodePath };
 		if (isTombstoned) {
-			this.onTombstoneLoaded(nodePath);
+			this.submitTombstoneLoadedMessage(nodePath);
 
 			// If tombstone enforcement is configured and allowTombstone is not true, throw an error
 			if (this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
@@ -1006,12 +1014,16 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 	}
 
-	private onTombstoneLoaded(nodePath: string) {
+	/**
+	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
+	 * Broadcasting this information in the op stream allows other clients to prevent
+	 * this object from being deleted by Sweep (after the Grace Period), by clearing
+	 * all unreferenced / tombstone state for this object.
+	 */
+	private submitTombstoneLoadedMessage(nodePath: string) {
 		const contents: GarbageCollectionMessage = {
 			type: "TombstoneLoaded",
-			contents: {
-				nodePath,
-			},
+			nodePath,
 		};
 		const containerGCMessage: ContainerRuntimeGCMessage = {
 			type: ContainerMessageType.GC,

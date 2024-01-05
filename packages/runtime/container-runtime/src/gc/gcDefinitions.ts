@@ -253,6 +253,8 @@ export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 export const GarbageCollectionMessageType = {
 	/** Message sent directing GC to delete the given nodes */
 	Sweep: "Sweep",
+	/** Message sent notifying GC that a Tombstoned object was Loaded */
+	TombstoneLoaded: "TombstoneLoaded",
 } as const;
 
 /**
@@ -266,8 +268,8 @@ export type GarbageCollectionMessageType =
  * @internal
  */
 export interface ISweepMessage {
-	type: "Sweep";
-	// The ids of nodes that are deleted.
+	type: typeof GarbageCollectionMessageType.Sweep;
+	/** The ids of nodes that are deleted. */
 	deletedNodeIds: string[];
 }
 
@@ -276,9 +278,9 @@ export interface ISweepMessage {
  * @internal
  */
 export interface ITombstoneLoadedMessage {
-	type: "TombstoneLoaded";
-	// The id of Tombstoned node that was loaded.
-	contents: { nodePath: string };
+	type: typeof GarbageCollectionMessageType.TombstoneLoaded;
+	/** The id of Tombstoned node that was loaded. */
+	nodePath: string;
 }
 
 /**
