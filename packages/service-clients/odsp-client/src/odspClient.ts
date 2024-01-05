@@ -157,7 +157,7 @@ export class OdspClient {
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
-				connection.filePath ?? "",
+				connection.filePath,
 				uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {

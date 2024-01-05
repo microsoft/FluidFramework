@@ -30,10 +30,9 @@ export interface OdspConnectionConfig {
 	driveId: string;
 
 	/**
-	 * Specifies the file path where Fluid files are created.
-	 * If not specified, Fluid files will be created at the root of the drive.
+	 * Specifies the file path where Fluid files are created. If passed an empty string, the Fluid files will be created at the root level.
 	 */
-	filePath?: string;
+	filePath: string;
 }
 /**
  * @beta
