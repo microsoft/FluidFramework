@@ -4,7 +4,10 @@
 "@fluidframework/test-runtime-utils": minor
 ---
 
-Deprecate addedGCOutboundReference on IDeltaConnection, IFluidDataStoreContext, and MockFluidDataStoreRuntime
+garbage collection: Deprecate addedGCOutboundReference
+
+The `addedGCOutboundReference` property on IDeltaConnection, IFluidDataStoreContext, and MockFluidDataStoreRuntime is
+now deprecated.
 
 The responsibility of adding outbound references (for Garbage Collection tracking) is moving up to the ContainerRuntime.
 Previously, DDSes themselves were responsible to detect and report added outbound references (via a handle being stored),

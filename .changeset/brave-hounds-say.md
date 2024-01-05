@@ -60,6 +60,29 @@
 "@fluid-tools/webpack-fluid-loader": minor
 ---
 
-Bump Server Version
+Updated server dependencies
 
-Bump protocol-definitions, server-services-client, server-local-server, protocol-base, server-services-core, server-test-utils, and gitresources package versions.
+The @fluidframework/common-utils dependency has been upgraded to v3.1.0.
+
+The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+- @fluidframework/gitresources
+- @fluidframework/server-kafka-orderer
+- @fluidframework/server-lambdas
+- @fluidframework/server-lambdas-driver
+- @fluidframework/server-local-server
+- @fluidframework/server-memory-orderer
+- @fluidframework/protocol-base
+- @fluidframework/server-routerlicious
+- @fluidframework/server-routerlicious-base
+- @fluidframework/server-services
+- @fluidframework/server-services-client
+- @fluidframework/server-services-core
+- @fluidframework/server-services-ordering-kafkanode
+- @fluidframework/server-services-ordering-rdkafka
+- @fluidframework/server-services-ordering-zookeeper
+- @fluidframework/server-services-shared
+- @fluidframework/server-services-telemetry
+- @fluidframework/server-services-utils
+- @fluidframework/server-test-utils
+- tinylicious
