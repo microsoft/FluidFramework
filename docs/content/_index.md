@@ -8,7 +8,7 @@ summary: "An open-source client technology stack that enables real-time collabor
   <h1 class="display-4"><strong>Real-time. Multiuser. Collaboration.</strong></h1>
   <p class="lead">Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.</p>
   <p><iframe width="560" height="315" src="https://www.youtube.com/embed/1okQVFqlMxU?si=BlpSaIHaWY47_OFe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></p>
-  <p><a class="link-button" href="/docs/start/quick-start/">Get Started with Fluid Framework Now!</a></p>
+  <p><a class="cta link-button get-started" href="/docs/start/quick-start/">Get Started with Fluid Framework Now!</a></p>
 </div>
 
 <div class="value-props">
