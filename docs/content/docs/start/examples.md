@@ -22,4 +22,3 @@ The simple SharedTree example app shows how to create a React web app using the 
 The sticky notes [brainstorming app](https://github.com/microsoft/FluidExamples/tree/main/brainstorm)
 shows how simple experiences become compelling when you make them collaborative. This example uses multiple SharedTree data structures to create, update, and organize sticky notes.
 
-
