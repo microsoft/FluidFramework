@@ -322,7 +322,7 @@ class RebaseQueue<T> {
 					const newId = getInputCellId(newMark, undefined, this.metadata);
 					assert(
 						baseId !== undefined && newId !== undefined,
-						"Both marks should have cell IDs",
+						0x89f /* Both marks should have cell IDs */,
 					);
 					const comparison = compareCellPositionsUsingTombstones(
 						baseId,
