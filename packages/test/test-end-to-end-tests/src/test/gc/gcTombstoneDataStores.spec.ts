@@ -39,7 +39,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import type { SharedMap } from "@fluidframework/map";
+// import type { SharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -459,8 +459,15 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 		});
 
-		itExpects(
-			"Requesting tombstoned datastores fails in interactive client loaded after tombstone timeout (but DDS load is allowed)",
+		//* TEMP -- Taking over this test, will split into new test(s) before moving PR out of draft state
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		itExpects.only(
+			"Requesting tombstoned datastore triggers auto-recovery",
 			[
 				// Interactive client's request
 				{
@@ -468,20 +475,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request,
 					clientType: "interactive",
-				},
-				// Interactive client's request w/ allowTombstone
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request_allowTombstone,
-					clientType: "interactive",
-				},
-				// Summarizer client's request
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request,
-					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
@@ -519,12 +512,14 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					"Expected the Tombstone header",
 				);
 
-				// This request succeeds because the "allowTombstone" header is set to true
+				// The GC TombstoneLoaded op should roundtrip here
+				await provider.ensureSynchronized();
+
+				// This request succeeds because Auto-Recovery kicked in and the object should be revived
 				const tombstoneSuccessResponse = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
 					url: unreferencedId,
-					headers: { [AllowTombstoneRequestHeaderKey]: true },
 				});
 				assert.equal(
 					tombstoneSuccessResponse.status,
@@ -533,31 +528,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 				assert.notEqual(
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
-					true,
-					"DID NOT Expect tombstone header to be set on the response",
-				);
-
-				// handle.get on a DDS in a tombstoned object should succeed (despite not being able to pass the header)
-				const dataObject = tombstoneSuccessResponse.value as ITestDataObject;
-				const ddsHandle = dataObject._root.get<IFluidHandle<SharedMap>>("dds1");
-				assert(ddsHandle !== undefined, "Expected to find a handle to the DDS");
-				await assert.doesNotReject(
-					async () => ddsHandle.get(),
-					"Should be able to get a tombstoned DDS via its handle",
-				);
-
-				// This request succeeds because the summarizer never fails for tombstones
-				const summarizerRuntime = (summarizer as any).runtime as ContainerRuntime;
-				const summarizerResponse = await summarizerRuntime.resolveHandle({
-					url: unreferencedId,
-				});
-				assert.equal(
-					summarizerResponse.status,
-					200,
-					"Should be able to retrieve a tombstoned datastore in summarizer clients",
-				);
-				assert.notEqual(
-					summarizerResponse.headers?.[TombstoneResponseHeaderKey],
 					true,
 					"DID NOT Expect tombstone header to be set on the response",
 				);

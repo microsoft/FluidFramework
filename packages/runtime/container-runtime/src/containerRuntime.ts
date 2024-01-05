@@ -3688,7 +3688,10 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.GC:
 				// GC op is only sent in summarizer which should never reconnect.
-				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
+				//* No longer true - Interactive clients send the TombstoneLoaded op
+				// throw new LoggingError("GC op not expected to be resubmitted in summarizer");
+				this.submit(message);
+				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
 				// future version of runtime code and now is being applied on an older version

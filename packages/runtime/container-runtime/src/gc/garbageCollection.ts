@@ -864,6 +864,9 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case "TombstoneLoaded": {
+				//* TODO: This will only clean up the one node that was loaded - not its children (in case of DataStore)
+				//* or other nodes that it alone references.  Need to think about test cases for this, and if this approach works or not.
+
 				//* Double-check that Tombstoned nodes are properly included in unreferenceNodesState
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
