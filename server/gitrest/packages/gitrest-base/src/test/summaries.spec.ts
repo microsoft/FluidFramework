@@ -31,6 +31,20 @@ import {
 	checkInitialWriteStorageAccessBaselinePerformance,
 } from "./storageAccess";
 import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
+import {
+	ElaborateFirstChannelPayload,
+	ElaborateFirstChannelResult,
+	ElaborateFirstContainerPayload,
+	ElaborateFirstContainerResult,
+	ElaborateFirstServiceContainerPayload,
+	ElaborateFirstServiceContainerResult,
+	ElaborateInitialPayload,
+	ElaborateInitialResult,
+	ElaborateSecondChannelPayload,
+	ElaborateSecondChannelResult,
+	ElaborateSecondContainerPayload,
+	ElaborateSecondContainerResult,
+} from "./examples2";
 
 // Github Copilot wizardry.
 function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
@@ -44,6 +58,14 @@ function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
 		permutations.push(permutation);
 	}
 	return permutations;
+}
+
+function replaceTestShas<T>(obj: T, shasToReplacements: { sha: string; replacement: string }[]): T {
+	let result: string = JSON.stringify(obj);
+	for (const { sha, replacement } of shasToReplacements) {
+		result = result.replaceAll(sha, replacement);
+	}
+	return JSON.parse(result);
 }
 
 function assertEqualSummaries(
@@ -223,12 +245,12 @@ testFileSystems.forEach((fileSystem) => {
 				const containerWriteResponse = await getWholeSummaryManager().writeSummary(
 					// Replace the referenced channel summary with the one we just wrote.
 					// This matters when low-io write is enabled, because it alters how the tree is stored.
-					JSON.parse(
-						JSON.stringify(sampleContainerSummaryUpload).replace(
-							sampleChannelSummaryResult.id,
-							channelWriteResponse.writeSummaryResponse.id,
-						),
-					),
+					replaceTestShas(sampleContainerSummaryUpload, [
+						{
+							sha: sampleChannelSummaryResult.id,
+							replacement: channelWriteResponse.writeSummaryResponse.id,
+						},
+					]),
 					false,
 				);
 				assert.strictEqual(
@@ -274,6 +296,201 @@ testFileSystems.forEach((fileSystem) => {
 						`Storage size should be <= ${expectedMaxStorageSizeKb}kb. Got ${finalStorageSizeKb}`,
 					);
 				}
+			});
+
+			/**
+			 * This tests a more elaborate flow:
+			 * 1. Create a new document
+			 * 2. Send some ops
+			 * 3. Wait until Client Summary is written
+			 * 4. Disconnect, triggering new service summary
+			 * 5. Send some ops
+			 * 6. Wait until Client Summary is written
+			 */
+			it("Can create and read multiple summaries", async () => {
+				const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+					ElaborateInitialPayload,
+					true,
+				);
+				assert.strictEqual(
+					initialWriteResponse.isNew,
+					true,
+					"Initial summary write `isNew` should be `true`.",
+				);
+				assertEqualSummaries(
+					initialWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+					ElaborateInitialResult,
+					"Initial summary write response should match expected response.",
+				);
+
+				const initialReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					initialReadResponse,
+					ElaborateInitialResult,
+					"Initial summary read response should match expected response.",
+				);
+
+				const firstChannelWriteResponse = await getWholeSummaryManager().writeSummary(
+					ElaborateFirstChannelPayload,
+					false,
+				);
+				assert.strictEqual(
+					firstChannelWriteResponse.isNew,
+					false,
+					"Channel summary write `isNew` should be `false`.",
+				);
+
+				// Latest should still be the initial summary.
+				const postFirstChannelReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					postFirstChannelReadResponse,
+					ElaborateInitialResult,
+					"Channel summary read response should match expected initial container summary response.",
+				);
+
+				const firstContainerWriteResponse = await getWholeSummaryManager().writeSummary(
+					// Replace the referenced channel summary with the one we just wrote.
+					// This matters when low-io write is enabled, because it alters how the tree is stored.
+					replaceTestShas(ElaborateFirstContainerPayload, [
+						{
+							sha: ElaborateFirstChannelResult.id,
+							replacement: firstChannelWriteResponse.writeSummaryResponse.id,
+						},
+					]),
+					false,
+				);
+				assert.strictEqual(
+					firstContainerWriteResponse.isNew,
+					false,
+					"Container summary write `isNew` should be `false`.",
+				);
+				assertEqualSummaries(
+					firstContainerWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+					ElaborateFirstContainerResult,
+					"Container summary write response should match expected response.",
+				);
+
+				const firstContainerReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					firstContainerReadResponse,
+					ElaborateFirstContainerResult,
+					"Container summary read response should match expected response.",
+				);
+
+				// And we should still be able to read the initial summary when referenced by ID.
+				const initialLaterReadResponse = await getWholeSummaryManager().readSummary(
+					initialWriteResponse.writeSummaryResponse.id,
+				);
+				assertEqualSummaries(
+					initialLaterReadResponse,
+					ElaborateInitialResult,
+					"Later initial summary read response should match expected initial summary response.",
+				);
+
+				const firstServiceContainerWriteResponse =
+					await getWholeSummaryManager().writeSummary(
+						// Replace the referenced channel summary with the one we just wrote.
+						// This matters when low-io write is enabled, because it alters how the tree is stored.
+						// JSON.parse(
+						// 	JSON.stringify(ElaborateFirstServiceContainerPayload)
+						// 		.replace(
+						// 			ElaborateFirstContainerResult.id,
+						// 			firstContainerWriteResponse.writeSummaryResponse.id,
+						// 		)
+						// 		.replace(
+						// 			ElaborateFirstContainerResult.trees[0].id,
+						// 			(
+						// 				firstContainerWriteResponse.writeSummaryResponse as IWholeFlatSummary
+						// 			).trees[0].id,
+						// 		),
+						// ),
+						replaceTestShas(ElaborateFirstServiceContainerPayload, [
+							{
+								sha: ElaborateFirstContainerResult.id,
+								replacement: firstContainerWriteResponse.writeSummaryResponse.id,
+							},
+						]),
+						false,
+					);
+				assert.strictEqual(
+					firstServiceContainerWriteResponse.isNew,
+					false,
+					"Container summary write `isNew` should be `false`.",
+				);
+				assertEqualSummaries(
+					firstServiceContainerWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+					ElaborateFirstServiceContainerResult,
+					"Container summary write response should match expected response.",
+				);
+				const firstServiceContainerReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					firstServiceContainerReadResponse,
+					ElaborateFirstServiceContainerResult,
+					"Container summary read response should match expected response.",
+				);
+
+				const secondChannelWriteResponse = await getWholeSummaryManager().writeSummary(
+					// Replace the referenced container summary with the one we just wrote.
+					replaceTestShas(ElaborateSecondChannelPayload, [
+						{
+							sha: ElaborateFirstContainerResult.id,
+							replacement: firstContainerWriteResponse.writeSummaryResponse.id,
+						},
+					]),
+					false,
+				);
+				assert.strictEqual(
+					secondChannelWriteResponse.isNew,
+					false,
+					"Channel summary write `isNew` should be `false`.",
+				);
+
+				// Latest should still be the initial summary.
+				const postSecondChannelReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					postSecondChannelReadResponse,
+					ElaborateFirstServiceContainerResult,
+					"Channel summary read response should match expected initial container summary response.",
+				);
+
+				const secondContainerWriteResponse = await getWholeSummaryManager().writeSummary(
+					// Replace the referenced channel summary with the one we just wrote.
+					// This matters when low-io write is enabled, because it alters how the tree is stored.
+					replaceTestShas(ElaborateSecondContainerPayload, [
+						{
+							sha: ElaborateFirstContainerResult.id,
+							replacement: firstContainerWriteResponse.writeSummaryResponse.id,
+						},
+						{
+							sha: ElaborateSecondChannelResult.id,
+							replacement: secondChannelWriteResponse.writeSummaryResponse.id,
+						},
+					]),
+					false,
+				);
+				assert.strictEqual(
+					secondContainerWriteResponse.isNew,
+					false,
+					"Container summary write `isNew` should be `false`.",
+				);
+				assertEqualSummaries(
+					secondContainerWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+					ElaborateSecondContainerResult,
+					"Container summary write response should match expected response.",
+				);
+
+				const secondContainerReadResponse =
+					await getWholeSummaryManager().readSummary(LatestSummaryId);
+				assertEqualSummaries(
+					secondContainerReadResponse,
+					ElaborateSecondContainerResult,
+					"Container summary read response should match expected response.",
+				);
 			});
 
 			// Test cross-compat between low-io and non-low-io write modes for same summary.

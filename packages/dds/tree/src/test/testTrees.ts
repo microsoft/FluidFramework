@@ -14,11 +14,11 @@ import {
 	FullSchemaPolicy,
 	Multiplicity,
 	SchemaLibrary,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
@@ -36,7 +36,7 @@ interface TestTree {
 	readonly treeFactory: () => JsonableTree[];
 }
 
-function testTree<T extends TreeNodeSchema>(
+function testTree<T extends FlexTreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
@@ -61,8 +61,8 @@ function testField<T extends TreeFieldSchema>(
 		name,
 		schemaData: schema,
 		treeFactory: () => {
-			const cursors = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
-			return cursors.map(jsonableTreeFromCursor);
+			const cursor = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
+			return jsonableTreeFromFieldCursor(cursor);
 		},
 		policy: defaultSchemaPolicy,
 	};

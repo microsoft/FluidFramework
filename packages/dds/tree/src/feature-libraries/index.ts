@@ -28,7 +28,7 @@ export {
 	BindingContextType,
 	BindingContext,
 	VisitorBindingContext,
-	DeleteBindingContext,
+	RemoveBindingContext,
 	InsertBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
@@ -128,7 +128,7 @@ export {
 export { Multiplicity } from "./multiplicity.js";
 
 export {
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	AllowedTypes,
 	TreeFieldSchema,
 	FlexTreeSchema,
@@ -199,6 +199,7 @@ export {
 	FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
+	FieldBatchEncodingContext,
 } from "./chunked-forest/index.js";
 
 export {

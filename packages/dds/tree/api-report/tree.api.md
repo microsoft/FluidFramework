@@ -17,8 +17,8 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
-import { StableId } from '@fluidframework/runtime-definitions';
+import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
+import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 
@@ -257,9 +257,6 @@ export interface Covariant<out T> {
     // (undocumented)
     _removeContravariance?: T;
 }
-
-// @public
-export const create: unique symbol;
 
 // @internal
 export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
@@ -974,8 +971,7 @@ export interface ISubscribable<E extends Events<E>> {
 }
 
 // @public
-export class IterableTreeListContent<T> implements Iterable<T> {
-    static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
+export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
@@ -1281,7 +1277,7 @@ export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optiona
 
 // @internal (undocumented)
 export interface OptionalFieldEditBuilder {
-    set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
+    set(newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void;
 }
 
 // @internal
@@ -1308,10 +1304,10 @@ export interface PathVisitor {
     beforeDestroy(content: DetachedRangeUpPath): void;
     beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void;
     beforeReplace(newContent: DetachedRangeUpPath, oldContent: RangeUpPath, oldContentDestination: DetachedPlaceUpPath): void;
-    // @deprecated
-    onDelete(path: UpPath, count: number): void;
     // @deprecated (undocumented)
     onInsert(path: UpPath, content: ProtoNodes): void;
+    // @deprecated
+    onRemove(path: UpPath, count: number): void;
 }
 
 // @internal
@@ -1529,9 +1525,9 @@ export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequenc
 
 // @internal (undocumented)
 export interface SequenceFieldEditBuilder {
-    delete(index: number, count: number): void;
-    insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
+    insert(index: number, newContent: ITreeCursorSynchronous): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
+    remove(index: number, count: number): void;
 }
 
 // @public
@@ -1584,7 +1580,7 @@ export class SharedTreeFactory implements IChannelFactory {
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
     // (undocumented)
-    summaryEncodeType?: TreeCompressionStrategy;
+    treeEncodeType?: TreeCompressionStrategy;
 }
 
 // @internal
@@ -1652,19 +1648,19 @@ export interface TreeApi {
 }
 
 // @public
-export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>, TreeArrayNode> {
+export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>, TreeArrayNode> {
 }
 
 // @public
 export const TreeArrayNode: {
-    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+    spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
 
 // @public
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
-    insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-    insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-    insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
@@ -1772,13 +1768,9 @@ export interface TreeLocation {
 }
 
 // @public
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>> {
-}
-
-// @public
-export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
-    set(key: string, value: TIn | undefined): void;
+    set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
 }
 
 // @internal (undocumented)
@@ -1946,7 +1938,7 @@ export type Value = undefined | TreeValue;
 
 // @internal (undocumented)
 export interface ValueFieldEditBuilder {
-    set(newContent: ITreeCursor): void;
+    set(newContent: ITreeCursorSynchronous): void;
 }
 
 // @internal

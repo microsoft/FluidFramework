@@ -10,7 +10,7 @@ import { brand } from "../../../util/index.js";
 
 enum Operation {
 	EditChild = 0,
-	Delete = 1,
+	Remove = 1,
 	Insert = 2,
 }
 
@@ -35,8 +35,8 @@ export function generateRandomChange(
 			);
 		case Operation.Insert:
 			return builder.insert(random.integer(0, maxIndex), 1, brand(0));
-		case Operation.Delete:
-			return builder.delete(random.integer(0, maxIndex), random.integer(1, 10), brand(0));
+		case Operation.Remove:
+			return builder.remove(random.integer(0, maxIndex), random.integer(1, 10), brand(0));
 		default:
 			unreachableCase(operation);
 	}
