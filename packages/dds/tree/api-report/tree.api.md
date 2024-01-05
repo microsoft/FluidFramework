@@ -392,7 +392,7 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 // @internal
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
-// @public
+// @internal
 export enum DiscardResult {
     Failure = 1,
     Success = 0
@@ -1364,7 +1364,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @public
+// @internal
 export interface Revertible {
     discard(): DiscardResult;
     readonly kind: RevertibleKind;
@@ -1374,7 +1374,7 @@ export interface Revertible {
     revert(): RevertResult;
 }
 
-// @public
+// @internal
 export enum RevertibleKind {
     Default = 0,
     Rebase = 3,
@@ -1382,7 +1382,7 @@ export enum RevertibleKind {
     Undo = 1
 }
 
-// @public
+// @internal
 export enum RevertResult {
     Failure = 1,
     Success = 0
