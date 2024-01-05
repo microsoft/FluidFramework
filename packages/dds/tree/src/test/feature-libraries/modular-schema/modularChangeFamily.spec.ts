@@ -38,6 +38,7 @@ import {
 	DeltaRoot,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
+	RevisionTagCodec,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
@@ -105,9 +106,10 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
+const revisionTagCodec = new RevisionTagCodec(new MockIdCompressor());
 const family = new ModularChangeFamily(
 	fieldKinds,
-	new MockIdCompressor(),
+	revisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );

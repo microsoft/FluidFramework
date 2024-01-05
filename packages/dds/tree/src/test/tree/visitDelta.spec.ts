@@ -19,7 +19,7 @@ import {
 	DeltaDetachedNodeRename,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import { deepFreeze, testIdCompressor } from "../utils.js";
+import { deepFreeze, testRevisionTagCodec } from "../utils.js";
 
 function visit(
 	delta: DeltaRoot,
@@ -27,7 +27,11 @@ function visit(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	deepFreeze(delta);
-	visitDelta(delta, visitor, detachedFieldIndex ?? makeDetachedFieldIndex("", testIdCompressor));
+	visitDelta(
+		delta,
+		visitor,
+		detachedFieldIndex ?? makeDetachedFieldIndex("", testRevisionTagCodec),
+	);
 }
 
 type CallSignatures<T> = {
@@ -100,7 +104,7 @@ describe("visitDelta", () => {
 		]);
 	});
 	it("insert root", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node = { minor: 42 };
 		const rootFieldDelta: DeltaFieldChanges = {
 			local: [{ count: 1, attach: node }],
@@ -121,7 +125,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("idempotent insert", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node = { minor: 42 };
 		index.createEntry(node);
 		const rootFieldDelta: DeltaFieldChanges = {
@@ -142,7 +146,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("insert child", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const buildId = { minor: 42 };
 		const rootFieldDelta: DeltaFieldChanges = {
 			local: [
@@ -176,7 +180,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("remove root", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const mark: DeltaMark = {
 			count: 2,
 			detach: { minor: 42 },
@@ -200,7 +204,7 @@ describe("visitDelta", () => {
 		]);
 	});
 	it("remove child", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const remove: DeltaMark = {
 			count: 1,
 			detach: { minor: 42 },
@@ -229,7 +233,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 0 }]);
 	});
 	it("changes under insert", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId = { minor: 1 };
 		const moveOut: DeltaMark = {
 			count: 1,
@@ -273,7 +277,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move node to the right", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		// start with 0123 then move 1 so the order is 0213
 		const moveId = { minor: 1 };
 		const moveOut: DeltaMark = {
@@ -297,7 +301,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move children to the left", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId = { minor: 1 };
 		const moveOut: DeltaMark = {
 			count: 2,
@@ -334,7 +338,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move cousins", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId = { minor: 1 };
 		const moveOut: DeltaMark = {
 			count: 1,
@@ -376,7 +380,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("changes under remove", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId = { minor: 1 };
 		const moveOut: DeltaMark = {
 			count: 1,
@@ -415,7 +419,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 	it("changes under destroy", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node1 = { minor: 42 };
 		index.createEntry(node1);
 		const moveId = { minor: 1 };
@@ -460,7 +464,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("destroy (root level)", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const id = { minor: 42 };
 		index.createEntry(id, 2);
 		const delta: DeltaRoot = {
@@ -474,7 +478,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("build-rename-destroy (field level)", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const buildId = { minor: 42 };
 		const detachId = { minor: 43 };
 		const delta: DeltaFieldChanges = {
@@ -497,7 +501,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("changes under move-out", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
 		const moveIn1: DeltaMark = {
@@ -540,7 +544,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("changes under replaced node", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
 		const moveOut2: DeltaMark = {
@@ -586,7 +590,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
 	it("changes under replacement node", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
 		const moveOut2: DeltaMark = {
@@ -630,7 +634,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
 	it("transient insert", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const delta: DeltaFieldChanges = {
 			build: [{ id: { minor: 42 }, trees: [content] }],
 			rename: [{ oldId: { minor: 42 }, count: 1, newId: { minor: 43 } }],
@@ -649,7 +653,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 43 }, root: 1 }]);
 	});
 	it("changes under transient", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId = { minor: 1 };
 		const moveOut: DeltaMark = {
 			count: 1,
@@ -694,7 +698,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: detachId, root: 2 }]);
 	});
 	it("restore", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const restore: DeltaMark = {
@@ -713,7 +717,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move removed node", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const moveId = { minor: 2 };
@@ -744,7 +748,7 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("changes under removed node", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const moveId = { minor: 2 };
@@ -785,7 +789,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 1 }, root: 0 }]);
 	});
 	it("changes under transient move-in", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
 		const detachId = { minor: 42 };
@@ -836,7 +840,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: detachId, root: 2 }]);
 	});
 	it("transient restore", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const restore: DeltaDetachedNodeRename = {
@@ -858,7 +862,7 @@ describe("visitDelta", () => {
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 	it("update detached node", () => {
-		const index = makeDetachedFieldIndex("", testIdCompressor);
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const buildId = { minor: 2 };
@@ -903,7 +907,7 @@ describe("visitDelta", () => {
 				const end = cycle ? pointA : { minor: 42 };
 				describe("1-step", () => {
 					it("Rename ordering: 1/1", () => {
-						const index = makeDetachedFieldIndex("", testIdCompressor);
+						const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 						index.createEntry(pointA);
 						const rename: DeltaDetachedNodeRename = {
 							count: 1,
@@ -938,7 +942,7 @@ describe("visitDelta", () => {
 				describe("2-step", () => {
 					for (let ordering = 1; ordering <= 2; ordering++) {
 						it(`Rename ordering: ${ordering}/2`, () => {
-							const index = makeDetachedFieldIndex("", testIdCompressor);
+							const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 							index.createEntry(pointA);
 							const pointB = { minor: 2 };
 							const rename1: DeltaDetachedNodeRename = {
@@ -1019,7 +1023,7 @@ describe("visitDelta", () => {
 								["enterField", rootKey],
 								["exitField", rootKey],
 							];
-							const index = makeDetachedFieldIndex("", testIdCompressor);
+							const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 							index.createEntry(pointA);
 							testTreeVisit(delta, expected, index);
 							assert.deepEqual(Array.from(index.entries()), [{ id: end, root: 3 }]);

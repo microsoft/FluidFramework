@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	applyDelta,
 	DeltaFieldChanges,
@@ -23,6 +22,7 @@ import {
 	ITreeSubscriptionCursor,
 	makeDetachedFieldIndex,
 	mapCursorField,
+	RevisionTagCodec,
 	TreeNavigationResult,
 } from "../../core/index.js";
 import {
@@ -55,7 +55,7 @@ export class ForestSummarizer implements Summarizable {
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly idCompressor: IIdCompressor,
+		private readonly revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: ICodecOptions = { jsonValidator: noopValidator },
@@ -160,7 +160,7 @@ export class ForestSummarizer implements Summarizable {
 			applyDelta(
 				{ fields: new Map(fieldChanges) },
 				this.forest,
-				makeDetachedFieldIndex("init", this.idCompressor),
+				makeDetachedFieldIndex("init", this.revisionTagCodec),
 			);
 		}
 	}
