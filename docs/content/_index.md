@@ -8,7 +8,7 @@ summary: "An open-source client technology stack that enables real-time collabor
   <h1 class="display-4"><strong>Real-time. Multiuser. Collaboration.</strong></h1>
   <p class="lead">Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.</p>
   <p><iframe width="560" height="315" src="https://www.youtube.com/embed/1okQVFqlMxU?si=BlpSaIHaWY47_OFe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></p>
-  <p><a class="cta link-button get-started" style="background-color: #0066b8 !important; text-decoration: none;" href="/docs/start/quick-start/">Get Started with Fluid Framework Now!</a></p>
+  <p><a class="cta link-button get-started" style="background-color: #0066b8 !important; text-decoration: none;" href="/docs/start/quick-start/">Get started with Fluid Framework today!</a></p>
 </div>
 
 <div class="value-props">
@@ -24,7 +24,7 @@ summary: "An open-source client technology stack that enables real-time collabor
             <div class="col-sm-4 col-xs-6">
                 <a class="value-prop" id="home-value-prop-open-source-link" href="#open-source">
                     <div class="value-prop-icon open-source"></div>
-                    <b>Open Source</b>
+                    <b>Open source</b>
                 </a>
             </div>
             <div class="col-sm-4 col-xs-6">
@@ -99,14 +99,14 @@ summary: "An open-source client technology stack that enables real-time collabor
 {{<swimlane_container fullPage="yes">}}
     {{<swimlane
         id="easy-to-use"
-        title="Easy to Use"
+        title="Easy to use"
         subTitle="Transform your collaborative experience with our developer friendly framework – where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software."
         img="/images/E1C1.svg"
         imgAlt="easy to use image"
       >}}
     {{<swimlane
         id="open-source"
-        title="Open Source"
+        title="Open source"
         subTitle="We believe that an <strong>open, inclusive, and respectful </strong>community will help shape a better future for this project. That's why Fluid Framework is made available for <strong>FREE</strong> as an <strong>Open Source project</strong> under the MIT license."
         img="/images/1F513.svg"
         imgAlt="github logo"
