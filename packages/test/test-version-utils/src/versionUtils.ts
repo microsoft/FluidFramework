@@ -430,7 +430,7 @@ function internalSchema(
 			const parsed = semver.parse(internalVersion);
 			assert(parsed !== null, "internalVersion should be parsable");
 			if (parsed.major + requested < 1) {
-				// If the request will evaluate to a pre-RC release, it's easier to major to convert the request
+				// If the request will evaluate to a pre-RC release, we need to convert the request
 				// to the equivalent internal release request.
 				return internalSchema("2.0.0", "8.0.0", "internal", requested + parsed.major);
 			}
