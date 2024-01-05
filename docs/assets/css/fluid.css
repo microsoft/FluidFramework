@@ -30,10 +30,9 @@ footer {
 }
 
 .cta {
-	padding: 2rem 0;
-	width: 100%;
+	width: fit-content;
 	height: 100%;
-	display: flex;
+	display: inline-block;
 	flex-flow: column;
 	color: #f3f5f7;
 	transition: 0.1s ease-in;

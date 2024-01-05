@@ -124,7 +124,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 {{<swimlane_container fullPage="yes">}}
 <div class="row title">
     <div class="text-center"><h2><strong>See How It Works</strong></h2></div>
-    <div class="col-md-8"  style="text-left; height:650px; overflow-x: auto;">
+    <div class="col-md-8" style="text-left; height:650px; overflow-x: auto;">
         <h3 class="text-center">Sample Code</h3>
                 {{< highlight go >}}
 /*!
