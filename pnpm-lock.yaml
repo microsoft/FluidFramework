@@ -11154,7 +11154,6 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/devtools': workspace:~
       '@fluidframework/devtools-core': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
@@ -11219,7 +11218,6 @@ importers:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
-      '@fluidframework/devtools': link:../devtools
       '@fluidframework/devtools-core': link:../devtools-core
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
@@ -17037,7 +17035,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       events: 3.3.0
 
   /@fluidframework/protocol-base/3.0.0-223236:
@@ -17055,7 +17053,6 @@ packages:
 
   /@fluidframework/protocol-definitions/3.1.0:
     resolution: {integrity: sha512-BgGF82z4sk5M4torMR38NGjHjFG9t6Y653UcGOlXiIaGQMDZpRfrxiIuq53Gb12OTfUgbNtvBJL1W46JfLvzQw==}
-    dev: true
 
   /@fluidframework/protocol-definitions/3.1.0-223007:
     resolution: {integrity: sha512-5Y1pdROt00bTVkdjYuQ/5lQW/ajJjb0KlRcsvcCYVOQK+qDb1E3i+6K6XMY5Fv9ufPXT4mrQzKkdOMDMJXynMA==}
@@ -17288,7 +17285,7 @@ packages:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 2.0.2
       '@fluidframework/protocol-base': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-lambdas-driver': 2.0.2
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
@@ -17317,7 +17314,7 @@ packages:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 2.0.2
       '@fluidframework/protocol-base': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-lambdas-driver': 2.0.2
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
@@ -17346,7 +17343,7 @@ packages:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 3.0.0-223236
       '@fluidframework/protocol-base': 3.0.0-223236
-      '@fluidframework/protocol-definitions': 3.1.0-223007
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-lambdas-driver': 3.0.0-223236
       '@fluidframework/server-services-client': 3.0.0-223236
       '@fluidframework/server-services-core': 3.0.0-223236
@@ -17372,7 +17369,7 @@ packages:
     resolution: {integrity: sha512-aKSvb13M5lsoUXN0vKadc6yVcBjJ2RZrtQr/vr0E7qJHlAQ+CZVaRIcFWavS5fZEMNi4+h4U2ohxtl+h4uu5NA==}
     dependencies:
       '@fluidframework/common-utils': 3.0.0
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-lambdas': 2.0.2_debug@4.3.4
       '@fluidframework/server-memory-orderer': 2.0.2
       '@fluidframework/server-services-client': 2.0.2
@@ -17413,7 +17410,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/protocol-base': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-lambdas': 2.0.2_debug@4.3.4
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
@@ -17441,7 +17438,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/protocol-base': 3.0.0-223236
-      '@fluidframework/protocol-definitions': 3.1.0-223007
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-lambdas': 3.0.0-223236_debug@4.3.4
       '@fluidframework/server-services-client': 3.0.0-223236
       '@fluidframework/server-services-core': 3.0.0-223236
@@ -17470,7 +17467,7 @@ packages:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 2.0.2
       '@fluidframework/protocol-base': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       axios: 0.26.1_debug@4.3.4
       crc-32: 1.2.0
       debug: 4.3.4
@@ -17507,7 +17504,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
       '@types/nconf': 0.10.6
@@ -17540,7 +17537,7 @@ packages:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 2.0.2
       '@fluidframework/protocol-base': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
@@ -17585,7 +17582,7 @@ packages:
   /@fluidframework/server-services-utils/2.0.2:
     resolution: {integrity: sha512-0oADQbRJl/5TtrinRh7N1ttFtn+E6NouB0TZceuC90sJVnGBDiyzffZyDdiFTDfOGi3EcEpMiyUP1cOJsPZGvg==}
     dependencies:
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
@@ -17611,7 +17608,7 @@ packages:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': 2.0.2
       '@fluidframework/protocol-base': 2.0.2
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
@@ -18226,7 +18223,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       jest-message-util: 29.7.0
       jest-util: 29.7.0
@@ -18407,7 +18404,7 @@ packages:
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
       '@jridgewell/trace-mapping': 0.3.20
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       collect-v8-coverage: 1.0.2
       exit: 0.1.2
@@ -21892,7 +21889,7 @@ packages:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       '@types/responselike': 1.0.3
     dev: true
 
@@ -21916,7 +21913,7 @@ packages:
   /@types/cli-progress/3.11.5:
     resolution: {integrity: sha512-D4PbNRbviKyppS5ivBGyFO29POlySLmA2HyUFE4p5QGazAMM3CwkKWcvTl8gvElSuxRh6FPKL8XmidX873ou4g==}
     dependencies:
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
 
   /@types/codemirror/5.60.7:
     resolution: {integrity: sha512-QXIC+RPzt/1BGSuD6iFn6UMC9TDp+9hkOANYNPVsjjrDdzKphfRkwQDKGp2YaC54Yhz0g6P5uYTCCibZZEiMAA==}
@@ -22099,7 +22096,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
     dev: true
 
   /@types/glob/8.1.0:
@@ -22112,7 +22109,7 @@ packages:
   /@types/graceful-fs/4.1.9:
     resolution: {integrity: sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ==}
     dependencies:
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
     dev: true
 
   /@types/handlebars/4.1.0:
@@ -22253,7 +22250,7 @@ packages:
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
     dev: true
 
   /@types/lodash.isequal/4.5.8:
@@ -22339,6 +22336,7 @@ packages:
     resolution: {integrity: sha512-nNPsNE65wjMxEKI93yOP+NPGGBJz/PoN3kZsVLee0XMiJolxSekEVD8wRwBUBqkwc7UWop0edW50yrCQW4CyRw==}
     dependencies:
       undici-types: 5.26.5
+    dev: true
 
   /@types/normalize-package-data/2.4.4:
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -22442,7 +22440,7 @@ packages:
   /@types/responselike/1.0.3:
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
     dependencies:
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
     dev: true
 
   /@types/retry/0.12.0:
@@ -22568,7 +22566,7 @@ packages:
     resolution: {integrity: sha512-vPXzCLmRp74e9LsP8oltnWKTH+jBwt86WgRUb4Pc9Lf3pkMVGyvIo2gm9bODeGfCay2DBB/hAWDuvf07JcK4rw==}
     dependencies:
       '@types/expect': 1.20.4
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
     dev: true
 
   /@types/webpack-env/1.18.4:
@@ -29279,7 +29277,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.11
       '@types/lodash': 4.14.202
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       '@types/sinon': 7.5.2
       lodash: 4.17.21
       mock-stdin: 1.0.0
@@ -32582,7 +32580,7 @@ packages:
       '@jest/expect': 29.7.0
       '@jest/test-result': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       co: 4.6.0
       dedent: 1.5.1
@@ -32916,7 +32914,7 @@ packages:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-mock: 29.7.0
       jest-util: 29.7.0
     dev: true
@@ -32989,7 +32987,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.3
       '@types/graceful-fs': 4.1.9
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -33157,7 +33155,7 @@ packages:
       '@jest/test-result': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       emittery: 0.13.1
       graceful-fs: 4.2.11
@@ -33188,7 +33186,7 @@ packages:
       '@jest/test-result': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       cjs-module-lexer: 1.2.3
       collect-v8-coverage: 1.0.2
@@ -33313,7 +33311,7 @@ packages:
     dependencies:
       '@jest/test-result': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.13.1
@@ -33334,7 +33332,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -33342,7 +33340,7 @@ packages:
     resolution: {integrity: sha512-eIz2msL/EzL9UFTFFx7jBTkeZfku0yUAyZZZmJ93H2TYEiroIx2PQjEXcwYtYl8zXCxb+PAmA2hLIt/6ZEkPHw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
