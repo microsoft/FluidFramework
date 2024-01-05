@@ -164,6 +164,10 @@ export interface IDataStore {
  */
 export interface IDataStore2 extends IDataStore {
 	readonly context: IFluidDataStoreContextDetached;
+	attachRuntime(
+		factory: IProvideFluidDataStoreFactory,
+		dataStoreChannel: IFluidDataStoreChannel,
+	): Promise<void>;
 }
 
 /**

@@ -154,6 +154,8 @@ export interface IDataStore {
 // @alpha (undocumented)
 export interface IDataStore2 extends IDataStore {
     // (undocumented)
+    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreChannel: IFluidDataStoreChannel): Promise<void>;
+    // (undocumented)
     readonly context: IFluidDataStoreContextDetached;
 }
 

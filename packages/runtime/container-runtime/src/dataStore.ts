@@ -13,6 +13,7 @@ import {
 	IDataStore2,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContextDetached,
+	IProvideFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
@@ -208,6 +209,7 @@ class DataStore implements IDataStore {
 
 export class DataStore2 implements IDataStore2 {
 	private _dataStore?: IDataStore;
+	private attachedRuntime: boolean = false;
 	public get context(): IFluidDataStoreContextDetached {
 		return this.fluidDatastoreContext;
 	}
@@ -219,8 +221,9 @@ export class DataStore2 implements IDataStore2 {
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
-	public get dataStore(): IDataStore {
+	private get dataStore(): IDataStore {
 		if (this._dataStore === undefined) {
+			assert(this.attachedRuntime, "DataStore2 must be attached to runtime before use");
 			this._dataStore = channelToDataStore(
 				this.fluidDatastoreContext.channelValue,
 				this.internalId,
@@ -238,5 +241,13 @@ export class DataStore2 implements IDataStore2 {
 
 	public async trySetAlias(alias: string): Promise<AliasResult> {
 		return this.dataStore.trySetAlias(alias);
+	}
+
+	public async attachRuntime(
+		factory: IProvideFluidDataStoreFactory,
+		dataStoreChannel: IFluidDataStoreChannel,
+	): Promise<void> {
+		await this.fluidDatastoreContext.attachRuntime(factory, dataStoreChannel);
+		this.attachedRuntime = true;
 	}
 }

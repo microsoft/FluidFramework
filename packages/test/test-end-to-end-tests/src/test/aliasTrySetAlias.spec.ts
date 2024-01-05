@@ -99,20 +99,14 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const runtime2 = dataObject2._context.containerRuntime as IContainerRuntime;
 
-		const props = { a: "a test" };
+		const props = { a: "1 is different from 2" };
 		const newObjectPromise1 = dataObjectFactory.createRootInstance("new", runtime, props);
-		const props2 = { a: "b test" };
+		const props2 = { a: "Totally not same string" };
 		const newObjectPromise2 = dataObjectFactory.createRootInstance("new", runtime2, props2);
 		await provider.ensureSynchronized();
 		await Promise.all([newObjectPromise1, newObjectPromise2]);
-		const handle = await runtime.getAliasedDataStoreEntryPoint("new");
-		const handle2 = await runtime2.getAliasedDataStoreEntryPoint("new");
-		assert(handle !== undefined, "handle should not be undefined");
-		assert(handle2 !== undefined, "handle2 should not be undefined");
-		const newObject1 = (await handle.get()) as TestDataObject;
-		const newObject2 = (await handle2.get()) as TestDataObject;
-		assert(newObject1 !== undefined, "newObject1 should not be undefined");
-		assert(newObject2 !== undefined, "newObject2 should not be undefined");
+		const newObject1 = await newObjectPromise1;
+		const newObject2 = await newObjectPromise2;
 		assert(newObject1.getValue() === newObject2.getValue(), "Aliasing should have worked");
 	});
 });

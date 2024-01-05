@@ -260,9 +260,24 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		const dataStore = (runtime as ContainerRuntime).createDataStore2([this.type]);
-		const instance = await this.createInstanceCore(dataStore.context, initialState);
-		await dataStore.trySetAlias(rootDataStoreId);
-		return instance;
+		const { instance, runtime: dataStoreRuntime } = await createDataObject(
+			this.ctor,
+			dataStore.context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		await dataStore.attachRuntime(this, dataStoreRuntime);
+		const result = await dataStore.trySetAlias(rootDataStoreId);
+		if (result === "Success") {
+			return instance;
+		}
+		const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+		assert(handle !== undefined, "Alias should exist");
+		const remoteInstance = await handle.get();
+		return remoteInstance as TObj;
 	}
 
 	protected async createNonRootInstanceCore(
