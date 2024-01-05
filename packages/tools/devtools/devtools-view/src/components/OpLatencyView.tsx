@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { Body1, Body1Strong, Subtitle1, makeStyles } from "@fluentui/react-components";
+import { Body1, Body1Strong, Link, Subtitle1, makeStyles } from "@fluentui/react-components";
 import {
 	handleIncomingMessage,
 	type InboundHandlers,
@@ -186,13 +186,13 @@ export function OpLatencyView(): React.ReactElement {
 								{`This Graph shows Fluid Op (Operation) Latency metrics.
 					As you make changes in your Fluid-based application, you'll see this graph update in real time with latency data for any ops your client produces.`}
 								&nbsp;
-								<a
+								<Link
 									target="_blank"
 									rel="noreferrer"
 									href="https://fluidframework.com/docs/concepts/tob/"
 								>
 									{`Learn more about ops.`}
-								</a>
+								</Link>
 							</Body1>
 						</div>
 
