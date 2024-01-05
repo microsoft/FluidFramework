@@ -109,15 +109,16 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	/**
 	 * Fired when a revertible change is made to this branch.
 	 */
-	newRevertible(type: Revertible): void;
+	newRevertible(revertible: Revertible): void;
 
 	/**
 	 * Fired when a revertible made on this branch is disposed.
 	 *
 	 * @param revertible - The revertible that was disposed.
 	 * This revertible was previously passed to the `newRevertible` event.
+	 * @param revision - The revision associated with the revertible that was disposed.
 	 */
-	revertibleDispose(revision: RevisionTag): void;
+	revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
 
 	/**
 	 * Fired when this branch forks
@@ -443,7 +444,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				this._revertibleCommits.delete(commit.revision);
 				this.revertibles.delete(revertible);
 				referenceCount = 0;
-				this.emit("revertibleDispose", commit.revision);
+				this.emit("revertibleDisposed", revertible, commit.revision);
 			},
 		};
 		this.revertibles.add(revertible);

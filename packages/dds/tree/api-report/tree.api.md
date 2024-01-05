@@ -205,7 +205,8 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 // @public
 export interface CheckoutEvents {
     afterBatch(): void;
-    revertible(revertible: Revertible): void;
+    newRevertible(revertible: Revertible): void;
+    revertibleDisposed(revertible: Revertible): void;
 }
 
 // @internal
@@ -391,12 +392,6 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 
 // @internal
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
-
-// @public
-export enum DiscardResult {
-    Failure = 1,
-    Success = 0
-}
 
 // @public
 export const disposeSymbol: unique symbol;
@@ -1366,12 +1361,14 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    discard(): DiscardResult;
+    discard(): RevertibleResult;
     readonly kind: RevertibleKind;
     readonly origin: {
         readonly isLocal: boolean;
     };
-    revert(): RevertResult;
+    retain(): RevertibleResult;
+    revert(): RevertibleResult;
+    readonly status: RevertibleStatus;
 }
 
 // @public
@@ -1383,9 +1380,15 @@ export enum RevertibleKind {
 }
 
 // @public
-export enum RevertResult {
+export enum RevertibleResult {
     Failure = 1,
     Success = 0
+}
+
+// @public
+export enum RevertibleStatus {
+    Disposed = 1,
+    Valid = 0
 }
 
 // @internal

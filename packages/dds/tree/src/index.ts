@@ -84,6 +84,7 @@ export {
 	MapTree,
 	Revertible,
 	RevertibleKind,
+	RevertibleStatus,
 	RevertibleResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
