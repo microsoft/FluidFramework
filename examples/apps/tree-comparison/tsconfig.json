@@ -5,8 +5,6 @@
 	],
 	"include": ["src/**/*", "tests/**/*"],
 	"compilerOptions": {
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
 		"outDir": "lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react"],
 	},
