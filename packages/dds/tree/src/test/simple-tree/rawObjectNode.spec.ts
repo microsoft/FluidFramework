@@ -8,7 +8,6 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../domains/index.js";
-import { boxedIterator } from "../../feature-libraries/flex-tree/index.js";
 import { brand } from "../../util/index.js";
 import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
 import { extractRawNodeContent, RawObjectNode } from "../../simple-tree/rawNode.js";
@@ -54,7 +53,7 @@ describe("raw object nodes", () => {
 		assert.throws(() => rawObjectNode.context);
 		assert.throws(() => rawObjectNode.parentField);
 		assert.throws(() => rawObjectNode.tryGetField(brand("foo")));
-		assert.throws(() => rawObjectNode[boxedIterator]());
+		assert.throws(() => rawObjectNode.boxedIterator());
 		assert.throws(() => rawObjectNode.on("changing", () => {}));
 		assert.throws(() => rawObjectNode.treeStatus());
 		assert.throws(() => rawObjectNode.localNodeKey);

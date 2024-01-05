@@ -255,7 +255,6 @@ export {
 	FlexTreeField,
 	FlexTreeNode,
 	getTreeContext,
-	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
 	Context,

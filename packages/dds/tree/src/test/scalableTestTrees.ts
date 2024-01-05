@@ -239,7 +239,7 @@ export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFi
 } {
 	let sum = 0;
 	let nodesCount = 0;
-	const root = tree.editableTree;
+	const root = tree.flexTree;
 	const field = root.content.foo;
 	assert(field.length !== 0);
 	for (const currentNode of field) {
@@ -254,7 +254,7 @@ export function readDeepEditableTree(tree: FlexTreeView<typeof deepSchema.rootFi
 	value: number;
 } {
 	let depth = 0;
-	let currentNode = tree.editableTree.content;
+	let currentNode = tree.flexTree.content;
 	while (currentNode.is(linkedListSchema)) {
 		currentNode = currentNode.foo;
 		depth++;

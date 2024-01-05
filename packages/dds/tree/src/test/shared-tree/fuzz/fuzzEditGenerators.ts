@@ -593,7 +593,7 @@ function trySelectTreeField(
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
-	const editable = tree.editableTree;
+	const editable = tree.flexTree;
 	const options =
 		weights.optional === 0
 			? ["recurse"]

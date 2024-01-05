@@ -21,7 +21,6 @@ export {
 	AssignableFieldKinds,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
-	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
 	onNextChange,
