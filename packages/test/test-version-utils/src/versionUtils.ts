@@ -429,11 +429,11 @@ function internalSchema(
 			}
 
 			const parsed = semver.parse(internalVersion);
-			assert(parsed !== null, "internalVersion should not be parsable");
+			assert(parsed !== null, "internalVersion should be parsable");
 			if (parsed.major + requested < 1) {
-				// If the request will evaluate to an internal release, it's easier to major to convert the request
+				// If the request will evaluate to a pre-RC release, it's easier to major to convert the request
 				// to the equivalent internal release request.
-				return internalSchema("2.0.0", "8.0.0", "internal", requested + 1);
+				return internalSchema("2.0.0", "8.0.0", "internal", requested + parsed.major);
 			}
 		}
 	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
