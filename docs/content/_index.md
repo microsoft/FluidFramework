@@ -235,7 +235,7 @@ const renderDiceRoller = (dice, elem) => {
 </div>
 <div class="row">
     <div class="col-md-12 text-center">
-        <p><br/><a class="cta link-button get-started" style="background-color: #0066b8 !important;" href="/docs/start/examples/">Try the other samples</a><br/></p>
+        <p><br/><a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important;" href="/docs/start/examples/"><small>Try the other samples</small></a><br/><br/></p>
     </div>
 </div>
 {{</swimlane_container>}}
@@ -267,19 +267,19 @@ const renderDiceRoller = (dice, elem) => {
                                         <p>Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.</p>
                                     </div>
                                     <div>
-                                        <a href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview">Learn more...</a>
+                                        <a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important;" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"><small>Learn more about Azure Fluid Relay</small></a>
                                     </div>
                             </div>
                             <div class="col-md-6">
                                     <div>
                                         <svg width="50" height="50"><image xlink:href="images/SharePoint_64x.svg" width="50" height="50"></svg><br/>
-                                        <h2>Sharepoint Embedded</h2>
+                                        <h2>SharePoint Embedded</h2>
                                     </div>
                                     <div>
                                         <p>Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
                                     </div>
                                     <div>
-                                        <a href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview">Learn more...</a>
+                                        <a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important;" href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"><small>Learn more about SharePoint Embedded</small></a>
                                     </div>
                                 </div>
                         </div>
