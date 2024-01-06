@@ -184,10 +184,18 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 const genFullBackCompatConfig = (): CompatConfig[] => {
 	const _configList: CompatConfig[] = [];
 
-	const [, semverInternal] = fromInternalScheme(codeVersion, true, true);
-
+	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(codeVersion, true, true);
 	assert(semverInternal !== undefined, "Unexpected pkg version");
-	const greatestMajor = semverInternal.major;
+
+	// Here we check if the release is an RC release. If so, we also need to account for internal releases when
+	// generating back compat configs. For back compat purposes, we consider RC major release 1 to be treated as internal
+	// major release 9. This will ensure we generate back compat configs for all RC and internal major releases.
+	const greatestInternalMajor = 8;
+	const greatestMajor =
+		prereleaseIndentifier === "rc" || prereleaseIndentifier === "dev-rc"
+			? semverInternal.major + greatestInternalMajor
+			: semverInternal.major;
+
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
 	// This loop goes as far back as 2.0.0.internal.1.y.z.
 	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)

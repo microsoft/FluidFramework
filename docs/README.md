@@ -336,22 +336,15 @@ The following npm scripts are supported in this directory:
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
-| `build:api-documentation:multi-version` | Convert package API reports (`.api.json` files) into Markdown. Includes API content from all major release branches. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
-| `build:md-magic:website` | `node markdown-magic-website.js` |
-| `build:multi-version` | Build the site; outputs to `public/` by default. Includes API content from all major release branches. |
 | `build:redirects` | `node ./build-redirects.js` |
 | `build:repo-docs` | `npm run build:md-magic:code` |
-| `build:website` | Build the website (including generating API docs and running markdown-magic) |
-| `build:website:multi-version` | `Build the website (including generating API docs and running markdown-magic). Includes API content from all major release branches. |
 | `ci:build` | `npm run download && npm run build` |
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
 | `ci:start` | `http-server ./public --port 1313 --silent` |
 | `clean` | Remove all generated files. |
-| `download` | Download the latest API JSON files from `main` locally and runs a build. |
 | `download:api` | Download the latest API JSON files from `main` locally. |
-| `download:api:multi-version` | Download and extract all latest API JSON from all major release branches files locally. |
 | `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |

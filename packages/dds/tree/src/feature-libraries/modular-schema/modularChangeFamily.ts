@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
 	ChangeFamily,
@@ -103,16 +102,11 @@ export class ModularChangeFamily
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-		idCompressor: IIdCompressor,
+		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 	) {
-		this.latestCodec = makeV0Codec(
-			fieldKinds,
-			new RevisionTagCodec(idCompressor),
-			fieldBatchCodec,
-			codecOptions,
-		);
+		this.latestCodec = makeV0Codec(fieldKinds, revisionTagCodec, fieldBatchCodec, codecOptions);
 		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 
