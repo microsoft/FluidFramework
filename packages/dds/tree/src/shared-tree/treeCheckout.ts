@@ -384,7 +384,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		});
 		branch.on("revertibleDisposed", (revertible, revision) => {
 			// We do not expose the revision in this API
-			this.events.emit("newRevertible", revertible);
+			this.events.emit("revertibleDisposed", revertible);
 		});
 	}
 
