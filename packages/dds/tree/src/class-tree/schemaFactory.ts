@@ -108,7 +108,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			if (value === null) {
 				return nullSchema;
 			}
-			assert(isFluidHandle(value), "invalid TreeValue");
+			assert(isFluidHandle(value), 0x87e /* invalid TreeValue */);
 			return handleSchema;
 		}
 		default:

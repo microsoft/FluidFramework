@@ -1,5 +1,7 @@
 ---
-"@fluid-experimental/app-insights-logger": major
+"@fluidframework/app-insights-logger": major
 ---
 
-Renamed the package to `@fluidframework/app-insights-logger`.
+@fluid-experimental/app-insights-logger package renamed
+
+The package is now `@fluidframework/app-insights-logger`.
