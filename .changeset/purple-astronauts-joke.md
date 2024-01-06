@@ -1,5 +1,7 @@
 ---
-"@fluid-experimental/tree2": major
+"@fluidframework/tree": major
 ---
 
-Renamed the package to `@fluidframework/tree`.
+@fluid-experimental/tree2 package renamed
+
+The package is now `@fluidframework/tree`.
