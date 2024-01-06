@@ -507,7 +507,7 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	}
 }
 
-export function escapeFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
+export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
 	if (fieldKeysToEscapeSet.has(key)) {
 		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
 	}
@@ -598,7 +598,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
-		const escapedKey = escapeFieldKey(key);
+		const escapedKey = propertyNameFromFieldKey(key);
 		let setter: ((newContent: FlexibleNodeContent<AllowedTypes>) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
