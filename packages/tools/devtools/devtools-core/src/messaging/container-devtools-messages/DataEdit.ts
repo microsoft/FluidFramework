@@ -16,14 +16,12 @@ export namespace DataEdit {
 	/**
 	 * {@link DataEdit.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "DATA_EDIT";
 
 	/**
 	 * Message data format used by {@link DataEdit.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData extends HasContainerKey {
 		/**
@@ -37,7 +35,6 @@ export namespace DataEdit {
 	 *
 	 * Will result in the DDS being edited.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -49,7 +46,6 @@ export namespace DataEdit {
 	/**
 	 * Creates a {@link DataEdit.Message} from the provided {@link DataEdit.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

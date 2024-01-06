@@ -15,14 +15,12 @@ export namespace ContainerList {
 	/**
 	 * {@link ContainerList.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "CONTAINER_LIST";
 
 	/**
 	 * Message data format used by {@link ContainerList.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData {
 		/**
@@ -36,7 +34,6 @@ export namespace ContainerList {
 	 *
 	 * Includes the new list of active {@link ContainerKey}s associated with active Container Devtools instances.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -48,7 +45,6 @@ export namespace ContainerList {
 	/**
 	 * Creates a {@link ContainerList.Message} from the provided {@link ContainerList.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

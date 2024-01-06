@@ -15,21 +15,18 @@ export namespace CloseContainer {
 	/**
 	 * {@link CloseContainer.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "CLOSE_CONTAINER";
 
 	/**
 	 * Message data format used by {@link CloseContainer.Message}.
 	 *
-	 * @internal
 	 */
 	export type MessageData = HasContainerKey;
 
 	/**
 	 * Inbound message requesting that the Container associated with the specified ID be closed.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -41,7 +38,6 @@ export namespace CloseContainer {
 	/**
 	 * Creates a {@link CloseContainer.Message} from the provided {@link CloseContainer.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

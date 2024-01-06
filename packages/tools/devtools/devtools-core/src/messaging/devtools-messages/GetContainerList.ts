@@ -14,7 +14,6 @@ export namespace GetContainerList {
 	/**
 	 * {@link GetContainerList.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "GET_CONTAINER_LIST";
 
@@ -22,7 +21,6 @@ export namespace GetContainerList {
 	 * Inbound message requesting the list of Containers for which Devtools have been registered.
 	 * Will result in the {@link ContainerList.Message} message being posted.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<undefined> {
 		/**
@@ -34,7 +32,6 @@ export namespace GetContainerList {
 	/**
 	 * Creates a {@link GetContainerList.Message}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(): Message {
 		return {

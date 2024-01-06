@@ -18,7 +18,6 @@ export namespace FluidDebugger {
 	 * User can chose to start with any snapshot
 	 * If pop-ups are disabled, we continue without debugger.
 	 * @param documentService - original document service to use to fetch ops / snapshots.
-	 * @internal
 	 */
 	export async function createFromService(
 		documentService: IDocumentService,
@@ -30,9 +29,6 @@ export namespace FluidDebugger {
 		return ReplayDocumentService.create(documentService, controller);
 	}
 
-	/**
-	 * @alpha
-	 */
 	export async function createFromServiceFactory(
 		documentServiceFactory: IDocumentServiceFactory,
 	): Promise<IDocumentServiceFactory> {

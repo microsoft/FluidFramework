@@ -15,14 +15,12 @@ export namespace GetRootDataVisualizations {
 	/**
 	 * {@link GetRootDataVisualizations.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "GET_ROOT_DATA_VISUALIZATIONS";
 
 	/**
 	 * Message data format used by {@link GetRootDataVisualizations.Message}.
 	 *
-	 * @internal
 	 */
 	export type MessageData = HasContainerKey;
 
@@ -32,7 +30,6 @@ export namespace GetRootDataVisualizations {
 	 *
 	 * Will result in the {@link RootDataVisualizations.Message} message being posted.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -44,7 +41,6 @@ export namespace GetRootDataVisualizations {
 	/**
 	 * Creates a {@link GetRootDataVisualizations.Message} from the provided {@link GetRootDataVisualizations.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

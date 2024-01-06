@@ -15,14 +15,12 @@ export namespace GetAudienceSummary {
 	/**
 	 * {@link GetAudienceSummary.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "GET_AUDIENCE_SUMMARY";
 
 	/**
 	 * Message data format used by {@link GetAudienceSummary.Message}.
 	 *
-	 * @internal
 	 */
 	export type MessageData = HasContainerKey;
 
@@ -30,7 +28,6 @@ export namespace GetAudienceSummary {
 	 * Inbound message requesting audience data from the Container with the specified ID.
 	 * Will result in a {@link AudienceSummary.Message } being posted.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -42,7 +39,6 @@ export namespace GetAudienceSummary {
 	/**
 	 * Creates a {@link GetAudienceSummary.Message} from the provided {@link GetAudienceSummary.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

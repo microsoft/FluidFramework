@@ -26,7 +26,6 @@ export type representationGenerator =
 	 *   was first defined.
 	 * @returns The runtime representation for this object. There is no form imposed on this object.
 	 *
-	 * @public
 	 */
 	(property: BaseProperty, bindingType: string, userData?: any) => any;
 
@@ -50,7 +49,6 @@ export type representationInitializer =
 	 * @param userData - The userData provided to {@link DataBinder.defineRepresentation} when the runtime representation
 	 *   was first defined.
 	 *
-	 * @public
 	 */
 	(runtimeObject: any, property: BaseProperty, bindingType: string, userData?: any) => void;
 
@@ -69,7 +67,6 @@ export type representationDestroyer =
 	 * @param userData - The userData provided to {@link DataBinder.defineRepresentation} when the runtime representation
 	 *   was first defined.
 	 *
-	 * @public
 	 */
 	(runtimeObject: any, bindingType: string, userData?: any) => void;
 

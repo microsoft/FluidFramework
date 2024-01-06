@@ -16,14 +16,12 @@ export namespace ContainerStateChange {
 	/**
 	 * {@link ContainerStateChange.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "CONTAINER_STATE_CHANGE";
 
 	/**
 	 * Message data format used by {@link ContainerStateChange.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData extends HasContainerKey {
 		/**
@@ -37,7 +35,6 @@ export namespace ContainerStateChange {
 	/**
 	 * Outbound message indicating a state change within a Container.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -49,7 +46,6 @@ export namespace ContainerStateChange {
 	/**
 	 * Creates a {@link ContainerStateChange.Message} from the provided {@link ContainerStateChange.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

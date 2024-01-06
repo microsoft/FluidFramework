@@ -55,29 +55,29 @@ export class NetworkError extends Error {
 	constructor(
 		/**
 		 * HTTP status code that describes the error.
-		 * @public
+	
 		 */
 		public readonly code: number,
 		/**
 		 * The message associated with the error.
-		 * @public
+	
 		 */
 		message: string,
 		/**
 		 * Optional boolean indicating whether this is an error that can be retried.
 		 * Only relevant when {@link NetworkError.isFatal} is false.
-		 * @public
+	
 		 */
 		public readonly canRetry?: boolean,
 		/**
 		 * Optional boolean indicating whether this error is fatal. This generally indicates that the error causes
 		 * negative, non-recoverable impact to the component/caller and cannot be ignored.
-		 * @public
+	
 		 */
 		public readonly isFatal?: boolean,
 		/**
 		 * Optional value representing the time in milliseconds that should be waited before retrying.
-		 * @public
+	
 		 */
 		public readonly retryAfterMs?: number,
 	) {

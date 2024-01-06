@@ -68,7 +68,6 @@ export abstract class BaseContext {
 	/**
 	 * Returns the nested ChangeSet for this modification.
 	 * @returns The Property ChangeSet that corresponds to this modification.
-	 * @public
 	 */
 	getNestedChangeSet(): SerializedChangeSet {
 		return this._nestedChangeSet;
@@ -78,7 +77,6 @@ export abstract class BaseContext {
 	 * Returns the operation type of the event being handled.
 	 *
 	 * @returns one of 'insert', 'modify' or 'remove'
-	 * @public
 	 */
 	getOperationType(): Utils.OperationType | undefined {
 		return this._operationType;
@@ -88,7 +86,6 @@ export abstract class BaseContext {
 	 * Returns the type of the property's container, if defined (it's not defined for remove operations)
 	 *
 	 * @returns  one of 'single', 'map', 'set', 'array', 'template', 'root', or ''
-	 * @public
 	 */
 	getContext(): string {
 		return this._context;
@@ -98,7 +95,6 @@ export abstract class BaseContext {
 	 * Returns the absolute (full) path from the root of the workspace to the modification.
 	 *
 	 * @returns the path
-	 * @public
 	 */
 	getAbsolutePath(): string {
 		// TODO: Should this function have a different name?
@@ -116,7 +112,6 @@ export abstract class BaseContext {
 	 * @returns A data binding (of the given
 	 * type) which may be empty, if no data binding of the given type is present at the path associated
 	 * with this modification.
-	 * @public
 	 */
 	getDataBinding(_in_bindingType?: string): DataBinding | undefined {
 		// the default implementation will just return undefined
@@ -127,7 +122,6 @@ export abstract class BaseContext {
 	 * Returns the Property at the root of the modification (if it exists).
 	 *
 	 * @returns the property at the root of this modification
-	 * @public
 	 */
 	abstract getProperty(): BaseProperty | undefined;
 
@@ -142,7 +136,6 @@ export abstract class BaseContext {
 	 * This flag gives callbacks the ability to know whether the callbacks are being simulated or not.
 	 *
 	 * @returns true if this modification is simulating a property being added or removed.
-	 * @public
 	 */
 	isSimulated(): boolean {
 		return this._simulated;

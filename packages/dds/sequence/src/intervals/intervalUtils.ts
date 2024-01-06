@@ -109,7 +109,6 @@ export enum IntervalType {
 
 	/**
 	 * A temporary interval, used internally
-	 * @internal
 	 */
 	Transient = 0x4,
 }

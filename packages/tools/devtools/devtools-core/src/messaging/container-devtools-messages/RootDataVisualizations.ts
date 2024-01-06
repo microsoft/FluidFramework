@@ -16,14 +16,12 @@ export namespace RootDataVisualizations {
 	/**
 	 * {@link RootDataVisualizations.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "ROOT_DATA_VISUALIZATIONS";
 
 	/**
 	 * Message data format used by {@link RootDataVisualizations.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData extends HasContainerKey {
 		/**
@@ -38,7 +36,6 @@ export namespace RootDataVisualizations {
 	 * Outbound message containing the visual descriptions of the root DDSs associated
 	 * with the debugger.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -50,7 +47,6 @@ export namespace RootDataVisualizations {
 	/**
 	 * Creates a {@link RootDataVisualizations.Message} from the provided {@link RootDataVisualizations.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

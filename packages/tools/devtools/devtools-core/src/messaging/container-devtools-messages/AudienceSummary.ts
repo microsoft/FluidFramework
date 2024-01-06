@@ -17,14 +17,12 @@ export namespace AudienceSummary {
 	/**
 	 * {@link AudienceSummary.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "AUDIENCE_SUMMARY";
 
 	/**
 	 * Message data format used by {@link AudienceSummary.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData extends HasContainerKey {
 		/**
@@ -46,7 +44,6 @@ export namespace AudienceSummary {
 	/**
 	 * Outbound message containing a summary of the Container's Audience info.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -58,7 +55,6 @@ export namespace AudienceSummary {
 	/**
 	 * Creates a {@link AudienceSummary.Message} from the provided {@link AudienceSummary.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

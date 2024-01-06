@@ -18,7 +18,6 @@ export namespace SequenceIntervalIndexes {
 	 * Collection of intervals.
 	 *
 	 * Provides additional APIs to support efficiently querying a collection of intervals based on segments and offset.
-	 * @internal
 	 */
 	export interface Overlapping extends IOverlappingIntervalsIndex<SequenceInterval> {
 		/**

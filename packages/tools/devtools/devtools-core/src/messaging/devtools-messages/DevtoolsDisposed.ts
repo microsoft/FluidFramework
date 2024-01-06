@@ -14,14 +14,12 @@ export namespace DevtoolsDisposed {
 	/**
 	 * {@link DevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "DEVTOOLS_DISPOSED";
 
 	/**
 	 * Outbound message indicating that the {@link IFluidDevtools} has been disposed.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<undefined> {
 		/**
@@ -33,7 +31,6 @@ export namespace DevtoolsDisposed {
 	/**
 	 * Creates a {@link DevtoolsDisposed.Message}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(): Message {
 		return {

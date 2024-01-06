@@ -22,7 +22,7 @@ export class TokenRevocationError extends NetworkError {
 	constructor(
 		/**
 		 * The request id. Used for tracking the request and later investigation
-		 * @public
+	
 		 */
 		public readonly requestId: string,
 		/**

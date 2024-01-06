@@ -15,14 +15,12 @@ export namespace TelemetryHistory {
 	/**
 	 * {@link TelemetryHistory.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "TELEMETRY_HISTORY";
 
 	/**
 	 * Message data format used by {@link TelemetryHistory.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData {
 		/**
@@ -34,7 +32,6 @@ export namespace TelemetryHistory {
 	/**
 	 * Outbound message including the entire history of telemetry events.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -46,7 +43,6 @@ export namespace TelemetryHistory {
 	/**
 	 * Creates a {@link TelemetryHistory.Message} from the provided {@link TelemetryHistory.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

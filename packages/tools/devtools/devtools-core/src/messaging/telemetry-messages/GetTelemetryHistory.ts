@@ -14,14 +14,12 @@ export namespace GetTelemetryHistory {
 	/**
 	 * {@link GetTelemetryHistory.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "GET_TELEMETRY_HISTORY";
 
 	/**
 	 * Inbound message requesting a complete history of telemetry events.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<undefined> {
 		/**
@@ -33,7 +31,6 @@ export namespace GetTelemetryHistory {
 	/**
 	 * Creates a {@link GetTelemetryHistory.Message}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(): Message {
 		return {

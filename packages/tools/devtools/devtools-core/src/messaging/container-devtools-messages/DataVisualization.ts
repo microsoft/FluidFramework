@@ -16,14 +16,12 @@ export namespace DataVisualization {
 	/**
 	 * {@link DataVisualization.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "DATA_VISUALIZATION";
 
 	/**
 	 * Message data format used by {@link DataVisualization.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData extends HasContainerKey, HasFluidObjectId {
 		/**
@@ -38,7 +36,6 @@ export namespace DataVisualization {
 	/**
 	 * Outbound message containing a visual description of the DDS associated with {@link HasFluidObjectId.fluidObjectId}.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -50,7 +47,6 @@ export namespace DataVisualization {
 	/**
 	 * Creates a {@link DataVisualization.Message} from the provided {@link DataVisualization.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

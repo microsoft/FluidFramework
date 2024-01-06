@@ -28,8 +28,6 @@ export namespace MockTransaction {
 
 	/**
 	 * Makes a new {@link GenericTransaction} that follows the {@link MockTransaction.Policy} policy.
-	 *
-	 * @internal
 	 */
 	export function factory(view: RevisionView, options: Options = defaultOptions): GenericTransaction {
 		return new GenericTransaction(view, new Policy(options));
@@ -37,7 +35,6 @@ export namespace MockTransaction {
 
 	/**
 	 * A mock implementation of `GenericTransaction` for use in tests.
-	 * @internal
 	 */
 	export class Policy implements GenericTransactionPolicy {
 		public options: Options;

@@ -87,7 +87,7 @@ export {
 	 *
 	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
 	 *
-	 * @public
+
 	 */
 	ApiItemUtilities,
 	/**
@@ -97,19 +97,18 @@ export {
 	 *
 	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
 	 *
-	 * @public
+
 	 */
 	LayoutUtilities,
 	/**
 	 * Functionality for rendering {@link DocumentationNode}s as HTML.
 	 *
-	 * @alpha
 	 */
 	HtmlRenderer,
 	/**
 	 * Functionality for rendering {@link DocumentationNode}s as Markdown.
 	 *
-	 * @public
+
 	 */
 	MarkdownRenderer,
 };

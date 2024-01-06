@@ -25,19 +25,15 @@ export type SummaryTree = ISummaryTree | ISummaryHandle;
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
 	/**
-	 * @internal
 	 */
 	export type Tree = 1;
 	/**
-	 * @internal
 	 */
 	export type Blob = 2;
 	/**
-	 * @internal
 	 */
 	export type Handle = 3;
 	/**
-	 * @internal
 	 */
 	export type Attachment = 4;
 

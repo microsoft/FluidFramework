@@ -316,7 +316,6 @@ export enum IntervalType {
     // (undocumented)
     Simple = 0,
     SlideOnRemove = 2,
-    // @internal
     Transient = 4
 }
 

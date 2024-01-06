@@ -29,7 +29,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
-	 * @alpha
 	 */
 	constructor(
 		private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,

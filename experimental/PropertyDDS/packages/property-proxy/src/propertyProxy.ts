@@ -43,7 +43,6 @@ export namespace PropertyProxy {
 	 * This utility function returns the parent property of a referenced property.
 	 * @param property - The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
 	 * @param key - The key of the referenced property in the Reference(Array/Map)Property.
-	 * @internal
 	 */
 	export function getParentOfReferencedProperty(
 		property: ReferenceType,
@@ -143,7 +142,6 @@ export namespace PropertyProxy {
 	 * @param property - The BaseProperty to be proxied.
 	 *
 	 * @returns The newly created proxy if `property` is of a non-primitive type otherwise the value.
-	 * @internal
 	 */
 	export function proxify<T extends PropertyTypes>(property: T): ProxyType<T> {
 		if (PropertyFactory.instanceOf(property, "BaseProperty")) {

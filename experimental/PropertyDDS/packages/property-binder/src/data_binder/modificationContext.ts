@@ -88,7 +88,6 @@ export class ModificationContext extends BaseContext {
 	 * @returns A data binding (defined for the given bindingType)
 	 *   which may be empty, if no data binding of the given type is present at the path associated
 	 *   with this modification.
-	 * @public
 	 */
 	getDataBinding(in_bindingType: string = ""): DataBinding | undefined {
 		if (!this._baseDataBinding) {
@@ -153,7 +152,6 @@ export class ModificationContext extends BaseContext {
 	 * array.
 	 *
 	 * @returns The property at the root of this modification.
-	 * @public
 	 */
 	getProperty(): BaseProperty | undefined {
 		if (this._propertyHint) {
@@ -265,7 +263,6 @@ export class ModificationContext extends BaseContext {
 	 * For a path registered on the DataBinder, this path will be relative to the root.
 	 *
 	 * @returns the tokenized path, relative to the binding point
-	 * @public
 	 */
 	getRelativeTokenizedPath(): string[] {
 		return this._relativeTokenizedPath;

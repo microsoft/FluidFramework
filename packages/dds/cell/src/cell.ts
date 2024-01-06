@@ -51,7 +51,6 @@ interface ICellValue {
 	value: unknown;
 	/**
 	 * The attribution key contained in the `Cell`.
-	 * @alpha
 	 */
 	attribution?: AttributionKey;
 }

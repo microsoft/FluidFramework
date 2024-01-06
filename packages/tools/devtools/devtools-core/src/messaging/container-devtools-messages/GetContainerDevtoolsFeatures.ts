@@ -15,14 +15,12 @@ export namespace GetContainerDevtoolsFeatures {
 	/**
 	 * {@link GetContainerDevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "GET_CONTAINER_DEVTOOLS_FEATURES";
 
 	/**
 	 * Message data format used by {@link ContainerDevtoolsFeatures.Message}.
 	 *
-	 * @internal
 	 */
 	export type MessageData = HasContainerKey;
 
@@ -32,7 +30,6 @@ export namespace GetContainerDevtoolsFeatures {
 	 *
 	 * Will result in the {@link ContainerDevtoolsFeatures.Message} message being posted.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -45,7 +42,6 @@ export namespace GetContainerDevtoolsFeatures {
 	 * Creates a {@link ContainerDevtoolsFeatures.Message} from the provided
 	 * {@link ContainerDevtoolsFeatures.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

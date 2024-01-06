@@ -15,14 +15,12 @@ export namespace DevtoolsFeatures {
 	/**
 	 * {@link DevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "DEVTOOLS_FEATURES";
 
 	/**
 	 * Message data format used by {@link DevtoolsFeatures.Message}.
 	 *
-	 * @internal
 	 */
 	export interface MessageData {
 		/**
@@ -39,7 +37,6 @@ export namespace DevtoolsFeatures {
 	/**
 	 * Outbound message containing the set of features supported by the {@link IFluidDevtools} instance.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -51,7 +48,6 @@ export namespace DevtoolsFeatures {
 	/**
 	 * Creates a {@link DevtoolsFeatures.Message} from the provided {@link DevtoolsFeatures.MessageData}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

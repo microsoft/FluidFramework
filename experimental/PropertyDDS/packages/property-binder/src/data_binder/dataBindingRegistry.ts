@@ -35,7 +35,6 @@ export class DataBindingRegistry {
 	 *                    (like a PropertySet template id).
 	 * @param upgradeType - What semver range this data binding applies to.
 	 * @param dataBindingObject - The Data Binding and its associated metadata.
-	 * @public
 	 */
 	public register(
 		bindingType: string,
@@ -60,7 +59,6 @@ export class DataBindingRegistry {
 	 * @param bindingType - The type of the representation.
 	 * @param typeid - The registration id.
 	 * @returns True if the representation was successfully removed
-	 * @public
 	 */
 	public unregister(bindingType: string, typeid: string): boolean {
 		// Clear our cache
@@ -81,7 +79,6 @@ export class DataBindingRegistry {
 	 * @param bindingType - The type of the representation.
 	 * @param typeid - The registration id.
 	 * @returns true if there is a precise rule for this bindingtype/typeid pair
-	 * @public
 	 */
 	public has(bindingType: string, typeid: string): boolean {
 		const rules = this._bindingTypeMap.get(bindingType);

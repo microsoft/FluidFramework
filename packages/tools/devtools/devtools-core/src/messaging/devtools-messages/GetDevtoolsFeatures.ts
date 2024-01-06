@@ -14,7 +14,6 @@ export namespace GetDevtoolsFeatures {
 	/**
 	 * {@link GetDevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @internal
 	 */
 	export const MessageType = "GET_DEVTOOLS_FEATURES";
 
@@ -22,7 +21,6 @@ export namespace GetDevtoolsFeatures {
 	 * Inbound message requesting the set of features supported by the {@link IFluidDevtools} instance.
 	 * Will result in the {@link DevtoolsFeatures.Message} message being posted.
 	 *
-	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<undefined> {
 		/**
@@ -34,7 +32,6 @@ export namespace GetDevtoolsFeatures {
 	/**
 	 * Creates a {@link GetDevtoolsFeatures.Message}.
 	 *
-	 * @internal
 	 */
 	export function createMessage(): Message {
 		return {

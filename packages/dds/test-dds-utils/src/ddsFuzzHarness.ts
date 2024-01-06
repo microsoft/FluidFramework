@@ -1295,7 +1295,6 @@ export namespace createDDSFuzzSuite {
 	 * // Runs only seed 42 for the given model.
 	 * createDDSFuzzSuite.only(42)(model);
 	 * ```
-	 * @internal
 	 */
 	export const only =
 		(...seeds: number[]) =>
@@ -1317,7 +1316,6 @@ export namespace createDDSFuzzSuite {
 	 * // Skips seed 42 for the given model.
 	 * createDDSFuzzSuite.skip(42)(model);
 	 * ```
-	 * @internal
 	 */
 	export const skip =
 		(...seeds: number[]) =>

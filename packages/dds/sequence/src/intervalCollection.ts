@@ -1582,7 +1582,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * deleted as a result of rebasing. This can occur if the interval applies
 	 * to a range that no longer exists, and the interval was unable to slide.
 	 *
-	 * @internal
 	 */
 	public rebaseLocalInterval(
 		opName: string,
@@ -1892,7 +1891,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @internal
 	 */
 	public serializeInternal(): ISerializedIntervalCollectionV2 {
 		if (!this.localCollection) {
