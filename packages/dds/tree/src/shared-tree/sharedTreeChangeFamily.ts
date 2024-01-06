@@ -4,20 +4,26 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions } from "../codec";
+import { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
+	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
-} from "../core";
-import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
-import { Mutable, fail } from "../util";
-import { RevisionTagCodec } from "../shared-tree-core";
-import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+} from "../core/index.js";
+import {
+	fieldKinds,
+	ModularChangeFamily,
+	ModularChangeset,
+	FieldBatchCodec,
+} from "../feature-libraries/index.js";
+import { Mutable, fail } from "../util/index.js";
+import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
@@ -33,13 +39,18 @@ export class SharedTreeChangeFamily
 		changes: [],
 	};
 
-	public readonly codecs: ICodecFamily<SharedTreeChange>;
+	public readonly codecs: ICodecFamily<SharedTreeChange, ChangeEncodingContext>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 
-	public constructor(codecOptions: ICodecOptions) {
+	public constructor(
+		revisionTagCodec: RevisionTagCodec,
+		fieldBatchCodec: FieldBatchCodec,
+		codecOptions: ICodecOptions,
+	) {
 		this.modularChangeFamily = new ModularChangeFamily(
 			fieldKinds,
-			new RevisionTagCodec(),
+			revisionTagCodec,
+			fieldBatchCodec,
 			codecOptions,
 		);
 		this.codecs = makeSharedTreeChangeCodecFamily(

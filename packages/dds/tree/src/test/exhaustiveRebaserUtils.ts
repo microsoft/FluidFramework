@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema";
+import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
@@ -162,7 +162,7 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 		initialState,
 		generateChildStates,
 		numberOfEdits,
-		(intention: number) => `${tagPrefix}${intention}` as RevisionTag,
+		(intention: number) => `${tagPrefix}${intention}` as unknown as RevisionTag,
 		intentionMinter ?? makeIntentionMinter(),
 	)) {
 		const edits: NamedChangeset<TChangeset>[] = [];

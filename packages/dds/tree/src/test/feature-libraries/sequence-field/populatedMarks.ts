@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand, generateStableId, Populated } from "../../../util";
-import { ChangeAtomId } from "../../../core";
-import { TestChange } from "../../testChange";
+import { IIdCompressor } from "@fluidframework/id-compressor";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand, Populated } from "../../../util/index.js";
+import { ChangeAtomId } from "../../../core/index.js";
+import { TestChange } from "../../testChange.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellMark } from "../../../feature-libraries/sequence-field";
+import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	Attach,
 	Detach,
 	DetachIdOverride,
-	DetachIdOverrideType,
 	MarkEffect,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types";
+} from "../../../feature-libraries/sequence-field/types.js";
 
 export type PopulatedMark<TNodeChange = TestChange> = Populated<
 	CellMark<Populated<MarkEffect>, TNodeChange>
@@ -28,8 +28,8 @@ export type PopulatedMark<TNodeChange = TestChange> = Populated<
  * @remarks - New objects are generated every time this function is called. This is to ensure that stable IDs are
  * generated when appropriate.
  */
-export function generatePopulatedMarks(): PopulatedMark[] {
-	const tag = generateStableId();
+export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMark[] {
+	const tag = idCompressor.generateCompressedId();
 	const lineageEvent: Populated<SF.LineageEvent> = {
 		count: 2,
 		id: brand(0),
@@ -89,7 +89,7 @@ export function generatePopulatedMarks(): PopulatedMark[] {
 			idOverride: unattachIdOverride,
 		},
 		{
-			type: "Delete",
+			type: "Remove",
 			count: 1,
 			cellId,
 			changes,

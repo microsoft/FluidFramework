@@ -17,8 +17,8 @@ import {
 	DetachedField,
 	rootField,
 	detachedFieldAsKey,
-} from "../core";
-import { fail } from "../util";
+} from "../core/index.js";
+import { fail } from "../util/index.js";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.

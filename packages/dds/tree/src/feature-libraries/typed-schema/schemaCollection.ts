@@ -4,22 +4,22 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
-import { capitalize, fail, requireAssignableTo } from "../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema";
-import { Multiplicity } from "../multiplicity";
+import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core/index.js";
+import { capitalize, fail, requireAssignableTo } from "../../util/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { Multiplicity } from "../multiplicity.js";
 import {
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	allowedTypesIsAny,
 	SchemaCollection,
 	MapNodeSchema,
 	LeafNodeSchema,
 	FieldNodeSchema,
 	ObjectNodeSchema,
-} from "./typedTreeSchema";
-import { normalizeFlexListEager } from "./flexList";
-import { Sourced } from "./view";
+} from "./typedTreeSchema.js";
+import { normalizeFlexListEager } from "./flexList.js";
+import { Sourced } from "./view.js";
 
 // TODO: tests for this file
 
@@ -80,7 +80,7 @@ export function aggregateSchemaLibraries(
 	libraries: Iterable<SchemaLibraryData>,
 	rootFieldSchema?: TreeFieldSchema,
 ): SchemaLibraryData {
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
 
 	const errors: string[] = [];
@@ -257,6 +257,8 @@ export function validateField(
 
 /**
  * Reserved field names to avoid collisions with the API.
+ *
+ * TODO: rework flex-tree API to avoid having to ban these.
  */
 export const bannedFieldNames = new Set([
 	"constructor",
@@ -270,6 +272,8 @@ export const bannedFieldNames = new Set([
 	"type",
 	"value",
 	"localNodeKey",
+	"boxedIterator",
+	"iterator",
 ]);
 
 /**

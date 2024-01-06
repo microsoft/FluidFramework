@@ -5,14 +5,20 @@
 
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { ITreeCursor, jsonableTreeFromCursor, EmptyKey, JsonCompatible, brand } from "../../..";
+import {
+	ITreeCursor,
+	jsonableTreeFromCursor,
+	EmptyKey,
+	JsonCompatible,
+	brand,
+} from "../../../index.js";
 import {
 	singleJsonCursor,
 	cursorToJsonObject,
 	jsonSchema,
 	jsonRoot,
 	SchemaBuilder,
-} from "../../../domains";
+} from "../../../domains/index.js";
 import {
 	buildForest,
 	defaultSchemaPolicy,
@@ -21,25 +27,26 @@ import {
 	cursorForJsonableTreeNode,
 	buildChunkedForest,
 	intoStoredSchema,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	FieldKey,
 	initializeForest,
 	JsonableTree,
 	moveToDetachedField,
 	TreeStoredSchemaRepository,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
 	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree";
-import { Canada, generateCanada } from "./canada";
-import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize } from "./twitter";
-import { CitmCatalog, generateCitmJson } from "./citm";
-import { clone } from "./jsObjectUtil";
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
+import { testRevisionTagCodec } from "../../utils.js";
+import { Canada, generateCanada } from "./canada.js";
+import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
+import { generateTwitterJsonByByteSize } from "./twitter.js";
+import { CitmCatalog, generateCitmJson } from "./citm.js";
+import { clone } from "./jsObjectUtil.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
@@ -103,7 +110,11 @@ function bench(
 					"object-forest Cursor",
 					() => {
 						const forest = buildForest();
-						initializeForest(forest, [cursorForJsonableTreeNode(encodedTree)]);
+						initializeForest(
+							forest,
+							[cursorForJsonableTreeNode(encodedTree)],
+							testRevisionTagCodec,
+						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						assert(cursor.firstNode());
@@ -126,7 +137,11 @@ function bench(
 						const forest = buildChunkedForest(
 							makeTreeChunker(schema, defaultSchemaPolicy),
 						);
-						initializeForest(forest, [cursorForJsonableTreeNode(encodedTree)]);
+						initializeForest(
+							forest,
+							[cursorForJsonableTreeNode(encodedTree)],
+							testRevisionTagCodec,
+						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						assert(cursor.firstNode());
