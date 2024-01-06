@@ -316,9 +316,30 @@ describe("internalScheme", () => {
 	});
 
 	describe("detect constraint types", () => {
+		it("exact constraint", () => {
+			const input = `2.0.0-internal.1.0.23`;
+			const expected = `exact`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
 		it("patch constraint", () => {
 			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.1.0`;
 			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("narrow patch constraint", () => {
+			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.0.25`;
+			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it('exact "patch" constraint', () => {
+			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.0.24`;
+			const expected = `exact`;
 			const result = detectInternalVersionConstraintType(input);
 			assert.strictEqual(result, expected);
 		});

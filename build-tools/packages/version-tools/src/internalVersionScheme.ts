@@ -440,7 +440,7 @@ export function changePreReleaseIdentifier(
  *
  * @internal
  */
-export function detectInternalVersionConstraintType(range: string): "minor" | "patch" {
+export function detectInternalVersionConstraintType(range: string): "minor" | "patch" | "exact" {
 	if (semver.validRange(range) === null) {
 		throw new Error(`Invalid range: ${range}`);
 	}
@@ -470,6 +470,5 @@ export function detectInternalVersionConstraintType(range: string): "minor" | "p
 	const minor = bumpInternalVersion(minVer, "minor");
 
 	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
-	// maxSatisfying could return null in case of exact version. Should that return as "minor"?
-	return maxSatisfying === patch ? "patch" : "minor";
+	return maxSatisfying === patch ? "patch" : maxSatisfying === minor ? "minor" : "exact";
 }

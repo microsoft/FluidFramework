@@ -60,6 +60,9 @@ export function bumpRange(
 
 		case "internal": {
 			const constraintType = detectInternalVersionConstraintType(range);
+			if (constraintType === "exact") {
+				throw new Error(`Can't bump exact specification from ${range}`);
+			}
 			const original = semver.minVersion(range);
 			if (original === null) {
 				throw new Error(`Couldn't determine minVersion from ${range}.`);
