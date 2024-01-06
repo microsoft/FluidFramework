@@ -98,7 +98,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		assert(
 			runtime.idCompressor !== undefined,
-			"IdCompressor must be enabled to use SharedTree",
+			0x886 /* IdCompressor must be enabled to use SharedTree */,
 		);
 		this.idCompressor = runtime.idCompressor;
 		const mintRevisionTag = () => this.idCompressor.generateCompressedId();

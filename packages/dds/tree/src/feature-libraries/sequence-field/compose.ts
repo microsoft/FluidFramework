@@ -576,7 +576,7 @@ export class ComposeQueue<T> {
 						this.newRevision,
 						this.revisionMetadata,
 					);
-					assert(newCellId !== undefined, "Both marks should have cell IDs");
+					assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
 					const comparison = compareCellPositionsUsingTombstones(
 						baseCellId,
 						newCellId,
