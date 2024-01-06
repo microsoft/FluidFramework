@@ -140,7 +140,7 @@ export function createNodeProxy(
 	const schema = flexNode.schema;
 	if (schemaIsLeaf(schema)) {
 		// Can't use `??` here since null is a valid TreeValue.
-		assert(flexNode.value !== undefined, "Leaf must have value");
+		assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
 		return flexNode.value;
 	}
 	let proxy: TreeNode;
@@ -190,7 +190,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 		set(target, key, value: InsertableContent) {
 			const flexNode = getFlexNode(proxy);
 			const flexNodeSchema = flexNode.schema;
-			assert(flexNodeSchema instanceof ObjectNodeSchema, "invalid schema");
+			assert(flexNodeSchema instanceof ObjectNodeSchema, 0x888 /* invalid schema */);
 			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
