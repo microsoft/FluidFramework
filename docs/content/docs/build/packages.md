@@ -26,8 +26,7 @@ You'll use one or more shared objects in your container to model your collaborat
 three data structures that cover a broad range of scenarios:
 
 1. [SharedMap]({{< relref "/docs/data-structures/map.md" >}}), a map-like data structure for storing key/value pair data.
-2. [SharedDirectory]({{< relref "shareddirectory-class.md" >}}), a map-like data structure with ability to organize keys into subdirectories.
-3. [SharedString]({{< relref "string.md" >}}), a data structure for string data.
+2. [SharedString]({{< relref "/docs/data-structures/string.md" >}}), a data structure for string data.
 
 ## Package scopes
 
@@ -38,7 +37,7 @@ Fluid Framework packages are published under one of the following npm scopes:
 -   @fluid-internal
 -   @fluid-tools
 
-In addition to the scoped packages, two unscoped packages are published: the [fluid-framework[] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}).
+In addition to the scoped packages, two unscoped packages are published: the [fluid-framework[] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "/docs/testing/tinylicious" >}}).
 
 Unless you are contributing to the Fluid Framework, you should only need the unscoped packages and packages from the **@fluidframework** scope.
 You can [read more about the scopes and their intent][scopes] in the Fluid Framework wiki.

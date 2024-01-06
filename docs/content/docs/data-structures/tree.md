@@ -553,4 +553,4 @@ Returns the object that defines the schema of the `node` object.
 
 ## API Documentation
 
-For a comprehensive view of the `SharedTree` package's API documentation, see [the SharedTree API docs]({{< ref "docs/apis/tree.md" >}}).
+For a comprehensive view of the `SharedTree` package's API documentation, see [the SharedTree API docs]({{< packageref "tree" >}}).

@@ -31,7 +31,7 @@ The device is a subsequent client in all future sessions.
 
 Your code creates containers using APIs provided by a service-specific client library.
 Each service-specific client library implements a common API for manipulating containers.
-For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides [these APIs]({{< relref "docs/api/v1/tinylicious-client.md" >}}) for the Tinylicious Fluid service.
+For example, the [Tinylicious library]({{< relref "/docs/testing/tinylicious" >}}) provides [these APIs]({{< relref "docs/api/v1/tinylicious-client.md" >}}) for the Tinylicious Fluid service.
 These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and to connect to the container once it is created.
 
 ### Container schema
