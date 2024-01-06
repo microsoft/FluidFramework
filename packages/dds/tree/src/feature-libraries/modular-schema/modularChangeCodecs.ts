@@ -250,7 +250,7 @@ export function makeV0Codec(
 
 		const chunks = fieldsCodec.decode(encoded.trees, chunkEncodingContext);
 		const getChunk = (index: number): TreeChunk => {
-			assert(index < chunks.length, "out of bounds index for build chunk");
+			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
 			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
 		};
 
@@ -309,7 +309,7 @@ export function makeV0Codec(
 	return {
 		encode: (change, context) => {
 			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, "Unexpected changeset with destroys");
+			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
 			return {
 				maxId: change.maxId,
 				revisions:

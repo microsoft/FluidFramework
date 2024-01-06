@@ -403,7 +403,10 @@ export class ModularChangeFamily
 			: undefined;
 
 		// Destroys only occur in rollback changesets, which are never inverted.
-		assert(change.change.destroys === undefined, "Unexpected destroys in change to invert");
+		assert(
+			change.change.destroys === undefined,
+			0x89a /* Unexpected destroys in change to invert */,
+		);
 
 		const revInfo = change.change.revisions;
 		return makeModularChangeset(
@@ -808,7 +811,7 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 						} else {
 							assert(
 								destroyCount === chunk.topLevelLength,
-								"Expected build and destroy to have the same length",
+								0x89b /* Expected build and destroy to have the same length */,
 							);
 							deleteFromNestedMap(allDestroys, setRevisionKey, id);
 						}
@@ -835,7 +838,7 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 					} else {
 						assert(
 							count === chunk.topLevelLength,
-							"Expected build and destroy to have the same length",
+							0x89c /* Expected build and destroy to have the same length */,
 						);
 						deleteFromNestedMap(allBuilds, setRevisionKey, id);
 					}

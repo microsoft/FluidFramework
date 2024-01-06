@@ -575,8 +575,8 @@ export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUni
 
 // @internal
 export interface FlexTreeEntity<out TSchema = unknown> {
-    [boxedIterator](): IterableIterator<FlexTreeEntity>;
     readonly [flexTreeMarker]: FlexTreeEntityKind;
+    boxedIterator(): IterableIterator<FlexTreeEntity>;
     readonly context: TreeContext;
     readonly schema: TSchema;
     treeStatus(): TreeStatus;
@@ -593,9 +593,9 @@ export enum FlexTreeEntityKind {
 // @internal
 export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
     // (undocumented)
-    [boxedIterator](): IterableIterator<FlexTreeNode>;
-    // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
+    // (undocumented)
+    boxedIterator(): IterableIterator<FlexTreeNode>;
     is<TSchema extends TreeFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
     isSameAs(other: FlexTreeField): boolean;
     readonly key: FieldKey;
@@ -619,15 +619,12 @@ export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends
 
 // @internal
 export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends FlexTreeNode {
-    [boxedIterator](): IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[
     FieldKey,
     FlexTreeUnboxField<TSchema["info"], "notEmpty">
     ]>;
-    readonly asObject: {
-        readonly [P in FieldKey]?: FlexTreeUnboxField<TSchema["info"], "notEmpty">;
-    };
+    boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
     delete(key: string): void;
     entries(): IterableIterator<[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]>;
     forEach(callbackFn: (value: FlexTreeUnboxField<TSchema["info"], "notEmpty">, key: FieldKey, map: FlexTreeMapNode<TSchema>) => void, thisArg?: any): void;
@@ -648,10 +645,10 @@ export const flexTreeMarker: unique symbol;
 // @internal
 export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     // (undocumented)
-    [boxedIterator](): IterableIterator<FlexTreeField>;
-    // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
     [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
+    // (undocumented)
+    boxedIterator(): IterableIterator<FlexTreeField>;
     is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
     // (undocumented)
     on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
@@ -660,7 +657,6 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
         readonly index: number;
     };
     tryGetField(key: FieldKey): undefined | FlexTreeField;
-    readonly type: TreeNodeSchemaIdentifier;
     readonly value?: TreeValue;
 }
 
@@ -724,12 +720,11 @@ export interface FlexTreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
 // @internal
 export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes> extends FlexTreeField {
     // (undocumented)
-    [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
-    // (undocumented)
     [Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
-    readonly asArray: readonly FlexTreeUnboxNodeUnion<TTypes>[];
     at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
     boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
+    // (undocumented)
+    boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
     insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
     insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
     insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
@@ -786,7 +781,7 @@ export type FlexTreeUnknownUnboxed = TreeValue | FlexTreeNode;
 export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
     readonly checkout: ITreeCheckout;
     readonly context: TreeContext;
-    readonly editableTree: FlexTreeTypedField<TRoot>;
+    readonly flexTree: FlexTreeTypedField<TRoot>;
     fork(): ITreeViewFork<TRoot>;
 }
 
