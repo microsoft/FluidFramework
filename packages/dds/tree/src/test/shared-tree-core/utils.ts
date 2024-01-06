@@ -12,7 +12,7 @@ import {
 	DefaultEditBuilder,
 	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
-import { testIdCompressor } from "../utils.js";
+import { testRevisionTagCodec } from "../utils.js";
 import { ICodecOptions } from "../../codec/index.js";
 
 /**
@@ -36,7 +36,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		super(
 			summarizables,
 			new DefaultChangeFamily(
-				testIdCompressor,
+				testRevisionTagCodec,
 				makeFieldBatchCodec(codecOptions),
 				codecOptions,
 			),

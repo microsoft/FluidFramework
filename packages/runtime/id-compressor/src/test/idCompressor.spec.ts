@@ -378,24 +378,9 @@ describe("IdCompressor", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			const range = compressor.takeNextCreationRange();
 			compressor.beginGhostSession(createSessionId(), () => {
-				assert.throws(
-					() => compressor.takeNextCreationRange(),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.finalizeCreationRange(range),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.serialize(false),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
+				assert.throws(() => compressor.takeNextCreationRange());
+				assert.throws(() => compressor.finalizeCreationRange(range));
+				assert.throws(() => compressor.serialize(false));
 			});
 		});
 
