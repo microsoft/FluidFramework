@@ -34,7 +34,11 @@ Promise.all(
 			version,
 		);
 
-		const uriRootDirectoryPath = `docs/api/${version}`;
+		// Note: the leading slash in the URI root is important.
+		// It tells Hugo to enterpret the links as relative to the site root, rather than
+		// relative to the document containing the link.
+		// See documentation here: https://gohugo.io/content-management/urls/#relative-urls
+		const uriRootDirectoryPath = `/docs/api/${version}`;
 
 		await renderApiDocumentation(
 			apiReportsDirectoryPath,
