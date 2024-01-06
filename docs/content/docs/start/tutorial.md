@@ -1,6 +1,6 @@
 ---
 title: 'Tutorial: DiceRoller application'
-menuPosition: 4
+menuPosition: 2
 aliases:
   - "/docs/get-started/tutorial/"
   - "/start/tutorial/"
@@ -10,7 +10,7 @@ In this walkthrough, you'll learn about using the Fluid Framework by examining t
 
 {{< callout note >}}
 
-The dice roller app uses Fluid Framework 1.0. For a walkthrough that uses version 2.0 preview, see [Tutorial: SharedTree demo]({{< relref "tutorial-sharedtree.md" >}})
+The demo app uses Fluid Framework 2.0, which is in preview.
 
 {{< /callout >}}
 

@@ -1,6 +1,6 @@
 ---
-title: Quick Start V.1
-menuPosition: 3
+title: Quick Start
+menuPosition: 1
 codeCopyButton: true
 aliases:
   - "/docs/get-started/quick-start/"
@@ -14,7 +14,7 @@ localhost.
 
 {{< callout note >}}
 
-The demo app uses Fluid Framework 1.0. For a quick start that uses version 2.0 preview, see [Quick Start V.2]({{< relref "quick-start-sharedtree.md" >}})
+The demo app uses Fluid Framework 2.0, which is in preview.
 
 {{< /callout >}}
 
