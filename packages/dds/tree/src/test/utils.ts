@@ -1026,7 +1026,10 @@ export function announceTestDelta(
 }
 
 export function createTestUndoRedoStacks(
-	events: ISubscribable<{ newRevertible(type: Revertible): void }>,
+	events: ISubscribable<{
+		newRevertible(type: Revertible): void;
+		revertibleDisposed(revertible: Revertible): void;
+	}>,
 ): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
@@ -1035,7 +1038,7 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe1 = events.on("newRevertible", (revertible) => {
+	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
 		revertible.retain();
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
@@ -1044,8 +1047,23 @@ export function createTestUndoRedoStacks(
 		}
 	});
 
+	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
+		if (revertible.kind === RevertibleKind.Undo) {
+			const index = redoStack.indexOf(revertible);
+			if (index !== -1) {
+				redoStack.splice(index, 1);
+			}
+		} else {
+			const index = undoStack.indexOf(revertible);
+			if (index !== -1) {
+				undoStack.splice(index, 1);
+			}
+		}
+	});
+
 	const unsubscribe = () => {
-		unsubscribe1();
+		unsubscribeFromNew();
+		unsubscribeFromDisposed();
 		for (const revertible of undoStack) {
 			revertible.discard();
 		}

@@ -12,6 +12,7 @@ import {
 } from "../../shared-tree-core/index.js";
 import {
 	GraphCommit,
+	Revertible,
 	RevisionTag,
 	findAncestor,
 	findCommonAncestor,
@@ -592,6 +593,87 @@ describe("Branches", () => {
 			});
 			branch.fork();
 			assert.equal(forkCount, 2);
+		});
+	});
+
+	describe("Revertibles", () => {
+		it("triggers a revertible event for changes made to the local branch", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe = branch.on("newRevertible", (revertible) => {
+				revertible.retain();
+				revertiblesCreated.push(revertible);
+			});
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 2);
+
+			// Each revert also leads to the creation of a revertible event
+			revertiblesCreated[1].revert();
+
+			assert.equal(revertiblesCreated.length, 3);
+
+			unsubscribe();
+		});
+
+		it("triggers a revertibleDisposed event for discarded and reverted revertibles", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe1 = branch.on("newRevertible", (revertible) => {
+				revertible.retain();
+				revertiblesCreated.push(revertible);
+			});
+			const revertiblesDisposed: Revertible[] = [];
+			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
+				revertiblesDisposed.push(revertible);
+			});
+
+			change(branch);
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 2);
+			assert.equal(revertiblesDisposed.length, 0);
+
+			revertiblesCreated[0].discard();
+
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
+
+			revertiblesCreated[1].revert();
+
+			assert.equal(revertiblesDisposed.length, 2);
+			assert.equal(revertiblesDisposed[1], revertiblesCreated[1]);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		it.skip("triggers revertible events for each change merged into the local branch", () => {
+			const parentBranch = create();
+			const childBranch = parentBranch.fork();
+
+			let revertibleCount = 0;
+			const unsubscribe = parentBranch.on("newRevertible", () => {
+				revertibleCount += 1;
+			});
+
+			change(childBranch);
+			change(childBranch);
+
+			assert.equal(revertibleCount, 0);
+
+			parentBranch.merge(childBranch);
+
+			assert.equal(revertibleCount, 2);
+
+			unsubscribe();
 		});
 	});
 
