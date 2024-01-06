@@ -691,14 +691,21 @@ export interface FlexTreeObjectNode extends FlexTreeNode {
 }
 
 // @internal
-export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<{
-    readonly [key in keyof TFields as `boxed${Capitalize<PropertyNameFromFieldKey<Assume<key, string>> & string>}`]: FlexTreeTypedField<TFields[key]>;
+export type FlexTreeObjectNodeFields<TFields extends Fields> = FlexTreeObjectNodeFieldsInner<FlattenKeys<{
+    [key in keyof TFields as key extends PropertyNameFromFieldKey<key & string> ? key : never]: TFields[key];
 } & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : PropertyNameFromFieldKey<Assume<key, string>>]: FlexTreeUnboxField<TFields[key]>;
+    [key in keyof TFields as key extends PropertyNameFromFieldKey<key & string> ? never : PropertyNameFromFieldKey<key & string>]: TFields[key];
+}>>;
+
+// @internal
+export type FlexTreeObjectNodeFieldsInner<TFields extends Fields> = FlattenKeys<{
+    readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<TFields[key]>;
 } & {
-    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? PropertyNameFromFieldKey<Assume<key, string>> : never]: FlexTreeUnboxField<TFields[key]>;
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: FlexTreeUnboxField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<PropertyNameFromFieldKey<Assume<key, string>> & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: FlexTreeUnboxField<TFields[key]>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 }>;
 
 // @internal

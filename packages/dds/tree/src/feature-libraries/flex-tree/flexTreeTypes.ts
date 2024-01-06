@@ -503,39 +503,58 @@ export type FlexTreeObjectNodeTyped<TSchema extends ObjectNodeSchema> =
 /**
  * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
  *
- * @privateRemarks TODOs:
+ * @privateRemarks
+ * TODO: Support custom field keys.
+ * @internal
+ */
+export type FlexTreeObjectNodeFields<TFields extends Fields> = FlexTreeObjectNodeFieldsInner<
+	FlattenKeys<
+		{
+			// When the key does not need to be escaped, map it from the input TFields in a way that doesn't break navigate to declaration
+			[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
+				? key
+				: never]: TFields[key];
+		} & {
+			[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
+				? never
+				: PropertyNameFromFieldKey<key & string>]: TFields[key];
+		}
+	>
+>;
+
+/**
+ * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
  *
- * 1. Support custom field keys.
- *
- * 2. Do we keep assignment operator + "setFoo" methods, or just use methods?
+ * @privateRemarks
+ * TODO: Do we keep assignment operator + "setFoo" methods, or just use methods?
  * Inconsistency in the API experience could confusing for consumers.
  *
  * @internal
  */
-export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<
+export type FlexTreeObjectNodeFieldsInner<TFields extends Fields> = FlattenKeys<
 	{
 		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		readonly [key in keyof TFields as `boxed${Capitalize<
-			PropertyNameFromFieldKey<Assume<key, string>> & string
-		>}`]: FlexTreeTypedField<TFields[key]>;
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<
+			TFields[key]
+		>;
 	} & {
 		// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
 		// If we could map to getters and setters separately, we would preferably do that, but we can't.
 		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? never
-			: PropertyNameFromFieldKey<Assume<key, string>>]: FlexTreeUnboxField<TFields[key]>;
+			: key]: FlexTreeUnboxField<TFields[key]>;
 	} & {
 		// Add setter (make property writable) when the field is of a kind that has a logical set operation.
 		// If we could map to getters and setters separately, we would preferably do that, but we can't.
 		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
 		-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? PropertyNameFromFieldKey<Assume<key, string>>
+			? key
 			: never]: FlexTreeUnboxField<TFields[key]>;
 	} & {
 		// Setter method (when the field is of a kind that has a logical set operation).
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? `set${Capitalize<PropertyNameFromFieldKey<Assume<key, string>> & string>}`
+			? `set${Capitalize<key & string>}`
 			: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 	}
 >;

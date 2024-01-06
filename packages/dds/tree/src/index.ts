@@ -230,6 +230,7 @@ export {
 	FieldApiPrefixes,
 	fieldKeysToEscape,
 	fieldApiPrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./feature-libraries/index.js";
 
 export {

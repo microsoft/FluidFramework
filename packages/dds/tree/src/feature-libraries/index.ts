@@ -279,6 +279,7 @@ export {
 	FieldApiPrefixes,
 	fieldKeysToEscape,
 	fieldApiPrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";

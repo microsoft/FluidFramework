@@ -34,6 +34,7 @@ export {
 	FieldApiPrefixes,
 	fieldKeysToEscape,
 	fieldApiPrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./flexTreeTypes.js";
 
 export {
