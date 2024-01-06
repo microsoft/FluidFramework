@@ -81,7 +81,7 @@ As an example, consider an app that provides a digital board with groups of stic
 
 ![A screenshot of a sticky note board app](/images/sticky-note-board-app.png)
 
-The full sample is at: [Shared Tree Demo](https://github.com/microsoft/FluidDemos/shared-tree-demo). *The code snippets in this article are simplified versions of the code in the sample.*
+The full sample is at: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm). *The code snippets in this article are simplified versions of the code in the sample.*
 
 #### Object schema
 

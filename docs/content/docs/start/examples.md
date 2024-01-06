@@ -13,7 +13,7 @@ both the power and simplicity of Fluid. Use these to learn and kickstart your ow
 
 ![A screenshot of simple shared tree app](/images/simple-example.png)
 
-The simple SharedTree example app shows how to create a React web app using the SharedTree data structure. This example is designed to be a good starting point for building more sophisticated apps.
+The [simple SharedTree example app](https://github.com/microsoft/FluidExamples/tree/main/item-counter) shows how to create a React web app using the SharedTree data structure. This example is designed to be a good starting point for building more sophisticated apps.
 
 ## Brainstorming
 
