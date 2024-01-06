@@ -120,7 +120,7 @@ describe("End to end chunked encoding", () => {
 			initialTree: [],
 		});
 
-		flexTree.editableTree.insertAt(0, chunk.cursor());
+		flexTree.flexTree.insertAt(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,

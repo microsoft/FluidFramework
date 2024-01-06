@@ -225,13 +225,13 @@ export function generateTestTrees() {
 				provider.processMessages();
 
 				// Insert node
-				tree1.editableTree.insertAtStart([value]);
+				tree1.flexTree.insertAtStart([value]);
 				provider.processMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Remove node
-				tree1.editableTree.removeAt(0);
+				tree1.flexTree.removeAt(0);
 
 				provider.processMessages();
 
