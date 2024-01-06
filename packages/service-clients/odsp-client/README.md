@@ -1,6 +1,6 @@
 # @fluid-experimental/odsp-client
 
-The odsp-client package provides a simple and powerful way to consume collaborative Fluid data with OneDrive/SharePoint (ODSP) storage.. Please note that odsp-client is currently an experimental package. We'd love for you to try it out and provide feedback but it is not yet recommended or supported for production scenarios.
+The odsp-client package provides a simple and powerful way to consume collaborative Fluid data with OneDrive/SharePoint (ODSP) storage. Please note that odsp-client is currently an experimental package. We'd love for you to try it out and provide feedback but it is not yet recommended or supported for production scenarios.
 
 ## Using odsp-client
 
