@@ -35,9 +35,6 @@ export {
 export { ViewSchema } from "./view.js";
 
 export {
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,

@@ -435,6 +435,9 @@ export abstract class ErasedType<out Name extends string> {
     protected abstract brand(dummy: never): Name;
 }
 
+// @internal
+export type EscapedFieldKeys = (typeof fieldKeysToEscape)[number];
+
 // @public
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -460,10 +463,19 @@ export interface FieldAnchor {
 }
 
 // @internal
+export type FieldApiPrefixes = (typeof fieldApiPrefixes)[number];
+
+// @internal
+export const fieldApiPrefixes: readonly ["set", "boxed", "field", "Field"];
+
+// @internal
 export type FieldGenerator = () => MapTree[];
 
 // @internal
 export type FieldKey = Brand<string, "tree.FieldKey">;
+
+// @internal
+export const fieldKeysToEscape: readonly ["constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
 
 // @public
 export enum FieldKind {
@@ -680,13 +692,13 @@ export interface FlexTreeObjectNode extends FlexTreeNode {
 
 // @internal
 export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<{
-    readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<TFields[key]>;
+    readonly [key in keyof TFields as `boxed${Capitalize<PropertyNameFromFieldKey<Assume<key, string>> & string>}`]: FlexTreeTypedField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: FlexTreeUnboxField<TFields[key]>;
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : PropertyNameFromFieldKey<Assume<key, string>>]: FlexTreeUnboxField<TFields[key]>;
 } & {
-    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: FlexTreeUnboxField<TFields[key]>;
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? PropertyNameFromFieldKey<Assume<key, string>> : never]: FlexTreeUnboxField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<PropertyNameFromFieldKey<Assume<key, string>> & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 }>;
 
 // @internal
@@ -1314,6 +1326,9 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 
 // @internal
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
+
+// @internal
+export type PropertyNameFromFieldKey<T extends string> = T extends EscapedFieldKeys ? `field${Capitalize<T>}` : T extends `${FieldApiPrefixes}${Capitalize<string>}` ? `field${Capitalize<T>}` : T;
 
 // @internal
 export type ProtoNodes = readonly DeltaProtoNode[];

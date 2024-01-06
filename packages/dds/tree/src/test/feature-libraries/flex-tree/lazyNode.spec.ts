@@ -14,14 +14,12 @@ import {
 	LazyMap,
 	LazyTreeNode,
 	buildLazyObjectNode,
+	escapeFieldKey,
 } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	Any,
 	FlexTreeField,
 	FlexTreeNode,
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	FieldKind,
 	AllowedTypes,
 	typeNameSymbol,
@@ -44,7 +42,7 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, capitalize } from "../../../util/index.js";
 import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
@@ -54,6 +52,10 @@ import {
 	failCodec,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import {
+	fieldKeysToEscapeSet,
+	fieldApiPrefixes,
+} from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import { contextWithContentReadonly } from "./utils.js";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -144,21 +146,19 @@ describe("LazyNode", () => {
 					const lowercaseBannedName = `${bannedName[0].toLowerCase()}${bannedName.substring(
 						1,
 					)}`;
-					assert(bannedFieldNames.has(lowercaseBannedName), lowercaseBannedName);
+					assert(fieldKeysToEscapeSet.has(lowercaseBannedName), lowercaseBannedName);
 					existingPropertiesExtended.add(lowercaseBannedName);
 				}
 			}
 
-			const errors: string[] = [];
-			// Confirm validateStructFieldName rejects all used names:
-			validateObjectNodeFieldName(name, () => "property test", errors);
-			assert(errors.length > 0, name);
+			// Confirm escapeFieldKey escapes all used names:
+			assert.equal(escapeFieldKey(name), `field${capitalize(name)}`);
 		}
 
 		// Ensure all existing properties are banned as field names:
 		// Note that this currently also ensure that there are no names that are unnecessary banned:
 		// this restriction may need to be relaxed in the future to reserve names so they can be used in the API later as a non breaking change.
-		assert.deepEqual(bannedFieldNames, new Set(existingPropertiesExtended));
+		assert.deepEqual(fieldKeysToEscapeSet, new Set(existingPropertiesExtended));
 	});
 
 	it("is", () => {

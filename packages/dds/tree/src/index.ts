@@ -225,6 +225,11 @@ export {
 	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
+	PropertyNameFromFieldKey,
+	EscapedFieldKeys,
+	FieldApiPrefixes,
+	fieldKeysToEscape,
+	fieldApiPrefixes,
 } from "./feature-libraries/index.js";
 
 export {

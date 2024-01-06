@@ -515,30 +515,83 @@ export type FlexTreeObjectNodeTyped<TSchema extends ObjectNodeSchema> =
 export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<
 	{
 		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<
-			TFields[key]
-		>;
+		readonly [key in keyof TFields as `boxed${Capitalize<
+			PropertyNameFromFieldKey<Assume<key, string>> & string
+		>}`]: FlexTreeTypedField<TFields[key]>;
 	} & {
 		// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
 		// If we could map to getters and setters separately, we would preferably do that, but we can't.
 		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? never
-			: key]: FlexTreeUnboxField<TFields[key]>;
+			: PropertyNameFromFieldKey<Assume<key, string>>]: FlexTreeUnboxField<TFields[key]>;
 	} & {
 		// Add setter (make property writable) when the field is of a kind that has a logical set operation.
 		// If we could map to getters and setters separately, we would preferably do that, but we can't.
 		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
 		-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? key
+			? PropertyNameFromFieldKey<Assume<key, string>>
 			: never]: FlexTreeUnboxField<TFields[key]>;
 	} & {
 		// Setter method (when the field is of a kind that has a logical set operation).
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? `set${Capitalize<key & string>}`
+			? `set${Capitalize<PropertyNameFromFieldKey<Assume<key, string>> & string>}`
 			: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 	}
 >;
+
+/**
+ * Reserved field property names to avoid collisions with the API.
+ * @internal
+ */
+export const fieldKeysToEscape = [
+	"constructor",
+	"context",
+	"is",
+	"on",
+	"parentField",
+	"schema",
+	"treeStatus",
+	"tryGetField",
+	"type",
+	"value",
+	"localNodeKey",
+	"boxedIterator",
+	"iterator",
+] as const;
+
+/**
+ * Reserved field property names to avoid collisions with the API.
+ */
+export const fieldKeysToEscapeSet: ReadonlySet<string> = new Set(fieldKeysToEscape);
+
+/**
+ * Field names starting with these must be followed by a lowercase letter.
+ * @internal
+ */
+export const fieldApiPrefixes = ["set", "boxed", "field", "Field"] as const;
+
+/**
+ * Convert and object node's field key into a escaped string usable as a property name.
+ * @internal
+ */
+export type EscapedFieldKeys = (typeof fieldKeysToEscape)[number];
+
+/**
+ * Convert and object node's field key into a escaped string usable as a property name.
+ * @internal
+ */
+export type FieldApiPrefixes = (typeof fieldApiPrefixes)[number];
+
+/**
+ * Convert and object node's field key into a escaped string usable as a property name.
+ * @internal
+ */
+export type PropertyNameFromFieldKey<T extends string> = T extends EscapedFieldKeys
+	? `field${Capitalize<T>}`
+	: T extends `${FieldApiPrefixes}${Capitalize<string>}`
+	? `field${Capitalize<T>}`
+	: T;
 
 /**
  * Field kinds that allow value assignment.
