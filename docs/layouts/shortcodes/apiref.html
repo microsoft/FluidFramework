@@ -9,7 +9,7 @@
 {{- $unscopedPackageName := .Get 0 -}}
 {{- $name := .Get 1 -}}
 {{- $kind := .Get 2 -}}
-{{- $version := default $.Site.Data.versions.currentVersion (.Get 3) -}}
+{{- $version := default $.Site.Data.params.versions.currentVersion (.Get 3) -}}
 
 {{- $fileNameWithoutExtension := lower (delimit (slice $name $kind) "-") -}}
 {{- $fileName := delimit (slice $fileNameWithoutExtension ".md") "" -}}
@@ -17,6 +17,6 @@
 {{- $apiLink := print "/docs/api/" $version "/" -}}
 {{- $path := delimit (slice $apiLink $unscopedPackageName "/" $fileName) "" -}}
 
-<a href="{{ relref . $path }}"><code>{{ $name }}</code></a>
+{{ relref . $path }}
 
 {{- /* Strip trailing newline. */ -}}
