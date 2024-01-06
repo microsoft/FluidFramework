@@ -62,8 +62,6 @@
 
 Updated server dependencies
 
-The @fluidframework/common-utils dependency has been upgraded to v3.1.0.
-
 The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
 
 - @fluidframework/gitresources
