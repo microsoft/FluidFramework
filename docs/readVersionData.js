@@ -17,5 +17,5 @@ const jsonData = fs.readFileSync("docs/data/versions.json", "utf8");
 // Parse the JSON data
 const parsedData = JSON.parse(jsonData);
 
-// Extract values from "previousVersions" and output for Bash processing
-return console.log(parsedData.params.previousVersions.join("\n"));
+// Extract values from "downloadVersions" and output for Bash processing
+return console.log(parsedData.params.downloadVersions.join("\n"));

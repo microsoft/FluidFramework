@@ -24,6 +24,7 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	schemaDataIsEmpty,
+	RevisionTagCodec,
 } from "../core/index.js";
 import { SharedTreeCore } from "../shared-tree-core/index.js";
 import {
@@ -155,9 +156,9 @@ export class SharedTree
 	private readonly _events: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
-	public readonly view: TreeCheckout;
+	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
-		return this.view.storedSchema;
+		return this.checkout.storedSchema;
 	}
 
 	/**
@@ -168,7 +169,7 @@ export class SharedTree
 	 * TODO:
 	 * 1. API docs need to reflect this limitation or the limitation has to be removed.
 	 */
-	private hasView2 = false;
+	private hasView = false;
 
 	public constructor(
 		id: string,
@@ -179,7 +180,7 @@ export class SharedTree
 	) {
 		assert(
 			runtime.idCompressor !== undefined,
-			"IdCompressor must be enabled to use SharedTree",
+			0x883 /* IdCompressor must be enabled to use SharedTree */,
 		);
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
@@ -188,38 +189,31 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedRoots = makeDetachedFieldIndex("repair", runtime.idCompressor, options);
+		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const removedRoots = makeDetachedFieldIndex("repair", revisionTagCodec, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const opFieldBatchCodec = makeFieldBatchCodec(options, {
-			// TODO: Currently unsure which schema should be passed if an op contains a schema edit, so it is not enabled.
-			// This should eventually handle that case, and pass in the correct schema accordingly.
-			// schema: {
-			// 	schema,
-			// 	policy: defaultSchemaPolicy,
-			// },
-			encodeType: options.summaryEncodeType,
-		});
+		const fieldBatchCodec = makeFieldBatchCodec(options);
 
-		// Separate field batch codec created as summarization does not need to handle the case of an op containing a schema edit.
-		const summaryFieldBatchCodec = makeFieldBatchCodec(options, {
+		const encoderContext = {
 			schema: {
 				schema,
 				policy: defaultSchemaPolicy,
 			},
-			encodeType: options.summaryEncodeType,
-		});
+			encodeType: options.treeEncodeType,
+		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			runtime.idCompressor,
-			summaryFieldBatchCodec,
+			revisionTagCodec,
+			fieldBatchCodec,
+			encoderContext,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
-			runtime.idCompressor,
-			opFieldBatchCodec,
+			revisionTagCodec,
+			fieldBatchCodec,
 			options,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
@@ -255,12 +249,12 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.view = createTreeCheckout(runtime.idCompressor, {
+		this.checkout = createTreeCheckout(runtime.idCompressor, revisionTagCodec, {
 			branch: localBranch,
 			changeFamily,
 			schema,
 			forest,
-			fieldBatchCodec: opFieldBatchCodec,
+			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
 		});
@@ -272,7 +266,7 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): CheckoutFlexTreeView<TRoot> | undefined {
-		assert(this.hasView2 === false, 0x7f1 /* Cannot create second view from tree. */);
+		assert(this.hasView === false, 0x7f1 /* Cannot create second view from tree. */);
 
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
 		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
@@ -283,15 +277,15 @@ export class SharedTree
 			return undefined;
 		}
 
-		this.hasView2 = true;
-		const view2 = new CheckoutFlexTreeView(
-			this.view,
+		this.hasView = true;
+		const view = new CheckoutFlexTreeView(
+			this.checkout,
 			schema,
 			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
 			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
 			() => {
-				assert(this.hasView2, 0x7f2 /* unexpected dispose */);
-				this.hasView2 = false;
+				assert(this.hasView, 0x7f2 /* unexpected dispose */);
+				this.hasView = false;
 			},
 		);
 		const onSchemaChange = () => {
@@ -300,7 +294,7 @@ export class SharedTree
 				compatibilityInner.write !== Compatibility.Compatible ||
 				compatibilityInner.read !== Compatibility.Compatible
 			) {
-				view2[disposeSymbol]();
+				view[disposeSymbol]();
 				onSchemaIncompatible();
 				return false;
 			} else {
@@ -308,18 +302,18 @@ export class SharedTree
 			}
 		};
 
-		afterSchemaChanges(this._events, this.view, onSchemaChange);
-		return view2;
+		afterSchemaChanges(this._events, this.checkout, onSchemaChange);
+		return view;
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
-		const cursor = this.view.forest.allocateCursor();
+		const cursor = this.checkout.forest.allocateCursor();
 		try {
-			moveToDetachedField(this.view.forest, cursor);
+			moveToDetachedField(this.checkout.forest, cursor);
 			return {
 				schema: this.storedSchema.clone(),
 				tree: jsonableTreeFromFieldCursor(cursor),
-				removed: this.view.getRemovedRoots(),
+				removed: this.checkout.getRemovedRoots(),
 			};
 		} finally {
 			cursor.free();
@@ -331,7 +325,7 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): CheckoutFlexTreeView<TRoot> {
-		if (this.hasView2 === true) {
+		if (this.hasView === true) {
 			throw new UsageError(
 				"Only one view can be constructed from a given tree at a time. Dispose of the first before creating a second.",
 			);
@@ -341,9 +335,9 @@ export class SharedTree
 		// This will improve support for readonly documents, cross version collaboration and attribution.
 
 		// Check for empty.
-		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
-			this.view.transaction.start();
-			initializeContent(this.view, config.schema, () => {
+		if (this.checkout.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
+			this.checkout.transaction.start();
+			initializeContent(this.checkout, config.schema, () => {
 				const field = { field: rootFieldKey, parent: undefined };
 				const content = normalizeNewFieldContent(
 					{ schema: config.schema },
@@ -371,10 +365,10 @@ export class SharedTree
 					}
 				}
 			});
-			this.view.transaction.commit();
+			this.checkout.transaction.commit();
 		}
 
-		schematize(this.view.events, this.view, config);
+		schematize(this.checkout.events, this.checkout, config);
 
 		return (
 			this.requireSchema(
@@ -408,7 +402,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
 	 */
 	forest?: ForestType;
-	summaryEncodeType?: TreeCompressionStrategy;
+	treeEncodeType?: TreeCompressionStrategy;
 }
 
 /**
@@ -431,7 +425,7 @@ export enum ForestType {
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 };
 
 /**

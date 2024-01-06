@@ -1,5 +1,7 @@
 # @fluidframework/common-utils Changelog
 
+## [3.2.0](https://github.com/microsoft/FluidFramework/releases/tag/common-utils_v3.2.0)
+
 ## [3.1.0](https://github.com/microsoft/FluidFramework/releases/tag/common-utils_v3.1.0)
 
 ### Updated @fluidframework/common-definitions
