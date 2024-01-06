@@ -8,7 +8,7 @@
  *
  * @remarks
  * Please note that odsp-client is currently an experimental package.
- * We'd love for you to try it out and provide feedback but it is not yet recommended or supported for production scnearios.
+ * We'd love for you to try it out and provide feedback but it is not yet recommended or supported for production scenarios.
  *
  * @packageDocumentation
  */
