@@ -206,7 +206,7 @@ export function compareCellPositionsUsingTombstones(
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
-		assert(false, "Inconsistent cell ordering");
+		assert(false, 0x8a0 /* Inconsistent cell ordering */);
 	}
 	if (newChangeKnowsOfOldMarkCellRevision) {
 		// The changeset that contains `newMarkCell` has tombstones for the revision that created `oldMarkCell`,
@@ -231,7 +231,10 @@ export function compareCellPositionsUsingTombstones(
 		// The only case where the old mark cell should have no revision is when composing anonymous changesets
 		// into a transaction, in which case the new mark cell should also have no revision, which is handled above.
 		// In all other cases, the old mark cell should have a revision.
-		assert(oldMarkCell.revision !== undefined, "Old mark cell should have a revision");
+		assert(
+			oldMarkCell.revision !== undefined,
+			0x8a1 /* Old mark cell should have a revision */,
+		);
 
 		// Note that these indices are for ordering the revisions in which the cells were named, not the revisions
 		// of the changesets in which the marks targeting these cells appear.
@@ -267,7 +270,7 @@ export function compareCellPositionsUsingTombstones(
 			//
 			// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
 			// the examples above) with the same resolution.
-			assert(false, "Invalid cell ordering scenario");
+			assert(false, 0x8a2 /* Invalid cell ordering scenario */);
 		}
 
 		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that

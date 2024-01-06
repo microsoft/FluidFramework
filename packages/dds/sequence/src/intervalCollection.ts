@@ -1662,8 +1662,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		let intervalId: string;
 		switch (op.opName) {
 			case IntervalDeltaOpType.ADD: {
-				assert(op.value.start !== undefined, "start is undefined");
-				assert(op.value.end !== undefined, "end is undefined");
+				assert(op.value.start !== undefined, 0x87a /* start is undefined */);
+				assert(op.value.end !== undefined, 0x87b /* end is undefined */);
 				interval = this.add({
 					start: op.value.start,
 					end: op.value.end,
@@ -1683,7 +1683,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					localSeq: this.getNextLocalSeq(),
 				};
 			case IntervalDeltaOpType.CHANGE: {
-				assert(op.value.properties !== undefined, "properties is undefined");
+				assert(op.value.properties !== undefined, 0x87c /* properties is undefined */);
 				({ intervalId, ...props } = op.value.properties);
 				interval = this.change(intervalId, {
 					start: op.value.start,

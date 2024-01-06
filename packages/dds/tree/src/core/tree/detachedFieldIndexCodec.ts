@@ -22,7 +22,7 @@ class MajorCodec implements IJsonCodec<Major> {
 	) {}
 
 	public encode(major: Major) {
-		assert(major !== undefined, "Unexpected undefined revision");
+		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
 		const id = this.revisionTagCodec.encode(major);
 		/**
 		 * Preface: this codec is only used at summarization time (not for ops).
@@ -39,7 +39,7 @@ class MajorCodec implements IJsonCodec<Major> {
 		 */
 		assert(
 			id === "root" || id >= 0,
-			"Expected final id on encode of detached field index revision",
+			0x88f /* Expected final id on encode of detached field index revision */,
 		);
 		return id;
 	}
@@ -47,7 +47,7 @@ class MajorCodec implements IJsonCodec<Major> {
 	public decode(major: EncodedRevisionTag) {
 		assert(
 			major === "root" || major >= 0,
-			"Expected final id on decode of detached field index revision",
+			0x890 /* Expected final id on decode of detached field index revision */,
 		);
 		return this.revisionTagCodec.decode(major, {
 			originatorId: this.revisionTagCodec.localSessionId,
