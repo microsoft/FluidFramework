@@ -8,7 +8,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { DataObjectGridContainerRuntimeFactory, IDataObjectGridAppModel } from "./container.js";
-import { DataObjectGridAppView } from "./dataObjectGridView";
+import { DataObjectGridAppView } from "./dataObjectGridView.js";
 
 /**
  * Start the app and render.

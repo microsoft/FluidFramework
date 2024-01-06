@@ -7,7 +7,7 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { CollaborativeText } from "./fluid-object";
+import { CollaborativeText } from "./fluid-object/index.js";
 
 export interface ICollaborativeTextAppModel {
 	readonly collaborativeText: CollaborativeText;

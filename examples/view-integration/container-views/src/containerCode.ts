@@ -13,7 +13,7 @@ import React from "react";
 
 import { IDiceRoller } from "./interface.js";
 import { DiceRollerInstantiationFactory } from "./model.js";
-import { DiceRollerView } from "./view";
+import { DiceRollerView } from "./view.js";
 
 /**
  * The data model for our application.

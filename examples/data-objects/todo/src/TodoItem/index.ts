@@ -4,4 +4,4 @@
  */
 
 export { ITodoItemInitialState, TodoItem, TodoItemFactory } from "./TodoItem.js";
-export { TodoItemView } from "./TodoItemView";
+export { TodoItemView } from "./TodoItemView.js";

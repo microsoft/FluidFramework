@@ -6,7 +6,7 @@
 import * as React from "react";
 import { Tree } from "@fluidframework/tree";
 import { Inventory } from "../schema.js";
-import { Counter } from "./counter";
+import { Counter } from "./counter.js";
 
 export const MainView: React.FC<{ inventory: Inventory }> = ({ inventory }) => {
 	// Use a React effect hook to invalidate this component when the inventory changes.

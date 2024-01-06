@@ -18,7 +18,7 @@ import {
 import React from "react";
 
 import { SmdeDataObject, SmdeFactory } from "./smde.js";
-import { SmdeReactView } from "./smdeView";
+import { SmdeReactView } from "./smdeView.js";
 
 const defaultComponentId = "default";
 

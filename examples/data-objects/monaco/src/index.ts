@@ -9,7 +9,7 @@ import * as sequence from "@fluidframework/sequence";
 import React from "react";
 
 import { MonacoRunner } from "./dataObject.js";
-import { MonacoView } from "./view";
+import { MonacoView } from "./view.js";
 
 const monacoName = "@fluid-example/monaco";
 

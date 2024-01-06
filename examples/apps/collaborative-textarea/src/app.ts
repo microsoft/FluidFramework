@@ -11,7 +11,7 @@ import {
 	CollaborativeTextContainerRuntimeFactory,
 	ICollaborativeTextAppModel,
 } from "./container.js";
-import { CollaborativeTextView } from "./view";
+import { CollaborativeTextView } from "./view.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container

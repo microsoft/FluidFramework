@@ -9,7 +9,7 @@ import React from "react";
 import { InventoryList, InventoryListFactory } from "./inventoryList.js";
 export { InventoryList, InventoryListFactory } from "./inventoryList.js";
 
-import { MainView } from "./view/inventoryList";
+import { MainView } from "./view/inventoryList.js";
 
 /**
  * @internal

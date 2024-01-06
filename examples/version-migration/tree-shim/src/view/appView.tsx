@@ -6,7 +6,7 @@
 import React from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
-import { InventoryListView } from "./inventoryView";
+import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
 	model: IInventoryListAppModel;
