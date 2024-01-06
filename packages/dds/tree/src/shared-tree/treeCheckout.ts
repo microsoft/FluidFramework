@@ -380,12 +380,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		});
 		branch.on("newRevertible", (revertible) => {
-			// if there are no listeners, discard the revertible to avoid memory leaks
-			if (!this.events.hasListeners("newRevertible")) {
-				revertible.discard();
-			} else {
-				this.events.emit("newRevertible", revertible);
-			}
+			this.events.emit("newRevertible", revertible);
+		});
+		branch.on("revertibleDisposed", (revertible, revision) => {
+			// We do not expose the revision in this API
+			this.events.emit("newRevertible", revertible);
 		});
 	}
 
