@@ -12,7 +12,6 @@
 "@fluidframework/datastore": minor
 "@fluidframework/datastore-definitions": minor
 "@fluidframework/debugger": minor
-"@fluid-experimental/devtools-core": minor
 "@fluidframework/driver-base": minor
 "@fluidframework/driver-definitions": minor
 "@fluidframework/driver-utils": minor
@@ -56,7 +55,7 @@
 "@fluidframework/tinylicious-driver": minor
 "@fluidframework/tool-utils": minor
 "@fluid-experimental/tree": minor
-"@fluid-experimental/tree2": minor
+"@fluidframework/tree": minor
 "@fluid-tools/webpack-fluid-loader": minor
 ---
 

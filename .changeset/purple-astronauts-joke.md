@@ -1,5 +1,5 @@
 ---
-"@fluid-experimental/tree2": major
+"@fluidframework/tree": major
 ---
 
 @fluid-experimental/tree2 package renamed
