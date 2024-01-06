@@ -49,12 +49,12 @@ For information about creating the schema for an array node, see [Array schema](
 
 ## Installation
 
-The `SharedTree` library can be found in the [fluid-experimental/tree2](https://www.npmjs.com/package/@fluid-experimental/tree2) package.
+The `SharedTree` library can be found in the [fluid-framework](https://www.npmjs.com/package/fluid-framework) package (version 2.x).
 
 To get started, run the following from a terminal in your project folder:
 
 ```bash
-npm install @fluid-experimental/tree2
+npm install fluid-framework@canary
 ```
 
 ## Usage
