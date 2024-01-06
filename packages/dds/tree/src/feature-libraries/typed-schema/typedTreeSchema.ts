@@ -191,7 +191,7 @@ export class ObjectNodeSchema<
 }
 
 /**
- * TODO: replace (or subclass) this with more specific types, like "List".
+ * TODO: remove or replace (or subclass) this with more specific types, like "List".
  * @internal
  */
 export class FieldNodeSchema<

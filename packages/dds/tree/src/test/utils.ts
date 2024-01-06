@@ -723,7 +723,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 		manager,
 		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 	);
-	return view.editableTree;
+	return view.flexTree;
 }
 
 export const requiredBooleanRootSchema = new SchemaBuilder({

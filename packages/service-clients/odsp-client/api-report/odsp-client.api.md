@@ -64,6 +64,4 @@ export interface OdspMember extends IMember {
 
 export { TokenResponse }
 
-// (No @packageDocumentation comment for this package)
-
 ```

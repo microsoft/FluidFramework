@@ -4,12 +4,7 @@
  */
 
 import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
-import {
-	FieldKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-} from "../../core/index.js";
+import { FieldKey, ITreeCursorSynchronous, TreeValue } from "../../core/index.js";
 import { Assume, FlattenKeys } from "../../util/index.js";
 import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import {
@@ -52,12 +47,6 @@ export enum FlexTreeEntityKind {
 	Node,
 	Field,
 }
-
-/**
- * Allows boxed iteration of a tree/field
- * @internal
- */
-export const boxedIterator = Symbol();
 
 /**
  * Part of a tree.
@@ -107,7 +96,7 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	 * @remarks
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
-	[boxedIterator](): IterableIterator<FlexTreeEntity>;
+	boxedIterator(): IterableIterator<FlexTreeEntity>;
 }
 
 /**
@@ -186,14 +175,7 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 */
 	is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
 
-	/**
-	 * Same as `this.schema.name`.
-	 * This is provided as an enumerable own property to aid with JavaScript object traversals of this data-structure.
-	 * See [ReadMe](./README.md) for details.
-	 */
-	readonly type: TreeNodeSchemaIdentifier;
-
-	[boxedIterator](): IterableIterator<FlexTreeField>;
+	boxedIterator(): IterableIterator<FlexTreeField>;
 
 	/**
 	 * Subscribe to the next change that affects this node's children.
@@ -253,7 +235,7 @@ export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
 	 */
 	is<TSchema extends TreeFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
 
-	[boxedIterator](): IterableIterator<FlexTreeNode>;
+	boxedIterator(): IterableIterator<FlexTreeNode>;
 
 	/**
 	 * Check if this field is the same as a different field.
@@ -393,22 +375,11 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 * To iterate over the unboxed values of the map, use `Symbol.Iterator()`.
 	 */
-	[boxedIterator](): IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
+	boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
 
 	[Symbol.iterator](): IterableIterator<
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	>;
-
-	/**
-	 * An enumerable own property which allows JavaScript object traversals to access {@link FlexTreeSequenceField} content.
-	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link FlexTreeMapNode.get} or iterate over fields with `Symbol.iterator`.
-	 * See [ReadMe](./README.md) for details.
-	 *
-	 * This object is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
-	 */
-	readonly asObject: {
-		readonly [P in FieldKey]?: FlexTreeUnboxField<TSchema["info"], "notEmpty">;
-	};
 }
 
 /**
@@ -837,18 +808,9 @@ export interface FlexTreeSequenceField<in out TTypes extends AllowedTypes> exten
 		source: FlexTreeSequenceField<AllowedTypes>,
 	): void;
 
-	[boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
+	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
 	[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
-
-	/**
-	 * An enumerable own property which allows JavaScript object traversals to access {@link FlexTreeSequenceField} content.
-	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link FlexTreeSequenceField#at} or iterate over nodes with `Symbol.iterator`.
-	 * See [ReadMe](./README.md) for details.
-	 *
-	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
-	 */
-	readonly asArray: readonly FlexTreeUnboxNodeUnion<TTypes>[];
 }
 
 /**

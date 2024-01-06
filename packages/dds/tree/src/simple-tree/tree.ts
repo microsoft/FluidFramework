@@ -129,6 +129,6 @@ export class WrapperTreeView<
 	}
 
 	public get root(): TreeFieldFromImplicitField<TSchema> {
-		return getProxyForField(this.view.editableTree) as TreeFieldFromImplicitField<TSchema>;
+		return getProxyForField(this.view.flexTree) as TreeFieldFromImplicitField<TSchema>;
 	}
 }

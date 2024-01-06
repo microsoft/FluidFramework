@@ -207,36 +207,12 @@ stages:
             script: |
               pnpm i --frozen-lockfile
 
-        - task: Bash@3
-          displayName: Download and extract previous version API
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              # Run helper script to read versions.json
-              output=$(node docs/readVersionData.js)
-              
-              # Pipe script output and loop through each value in the array
-              if [ -n "$output" ]; then
-                echo "$output" | while IFS= read -r version; do
-                  version=$(echo "$version" | sed 's/"//g')
-                  echo "Version: $version"
-
-                  echo "creating api-extractor-temp-$version folder"
-                  mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-$version/doc-models
-
-                  az storage blob download -f latest-$version.tar.gz -c 'api-extractor-json' -n latest-$version.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
-                  
-                  tar -xzf latest-$version.tar.gz -C _api-extractor-temp-$version/doc-models
-
-                done
-              fi
         - task: Npm@1
-          displayName: npm run build:multi-version
+          displayName: npm run build
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run build:multi-version'
+            customCommand: 'run ci:build'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'

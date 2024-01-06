@@ -84,19 +84,6 @@
   },
   {
     "type": "cycle",
-    "from": "src/feature-libraries/sequence-field/markListFactory.ts",
-    "to": "src/feature-libraries/sequence-field/utils.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/sequence-field/utils.ts",
-      "src/feature-libraries/sequence-field/markListFactory.ts"
-    ]
-  },
-  {
-    "type": "cycle",
     "from": "src/feature-libraries/sequence-field/moveEffectTable.ts",
     "to": "src/feature-libraries/sequence-field/utils.ts",
     "rule": {
