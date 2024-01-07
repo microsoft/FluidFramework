@@ -5,7 +5,7 @@
 
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import { App } from "../../components/index.js";
+import { App } from "../../components";
 
 describe("App Insights Example App UI test", () => {
 	it("App renders", async (): Promise<void> => {

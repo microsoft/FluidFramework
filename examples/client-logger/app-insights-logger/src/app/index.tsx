@@ -4,7 +4,7 @@
  */
 import React from "react";
 import ReactDOM from "react-dom";
-import { App } from "../components/index.js";
+import { App } from "../components";
 
 console.log("Rendering app...");
 
