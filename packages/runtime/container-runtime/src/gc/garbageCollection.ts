@@ -864,19 +864,11 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case "TombstoneLoaded": {
-				//* TODO: This will only clean up the one node that was loaded - not its children (in case of DataStore)
-				//* or other nodes that it alone references.  Need to think about test cases for this, and if this approach works or not.
+				//* Then also run full GC - Otherwise if it's our bug it won't resolve (the object with the handle we missed doesn't change)
 
-				//* Double-check that Tombstoned nodes are properly included in unreferenceNodesState
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
-				this.unreferencedNodesState.delete(tombstonedNodePath);
-
-				//* Thought experiment: For summarizer, this will happen automatically on next GC run, right?
-				//* Check first that the node is in the list?  If not, indexOf gives -1 and we wrongly remove the last one
-				// Remove the node from the tombstones list and update the runtime's tombstoned routes.
-				this.tombstones.splice(this.tombstones.indexOf(tombstonedNodePath), 1);
-				this.runtime.updateTombstonedRoutes(this.tombstones);
+				this.addedOutboundReference("/", tombstonedNodePath);
 
 				break;
 			}

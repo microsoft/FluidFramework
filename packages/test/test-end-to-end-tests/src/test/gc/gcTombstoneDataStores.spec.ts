@@ -159,6 +159,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
+		//* Revisit this - no longer a problem given Op-Based References?
 		// If we added a DDS above, this trailing op will trigger a codepath that over-eagerly detects that
 		// DDS reference as if it's new, and wipes out the unreference tracking for the datastore.
 		// So we must skip the trailing op to avoid that case.
@@ -468,6 +469,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		//* ONLY
 		itExpects.only(
 			"Requesting tombstoned datastore triggers auto-recovery",
+			//* Revisit these expected logs, to update comments etc.
 			[
 				// Interactive client's request
 				{
@@ -475,6 +477,21 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request,
 					clientType: "interactive",
+					category: "error",
+				},
+				// Interactive client's request
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
+				},
+				// Interactive client's request
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
 				},
 			],
 			async () => {
@@ -489,7 +506,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const { summaryVersion } = await summarize(summarizer);
 				const container = await loadContainer(summaryVersion);
 
-				// This request fails since the datastore is tombstoned
+				// Simulate an invalid reference from the app, for this properly unreferenced (Tombstoned) object
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const tombstoneErrorResponse = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
@@ -515,21 +532,67 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// The GC TombstoneLoaded op should roundtrip here
 				await provider.ensureSynchronized();
 
-				// This request succeeds because Auto-Recovery kicked in and the object should be revived
-				const tombstoneSuccessResponse = await (
+				//* TODO?: Use spy or mockLogger to validate addedOutboundReference called
+
+				// This request still fails because Auto-Recovery only affects the next summary (via next GC run)
+				const tombstoneErrorResponse_Interactive = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
 					url: unreferencedId,
 				});
 				assert.equal(
-					tombstoneSuccessResponse.status,
+					tombstoneErrorResponse_Interactive.status,
+					404,
+					"Expected tombstone error - Auto-Recovery shouldn't affect in-progress Interactive sessions",
+				);
+
+				// Auto-Recovery: This summary will have the unref timestamp reset due to the GC TombstoneLoaded op
+				const { summaryVersion: summaryVersion2 } = await summarize(summarizer);
+				const container2 = await loadContainer(summaryVersion2);
+
+				//* TODO?: Verify that the object is not Tombstoned in summarizingContainer
+
+				// Container2 loaded after auto-recovery: This request succeeds because the datastore is no longer tombstoned
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const successResponse2 = await (
+					entryPoint2._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: unreferencedId,
+				});
+				assert.equal(
+					successResponse2.status,
 					200,
-					"Should be able to retrieve a tombstoned datastore given the allowTombstone header",
+					"Auto-Recovery should have made the object no longer tombstoned",
 				);
 				assert.notEqual(
-					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
+					successResponse2.headers?.[TombstoneResponseHeaderKey],
 					true,
-					"DID NOT Expect tombstone header to be set on the response",
+					"DID NOT Expect tombstone header to be set on the success response",
+				);
+
+				//* TODO: Also confirm request for child or other referenced node succeeds
+
+				// Wait the Tombstone timeout then summarize and load another container
+				// It will be tombstoned again since it's been unreferenced the whole time
+				await delay(tombstoneTimeoutMs); //* Revert +10
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
+				const { summaryVersion: summaryVersion3 } = await summarize(summarizer);
+				const container3 = await loadContainer(summaryVersion3);
+				const entryPoint3 = (await container3.getEntryPoint()) as ITestDataObject;
+				const tombstoneErrorResponse3 = await (
+					entryPoint3._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: unreferencedId,
+				});
+				assert.equal(
+					tombstoneErrorResponse3.status,
+					404,
+					"Object should become tombstoned again after the timeout",
+				);
+				assert.equal(
+					tombstoneErrorResponse3.value,
+					`DataStore was tombstoned: ${unreferencedId}`,
+					"Expected the Tombstone error message",
 				);
 			},
 		);
