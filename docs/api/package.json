@@ -1,7 +1,16 @@
 {
 	"name": "api",
 	"version": "1.0.0",
+	"private": true,
 	"description": "",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "docs/api"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
 	"scripts": {
 		"start": "func start",
 		"test": "echo \"No tests yet...\""
