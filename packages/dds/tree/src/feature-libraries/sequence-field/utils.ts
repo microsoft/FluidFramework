@@ -41,7 +41,6 @@ import {
 	DetachFields,
 	IdRange,
 } from "./types.js";
-import { isMoveMark, MoveEffectTable } from "./moveEffectTable.js";
 import {
 	EmptyInputCellMark,
 	MoveMarkEffect,
@@ -886,13 +885,6 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 }
 
 /**
- * @internal
- */
-export function newMoveEffectTable<T>(): MoveEffectTable<T> {
-	return newCrossFieldTable();
-}
-
-/**
  * Splits the `mark` into two marks such that the first returned mark has length `length`.
  * @param mark - The mark to split.
  * @param revision - The revision of the changeset the mark is part of.
@@ -1114,14 +1106,6 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 		0x829 /* Should not overwrite mark revision */,
 	);
 	effect.revision = revision;
-}
-
-export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {
-	if (isMoveMark(mark)) {
-		return mark.id;
-	}
-
-	return undefined;
 }
 
 export function getEndpoint(
