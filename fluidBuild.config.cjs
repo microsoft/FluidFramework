@@ -178,6 +178,7 @@ module.exports = {
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
+			"fluid-build-tasks-tsc": ["packages/dds/tree/package.json"],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
