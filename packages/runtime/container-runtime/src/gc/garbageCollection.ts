@@ -46,6 +46,7 @@ import {
 	ISweepPhaseStats,
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
+	disableAutoRecoveryKey,
 } from "./gcDefinitions";
 import {
 	cloneGCData,
@@ -865,12 +866,16 @@ export class GarbageCollector implements IGarbageCollector {
 	public processMessage(message: ContainerRuntimeGCMessage, local: boolean) {
 		const gcMessageType = message.contents.type;
 		switch (gcMessageType) {
-			case "Sweep": {
+			case GarbageCollectionMessageType.Sweep: {
 				// Delete the nodes whose ids are present in the contents.
 				this.deleteSweepReadyNodes(message.contents.deletedNodeIds);
 				break;
 			}
-			case "TombstoneLoaded": {
+			case GarbageCollectionMessageType.TombstoneLoaded: {
+				if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+					break;
+				}
+
 				//* NOTE: In separate PR... Then also run full GC - Otherwise if it's our bug it won't resolve (the object with the handle we missed doesn't change)
 
 				// Mark the node as referenced to ensure it isn't Swept
@@ -1023,10 +1028,17 @@ export class GarbageCollector implements IGarbageCollector {
 	 * all unreferenced / tombstone state for this object.
 	 */
 	private submitTombstoneLoadedMessage(nodePath: string) {
+		if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+			return;
+		}
+
 		const contents: GarbageCollectionMessage = {
 			type: "TombstoneLoaded",
 			nodePath,
 		};
+
+		// Use compat behavior "Ignore" since this is an optimization to opportunistically protect
+		// objects from deletion, so it's fine for older clients to ignore this op.
 		const containerGCMessage: ContainerRuntimeGCMessage = {
 			type: ContainerMessageType.GC,
 			contents,

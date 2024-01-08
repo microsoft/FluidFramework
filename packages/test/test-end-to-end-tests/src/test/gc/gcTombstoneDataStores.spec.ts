@@ -447,7 +447,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	});
 
 	// If these tests start failing due to "runtime is closed" errors try first adjusting `tombstoneTimeoutMs` above
-	describe("Loading tombstone data stores not allowed (per config)", () => {
+	describe("Loading tombstoned data stores", () => {
 		const expectedHeadersLogged = {
 			request: "{}",
 			handleGet: JSON.stringify({ viaHandle: true }),
@@ -896,7 +896,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const defaultDataObject =
 					(await initialContainer.getEntryPoint()) as ITestDataObject;
 
-				// Create dataStore2 and dataStore3. dataStore2 has reference to dataStore3 and unreference dataStore2.
+				// Create dataStoreA and dataStoreB. dataStoreA has reference to dataStoreB. Then unreference dataStoreA.
 				const dataStoreA = await createDataStore(defaultDataObject);
 				const dataStoreB = await createDataStore(defaultDataObject);
 				const dataStoreAId = dataStoreA._context.id;

@@ -76,6 +76,8 @@ export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStor
 export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 /** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
 export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
+/** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
+export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -268,6 +270,7 @@ export type GarbageCollectionMessageType =
  * @internal
  */
 export interface ISweepMessage {
+	/** @see GarbageCollectionMessageType.Sweep */
 	type: typeof GarbageCollectionMessageType.Sweep;
 	/** The ids of nodes that are deleted. */
 	deletedNodeIds: string[];
@@ -278,6 +281,7 @@ export interface ISweepMessage {
  * @internal
  */
 export interface ITombstoneLoadedMessage {
+	/** @see GarbageCollectionMessageType.TombstoneLoaded */
 	type: typeof GarbageCollectionMessageType.TombstoneLoaded;
 	/** The id of Tombstoned node that was loaded. */
 	nodePath: string;
