@@ -92,6 +92,8 @@ export class DocumentDeltaConnection
 		return this._disposed;
 	}
 
+	public readonly supportDeltaConnectionUpdates = true;
+
 	/**
 	 * Flag to indicate whether the DocumentDeltaConnection is expected to still be capable of sending messages.
 	 * After disconnection, we flip this to prevent any stale messages from being emitted.

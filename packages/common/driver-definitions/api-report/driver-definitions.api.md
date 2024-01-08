@@ -126,6 +126,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
     submitSignal(content: any, targetClientId?: string): void;
+    supportDeltaConnectionUpdates?: boolean;
     version: string;
 }
 

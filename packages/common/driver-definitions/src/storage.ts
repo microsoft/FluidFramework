@@ -301,6 +301,11 @@ export interface IDocumentDeltaConnection
 	submitSignal(content: any, targetClientId?: string): void;
 
 	/**
+	 * Tells whether the connection supports connection updates events on the connection object
+	 */
+	supportDeltaConnectionUpdates?: boolean;
+
+	/**
 	 * Any metadata properties for the connection.
 	 */
 	metadata?: Record<string, unknown> | undefined;

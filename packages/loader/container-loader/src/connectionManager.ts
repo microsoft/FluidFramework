@@ -759,7 +759,9 @@ export class ConnectionManager implements IConnectionManager {
 		connection.off("disconnect", this.disconnectHandlerInternal);
 		connection.off("error", this.errorHandler);
 		connection.off("pong", this.props.pongHandler);
-		connection.off("deltaConnectionUpdated", this.deltaConnectionUpdateHandler);
+		if (connection.supportDeltaConnectionUpdates === true) {
+			connection.off("deltaConnectionUpdated", this.deltaConnectionUpdateHandler);
+		}
 
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this._outbound.pause();
@@ -858,7 +860,9 @@ export class ConnectionManager implements IConnectionManager {
 		connection.on("disconnect", this.disconnectHandlerInternal);
 		connection.on("error", this.errorHandler);
 		connection.on("pong", this.props.pongHandler);
-		connection.on("deltaConnectionUpdated", this.deltaConnectionUpdateHandler);
+		if (connection.supportDeltaConnectionUpdates === true) {
+			connection.on("deltaConnectionUpdated", this.deltaConnectionUpdateHandler);
+		}
 
 		// Initial messages are always sorted. However, due to early op handler installed by drivers and appending those
 		// ops to initialMessages, resulting set is no longer sorted, which would result in client hitting storage to
