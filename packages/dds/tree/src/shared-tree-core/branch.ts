@@ -379,6 +379,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return this._revertibleCommits.keys();
 	}
 
+	public purgeRevertibles(): void {
+		for (const revertible of this.revertibles) {
+			revertible.discard();
+		}
+	}
+
 	/**
 	 * Associate a revertible with a new commit of the same revision.
 	 * This is applicable when a commit is replaced by a rebase or a local commit is sequenced.

@@ -588,7 +588,7 @@ describe("sharedTreeView", () => {
 		});
 	});
 
-	it("schema edits cause all clients to purge repair data and undo-redo queue", () => {
+	it("schema edits cause all clients to purge all repair data and all revertibles", () => {
 		const provider = new TestTreeProviderLite(2);
 		const checkout1 = provider.trees[0].view;
 		const checkout2 = provider.trees[1].view;
@@ -635,9 +635,12 @@ describe("sharedTreeView", () => {
 
 		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
 
-		assert.equal(checkout1Revertibles.undoStack.length, 0);
+		// The undo stack is not empty because it contains the schema change
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 0);
 		assert.deepEqual(checkout1.getRemovedRoots(), []);
+
+		provider.processMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 0);
 		assert.equal(checkout2Revertibles.redoStack.length, 0);

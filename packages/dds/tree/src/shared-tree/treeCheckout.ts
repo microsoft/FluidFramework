@@ -24,6 +24,7 @@ import {
 	TreeStoredSchemaSubscription,
 	JsonableTree,
 	RevisionTagCodec,
+	DeltaVisitor,
 } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
@@ -340,17 +341,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						const delta = intoDelta(
 							tagChange(change.innerChange, event.change.revision),
 						);
-						const anchorVisitor = this.forest.anchors.acquireVisitor();
-						const combinedVisitor = combineVisitors(
-							[this.forest.acquireVisitor(), anchorVisitor],
-							[anchorVisitor],
-						);
-						visitDelta(delta, combinedVisitor, this.removedRoots);
-						combinedVisitor.free();
+						this.withCombinedVisitor((visitor) => {
+							visitDelta(delta, visitor, this.removedRoots);
+						});
 					} else if (change.type === "schema") {
-						if (change.innerChange.schema !== undefined) {
-							storedSchema.apply(change.innerChange.schema.new);
-						}
+						// We purge all removed content because the schema change may render that repair data invalid.
+						// This happens on all peers that receive the schema change.
+						// Note that while the originator of the schema change could theoretically validate/update the
+						// repair data that it has, so that is it guaranteed to be valid with the new schema, we cannot
+						// guarantee that the originator has a superset of the repair data that other clients have.
+						// This means the originator cannot guarantee that the repair data on all peers is valid for
+						// the new schema.
+						this.purgeRemovedRoots();
+						storedSchema.apply(change.innerChange.schema.new);
 					} else {
 						fail("Unknown Shared Tree change type.");
 					}
@@ -372,6 +375,33 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("revertible", revertible);
 			}
 		});
+		branch.on("revertibleDispose", (revertible, revision) => {
+			// We do not expose the revision in this API
+			this.events.emit("revertibleDispose", revertible);
+		});
+	}
+
+	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
+		const anchorVisitor = this.forest.anchors.acquireVisitor();
+		const combinedVisitor = combineVisitors(
+			[this.forest.acquireVisitor(), anchorVisitor],
+			[anchorVisitor],
+		);
+		fn(combinedVisitor);
+		combinedVisitor.free();
+	}
+
+	private purgeRemovedRoots() {
+		// Revertibles are susceptible to use repair data so we purge them.
+		this.branch.purgeRevertibles();
+		this.withCombinedVisitor((visitor) => {
+			for (const { root } of this.removedRoots.entries()) {
+				const field = this.removedRoots.toFieldKey(root);
+				// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
+				visitor.destroy(field, 1);
+			}
+		});
+		this.removedRoots.purge();
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {

@@ -80,6 +80,13 @@ export class DetachedFieldIndex {
 		}
 	}
 
+	/**
+	 * Removes all entries from the index.
+	 */
+	public purge() {
+		this.detachedNodeToField.clear();
+	}
+
 	public updateMajor(current: Major, updated: Major) {
 		const innerCurrent = this.detachedNodeToField.get(current);
 		if (innerCurrent !== undefined) {
