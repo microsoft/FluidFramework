@@ -13,7 +13,6 @@ export {
 	JsonValidator,
 	makeCodecFamily,
 	SchemaValidationFunction,
-	SessionAwareCodec,
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,

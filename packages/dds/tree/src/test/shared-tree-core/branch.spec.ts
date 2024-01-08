@@ -30,10 +30,10 @@ import {
 	createTestUndoRedoStacks,
 	failCodec,
 	mintRevisionTag,
-	testIdCompressor,
+	testRevisionTagCodec,
 } from "../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
+const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
 	jsonValidator: noopValidator,
 });
 

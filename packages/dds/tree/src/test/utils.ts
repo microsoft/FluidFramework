@@ -111,8 +111,11 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
+	RevisionTagCodec,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
 } from "../core/index.js";
-import { JsonCompatible, brand, nestedMapFromFlatList } from "../util/index.js";
+import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -669,7 +672,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, {
+	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -693,7 +696,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
 	);
-	initializeForest(forest, nodeCursors, testIdCompressor);
+	initializeForest(forest, nodeCursors, testRevisionTagCodec);
 	return forest;
 }
 
@@ -708,7 +711,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout(testIdCompressor, {
+	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -720,7 +723,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 		manager,
 		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 	);
-	return view.editableTree;
+	return view.flexTree;
 }
 
 export const requiredBooleanRootSchema = new SchemaBuilder({
@@ -1003,12 +1006,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
 }
 
@@ -1016,13 +1021,30 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
+}
+
+export function rootFromDeltaFieldMap(
+	delta: DeltaFieldMap,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
+): Mutable<DeltaRoot> {
+	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (build !== undefined) {
+		rootDelta.build = build;
+	}
+	if (destroy !== undefined) {
+		rootDelta.destroy = destroy;
+	}
+	return rootDelta;
 }
 
 export function createTestUndoRedoStacks(
@@ -1126,3 +1148,5 @@ export const testIdCompressor = createIdCompressor();
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
 }
+
+export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);

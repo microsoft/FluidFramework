@@ -7,7 +7,7 @@
  * Allows reversion of a change made to SharedTree.
  *
  * Applications wanting to implement undo/redo support might typically maintain two stacks of Revertibles, with optional eviction policy to free up memory.
- * @public
+ * @internal
  */
 export interface Revertible {
 	/** Indicates the type of edit that produced this revertible. */
@@ -43,7 +43,7 @@ export interface Revertible {
 /**
  * The type of revertible commit.
  *
- * @public
+ * @internal
  */
 export enum RevertibleKind {
 	/** A typical local commit */
@@ -62,7 +62,7 @@ export enum RevertibleKind {
 /**
  * The status of a {@link Revertible}.
  *
- * @public
+ * @internal
  */
 export enum RevertibleStatus {
 	/** The revertible can be reverted. */
@@ -74,7 +74,7 @@ export enum RevertibleStatus {
 /**
  * The result of a revert operation.
  *
- * @public
+ * @internal
  */
 export enum RevertibleResult {
 	/** The operation was successful. */

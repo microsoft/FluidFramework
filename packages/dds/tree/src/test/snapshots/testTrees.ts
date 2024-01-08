@@ -22,6 +22,7 @@ import {
 	FlexTreeNodeSchema,
 	InsertableFlexNode,
 	intoStoredSchema,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
@@ -52,6 +53,7 @@ const rootNode: UpPath = {
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });
@@ -151,8 +153,8 @@ export function generateTestTrees() {
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(2);
-				const tree1 = provider.trees[0].view;
-				const tree2 = provider.trees[1].view;
+				const tree1 = provider.trees[0].checkout;
+				const tree2 = provider.trees[1].checkout;
 
 				// NOTE: we're using the old tree editing APIs here as the new
 				// flex-tree API doesn't support cross-field moves at the
@@ -223,13 +225,13 @@ export function generateTestTrees() {
 				provider.processMessages();
 
 				// Insert node
-				tree1.editableTree.insertAtStart([value]);
+				tree1.flexTree.insertAtStart([value]);
 				provider.processMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Remove node
-				tree1.editableTree.removeAt(0);
+				tree1.flexTree.removeAt(0);
 
 				provider.processMessages();
 
