@@ -263,7 +263,7 @@ export class GarbageCollector implements IGarbageCollector {
 			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 			assert(
 				currentReferenceTimestampMs !== undefined,
-				"Trying to initialize GC state without current timestamp",
+				0x8a4 /* Trying to initialize GC state without current timestamp */,
 			);
 
 			/**
@@ -1017,7 +1017,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		assert(fromNodePath.startsWith("/"), "fromNodePath must be an absolute path");
+		assert(fromNodePath.startsWith("/"), 0x8a5 /* fromNodePath must be an absolute path */);
 
 		const outboundRoutes = this.newReferencesSinceLastRun.get(fromNodePath) ?? [];
 		outboundRoutes.push(toNodePath);

@@ -49,11 +49,11 @@ export function allowsTreeSuperset(
 
 	assert(
 		original instanceof MapNodeStoredSchema || original instanceof ObjectNodeStoredSchema,
-		"unsupported node kind",
+		0x893 /* unsupported node kind */,
 	);
 	assert(
 		superset instanceof MapNodeStoredSchema || superset instanceof ObjectNodeStoredSchema,
-		"unsupported node kind",
+		0x894 /* unsupported node kind */,
 	);
 
 	if (original instanceof MapNodeStoredSchema) {
@@ -68,7 +68,7 @@ export function allowsTreeSuperset(
 		return false;
 	}
 
-	assert(original instanceof ObjectNodeStoredSchema, "unsupported node kind");
+	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
 	if (superset instanceof MapNodeStoredSchema) {
 		for (const [_key, field] of original.objectNodeFields) {
 			if (
@@ -84,7 +84,7 @@ export function allowsTreeSuperset(
 		}
 		return true;
 	}
-	assert(superset instanceof ObjectNodeStoredSchema, "unsupported node kind");
+	assert(superset instanceof ObjectNodeStoredSchema, 0x896 /* unsupported node kind */);
 
 	return compareSets({
 		a: original.objectNodeFields,
@@ -294,7 +294,7 @@ export function isNeverTreeRecursive(
 			}
 			return false;
 		} else {
-			assert(treeNode instanceof LeafNodeStoredSchema, "unsupported node kind");
+			assert(treeNode instanceof LeafNodeStoredSchema, 0x897 /* unsupported node kind */);
 			return false;
 		}
 	} finally {
