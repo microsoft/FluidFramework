@@ -832,7 +832,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			}
 		}
 
-		//* Does this result in duplicates if the input overlaps with the existing Tombstone list?
+		//* Sidenote: Does this result in duplicates if the input overlaps with the existing Tombstone list?
 		// Mark blobs that are now tombstoned by adding them to the tombstone list.
 		for (const blobId of tombstonedBlobsSet) {
 			this.tombstonedBlobs.add(blobId);

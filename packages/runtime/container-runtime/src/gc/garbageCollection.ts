@@ -871,7 +871,7 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case "TombstoneLoaded": {
-				//* Then also run full GC - Otherwise if it's our bug it won't resolve (the object with the handle we missed doesn't change)
+				//* NOTE: In separate PR... Then also run full GC - Otherwise if it's our bug it won't resolve (the object with the handle we missed doesn't change)
 
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
