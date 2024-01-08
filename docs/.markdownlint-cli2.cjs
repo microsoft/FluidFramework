@@ -138,12 +138,14 @@ module.exports = {
 				"JavaScript",
 				"JSON",
 				"Microsoft",
+				"microsoft.com",
 				"npm",
 				"Routerlicious",
 				"Tinylicious",
 				// Without the following entries, markdownlint incorrectly flags various correct usages of tinylicious.
 				"tinylicious.md",
 				"tinylicious-client",
+				'{{< packageref "tinylicious" >}}',
 			],
 		},
 		"reference-links-images": false, // MD052

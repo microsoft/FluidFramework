@@ -23,7 +23,7 @@ Fluid clients require a centralized service that all connected clients use to se
 
 Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes. There are two services currently available:
 
--   The [Tinylicious service]({{< relref "/docs/testing/tinylicious" >}}) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
+-   The [Tinylicious service]({{< relref "/docs/testing/tinylicious.md" >}}) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
 -   [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) runs in Azure and enables high-scale production scenarios.
 
 See [Service-specific client libraries](#service-specific-client-libraries) for more details.
@@ -63,7 +63,7 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 For specifics about each service-specific client implementation see their corresponding documentation.
 
--   The client library for the [Tinylicious]({{< relref "/docs/testing/tinylicious" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
+-   The client library for the [Tinylicious]({{< relref "/docs/testing/tinylicious.md" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
 -   The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
 
 For more information see [Packages]({{< relref "packages.md" >}}).
