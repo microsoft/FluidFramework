@@ -80,9 +80,6 @@ menu:
     - name: "Community"
       url: "/community/"
       weight: -60
-    - name: "Blogs"
-      url: "/blogs/"
-      weight: -50
 
   old_section:
     - identifier: "quick-start"
@@ -132,11 +129,6 @@ menu:
     - identifier: "updates"
       name: "Release notes"
       weight: -80
-
-blogs:
-    - identifier: "blogs"
-      name: "Blogs"
-      weight: -800
 
 markup:
   goldmark:
