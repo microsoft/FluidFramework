@@ -21,6 +21,7 @@ variables:
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
 
+# The `resources` specify the location and version of the 1ES PT.
 resources:
   repositories:
   - repository: m365Pipelines
@@ -28,10 +29,11 @@ resources:
     name: 1ESPipelineTemplates/M365GPT
     ref: refs/tags/release
 extends:
+  # The pipeline extends the 1ES PT which will inject different SDL and compliance tasks.
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: Small-1ES
+      name: Small-1ES # This is one of the Fluid Orgs new 1ES hosted pools.
       os: linux
     sdl:
       arrow:
