@@ -154,5 +154,11 @@ module.exports = {
 			indent: 4,
 		},
 	},
-	globs: ["content/**/*.md", "!content/docs/apis", "!content/docs/api", "!node_modules"],
+	globs: [
+		"content/**/*.md",
+		"!content/_index.md", // Markdown-lint doesn't like our use of Hugo's "highlight" shortcode for code blocks
+		"!content/docs/apis",
+		"!content/docs/api",
+		"!node_modules",
+	],
 };
