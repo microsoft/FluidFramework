@@ -561,8 +561,8 @@ describe("sharedTreeView", () => {
 
 	it("schema edits cause all clients to purge all repair data and all revertibles", () => {
 		const provider = new TestTreeProviderLite(2);
-		const checkout1 = provider.trees[0].view;
-		const checkout2 = provider.trees[1].view;
+		const checkout1 = provider.trees[0].checkout;
+		const checkout2 = provider.trees[1].checkout;
 
 		checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 		checkout1.editor.sequenceField(rootField).insert(

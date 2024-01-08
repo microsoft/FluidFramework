@@ -380,10 +380,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			// We do not expose the revision in this API
 			this.events.emit("revertibleDisposed", revertible);
 		});
-		branch.on("revertibleDispose", (revertible, revision) => {
-			// We do not expose the revision in this API
-			this.events.emit("revertibleDispose", revertible);
-		});
 	}
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
