@@ -100,7 +100,7 @@ summary: "An open-source client technology stack that enables real-time collabor
     {{<swimlane
         id="easy-to-use"
         title="Easy to use"
-        subTitle="Transform your collaborative experience with our developer friendly framework – where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software."
+        subTitle="Transform your collaborative experience with our developer friendly framework - where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software."
         img="/images/E1C1.svg"
         imgAlt="easy to use image"
       >}}
@@ -115,7 +115,7 @@ summary: "An open-source client technology stack that enables real-time collabor
     {{<swimlane
         id="perf"
         title="Industry-leading speed & performance"
-        subTitle="Unleash unparalleled speed and performance with our cutting-edge solution for building real-time collaborative applications. Collaborative features are only successful if they are fast, scale to large data and user bases. Fluid offers an approachable programming model that leverages mainstream web technology while delivering best-in-class performance." 
+        subTitle="Unleash unparalleled speed and performance with our cutting-edge solution for building real-time collaborative applications. Collaborative features are only successful if they are fast, scale to large data and user bases. Fluid offers an approachable programming model that leverages mainstream web technology while delivering best-in-class performance."
         img="/images/1F680.svg"
         imgAlt="speed and performance image"
       >}}
@@ -129,14 +129,13 @@ summary: "An open-source client technology stack that enables real-time collabor
         </div>
         <div class="col-md-8 text-center">
             <h3>Sample Code</h3>
-        </div>    
+        </div>
         <div class="col-md-8" style="text-left; height:650px; overflow-x: auto; padding-left: 50px;">
-            
                 {{< highlight go >}}
                 /*!
-                * Copyright (c) Microsoft Corporation. All rights reserved.
-                * Licensed under the MIT License.
-                */
+                 * Copyright (c) Microsoft Corporation. All rights reserved.
+                 * Licensed under the MIT License.
+                 */
 
                 import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
                 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -296,4 +295,3 @@ summary: "An open-source client technology stack that enables real-time collabor
         </div>
 </div>
 {{</swimlane_container>}}
-
