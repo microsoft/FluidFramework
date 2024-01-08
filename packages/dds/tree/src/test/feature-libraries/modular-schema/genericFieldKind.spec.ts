@@ -17,23 +17,23 @@ import {
 	tagChange,
 	TaggedChange,
 	FieldKey,
-	deltaForSet,
 	DeltaFieldMap,
 	DeltaFieldChanges,
 	RevisionTagCodec,
+	ChangeEncodingContext,
 } from "../../../core/index.js";
-import { fakeIdAllocator, brand } from "../../../util/index.js";
+import { fakeIdAllocator, brand, JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
 	EncodingTestData,
 	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils.js";
-import { SessionAwareCodec } from "../../../codec/index.js";
-import { singleJsonCursor } from "../../../domains/index.js";
+import { IJsonCodec } from "../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
+import { testSnapshots } from "./genericFieldSnapshots.test.js";
 
 const valueFieldKey: FieldKey = brand("Value");
 
@@ -131,17 +131,14 @@ const childRebaser = (
 	return nodeChangeFromValueChange(rebased);
 };
 
-const detachId = { minor: 42 };
-const buildId = { minor: 42 };
-
 const childToDelta = (nodeChange: NodeChangeset): DeltaFieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
-	return deltaForValueChange(valueChange.new);
+	return deltaForValueChange(valueChange);
 };
 
-function deltaForValueChange(newValue: number): DeltaFieldMap {
-	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
+function deltaForValueChange(valueChange: ValueChangeset): DeltaFieldMap {
+	return new Map([[valueFieldKey, valueHandler.intoDelta(makeAnonChange(valueChange))]]);
 }
 
 const crossFieldManager: CrossFieldManager = {
@@ -149,7 +146,9 @@ const crossFieldManager: CrossFieldManager = {
 	set: unexpectedDelegate,
 };
 
-describe("Generic FieldKind", () => {
+describe("GenericField", () => {
+	testSnapshots();
+
 	describe("compose", () => {
 		it("empty list", () => {
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
@@ -385,9 +384,9 @@ describe("Generic FieldKind", () => {
 
 		const expected: DeltaFieldChanges = {
 			local: [
-				{ count: 1, fields: deltaForValueChange(1) },
+				{ count: 1, fields: deltaForValueChange(valueChange0To1) },
 				{ count: 1 },
-				{ count: 1, fields: deltaForValueChange(2) },
+				{ count: 1, fields: deltaForValueChange(valueChange1To2) },
 			],
 		};
 
@@ -400,37 +399,36 @@ describe("Generic FieldKind", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<GenericChangeset, unknown, SessionId> = {
-			successes: [
-				[
-					"Misc",
+		const encodingTestData: EncodingTestData<GenericChangeset, unknown, ChangeEncodingContext> =
+			{
+				successes: [
 					[
-						{
-							index: 0,
-							nodeChange: nodeChange0To1,
-						},
-						{
-							index: 2,
-							nodeChange: nodeChange1To2,
-						},
+						"Misc",
+						[
+							{
+								index: 0,
+								nodeChange: nodeChange0To1,
+							},
+							{
+								index: 2,
+								nodeChange: nodeChange1To2,
+							},
+						],
+						{ originatorId: "session1" as SessionId },
 					],
-					"session1" as SessionId,
 				],
-			],
-		};
+			};
 
-		const throwCodec: SessionAwareCodec<any> = {
-			encode: unexpectedDelegate,
-			decode: unexpectedDelegate,
-		};
-
-		const leafCodec = valueHandler
-			.codecsFactory(throwCodec, new RevisionTagCodec(new MockIdCompressor()))
-			.resolve(0).json;
-		const childCodec: SessionAwareCodec<NodeChangeset> = {
-			encode: (nodeChange, originatorId) => {
+		const leafCodec = valueHandler.codecsFactory().resolve(0).json;
+		const childCodec: IJsonCodec<
+			NodeChangeset,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			ChangeEncodingContext
+		> = {
+			encode: (nodeChange, context) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
-				return leafCodec.encode(valueChange, originatorId);
+				return leafCodec.encode(valueChange, context);
 			},
 			decode: (nodeChange, originatorId) => {
 				const valueChange = leafCodec.decode(nodeChange, originatorId);

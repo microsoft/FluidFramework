@@ -158,7 +158,7 @@ export {
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
 	AllowedTypes as FlexAllowedTypes,
-	TreeNodeSchema as FlexTreeNodeSchema,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
@@ -228,16 +228,6 @@ export {
 } from "./feature-libraries/index.js";
 
 export {
-	TreeArrayNode,
-	TreeMapNodeBase,
-	Unhydrated,
-	IterableTreeListContent,
-	TreeNode,
-	TreeArrayNodeBase,
-	create,
-} from "./simple-tree/index.js";
-
-export {
 	ISharedTree,
 	ITreeCheckout,
 	ITransaction,
@@ -260,10 +250,16 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	TreeArrayNode,
+	Unhydrated,
+	IterableTreeArrayContent,
+	TreeNode,
+	TreeArrayNodeBase,
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
 	TreeView,
+	TreeViewEvents,
 	SchemaFactory,
 	Tree,
 	TreeApi,
@@ -301,7 +297,7 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
-} from "./class-tree/index.js";
+} from "./simple-tree/index.js";
 export { SharedTree, TreeFactory } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";

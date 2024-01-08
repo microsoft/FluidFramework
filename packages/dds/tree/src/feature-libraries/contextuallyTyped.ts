@@ -30,7 +30,7 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	allowedTypesSchemaSet,
 } from "./typed-schema/index.js";
 import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
@@ -122,7 +122,7 @@ export function getFieldKind(fieldSchema: TreeFieldSchema): FieldKind {
 export function getAllowedTypes(
 	schemaData: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
-): ReadonlySet<TreeNodeSchema> {
+): ReadonlySet<FlexTreeNodeSchema> {
 	// TODO: Performance: avoid the `Any` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
 	return typeSet === Any ? new Set(schemaData.nodeSchema.values()) : typeSet;
 }
@@ -138,7 +138,7 @@ export function getPossibleTypes(
 	// All types allowed by schema
 	const allowedTypes = getAllowedTypes(context, typeSet);
 
-	const possibleTypes: TreeNodeSchema[] = [];
+	const possibleTypes: FlexTreeNodeSchema[] = [];
 	for (const allowed of allowedTypes) {
 		if (shallowCompatibilityTest(allowed, data)) {
 			possibleTypes.push(allowed);
@@ -280,7 +280,7 @@ export interface ContextuallyTypedNodeDataObject {
  * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
  */
 function shallowCompatibilityTest(
-	schema: TreeNodeSchema,
+	schema: FlexTreeNodeSchema,
 	data: ContextuallyTypedNodeData,
 ): boolean {
 	assert(!areCursors(data), 0x6b1 /* cursors cannot be used as contextually typed data. */);
@@ -342,7 +342,7 @@ export function cursorFromContextualData(
  * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @internal
  */
-export function cursorForTypedTreeData<T extends TreeNodeSchema>(
+export function cursorForTypedTreeData<T extends FlexTreeNodeSchema>(
 	context: TreeDataContext,
 	schema: T,
 	data: InsertableFlexNode<T>,
@@ -409,7 +409,7 @@ export function applyTypesFromContext(
 	typeSet: AllowedTypeSet,
 	data: ContextuallyTypedNodeData,
 ): MapTree {
-	const possibleTypes: TreeNodeSchema[] = getPossibleTypes(context.schema, typeSet, data);
+	const possibleTypes: FlexTreeNodeSchema[] = getPossibleTypes(context.schema, typeSet, data);
 
 	assert(
 		possibleTypes.length !== 0,
@@ -433,7 +433,7 @@ export function applyTypesFromContext(
 		);
 		return { value, type: schema.name, fields: new Map() };
 	}
-	assert(!isTreeValue(data), "leaf value for non leaf");
+	assert(!isTreeValue(data), 0x880 /* leaf value for non leaf */);
 	if (schema instanceof FieldNodeSchema) {
 		if (isArrayLike(data)) {
 			const children = applyFieldTypesFromContext(context, schema.getFieldSchema(), data);
@@ -444,7 +444,7 @@ export function applyTypesFromContext(
 			};
 		}
 	}
-	assert(!isArrayLike(data), "array for non field node");
+	assert(!isArrayLike(data), 0x881 /* array for non field node */);
 	if (
 		schema instanceof MapNodeSchema ||
 		schema instanceof ObjectNodeSchema ||
@@ -480,7 +480,7 @@ export function applyTypesFromContext(
 function setFieldForKey(
 	key: FieldKey,
 	context: TreeDataContext,
-	schema: TreeNodeSchema,
+	schema: FlexTreeNodeSchema,
 	fields: Map<FieldKey, MapTree[]>,
 ): void {
 	const requiredFieldSchema = schema.getFieldSchema(key);

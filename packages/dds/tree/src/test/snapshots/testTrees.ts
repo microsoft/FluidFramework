@@ -17,12 +17,12 @@ import {
 	Any,
 	FieldKinds,
 	TreeFieldSchema,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	InsertableFlexNode,
 	intoStoredSchema,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
@@ -53,7 +53,7 @@ const rootNode: UpPath = {
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });
@@ -153,14 +153,22 @@ export function generateTestTrees() {
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(2);
-				const tree1 = provider.trees[0].view;
-				const tree2 = provider.trees[1].view;
+				const tree1 = provider.trees[0].checkout;
+				const tree2 = provider.trees[1].checkout;
 
 				// NOTE: we're using the old tree editing APIs here as the new
-				// editable-tree-2 API doesn't support cross-field moves at the
+				// flex-tree API doesn't support cross-field moves at the
 				// time of writing
+
+				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
+				const nodeSchema = schemaBuilder.object("Node", {
+					foo: SchemaBuilder.sequence(leaf.string),
+					bar: SchemaBuilder.sequence(leaf.string),
+				});
+				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
+				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 				const initialState: JsonableTree = {
-					type: brand("Node"),
+					type: nodeSchema.name,
 					fields: {
 						foo: [
 							{ type: leaf.string.name, value: "a" },
@@ -174,14 +182,6 @@ export function generateTestTrees() {
 						],
 					},
 				};
-
-				const schemaBuilder = new SchemaBuilder({ scope: "move-across-fields" });
-				const nodeSchema = schemaBuilder.object("Node", {
-					foo: SchemaBuilder.sequence(leaf.string),
-					bar: SchemaBuilder.sequence(leaf.string),
-				});
-				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
-				const schema = schemaBuilder.intoSchema(rootFieldSchema);
 
 				tree1.updateSchema(intoStoredSchema(schema));
 
@@ -225,13 +225,13 @@ export function generateTestTrees() {
 				provider.processMessages();
 
 				// Insert node
-				tree1.editableTree.insertAtStart([value]);
+				tree1.flexTree.insertAtStart([value]);
 				provider.processMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Remove node
-				tree1.editableTree.removeAt(0);
+				tree1.flexTree.removeAt(0);
 
 				provider.processMessages();
 
@@ -260,7 +260,7 @@ export function generateTestTrees() {
 				} as const;
 
 				// Enables below editing code to be slightly less verbose
-				const makeCursor = <T extends TreeNodeSchema>(
+				const makeCursor = <T extends FlexTreeNodeSchema>(
 					schema: T,
 					data: InsertableFlexNode<T>,
 				): ITreeCursorSynchronous =>

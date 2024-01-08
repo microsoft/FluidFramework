@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { createSandbox, SinonFakeTimers, useFakeTimers } from "sinon";
 import {
 	AttachState,
-	ContainerErrorType,
 	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
@@ -1140,7 +1139,7 @@ describe("Runtime", () => {
 							false /* local */,
 						),
 					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
+						error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
 				);
 			});
@@ -1171,7 +1170,7 @@ describe("Runtime", () => {
 							false /* local */,
 						),
 					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
+						error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and no specified compat behavior should fail to process",
 				);
 			});
@@ -1199,7 +1198,7 @@ describe("Runtime", () => {
 				assert.throws(
 					codeBlock,
 					(e: IErrorBase) =>
-						e.errorType === ContainerErrorType.usageError &&
+						e.errorType === ContainerErrorTypes.usageError &&
 						e.message === `Id cannot contain slashes: '${invalidId}'`,
 				);
 			});

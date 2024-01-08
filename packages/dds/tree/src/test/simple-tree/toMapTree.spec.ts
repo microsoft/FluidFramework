@@ -13,6 +13,8 @@ import { SchemaBuilder, leaf } from "../../domains/index.js";
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { InsertableContent } from "../../simple-tree/proxies.js";
 
 describe("toMapTree", () => {
 	it("string", () => {
@@ -117,13 +119,13 @@ describe("toMapTree", () => {
 		]);
 		const schema = schemaBuilder.intoSchema(rootSchema);
 
-		const entries: [string, number | string | null | undefined][] = [
+		const entries: [string, InsertableContent][] = [
 			["a", 42],
 			["b", "Hello world"],
 			["c", null],
-			["d", undefined], // Should be skipped in output
+			["d", undefined as unknown as InsertableContent], // Should be skipped in output
 		];
-		const tree = new Map<string, number | string | null | undefined>(entries);
+		const tree = new Map<string, InsertableContent>(entries);
 
 		const actual = nodeDataToMapTree(tree, schema, schema.rootFieldSchema.allowedTypeSet);
 
@@ -231,12 +233,12 @@ describe("toMapTree", () => {
 
 		const a = "Hello world";
 		const b = [{ name: "Jack", age: 37 }, null, { name: "Jill", age: 42 }, handle];
-		const cEntries: [string, unknown][] = [
+		const cEntries: [string, InsertableContent][] = [
 			["foo", { name: "Foo", age: 2 }],
 			["bar", "1"],
 			["baz", 2],
 		];
-		const c = new Map<string, unknown>(cEntries);
+		const c = new Map<string, InsertableContent>(cEntries);
 
 		const tree = {
 			a,
@@ -459,7 +461,11 @@ describe("toMapTree", () => {
 
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
-			const actual = nodeDataToMapTree(input, schema, schema.rootFieldSchema.allowedTypeSet);
+			const actual = nodeDataToMapTree(
+				input as InsertableContent,
+				schema,
+				schema.rootFieldSchema.allowedTypeSet,
+			);
 
 			const expected: MapTree = {
 				type: rootSchema.name,
@@ -503,7 +509,11 @@ describe("toMapTree", () => {
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
 			assert.throws(() =>
-				nodeDataToMapTree(input, schema, schema.rootFieldSchema.allowedTypeSet),
+				nodeDataToMapTree(
+					input as InsertableContent,
+					schema,
+					schema.rootFieldSchema.allowedTypeSet,
+				),
 			);
 		});
 	});

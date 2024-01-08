@@ -962,6 +962,8 @@ export function getSummaryForDatastores(
 
 /**
  * Traverse this op's contents and detect any outbound routes that were added by this op.
+ *
+ * @internal
  */
 export function detectOutboundReferences(
 	envelope: IEnvelope,
