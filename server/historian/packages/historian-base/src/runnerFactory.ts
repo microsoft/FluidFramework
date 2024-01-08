@@ -45,7 +45,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		customizations: IHistorianResourcesCustomizations,
 	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
-		const redisTTLOverride = config.get("redisTTLOverride");
 		const redisOptions: Redis.RedisOptions = {
 			host: redisConfig.host,
 			port: redisConfig.port,
@@ -71,9 +70,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		}
 
 		const redisParams = {
-			expireAfterSeconds: (redisTTLOverride ?? redisConfig.keyExpireAfterSeconds) as
-				| number
-				| undefined,
+			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 
 		const redisClient = new Redis.default(redisOptions);
