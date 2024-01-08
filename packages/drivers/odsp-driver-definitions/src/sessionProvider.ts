@@ -38,6 +38,11 @@ export interface ISocketStorageDiscovery {
 	 * This is the time within which client has to refresh the session on (ODSP) relay service.
 	 */
 	refreshSessionDurationSeconds?: number;
+
+	/**
+	 * Represent the sensitivity labels info for the file.
+	 */
+	sensitivityLabelsInfo?: string;
 }
 
 /**

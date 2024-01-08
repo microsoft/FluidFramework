@@ -66,6 +66,7 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-base": "workspace:~",

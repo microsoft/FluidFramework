@@ -119,6 +119,8 @@ export interface IConnectionManager {
 	dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;
 
 	get connectionMode(): ConnectionMode;
+
+	deltaConnectionMetadata?: Record<string, unknown> | undefined;
 }
 
 /**
@@ -195,6 +197,11 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called whenever we cancel the connection in progress.
 	 */
 	readonly cancelConnectionHandler: (reason: IConnectionStateChangeReason) => void;
+
+	/**
+	 * Called whenever delta connection metadata is updated or initialized.
+	 */
+	readonly deltaConnectionUpdateHandler: (metadata?: Record<string, unknown>) => void;
 }
 
 /**

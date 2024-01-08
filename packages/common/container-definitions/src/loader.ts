@@ -245,6 +245,11 @@ export interface IContainerEvents extends IEvent {
 	 * @see {@link IContainer.isDirty}
 	 */
 	(event: "saved", listener: (dirty: boolean) => void);
+
+	/**
+	 * Emitted when the some of the delta connection properties are initialized or updated.
+	 */
+	(event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void);
 }
 
 /**
@@ -467,6 +472,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * Use this as the primary way of getting access to the user-defined logic within the container.
 	 */
 	getEntryPoint(): Promise<FluidObject>;
+
+	/**
+	 * Exposes any metadata/props related to the delta connection.
+	 */
+	deltaConnectionMetadata?: Record<string, unknown> | undefined;
 }
 
 /**

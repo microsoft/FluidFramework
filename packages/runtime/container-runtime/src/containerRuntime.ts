@@ -24,6 +24,7 @@ import {
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
+	ISignalEnvelope,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -76,7 +77,6 @@ import {
 	IGarbageCollectionData,
 	IEnvelope,
 	IInboundSignalMessage,
-	ISignalEnvelope,
 	NamedFluidDataStoreRegistryEntries,
 	ISummaryTreeWithStats,
 	ISummarizeInternalResult,

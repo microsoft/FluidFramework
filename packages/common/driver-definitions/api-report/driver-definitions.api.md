@@ -143,6 +143,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
     initialSignals: ISignalMessage[];
+    metadata?: Record<string, unknown> | undefined;
     mode: ConnectionMode;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
@@ -165,6 +166,8 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "pong", listener: (latency: number) => void): any;
     // (undocumented)
     (event: "error", listener: (error: any) => void): any;
+    // (undocumented)
+    (event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void): any;
 }
 
 // @alpha

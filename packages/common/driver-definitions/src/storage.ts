@@ -217,6 +217,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(event: "error", listener: (error: any) => void);
+	(event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void);
 }
 
 /**
@@ -298,6 +299,11 @@ export interface IDocumentDeltaConnection
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	submitSignal(content: any, targetClientId?: string): void;
+
+	/**
+	 * Any metadata properties for the connection.
+	 */
+	metadata?: Record<string, unknown> | undefined;
 }
 
 /**

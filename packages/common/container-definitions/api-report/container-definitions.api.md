@@ -133,6 +133,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
+    deltaConnectionMetadata?: Record<string, unknown> | undefined;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
@@ -217,6 +218,7 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
+    (event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void): any;
 }
 
 // @internal (undocumented)
@@ -470,6 +472,16 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @alpha
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
+
+// @internal (undocumented)
+export interface ISignalEnvelope {
+    address?: string;
+    clientSignalSequenceNumber: number;
+    contents: {
+        type: string;
+        content: any;
+    };
+}
 
 // @alpha
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {

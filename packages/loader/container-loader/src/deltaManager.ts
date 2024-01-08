@@ -72,6 +72,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 		event: "cancelEstablishingConnection",
 		listener: (reason: IConnectionStateChangeReason) => void,
 	);
+	(event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void);
 }
 
 /**
@@ -247,6 +248,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public get minimumSequenceNumber(): number {
 		return this.minSequenceNumber;
+	}
+
+	public get deltaConnectionMetadata() {
+		return this.connectionManager.deltaConnectionMetadata;
 	}
 
 	/**
@@ -438,6 +443,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.establishingConnection(reason),
 			cancelConnectionHandler: (reason: IConnectionStateChangeReason) =>
 				this.cancelEstablishingConnection(reason),
+			deltaConnectionUpdateHandler: (metadata?: Record<string, unknown>) => {
+				safeRaiseEvent(this, this.logger, "deltaConnectionUpdated", metadata);
+			},
 		};
 
 		this.connectionManager = createConnectionManager(props);

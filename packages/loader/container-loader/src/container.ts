@@ -669,6 +669,11 @@ export class Container
 		return this._clientId;
 	}
 
+	public get deltaConnectionMetadata() {
+		// Provide a copy instead of the actual object.
+		return { ...this._deltaManager.deltaConnectionMetadata };
+	}
+
 	private get offlineLoadEnabled(): boolean {
 		const enabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
@@ -2116,6 +2121,10 @@ export class Container
 
 		deltaManager.on("disposed", (error?: ICriticalContainerError) => {
 			this.disposeCore(error);
+		});
+
+		deltaManager.on("deltaConnectionUpdated", (metadata?: Record<string, unknown>) => {
+			this.emit("deltaConnectionUpdated", metadata);
 		});
 
 		return deltaManager;

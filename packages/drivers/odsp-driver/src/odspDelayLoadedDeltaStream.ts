@@ -4,6 +4,7 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
+import { ISignalEnvelope } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidErrorBase,
@@ -20,7 +21,11 @@ import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	IClient,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/protocol-definitions";
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
@@ -54,6 +59,9 @@ export class OdspDelayLoadedDeltaStream {
 	private currentConnection?: OdspDocumentDeltaConnection;
 
 	private _relayServiceTenantAndSessionId: string | undefined;
+
+	// Tracks the time at which the Policy Labels were updated the last time.
+	private labelUpdateTimestamp: number = -1;
 
 	/**
 	 * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -173,6 +181,7 @@ export class OdspDelayLoadedDeltaStream {
 				connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
 					this.opsReceived(ops);
 				});
+				connection.on("signal", this.signalHandler);
 				// On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
 				// get the auth error on reconnecting and face latency.
 				connection.once("disconnect", (error: any) => {
@@ -191,6 +200,11 @@ export class OdspDelayLoadedDeltaStream {
 					this.currentConnection = undefined;
 				});
 				this.currentConnection = connection;
+				if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
+					this.emitDeltaConnectionUpdateEvent({
+						sensitivityLabelsInfo: JSON.parse(websocketEndpoint.sensitivityLabelsInfo),
+					});
+				}
 				return connection;
 			} catch (error) {
 				this.clearJoinSessionTimer();
@@ -210,6 +224,18 @@ export class OdspDelayLoadedDeltaStream {
 			}
 		});
 	}
+
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		signals.forEach((signal: ISignalMessage) => {
+			const envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
+			if (envelope.contents.type === "PolicyLabelsUpdate") {
+				this.emitDeltaConnectionUpdateEvent({
+					sensitivityLabelsInfo: envelope.contents.content,
+				});
+			}
+		});
+	};
 
 	private clearJoinSessionTimer() {
 		if (this.joinSessionRefreshTimer !== undefined) {
@@ -339,6 +365,12 @@ export class OdspDelayLoadedDeltaStream {
 				isRefreshingJoinSession,
 				this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
 			);
+			// Emit event only in case it is fetched from the network.
+			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
+				this.emitDeltaConnectionUpdateEvent({
+					sensitivityLabelsInfo: JSON.parse(joinSessionResponse.sensitivityLabelsInfo),
+				});
+			}
 			return {
 				entryTime: Date.now(),
 				joinSessionResponse,
@@ -400,6 +432,26 @@ export class OdspDelayLoadedDeltaStream {
 			}
 		}
 		return response.joinSessionResponse;
+	}
+
+	private emitDeltaConnectionUpdateEvent(metadata: Record<string, unknown>) {
+		if (this.currentConnection !== undefined) {
+			const label = metadata.sensitivityLabelsInfo as {
+				labels: unknown;
+				timestamp: string;
+			};
+			const time = Date.parse(label.timestamp);
+			if (time > this.labelUpdateTimestamp) {
+				this.labelUpdateTimestamp = time;
+				this.currentConnection.metadata = {
+					sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
+				};
+				this.currentConnection.emit(
+					"deltaConnectionUpdated",
+					this.currentConnection?.metadata,
+				);
+			}
+		}
 	}
 
 	private calculateJoinSessionRefreshDelta(
