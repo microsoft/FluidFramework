@@ -178,15 +178,15 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		await delay(approximateUnreferenceTimestampMs);
 
 		// Load a new container and summarizer based on the latest summary, summarize
-		const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
+		const { container: summarizingContainer, summarizer } = await loadSummarizer(
 			container,
 			summaryVersion,
 		);
 
 		return {
 			unreferencedId,
-			summarizingContainer: summarizingContainer2,
-			summarizer: summarizer2,
+			summarizingContainer,
+			summarizer,
 			summaryVersion,
 		};
 	};
@@ -856,7 +856,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		//* ONLY
 		//* ONLY
 		//* ONLY
-		itExpects(
+		itExpects.only(
 			"Requesting tombstoned datastore triggers auto-recovery",
 			//* Revisit these expected logs, to update comments etc.
 			[
@@ -884,23 +884,48 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				},
 			],
 			async () => {
-				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(
-						tombstoneTimeoutMs,
-						/* includeDds */ true,
-					);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
+				const mockLogger = new MockLogger();
+				const containerA = await makeContainer();
+				const { container: summarizingContainer, summarizer } =
+					await loadSummarizer(containerA);
+				await waitForContainerConnection(containerA);
 
-				// The datastore should be tombstoned now
+				const defaultDataObject = (await containerA.getEntryPoint()) as ITestDataObject;
+
+				// Create dataStore2 and dataStore3. dataStore2 has reference to dataStore3 and unreference dataStore2.
+				const dataStore2 = await createDataStore(defaultDataObject);
+				const dataStore3 = await createDataStore(defaultDataObject);
+				dataStore2._root.set("ds3", dataStore3.handle);
+				defaultDataObject._root.set("ds2", dataStore2.handle);
+				defaultDataObject._root.delete("ds2");
+
+				const dataStore2Id = dataStore2._context.id;
+
+				//* Necessary to track DDS?
+				// Create/reference a DDS under the datastore, it will become Tombstoned with it
+				// const map = SharedMap.create(dataStore2._runtime);
+				// dataStore2._root.set("dds1", map.handle);
+
+				// Summarize to set unreferenced timestamp.
+				// Then wait the Tombstone timeout and update current timestamp, and summarize again
+				await summarize(summarizer);
+				await delay(tombstoneTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 				const { summaryVersion } = await summarize(summarizer);
-				const container = await loadContainer(summaryVersion);
+
+				// The datastore should be tombstoned in the snapshot this container loads from
+				const container = await loadContainer(
+					summaryVersion,
+					/* disableTombstoneFailureViaGCGenerationOption: */ false,
+					mockLogger,
+				);
 
 				// Simulate an invalid reference from the app, for this properly unreferenced (Tombstoned) object
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const tombstoneErrorResponse = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
-					url: unreferencedId,
+					url: dataStore2Id,
 				});
 				assert.equal(
 					tombstoneErrorResponse.status,
@@ -909,7 +934,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 				assert.equal(
 					tombstoneErrorResponse.value,
-					`DataStore was tombstoned: ${unreferencedId}`,
+					`DataStore was tombstoned: ${dataStore2Id}`,
 					"Expected the Tombstone error message",
 				);
 				assert.equal(
@@ -921,13 +946,23 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// The GC TombstoneLoaded op should roundtrip here
 				await provider.ensureSynchronized();
 
-				//* TODO?: Use spy or mockLogger to validate addedOutboundReference called
+				// TombstoneLoaded op should trigger Revived event
+				mockLogger.assertMatch(
+					[
+						{
+							eventName:
+								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
+							clientType: "interactive",
+						},
+					],
+					"Missing expected revived event from Auto-Recovery",
+				);
 
 				// This request still fails because Auto-Recovery only affects the next summary (via next GC run)
 				const tombstoneErrorResponse_Interactive = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
-					url: unreferencedId,
+					url: dataStore2Id,
 				});
 				assert.equal(
 					tombstoneErrorResponse_Interactive.status,
@@ -946,7 +981,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const successResponse2 = await (
 					entryPoint2._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
-					url: unreferencedId,
+					url: dataStore2Id,
 				});
 				assert.equal(
 					successResponse2.status,
@@ -963,7 +998,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Wait the Tombstone timeout then summarize and load another container
 				// It will be tombstoned again since it's been unreferenced the whole time
-				await delay(tombstoneTimeoutMs); //* Revert +10
+				await delay(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 				const { summaryVersion: summaryVersion3 } = await summarize(summarizer);
 				const container3 = await loadContainer(summaryVersion3);
@@ -971,7 +1006,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const tombstoneErrorResponse3 = await (
 					entryPoint3._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
-					url: unreferencedId,
+					url: dataStore2Id,
 				});
 				assert.equal(
 					tombstoneErrorResponse3.status,
@@ -980,7 +1015,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 				assert.equal(
 					tombstoneErrorResponse3.value,
-					`DataStore was tombstoned: ${unreferencedId}`,
+					`DataStore was tombstoned: ${dataStore2Id}`,
 					"Expected the Tombstone error message",
 				);
 			},
