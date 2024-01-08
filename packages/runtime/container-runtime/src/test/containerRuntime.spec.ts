@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { createSandbox, SinonFakeTimers, useFakeTimers } from "sinon";
 import {
 	AttachState,
-	ContainerErrorType,
 	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
@@ -24,9 +23,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-	ConfigTypes,
 	createChildLogger,
-	IConfigProviderBase,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
@@ -34,7 +31,14 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IErrorBase, IResponse, FluidObject, IGenericError } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IResponse,
+	FluidObject,
+	IGenericError,
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
@@ -785,12 +789,8 @@ describe("Runtime", () => {
 			const getMockDataStores = (): DataStores => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processFluidDataStoreOp: (
-						_message: ISequencedDocumentMessage,
-						_local: boolean,
-						_localMessageMetadata: unknown,
-					) => {},
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					processFluidDataStoreOp: (..._args) => {},
+					setConnectionState: (..._args) => {},
 				} as DataStores;
 			};
 
@@ -1139,7 +1139,7 @@ describe("Runtime", () => {
 							false /* local */,
 						),
 					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
+						error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
 				);
 			});
@@ -1170,7 +1170,7 @@ describe("Runtime", () => {
 							false /* local */,
 						),
 					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
+						error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and no specified compat behavior should fail to process",
 				);
 			});
@@ -1198,7 +1198,7 @@ describe("Runtime", () => {
 				assert.throws(
 					codeBlock,
 					(e: IErrorBase) =>
-						e.errorType === ContainerErrorType.usageError &&
+						e.errorType === ContainerErrorTypes.usageError &&
 						e.message === `Id cannot contain slashes: '${invalidId}'`,
 				);
 			});
@@ -1300,7 +1300,9 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				const responseFromRequestMethod = await (containerRuntime as any).request({
+					url: "/",
+				});
 				assert.deepEqual(
 					responseFromRequestMethod,
 					myResponse,

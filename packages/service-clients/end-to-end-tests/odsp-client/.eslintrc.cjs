@@ -7,6 +7,7 @@ module.exports = {
 	rules: {
 		"prefer-arrow-callback": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+		"import/namespace": "off",
 	},
 	parserOptions: {
 		project: ["./src/test/tsconfig.json"],

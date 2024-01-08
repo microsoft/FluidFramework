@@ -1,0 +1,58 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	FlexTreeField,
+	FlexTreeNode,
+	FlexTreeEntity,
+	FlexTreeTypedField,
+	FlexTreeFieldNode,
+	FlexibleFieldContent,
+	FlexibleNodeContent,
+	FlexTreeLeafNode,
+	FlexTreeMapNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
+	FlexTreeObjectNode,
+	FlexTreeObjectNodeTyped,
+	AssignableFieldKinds,
+	FlexTreeTypedNode,
+	FlexTreeTypedNodeUnion,
+	CheckTypesOverlap,
+	TreeStatus,
+	onNextChange,
+	FlexTreeUnknownUnboxed,
+	FlexTreeUnboxField,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	isFlexTreeNode,
+} from "./flexTreeTypes.js";
+
+export {
+	visitBipartiteIterableTree,
+	Skip,
+	visitBipartiteIterableTreeWithState,
+	visitIterableTree,
+	visitIterableTreeWithState,
+} from "./navigation.js";
+
+export { getTreeContext, FlexTreeContext, Context } from "./context.js";
+
+export { TreeEvent, EditableTreeEvents } from "./treeEvents.js";
+
+// Below here are things that are used by the above, but not part of the desired API surface.
+export {
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+} from "./flexTreeTypes.js";
+
+export { NodeKeys } from "./nodeKeys.js";

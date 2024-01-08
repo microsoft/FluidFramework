@@ -1,5 +1,24 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-internal.8.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   telemetry-utils: Deprecate ConfigTypes and IConfigProviderBase ([#18597](https://github.com/microsoft/FluidFramework/issues/18597)) [39b9ff57c0](https://github.com/microsoft/FluidFramework/commits/39b9ff57c0184b72f0e3f9425922dda944995265)
+
+    The types `ConfigTypes` and `IConfigProviderBase` have been deprecated in the @fluidframework/telemetry-utils package.
+    The types can now be found in the @fluidframework/core-interfaces package. Please replace any uses with the types from
+    @fluidframework/core-interfaces.
+
+-   telemetry-utils: Deprecated logIfFalse ([#18047](https://github.com/microsoft/FluidFramework/issues/18047)) [57614ffdc6](https://github.com/microsoft/FluidFramework/commits/57614ffdc6e3fbd22ddbe5ed589c75d3d195aa48)
+
+    This functionality was not intended for export and will be removed in a future release.
+    No replacement API is offered because the logic is trivial to reproduce as needed.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

@@ -5,7 +5,6 @@
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	DriverErrorType,
 	DriverHeader,
 	IContainerPackageInfo,
 	IResolvedUrl,
@@ -13,6 +12,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
+	OdspErrorTypes,
 	ShareLinkTypes,
 	ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions";
@@ -85,6 +85,9 @@ function removeBeginningSlash(str: string): string {
 export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}
 
+	/**
+	 * @alpha
+	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
 			const [siteURL, queryString] = request.url.split("?");
@@ -99,7 +102,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(
 					"Proper new file params should be there!!",
-					DriverErrorType.genericError,
+					OdspErrorTypes.genericError,
 					{ driverVersion: pkgVersion },
 				);
 			}

@@ -13,16 +13,16 @@ import {
 } from "@fluidframework/container-runtime";
 import {
 	ITelemetryBaseLogger,
-	FluidObject,
 	IRequest,
 	IConfigProviderBase,
+	IResponse,
 } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
-	IContainerRuntimeBase,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
@@ -30,6 +30,28 @@ import { timeoutAwait } from "./timeoutUtils";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
 
 const summarizerClientType = "summarizer";
+
+/**
+ * This function should ONLY be used for back compat purposes
+ * LTS versions of the Loader/Container will not have the "getEntryPoint" method, so we need to fallback to "request"
+ * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
+ * @internal
+ */
+async function getSummarizerBackCompat(container: IContainer): Promise<ISummarizer> {
+	if (container.getEntryPoint !== undefined) {
+		const entryPoint = await container.getEntryPoint();
+		// Note: We need to also check if the result of `getEntryPoint()` is defined. This is because when running
+		// cross version compat testing scenarios, if we create with 1.X container and load with 2.X then the
+		// function container.getEntryPoint will be defined for the 2.X container. However, it will not return undefined
+		// since the container's runtime will be on version 1.X, which does not have an entry point defined.
+		if (entryPoint !== undefined) {
+			return entryPoint as ISummarizer;
+		}
+	}
+	const response: IResponse = await (container as any).request({ url: "_summarizer" });
+	assert(response.status === 200, "requesting '/' should return default data object");
+	return response.value as ISummarizer;
+}
 
 async function createSummarizerCore(
 	container: IContainer,
@@ -56,9 +78,10 @@ async function createSummarizerCore(
 	const summarizerContainer = await loader.resolve(request);
 	await waitForContainerConnection(summarizerContainer);
 
-	const fluidObject: FluidObject<ISummarizer> | undefined =
-		await summarizerContainer.getEntryPoint();
-	if (fluidObject?.ISummarizer === undefined) {
+	// Old loaders will not have getEntryPoint API on the container. So, use getSummarizerBackCompat which
+	// will use request pattern to get the summarizer in these old loaders.
+	const fluidObject = await getSummarizerBackCompat(summarizerContainer);
+	if (fluidObject.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
 
@@ -93,8 +116,6 @@ export async function createSummarizerFromFactory(
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
 		{
@@ -102,7 +123,6 @@ export async function createSummarizerFromFactory(
 			registryEntries: registryEntries ?? [
 				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
 			],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions: { summaryOptions: defaultSummaryOptions },
 		},
 	);
@@ -156,7 +176,7 @@ export async function createSummarizer(
 export async function summarizeNow(
 	summarizer: ISummarizer,
 	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",
-) {
+): Promise<SummaryInfo> {
 	const options: IOnDemandSummarizeOptions =
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);
@@ -191,4 +211,23 @@ export async function summarizeNow(
 		summaryVersion: ackNackResult.data.summaryAckOp.contents.handle,
 		summaryRefSeq: submitResult.data.referenceSequenceNumber,
 	};
+}
+
+/**
+ * Summary information containing the summary tree, summary version, and summary sequence number.
+ * @internal
+ */
+export interface SummaryInfo {
+	/**
+	 * The summary tree generated
+	 */
+	summaryTree: ISummaryTree;
+	/**
+	 * Handle of the completed summary
+	 */
+	summaryVersion: string;
+	/**
+	 * Reference sequence number of the current summary generation
+	 */
+	summaryRefSeq: number;
 }

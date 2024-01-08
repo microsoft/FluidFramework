@@ -65,7 +65,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     // (undocumented)
     readonly claims: string | undefined;
     // (undocumented)
-    readonly errorType = DriverErrorType.authorizationError;
+    readonly errorType: "authorizationError";
     // (undocumented)
     readonly tenantId: string | undefined;
 }
@@ -125,9 +125,9 @@ export class DeltaStreamConnectionForbiddenError extends LoggingError implements
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    static readonly errorType: "deltaStreamConnectionForbidden";
     // (undocumented)
-    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    readonly errorType: "deltaStreamConnectionForbidden";
     // (undocumented)
     readonly storageOnlyReason: string | undefined;
 }
@@ -170,7 +170,7 @@ export class FluidInvalidSchemaError extends LoggingError implements IDriverErro
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.fluidInvalidSchema;
+    readonly errorType: "fluidInvalidSchema";
 }
 
 // @internal
@@ -179,7 +179,7 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     // (undocumented)
     readonly canRetry: boolean;
     // (undocumented)
-    readonly errorType = DriverErrorType.genericNetworkError;
+    readonly errorType: "genericNetworkError";
 }
 
 // @internal
@@ -194,7 +194,7 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @internal
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface ICompressionStorageConfig {
     // (undocumented)
     algorithm: SummaryCompressionAlgorithm;
@@ -236,7 +236,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.locationRedirection;
+    readonly errorType: "locationRedirection";
     // (undocumented)
     readonly redirectUrl: IResolvedUrl;
 }
@@ -355,7 +355,7 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 // @internal (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export enum SummaryCompressionAlgorithm {
     // (undocumented)
     LZ4 = 1,
@@ -369,7 +369,7 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     // (undocumented)
     readonly canRetry = true;
     // (undocumented)
-    readonly errorType = DriverErrorType.throttlingError;
+    readonly errorType: "throttlingError";
     // (undocumented)
     readonly retryAfterSeconds: number;
 }
@@ -393,7 +393,7 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.usageError;
+    readonly errorType: "usageError";
 }
 
 // (No @packageDocumentation comment for this package)

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FluidAppInsightsLogger } from "@fluid-experimental/app-insights-logger";
+import { createLogger } from "@fluidframework/app-insights-logger";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
@@ -50,7 +50,7 @@ function initializeTinyliciousClient(): TinyliciousClient {
 	appInsightsClient.loadAppInsights();
 
 	return new TinyliciousClient({
-		logger: new FluidAppInsightsLogger(appInsightsClient),
+		logger: createLogger(appInsightsClient),
 	});
 }
 

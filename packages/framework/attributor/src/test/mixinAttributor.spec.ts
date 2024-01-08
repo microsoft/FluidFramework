@@ -10,14 +10,10 @@ import {
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
-	MockLogger,
-	sessionStorageConfigProvider,
-	ConfigTypes,
-} from "@fluidframework/telemetry-utils";
+import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,

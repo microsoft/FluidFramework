@@ -5,10 +5,7 @@
 
 import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
 import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
-import {
-	type ITelemetryBaseLogger,
-	type ITelemetryBaseEvent,
-} from "@fluid-experimental/devtools-view";
+import { type ITelemetryBaseLogger, type ITelemetryBaseEvent } from "@fluid-internal/devtools-view";
 import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 

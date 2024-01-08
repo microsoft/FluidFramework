@@ -25,6 +25,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 				LegacyTreeInventoryListFactory.registryEntry,
 				NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
+			{ enableRuntimeIdCompressor: true },
 		);
 	}
 

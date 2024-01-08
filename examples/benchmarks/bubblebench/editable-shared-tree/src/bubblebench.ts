@@ -8,7 +8,7 @@ import {
 	ISharedTree,
 	FlexTreeView,
 	SharedTreeFactory,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";
@@ -45,7 +45,7 @@ export class Bubblebench extends DataObject {
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			this.tree.editableTree,
+			this.tree.flexTree,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,

@@ -36,10 +36,10 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
@@ -104,7 +104,6 @@
 		"ts-node": "^8.6.2",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
 		"node": ">=14.0.0"
 	},

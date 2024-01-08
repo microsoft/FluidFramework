@@ -13,11 +13,10 @@ import {
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -56,7 +55,7 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * Enum to support different types of snapshot formats.
- * @internal
+ * @alpha
  */
 export enum SnapshotFormatSupportType {
 	Json = 0,
@@ -191,8 +190,8 @@ export async function fetchSnapshotWithRedeem(
 			if (
 				(typeof error === "object" &&
 					error !== null &&
-					error.errorType === DriverErrorType.authorizationError) ||
-				error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
+					error.errorType === OdspErrorTypes.authorizationError) ||
+				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 			) {
 				await removeEntries();
 			}
@@ -365,7 +364,7 @@ async function fetchLatestSnapshotCore(
 						) {
 							throw new NonRetryableError(
 								"Returned odsp snapshot is malformed. No trees or blobs!",
-								DriverErrorType.incorrectServerResponse,
+								OdspErrorTypes.incorrectServerResponse,
 								propsToLog,
 							);
 						}
@@ -386,7 +385,7 @@ async function fetchLatestSnapshotCore(
 					default:
 						throw new NonRetryableError(
 							"Unknown snapshot content type",
-							DriverErrorType.incorrectServerResponse,
+							OdspErrorTypes.incorrectServerResponse,
 							propsToLog,
 						);
 				}
@@ -400,7 +399,7 @@ async function fetchLatestSnapshotCore(
 					(errorMessage) =>
 						new NonRetryableError(
 							`Error parsing snapshot response: ${errorMessage}`,
-							DriverErrorType.genericError,
+							OdspErrorTypes.genericError,
 							propsToLog,
 						),
 				);
@@ -490,8 +489,8 @@ async function fetchLatestSnapshotCore(
 			if (
 				typeof error === "object" &&
 				error !== null &&
-				(error.errorType === DriverErrorType.fetchFailure ||
-					error.errorType === OdspErrorType.fetchTimeout)
+				(error.errorType === OdspErrorTypes.fetchFailure ||
+					error.errorType === OdspErrorTypes.fetchTimeout)
 			) {
 				error[getWithRetryForTokenRefreshRepeat] = true;
 			}
@@ -649,8 +648,8 @@ function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any)
 		odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined &&
 		typeof error === "object" &&
 		error !== null &&
-		(error.errorType === DriverErrorType.authorizationError ||
-			error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)
+		(error.errorType === OdspErrorTypes.authorizationError ||
+			error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError)
 	) {
 		return true;
 	}

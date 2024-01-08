@@ -8,8 +8,6 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
@@ -53,7 +51,6 @@ import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
-	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -88,12 +85,14 @@ import {
 	channelsTreeName,
 	IDataStore,
 	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import type {
 	SerializedIdCompressorWithNoSession,
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/id-compressor";
 import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
@@ -164,7 +163,7 @@ import { formExponentialFn, Throttler } from "./throttler";
 import {
 	GarbageCollector,
 	GCNodeType,
-	gcTombstoneGenerationOptionName,
+	gcGenerationOptionName,
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
@@ -322,7 +321,7 @@ export type ISummaryConfiguration =
 	| ISummaryConfigurationHeuristics;
 
 /**
- * @internal
+ * @alpha
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
@@ -478,7 +477,7 @@ export enum RuntimeHeaders {
 }
 
 /** True if a tombstoned object should be returned without erroring
- * @internal
+ * @alpha
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 /**
@@ -489,12 +488,12 @@ export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the 
 
 /**
  * Tombstone error responses will have this header set to true
- * @internal
+ * @alpha
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @internal
+ * @alpha
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
@@ -696,7 +695,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
+		const response = await (resolvedContainer as any).request({
+			url: `/${summarizerRequestUrl}`,
+		});
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
@@ -707,14 +708,6 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 		throw new UsageError("Fluid object does not implement ISummarizer");
 	}
 	return fluidObject.ISummarizer;
-}
-
-/**
- * This function is not supported publicly and exists for e2e testing
- * @internal
- */
-export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
-	return createSummarizer(loader, url);
 }
 
 /**
@@ -731,53 +724,6 @@ export class ContainerRuntime
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext
 {
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
-
-	/**
-	 * @deprecated use loadRuntime instead.
-	 * Load the stores from a snapshot and returns the runtime.
-	 * @param context - Context of the container.
-	 * @param registryEntries - Mapping to the stores.
-	 * @param requestHandler - Request handlers for the container runtime
-	 * @param runtimeOptions - Additional options to be passed to the runtime
-	 * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
-	 * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
-	 * allows mixin classes to leverage this method to define their own async initializer.
-	 */
-	public static async load(
-		context: IContainerContext,
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-		runtimeOptions: IContainerRuntimeOptions = {},
-		containerScope: FluidObject = context.scope,
-		existing?: boolean,
-		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-	): Promise<ContainerRuntime> {
-		let existingFlag = true;
-		if (!existing) {
-			existingFlag = false;
-		}
-		return this.loadRuntime({
-			context,
-			registryEntries,
-			existing: existingFlag,
-			runtimeOptions,
-			containerScope,
-			containerRuntimeCtor,
-			requestHandler,
-			provideEntryPoint: () => {
-				throw new UsageError(
-					"ContainerRuntime.load is deprecated and should no longer be used",
-				);
-			},
-		});
-	}
-
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
@@ -800,7 +746,7 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
-		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
@@ -911,16 +857,18 @@ export class ContainerRuntime
 			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
-			const { IdCompressor, createSessionId } = await import("./id-compressor");
+			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
+				"@fluidframework/id-compressor"
+			);
 
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = IdCompressor.deserialize(pendingLocalState.pendingIdCompressorState);
+				idCompressor = deserializeIdCompressor(pendingLocalState.pendingIdCompressorState);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = IdCompressor.deserialize(serializedIdCompressor, createSessionId());
+				idCompressor = deserializeIdCompressor(serializedIdCompressor, createSessionId());
 			} else {
-				idCompressor = IdCompressor.create(logger);
+				idCompressor = createIdCompressor(logger);
 			}
 		}
 
@@ -1343,8 +1291,7 @@ export class ContainerRuntime
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
-				gcOptions_gcTombstoneGeneration:
-					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+				gcOptions_gcGeneration: this.runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
 		});
 
@@ -1446,9 +1393,6 @@ export class ContainerRuntime
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
-			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
-			// delta manager would always return false for summarizer client.
-			activeConnection: () => this.innerDeltaManager.active,
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 		});
 
@@ -1466,9 +1410,6 @@ export class ContainerRuntime
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
 				canReuseHandle: false,
-				// Must set to true to throw on any data stores failure that was too severe to be handled.
-				// We also are not decoding the base summaries at the root.
-				throwOnFailure: true,
 				// If GC should not run, let the summarizer node know so that it does not track GC state.
 				gcDisabled: !this.garbageCollector.shouldRunGC,
 			},
@@ -1780,9 +1721,10 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. This method needs to stay private until LTS version of Loader moves to "2.0.0-internal.7.0.0".
 	 */
-	public async request(request: IRequest): Promise<IResponse> {
+	// @ts-expect-error expected to be used by LTS Loaders and Containers
+	private async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
@@ -2322,6 +2264,7 @@ export class ContainerRuntime
 					messageWithContext.message,
 					local,
 					localOpMetadata,
+					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
 				);
 				break;
 			case ContainerMessageType.BlobAttach:
@@ -2445,28 +2388,6 @@ export class ContainerRuntime
 		}
 
 		this.dataStores.processSignal(envelope.address, transformed, local);
-	}
-
-	/**
-	 * Returns the runtime of the data store.
-	 * @param id - Id supplied during creating the data store.
-	 * @param wait - True if you want to wait for it.
-	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-		return this.getRootDataStoreChannel(id, wait);
-	}
-
-	private async getRootDataStoreChannel(
-		id: string,
-		wait = true,
-	): Promise<IFluidDataStoreChannel> {
-		await this.dataStores.waitIfPendingAlias(id);
-		const internalId = this.internalId(id);
-		const context = await this.dataStores.getDataStore(internalId, { wait });
-		assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
-		return context.realize();
 	}
 
 	/**
@@ -2755,6 +2676,12 @@ export class ContainerRuntime
 			this.blobManager.setRedirectTable(blobRedirectTable);
 		}
 
+		// We can finalize any allocated IDs since we're the only client
+		const idRange = this.idCompressor?.takeNextCreationRange();
+		if (idRange !== undefined) {
+			this.idCompressor?.finalizeCreationRange(idRange);
+		}
+
 		const summarizeResult = this.dataStores.createSummary(telemetryContext);
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);
@@ -2936,6 +2863,10 @@ export class ContainerRuntime
 
 	/**
 	 * This is called to update objects that are tombstones.
+	 *
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
+	 *
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
@@ -3065,7 +2996,6 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
 		// We close the summarizer and download a new snapshot and reload the container
-		let latestSnapshotVersionId: string | undefined;
 		if (refreshLatestAck === true) {
 			return this.prefetchLatestSummaryThenClose(
 				createChildLogger({
@@ -3281,34 +3211,18 @@ export class ContainerRuntime
 				return { stage: "generate", ...generateSummaryData, error: continueResult.error };
 			}
 
-			// It may happen that the lastAck it not correct due to missing summaryAck in case of single commit
-			// summary. So if the previous summarizer closes just after submitting the summary and before
-			// submitting the summaryOp then we can't rely on summaryAck. So in case we have
-			// latestSnapshotVersionId from storage and it does not match with the lastAck ackHandle, then use
-			// the one fetched from storage as parent as that is the latest.
-			let summaryContext: ISummaryContext;
-			if (
-				lastAck?.summaryAck.contents.handle !== latestSnapshotVersionId &&
-				latestSnapshotVersionId !== undefined
-			) {
-				summaryContext = {
-					proposalHandle: undefined,
-					ackHandle: latestSnapshotVersionId,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			} else if (lastAck === undefined) {
-				summaryContext = {
-					proposalHandle: undefined,
-					ackHandle: this.loadedFromVersionId,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			} else {
-				summaryContext = {
-					proposalHandle: lastAck.summaryOp.contents.handle,
-					ackHandle: lastAck.summaryAck.contents.handle,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			}
+			const summaryContext =
+				lastAck === undefined
+					? {
+							proposalHandle: undefined,
+							ackHandle: this.loadedFromVersionId,
+							referenceSequenceNumber: summaryRefSeqNum,
+					  }
+					: {
+							proposalHandle: lastAck.summaryOp.contents.handle,
+							ackHandle: lastAck.summaryAck.contents.handle,
+							referenceSequenceNumber: summaryRefSeqNum,
+					  };
 
 			let handle: string;
 			try {
@@ -3743,6 +3657,7 @@ export class ContainerRuntime
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
+	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 * @param message - The original LocalContainerRuntimeMessage.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
@@ -3835,7 +3750,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(
+			await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3845,32 +3760,7 @@ export class ContainerRuntime
 				readAndParseBlob,
 			);
 
-			/**
-			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
-			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
-			 * However, there are couple of scenarios where it's possible:
-			 * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
-			 * the document being unusable and we should not proceed.
-			 * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
-			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
-			 * state.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				const error = DataProcessingError.create(
-					"Fetched snapshot is older than the received ack",
-					"RefreshLatestSummaryAck",
-					undefined /* sequencedMessage */,
-					{
-						ackHandle,
-						summaryRefSeq,
-						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-					},
-				);
-				this.disposeFn(error);
-				throw error;
-			}
-
-			await this.closeStaleSummarizer("RefreshLatestSummaryAckFetch");
+			await this.closeStaleSummarizer();
 			return;
 		}
 
@@ -3899,7 +3789,7 @@ export class ContainerRuntime
 			readAndParseBlob,
 		);
 
-		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
+		await this.closeStaleSummarizer();
 
 		return {
 			stage: "base",
@@ -3909,7 +3799,7 @@ export class ContainerRuntime
 		};
 	}
 
-	private async closeStaleSummarizer(codePath: string): Promise<void> {
+	private async closeStaleSummarizer(): Promise<void> {
 		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");
@@ -3973,8 +3863,6 @@ export class ContainerRuntime
 			},
 		);
 	}
-
-	public notifyAttaching() {} // do nothing (deprecated method)
 
 	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
 		return PerformanceEvent.timedExecAsync(
