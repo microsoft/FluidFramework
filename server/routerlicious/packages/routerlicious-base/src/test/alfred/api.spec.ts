@@ -220,7 +220,7 @@ describe("Routerlicious", () => {
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertThrottle(
-							`/apis/${appTenant1.id}/${document1._id}/root`,
+							`/api/v1/${appTenant1.id}/${document1._id}/root`,
 							null,
 							null,
 							"patch",
@@ -228,7 +228,7 @@ describe("Routerlicious", () => {
 					});
 					it("/:tenantId/:id/blobs", async () => {
 						await assertThrottle(
-							`/apis/${appTenant1.id}/${document1._id}/blobs`,
+							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
 							null,
 							null,
 							"post",
@@ -393,7 +393,7 @@ describe("Routerlicious", () => {
 				});
 
 				describe("/api/v1", () => {
-					it("/apis/:tenantId/:id/broadcast-signal", async () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
 						const body = {
 							signalContent: {
 								contents: {
@@ -404,13 +404,13 @@ describe("Routerlicious", () => {
 						};
 
 						await supertest
-							.post(`/apis/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
 							.expect(200);
 					});
-					it("/apis/:tenantId/:id/broadcast-signal invalid-token", async () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal invalid-token", async () => {
 						const body = {
 							signalContent: {
 								contents: {
@@ -421,7 +421,7 @@ describe("Routerlicious", () => {
 						};
 
 						await supertest
-							.post(`/apis/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Content-Type", "application/json")
 							.expect(403);
@@ -562,23 +562,23 @@ describe("Routerlicious", () => {
 
 				describe("/api/v1", () => {
 					it("/ping", async () => {
-						await assertCorrelationId("/apis/ping");
+						await assertCorrelationId("/api/v1/ping");
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertCorrelationId(
-							`/apis/${appTenant1.id}/${document1._id}/root`,
+							`/api/v1/${appTenant1.id}/${document1._id}/root`,
 							"patch",
 						);
 					});
 					it("/:tenantId/:id/blobs", async () => {
 						await assertCorrelationId(
-							`/apis/${appTenant1.id}/${document1._id}/blobs`,
+							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
 							"post",
 						);
 					});
-					it("/apis/:tenantId/:id/broadcast-signal", async () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
 						await assertCorrelationId(
-							`/apis/${appTenant1.id}/${document1._id}/broadcast-signal`,
+							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
 							"post",
 						);
 					});
@@ -868,7 +868,7 @@ describe("Routerlicious", () => {
 					supertest = request(app);
 				});
 
-				describe("/apis/:tenantId/:id/broadcast-signal", () => {
+				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
 					it("Successful request", async () => {
 						const body = {
 							signalContent: {
@@ -880,7 +880,7 @@ describe("Routerlicious", () => {
 						};
 
 						await supertest
-							.post(`/apis/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
@@ -893,7 +893,7 @@ describe("Routerlicious", () => {
 						};
 
 						await supertest
-							.post(`/apis/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
