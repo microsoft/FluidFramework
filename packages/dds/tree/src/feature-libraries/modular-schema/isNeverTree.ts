@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { assert } from "@fluidframework/core-utils";
 import { fail } from "../../util/index.js";
 import {
@@ -106,7 +111,7 @@ export function isNeverTreeRecursive(
 			}
 			return false;
 		} else {
-			assert(treeNode instanceof LeafNodeStoredSchema, 2199 /* unsupported node kind */);
+			assert(treeNode instanceof LeafNodeStoredSchema, 0x897 /* unsupported node kind */);
 			return false;
 		}
 	} finally {
