@@ -4,11 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { execSync } from "child_process";
 import { CompatKind } from "../../compatOptions.cjs";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
-import { baseVersion } from "../baseVersion.js";
 
 describe("Minimum Compat Version", () => {
+	const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
+		encoding: "utf-8",
+	});
+	const allVersions: string[] = JSON.parse(allVersionsFromNpm);
+	const latestVersion = allVersions[allVersions.length-1];
+	
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
 		try {
@@ -27,36 +33,35 @@ describe("Minimum Compat Version", () => {
 	});
 
 	for (let i = 1; i < 9; i++) {
-		it(`compatVersion N-${i} < latest version`, () => {
+		it(`compatVersion N-${i} < latest version ${latestVersion}`, () => {
 			assert.strictEqual(
-				// using latest version found in allVersions array.
-				isCompatVersionBelowMinVersion(baseVersion, {
+				isCompatVersionBelowMinVersion(latestVersion, {
 					name: `test`,
 					kind: CompatKind.None,
 					compatVersion: -i,
 				}),
 				true,
-				`N-${i} is not lower than current base version ${baseVersion}`,
+				`N-${i} is not lower than min version`,
 			);
 		});
 	}
 
 	it("cross compat", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(baseVersion, {
+			isCompatVersionBelowMinVersion(latestVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: baseVersion,
+				compatVersion: latestVersion,
 				loadVersion: "1.3.7",
 			}),
 			true,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(baseVersion, {
+			isCompatVersionBelowMinVersion(latestVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "1.3.7",
-				loadVersion: baseVersion,
+				loadVersion: latestVersion,
 			}),
 			true,
 		);
@@ -64,7 +69,7 @@ describe("Minimum Compat Version", () => {
 			isCompatVersionBelowMinVersion("1.3.7", {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: baseVersion,
+				compatVersion: latestVersion,
 				loadVersion: "1.3.7",
 			}),
 			false,
@@ -74,7 +79,7 @@ describe("Minimum Compat Version", () => {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "1.3.7",
-				loadVersion: baseVersion,
+				loadVersion: latestVersion,
 			}),
 			false,
 		);
