@@ -131,6 +131,9 @@ summary: "An open-source client technology stack that enables real-time collabor
         <div class="col-md-8 text-center">
             <h3>Sample Code</h3>
         </div>
+        <div  class="col-md-4 text-center">
+            <h3>Sample Output</h3>
+        </div>
         <div class="col-md-8" style="text-left; height:650px; overflow-x: auto; padding-left: 50px;">
                 {{< highlight go >}}
                 /*!
@@ -234,7 +237,6 @@ summary: "An open-source client technology stack that enables real-time collabor
                 {{< / highlight >}}
         </div>
     <div class="col-md-4 text-center" style="padding-right: 50px;">
-        <h3>Sample Output</h3>
         {{< fluid_bundle_loader idPrefix="dice-roller"
         bundleName="dice-roller.2021-09-24.js" >}}
     </div>
