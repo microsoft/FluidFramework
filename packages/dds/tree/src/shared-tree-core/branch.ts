@@ -677,7 +677,8 @@ class RevertibleRevision implements Revertible {
 	public revert(): RevertibleResult {
 		if (this.status === RevertibleStatus.Valid) {
 			this.onRevert(this);
-			this.dispose();
+			// If reverting leads to a schema change then the revertible will be disposed as part of the revert.
+			this.dispose(false);
 			return RevertibleResult.Success;
 		}
 		return RevertibleResult.Failure;
@@ -703,12 +704,12 @@ class RevertibleRevision implements Revertible {
 		return RevertibleResult.Failure;
 	}
 
-	public dispose(): void {
-		assert(
-			this.status === RevertibleStatus.Valid,
-			"Cannot dispose already disposed revertible",
-		);
-		this.referenceCount = 0;
-		this.onDispose(this);
+	public dispose(validateStatus = true): void {
+		if (this.status === RevertibleStatus.Valid) {
+			this.referenceCount = 0;
+			this.onDispose(this);
+		} else {
+			assert(validateStatus === false, "Cannot dispose already disposed revertible");
+		}
 	}
 }
