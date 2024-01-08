@@ -158,7 +158,14 @@ export class GarbageCollector implements IGarbageCollector {
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
-		this.getNodePackagePath = createParams.getNodePackagePath;
+		this.getNodePackagePath = async (nodePath: string) => {
+			// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
+			// These have no package path so return undefined.
+			if (nodePath === "/") {
+				return undefined;
+			}
+			return createParams.getNodePackagePath(nodePath);
+		};
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
 		this.submitMessage = createParams.submitMessage;
 

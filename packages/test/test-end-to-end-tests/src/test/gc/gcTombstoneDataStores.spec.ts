@@ -1500,16 +1500,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
 				},
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					clientType: "interactive",
-				},
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					clientType: "interactive",
-				},
 			],
 			async () => {
 				settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
@@ -1540,25 +1530,17 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// Requesting dataStore2 and dataStore3 should fail in container2.
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
-				await assert.rejects(
-					async () => resolveHandleHelper(containerRuntime2, dataStore2._context.id),
-					(error: any) => {
-						const correctErrorType = error.code === 404;
-						const correctErrorMessage =
-							error.message === `DataStore was tombstoned: ${dataStore2._context.id}`;
-						return correctErrorType && correctErrorMessage;
-					},
-					`Should not be able to request dataStore2 which is tombstoned`,
+				assert.equal(
+					(containerRuntime2 as any).dataStores.contexts.get(dataStore2._context.id)
+						.tombstoned,
+					true,
+					"Expected dataStore2 to be Tombstoned",
 				);
-				await assert.rejects(
-					async () => resolveHandleHelper(containerRuntime2, dataStore3._context.id),
-					(error: any) => {
-						const correctErrorType = error.code === 404;
-						const correctErrorMessage =
-							error.message === `DataStore was tombstoned: ${dataStore3._context.id}`;
-						return correctErrorType && correctErrorMessage;
-					},
-					`Should not be able to request dataStore3 which is tombstoned`,
+				assert.equal(
+					(containerRuntime2 as any).dataStores.contexts.get(dataStore3._context.id)
+						.tombstoned,
+					true,
+					"Expected dataStore3 to be Tombstoned",
 				);
 
 				// Load a new summarizer from the last summary. This is done so that dataStore2 is loaded again
@@ -1575,12 +1557,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// handle to dataStore3 is parsed resulting in a notification to GC of reference to dataStore3.
 				dataStore2._root.set("just", "an op");
 				await provider.ensureSynchronized();
-				// Note: Summarizer client never throws on loading tombstoned data stores.
-				await assert.doesNotReject(
-					async () =>
-						resolveHandleHelper((summarizer2 as any).runtime, dataStore2._context.id),
-					`Should be able to request dataStore2 which is tombstoned in summarizer`,
-				);
+
 				// Summarize again. This should not result in any of the data stores getting un-tombstoned.
 				const { summaryVersion: summaryVersion2 } = await summarize(summarizer2);
 				// There shouldn't be any revived event for dataStore3 because it is not revived.
@@ -1636,17 +1613,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
 				},
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					clientType: "noninteractive/summarizer",
-					category: "generic",
-				},
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					clientType: "interactive",
-				},
 			],
 			async () => {
 				settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
@@ -1677,15 +1643,11 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// Requesting dataStore2 should fail in container2.
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
-				await assert.rejects(
-					async () => resolveHandleHelper(containerRuntime2, dataStore2._context.id),
-					(error: any) => {
-						const correctErrorType = error.code === 404;
-						const correctErrorMessage =
-							error.message === `DataStore was tombstoned: ${dataStore2._context.id}`;
-						return correctErrorType && correctErrorMessage;
-					},
-					`Should not be able to request dataStore2 which is tombstoned`,
+				assert.equal(
+					(containerRuntime2 as any).dataStores.contexts.get(dataStore2._context.id)
+						.tombstoned,
+					true,
+					"Expected dataStore2 to be Tombstoned",
 				);
 
 				// Load a new summarizer from the last summary. This is done so that dataStore2 is loaded again.
@@ -1702,15 +1664,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// handle to dds2 is parsed resulting in a notification to GC of references.
 				dataStore2._root.set("just", "an op");
 				await provider.ensureSynchronized();
-				// Note: Summarizer client never throws on loading tombstoned data stores.
-				await assert.doesNotReject(
-					async () =>
-						resolveHandleHelper(
-							(summarizer2 as any).runtime as ContainerRuntime,
-							dataStore2._context.id,
-						),
-					`Should be able to request dataStore2 which is tombstoned in summarizer`,
-				);
+
 				// Summarize again. This should not result in any of the data stores getting un-tombstoned.
 				const { summaryVersion: summaryVersion2 } = await summarize(summarizer2);
 				// There shouldn't be any revived event for dataStore2 because it is not revived.
