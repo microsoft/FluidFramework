@@ -24,7 +24,6 @@ import {
 	FlexTreeUnboxNodeUnion,
 	FlexTreeMapNode,
 	FlexTreeTypedField,
-	boxedIterator,
 	FlexTreeObjectNode,
 	IsArrayOfOne,
 	FlexTreeUnknownUnboxed,
@@ -85,7 +84,7 @@ describe("editableTreeTypes", () => {
 		const schema = SchemaBuilder.sequence(jsonRoot2);
 
 		assert(root.is(schema));
-		for (const tree of root[boxedIterator]()) {
+		for (const tree of root.boxedIterator()) {
 			if (tree.is(leaf.boolean)) {
 				const b: boolean = tree.value;
 			} else if (tree.is(leaf.number)) {
@@ -181,7 +180,7 @@ describe("editableTreeTypes", () => {
 	function iteratorsExample(mixed: Mixed): void {
 		const unboxedListIteration: number[] = [...mixed.sequence];
 		const boxedListIteration: FlexTreeTypedNode<typeof leaf.number>[] = [
-			...mixed.sequence[boxedIterator](),
+			...mixed.sequence.boxedIterator(),
 		];
 
 		const optionalNumberField = SchemaBuilder.optional(leaf.number);
@@ -192,7 +191,7 @@ describe("editableTreeTypes", () => {
 		const mapNode = undefined as unknown as FlexTreeMapNode<typeof mapSchema>;
 		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
 		const boxedMapIteration: FlexTreeTypedField<typeof optionalNumberField>[] = [
-			...mapNode[boxedIterator](),
+			...mapNode.boxedIterator(),
 		];
 	}
 

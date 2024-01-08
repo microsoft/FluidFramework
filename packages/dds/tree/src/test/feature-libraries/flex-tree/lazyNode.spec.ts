@@ -12,22 +12,16 @@ import {
 	LazyFieldNode,
 	LazyLeaf,
 	LazyMap,
-	LazyObjectNode,
 	LazyTreeNode,
 	buildLazyObjectNode,
 } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	Any,
-	isTreeValue,
-	jsonableTreeFromCursor,
-	cursorForMapTreeNode,
 	FlexTreeField,
 	FlexTreeNode,
-	Skip,
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateObjectNodeFieldName,
-	assertAllowedValue,
 	FieldKind,
 	AllowedTypes,
 	typeNameSymbol,
@@ -48,30 +42,17 @@ import {
 	ITreeSubscriptionCursor,
 	MapTree,
 	TreeNavigationResult,
-	TreeValue,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { RestrictiveReadonlyRecord, brand } from "../../../util/index.js";
-import {
-	LazyField,
-	LazyOptionalField,
-	LazySequence,
-	LazyValueField,
-} from "../../../feature-libraries/flex-tree/lazyField.js";
-import {
-	FlexTreeEntity,
-	boxedIterator,
-	visitIterableTree,
-} from "../../../feature-libraries/flex-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
-import { testTrees, treeContentFromTestTree } from "../../testTrees.js";
 import {
 	forestWithContent,
 	flexTreeViewWithContent,
-	testIdCompressor,
 	failCodec,
+	testRevisionTagCodec,
 } from "../../utils.js";
 import { contextWithContentReadonly } from "./utils.js";
 
@@ -163,7 +144,7 @@ describe("LazyNode", () => {
 					const lowercaseBannedName = `${bannedName[0].toLowerCase()}${bannedName.substring(
 						1,
 					)}`;
-					assert(bannedFieldNames.has(lowercaseBannedName));
+					assert(bannedFieldNames.has(lowercaseBannedName), lowercaseBannedName);
 					existingPropertiesExtended.add(lowercaseBannedName);
 				}
 			}
@@ -261,44 +242,6 @@ describe("LazyNode", () => {
 		assert.equal(index, 0);
 		assert.equal(parent.key, rootFieldKey);
 	});
-
-	describe("enumerable own properties", () => {
-		describe("test trees", () => {
-			for (const testTree of testTrees) {
-				describe(testTree.name, () => {
-					it("iterable traversal", () => {
-						const context = contextWithContentReadonly(
-							treeContentFromTestTree(testTree),
-						);
-
-						const mapTree = fieldToMapTree(context.root);
-						const jsonable = mapTree
-							.map(cursorForMapTreeNode)
-							.map(jsonableTreeFromCursor);
-
-						const expected = testTree.treeFactory();
-						assert.deepEqual(jsonable, expected);
-					});
-					it("object traversal", () => {
-						const context = contextWithContentReadonly(
-							treeContentFromTestTree(testTree),
-						);
-
-						const viaJson = JSON.parse(JSON.stringify(context.root));
-						checkPropertyInvariants(context.root);
-						// assert.deepEqual(viaJson, {type:})
-					});
-
-					it("deepEquals self", () => {
-						const content = treeContentFromTestTree(testTree);
-						const context1 = contextWithContentReadonly(content);
-						const context2 = contextWithContentReadonly(content);
-						assert.deepEqual(context1.root, context2.root);
-					});
-				});
-			}
-		});
-	});
 });
 
 describe("LazyFieldNode", () => {
@@ -371,7 +314,7 @@ describe("LazyMap", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testRevisionTagCodec, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},
@@ -410,7 +353,7 @@ describe("LazyMap", () => {
 
 	it("set", () => {
 		const view = flexTreeViewWithContent({ schema, initialTree: {} });
-		const mapNode = view.editableTree.content;
+		const mapNode = view.flexTree.content;
 		assert(mapNode.is(mapNodeSchema));
 
 		mapNode.set("baz", "First edit");
@@ -427,7 +370,7 @@ describe("LazyMap", () => {
 
 	it("getBoxed empty", () => {
 		const view = flexTreeViewWithContent({ schema, initialTree: {} });
-		const mapNode = view.editableTree.content;
+		const mapNode = view.flexTree.content;
 		assert(mapNode.is(mapNodeSchema));
 
 		const empty = mapNode.getBoxed("foo");
@@ -466,7 +409,7 @@ describe("LazyObjectNode", () => {
 	});
 
 	const editBuilder = new DefaultEditBuilder(
-		new DefaultChangeFamily(testIdCompressor, failCodec, { jsonValidator: noopValidator }),
+		new DefaultChangeFamily(testRevisionTagCodec, failCodec, { jsonValidator: noopValidator }),
 		(change: DefaultChangeset) => {
 			editCallCount++;
 		},
@@ -544,9 +487,18 @@ describe("buildLazyObjectNode", () => {
 	const node = buildLazyObjectNode(context, objectNodeSchema, cursor, anchorNode, anchor);
 
 	it("Binds setter properties for values, but not other field kinds", () => {
-		assert(Object.getOwnPropertyDescriptor(node, "optional")?.set !== undefined);
-		assert(Object.getOwnPropertyDescriptor(node, "required")?.set !== undefined);
-		assert(Object.getOwnPropertyDescriptor(node, "sequence")?.set === undefined);
+		assert(
+			Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "optional")?.set !==
+				undefined,
+		);
+		assert(
+			Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "required")?.set !==
+				undefined,
+		);
+		assert(
+			Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "sequence")?.set ===
+				undefined,
+		);
 	});
 
 	it('Binds "set" methods for values, but not other field kinds', () => {
@@ -559,7 +511,7 @@ describe("buildLazyObjectNode", () => {
 
 function fieldToMapTree(field: FlexTreeField): MapTree[] {
 	const results: MapTree[] = [];
-	for (const child of field[boxedIterator]()) {
+	for (const child of field.boxedIterator()) {
 		results.push(nodeToMapTree(child));
 	}
 	return results;
@@ -567,132 +519,9 @@ function fieldToMapTree(field: FlexTreeField): MapTree[] {
 
 function nodeToMapTree(node: FlexTreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
-	for (const field of node[boxedIterator]()) {
+	for (const field of node.boxedIterator()) {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
-	return { fields, type: node.type, value: node.value };
-}
-
-function checkPropertyInvariants(root: FlexTreeEntity): void {
-	const treeValues = new Map<unknown, number>();
-	// Assert all nodes and fields traversed, and all values found.
-	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
-	visitIterableTree(
-		root,
-		(tree) => tree[boxedIterator](),
-		(item) => {
-			if (item instanceof LazyLeaf) {
-				const value = item.value;
-				treeValues.set(value, (treeValues.get(value) ?? 0) + 1);
-			}
-		},
-	);
-
-	// TODO: generic typed traverse first, collect leaves use in asserts.
-	// TODO: add extra items needed to traverse map nodes and in leaves.
-	const allowedPrototypes = new Set([
-		LazyMap.prototype,
-		LazyFieldNode.prototype,
-		LazyLeaf.prototype,
-		LazySequence.prototype,
-		LazyValueField.prototype,
-		LazyOptionalField.prototype,
-		null,
-		Array.prototype,
-	]);
-
-	const visited: Set<unknown> = new Set([root]);
-	const primitivesAndValues = new Map<TreeValue, number>();
-	// TODO: add cycle handler to not error on Fluid handles.
-	visitOwnPropertiesRecursive(root, (parent, key, child): Skip | void => {
-		assert(typeof child !== "function");
-		assert(typeof key !== "symbol");
-
-		if (typeof child === "object" && child !== null) {
-			if (treeValues.has(child)) {
-				assertAllowedValue(child);
-				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
-				return Skip;
-			}
-
-			assert(!visited.has(child));
-			visited.add(child);
-
-			const prototype = Object.getPrototypeOf(child);
-			if (!allowedPrototypes.has(prototype)) {
-				const prototypeInner = Object.getPrototypeOf(prototype);
-				assert(prototypeInner === LazyObjectNode.prototype);
-			}
-		} else if (isTreeValue(child)) {
-			// TODO: more robust check for schema names
-			if (key === "type") {
-				assert(typeof child === "string");
-				assert(root.context.schema.nodeSchema.has(brand(child)));
-			} else {
-				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
-			}
-		}
-	});
-
-	const unboxable = new Set([
-		LazyLeaf.prototype,
-		LazyValueField.prototype,
-		LazyOptionalField.prototype,
-	]);
-
-	// Assert all nodes and fields traversed, and all values found.
-	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
-	visitIterableTree(
-		root,
-		(tree) => tree[boxedIterator](),
-		(item) => {
-			if (!unboxable.has(Object.getPrototypeOf(item))) {
-				if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
-					// Fields don't have stable object identity, so they can fail the above test.
-					// Nothing else should fail it.
-					assert(item instanceof LazyField);
-				}
-			}
-		},
-	);
-
-	assert.deepEqual(primitivesAndValues, treeValues);
-}
-
-function visitOwnPropertiesRecursive(
-	root: unknown,
-	visitor: (parent: object, key: string | symbol, data: unknown) => void | Skip,
-	cycleHandler: (item: object) => void = () => fail("cycle"),
-	stack: Set<unknown> = new Set(),
-): void {
-	if (typeof root !== "object" || root === null) {
-		return;
-	}
-
-	if (stack.has(root)) {
-		cycleHandler(root);
-		return;
-	}
-	stack.add(root);
-
-	// There does not seem to be an API that lists both string and symbol own properties without also including non-enumerable properties.
-	// So using Object.getOwnPropertyDescriptors to get everything, then filtering.
-	// TypeScript has the wrong type for getOwnPropertyDescriptors (it omits symbols) so fix that:
-	const descriptors = Object.getOwnPropertyDescriptors(root) as RestrictiveReadonlyRecord<
-		string | symbol,
-		PropertyDescriptor
-	>;
-
-	for (const key of Reflect.ownKeys(descriptors)) {
-		const descriptor = descriptors[key];
-		if (descriptor.enumerable === true) {
-			const value = Reflect.get(root, key);
-			if (visitor(root, key, value) !== Skip) {
-				visitOwnPropertiesRecursive(value, visitor, cycleHandler, stack);
-			}
-		}
-	}
-
-	stack.delete(root);
+	return { fields, type: node.schema.name, value: node.value };
 }

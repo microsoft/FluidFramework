@@ -43,7 +43,7 @@ describe("sharedTreeView", () => {
 					x: 24,
 				},
 			});
-			const root = view.editableTree.content ?? fail("missing root");
+			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
 			const unsubscribe = root.on("changing", () => log.push("change"));
 			const unsubscribeSubtree = root.on("subtreeChanging", () => {
@@ -84,7 +84,7 @@ describe("sharedTreeView", () => {
 					x: 24,
 				},
 			});
-			const root = view.editableTree.content ?? fail("missing root");
+			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
 			const unsubscribe = root.on("changing", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
