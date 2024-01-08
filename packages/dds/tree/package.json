@@ -156,27 +156,9 @@
 			"build:docs": [
 				"build:esnext"
 			],
-			"build:esnext": [
-				"^api",
-				"^build:esnext"
-			],
 			"ci:build:docs": [
 				"build:esnext"
-			],
-			"commonjs": {
-				"dependsOn": [
-					"tsc"
-				],
-				"script": false
-			},
-			"compile": {
-				"dependsOn": [
-					"build:commonjs",
-					"build:esnext",
-					"build:test"
-				],
-				"script": false
-			}
+			]
 		}
 	},
 	"typeValidation": {
