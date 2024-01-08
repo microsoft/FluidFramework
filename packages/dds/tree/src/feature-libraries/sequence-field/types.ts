@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core";
-import { NodeChangeset } from "../modular-schema";
-import { DetachIdOverrideType } from "./format";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import { NodeChangeset } from "../modular-schema/index.js";
+import { DetachIdOverrideType } from "./format.js";
 
 export type CellCount = number;
 
@@ -167,8 +167,8 @@ export interface DetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Delete extends HasRevisionTag, DetachFields {
-	type: "Delete";
+export interface Remove extends HasRevisionTag, DetachFields {
+	type: "Remove";
 	id: ChangesetLocalId;
 }
 
@@ -186,7 +186,7 @@ export interface MoveOut extends HasMoveFields, DetachFields {
 
 export type Attach = Insert | MoveIn;
 
-export type Detach = Delete | MoveOut;
+export type Detach = Remove | MoveOut;
 
 /**
  * Fills then empties cells.

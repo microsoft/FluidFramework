@@ -13,8 +13,8 @@ import {
 	FieldKey,
 	RevisionTag,
 	makeDetachedNodeId,
-} from "../core";
-import { Mutable } from "../util";
+} from "../core/index.js";
+import { Mutable } from "../util/index.js";
 
 export function nodeIdFromChangeAtom(
 	changeAtom: ChangeAtomId,
@@ -93,12 +93,6 @@ export function mapFieldChanges<TIn, TOut>(
 		out.global = fieldChanges.global.map(({ id, fields }) => ({
 			id,
 			fields: mapFieldsChanges(fields, func),
-		}));
-	}
-	if (fieldChanges.build !== undefined) {
-		out.build = fieldChanges.build.map(({ id, trees }) => ({
-			id,
-			trees: trees.map(func),
 		}));
 	}
 	if (fieldChanges.rename !== undefined) {

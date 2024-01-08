@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { ValueSchema } from "../../core";
+import { ValueSchema } from "../../core/index.js";
 
 import {
 	allowsValue,
 	isFluidHandle,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../feature-libraries/valueUtilities";
+} from "../../feature-libraries/valueUtilities.js";
 
 describe("valueUtilities", () => {
 	it("isFluidHandle", () => {

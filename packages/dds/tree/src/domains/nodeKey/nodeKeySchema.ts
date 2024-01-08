@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ValueSchema } from "../../core";
+import { ValueSchema } from "../../core/index.js";
 import {
 	nodeKeyFieldKey,
 	FieldKinds,
 	nodeKeyTreeIdentifier,
 	SchemaBuilderInternal,
 	TreeFieldSchema,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });
 

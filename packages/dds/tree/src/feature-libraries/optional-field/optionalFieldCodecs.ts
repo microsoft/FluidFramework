@@ -4,68 +4,91 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
-import { EncodedRevisionTag, RevisionTag } from "../../core";
-import { Mutable } from "../../util";
-import type { NodeChangeset } from "../modular-schema";
-import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
-import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat";
+import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
+import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
+import type { NodeChangeset } from "../modular-schema/index.js";
+import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
-export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
+export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
+	0,
+	ChangeEncodingContext
+>([[0, unitCodec]]);
 
 export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
-	childCodec: IJsonCodec<TChildChange>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): ICodecFamily<OptionalChangeset<TChildChange>> =>
+	childCodec: IJsonCodec<
+		TChildChange,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		ChangeEncodingContext
+	>,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+): ICodecFamily<OptionalChangeset<TChildChange>, ChangeEncodingContext> =>
 	makeCodecFamily([[0, makeOptionalFieldCodec(childCodec, revisionTagCodec)]]);
 
 function makeRegisterIdCodec(
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): IJsonCodec<RegisterId, EncodedRegisterId> {
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+): IJsonCodec<RegisterId, EncodedRegisterId, EncodedRegisterId, ChangeEncodingContext> {
+	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	return {
-		encode: (registerId: RegisterId) => {
+		encode: (registerId: RegisterId, context: ChangeEncodingContext) => {
 			if (registerId === "self") {
-				return 0;
+				return null;
 			}
-
-			const encodedRegisterId: EncodedRegisterId = { localId: registerId.localId };
-			if (registerId.revision !== undefined) {
-				encodedRegisterId.revision = revisionTagCodec.encode(registerId.revision);
-			}
-
-			return encodedRegisterId;
+			return changeAtomIdCodec.encode(registerId, context);
 		},
-		decode: (registerId: EncodedRegisterId) => {
-			if (registerId === 0) {
+		decode: (registerId: EncodedRegisterId, context: ChangeEncodingContext) => {
+			if (registerId === null) {
 				return "self";
 			}
-
-			const decodedRegisterId: Mutable<RegisterId> = { localId: registerId.localId };
-			if (registerId.revision !== undefined) {
-				decodedRegisterId.revision = revisionTagCodec.decode(registerId.revision);
-			}
-
-			return decodedRegisterId;
+			return changeAtomIdCodec.decode(registerId, context);
 		},
 		encodedSchema: EncodedRegisterId,
 	};
 }
 
 function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
-	childCodec: IJsonCodec<TChildChange>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-): IJsonCodec<OptionalChangeset<TChildChange>, EncodedOptionalChangeset<TAnySchema>> {
+	childCodec: IJsonCodec<
+		TChildChange,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		ChangeEncodingContext
+	>,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+): IJsonCodec<
+	OptionalChangeset<TChildChange>,
+	EncodedOptionalChangeset<TAnySchema>,
+	EncodedOptionalChangeset<TAnySchema>,
+	ChangeEncodingContext
+> {
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
 	return {
-		encode: (change: OptionalChangeset<TChildChange>) => {
+		encode: (change: OptionalChangeset<TChildChange>, context: ChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.moves.length > 0) {
 				encoded.m = [];
 				for (const [src, dst, type] of change.moves) {
 					encoded.m.push([
-						registerIdCodec.encode(src),
-						registerIdCodec.encode(dst),
+						registerIdCodec.encode(src, context),
+						registerIdCodec.encode(dst, context),
 						type === "nodeTargeting",
 					]);
 				}
@@ -74,24 +97,27 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 			if (change.childChanges.length > 0) {
 				encoded.c = [];
 				for (const [id, childChange] of change.childChanges) {
-					encoded.c.push([registerIdCodec.encode(id), childCodec.encode(childChange)]);
+					encoded.c.push([
+						registerIdCodec.encode(id, context),
+						childCodec.encode(childChange, context),
+					]);
 				}
 			}
 
 			if (change.reservedDetachId !== undefined) {
-				encoded.d = registerIdCodec.encode(change.reservedDetachId);
+				encoded.d = registerIdCodec.encode(change.reservedDetachId, context);
 			}
 
 			return encoded;
 		},
 
-		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
+		decode: (encoded: EncodedOptionalChangeset<TAnySchema>, context: ChangeEncodingContext) => {
 			const moves: OptionalChangeset["moves"] =
 				encoded.m?.map(
 					([src, dst, type]) =>
 						[
-							registerIdCodec.decode(src),
-							registerIdCodec.decode(dst),
+							registerIdCodec.decode(src, context),
+							registerIdCodec.decode(dst, context),
 							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
 						] as const,
 				) ?? [];
@@ -99,13 +125,13 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id),
-						childCodec.decode(encodedChange),
+						registerIdCodec.decode(id, context),
+						childCodec.decode(encodedChange, context),
 					]) ?? [],
 			};
 
 			if (encoded.d !== undefined) {
-				decoded.reservedDetachId = registerIdCodec.decode(encoded.d);
+				decoded.reservedDetachId = registerIdCodec.decode(encoded.d, context);
 			}
 			return decoded;
 		},

@@ -214,7 +214,7 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
-[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
+[Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 

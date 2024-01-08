@@ -5,12 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { brand, fail, isReadonlyArray } from "../util";
+import { brand, fail, isReadonlyArray } from "../util/index.js";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
 	ObjectNodeSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -30,20 +30,22 @@ import {
 	typeNameSymbol,
 	isFluidHandle,
 	FlexTreeField,
-} from "../feature-libraries";
-import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core";
+} from "../feature-libraries/index.js";
+import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
-import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeKind, TreeMapNode } from "../class-tree/schemaTypes";
-import { IterableTreeListContent, TreeArrayNode } from "./treeListNode";
-import { Unhydrated, TreeNode, TypedNode } from "./types";
-import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
-import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
-import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
-import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode";
+import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
+import {
+	type TreeNodeSchema as TreeNodeSchemaClass,
+	type InsertableTypedNode,
+	NodeKind,
+	TreeMapNode,
+} from "./schemaTypes.js";
+import { IterableTreeArrayContent, TreeArrayNode } from "./treeListNode.js";
+import { Unhydrated, TreeNode } from "./types.js";
+import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
+import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
+import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 
 /**
  * Retrieve the associated proxy for the given field.
@@ -91,7 +93,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
  */
 export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
 
-export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | undefined {
+export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass | undefined {
 	if (simpleSchemaSymbol in schema) {
 		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
 	}
@@ -140,7 +142,7 @@ export function createNodeProxy(
 	const schema = flexNode.schema;
 	if (schemaIsLeaf(schema)) {
 		// Can't use `??` here since null is a valid TreeValue.
-		assert(flexNode.value !== undefined, "Leaf must have value");
+		assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
 		return flexNode.value;
 	}
 	let proxy: TreeNode;
@@ -190,7 +192,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 		set(target, key, value: InsertableContent) {
 			const flexNode = getFlexNode(proxy);
 			const flexNodeSchema = flexNode.schema;
-			assert(flexNodeSchema instanceof ObjectNodeSchema, "invalid schema");
+			assert(flexNodeSchema instanceof ObjectNodeSchema, 0x888 /* invalid schema */);
 			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
@@ -275,11 +277,11 @@ export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeArrayNod
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
 	insertedAtIndex: number,
-	content: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[],
+	content: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
 ): ExtractedFactoryContent {
 	return extractFactoryContent(
 		content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeListContent ? Array.from(c) : [c],
+			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		),
 		insertedAtIndex,
 	);
@@ -315,7 +317,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		value(
 			this: TreeArrayNode,
 			index: number,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -336,7 +338,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	insertAtStart: {
 		value(
 			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -357,7 +359,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	insertAtEnd: {
 		value(
 			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -709,7 +711,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: TreeMapNode,
 			key: string,
-			value: InsertableTreeNodeUnion<AllowedTypes>,
+			value: InsertableTypedNode<TreeNodeSchemaClass>,
 		): TreeMapNode {
 			const node = getFlexNode(this);
 
@@ -802,44 +804,26 @@ function createMapProxy(
  * Because this proxy is backed by a raw node, it has the same limitations as the node created by {@link createRawNode}.
  * Most of its properties and methods will error if read/called.
  */
-export function createRawNodeProxy<TSchema extends ObjectNodeSchema>(
-	schema: TSchema,
-	content: InsertableTypedNode<TSchema>,
-	allowAdditionalProperties: boolean,
-	target?: object,
-): Unhydrated<TypedNode<TSchema>>;
-export function createRawNodeProxy<TSchema extends FieldNodeSchema>(
-	schema: TSchema,
-	content: InsertableTypedNode<TSchema>,
-	allowAdditionalProperties: boolean,
-	target?: object,
-): Unhydrated<TreeArrayNode>;
-export function createRawNodeProxy<TSchema extends MapNodeSchema>(
-	schema: TSchema,
-	content: InsertableTypedNode<TSchema>,
-	allowAdditionalProperties: boolean,
-	target?: object,
-): Unhydrated<TreeMapNode>;
-export function createRawNodeProxy<TSchema extends TreeNodeSchema>(
-	schema: TSchema,
-	content: InsertableTypedNode<TSchema>,
+export function createRawNodeProxy(
+	schema: FlexTreeNodeSchema,
+	content: InsertableTypedNode<TreeNodeSchemaClass> & object,
 	allowAdditionalProperties: boolean,
 	target?: object,
 ): Unhydrated<TreeNode> {
 	// Shallow copy the content and then add the type name symbol to it.
-	let flexNode: RawTreeNode<TSchema, InsertableTypedNode<TreeNodeSchema>>;
+	let flexNode: RawTreeNode<FlexTreeNodeSchema, InsertableTypedNode<TreeNodeSchemaClass>>;
 	let proxy: TreeNode;
 	if (schema instanceof ObjectNodeSchema) {
-		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
+		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
 		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
 	} else if (schema instanceof FieldNodeSchema) {
 		// simple-tree uses field nodes exclusively to represent lists
-		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
+		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
 		proxy = createListProxy(allowAdditionalProperties, target);
 	} else if (schema instanceof MapNodeSchema) {
-		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
+		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
 		proxy = createMapProxy(allowAdditionalProperties, target);
 	} else {

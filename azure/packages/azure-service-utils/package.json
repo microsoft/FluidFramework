@@ -93,17 +93,17 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.1.0",
 		"jsrsasign": "^10.5.25",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-225750",
+		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@2.0.0-internal.8.0.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-225750",
-		"@fluidframework/eslint-config-fluid": "^3.2.0",
+		"@fluidframework/build-tools": "^0.29.0",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/jsrsasign": "^8.0.8",
 		"copyfiles": "^2.4.1",

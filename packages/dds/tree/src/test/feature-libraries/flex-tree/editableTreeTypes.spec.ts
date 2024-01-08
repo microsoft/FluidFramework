@@ -5,7 +5,14 @@
 
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { jsonArray, jsonObject, jsonRoot, jsonSchema, leaf, SchemaBuilder } from "../../../domains";
+import {
+	jsonArray,
+	jsonObject,
+	jsonRoot,
+	jsonSchema,
+	leaf,
+	SchemaBuilder,
+} from "../../../domains/index.js";
 
 import {
 	FlexTreeSequenceField,
@@ -17,20 +24,19 @@ import {
 	FlexTreeUnboxNodeUnion,
 	FlexTreeMapNode,
 	FlexTreeTypedField,
-	boxedIterator,
 	FlexTreeObjectNode,
 	IsArrayOfOne,
 	FlexTreeUnknownUnboxed,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-tree/flexTreeTypes";
+} from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
 	areSafelyAssignable,
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
-} from "../../../util";
-import { EmptyKey, FieldKey } from "../../../core";
+} from "../../../util/index.js";
+import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
 	FieldKinds,
 	Any,
@@ -38,13 +44,13 @@ import {
 	LeafNodeSchema,
 	MapNodeSchema,
 	ObjectNodeSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
 	ArrayToUnion,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
+import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
 
 describe("editableTreeTypes", () => {
 	/**
@@ -78,7 +84,7 @@ describe("editableTreeTypes", () => {
 		const schema = SchemaBuilder.sequence(jsonRoot2);
 
 		assert(root.is(schema));
-		for (const tree of root[boxedIterator]()) {
+		for (const tree of root.boxedIterator()) {
 			if (tree.is(leaf.boolean)) {
 				const b: boolean = tree.value;
 			} else if (tree.is(leaf.number)) {
@@ -174,7 +180,7 @@ describe("editableTreeTypes", () => {
 	function iteratorsExample(mixed: Mixed): void {
 		const unboxedListIteration: number[] = [...mixed.sequence];
 		const boxedListIteration: FlexTreeTypedNode<typeof leaf.number>[] = [
-			...mixed.sequence[boxedIterator](),
+			...mixed.sequence.boxedIterator(),
 		];
 
 		const optionalNumberField = SchemaBuilder.optional(leaf.number);
@@ -185,7 +191,7 @@ describe("editableTreeTypes", () => {
 		const mapNode = undefined as unknown as FlexTreeMapNode<typeof mapSchema>;
 		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
 		const boxedMapIteration: FlexTreeTypedField<typeof optionalNumberField>[] = [
-			...mapNode[boxedIterator](),
+			...mapNode.boxedIterator(),
 		];
 	}
 
@@ -313,22 +319,22 @@ describe("editableTreeTypes", () => {
 		// Type-Erased
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<[TreeNodeSchema]>, FlexTreeNode>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[FlexTreeNodeSchema]>, FlexTreeNode>
 			>;
 			type _2 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<[ObjectNodeSchema]>, FlexTreeObjectNode>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeTypedNodeUnion<[TreeNodeSchema, TreeNodeSchema]>,
+					FlexTreeTypedNodeUnion<[FlexTreeNodeSchema, FlexTreeNodeSchema]>,
 					FlexTreeNode
 				>
 			>;
 			type _4 = requireTrue<areSafelyAssignable<FlexTreeTypedNodeUnion<[Any]>, FlexTreeNode>>;
-			type y = ConstantFlexListToNonLazyArray<TreeNodeSchema[]>;
+			type y = ConstantFlexListToNonLazyArray<FlexTreeNodeSchema[]>;
 
 			type _5 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<TreeNodeSchema[]>, FlexTreeNode>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexTreeNodeSchema[]>, FlexTreeNode>
 			>;
 			type _6 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<AllowedTypes>, FlexTreeNode>
@@ -392,7 +398,7 @@ describe("editableTreeTypes", () => {
 		{
 			type _1 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[TreeNodeSchema]>,
+					FlexTreeUnboxNodeUnion<[FlexTreeNodeSchema]>,
 					FlexTreeUnknownUnboxed
 				>
 			>;
@@ -401,14 +407,14 @@ describe("editableTreeTypes", () => {
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[TreeNodeSchema, TreeNodeSchema]>,
+					FlexTreeUnboxNodeUnion<[FlexTreeNodeSchema, FlexTreeNodeSchema]>,
 					FlexTreeNode
 				>
 			>;
 			type _4 = requireTrue<areSafelyAssignable<FlexTreeUnboxNodeUnion<[Any]>, FlexTreeNode>>;
 			type _5 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<TreeNodeSchema[]>,
+					FlexTreeUnboxNodeUnion<FlexTreeNodeSchema[]>,
 					FlexTreeUnknownUnboxed
 				>
 			>;
@@ -428,7 +434,7 @@ describe("editableTreeTypes", () => {
 
 	// IsArrayOfOne
 	{
-		type _1 = requireFalse<IsArrayOfOne<[TreeNodeSchema, TreeNodeSchema]>>;
+		type _1 = requireFalse<IsArrayOfOne<[FlexTreeNodeSchema, FlexTreeNodeSchema]>>;
 		type _2 = requireFalse<IsArrayOfOne<[]>>;
 		type _3 = requireTrue<areSafelyAssignable<IsArrayOfOne<AllowedTypes>, boolean>>;
 		type _4 = requireTrue<IsArrayOfOne<[Any]>>;

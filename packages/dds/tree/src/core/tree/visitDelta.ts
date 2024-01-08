@@ -4,18 +4,18 @@
  */
 import { assert } from "@fluidframework/core-utils";
 
-import { FieldKey } from "../schema-stored";
-import * as Delta from "./delta";
-import { NodeIndex, PlaceIndex, Range } from "./pathTree";
-import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
+import { FieldKey } from "../schema-stored/index.js";
+import * as Delta from "./delta.js";
+import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex.js";
 import {
 	areDetachedNodeIdsEqual,
 	isAttachMark,
 	isDetachMark,
 	isReplaceMark,
 	offsetDetachId,
-} from "./deltaUtil";
-import { ProtoNodes } from "./delta";
+} from "./deltaUtil.js";
+import { ProtoNodes } from "./delta.js";
 
 /**
  * Implementation notes:
@@ -356,8 +356,6 @@ function visitNode(
  * (because we want to wait until we are sure content to attach is available as a root)
  */
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
-	processBuilds(delta.build, config, visitor);
-	collectDestroys(delta.destroy, config);
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
 			const root = config.detachedFieldIndex.getEntry(id);

@@ -7,10 +7,10 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { EmptyKey, type FieldKey, type MapTree } from "../core";
+import { EmptyKey, type FieldKey, type MapTree } from "../core/index.js";
 // Drilling into `domains` to reduce the magnitude of cycles introduced here
 // eslint-disable-next-line import/no-internal-modules
-import { leaf } from "../domains/leafDomain";
+import { leaf } from "../domains/leafDomain.js";
 import {
 	allowsValue,
 	cursorForMapTreeField,
@@ -18,7 +18,7 @@ import {
 	type CursorWithNode,
 	isFluidHandle,
 	Multiplicity,
-	type TreeNodeSchema,
+	type FlexTreeNodeSchema,
 	FlexTreeSchema,
 	type AllowedTypeSet,
 	TreeFieldSchema,
@@ -29,9 +29,9 @@ import {
 	MapNodeSchema,
 	getAllowedTypes,
 	typeNameSymbol,
-} from "../feature-libraries";
-import { brand, isReadonlyArray } from "../util";
-import { InsertableTreeField, InsertableTypedNode } from "./insertable";
+} from "../feature-libraries/index.js";
+import { brand, isReadonlyArray } from "../util/index.js";
+import { InsertableContent } from "./proxies.js";
 
 /**
  * Module notes:
@@ -53,7 +53,7 @@ import { InsertableTreeField, InsertableTypedNode } from "./insertable";
  * @returns A cursor (in nodes mode) for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
  */
 export function cursorFromNodeData(
-	data: InsertableTypedNode<TreeNodeSchema>,
+	data: InsertableContent,
 	globalSchema: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
 ): CursorWithNode<MapTree> | undefined {
@@ -63,6 +63,8 @@ export function cursorFromNodeData(
 	const mappedContent = nodeDataToMapTree(data, globalSchema, typeSet);
 	return cursorForMapTreeNode(mappedContent);
 }
+
+type InsertableTreeField = InsertableContent | undefined | InsertableContent[];
 
 /**
  * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
@@ -96,7 +98,7 @@ export function cursorFromFieldData(
  * @param typeSet - The set of types allowed by the parent context. Used to validate the input tree.
  */
 export function nodeDataToMapTree(
-	data: InsertableTypedNode<TreeNodeSchema>,
+	data: InsertableContent,
 	globalSchema: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
 ): MapTree {
@@ -120,7 +122,7 @@ export function nodeDataToMapTree(
 			} else {
 				// Assume record-like object
 				return recordToMapTree(
-					data as Record<string, InsertableTypedNode<TreeNodeSchema>>,
+					data as Record<string, InsertableContent>,
 					globalSchema,
 					typeSet,
 				);
@@ -234,7 +236,7 @@ function mapValueWithFallbacks(
 }
 
 function arrayToMapTree(
-	data: InsertableTypedNode<TreeNodeSchema>[],
+	data: InsertableContent[],
 	globalSchema: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
 ): MapTree {
@@ -258,7 +260,7 @@ function arrayToMapTree(
 }
 
 function mapToMapTree(
-	data: Map<string, InsertableTypedNode<TreeNodeSchema>>,
+	data: Map<string, InsertableContent>,
 	globalSchema: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
 ): MapTree {
@@ -282,7 +284,7 @@ function mapToMapTree(
 }
 
 function recordToMapTree(
-	data: Record<string | number | symbol, InsertableTypedNode<TreeNodeSchema>>,
+	data: Record<string | number | symbol, InsertableContent>,
 	globalSchema: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
 ): MapTree {
@@ -312,10 +314,10 @@ function recordToMapTree(
 }
 
 function getType(
-	data: InsertableTypedNode<TreeNodeSchema>,
+	data: InsertableContent,
 	globalSchema: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
-): TreeNodeSchema {
+): FlexTreeNodeSchema {
 	const possibleTypes = getPossibleTypes(
 		globalSchema,
 		typeSet,
@@ -361,7 +363,7 @@ export function getPossibleTypes(
 	// All types allowed by schema
 	const allowedTypes = getAllowedTypes(globalSchema, typeSet);
 
-	const possibleTypes: TreeNodeSchema[] = [];
+	const possibleTypes: FlexTreeNodeSchema[] = [];
 	for (const allowed of allowedTypes) {
 		if (shallowCompatibilityTest(allowed, data)) {
 			possibleTypes.push(allowed);
@@ -378,12 +380,12 @@ export function getPossibleTypes(
  * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
  */
 function shallowCompatibilityTest(
-	schema: TreeNodeSchema,
+	schema: FlexTreeNodeSchema,
 	data: ContextuallyTypedNodeData,
 ): boolean {
 	assert(
 		data !== undefined,
-		"undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData.",
+		0x889 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	if (isTreeValue(data)) {
 		return schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, data);

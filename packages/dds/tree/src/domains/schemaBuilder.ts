@@ -13,7 +13,7 @@ import {
 	NormalizeAllowedTypes,
 	NormalizeField,
 	SchemaBuilderOptions,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	MapFieldSchema,
 	normalizeField,
 	SchemaBuilderBase,
@@ -24,9 +24,9 @@ import {
 	FieldNodeSchema,
 	MapNodeSchema,
 	TreeNodeSchemaBase,
-} from "../feature-libraries";
-import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
-import { leaf } from "./leafDomain";
+} from "../feature-libraries/index.js";
+import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util/index.js";
+import { leaf } from "./leafDomain.js";
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -54,7 +54,7 @@ export class SchemaBuilder<
 	TScope extends string = string,
 	TName extends string | number = string,
 > extends SchemaBuilderBase<TScope, typeof FieldKinds.required, TName> {
-	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
+	private readonly structuralTypes: Map<string, FlexTreeNodeSchema> = new Map();
 
 	public constructor(options: SchemaBuilderOptions<TScope>) {
 		super(FieldKinds.required, {
@@ -90,7 +90,7 @@ export class SchemaBuilder<
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
 	 */
-	public list<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
+	public list<const T extends FlexTreeNodeSchema | Any | readonly FlexTreeNodeSchema[]>(
 		allowedTypes: T,
 	): FieldNodeSchema<
 		`${TScope}.List<${string}>`,
@@ -111,7 +111,9 @@ export class SchemaBuilder<
 	>;
 
 	public list<const T extends ImplicitAllowedTypes>(
-		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | Any | readonly TreeNodeSchema[]),
+		nameOrAllowedTypes:
+			| TName
+			| ((T & FlexTreeNodeSchema) | Any | readonly FlexTreeNodeSchema[]),
 		allowedTypes?: T,
 	): FieldNodeSchema<
 		`${TScope}.${string}`,
@@ -119,9 +121,9 @@ export class SchemaBuilder<
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as
-				| (T & TreeNodeSchema)
+				| (T & FlexTreeNodeSchema)
 				| Any
-				| readonly TreeNodeSchema[];
+				| readonly FlexTreeNodeSchema[];
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedList(fullName, nameOrAllowedTypes as T),
@@ -170,7 +172,7 @@ export class SchemaBuilder<
 	 * @privateRemarks
 	 * See note on list.
 	 */
-	public override map<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
+	public override map<const T extends FlexTreeNodeSchema | Any | readonly FlexTreeNodeSchema[]>(
 		allowedTypes: T,
 	): MapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
 
@@ -183,14 +185,16 @@ export class SchemaBuilder<
 	): MapNodeSchema<`${TScope}.${Name}`, NormalizeField<T, typeof FieldKinds.optional>>;
 
 	public override map<const T extends MapFieldSchema | ImplicitAllowedTypes>(
-		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | Any | readonly TreeNodeSchema[]),
+		nameOrAllowedTypes:
+			| TName
+			| ((T & FlexTreeNodeSchema) | Any | readonly FlexTreeNodeSchema[]),
 		allowedTypes?: T,
 	): MapNodeSchema<`${TScope}.${string}`, NormalizeField<T, typeof FieldKinds.optional>> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as
-				| (T & TreeNodeSchema)
+				| (T & FlexTreeNodeSchema)
 				| Any
-				| readonly TreeNodeSchema[];
+				| readonly FlexTreeNodeSchema[];
 			const fullName = structuralName("Map", types);
 			return getOrCreate(
 				this.structuralTypes,
@@ -199,7 +203,7 @@ export class SchemaBuilder<
 					super.map(
 						fullName as TName,
 						normalizeField(nameOrAllowedTypes as T, FieldKinds.optional),
-					) as TreeNodeSchema,
+					) as FlexTreeNodeSchema,
 			) as MapNodeSchema<
 				`${TScope}.${string}`,
 				NormalizeField<T, typeof FieldKinds.optional>
@@ -225,7 +229,7 @@ export class SchemaBuilder<
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.optional` to {@link TreeFieldSchema.create}.
 	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly optional = SchemaBuilder.optional;
@@ -246,7 +250,7 @@ export class SchemaBuilder<
 	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link ImplicitFieldSchema}
 	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link FieldKinds.required|required field}.
 	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly required = SchemaBuilder.required;
@@ -265,7 +269,7 @@ export class SchemaBuilder<
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.sequence` to {@link TreeFieldSchema.create}.
 	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
@@ -320,7 +324,7 @@ function fieldHelper<Kind extends FieldKind>(kind: Kind) {
 
 export function structuralName<const T extends string>(
 	collectionName: T,
-	allowedTypes: TreeNodeSchema | Any | readonly TreeNodeSchema[],
+	allowedTypes: FlexTreeNodeSchema | Any | readonly FlexTreeNodeSchema[],
 ): `${T}<${string}>` {
 	let inner: string;
 	if (allowedTypes === Any) {

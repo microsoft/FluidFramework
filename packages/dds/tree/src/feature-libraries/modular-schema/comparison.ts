@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { compareSets, fail } from "../../util";
+import { compareSets, fail } from "../../util/index.js";
 import {
 	TreeNodeStoredSchema,
 	ValueSchema,
@@ -15,9 +15,9 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-} from "../../core";
-import { Multiplicity } from "../multiplicity";
-import { FullSchemaPolicy, withEditor } from "./fieldKind";
+} from "../../core/index.js";
+import { Multiplicity } from "../multiplicity.js";
+import { FullSchemaPolicy, withEditor } from "./fieldKind.js";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
@@ -49,11 +49,11 @@ export function allowsTreeSuperset(
 
 	assert(
 		original instanceof MapNodeStoredSchema || original instanceof ObjectNodeStoredSchema,
-		"unsupported node kind",
+		0x893 /* unsupported node kind */,
 	);
 	assert(
 		superset instanceof MapNodeStoredSchema || superset instanceof ObjectNodeStoredSchema,
-		"unsupported node kind",
+		0x894 /* unsupported node kind */,
 	);
 
 	if (original instanceof MapNodeStoredSchema) {
@@ -68,7 +68,7 @@ export function allowsTreeSuperset(
 		return false;
 	}
 
-	assert(original instanceof ObjectNodeStoredSchema, "unsupported node kind");
+	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
 	if (superset instanceof MapNodeStoredSchema) {
 		for (const [_key, field] of original.objectNodeFields) {
 			if (
@@ -84,7 +84,7 @@ export function allowsTreeSuperset(
 		}
 		return true;
 	}
-	assert(superset instanceof ObjectNodeStoredSchema, "unsupported node kind");
+	assert(superset instanceof ObjectNodeStoredSchema, 0x896 /* unsupported node kind */);
 
 	return compareSets({
 		a: original.objectNodeFields,
@@ -294,7 +294,7 @@ export function isNeverTreeRecursive(
 			}
 			return false;
 		} else {
-			assert(treeNode instanceof LeafNodeStoredSchema, "unsupported node kind");
+			assert(treeNode instanceof LeafNodeStoredSchema, 0x897 /* unsupported node kind */);
 			return false;
 		}
 	} finally {

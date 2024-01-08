@@ -16,15 +16,15 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree";
+import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
 import {
 	ITree,
 	ImplicitFieldSchema,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "./class-tree";
-import { pkgVersion } from "./packageVersion";
+} from "./simple-tree/index.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
