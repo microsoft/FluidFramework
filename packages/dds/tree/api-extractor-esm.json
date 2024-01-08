@@ -7,7 +7,7 @@
 			"extends": "./tsconfig.esnext.json",
 			"compilerOptions": {
 				"module": "esnext",
-				"moduleResolution": "node"
+				"moduleResolution": "Bundler"
 			}
 		}
 	}
