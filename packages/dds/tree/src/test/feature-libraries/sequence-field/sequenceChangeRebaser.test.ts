@@ -39,6 +39,8 @@ import {
 	assertChangesetsEqual,
 	withoutTombstones,
 	skipOnLineageMethod,
+	areRebasable,
+	DetachedNodeTracker,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
@@ -215,7 +217,7 @@ export function testRebaserAxioms() {
 										makeChange2(offset2, maxOffset),
 										tag5,
 									);
-									if (!SF.areRebasable(change1.change, change2.change)) {
+									if (!areRebasable(change1.change, change2.change)) {
 										continue;
 									}
 									const inv = tagRollbackInverse(invert(change2), tag6, tag5);
@@ -273,7 +275,7 @@ export function testRebaserAxioms() {
 										makeChange2(offset2, maxOffset),
 										tag5,
 									);
-									if (!SF.areRebasable(change1.change, change2.change)) {
+									if (!areRebasable(change1.change, change2.change)) {
 										continue;
 									}
 									const inv = tagChange(invert(change2), tag6);
@@ -331,7 +333,7 @@ export function testRebaserAxioms() {
 										makeChange2(offset2, maxOffset),
 										tag5,
 									);
-									if (!SF.areRebasable(change1.change, change2.change)) {
+									if (!areRebasable(change1.change, change2.change)) {
 										continue;
 									}
 									const inverse2 = tagRollbackInverse(
@@ -377,7 +379,7 @@ export function testRebaserAxioms() {
 			for (const [name, makeChange] of testChanges) {
 				it(`${name}⁻¹ ○ ${name} === ε`, () =>
 					withConfig(() => {
-						const tracker = new SF.DetachedNodeTracker();
+						const tracker = new DetachedNodeTracker();
 						const change = makeChange(0, 0);
 						const taggedChange = tagChange(change, tag5);
 						const inv = tagRollbackInverse(

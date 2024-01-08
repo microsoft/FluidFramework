@@ -34,7 +34,6 @@ describe("DeltaUtils", () => {
 				[
 					fooField,
 					{
-						build: [{ id: detachId, trees: [nodeXCursor] }],
 						local: [
 							{ count: 42 },
 							{
@@ -51,7 +50,6 @@ describe("DeltaUtils", () => {
 					[
 						fooField,
 						{
-							build: [{ id: detachId, trees: [nodeXCursor] }],
 							local: [
 								{
 									count: 1,
@@ -69,7 +67,6 @@ describe("DeltaUtils", () => {
 				[
 					fooField,
 					{
-						build: [{ id: detachId, trees: [nodeX] }],
 						local: [
 							{ count: 42 },
 							{
@@ -86,7 +83,6 @@ describe("DeltaUtils", () => {
 					[
 						fooField,
 						{
-							build: [{ id: detachId, trees: [nodeX] }],
 							local: [
 								{
 									count: 1,
