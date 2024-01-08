@@ -216,7 +216,7 @@ describe("Routerlicious", () => {
 
 				describe("/api/v1", () => {
 					it("/ping", async () => {
-						await assertThrottle("/apis/ping", null, null);
+						await assertThrottle("/api/v1/ping", null, null);
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertThrottle(
