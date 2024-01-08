@@ -46,6 +46,7 @@ export interface OdspClientProps {
 // @beta
 export interface OdspConnectionConfig {
     driveId: string;
+    filePath: string;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
 }
@@ -63,7 +64,5 @@ export interface OdspMember extends IMember {
 }
 
 export { TokenResponse }
-
-// (No @packageDocumentation comment for this package)
 
 ```

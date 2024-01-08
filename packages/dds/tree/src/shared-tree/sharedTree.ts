@@ -180,7 +180,7 @@ export class SharedTree
 	) {
 		assert(
 			runtime.idCompressor !== undefined,
-			"IdCompressor must be enabled to use SharedTree",
+			0x883 /* IdCompressor must be enabled to use SharedTree */,
 		);
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };

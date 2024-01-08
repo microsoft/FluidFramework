@@ -84,7 +84,7 @@ export class ForestSummarizer implements Summarizable {
 					{ fieldKey: key, parent: undefined },
 					innerCursor,
 				) === TreeNavigationResult.Ok,
-				"failed to navigate to field",
+				0x892 /* failed to navigate to field */,
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
