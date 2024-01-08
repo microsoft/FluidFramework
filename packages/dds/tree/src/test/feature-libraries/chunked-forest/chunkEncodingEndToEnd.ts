@@ -7,6 +7,7 @@ import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import {
 	ChangesetLocalId,
 	IEditableForest,
+	RevisionTagCodec,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { leaf } from "../../../domains/index.js";
@@ -55,6 +56,7 @@ const context = {
 const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator });
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
+const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 describe("End to end chunked encoding", () => {
 	it(`insert ops shares reference with the original chunk.`, () => {
@@ -82,7 +84,7 @@ describe("End to end chunked encoding", () => {
 				changeLog.push(change);
 			};
 			const dummyEditor = new DefaultEditBuilder(
-				new DefaultChangeFamily(idCompressor, fieldBatchCodec, {
+				new DefaultChangeFamily(revisionTagCodec, fieldBatchCodec, {
 					jsonValidator: typeboxValidator,
 				}),
 				changeReceiver,
@@ -118,11 +120,11 @@ describe("End to end chunked encoding", () => {
 			initialTree: [],
 		});
 
-		flexTree.editableTree.insertAt(0, chunk.cursor());
+		flexTree.flexTree.insertAt(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
-			idCompressor,
+			revisionTagCodec,
 			fieldBatchCodec,
 			context,
 			options,
@@ -150,7 +152,7 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.forest as IEditableForest,
-			idCompressor,
+			revisionTagCodec,
 			fieldBatchCodec,
 			context,
 			options,

@@ -257,6 +257,8 @@ export function validateField(
 
 /**
  * Reserved field names to avoid collisions with the API.
+ *
+ * TODO: rework flex-tree API to avoid having to ban these.
  */
 export const bannedFieldNames = new Set([
 	"constructor",
@@ -270,6 +272,8 @@ export const bannedFieldNames = new Set([
 	"type",
 	"value",
 	"localNodeKey",
+	"boxedIterator",
+	"iterator",
 ]);
 
 /**

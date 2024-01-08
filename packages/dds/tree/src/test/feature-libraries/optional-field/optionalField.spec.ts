@@ -34,7 +34,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	mintRevisionTag,
 } from "../../utils.js";
-import { changesetForChild, fooKey, testTreeCursor } from "../fieldKindTestUtils.js";
+import { changesetForChild, fooKey } from "../fieldKindTestUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { assertEqual } from "./optionalFieldUtils.js";
@@ -63,7 +63,6 @@ const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Del
 		[
 			fooKey,
 			{
-				build: [{ id: buildId, trees: [testTreeCursor("nodeChange1")] }],
 				local: [
 					{
 						count: 1,
@@ -83,7 +82,6 @@ const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Del
 		[
 			fooKey,
 			{
-				build: [{ id: buildId, trees: [testTreeCursor("nodeChange2")] }],
 				local: [
 					{
 						count: 1,
@@ -415,12 +413,6 @@ describe("optionalField", () => {
 							[
 								fooKey,
 								{
-									build: [
-										{
-											id: innerNodeId,
-											trees: [testTreeCursor("nodeChange1")],
-										},
-									],
 									local: [
 										{
 											count: 1,
@@ -468,12 +460,6 @@ describe("optionalField", () => {
 							[
 								fooKey,
 								{
-									build: [
-										{
-											id: { major: tag, minor: 1 },
-											trees: [testTreeCursor("nodeChange2")],
-										},
-									],
 									local: [
 										{
 											count: 1,

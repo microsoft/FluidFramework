@@ -356,8 +356,6 @@ function visitNode(
  * (because we want to wait until we are sure content to attach is available as a root)
  */
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
-	processBuilds(delta.build, config, visitor);
-	collectDestroys(delta.destroy, config);
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
 			const root = config.detachedFieldIndex.getEntry(id);
