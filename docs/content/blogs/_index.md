@@ -1,4 +1,6 @@
-# How to Write a Great Technical Blog Post
+---
+title: "How to Write a Great Technical Blog Post"
+---
 
 Writing a technical blog post can be a great way to share your knowledge and expertise with others. However, it can be challenging to know where to start. In this post, we'll go over five main steps of my process for writing a post:
 
