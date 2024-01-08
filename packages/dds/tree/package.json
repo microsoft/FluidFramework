@@ -37,6 +37,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
 		"api-extractor:esnext": "api-extractor run --local --config ./api-extractor-esm.json",
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
@@ -46,7 +47,6 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
