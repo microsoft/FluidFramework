@@ -26,9 +26,6 @@ describe("Minimum Compat Version", () => {
 		}
 	});
 
-	// N-1 version is 2.0.0-internal.8.0.0
-	// N-2 version is 2.0.0-internal.8.0.0 (bug?)
-	// therefore start testing on N-3
 	for (let i = 1; i < 9; i++) {
 		it(`compatVersion N-${i} < latest version`, () => {
 			assert.strictEqual(
