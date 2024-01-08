@@ -3,64 +3,63 @@
  * Licensed under the MIT License.
  */
 
+import { TreeArrayNodeBase, TreeNode } from "./types.js";
 import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-} from "../class-tree/index.js";
-import { TreeArrayNodeBase, TreeNode } from "./types.js";
+} from "./schemaTypes.js";
 
 /**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
+ * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
+ *
+ * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
+ *
  * @public
  */
-export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
+export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeNode,
 		TreeArrayNodeBase<
-			TreeNodeFromImplicitAllowedTypes<T>,
-			InsertableTreeNodeFromImplicitAllowedTypes<T>,
+			TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+			InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 			TreeArrayNode
 		> {}
 
 /**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
+ * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
  * @public
  */
 export const TreeArrayNode = {
 	/**
-	 * Wrap an iterable of items to inserted as consecutive items in a list.
+	 * Wrap an iterable of items to inserted as consecutive items in a array.
 	 * @remarks
 	 * The object returned by this function can be inserted into a {@link (TreeArrayNode:interface)}.
-	 * Its contents will be inserted consecutively in the corresponding location in the list.
+	 * Its contents will be inserted consecutively in the corresponding location in the array.
 	 * @example
 	 * ```ts
-	 * list.insertAtEnd(TreeArrayNode.inline(iterable))
+	 * array.insertAtEnd(TreeArrayNode.spread(iterable))
 	 * ```
 	 */
-	inline: <T>(content: Iterable<T>) => IterableTreeListContent[create](content),
+	spread: <T>(content: Iterable<T>) => create(content),
 };
 
 /**
- * Non-exported symbol used to make IterableTreeListContent constructable only from within this file.
- * @public
+ * Package internal construction API.
+ * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type instead.
  */
-export const create = Symbol("Create IterableTreeListContent");
+let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
- * Use {@link (TreeArrayNode:variable).inline} to create an instance of this type.
+ * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type.
  * @public
  */
-export class IterableTreeListContent<T> implements Iterable<T> {
-	private constructor(private readonly content: Iterable<T>) {}
-
-	/**
-	 * Package internal construction API.
-	 * Use {@link (TreeArrayNode:variable).inline} to create an instance of this type instead.
-	 */
-	public static [create]<T>(content: Iterable<T>): IterableTreeListContent<T> {
-		return new IterableTreeListContent(content);
+export class IterableTreeArrayContent<T> implements Iterable<T> {
+	static {
+		create = <T2>(content: Iterable<T2>) => new IterableTreeArrayContent(content);
 	}
+
+	private constructor(private readonly content: Iterable<T>) {}
 
 	/**
 	 * Iterates over content for nodes to insert.

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
-} from "../../class-tree/index.js";
+} from "../../simple-tree/index.js";
 import { getRoot, makeSchema, pretty } from "./utils.js";
 
 // Construct a SharedTree with each of the above primitives as the root and then

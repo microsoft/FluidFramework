@@ -364,7 +364,7 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
  */
 export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
-	assert(result.size === input.size, "all values in a map must be unique to invert it");
+	assert(result.size === input.size, 0x88a /* all values in a map must be unique to invert it */);
 	return result;
 }
 

@@ -10,7 +10,7 @@ import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
 import { Multiplicity } from "../multiplicity.js";
 import {
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	allowedTypesIsAny,
 	SchemaCollection,
 	MapNodeSchema,
@@ -80,7 +80,7 @@ export function aggregateSchemaLibraries(
 	libraries: Iterable<SchemaLibraryData>,
 	rootFieldSchema?: TreeFieldSchema,
 ): SchemaLibraryData {
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
 
 	const errors: string[] = [];
@@ -257,6 +257,8 @@ export function validateField(
 
 /**
  * Reserved field names to avoid collisions with the API.
+ *
+ * TODO: rework flex-tree API to avoid having to ban these.
  */
 export const bannedFieldNames = new Set([
 	"constructor",
@@ -270,6 +272,8 @@ export const bannedFieldNames = new Set([
 	"type",
 	"value",
 	"localNodeKey",
+	"boxedIterator",
+	"iterator",
 ]);
 
 /**

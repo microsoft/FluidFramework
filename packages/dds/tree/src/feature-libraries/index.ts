@@ -128,7 +128,7 @@ export {
 export { Multiplicity } from "./multiplicity.js";
 
 export {
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	AllowedTypes,
 	TreeFieldSchema,
 	FlexTreeSchema,
@@ -199,6 +199,7 @@ export {
 	FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
+	FieldBatchEncodingContext,
 } from "./chunked-forest/index.js";
 
 export {
@@ -254,7 +255,6 @@ export {
 	FlexTreeField,
 	FlexTreeNode,
 	getTreeContext,
-	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
 	Context,
