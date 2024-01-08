@@ -4,6 +4,7 @@ aliases:
   - /playground/
 summary: "An open-source client technology stack that enables real-time collaboration, provides developers with easy-to-understand data structures automatically keeps in sync between clients"
 ---
+
 <div class="jumbotron text-center">
   <h1 class="display-4"><strong>Real-time. Multiuser. Collaboration.</strong></h1>
   <p class="lead">Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.</p>
