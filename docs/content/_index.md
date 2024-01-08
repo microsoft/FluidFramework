@@ -137,11 +137,6 @@ summary: "An open-source client technology stack that enables real-time collabor
         <div class="col-md-8" style="text-left; height:650px; overflow-x: auto; padding-left: 50px;">
             <code>
                 {{< highlight typescript >}}
-                /*!
-                 * Copyright (c) Microsoft Corporation. All rights reserved.
-                 * Licensed under the MIT License.
-                 */
-
                 import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
                 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
