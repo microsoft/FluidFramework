@@ -51,7 +51,7 @@ permalinks:
 params:
   appInsightKey: "" # This is provided by the build system as an env variable
   cookies: false
-  customCSS: ["css/fluid.css", "css/tango.css"]
+  customCSS: ["css/fluid.css", "css/tango.css", "css/carousel.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
   dateformNumTime: "2006-01-02 15:04 -0700"
@@ -59,12 +59,12 @@ params:
   githubRepo: "microsoft/FluidFramework"
   twitterHandle: "fluidframework"
   banner:
-    showBanner: true # show or hide the banner completely
+    showBanner: false # show or hide the banner completely
     bannerClose: false # show or hide the close button on the banner
     version: "0.50"
     urlRef: "docs/updates/v0.50.md"
     message: | # if set, this will override the release notes updates
-      [Azure Fluid Relay](/docs/deployment/azure-frs/) is now generally available! [Learn more.](https://devblogs.microsoft.com/microsoft365dev/announcing-general-availability-of-azure-fluid-relay-service/)
+      Fluid Framework 2.0 beta is available now! [Learn more.](/blogs/)
 
 menu:
   main:
@@ -80,9 +80,6 @@ menu:
     - name: "Community"
       url: "/community/"
       weight: -60
-  #  - name: "Updates"
-  #    url: "/posts/"
-  #    weight: -50
 
   old_section:
     - identifier: "quick-start"

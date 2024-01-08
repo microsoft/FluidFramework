@@ -84,8 +84,8 @@ export {
 	MapTree,
 	Revertible,
 	RevertibleKind,
-	RevertResult,
-	DiscardResult,
+	RevertibleStatus,
+	RevertibleResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
@@ -228,16 +228,6 @@ export {
 } from "./feature-libraries/index.js";
 
 export {
-	TreeArrayNode,
-	TreeMapNodeBase,
-	Unhydrated,
-	IterableTreeListContent,
-	TreeNode,
-	TreeArrayNodeBase,
-	create,
-} from "./simple-tree/index.js";
-
-export {
 	ISharedTree,
 	ITreeCheckout,
 	ITransaction,
@@ -260,10 +250,16 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	TreeArrayNode,
+	Unhydrated,
+	IterableTreeArrayContent,
+	TreeNode,
+	TreeArrayNodeBase,
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
 	TreeView,
+	TreeViewEvents,
 	SchemaFactory,
 	Tree,
 	TreeApi,

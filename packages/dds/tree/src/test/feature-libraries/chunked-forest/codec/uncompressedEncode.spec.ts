@@ -23,9 +23,9 @@ describe("uncompressedEncode", () => {
 			it(name, () => {
 				const input = cursorForJsonableTreeField([jsonable]);
 				const context = { encodeType: TreeCompressionStrategy.Uncompressed };
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, context);
-				const result = codec.encode([input]);
-				const decoded = codec.decode(result);
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator });
+				const result = codec.encode([input], context);
+				const decoded = codec.decode(result, context);
 				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
 			});

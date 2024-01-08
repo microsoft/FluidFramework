@@ -309,13 +309,13 @@ This shortcode can be found in `layouts/shortcodes/apiref.html`.
 `Markdown` like the following:
 
 ```markdown
-The {{< apiref "FluidContainer" "class" >}} class can be used to...
+The {{< apiref "fluid-static" "FluidContainer" "class" >}} class can be used to...
 ```
 
 will generate something like:
 
 ```markdown
-The <a href="{{ relref /docs/api/v1/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
+The <a href="{{ relref /docs/apis/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
 ```
 
 ## Working on the template
@@ -336,28 +336,24 @@ The following npm scripts are supported in this directory:
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
-| `build:api-documentation:multi-version` | Convert package API reports (`.api.json` files) into Markdown. Includes API content from all major release branches. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
-| `build:md-magic:website` | `node markdown-magic-website.js` |
-| `build:multi-version` | Build the site; outputs to `public/` by default. Includes API content from all major release branches. |
+| `build:redirects` | `node ./build-redirects.js` |
 | `build:repo-docs` | `npm run build:md-magic:code` |
-| `build:website` | Build the website (including generating API docs and running markdown-magic) |
-| `build:website:multi-version` | `Build the website (including generating API docs and running markdown-magic). Includes API content from all major release branches. |
 | `ci:build` | `npm run download && npm run build` |
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
 | `ci:start` | `http-server ./public --port 1313 --silent` |
 | `clean` | Remove all generated files. |
-| `download` | Download the latest API JSON files from `main` locally and runs a build. |
 | `download:api` | Download the latest API JSON files from `main` locally. |
-| `download:api:multi-version` | Download and extract all latest API JSON from all major release branches files locally. |
 | `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
 | `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
 | `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
-| `lint` | `markdownlint-cli2` |
-| `lint:fix` | `markdownlint-cli2-fix` |
+| `lint` | `npm run markdownlint && npm run prettier` |
+| `lint:fix` | `npm run markdownlint:fix && npm run prettier:fix` |
+| `markdownlint` | `markdownlint-cli2` |
+| `markdownlint:fix` | `markdownlint-cli2-fix` |
 | `prettier` | `prettier --check . --ignore-path ../.prettierignore` |
 | `prettier:fix` | `prettier --write . --ignore-path ../.prettierignore` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |

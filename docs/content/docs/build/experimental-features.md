@@ -30,7 +30,7 @@ When a [container]({{< relref "containers.md" >}}) is loaded, there will be seve
 
 The following is an example of how to enable experimental features with `AzureClient`.
 
-1. First, implement [IConfigProviderBase]({{< relref "/docs/api/v1/core-interfaces/iconfigproviderbase-interface" >}}). For example:
+1. First, implement [IConfigProviderBase]({{< apiref "core-interfaces" "IConfigProviderBase" "interface" "v2" >}}). For example:
 
     ```typescript
     const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

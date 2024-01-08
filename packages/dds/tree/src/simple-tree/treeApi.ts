@@ -14,9 +14,7 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { TreeNode } from "./types.js";
-// eslint-disable-next-line import/no-internal-modules
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
-// eslint-disable-next-line import/no-internal-modules
 import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes.js";
@@ -90,7 +88,10 @@ export const nodeApi: TreeApi = {
 		}
 
 		const output = getOrCreateNodeProxy(editNode);
-		assert(!isTreeValue(output), "Parent can't be a leaf, so it should be a node not a value");
+		assert(
+			!isTreeValue(output),
+			0x87f /* Parent can't be a leaf, so it should be a node not a value */,
+		);
 		return output;
 	},
 	key: (node: TreeNode) => {

@@ -108,7 +108,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			if (value === null) {
 				return nullSchema;
 			}
-			assert(isFluidHandle(value), "invalid TreeValue");
+			assert(isFluidHandle(value), 0x87e /* invalid TreeValue */);
 			return handleSchema;
 		}
 		default:
@@ -289,7 +289,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @remarks
 	 * The unique identifier for this Map is defined as a function of the provided types.
@@ -322,7 +322,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	>;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
+	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *

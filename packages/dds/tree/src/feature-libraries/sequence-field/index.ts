@@ -42,13 +42,9 @@ export { NodeChangeRebaser, rebase } from "./rebase.js";
 export { invert, NodeChangeInverter } from "./invert.js";
 export { amendCompose, compose, NodeChangeComposer } from "./compose.js";
 export {
-	areComposable,
-	areRebasable,
 	getInputLength,
 	isDetach,
-	DetachedNodeTracker,
 	newCrossFieldTable,
-	newMoveEffectTable,
 	CrossFieldTable,
 	cloneMark,
 	extractMarkEffect,

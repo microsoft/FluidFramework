@@ -52,16 +52,6 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-// @internal @deprecated
-export enum ContainerErrorType {
-    clientSessionExpiredError = "clientSessionExpiredError",
-    dataCorruptionError = "dataCorruptionError",
-    dataProcessingError = "dataProcessingError",
-    genericError = "genericError",
-    throttlingError = "throttlingError",
-    usageError = "usageError"
-}
-
 // @alpha
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";

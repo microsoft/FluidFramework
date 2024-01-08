@@ -41,7 +41,7 @@ import {
 	NodeKind,
 	TreeMapNode,
 } from "./schemaTypes.js";
-import { IterableTreeListContent, TreeArrayNode } from "./treeListNode.js";
+import { IterableTreeArrayContent, TreeArrayNode } from "./treeListNode.js";
 import { Unhydrated, TreeNode } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
@@ -142,7 +142,7 @@ export function createNodeProxy(
 	const schema = flexNode.schema;
 	if (schemaIsLeaf(schema)) {
 		// Can't use `??` here since null is a valid TreeValue.
-		assert(flexNode.value !== undefined, "Leaf must have value");
+		assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
 		return flexNode.value;
 	}
 	let proxy: TreeNode;
@@ -192,7 +192,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 		set(target, key, value: InsertableContent) {
 			const flexNode = getFlexNode(proxy);
 			const flexNodeSchema = flexNode.schema;
-			assert(flexNodeSchema instanceof ObjectNodeSchema, "invalid schema");
+			assert(flexNodeSchema instanceof ObjectNodeSchema, 0x888 /* invalid schema */);
 			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
@@ -277,11 +277,11 @@ export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeArrayNod
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
 	insertedAtIndex: number,
-	content: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[],
+	content: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
 ): ExtractedFactoryContent {
 	return extractFactoryContent(
 		content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeListContent ? Array.from(c) : [c],
+			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		),
 		insertedAtIndex,
 	);
@@ -317,7 +317,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		value(
 			this: TreeArrayNode,
 			index: number,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -338,7 +338,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	insertAtStart: {
 		value(
 			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -359,7 +359,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	insertAtEnd: {
 		value(
 			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
+			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
