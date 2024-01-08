@@ -61,7 +61,6 @@ export {
 	IRuntime,
 	IRuntimeFactory,
 	IGetPendingLocalStateProps,
-	ISignalEnvelope,
 } from "./runtime";
 
 export {

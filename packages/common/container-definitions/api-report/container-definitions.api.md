@@ -463,16 +463,6 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 // @alpha
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
-// @internal (undocumented)
-export interface ISignalEnvelope {
-    address?: string;
-    clientSignalSequenceNumber: number;
-    contents: {
-        type: string;
-        content: any;
-    };
-}
-
 // @alpha
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     // (undocumented)

@@ -11,6 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -24,7 +25,6 @@ import {
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
-	ISignalEnvelope,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
