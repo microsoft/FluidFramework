@@ -30,6 +30,7 @@ export function createAzureClient(
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
 		: "frs-client-tenant";
+	const isEphemeralContainer = process.env.IS_EPHEMERAL_CONTAINER === "true";
 	const user = {
 		id: userID ?? uuid(),
 		name: userName ?? uuid(),
@@ -68,5 +69,6 @@ export function createAzureClient(
 		connection: connectionProps,
 		logger: getLogger(),
 		configProvider,
+		isEphemeralContainer,
 	});
 }

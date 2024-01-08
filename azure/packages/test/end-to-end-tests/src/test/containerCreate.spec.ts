@@ -164,7 +164,6 @@ describe("Container create with feature flags", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 	let mockLogger: MockLogger;
-
 	beforeEach(() => {
 		mockLogger = new MockLogger();
 		client = createAzureClient(
