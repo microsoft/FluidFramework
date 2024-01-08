@@ -178,7 +178,9 @@ module.exports = {
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
-			"fluid-build-tasks-tsc": ["packages/dds/tree/package.json"],
+			"fluid-build-tasks-tsc": [
+				"packages/dds/tree/package.json", // Builds CommonJS with custom tsconfig
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -232,6 +234,7 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
+				"packages/dds/tree/package.json", // Policy is incorrect about "module" in package.json
 				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",

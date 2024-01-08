@@ -12,8 +12,29 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/tree-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/tree-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
