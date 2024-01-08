@@ -1,11 +1,12 @@
 ---
-title: Connect to Azure Fluid Relay
-menuPosition: 2
+title: Connect to SharePoint Embedded
+menuPosition: 3
 ---
 
-[SharePoint Embedded](https://aka.ms/azurefluidrelay) is a cloud-hosted Fluid service.
-You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the [@fluidframework/azure-client]({{< relref "/docs/api/v1/azure-client.md" >}}) package.
-AzureClient handles the logic of connecting your [Fluid container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic.
-You can use one instance of this client to manage multiple containers.
+Microsoft [SharePoint Embedded](https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview) is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.
 
-To learn more about using AzureClient and Azure Fluid Relay, see [Connect to an Azure Fluid Relay instance](https://docs.microsoft.com/azure/azure-fluid-relay/how-tos/connect-fluid-azure-service).
+{{% callout note %}}
+
+SharePoint Embedded is currently in public preview and Fluid Framework integration is not enabled for all M365 tenants. This functionality will be broadly available in February, 2024.
+
+{{% /callout %}}
