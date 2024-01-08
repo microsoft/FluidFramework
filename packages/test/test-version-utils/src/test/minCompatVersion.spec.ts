@@ -13,8 +13,8 @@ describe("Minimum Compat Version", () => {
 		encoding: "utf-8",
 	});
 	const allVersions: string[] = JSON.parse(allVersionsFromNpm);
-	const latestVersion = allVersions[allVersions.length-1];
-	
+	const latestVersion = allVersions[allVersions.length - 1];
+
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
 		try {
