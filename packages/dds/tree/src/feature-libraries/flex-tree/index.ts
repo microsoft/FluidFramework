@@ -21,7 +21,6 @@ export {
 	AssignableFieldKinds,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
-	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
 	onNextChange,
@@ -30,7 +29,7 @@ export {
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
-} from "./flexTreeTypes";
+} from "./flexTreeTypes.js";
 
 export {
 	visitBipartiteIterableTree,
@@ -38,11 +37,11 @@ export {
 	visitBipartiteIterableTreeWithState,
 	visitIterableTree,
 	visitIterableTreeWithState,
-} from "./navigation";
+} from "./navigation.js";
 
-export { getTreeContext, FlexTreeContext, Context } from "./context";
+export { getTreeContext, FlexTreeContext, Context } from "./context.js";
 
-export { TreeEvent, EditableTreeEvents } from "./treeEvents";
+export { TreeEvent, EditableTreeEvents } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 export {
@@ -54,6 +53,6 @@ export {
 	FlexTreeNodeKeyField,
 	IsArrayOfOne,
 	FlexibleNodeSubSequence,
-} from "./flexTreeTypes";
+} from "./flexTreeTypes.js";
 
-export { NodeKeys } from "./nodeKeys";
+export { NodeKeys } from "./nodeKeys.js";

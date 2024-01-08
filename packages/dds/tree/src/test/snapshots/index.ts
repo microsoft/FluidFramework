@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { takeJsonSnapshot, takeSnapshot, useSnapshotDirectory } from "./snapshotTools";
+export { takeJsonSnapshot, takeSnapshot, useSnapshotDirectory } from "./snapshotTools.js";

@@ -7,12 +7,11 @@
 /* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../domains";
-import { boxedIterator } from "../../feature-libraries/flex-tree";
-import { brand } from "../../util";
-import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils";
-import { createRawNode, extractRawNodeContent } from "../../simple-tree/rawNode";
-import { ObjectNodeSchema } from "../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { brand } from "../../util/index.js";
+import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
+import { extractRawNodeContent, RawObjectNode } from "../../simple-tree/rawNode.js";
+import { ObjectNodeSchema } from "../../feature-libraries/index.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {
@@ -30,7 +29,7 @@ describe("raw object nodes", () => {
 		});
 
 		assert(context.root.is(rootFieldSchema));
-		const rawObjectNode = createRawNode(objectSchema as ObjectNodeSchema, {
+		const rawObjectNode = new RawObjectNode(objectSchema as ObjectNodeSchema, {
 			foo: 42,
 			bar: undefined,
 			baz: [],
@@ -54,7 +53,7 @@ describe("raw object nodes", () => {
 		assert.throws(() => rawObjectNode.context);
 		assert.throws(() => rawObjectNode.parentField);
 		assert.throws(() => rawObjectNode.tryGetField(brand("foo")));
-		assert.throws(() => rawObjectNode[boxedIterator]());
+		assert.throws(() => rawObjectNode.boxedIterator());
 		assert.throws(() => rawObjectNode.on("changing", () => {}));
 		assert.throws(() => rawObjectNode.treeStatus());
 		assert.throws(() => rawObjectNode.localNodeKey);
@@ -69,7 +68,7 @@ describe("raw object nodes", () => {
 
 	it("expose their contents", () => {
 		const { rawObjectNode } = getRawObjectNode();
-		assert.equal(extractRawNodeContent(rawObjectNode)?.foo, 42);
+		assert.equal((extractRawNodeContent(rawObjectNode) as Record<string, unknown>)?.foo, 42);
 	});
 
 	it("can only have their contents read once", () => {

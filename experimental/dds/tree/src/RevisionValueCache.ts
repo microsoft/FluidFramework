@@ -4,7 +4,7 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import BTree from 'sorted-btree';
+import { BTree } from '@tylerbu/sorted-btree-es6';
 import LRU from 'lru-cache';
 import { fail, compareFiniteNumbers } from './Common';
 

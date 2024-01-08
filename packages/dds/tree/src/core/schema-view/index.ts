@@ -3,4 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { Adapters, Compatibility, TreeAdapter, AdaptedViewSchema, AllowedUpdateType } from "./view";
+export {
+	Adapters,
+	Compatibility,
+	TreeAdapter,
+	AdaptedViewSchema,
+	AllowedUpdateType,
+} from "./view.js";

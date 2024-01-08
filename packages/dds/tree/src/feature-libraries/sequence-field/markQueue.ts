@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { RevisionTag, TaggedChange } from "../../core";
-import { IdAllocator } from "../../util";
-import { Mark } from "./types";
-import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
-import { splitMark } from "./utils";
+import { RevisionTag, TaggedChange } from "../../core/index.js";
+import { IdAllocator } from "../../util/index.js";
+import { Mark } from "./types.js";
+import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable.js";
+import { splitMark } from "./utils.js";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];

@@ -4,8 +4,8 @@
  */
 
 import { NumericOptions, TUnsafe, Type } from "@sinclair/typebox";
-import { Covariant, isAny } from "./typeCheck";
-import { Assume } from "./utils";
+import { Covariant, isAny } from "./typeCheck.js";
+import { Assume } from "./utils.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.

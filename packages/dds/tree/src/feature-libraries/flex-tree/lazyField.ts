@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
+import { StableId } from "@fluidframework/id-compressor";
 import {
 	FieldKey,
 	TreeNavigationResult,
@@ -17,22 +17,27 @@ import {
 	iterateCursorField,
 	isCursor,
 	ITreeCursorSynchronous,
-	mapCursorField,
-} from "../../core";
-import { FieldKind } from "../modular-schema";
+} from "../../core/index.js";
+import { FieldKind } from "../modular-schema/index.js";
 // TODO: stop depending on contextuallyTyped
-import { cursorFromContextualData } from "../contextuallyTyped";
+import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
-} from "../default-schema";
-import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
-import { AllowedTypes, TreeFieldSchema } from "../typed-schema";
-import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
-import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
-import { Context } from "./context";
+} from "../default-schema/index.js";
+import {
+	assertValidIndex,
+	assertValidRangeIndices,
+	brand,
+	disposeSymbol,
+	fail,
+} from "../../util/index.js";
+import { AllowedTypes, TreeFieldSchema } from "../typed-schema/index.js";
+import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
+import { Context } from "./context.js";
 import {
 	FlexibleNodeContent,
 	FlexTreeOptionalField,
@@ -43,26 +48,23 @@ import {
 	FlexTreeField,
 	FlexTreeNode,
 	FlexTreeRequiredField,
-	boxedIterator,
 	TreeStatus,
 	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
 	FlexTreeEntityKind,
 	flexTreeMarker,
-} from "./flexTreeTypes";
-import { makeTree } from "./lazyNode";
+} from "./flexTreeTypes.js";
+import { makeTree } from "./lazyNode.js";
 import {
 	LazyEntity,
 	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
-	makePropertyEnumerableOwn,
-	makePropertyNotEnumerable,
 	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity";
-import { unboxedUnion } from "./unboxed";
-import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities";
+} from "./lazyEntity.js";
+import { unboxedUnion } from "./unboxed.js";
+import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
 
 /**
  * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
@@ -137,8 +139,6 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		super(context, schema, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
-
-		makePropertyNotEnumerable(this, "key");
 	}
 
 	public is<TSchema extends TreeFieldSchema>(
@@ -213,10 +213,10 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public mapBoxed<U>(
 		callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U,
 	): U[] {
-		return Array.from(this[boxedIterator](), callbackfn);
+		return Array.from(this.boxedIterator(), callbackfn);
 	}
 
-	public [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
+	public boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
 			(cursor) => makeTree(this.context, cursor) as unknown as FlexTreeTypedNodeUnion<TTypes>,
@@ -274,8 +274,6 @@ export class LazySequence<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
 	}
 
 	public at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined {
@@ -301,11 +299,14 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 	public insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void {
 		assertValidIndex(index, this, true);
-		const content: ITreeCursorSynchronous[] = isCursor(value)
+		const content: ITreeCursorSynchronous = isCursor(value)
 			? prepareFieldCursorForInsert(value)
-			: Array.from(value, (item) =>
-					cursorFromContextualData(this.context, this.schema.allowedTypeSet, item),
+			: cursorForMapTreeField(
+					Array.from(value, (item) =>
+						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
+					),
 			  );
+
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
 	}
@@ -320,7 +321,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 	public removeAt(index: number): void {
 		const fieldEditor = this.sequenceEditor();
-		fieldEditor.delete(index, 1);
+		fieldEditor.remove(index, 1);
 	}
 
 	public removeRange(start?: number, end?: number): void {
@@ -329,7 +330,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		const removeStart = start ?? 0;
 		const removeEnd = Math.min(length, end ?? length);
 		assertValidRangeIndices(removeStart, removeEnd, this);
-		fieldEditor.delete(removeStart, removeEnd - removeStart);
+		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 
 	public moveToStart(sourceIndex: number): void;
@@ -448,8 +449,6 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "content", LazyValueField.prototype);
 	}
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
@@ -487,8 +486,6 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "content", LazyOptionalField.prototype);
 	}
 
 	private optionalEditor(): OptionalFieldEditBuilder {
@@ -532,8 +529,6 @@ export class LazyNodeKeyField<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "stableNodeKey", LazyNodeKeyField.prototype);
 	}
 
 	public get localNodeKey(): LocalNodeKey {
@@ -578,13 +573,11 @@ const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
 /**
  * Prepare a fields cursor (holding a sequence of nodes) for inserting.
  */
-function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
+function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	// Convert from the desired API (single field cursor) to the currently required API (array of node cursors).
-	// This is inefficient, and particularly bad if the data was efficiently chunked using uniform chunks.
-	// TODO: update editing APIs to take in field cursors not arrays of node cursors, then remove this copying conversion.
-	return mapCursorField(cursor, () => cursorForMapTreeNode(mapTreeFromCursor(cursor)));
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	return cursor;
 }
 
 /**

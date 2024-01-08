@@ -5,32 +5,42 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
+import {
+	onForkTransitive,
+	SharedTreeBranch,
+	SharedTreeBranchChange,
+} from "../../shared-tree-core/index.js";
 import {
 	GraphCommit,
 	RevisionTag,
-	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	rootFieldKey,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	cursorForJsonableTreeNode,
-} from "../../feature-libraries";
-import { brand, fail } from "../../util";
-import { noopValidator } from "../../codec";
-import { createTestUndoRedoStacks } from "../utils";
+} from "../../feature-libraries/index.js";
+import { brand, fail } from "../../util/index.js";
+import { noopValidator } from "../../codec/index.js";
+import {
+	createTestUndoRedoStacks,
+	failCodec,
+	mintRevisionTag,
+	testRevisionTagCodec,
+} from "../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
+	jsonValidator: noopValidator,
+});
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
 describe("Branches", () => {
 	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */
-	const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+	const nullRevisionTag = mintRevisionTag();
 
 	it("have a consistent history as they apply changes", () => {
 		// Create a new branch
@@ -594,7 +604,7 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 		let head = branch.getHead();
 		branch.on("beforeChange", (c) => {
 			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.

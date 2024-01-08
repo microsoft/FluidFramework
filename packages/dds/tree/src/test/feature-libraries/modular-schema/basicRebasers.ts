@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { TUnsafe, Type } from "@sinclair/typebox";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema";
-import { Mutable, fail } from "../../../util";
-import { makeCodecFamily, makeValueCodec } from "../../../codec";
-import { singleJsonCursor } from "../../../domains";
-import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core";
-import { Multiplicity } from "../../../feature-libraries";
+} from "../../../feature-libraries/modular-schema/index.js";
+import { Mutable, fail } from "../../../util/index.js";
+import { makeCodecFamily } from "../../../codec/index.js";
+import {
+	ChangeEncodingContext,
+	DeltaFieldChanges,
+	makeDetachedNodeId,
+} from "../../../core/index.js";
+import { Multiplicity } from "../../../feature-libraries/index.js";
+import { makeValueCodec } from "../../codec/index.js";
 
 /**
  * Picks the last value written.
@@ -75,27 +79,29 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 
 export type ValueChangeset = ReplaceOp<number>;
 
-export const valueHandler: FieldChangeHandler<ValueChangeset> = {
+export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
+		makeCodecFamily([
+			[0, makeValueCodec<TUnsafe<ValueChangeset>, ChangeEncodingContext>(Type.Any())],
+		]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: ({ change, revision }): DeltaFieldChanges => {
 		const delta: Mutable<DeltaFieldChanges> = {};
 		if (change !== 0) {
-			// This is an arbitrary number for testing.
-			const changeId = makeDetachedNodeId(revision, 424242);
-			const buildId = makeDetachedNodeId(revision, 424243);
-			delta.build = [{ id: buildId, trees: [singleJsonCursor(change.new)] }];
-			delta.local = [{ count: 1, attach: buildId, detach: changeId }];
+			// We use the new and old numbers as the node ids.
+			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
+			const detach = makeDetachedNodeId(revision, change.old);
+			const attach = makeDetachedNodeId(revision, change.new);
+			delta.local = [{ count: 1, attach, detach }];
 		}
 		return delta;
 	},
 
 	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
-};
+} satisfies FieldChangeHandler<ValueChangeset>;
 
 export const valueField = new FieldKindWithEditor(
 	"Value",
