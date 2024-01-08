@@ -5,12 +5,10 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
-import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	FieldKey,
 	tagChange,
-	deltaForSet,
 	RevisionTag,
 	TaggedChange,
 	RevisionMetadataSource,
@@ -74,18 +72,13 @@ describe("TestChange", () => {
 		const change1 = TestChange.mint([0, 1], [2, 3]);
 		const tag = mintRevisionTag();
 		const delta = TestChange.toDelta(tagChange(change1, tag));
-		const fooField: FieldKey = brand("foo");
+		const field: FieldKey = brand("testIntentions");
 		const expected = new Map([
 			[
-				fooField,
-				deltaForSet(
-					cursorForJsonableTreeNode({
-						type: brand("test"),
-						value: "2|3",
-					}),
-					{ major: tag, minor: 424243 },
-					{ major: tag, minor: 424242 },
-				),
+				field,
+				{
+					local: [{ count: 2 }, { count: 3 }],
+				},
 			],
 		]);
 

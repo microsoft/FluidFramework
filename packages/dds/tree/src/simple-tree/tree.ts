@@ -6,7 +6,7 @@
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events/index.js";
 import { IDisposable, disposeSymbol } from "../util/index.js";
-import { FlexTreeView, type CheckoutEvents } from "../shared-tree/index.js";
+import { FlexTreeView } from "../shared-tree/index.js";
 import { TreeFieldSchema as FlexTreeFieldSchema } from "../feature-libraries/index.js";
 import { getProxyForField } from "./proxies.js";
 import {
@@ -96,7 +96,18 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	/**
 	 * Events for the tree.
 	 */
-	readonly events: ISubscribable<CheckoutEvents>;
+	readonly events: ISubscribable<TreeViewEvents>;
+}
+
+/**
+ * Events for {@link TreeView}.
+ * @public
+ */
+export interface TreeViewEvents {
+	/**
+	 * A batch of changes has finished processing and the view has been updated.
+	 */
+	afterBatch(): void;
 }
 
 /**
@@ -113,11 +124,11 @@ export class WrapperTreeView<
 		this.view[disposeSymbol]();
 	}
 
-	public get events(): ISubscribable<CheckoutEvents> {
+	public get events(): ISubscribable<TreeViewEvents> {
 		return this.view.checkout.events;
 	}
 
 	public get root(): TreeFieldFromImplicitField<TSchema> {
-		return getProxyForField(this.view.editableTree) as TreeFieldFromImplicitField<TSchema>;
+		return getProxyForField(this.view.flexTree) as TreeFieldFromImplicitField<TSchema>;
 	}
 }

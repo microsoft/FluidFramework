@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import { OptionalChangeset } from "../optional-field/index.js";
 import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
@@ -20,6 +19,7 @@ import {
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
+	RevisionTagCodec,
 	CursorLocationType,
 	ITreeCursorSynchronous,
 } from "../../core/index.js";
@@ -48,13 +48,13 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(
-		idCompressor: IIdCompressor,
+		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 	) {
 		this.modularFamily = new ModularChangeFamily(
 			fieldKinds,
-			idCompressor,
+			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
 		);

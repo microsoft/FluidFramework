@@ -734,7 +734,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		const metadata =
 			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
 			this.client.applyStashedOp(parsedContent);
-		assert(!!metadata, "Metadata is undefined");
+		assert(!!metadata, 0x87d /* Metadata is undefined */);
 		return metadata;
 	}
 

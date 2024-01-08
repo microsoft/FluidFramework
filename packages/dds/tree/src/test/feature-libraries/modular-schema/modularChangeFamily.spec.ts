@@ -32,13 +32,13 @@ import {
 	FieldKindIdentifier,
 	FieldKey,
 	UpPath,
-	deltaForSet,
 	revisionMetadataSourceFromInfo,
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
+	RevisionTagCodec,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
@@ -106,9 +106,10 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
+const revisionTagCodec = new RevisionTagCodec(new MockIdCompressor());
 const family = new ModularChangeFamily(
 	fieldKinds,
-	new MockIdCompressor(),
+	revisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
@@ -819,7 +820,16 @@ describe("ModularChangeFamily", () => {
 				local: [
 					{
 						count: 1,
-						fields: new Map([[fieldA, deltaForSet(node1, buildId, detachId)]]),
+						fields: new Map([
+							[
+								fieldA,
+								{
+									local: [
+										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
+									],
+								},
+							],
+						]),
 					},
 				],
 			};
@@ -827,7 +837,7 @@ describe("ModularChangeFamily", () => {
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+					[fieldB, { local: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
 				]),
 			};
 

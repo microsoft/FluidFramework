@@ -9,7 +9,7 @@ import { DoublyLinkedList } from "./collections";
 import { EndOfTreeSegment } from "./endOfTreeSegment";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
-import { IMergeLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
+import { ISegmentLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
@@ -94,9 +94,7 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 		const refCallbacks: MergeTreeWithRevert["__mergeTreeRevertible"]["refCallbacks"] = {
 			afterSlide: (r: LocalReferencePosition) => {
 				if (mergeTree.referencePositionToLocalPosition(r) === DetachedReferencePosition) {
-					const refs = (detachedReferences.localRefs ??= new LocalReferenceCollection(
-						detachedReferences,
-					));
+					const refs = LocalReferenceCollection.setOrGet(detachedReferences);
 					refs.addAfterTombstones([r]);
 				}
 			},
@@ -284,7 +282,7 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment: IMergeLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
+		const insertSegment: ISegmentLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
 			realPos,
 			mergeTreeWithRevert.collabWindow.currentSeq,
 			mergeTreeWithRevert.collabWindow.clientId,
@@ -339,9 +337,7 @@ function revertLocalRemove(
 		}
 
 		if (insertRef !== undefined) {
-			const localRefs = (insertSegment.localRefs ??= new LocalReferenceCollection(
-				insertSegment,
-			));
+			const localRefs = LocalReferenceCollection.setOrGet(insertSegment);
 			if (insertRef.before?.empty === false) {
 				localRefs.addBeforeTombstones(insertRef.before.map((n) => n.data));
 			}

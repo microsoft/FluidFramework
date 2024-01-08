@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import {
-	DriverErrorType,
+	DriverErrorTypes,
 	IAnyDriverError,
 	IDocumentService,
 } from "@fluidframework/driver-definitions";
@@ -95,7 +95,7 @@ describe("connectionManager", () => {
 
 		// Act
 		connection.emitError({
-			errorType: DriverErrorType.genericError,
+			errorType: DriverErrorTypes.genericError,
 			message: "whatever",
 			canRetry: true,
 		});
@@ -117,7 +117,7 @@ describe("connectionManager", () => {
 		// Act I - retryableError
 		const error: IAnyDriverError = new RetryableError(
 			"Retryable error",
-			DriverErrorType.genericError,
+			DriverErrorTypes.genericError,
 			{ driverVersion: pkgVersion },
 		);
 		let oldConnection = connection;
@@ -138,7 +138,7 @@ describe("connectionManager", () => {
 		// Act II - nonretryable disconnect
 		const disconnectReason: IAnyDriverError = new NonRetryableError(
 			"Fatal disconnect reason",
-			DriverErrorType.genericError,
+			DriverErrorTypes.genericError,
 			{ driverVersion: pkgVersion },
 		);
 		oldConnection = connection;

@@ -70,7 +70,7 @@ export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name:
 // @alpha
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
-    readonly errorType: OdspErrorType;
+    readonly errorType: OdspErrorTypes;
 }
 
 // @alpha (undocumented)
@@ -174,7 +174,6 @@ export interface ISnapshotOptions {
     channels?: number;
     // (undocumented)
     deltas?: number;
-    // (undocumented)
     mds?: number;
     // (undocumented)
     timeout?: number;
@@ -203,20 +202,6 @@ export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) =>
 
 // @alpha (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
-
-// @alpha @deprecated
-export enum OdspErrorType {
-    blockedIPAddress = "blockedIPAddress",
-    cannotCatchUp = "cannotCatchUp",
-    fetchTimeout = "fetchTimeout",
-    // (undocumented)
-    fetchTokenError = "fetchTokenError",
-    fluidNotEnabled = "fluidNotEnabled",
-    invalidFileNameError = "invalidFileNameError",
-    outOfStorageError = "outOfStorageError",
-    serviceReadOnly = "serviceReadOnly",
-    snapshotTooBig = "snapshotTooBig"
-}
 
 // @alpha
 export const OdspErrorTypes: {

@@ -15,7 +15,6 @@ import {
 	IDocumentDeltaConnection,
 	IResolvedUrl,
 	IDocumentServicePolicies,
-	DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
 	DeltaStreamConnectionForbiddenError,
@@ -32,7 +31,7 @@ import {
 	HostStoragePolicy,
 	InstrumentedStorageTokenFetcher,
 	ISocketStorageDiscovery,
-	OdspErrorType,
+	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import { IOdspCache } from "./odspCache";
@@ -163,7 +162,7 @@ export class OdspDelayLoadedDeltaStream {
 				throw this.annotateConnectionError(
 					new NonRetryableError(
 						"Websocket token is null",
-						OdspErrorType.fetchTokenError,
+						OdspErrorTypes.fetchTokenError,
 						{ driverVersion },
 					),
 					"getWebsocketToken",
@@ -190,7 +189,7 @@ export class OdspDelayLoadedDeltaStream {
 					if (
 						typeof error === "object" &&
 						error !== null &&
-						error.errorType === DriverErrorType.authorizationError
+						error.errorType === OdspErrorTypes.authorizationError
 					) {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
@@ -299,7 +298,7 @@ export class OdspDelayLoadedDeltaStream {
 			this.clearJoinSessionTimer();
 			throw new NonRetryableError(
 				"JoinSessionRefreshTimerNotCancelled",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{
 					driverVersion,
 					details: JSON.stringify({

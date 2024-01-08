@@ -48,7 +48,6 @@ import {
 	FlexTreeField,
 	FlexTreeNode,
 	FlexTreeRequiredField,
-	boxedIterator,
 	TreeStatus,
 	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
@@ -62,8 +61,6 @@ import {
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
-	makePropertyEnumerableOwn,
-	makePropertyNotEnumerable,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { unboxedUnion } from "./unboxed.js";
@@ -142,8 +139,6 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		super(context, schema, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
-
-		makePropertyNotEnumerable(this, "key");
 	}
 
 	public is<TSchema extends TreeFieldSchema>(
@@ -218,10 +213,10 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public mapBoxed<U>(
 		callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U,
 	): U[] {
-		return Array.from(this[boxedIterator](), callbackfn);
+		return Array.from(this.boxedIterator(), callbackfn);
 	}
 
-	public [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
+	public boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
 			(cursor) => makeTree(this.context, cursor) as unknown as FlexTreeTypedNodeUnion<TTypes>,
@@ -279,8 +274,6 @@ export class LazySequence<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
 	}
 
 	public at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined {
@@ -456,8 +449,6 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "content", LazyValueField.prototype);
 	}
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
@@ -495,8 +486,6 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "content", LazyOptionalField.prototype);
 	}
 
 	private optionalEditor(): OptionalFieldEditBuilder {
@@ -540,8 +529,6 @@ export class LazyNodeKeyField<TTypes extends AllowedTypes>
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-
-		makePropertyEnumerableOwn(this, "stableNodeKey", LazyNodeKeyField.prototype);
 	}
 
 	public get localNodeKey(): LocalNodeKey {
