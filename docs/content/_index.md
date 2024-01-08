@@ -135,7 +135,8 @@ summary: "An open-source client technology stack that enables real-time collabor
             <h3>Sample Output</h3>
         </div>
         <div class="col-md-8" style="text-left; height:650px; overflow-x: auto; padding-left: 50px;">
-                {{< highlight TypeScript >}}
+            <code>
+                {{< highlight typescript >}}
                 /*!
                  * Copyright (c) Microsoft Corporation. All rights reserved.
                  * Licensed under the MIT License.
@@ -235,6 +236,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                     window["fluidStarted"] = true;
                 };
                 {{< / highlight >}}
+            </code>
         </div>
     <div class="col-md-4 text-center" style="padding-right: 50px;">
         {{< fluid_bundle_loader idPrefix="dice-roller"
