@@ -153,7 +153,13 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": [
+			"build:docs": {
+				"dependsOn": [
+					"build:esnext"
+				],
+				"script": false
+			},
+			"check:release-tags": [
 				"build:esnext"
 			],
 			"ci:build:docs": [
