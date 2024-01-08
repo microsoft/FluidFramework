@@ -1,6 +1,6 @@
 .home {
 	/*----- Hero Section -----*/
-
+	overflow: hidden;
 	#main-content {
 		flex-grow: 1;
 		display: flex;
@@ -509,6 +509,7 @@
 	/*----- Customers -----*/
 	.customers {
 		padding: 50px 0;
+		overflow: hidden;
 
 		.title {
 			height: 20.5rem; //5 times the height of the list
@@ -578,7 +579,10 @@
 			text-align: center;
 		}
 	}
-
+	.samplecode {
+		overflow: hidden;
+		// position: absolute;
+	}
 	.terms p {
 		font-size: 1.4rem;
 	}
