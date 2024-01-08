@@ -1,4 +1,4 @@
 {
-	"targets": [{ "extname": ".cjs", "dExtName": ".d.cts", "module": "node16", "outDir": "./dist" }],
+	"targets": [{ "extname": ".cjs", "module": "node16" }],
 	"projects": ["tsconfig.json"]
 }
