@@ -29,11 +29,11 @@ describe("Minimum Compat Version", () => {
 	// N-1 version is 2.0.0-internal.8.0.0
 	// N-2 version is 2.0.0-internal.8.0.0 (bug?)
 	// therefore start testing on N-3
-	for (let i = 3; i < 9; i++) {
+	for (let i = 1; i < 9; i++) {
 		it(`compatVersion N-${i} < latest version`, () => {
 			assert.strictEqual(
 				// using latest version found in allVersions array.
-				isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", {
+				isCompatVersionBelowMinVersion(baseVersion, {
 					name: `test`,
 					kind: CompatKind.None,
 					compatVersion: -i,
@@ -46,20 +46,20 @@ describe("Minimum Compat Version", () => {
 
 	it("cross compat", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", {
+			isCompatVersionBelowMinVersion(baseVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: "2.0.0-internal.8.0.0",
+				compatVersion: baseVersion,
 				loadVersion: "1.3.7",
 			}),
 			true,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("2.0.0-internal.8.0.0", {
+			isCompatVersionBelowMinVersion(baseVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "1.3.7",
-				loadVersion: "2.0.0-internal.8.0.0",
+				loadVersion: baseVersion,
 			}),
 			true,
 		);
@@ -67,7 +67,7 @@ describe("Minimum Compat Version", () => {
 			isCompatVersionBelowMinVersion("1.3.7", {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: "2.0.0-internal.8.0.0",
+				compatVersion: baseVersion,
 				loadVersion: "1.3.7",
 			}),
 			false,
@@ -77,7 +77,7 @@ describe("Minimum Compat Version", () => {
 				name: "test",
 				kind: CompatKind.CrossVersion,
 				compatVersion: "1.3.7",
-				loadVersion: "2.0.0-internal.8.0.0",
+				loadVersion: baseVersion,
 			}),
 			false,
 		);
