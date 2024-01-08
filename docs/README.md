@@ -309,7 +309,7 @@ This shortcode can be found in `layouts/shortcodes/apiref.html`.
 `Markdown` like the following:
 
 ```markdown
-The {{< apiref "FluidContainer" "class" >}} class can be used to...
+The {{< apiref "fluid-static" "FluidContainer" "class" >}} class can be used to...
 ```
 
 will generate something like:
