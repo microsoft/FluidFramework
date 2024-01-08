@@ -140,7 +140,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 > {
 	public readonly editor: TEditor;
 	// set of revertibles maintained for automatic disposal
-	private readonly revertibles = new Set<Revertible>();
+	private readonly revertibles = new Set<RevertibleRevision>();
 	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	/**
@@ -384,7 +384,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	public purgeRevertibles(): void {
 		for (const revertible of this.revertibles) {
-			revertible.discard();
+			revertible.dispose();
 		}
 	}
 
@@ -703,7 +703,7 @@ class RevertibleRevision implements Revertible {
 		return RevertibleResult.Failure;
 	}
 
-	private dispose(): void {
+	public dispose(): void {
 		assert(
 			this.status === RevertibleStatus.Valid,
 			"Cannot dispose already disposed revertible",
