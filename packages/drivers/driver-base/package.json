@@ -167,6 +167,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DocumentDeltaConnection": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

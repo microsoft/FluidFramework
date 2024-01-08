@@ -55,6 +55,7 @@ declare function get_old_ClassDeclaration_LocalDocumentDeltaConnection():
 declare function use_current_ClassDeclaration_LocalDocumentDeltaConnection(
     use: TypeOnly<current.LocalDocumentDeltaConnection>): void;
 use_current_ClassDeclaration_LocalDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalDocumentDeltaConnection());
 
 /*
