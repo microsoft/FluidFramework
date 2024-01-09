@@ -190,7 +190,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
-		return undefined;
+		return this.notCalled("policies");
 	}
 
 	public get repositoryUrl(): string {

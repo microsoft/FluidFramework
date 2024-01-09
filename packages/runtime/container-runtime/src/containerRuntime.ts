@@ -1370,15 +1370,17 @@ export class ContainerRuntime
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
-		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
-		if (
-			maxSnapshotCacheDurationMs !== undefined &&
-			maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
-		) {
-			// This is a runtime enforcement of what's already explicit in the policy's type itself,
-			// which dictates the value is either undefined or exactly 5 days in ms.
-			// As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
-			throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+		if (context.attachState === AttachState.Attached) {
+			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
+			if (
+				maxSnapshotCacheDurationMs !== undefined &&
+				maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
+			) {
+				// This is a runtime enforcement of what's already explicit in the policy's type itself,
+				// which dictates the value is either undefined or exactly 5 days in ms.
+				// As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
+				throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+			}
 		}
 
 		this.garbageCollector = GarbageCollector.create({
