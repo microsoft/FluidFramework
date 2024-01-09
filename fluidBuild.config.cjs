@@ -358,6 +358,30 @@ module.exports = {
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
 		},
+		// Requirements applied to all `public` packages.
+		publicPackageRequirements: {
+			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			requiredScripts: [
+				{
+					name: "api",
+					body: "fluid-build . --task api",
+				},
+				{
+					name: "build:docs",
+					body: "fluid-build . --task api",
+				},
+				{
+					name: "ci:build:docs",
+					body: "api-extractor run",
+				},
+				{
+					name: "check:release-tags",
+					body: "api-extractor run --local --config ./api-extractor-lint.json",
+				},
+			],
+			// All of our public packages should be using api-extractor
+			requiredDevDependencies: ["@microsoft/api-extractor"],
+		},
 	},
 
 	assertTagging: {
