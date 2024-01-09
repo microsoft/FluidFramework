@@ -37,7 +37,7 @@ export interface IFluidBuildConfig {
 	};
 
 	/**
-	 * Policy configuration for the `check:policy` command. This can only be configured in the rrepo-wide Fluid build
+	 * Policy configuration for the `check:policy` command. This can only be configured in the repo-wide Fluid build
 	 * config (the repo-root package.json).
 	 */
 	policy?: PolicyConfig;
