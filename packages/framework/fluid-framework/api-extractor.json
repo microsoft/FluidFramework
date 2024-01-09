@@ -3,6 +3,7 @@
 	"extends": "../../../common/build/build-common/api-extractor-base.json",
 	"bundledPackages": [
 		"@fluidframework/driver-definitions",
+		"@fluidframework/fluid-static",
 		"@fluidframework/map",
 		"@fluidframework/tree"
 	],
