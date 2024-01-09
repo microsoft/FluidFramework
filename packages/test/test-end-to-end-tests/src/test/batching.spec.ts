@@ -157,6 +157,9 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 			enableGroupedBatching: true,
 			chunkSizeInBytes: 100,
 		});
+		const futureOpSubmitter2 = dataObject2.context.containerRuntime as unknown as {
+			submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+		};
 		const dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
 		const dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 		setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
@@ -164,11 +167,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Submit two ops, one of which is unrecognized
 		dataObject2map1.set("key1", "value1");
-		(
-			dataObject2.context.containerRuntime as unknown as {
-				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-			}
-		).submit({
+		futureOpSubmitter2.submit({
 			type: "FUTURE_TYPE" as any,
 			contents: "Hello",
 			compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed
