@@ -11,6 +11,7 @@ import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { INack } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -120,13 +121,11 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
     initialSignals: ISignalMessage[];
-    metadata?: Record<string, unknown> | undefined;
     mode: ConnectionMode;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
     submitSignal(content: any, targetClientId?: string): void;
-    supportDeltaConnectionUpdates?: boolean;
     version: string;
 }
 
@@ -144,8 +143,6 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "pong", listener: (latency: number) => void): any;
     // (undocumented)
     (event: "error", listener: (error: any) => void): any;
-    // (undocumented)
-    (event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void): any;
 }
 
 // @alpha
@@ -154,7 +151,7 @@ export interface IDocumentDeltaStorageService {
 }
 
 // @alpha (undocumented)
-export interface IDocumentService {
+export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
@@ -162,6 +159,12 @@ export interface IDocumentService {
     policies?: IDocumentServicePolicies;
     // (undocumented)
     resolvedUrl: IResolvedUrl;
+}
+
+// @alpha
+export interface IDocumentServiceEvents extends IEvent {
+    // (undocumented)
+    (event: "metadataUpdate", listener: (metadata?: Record<string, unknown>) => void): any;
 }
 
 // @alpha (undocumented)

@@ -8,6 +8,7 @@ import {
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
+	IEvent,
 } from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
@@ -206,6 +207,14 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 }
 
 /**
+ * Events emitted by {@link IDocumentService}.
+ * @alpha
+ */
+export interface IDocumentServiceEvents extends IEvent {
+	(event: "metadataUpdate", listener: (metadata?: Record<string, unknown>) => void);
+}
+
+/**
  * @alpha
  */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
@@ -217,7 +226,6 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(event: "error", listener: (error: any) => void);
-	(event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void);
 }
 
 /**
@@ -299,16 +307,6 @@ export interface IDocumentDeltaConnection
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	submitSignal(content: any, targetClientId?: string): void;
-
-	/**
-	 * Tells whether the connection supports connection updates events on the connection object
-	 */
-	supportDeltaConnectionUpdates?: boolean;
-
-	/**
-	 * Any metadata properties for the connection.
-	 */
-	metadata?: Record<string, unknown> | undefined;
 }
 
 /**
@@ -344,7 +342,7 @@ export interface IDocumentServicePolicies {
 /**
  * @alpha
  */
-export interface IDocumentService {
+export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
 	resolvedUrl: IResolvedUrl;
 
 	/**

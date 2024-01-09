@@ -123,54 +123,39 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 	it("Delta connection metadata should be updated via Fluid signals and join session response", async () => {
 		socket = new ClientSocketMock();
+		let eventRaised = false;
+		let content: Record<string, unknown>;
+
+		const handler = (metadata: Record<string, unknown>) => {
+			eventRaised = true;
+			assert.strictEqual(
+				(metadata?.sensitivityLabelsInfo as any).labels,
+				content.labels,
+				"label via event should match",
+			);
+		};
+
 		let joinSessionStub = addJoinSessionStub("label1");
 
+		content = { labels: "label1" };
+		service.on("metadataUpdate", handler);
 		const connection = (await mockSocket(socket as unknown as Socket, async () =>
 			service.connectToDeltaStream(client),
 		)) as OdspDocumentDeltaConnection;
+		assert(eventRaised, "event1 should have been raised");
+		service.off("metadataUpdate", handler);
 		joinSessionStub.restore();
 
 		assert(!connection.disposed, "connection should not be disposed");
-		assert.strictEqual(
-			(connection.metadata?.sensitivityLabelsInfo as any).labels,
-			"label1",
-			"label1 should match",
-		);
+
 		assert(joinSessionStub.calledOnce, "Should called once on first try");
 
 		await tickClock(1);
-		// Now change label through signal array.
-		const signalContent = { labels: "label2", timestamp: Date.now() };
-		const signalMessage: ISignalMessage = {
-			clientId: null,
-			content: JSON.stringify({
-				contents: {
-					type: "PolicyLabelsUpdate",
-					content: signalContent,
-				},
-			}),
-		};
-		socket.emit("signal", [signalMessage]);
-		assert.strictEqual(
-			(connection.metadata?.sensitivityLabelsInfo as any).labels,
-			signalContent.labels,
-			"label2 should match",
-		);
 
-		await tickClock(1);
-		// Now update through join session response
-		joinSessionStub = addJoinSessionStub("label3");
-		await tickClock(70000);
-		assert.strictEqual(
-			(connection.metadata?.sensitivityLabelsInfo as any).labels,
-			"label3",
-			"label3 should match",
-		);
-		joinSessionStub.restore();
-
-		await tickClock(1);
-		// Now change label through signal and listen as event on connection.
-		const signalContent1 = { labels: "label4", timestamp: Date.now() };
+		// Now change label through signal and listen as event on service.
+		eventRaised = false;
+		content = { labels: "label2" };
+		const signalContent1 = { labels: "label2", timestamp: Date.now() };
 		const signalMessage1: ISignalMessage = {
 			clientId: null,
 			content: JSON.stringify({
@@ -181,30 +166,23 @@ describe("DeltaConnectionMetadata update tests", () => {
 			}),
 		};
 
-		let eventRaised = false;
-		connection.on("deltaConnectionUpdated", (metadata) => {
-			eventRaised = true;
-			assert.strictEqual(
-				metadata?.sensitivityLabelsInfo,
-				signalContent1,
-				"label4 via event should match",
-			);
-		});
+		service.on("metadataUpdate", handler);
 
 		socket.emit("signal", signalMessage1);
-		assert.strictEqual(
-			(connection.metadata?.sensitivityLabelsInfo as any).labels,
-			signalContent1.labels,
-			"label4 should match",
-		);
-		assert(eventRaised, "event should have been raised");
+		assert(eventRaised, "event2 should have been raised");
+		service.off("metadataUpdate", handler);
 
-		// Disconnect should clear the metadata details.
-		socket.sendDisconnectEvent();
-		assert(
-			connection.metadata === undefined,
-			"connection metadata should be cleared on disconnect",
-		);
+		await tickClock(1);
+
+		// Now update through join session response
+		eventRaised = false;
+		content = { labels: "label3" };
+		service.on("metadataUpdate", handler);
+		joinSessionStub = addJoinSessionStub("label3");
+		await tickClock(70000);
+		joinSessionStub.restore();
+		assert(eventRaised, "event3 should have been raised");
+		service.off("metadataUpdate", handler);
 	});
 
 	afterEach(async () => {

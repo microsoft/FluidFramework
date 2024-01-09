@@ -353,7 +353,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
 	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
-	private _metadata: Record<string, unknown> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -715,14 +714,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return this._disposed;
 	}
 
-	public get metadata() {
-		return this._metadata;
-	}
-
-	public set metadata(props: Record<string, unknown> | undefined) {
-		this._metadata = { ...this._metadata, ...props };
-	}
-
 	/**
 	 * Returns true in case the connection is not yet disposed and the socket is also connected. The expectation is
 	 * that it will be called only after connection is fully established. i.e. there should no way to submit an op
@@ -784,7 +775,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;
-		this._metadata = undefined;
 
 		socket.off("disconnect", this.disconnectHandler);
 		if (this.hasDetails) {

@@ -178,7 +178,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_LocalDocumentDeltaConnection": {
+			"ClassDeclaration_LocalDocumentService": {
 				"forwardCompat": false
 			}
 		}

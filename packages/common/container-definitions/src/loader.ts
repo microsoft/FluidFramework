@@ -247,9 +247,9 @@ export interface IContainerEvents extends IEvent {
 	(event: "saved", listener: (dirty: boolean) => void);
 
 	/**
-	 * Emitted when the some of the delta connection properties are initialized or updated.
+	 * Emitted when the some of the properties related to the container are initialized or updated.
 	 */
-	(event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void);
+	(event: "metadataUpdate", listener: (metadata?: Record<string, unknown> | undefined) => void);
 }
 
 /**
@@ -474,9 +474,9 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	getEntryPoint(): Promise<FluidObject>;
 
 	/**
-	 * Exposes any metadata/props related to the delta connection.
+	 * Exposes any metadata/props related to the container.
 	 */
-	deltaConnectionMetadata?: Record<string, unknown> | undefined;
+	containerMetadata: Record<string, unknown> | undefined;
 }
 
 /**

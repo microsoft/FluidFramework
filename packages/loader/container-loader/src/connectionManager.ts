@@ -286,10 +286,6 @@ export class ConnectionManager implements IConnectionManager {
 		return this._outbound;
 	}
 
-	public get deltaConnectionMetadata() {
-		return this.connection?.metadata;
-	}
-
 	/**
 	 * Returns set of props that can be logged in telemetry that provide some insights / statistics
 	 * about current or last connection (if there is no connection at the moment)
@@ -759,9 +755,6 @@ export class ConnectionManager implements IConnectionManager {
 		connection.off("disconnect", this.disconnectHandlerInternal);
 		connection.off("error", this.errorHandler);
 		connection.off("pong", this.props.pongHandler);
-		if (connection.supportDeltaConnectionUpdates === true) {
-			connection.off("deltaConnectionUpdated", this.deltaConnectionUpdateHandler);
-		}
 
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this._outbound.pause();
@@ -860,9 +853,6 @@ export class ConnectionManager implements IConnectionManager {
 		connection.on("disconnect", this.disconnectHandlerInternal);
 		connection.on("error", this.errorHandler);
 		connection.on("pong", this.props.pongHandler);
-		if (connection.supportDeltaConnectionUpdates === true) {
-			connection.on("deltaConnectionUpdated", this.deltaConnectionUpdateHandler);
-		}
 
 		// Initial messages are always sorted. However, due to early op handler installed by drivers and appending those
 		// ops to initialMessages, resulting set is no longer sorted, which would result in client hitting storage to
@@ -1170,10 +1160,6 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
 		this.props.signalHandler(signals);
-	};
-
-	private readonly deltaConnectionUpdateHandler = (metadata?: Record<string, unknown>) => {
-		this.props.deltaConnectionUpdateHandler(metadata);
 	};
 
 	// Always connect in write mode after getting nacked.

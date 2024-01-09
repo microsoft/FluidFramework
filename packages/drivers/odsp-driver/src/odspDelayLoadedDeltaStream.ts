@@ -44,6 +44,7 @@ import {
 import { fetchJoinSession } from "./vroom";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { OdspDocumentService } from "./odspDocumentService";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection
@@ -59,7 +60,8 @@ export class OdspDelayLoadedDeltaStream {
 
 	private _relayServiceTenantAndSessionId: string | undefined;
 
-	// Tracks the time at which the Policy Labels were updated the last time.
+	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
+	// between label updates from the join session and the fluid signals.
 	private labelUpdateTimestamp: number = -1;
 
 	/**
@@ -89,6 +91,7 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
+		private readonly docService: OdspDocumentService,
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
 		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
@@ -200,7 +203,7 @@ export class OdspDelayLoadedDeltaStream {
 				});
 				this.currentConnection = connection;
 				if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
-					this.emitDeltaConnectionUpdateEvent({
+					this.emitMetaDataUpdateEvent({
 						sensitivityLabelsInfo: JSON.parse(websocketEndpoint.sensitivityLabelsInfo),
 					});
 				}
@@ -229,7 +232,7 @@ export class OdspDelayLoadedDeltaStream {
 		signals.forEach((signal: ISignalMessage) => {
 			const envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
 			if (envelope.contents.type === "PolicyLabelsUpdate") {
-				this.emitDeltaConnectionUpdateEvent({
+				this.emitMetaDataUpdateEvent({
 					sensitivityLabelsInfo: envelope.contents.content,
 				});
 			}
@@ -366,7 +369,7 @@ export class OdspDelayLoadedDeltaStream {
 			);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
-				this.emitDeltaConnectionUpdateEvent({
+				this.emitMetaDataUpdateEvent({
 					sensitivityLabelsInfo: JSON.parse(joinSessionResponse.sensitivityLabelsInfo),
 				});
 			}
@@ -433,7 +436,7 @@ export class OdspDelayLoadedDeltaStream {
 		return response.joinSessionResponse;
 	}
 
-	private emitDeltaConnectionUpdateEvent(metadata: Record<string, unknown>) {
+	private emitMetaDataUpdateEvent(metadata: Record<string, unknown>) {
 		if (this.currentConnection !== undefined) {
 			const label = metadata.sensitivityLabelsInfo as {
 				labels: unknown;
@@ -442,13 +445,9 @@ export class OdspDelayLoadedDeltaStream {
 			const time = Date.parse(label.timestamp);
 			if (time > this.labelUpdateTimestamp) {
 				this.labelUpdateTimestamp = time;
-				this.currentConnection.metadata = {
+				this.docService.emit("metadataUpdate", {
 					sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
-				};
-				this.currentConnection.emit(
-					"deltaConnectionUpdated",
-					this.currentConnection?.metadata,
-				);
+				});
 			}
 		}
 	}

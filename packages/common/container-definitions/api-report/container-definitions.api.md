@@ -123,7 +123,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
-    deltaConnectionMetadata?: Record<string, unknown> | undefined;
+    containerMetadata: Record<string, unknown> | undefined;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
@@ -208,7 +208,7 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
-    (event: "deltaConnectionUpdated", listener: (metadata?: Record<string, unknown>) => void): any;
+    (event: "metadataUpdate", listener: (metadata?: Record<string, unknown> | undefined) => void): any;
 }
 
 // @internal (undocumented)

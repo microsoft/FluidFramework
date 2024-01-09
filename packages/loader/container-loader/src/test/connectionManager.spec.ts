@@ -53,7 +53,6 @@ describe("connectionManager", () => {
 		signalHandler: () => {},
 		establishConnectionHandler: () => {},
 		cancelConnectionHandler: () => {},
-		deltaConnectionUpdateHandler: () => {},
 	};
 
 	const mockLogger = new MockLogger();
