@@ -140,7 +140,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 > {
 	public readonly editor: TEditor;
 	// set of revertibles maintained for automatic disposal
-	private readonly revertibles = new Set<Revertible>();
+	private readonly revertibles = new Set<RevertibleRevision>();
 	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	/**
@@ -382,6 +382,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return this._revertibleCommits.keys();
 	}
 
+	public purgeRevertibles(): void {
+		for (const revertible of this.revertibles) {
+			revertible.dispose();
+		}
+	}
+
 	/**
 	 * Associate a revertible with a new commit of the same revision.
 	 * This is applicable when a commit is replaced by a rebase or a local commit is sequenced.
@@ -614,7 +620,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.abortTransaction();
 		}
 
-		this.revertibles.forEach((revertible) => revertible.discard());
+		this.revertibles.forEach((revertible) => revertible.dispose());
 
 		this.disposed = true;
 		this.emit("dispose");
@@ -671,7 +677,8 @@ class RevertibleRevision implements Revertible {
 	public revert(): RevertibleResult {
 		if (this.status === RevertibleStatus.Valid) {
 			this.onRevert(this);
-			this.dispose();
+			// If reverting leads to a schema change then the revertible will be disposed as part of the revert.
+			this.dispose(false);
 			return RevertibleResult.Success;
 		}
 		return RevertibleResult.Failure;
@@ -697,12 +704,12 @@ class RevertibleRevision implements Revertible {
 		return RevertibleResult.Failure;
 	}
 
-	private dispose(): void {
-		assert(
-			this.status === RevertibleStatus.Valid,
-			"Cannot dispose already disposed revertible",
-		);
-		this.referenceCount = 0;
-		this.onDispose(this);
+	public dispose(validateStatus = true): void {
+		if (this.status === RevertibleStatus.Valid) {
+			this.referenceCount = 0;
+			this.onDispose(this);
+		} else {
+			assert(validateStatus === false, "Cannot dispose already disposed revertible");
+		}
 	}
 }

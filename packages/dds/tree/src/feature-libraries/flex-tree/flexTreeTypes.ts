@@ -503,16 +503,35 @@ export type FlexTreeObjectNodeTyped<TSchema extends ObjectNodeSchema> =
 /**
  * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
  *
- * @privateRemarks TODOs:
+ * @privateRemarks
+ * TODO: Support custom field keys.
+ * @internal
+ */
+export type FlexTreeObjectNodeFields<TFields extends Fields> = FlexTreeObjectNodeFieldsInner<
+	FlattenKeys<
+		{
+			// When the key does not need to be escaped, map it from the input TFields in a way that doesn't break navigate to declaration
+			[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
+				? key
+				: never]: TFields[key];
+		} & {
+			[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
+				? never
+				: PropertyNameFromFieldKey<key & string>]: TFields[key];
+		}
+	>
+>;
+
+/**
+ * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
  *
- * 1. Support custom field keys.
- *
- * 2. Do we keep assignment operator + "setFoo" methods, or just use methods?
+ * @privateRemarks
+ * TODO: Do we keep assignment operator + "setFoo" methods, or just use methods?
  * Inconsistency in the API experience could confusing for consumers.
  *
  * @internal
  */
-export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<
+export type FlexTreeObjectNodeFieldsInner<TFields extends Fields> = FlattenKeys<
 	{
 		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
 		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<
@@ -539,6 +558,75 @@ export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<
 			: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 	}
 >;
+
+/**
+ * Reserved object node field property names to avoid collisions with the rest of the object node API.
+ * @internal
+ */
+export const reservedObjectNodeFieldPropertyNames = [
+	"constructor",
+	"context",
+	"is",
+	"on",
+	"parentField",
+	"schema",
+	"treeStatus",
+	"tryGetField",
+	"type",
+	"value",
+	"localNodeKey",
+	"boxedIterator",
+	"iterator",
+] as const;
+
+/**
+ * Reserved object node field property names prefixes.
+ * These are reserved to avoid collisions with properties derived from field other field names.
+ *
+ * Field names starting with these must be followed by a lowercase letter, or be escaped.
+ * @internal
+ */
+export const reservedObjectNodeFieldPropertyNamePrefixes = [
+	"set",
+	"boxed",
+	"field",
+	"Field",
+] as const;
+
+/**
+ * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
+ * @internal
+ */
+export type ReservedObjectNodeFieldPropertyNames =
+	(typeof reservedObjectNodeFieldPropertyNames)[number];
+
+/**
+ * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
+ * @internal
+ */
+export type ReservedObjectNodeFieldPropertyNamePrefixes =
+	(typeof reservedObjectNodeFieldPropertyNamePrefixes)[number];
+
+/**
+ * Convert an object node's field key into an escaped string usable as a property name.
+ *
+ * @privateRemarks
+ * TODO:
+ * Collisions are still possible.
+ * For example fields named "foo" and "Foo" would both produce a setter "setFoo".
+ * Consider naming schemes to avoid this, ensure that there is a good workaround for these cases.
+ * Another approach would be to support custom field names (separate from keys),
+ * and do the escaping (if needed) when creating the flex tree schema (both when manually creating them and when doing so automatically):
+ * this would enable better intellisense for escaped fields, as well as allow the feature of custom field property names.
+ *
+ * @internal
+ */
+export type PropertyNameFromFieldKey<T extends string> =
+	T extends ReservedObjectNodeFieldPropertyNames
+		? `field${Capitalize<T>}`
+		: T extends `${ReservedObjectNodeFieldPropertyNamePrefixes}${Capitalize<string>}`
+		? `field${Capitalize<T>}`
+		: T;
 
 /**
  * Field kinds that allow value assignment.
