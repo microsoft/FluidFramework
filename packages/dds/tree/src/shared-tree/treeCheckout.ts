@@ -55,14 +55,24 @@ export interface CheckoutEvents {
 	afterBatch(): void;
 
 	/**
-	 * A revertible change has been made to this view.
-	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire, if they so choose (failure to do so will leak memory).
+	 * Fired when a revertible change has been made to this view.
+	 *
+	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire (failure to do so will leak memory).
 	 * The provided revertible is inherently bound to the view that raised the event, calling `revert` won't apply to forked views.
 	 *
-	 * @remarks
-	 * This event provides a {@link Revertible} object that can be used to revert the change.
+	 * @param revertible - The revertible that can be used to revert the change.
 	 */
-	revertible(revertible: Revertible): void;
+	newRevertible(revertible: Revertible): void;
+
+	/**
+	 * Fired when a revertible is either reverted or discarded.
+	 *
+	 * This event can be used to maintain a list or set of active revertibles.
+	 * @param revertible - The revertible that was disposed.
+	 * This revertible was previously passed to the `newRevertible` event.
+	 * Calling `discard` on this revertible is not necessary but is safe to do.
+	 */
+	revertibleDisposed(revertible: Revertible): void;
 }
 
 /**
@@ -360,13 +370,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		branch.on("revertible", (revertible) => {
-			// if there are no listeners, discard the revertible to avoid memory leaks
-			if (!this.events.hasListeners("revertible")) {
-				revertible.discard();
-			} else {
-				this.events.emit("revertible", revertible);
-			}
+		branch.on("newRevertible", (revertible) => {
+			this.events.emit("newRevertible", revertible);
+		});
+		branch.on("revertibleDisposed", (revertible, revision) => {
+			// We do not expose the revision in this API
+			this.events.emit("revertibleDisposed", revertible);
 		});
 	}
 
