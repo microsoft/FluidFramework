@@ -2050,6 +2050,8 @@ export class ContainerRuntime
 					this.closeFn(error);
 					throw error;
 				}
+				// Note: Even if its compat behavior allows it, we don't know how to apply this stashed op.
+				// All we can do is ignore it (similar to on process).
 			}
 		}
 	}
@@ -3699,9 +3701,10 @@ export class ContainerRuntime
 				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
-				// future version of runtime code and now is being applied on an older version
+				// future version of runtime code and now is being applied on an older version.
 				const compatBehavior = message.compatDetails?.behavior;
 				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
+					// We do not ultimately resubmit it, to be consistent with this version of the code.
 					this.logger.sendTelemetryEvent({
 						eventName: "resubmitUnrecognizedMessageTypeAllowed",
 						messageDetails: { type: message.type, compatBehavior },

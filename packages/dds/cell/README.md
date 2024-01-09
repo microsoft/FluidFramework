@@ -42,7 +42,7 @@ library consumers should always prefer `^`.
 
 ## API Documentation
 
-API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/api/v1/cell>.
+API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/apis/cell>.
 
 <!-- prettier-ignore-end -->
 

@@ -102,14 +102,16 @@ import { pkgVersion } from "./packageVersion";
 import {
 	ContainerStorageAdapter,
 	getBlobContentsFromTree,
-	getBlobContentsFromTreeWithBlobContents,
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import {
+	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	getProtocolSnapshotTree,
-	getSnapshotTreeFromSerializedContainer,
+	getSnapshotTreeAndBlobsFromSerializedContainer,
+	combineSnapshotTreeAndSnapshotBlobs,
+	getDetachedContainerStateFromSerializedContainer,
 } from "./utils";
 import { initQuorumValuesFromCodeDetails } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
@@ -128,8 +130,6 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
-
-const hasBlobsSummaryTree = ".hasAttachmentBlobs";
 
 /**
  * @internal
@@ -360,6 +360,18 @@ export interface IPendingContainerState {
 	clientId?: string;
 }
 
+/**
+ * State saved by a container in detached state, to be used to load a new instance
+ * of the container to the same state (rehydrate)
+ * @internal
+ */
+export interface IPendingDetachedContainerState {
+	attached: boolean;
+	baseSnapshot: ISnapshotTree;
+	snapshotBlobs: ISerializableBlobContents;
+	hasAttachmentBlobs: boolean;
+}
+
 const summarizerClientType = "summarizer";
 
 interface IContainerLifecycleEvents extends IEvent {
@@ -471,12 +483,9 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot);
-				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
-					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
-				}
-
-				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
+				const detachedContainerState: IPendingDetachedContainerState =
+					getDetachedContainerStateFromSerializedContainer(snapshot);
+				await container.rehydrateDetachedFromSnapshot(detachedContainerState);
 				return container;
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -1186,13 +1195,16 @@ export class Container
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
-			combinedSummary.tree[hasBlobsSummaryTree] = {
-				type: SummaryType.Blob,
-				content: "true",
-			};
-		}
-		return JSON.stringify(combinedSummary);
+		const [baseSnapshot, snapshotBlobs] =
+			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+
+		const detachedContainerState: IPendingDetachedContainerState = {
+			attached: false,
+			baseSnapshot,
+			snapshotBlobs,
+			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
+		};
+		return JSON.stringify(detachedContainerState);
 	}
 
 	public async attach(
@@ -1243,10 +1255,10 @@ export class Container
 						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
-							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							const [snapshot, snapshotBlobs] =
+								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs =
-								getBlobContentsFromTreeWithBlobContents(snapshot);
+							this.baseSnapshotBlobs = snapshotBlobs;
 						}
 					}
 
@@ -1306,10 +1318,10 @@ export class Container
 						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
-							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							const [snapshot, snapshotBlobs] =
+								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs =
-								getBlobContentsFromTreeWithBlobContents(snapshot);
+							this.baseSnapshotBlobs = snapshotBlobs;
 						}
 
 						await this.storageAdapter.uploadSummaryWithContext(summary, {
@@ -1807,24 +1819,30 @@ export class Container
 		this.setLoaded();
 	}
 
-	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
+	private async rehydrateDetachedFromSnapshot({
+		attached,
+		baseSnapshot,
+		snapshotBlobs,
+		hasAttachmentBlobs,
+	}: IPendingDetachedContainerState) {
+		if (hasAttachmentBlobs) {
 			assert(
 				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
 		}
-
-		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTree);
-		const attributes = await this.getDocumentAttributes(this.storageAdapter, snapshotTree);
+		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
+			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
+		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
+		const attributes = await this.getDocumentAttributes(
+			this.storageAdapter,
+			snapshotTreeWithBlobContents,
+		);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(snapshotTree);
+		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
@@ -1839,7 +1857,7 @@ export class Container
 		);
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
-		await this.instantiateRuntime(codeDetails, snapshotTree);
+		await this.instantiateRuntime(codeDetails, snapshotTreeWithBlobContents);
 
 		this.setLoaded();
 	}
