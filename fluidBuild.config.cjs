@@ -270,6 +270,58 @@ module.exports = {
 				"package.json",
 			],
 			"npm-package-json-script-dep": ["^build-tools/"],
+			"npm-public-package-requirements": [
+				// Test packages published only for the purpose of running tests in CI.
+				"@fluid-experimental/azure-scenario-runner",
+				"@fluid-experimental/odsp-end-to-end-tests",
+				"@fluid-internal/test-app-insights-logger",
+				"@fluid-internal/test-service-load",
+				"@fluid-private/test-end-to-end-tests",
+
+				// JS packages, which do not use api-extractor
+				"@fluidframework/build-common",
+				"@fluidframework/eslint-config-fluid",
+
+				// PropertyDDS packages, which are not production
+				"@fluid-experimental/property-binder",
+				"@fluid-experimental/property-changeset",
+				"@fluid-experimental/property-common",
+				"@fluid-experimental/property-dds",
+				"@fluid-experimental/property-inspector-table",
+				"@fluid-experimental/property-properties",
+				"@fluid-experimental/property-proxy",
+				"@fluid-experimental/property-query",
+				"@fluid-experimental/property-shared-tree-interop",
+
+				// Tools packages that are not library packages
+				"@fluid-tools/fetch-tool",
+				"@fluidframework/test-tools",
+
+				// TODO: add api-extractor infra and remove
+				"@fluidframework/bundle-size-tools",
+				"@fluidframework/gitrest",
+				"@fluidframework/gitrest-base",
+				"@fluidframework/historian",
+				"@fluidframework/historian-base",
+				"@fluidframework/gitresources",
+				"@fluidframework/kafka-orderer",
+				"@fluidframework/lambdas",
+				"@fluidframework/lambdas-driver",
+				"@fluidframework/local-server",
+				"@fluidframework/memory-orderer",
+				"@fluidframework/protocol-base",
+				"@fluidframework/services",
+				"@fluidframework/services-client",
+				"@fluidframework/services-core",
+				"@fluidframework/server-services-ordering-kafkanode",
+				"@fluidframework/server-services-ordering-rdkafka",
+				"@fluidframework/server-services-ordering-zookeeper",
+				"@fluidframework/services-shared",
+				"@fluidframework/services-telemetry",
+				"@fluidframework/services-utils",
+				"@fluid-tools/telemetry-generator",
+				"@fluid-tools/webpack-fluid-loader",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
