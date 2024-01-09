@@ -198,13 +198,13 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 
 	/* eslint-disable @typescript-eslint/unbound-method */
-	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled("getSnapshotTree");
-	public getVersions: () => Promise<IVersion[]> = this.notCalled("getVersions");
-	public write: () => Promise<IVersion> = this.notCalled("write");
-	public uploadSummaryWithContext: () => Promise<string> = this.notCalled(
-		"uploadSummaryWithContext",
-	);
-	public downloadSummary: () => Promise<ISummaryTree> = this.notCalled("downloadSummary");
+	public getSnapshotTree: () => Promise<ISnapshotTree | null> = () =>
+		this.notCalled("getSnapshotTree");
+	public getVersions: () => Promise<IVersion[]> = () => this.notCalled("getVersions");
+	public write: () => Promise<IVersion> = () => this.notCalled("write");
+	public uploadSummaryWithContext: () => Promise<string> = () =>
+		this.notCalled("uploadSummaryWithContext");
+	public downloadSummary: () => Promise<ISummaryTree> = () => this.notCalled("downloadSummary");
 	/* eslint-enable @typescript-eslint/unbound-method */
 
 	private notCalled(calledBy: string): never {
