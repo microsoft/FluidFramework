@@ -1,0 +1,703 @@
+Statistical profiling result from profile.log, (117650 ticks, 496 unaccounted, 0 excluded).
+
+ [Shared libraries]:
+   ticks  total  nonlib   name
+   1497    1.3%          /usr/lib/system/libsystem_malloc.dylib
+    158    0.1%          /usr/lib/system/libsystem_pthread.dylib
+    123    0.1%          /usr/lib/system/libsystem_platform.dylib
+     35    0.0%          /usr/lib/system/libsystem_c.dylib
+     15    0.0%          /usr/lib/system/libdyld.dylib
+     14    0.0%          /usr/lib/libc++.1.dylib
+     13    0.0%          /usr/lib/libc++abi.dylib
+      3    0.0%          /usr/lib/system/libsystem_kernel.dylib
+      1    0.0%          /usr/lib/system/libsystem_m.dylib
+
+ [JavaScript]:
+   ticks  total  nonlib   name
+    877    0.7%    0.8%  LazyCompile: *get /Users/danlehen/gh/f1/packages/common/core-utils/dist/index.js:9:76
+    818    0.7%    0.7%  LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+    377    0.3%    0.3%  LazyCompile: *LazyEntity /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:58:16
+    343    0.3%    0.3%  LazyCompile: *getOrCreateChild /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:820:21
+    340    0.3%    0.3%  LazyCompile: *composeFieldMaps /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:84:21
+    290    0.2%    0.3%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:84:31
+    275    0.2%    0.2%  LazyCompile: *enterNode /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:633:22
+    264    0.2%    0.2%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeEditBuilder.js:15:36
+    254    0.2%    0.2%  LazyCompile: *trackInner /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:126:15
+    247    0.2%    0.2%  LazyCompile: *moveCursorToPath /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:197:21
+    239    0.2%    0.2%  LazyCompile: *attachPass /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:262:20
+    134    0.1%    0.1%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:59:98
+    126    0.1%    0.1%  LazyCompile: *encode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/genericFieldKindCodecs.js:17:17
+    120    0.1%    0.1%  LazyCompile: *findCommonAncestor /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/utils.js:233:28
+    119    0.1%    0.1%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/treeCheckout.js:75:35
+    118    0.1%    0.1%  LazyCompile: *getFieldPath /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:247:17
+    116    0.1%    0.1%  LazyCompile: *visitFieldMarks /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:170:25
+    116    0.1%    0.1%  LazyCompile: *compose /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:102:14
+    112    0.1%    0.1%  LazyCompile: *detachPass /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:196:20
+    110    0.1%    0.1%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:10:75
+    103    0.1%    0.1%  LazyCompile: *FluidSerializer.decodeValue /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:37:28
+    101    0.1%    0.1%  LazyCompile: *makeTree /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:31:18
+    101    0.1%    0.1%  LazyCompile: *FluidSerializer.encodeValue /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:29:28
+     88    0.1%    0.1%  LazyCompile: *intoDeltaImpl /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:515:23
+     87    0.1%    0.1%  LazyCompile: *encode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalFieldCodecs.js:42:17
+     87    0.1%    0.1%  LazyCompile: *boxedAt /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:105:12
+     86    0.1%    0.1%  LazyCompile: *encode /Users/danlehen/gh/f1/packages/dds/tree/dist/codec/versioned/codec.js:13:17
+     85    0.1%    0.1%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/forest/index.js:12:98
+     85    0.1%    0.1%  LazyCompile: *assert /Users/danlehen/gh/f1/packages/common/core-utils/dist/assert.js:19:16
+     84    0.1%    0.1%  LazyCompile: *set content /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:250:16
+     83    0.1%    0.1%  LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+     83    0.1%    0.1%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/context.js:38:44
+     82    0.1%    0.1%  LazyCompile: *exitNode /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:651:21
+     81    0.1%    0.1%  LazyCompile: *decode /Users/danlehen/gh/f1/packages/dds/tree/dist/codec/versioned/codec.js:18:17
+     79    0.1%    0.1%  LazyCompile: *visitDelta /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:52:20
+     78    0.1%    0.1%  LazyCompile: *pruneNodeChange /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:342:20
+     77    0.1%    0.1%  LazyCompile: *rebaseBranch /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/utils.js:11:22
+     77    0.1%    0.1%  LazyCompile: *firstNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:322:14
+     76    0.1%    0.1%  LazyCompile: *compose /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:60:12
+     75    0.1%    0.1%  LazyCompile: *get mode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:119:13
+     74    0.1%    0.1%  LazyCompile: *chunkRange /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/chunkTree.js:224:20
+     72    0.1%    0.1%  LazyCompile: *acquireVisitor /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:371:19
+     71    0.1%    0.1%  LazyCompile: *processFirstMessage /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:305:24
+     71    0.1%    0.1%  LazyCompile: *decode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalFieldCodecs.js:65:17
+     68    0.1%    0.1%  LazyCompile: *processBuilds /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:234:23
+     64    0.1%    0.1%  LazyCompile: *replace /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:134:20
+     64    0.1%    0.1%  LazyCompile: *enterNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:139:22
+     63    0.1%    0.1%  LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+     61    0.1%    0.1%  LazyCompile: *addSequencedChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManager.js:344:23
+     61    0.1%    0.1%  LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+     59    0.1%    0.1%  LazyCompile: *mapTreeFromCursor /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/mapTreeCursor.js:38:27
+     59    0.1%    0.1%  LazyCompile: *getBufferedUUID node:internal/crypto/random:387:25
+     58    0.0%    0.1%  LazyCompile: *getOffsetPath /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:128:18
+     58    0.0%    0.1%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/util/nestedMap.js:149:26
+     56    0.0%    0.0%  LazyCompile: *StackCursor /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:76:16
+     55    0.0%    0.0%  LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+     55    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:215:35
+     54    0.0%    0.0%  LazyCompile: *compose /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/genericFieldKind.js:18:18
+     53    0.0%    0.0%  LazyCompile: *encode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeCodecs.js:163:17
+     53    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeCodecs.js:101:62
+     52    0.0%    0.0%  LazyCompile: *track /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:114:10
+     50    0.0%    0.0%  LazyCompile: *pruneFieldMap /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:331:18
+     50    0.0%    0.0%  LazyCompile: *keys /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:46:9
+     47    0.0%    0.0%  LazyCompile: *enterField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:145:23
+     46    0.0%    0.0%  LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+     46    0.0%    0.0%  LazyCompile: *cursorForMapTreeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/mapTreeCursor.js:21:31
+     46    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/uncompressedEncode.js:44:37
+     45    0.0%    0.0%  LazyCompile: *composeBuildsAndDestroys /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:358:34
+     44    0.0%    0.0%  LazyCompile: *decode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/genericFieldKindCodecs.js:24:17
+     41    0.0%    0.0%  LazyCompile: *submit /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:113:11
+     41    0.0%    0.0%  LazyCompile: *forRange /Users/danlehen/gh/f1/node_modules/.pnpm/@tylerbu+sorted-btree-es6@1.8.0/node_modules/@tylerbu/sorted-btree-es6/b+tree.js:1290:13
+     41    0.0%    0.0%  LazyCompile: *decodeBuilds /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeCodecs.js:114:26
+     39    0.0%    0.0%  LazyCompile: *rebaseOnto /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:320:15
+     37    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:714:40
+     36    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:19:79
+     36    0.0%    0.0%  LazyCompile: *entries /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:65:12
+     35    0.0%    0.0%  LazyCompile: *afterReplace /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:567:25
+     35    0.0%    0.0%  LazyCompile: *LazyValueField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:238:16
+     34    0.0%    0.0%  LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+     34    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:64:56
+     33    0.0%    0.0%  LazyCompile: *stackTreeNodeCursor /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:18:29
+     32    0.0%    0.0%  LazyCompile: *sequenceIdComparator /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManagerFormat.js:23:30
+     32    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:363:82
+     31    0.0%    0.0%  LazyCompile: *nodeDataToMapTree /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/toMapTree.js:69:27
+     31    0.0%    0.0%  LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:63:9
+     31    0.0%    0.0%  LazyCompile: *data /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeChangeCodecs.js:14:13
+     30    0.0%    0.0%  LazyCompile: *replace /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:592:20
+     30    0.0%    0.0%  LazyCompile: *intoDelta /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/genericFieldKind.js:72:16
+     30    0.0%    0.0%  LazyCompile: *get parent /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:794:15
+     29    0.0%    0.0%  LazyCompile: *getPossibleTypes /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/toMapTree.js:253:26
+     29    0.0%    0.0%  LazyCompile: *getParent /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:349:14
+     29    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+     28    0.0%    0.0%  LazyCompile: *measure /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/sampledTelemetryHelper.js:58:12
+     28    0.0%    0.0%  LazyCompile: *intoDelta /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:470:19
+     28    0.0%    0.0%  LazyCompile: *internalizePath /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:160:20
+     28    0.0%    0.0%  LazyCompile: *forEachNode /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/cursor.js:105:21
+     28    0.0%    0.0%  LazyCompile: *coupleNodes /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:266:16
+     27    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:86:79
+     27    0.0%    0.0%  LazyCompile: *decode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecoding.js:189:11
+     26    0.0%    0.0%  LazyCompile: *getFieldLength /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:271:19
+     26    0.0%    0.0%  LazyCompile: *exitField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:148:22
+     26    0.0%    0.0%  LazyCompile: *enterField /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:661:23
+     25    0.0%    0.0%  LazyCompile: *readStream /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkCodecUtilities.js:91:20
+     25    0.0%    0.0%  LazyCompile: *moveChildren /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:329:17
+     25    0.0%    0.0%  LazyCompile: *getFieldPathForEditing /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:146:27
+     25    0.0%    0.0%  LazyCompile: *exitNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:142:21
+     24    0.0%    0.0%  LazyCompile: *optionalFieldIntoDelta /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:385:32
+     24    0.0%    0.0%  LazyCompile: *chunkFieldSingle /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/chunkTree.js:109:26
+     24    0.0%    0.0%  LazyCompile: *beforeReplace /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:542:26
+     24    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/treeCheckout.js:104:33
+     23    0.0%    0.0%  LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+     23    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/default-schema/index.js:9:80
+     23    0.0%    0.0%  LazyCompile: *createEntry /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/detachedFieldIndex.js:94:16
+     22    0.0%    0.0%  LazyCompile: *free /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:68:17
+     22    0.0%    0.0%  LazyCompile: *exitField /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:664:22
+     21    0.0%    0.0%  LazyCompile: *getRevInfoFromTaggedChanges /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:751:37
+     21    0.0%    0.0%  LazyCompile: *getMapTreeField /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/mapTree.js:11:25
+     21    0.0%    0.0%  LazyCompile: *firstNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:213:14
+     21    0.0%    0.0%  LazyCompile: *dispatch /Users/danlehen/gh/f1/packages/dds/tree/dist/codec/discriminatedUnions.js:80:13
+     20    0.0%    0.0%  LazyCompile: *pruneGenericChange /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/genericFieldKind.js:128:28
+     20    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:47:81
+     19    0.0%    0.0%  LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/util/nestedMap.js:202:8
+     19    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:54:86
+     19    0.0%    0.0%  LazyCompile: *addFieldData /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:627:22
+     19    0.0%    0.0%  LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+     18    0.0%    0.0%  LazyCompile: *clear /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:328:10
+     18    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:487:74
+     18    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/cursor.js:80:25
+     17    0.0%    0.0%  LazyCompile: *trimTrunk /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManager.js:171:14
+     17    0.0%    0.0%  LazyCompile: *BasicChunkCursor /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:87:16
+     17    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/context.js:104:31
+     16    0.0%    0.0%  LazyCompile: *enterField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:315:15
+     16    0.0%    0.0%  LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+     16    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:217:160
+     16    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:93:16
+     15    0.0%    0.0%  LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:358:10
+     15    0.0%    0.0%  LazyCompile: *getMinSeq /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:264:14
+     15    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:80:90
+     14    0.0%    0.0%  LazyCompile: *getNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:396:12
+     14    0.0%    0.0%  LazyCompile: *getEntry /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/detachedFieldIndex.js:82:13
+     14    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:56:98
+     14    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:50:83
+     14    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:24:85
+     14    0.0%    0.0%  LazyCompile: *forEachField /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/cursor.js:64:22
+     13    0.0%    0.0%  LazyCompile: *locate /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:91:11
+     13    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:29:89
+     13    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:411:20
+     13    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:45:89
+     13    0.0%    0.0%  LazyCompile: *create /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:617:19
+     13    0.0%    0.0%  LazyCompile: *LazySequence /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:153:16
+     12    0.0%    0.0%  LazyCompile: *getCachedUpdatedDetachedField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/utilities.js:49:39
+     12    0.0%    0.0%  LazyCompile: *get type /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:264:13
+     12    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:25:84
+     12    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/typed-schema/index.js:12:84
+     12    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:27:80
+     12    0.0%    0.0%  LazyCompile: *forget /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:99:11
+     12    0.0%    0.0%  LazyCompile: *create /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:77:19
+     11    0.0%    0.0%  LazyCompile: *seekNodes /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:281:14
+     11    0.0%    0.0%  LazyCompile: *readStreamIdentifier /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js:47:30
+     11    0.0%    0.0%  LazyCompile: *prune /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:339:12
+     11    0.0%    0.0%  LazyCompile: *getBidirectionalMaps /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:103:38
+     11    0.0%    0.0%  LazyCompile: *get type /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:416:13
+     11    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/schema-stored/index.js:32:81
+     11    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/revertible/index.js:11:83
+     11    0.0%    0.0%  LazyCompile: *encode /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeChangeCodecs.js:28:17
+     11    0.0%    0.0%  LazyCompile: *assertValidRange /Users/danlehen/gh/f1/packages/dds/tree/dist/util/utils.js:189:26
+     11    0.0%    0.0%  LazyCompile: *assertNonNegativeSafeInteger /Users/danlehen/gh/f1/packages/dds/tree/dist/util/utils.js:196:38
+     10    0.0%    0.0%  LazyCompile: *set /Users/danlehen/gh/f1/node_modules/.pnpm/@tylerbu+sorted-btree-es6@1.8.0/node_modules/@tylerbu/sorted-btree-es6/b+tree.js:1200:8
+     10    0.0%    0.0%  LazyCompile: *get value /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:410:14
+     10    0.0%    0.0%  LazyCompile: *get chunkStart /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:443:19
+     10    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:15:87
+     10    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+     10    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/index.js:28:82
+     10    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:151:80
+     10    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/common/client-utils/dist/indexNode.js:17:81
+     10    0.0%    0.0%  LazyCompile: *c /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecoding.js:30:6
+     10    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:223:16
+      9    0.0%    0.0%  LazyCompile: *toFieldKey /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/detachedFieldIndex.js:68:15
+      9    0.0%    0.0%  LazyCompile: *isEmpty /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/genericFieldKind.js:87:14
+      9    0.0%    0.0%  LazyCompile: *get serializer /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/sharedObject.js:393:19
+      9    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:46:88
+      9    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:93:85
+      9    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:46:88
+      8    0.0%    0.0%  LazyCompile: *getPairOrNextLower /Users/danlehen/gh/f1/node_modules/.pnpm/@tylerbu+sorted-btree-es6@1.8.0/node_modules/@tylerbu/sorted-btree-es6/b+tree.js:1166:23
+      8    0.0%    0.0%  LazyCompile: *get boxedContent /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:258:21
+      8    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/runtime/runtime-definitions/dist/index.js:9:79
+      8    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:23:78
+      8    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:13:80
+      8    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:41:82
+      8    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:14:79
+      8    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:103:84
+      8    0.0%    0.0%  LazyCompile: *generateId /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeFamily.js:723:15
+      8    0.0%    0.0%  LazyCompile: *deaggregateChunks /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecoding.js:67:27
+      8    0.0%    0.0%  LazyCompile: *assertValidIndex /Users/danlehen/gh/f1/packages/dds/tree/dist/util/utils.js:179:26
+      7    0.0%    0.0%  LazyCompile: *tryAdd /Users/danlehen/gh/f1/packages/dds/tree/dist/util/nestedMap.js:191:11
+      7    0.0%    0.0%  LazyCompile: *offsetDetachId /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/deltaUtil.js:68:24
+      7    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:66:90
+      7    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:57:85
+      7    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/index.js:24:87
+      7    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/index.js:15:88
+      7    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:61:89
+      7    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:63:81
+      7    0.0%    0.0%  LazyCompile: *exitNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:239:13
+      7    0.0%    0.0%  LazyCompile: *exitField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:259:14
+      7    0.0%    0.0%  LazyCompile: *deleteFromNestedMap /Users/danlehen/gh/f1/packages/dds/tree/dist/util/nestedMap.js:111:29
+      7    0.0%    0.0%  LazyCompile: *aggregateChunks /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecoding.js:97:25
+      7    0.0%    0.0%  LazyCompile: *Cursor /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:230:16
+      6    0.0%    0.0%  LazyCompile: *getChecked /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkCodecUtilities.js:83:20
+      6    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:41:78
+      6    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:16:81
+      6    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:14:84
+      6    0.0%    0.0%  LazyCompile: *allocate /Users/danlehen/gh/f1/packages/dds/tree/dist/util/idAllocator.js:19:19
+      6    0.0%    0.0%  LazyCompile: *addFieldAsDetached /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:164:23
+      6    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/util/nestedMap.js:148:17
+      5    0.0%    0.0%  LazyCompile: *getFlexNode /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/flexNode.js:19:21
+      5    0.0%    0.0%  LazyCompile: *get length /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:99:15
+      5    0.0%    0.0%  LazyCompile: *get fieldIndex /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:422:19
+      5    0.0%    0.0%  LazyCompile: *get change /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:347:23
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:24:88
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/index.js:13:89
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:59:81
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:164:82
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:109:84
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/index.js:17:86
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:21:82
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:82:88
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:56:90
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:51:82
+      5    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:25:88
+      5    0.0%    0.0%  LazyCompile: *fixedPointVisitOfRoots /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:99:32
+      5    0.0%    0.0%  LazyCompile: *emit /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/eventEmitterWithErrorHandling.js:28:9
+      5    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManager.js:140:16
+      5    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:77:33
+      4    0.0%    0.0%  LazyCompile: *tryGetInfo /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/utils.js:142:24
+      4    0.0%    0.0%  LazyCompile: *get value /Users/danlehen/gh/f1/packages/common/core-utils/dist/lazy.js:30:14
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/index.js:11:90
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/typed-schema/index.js:10:73
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/index.js:11:82
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:62:88
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:25:85
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:18:84
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:92:80
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:28:85
+      4    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:105:83
+      4    0.0%    0.0%  LazyCompile: *emit node:events:461:44
+      4    0.0%    0.0%  LazyCompile: *a /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecoding.js:24:6
+      4    0.0%    0.0%  LazyCompile: *RegisterMap /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:15:16
+      3    0.0%    0.0%  LazyCompile: *reversePaths /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/utils.js:255:26
+      3    0.0%    0.0%  LazyCompile: *isAllowedValue /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/valueUtilities.js:57:24
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:49:85
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:27:84
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:111:86
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:48:80
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:45:79
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:20:83
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:27:88
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:85:84
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:10:78
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/common/container-definitions/dist/index.js:20:81
+      3    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/node_modules/.pnpm/@fluidframework+protocol-definitions@3.1.0-223007/node_modules/@fluidframework/protocol-definitions/dist/index.cjs:9:81
+      3    0.0%    0.0%  LazyCompile: *free /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:412:17
+      3    0.0%    0.0%  LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:117:9
+      2    0.0%    0.0%  LazyCompile: *resolve node:path:1091:10
+      2    0.0%    0.0%  LazyCompile: *prepareForEdit /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/context.js:47:19
+      2    0.0%    0.0%  LazyCompile: *getField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:400:13
+      2    0.0%    0.0%  LazyCompile: *get type /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:319:13
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:57:86
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:20:89
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/typed-schema/index.js:19:81
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/typed-schema/index.js:14:86
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:156:79
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/events/index.js:9:83
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:42:88
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:15:85
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:31:100
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:11:85
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:97:100
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:94:82
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:55:100
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:53:78
+      2    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:39:81
+      2    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:103:30
+      2    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/utils.js:276:52
+      2    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/typed-schema/index.js:18:82
+      1    0.0%    0.0%  LazyCompile: *realpathSync node:fs:2577:22
+      1    0.0%    0.0%  LazyCompile: *randomFillSync node:internal/crypto/random:118:24
+      1    0.0%    0.0%  LazyCompile: *on /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:91:7
+      1    0.0%    0.0%  LazyCompile: *getPathFromURLPosix node:internal/url:1379:29
+      1    0.0%    0.0%  LazyCompile: *get value /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:258:14
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/runtime/id-compressor/dist/index.js:18:86
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:21:83
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/typed-schema/index.js:18:82
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/index.js:39:79
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:47:81
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/default-schema/index.js:14:79
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/index.js:12:87
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:52:85
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:46:90
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/index.js:18:82
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/revertible/index.js:9:84
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:28:82
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:22:85
+      1    0.0%    0.0%  LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:21:84
+      1    0.0%    0.0%  LazyCompile: *enterNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:279:14
+      1    0.0%    0.0%  LazyCompile: *encodeSequence /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/uncompressedEncode.js:42:24
+      1    0.0%    0.0%  LazyCompile: *decodeFieldChangesFromJson /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeCodecs.js:69:40
+      1    0.0%    0.0%  LazyCompile: *cursor /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:42:11
+      1    0.0%    0.0%  LazyCompile: *__classPrivateFieldGet /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:12:80
+      1    0.0%    0.0%  LazyCompile: *Visit /Users/danlehen/gh/f1/node_modules/.pnpm/@sinclair+typebox@0.29.6/node_modules/@sinclair/typebox/typebox.js:1428:19
+      1    0.0%    0.0%  LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/genericFieldKindCodecs.js:18:40
+      1    0.0%    0.0%  Function: ^updateChildren node:internal/modules/cjs/loader:206:24
+      1    0.0%    0.0%  Function: ^tryInferInputContext /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/optional-field/optionalField.js:90:30
+      1    0.0%    0.0%  Function: ^tryGetFromNestedMap /Users/danlehen/gh/f1/packages/dds/tree/dist/util/nestedMap.js:67:29
+      1    0.0%    0.0%  Function: ^treeStatusFromAnchorCache /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/utilities.js:29:35
+      1    0.0%    0.0%  Function: ^send /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/logger.js:344:9
+      1    0.0%    0.0%  Function: ^referenceAdded /Users/danlehen/gh/f1/packages/dds/tree/dist/util/referenceCounting.js:16:19
+      1    0.0%    0.0%  Function: ^readPackage node:internal/modules/cjs/loader:364:21
+      1    0.0%    0.0%  Function: ^isPosixPathSeparator node:path:56:30
+      1    0.0%    0.0%  Function: ^initNestedCursor /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:367:21
+      1    0.0%    0.0%  Function: ^get serializer /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/sharedObject.js:393:19
+      1    0.0%    0.0%  Function: ^get mode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:179:13
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/runtime/id-compressor/dist/index.js:18:86
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:80:90
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:55:86
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/util/index.js:24:88
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/typed-schema/index.js:14:86
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/index.js:109:84
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/revertible/index.js:11:83
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/index.js:18:84
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:56:90
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:50:83
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:45:89
+      1    0.0%    0.0%  Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/core/index.js:103:84
+      1    0.0%    0.0%  Function: ^firstNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/basicChunk.js:322:14
+      1    0.0%    0.0%  Function: ^equalSequenceIds /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManagerFormat.js:27:26
+      1    0.0%    0.0%  Function: ^enterNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/treeCursorUtils.js:106:14
+      1    0.0%    0.0%  Function: ^create /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:617:19
+      1    0.0%    0.0%  Function: ^brand /Users/danlehen/gh/f1/packages/dds/tree/dist/util/brand.js:87:15
+      1    0.0%    0.0%  Function: ^addSequencedChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManager.js:344:23
+      1    0.0%    0.0%  Function: ^<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeCodecs.js:101:62
+      1    0.0%    0.0%  Function: ^<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js:14:39
+      1    0.0%    0.0%  Function: ^<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:77:33
+      1    0.0%    0.0%  Function: ^#updateContext node:internal/url:649:17
+
+ [C++]:
+   ticks  total  nonlib   name
+  100899   85.8%   87.1%  T node::builtins::BuiltinLoader::GetCannotBeRequired()
+   1126    1.0%    1.0%  T _semaphore_destroy
+    367    0.3%    0.3%  T _task_get_special_port
+    288    0.2%    0.2%  T _task_policy_set
+    201    0.2%    0.2%  t _udec
+    170    0.1%    0.1%  T __simple_asl_send
+    143    0.1%    0.1%  T __os_semaphore_create
+     85    0.1%    0.1%  T _mach_port_get_attributes
+     80    0.1%    0.1%  T __kernelrpc_mach_port_get_refs
+     57    0.0%    0.0%  T _issetugid
+     56    0.0%    0.0%  T _munmap
+     44    0.0%    0.0%  T _mach_right_send_release
+     43    0.0%    0.0%  t std::__1::__hash_table<unsigned long, std::__1::hash<unsigned long>, std::__1::equal_to<unsigned long>, std::__1::allocator<unsigned long>>::remove(std::__1::__hash_const_iterator<std::__1::__hash_node<unsigned long, void*>*>)
+     37    0.0%    0.0%  T __kernelrpc_vm_remap
+     35    0.0%    0.0%  T _guarded_close_np
+     24    0.0%    0.0%  T __simple_sappend
+     16    0.0%    0.0%  T _mach_vm_map
+      8    0.0%    0.0%  t __pthread_mutex_check_init_slow
+      7    0.0%    0.0%  t std::__1::basic_ostream<char, std::__1::char_traits<char>>& std::__1::__put_character_sequence<char, std::__1::char_traits<char>>(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, char const*, unsigned long)
+      7    0.0%    0.0%  T __kernelrpc_mach_port_set_context
+      6    0.0%    0.0%  T _mig_get_special_reply_port
+      5    0.0%    0.0%  t void node::Buffer::(anonymous namespace)::StringSlice<(node::encoding)1>(v8::FunctionCallbackInfo<v8::Value> const&)
+      5    0.0%    0.0%  t non-virtual thunk to v8::internal::PointersUpdatingVisitor::~PointersUpdatingVisitor()
+      4    0.0%    0.0%  t void std::__1::__tree_balance_after_insert<std::__1::__tree_node_base<void*>*>(std::__1::__tree_node_base<void*>*, std::__1::__tree_node_base<void*>*)
+      4    0.0%    0.0%  t std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>> std::__1::__pad_and_output<char, std::__1::char_traits<char>>(std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>>, char const*, char const*, char const*, std::__1::ios_base&, char)
+      4    0.0%    0.0%  T _os_unfair_recursive_lock_trylock
+      3    0.0%    0.0%  T _task_restartable_ranges_register
+      3    0.0%    0.0%  T _close$NOCANCEL
+      3    0.0%    0.0%  T ___pthread_init
+      2    0.0%    0.0%  t __simple_asl_escape_val
+      1    0.0%    0.0%  t std::__1::deque<unsigned long, std::__1::allocator<unsigned long>>::__add_back_capacity()
+      1    0.0%    0.0%  t std::__1::__tree<int, std::__1::less<int>, std::__1::allocator<int>>::destroy(std::__1::__tree_node<int, void*>*)
+      1    0.0%    0.0%  t std::__1::__shared_ptr_pointer<char*, std::__1::default_delete<char []>, std::__1::allocator<char>>::__on_zero_shared_weak()
+      1    0.0%    0.0%  t non-virtual thunk to node::PerIsolatePlatformData::NonNestableDelayedTasksEnabled() const
+      1    0.0%    0.0%  t __pthread_mutex_droplock
+      1    0.0%    0.0%  t __pthread_cond_updateval
+      1    0.0%    0.0%  t __pthread_bsdthread_init
+      1    0.0%    0.0%  T node::loader::ModuleWrap::New(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  T node::Environment::PrintSyncTrace() const
+      1    0.0%    0.0%  T _pthread_setschedparam
+      1    0.0%    0.0%  T _pthread_rwlock_wrlock
+      1    0.0%    0.0%  T _pthread_cond_signal
+      1    0.0%    0.0%  T _pthread_attr_setdetachstate
+      1    0.0%    0.0%  T __pthread_wqthread
+
+ [Summary]:
+   ticks  total  nonlib   name
+  11549    9.8%   10.0%  JavaScript
+  103746   88.2%   89.6%  C++
+  20499   17.4%   17.7%  GC
+   1859    1.6%          Shared libraries
+    496    0.4%          Unaccounted
+
+ [C++ entry points]:
+   ticks    cpp   total   name
+  84257   99.7%   71.6%  T node::builtins::BuiltinLoader::GetCannotBeRequired()
+     53    0.1%    0.0%  T _issetugid
+     42    0.0%    0.0%  T __simple_asl_send
+     34    0.0%    0.0%  t _udec
+     33    0.0%    0.0%  T __os_semaphore_create
+     26    0.0%    0.0%  T _task_get_special_port
+     17    0.0%    0.0%  T _guarded_close_np
+     11    0.0%    0.0%  T __simple_sappend
+      8    0.0%    0.0%  t __pthread_mutex_check_init_slow
+      7    0.0%    0.0%  t std::__1::basic_ostream<char, std::__1::char_traits<char>>& std::__1::__put_character_sequence<char, std::__1::char_traits<char>>(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, char const*, unsigned long)
+      7    0.0%    0.0%  T __kernelrpc_mach_port_set_context
+      5    0.0%    0.0%  t void node::Buffer::(anonymous namespace)::StringSlice<(node::encoding)1>(v8::FunctionCallbackInfo<v8::Value> const&)
+      5    0.0%    0.0%  T _task_policy_set
+      4    0.0%    0.0%  t void std::__1::__tree_balance_after_insert<std::__1::__tree_node_base<void*>*>(std::__1::__tree_node_base<void*>*, std::__1::__tree_node_base<void*>*)
+      4    0.0%    0.0%  t std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>> std::__1::__pad_and_output<char, std::__1::char_traits<char>>(std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>>, char const*, char const*, char const*, std::__1::ios_base&, char)
+      4    0.0%    0.0%  T _mach_port_get_attributes
+      3    0.0%    0.0%  T _task_restartable_ranges_register
+      3    0.0%    0.0%  T _mach_vm_map
+      2    0.0%    0.0%  T node::loader::ModuleWrap::Evaluate(v8::FunctionCallbackInfo<v8::Value> const&)
+      2    0.0%    0.0%  T _os_unfair_recursive_lock_trylock
+      1    0.0%    0.0%  t non-virtual thunk to v8::internal::PointersUpdatingVisitor::~PointersUpdatingVisitor()
+      1    0.0%    0.0%  t __simple_asl_escape_val
+      1    0.0%    0.0%  T node::loader::ModuleWrap::New(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  T node::Environment::PrintSyncTrace() const
+      1    0.0%    0.0%  T _close$NOCANCEL
+
+ [Bottom up (heavy) profile]:
+  Note: percentage shows a share of a particular caller in the total
+  amount of its parent calls.
+  Callers occupying less than 1.0% are not shown.
+
+   ticks parent  name
+  100899   85.8%  T node::builtins::BuiltinLoader::GetCannotBeRequired()
+  23332   23.1%    T node::builtins::BuiltinLoader::GetCannotBeRequired()
+  18187   77.9%      LazyCompile: *LazyEntity /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:58:16
+  10103   55.6%        LazyCompile: *LazyValueField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:238:16
+   6187   61.2%          LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+   6186  100.0%            LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+   3915   38.8%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:363:82
+   3915  100.0%            LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+   4148   22.8%        LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+   4148  100.0%          LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+   4148  100.0%            LazyCompile: *makeTree /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:31:18
+   3935   21.6%        LazyCompile: *LazySequence /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:153:16
+   3935  100.0%          LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+   2703   68.7%            LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+   1230   31.3%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:411:20
+   1144    4.9%      LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+   1107   96.8%        LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+   1044   94.3%          LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+   1044  100.0%            LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+     62    5.6%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:64:56
+     62  100.0%            LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+     37    3.2%        LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+     37  100.0%          LazyCompile: *measure /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/sampledTelemetryHelper.js:58:12
+     37  100.0%            LazyCompile: *processFirstMessage /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:305:24
+    501    2.1%      LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+    500   99.8%        LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+    500  100.0%          LazyCompile: *makeTree /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:31:18
+    500  100.0%            LazyCompile: *boxedAt /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:105:12
+    388    1.7%      T node::builtins::BuiltinLoader::GetCannotBeRequired()
+    198   51.0%        LazyCompile: *LazyEntity /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:58:16
+    104   52.5%          LazyCompile: *LazyValueField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:238:16
+     56   53.8%            LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+     48   46.2%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:363:82
+     58   29.3%          LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+     58  100.0%            LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+     36   18.2%          LazyCompile: *LazySequence /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:153:16
+     36  100.0%            LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+     98   25.3%        LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+     98  100.0%          LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+     98  100.0%            LazyCompile: *makeTree /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:31:18
+     21    5.4%        LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+     18   85.7%          LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+     18  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+      3   14.3%          LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+      3  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+      9    2.3%        LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:215:35
+      9  100.0%          LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+      9  100.0%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+      8    2.1%        LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:84:31
+      4   50.0%          LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+      4  100.0%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+      3   37.5%          LazyCompile: *boxedAt /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:105:12
+      3  100.0%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:217:160
+      1   12.5%          LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+      1  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+      6    1.5%        LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+      6  100.0%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeEditBuilder.js:15:36
+      6  100.0%            LazyCompile: *set content /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:250:16
+    306    1.3%      LazyCompile: *create /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:77:19
+    306  100.0%        LazyCompile: *processBuilds /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:234:23
+    306  100.0%          LazyCompile: *visitDelta /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:52:20
+    306  100.0%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/treeCheckout.js:75:35
+    270    1.2%      LazyCompile: *aggregateChunks /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/chunked-forest/codec/chunkDecoding.js:97:25
+    270  100.0%        LazyCompile: *decode /Users/danlehen/gh/f1/packages/dds/tree/dist/codec/versioned/codec.js:18:17
+    270  100.0%          LazyCompile: *decodeBuilds /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeCodecs.js:114:26
+    270  100.0%            LazyCompile: *data /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeChangeCodecs.js:14:13
+  19692   19.5%    LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:84:31
+  14141   71.8%      LazyCompile: *boxedAt /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:105:12
+   7613   53.8%        LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:217:160
+   7613  100.0%          LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:63:9
+   7613  100.0%            LazyCompile: *replace /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:592:20
+   4971   35.2%        LazyCompile: *get boxedContent /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:258:21
+   4971  100.0%          LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+   4971  100.0%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   1556   11.0%        LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+   1556  100.0%          T node::builtins::BuiltinLoader::GetCannotBeRequired()
+   1555   99.9%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   2468   12.5%      LazyCompile: *getFieldPathForEditing /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:146:27
+   2468  100.0%        LazyCompile: *set content /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:250:16
+   2468  100.0%          LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+   2468  100.0%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   1753    8.9%      LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+   1744   99.5%        T node::builtins::BuiltinLoader::GetCannotBeRequired()
+   1744  100.0%          LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   1744  100.0%            Function: ^doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+    906    4.6%      LazyCompile: *get length /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:99:15
+    905   99.9%        LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:411:20
+    905  100.0%          T node::builtins::BuiltinLoader::GetCannotBeRequired()
+    905  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+    213    1.1%      LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+    212   99.5%        LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+    212  100.0%          Function: ^doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+    212  100.0%            LazyCompile: ~runBenchmarkSync /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:150:26
+   7929    7.9%    LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/context.js:38:44
+   7929  100.0%      LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:63:9
+   7929  100.0%        LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:117:9
+   7929  100.0%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/treeCheckout.js:75:35
+   7929  100.0%            LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+   6004    6.0%    LazyCompile: *LazyEntity /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:58:16
+   2843   47.4%      LazyCompile: *LazyValueField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:238:16
+   1425   50.1%        LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+   1424   99.9%          LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+   1424  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+   1418   49.9%        LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:363:82
+   1418  100.0%          LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+   1413   99.6%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   1625   27.1%      LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+   1625  100.0%        LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+   1625  100.0%          LazyCompile: *makeTree /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:31:18
+   1625  100.0%            LazyCompile: *boxedAt /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:105:12
+   1532   25.5%      LazyCompile: *LazySequence /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:153:16
+   1532  100.0%        LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+   1061   69.3%          LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+   1060   99.9%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+    465   30.4%          LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:411:20
+    465  100.0%            T node::builtins::BuiltinLoader::GetCannotBeRequired()
+   5490    5.4%    LazyCompile: *processFirstMessage /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:305:24
+   5425   98.8%      LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   5425  100.0%        Function: ^doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+   5425  100.0%          LazyCompile: ~runBenchmarkSync /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:150:26
+   5425  100.0%            LazyCompile: ~runBenchmark /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:30:28
+   1468    1.5%    LazyCompile: *getFieldPathForEditing /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:146:27
+   1468  100.0%      LazyCompile: *set content /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:250:16
+   1468  100.0%        LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+   1468  100.0%          LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   1468  100.0%            Function: ^doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+   1188    1.2%    LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+   1124   94.6%      LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+   1083   96.4%        LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+   1022   94.4%          LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+    964   94.3%            LazyCompile: *recursivelyReplace /Users/danlehen/gh/f1/packages/dds/shared-object-base/dist/serializer.js:105:23
+     35    3.4%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:64:56
+     23    2.3%            LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+     32    3.0%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:64:56
+     32  100.0%            LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+     29    2.7%          LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+     29  100.0%            LazyCompile: *measure /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/sampledTelemetryHelper.js:58:12
+     23    2.0%        LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+     23  100.0%          LazyCompile: *measure /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/sampledTelemetryHelper.js:58:12
+     23  100.0%            LazyCompile: *processFirstMessage /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:305:24
+     18    1.6%        LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:64:56
+     18  100.0%          LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+     18  100.0%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeEditBuilder.js:15:36
+     52    4.4%      LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:64:56
+     52  100.0%        LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+     52  100.0%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeEditBuilder.js:15:36
+     52  100.0%            LazyCompile: *set content /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:250:16
+     12    1.0%      LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+     12  100.0%        LazyCompile: *measure /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/sampledTelemetryHelper.js:58:12
+     12  100.0%          LazyCompile: *processFirstMessage /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:305:24
+     12  100.0%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+   1049    1.0%    LazyCompile: *track /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/anchorSet.js:114:10
+    467   44.5%      LazyCompile: *makeTree /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:31:18
+    467  100.0%        LazyCompile: *boxedAt /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:105:12
+    203   43.5%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:217:160
+    203  100.0%            LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:63:9
+    189   40.5%          LazyCompile: *get boxedContent /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:258:21
+    189  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+     75   16.1%          LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+     75  100.0%            T node::builtins::BuiltinLoader::GetCannotBeRequired()
+    390   37.2%      LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+    183   46.9%        LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+    183  100.0%          LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+    182   99.5%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+    145   37.2%        LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+    143   98.6%          LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+    143  100.0%            T node::builtins::BuiltinLoader::GetCannotBeRequired()
+      2    1.4%          Function: ^get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:411:20
+      2  100.0%            T node::builtins::BuiltinLoader::GetCannotBeRequired()
+     61   15.6%        LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:411:20
+     61  100.0%          T node::builtins::BuiltinLoader::GetCannotBeRequired()
+     61  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+    192   18.3%      LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:363:82
+    192  100.0%        LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+    191   99.5%          LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+    191  100.0%            Function: ^doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+
+   1497    1.3%  /usr/lib/system/libsystem_malloc.dylib
+    599   40.0%    T node::builtins::BuiltinLoader::GetCannotBeRequired()
+    501   83.6%      T node::builtins::BuiltinLoader::GetCannotBeRequired()
+    252   50.3%        LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+    252  100.0%          LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+    252  100.0%            LazyCompile: *makeTree /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:31:18
+    184   36.7%        LazyCompile: *LazyEntity /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:58:16
+     97   52.7%          LazyCompile: *LazyValueField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:238:16
+     50   51.5%            LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+     47   48.5%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:363:82
+     45   24.5%          LazyCompile: *LazySequence /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:153:16
+     45  100.0%            LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+     42   22.8%          LazyCompile: *LazyTreeNode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:75:16
+     42  100.0%            LazyCompile: *LazyLeaf /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:314:16
+     16    3.2%        LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+     15   93.8%          LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+     15  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+      1    6.3%          LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+      1  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+     16    3.2%        LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:215:35
+     16  100.0%          LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+     16  100.0%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+     10    2.0%        LazyCompile: *forEachNode /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/cursor.js:105:21
+     10  100.0%          LazyCompile: *encode /Users/danlehen/gh/f1/packages/dds/tree/dist/codec/versioned/codec.js:13:17
+     10  100.0%            LazyCompile: *encode /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/modular-schema/modularChangeCodecs.js:163:17
+      6    1.2%        LazyCompile: *getCachedUpdatedDetachedField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/utilities.js:49:39
+      6  100.0%          LazyCompile: *getFieldPathForEditing /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:146:27
+      6  100.0%            LazyCompile: *set content /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:250:16
+      6    1.2%        LazyCompile: *applyChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:97:16
+      6  100.0%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/sharedTreeEditBuilder.js:15:36
+      6  100.0%            LazyCompile: *set content /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:250:16
+     29    4.8%      LazyCompile: *create /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:77:19
+     29  100.0%        LazyCompile: *processBuilds /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:234:23
+     29  100.0%          LazyCompile: *visitDelta /Users/danlehen/gh/f1/packages/dds/tree/dist/core/tree/visitDelta.js:52:20
+     29  100.0%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/treeCheckout.js:75:35
+     16    2.7%      LazyCompile: *moveCursorToPath /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/object-forest/objectForest.js:197:21
+     16  100.0%        LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:84:31
+     10   62.5%          LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+     10  100.0%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+      5   31.3%          LazyCompile: *tryGetField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:109:16
+      5  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+      1    6.3%          LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+      1  100.0%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:423:14
+     14    2.3%      LazyCompile: *LazyEntity /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:58:16
+     11   78.6%        LazyCompile: *LazyValueField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:238:16
+     11  100.0%          LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyNode.js:363:82
+     11  100.0%            LazyCompile: *set /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:147:12
+      3   21.4%        LazyCompile: *LazySequence /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:153:16
+      3  100.0%          LazyCompile: *makeField /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyField.js:44:19
+      2   66.7%            LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:411:20
+      1   33.3%            LazyCompile: *getSequenceField /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:207:26
+      7    1.2%      LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/context.js:38:44
+      7  100.0%        LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:63:9
+      7  100.0%          LazyCompile: *emit /Users/danlehen/gh/f1/packages/dds/tree/dist/events/events.js:117:9
+      7  100.0%            LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree/treeCheckout.js:75:35
+      6    1.0%      LazyCompile: *rebaseBranch /Users/danlehen/gh/f1/packages/dds/tree/dist/core/rebase/utils.js:11:22
+      6  100.0%        LazyCompile: *rebaseOnto /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/branch.js:320:15
+      6  100.0%          LazyCompile: *addSequencedChange /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManager.js:344:23
+      6  100.0%            LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+      6    1.0%      LazyCompile: *<anonymous> /Users/danlehen/gh/f1/packages/dds/tree/dist/feature-libraries/flex-tree/lazyEntity.js:84:31
+      6  100.0%        LazyCompile: *get /Users/danlehen/gh/f1/packages/dds/tree/dist/simple-tree/proxies.js:139:12
+      5   83.3%          LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+      5  100.0%            Function: ^doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+      1   16.7%          Function: ^benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+      1  100.0%            LazyCompile: ~doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+    361   24.1%    LazyCompile: *processFirstMessage /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:305:24
+    360   99.7%      LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+    360  100.0%        Function: ^doBatch /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:169:17
+    360  100.0%          LazyCompile: ~runBenchmarkSync /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:150:26
+    360  100.0%            LazyCompile: ~runBenchmark /Users/danlehen/gh/f1/node_modules/.pnpm/@fluid-tools+benchmark@0.48.0/node_modules/@fluid-tools/benchmark/dist/runBenchmark.js:30:28
+     32    2.1%    LazyCompile: *trimTrunk /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/editManager.js:171:14
+     32  100.0%      LazyCompile: *processCore /Users/danlehen/gh/f1/packages/dds/tree/dist/shared-tree-core/sharedTreeCore.js:132:16
+     32  100.0%        LazyCompile: *measure /Users/danlehen/gh/f1/packages/utils/telemetry-utils/dist/sampledTelemetryHelper.js:58:12
+     32  100.0%          LazyCompile: *processFirstMessage /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:305:24
+     31   96.9%            LazyCompile: *benchmarkFn /Users/danlehen/gh/f1/examples/benchmarks/tablebench/dist/test/bench/table.bench.js:63:26
+      1    3.1%            Function: ^processAllMessages /Users/danlehen/gh/f1/packages/runtime/test-runtime-utils/dist/mocks.js:349:23
+

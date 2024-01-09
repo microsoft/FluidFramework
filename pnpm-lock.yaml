@@ -1606,6 +1606,61 @@ importers:
       webpack-hot-middleware: 2.25.4
       webpack-merge: 5.10.0
 
+  examples/benchmarks/tablebench:
+    specifiers:
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
+      '@fluid-tools/benchmark': ^0.48.0
+      '@fluidframework/azure-client': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': 0.29.0-225750
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.2.0
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-tools': ^1.0.195075
+      '@fluidframework/tree': workspace:~
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      typescript: ~5.1.6
+    dependencies:
+      '@fluid-internal/client-utils': link:../../../packages/common/client-utils
+      '@fluidframework/azure-client': link:../../../azure/packages/azure-client
+      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/matrix': link:../../../packages/dds/matrix
+      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
+      '@fluidframework/tree': link:../../../packages/dds/tree
+    devDependencies:
+      '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
+      '@fluid-tools/benchmark': 0.48.0
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.29.0-225750_@types+node@18.19.1
+      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
+      '@fluidframework/test-tools': 1.0.195075
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
   examples/client-logger/app-insights-logger:
     specifiers:
       '@fluid-experimental/react-inputs': workspace:~
@@ -15971,6 +16026,24 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluid-tools/version-tools/0.29.0-225750:
+    resolution: {integrity: sha512-zhnv/YF2nFl+QEUOtTerJ3qP/9xUPXVBl7zIL3v/hUv5W6jjT8u4wM00A6DcLgDFVKijsTl6bxTZcPuKp3j9Qg==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 2.3.10
+      '@oclif/plugin-commands': 3.0.7
+      '@oclif/plugin-help': 6.0.7
+      '@oclif/plugin-not-found': 3.0.4
+      '@oclif/plugin-plugins': 3.9.4
+      chalk: 2.4.2
+      semver: 7.5.4
+      table: 6.8.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@fluid-tools/webpack-fluid-loader/2.0.0-internal.8.0.0_wvskkfkvbt5crqa4uyjlq44kiy:
     resolution: {integrity: sha512-ucWfv1BoPMY2tsJ/bQZ+fCQYDo4MCMETNVnCAqdjhQnj59sVa4LbpidtqKaYsCZtDlLDn13+NkWqsPP6KA/piA==}
     dependencies:
@@ -16158,6 +16231,49 @@ packages:
       - webpack-cli
     dev: true
 
+  /@fluidframework/build-tools/0.29.0-225750_@types+node@18.19.1:
+    resolution: {integrity: sha512-IH5ZWmAeRpgzlXJ0OTEjHdGlJdO4PA48Odb3DN9hPYun8US0XcFesdFkwGh1yqNB2+4FGqJ7NfOdhyTgXdPh0Q==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.29.0-225750
+      '@fluidframework/bundle-size-tools': 0.29.0-225750
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.61.0_@types+node@18.19.1
+      async: 3.2.5
+      chalk: 2.4.2
+      cosmiconfig: 8.3.6_typescript@5.1.6
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.4
+      detect-indent: 6.1.0
+      find-up: 5.0.0
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      ignore: 5.3.0
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      picomatch: 2.3.1
+      replace-in-file: 6.3.5
+      rimraf: 4.4.1
+      semver: 7.5.4
+      sort-package-json: 1.57.0
+      ts-morph: 17.0.1
+      type-fest: 2.19.0
+      typescript: 5.1.6
+      yaml: 2.3.4
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
   /@fluidframework/build-tools/0.29.0_@types+node@18.19.1:
     resolution: {integrity: sha512-OJCaj/fzeBjfQeXVeoo4IsbVVj8zsXg+BRmkO3C0DfujIhc2XXsqG2Pd164DNH5rjMBmFzj9R50p0ZHVWXpUuQ==}
     engines: {node: '>=14.17.0'}
@@ -16289,6 +16405,22 @@ packages:
 
   /@fluidframework/bundle-size-tools/0.29.0:
     resolution: {integrity: sha512-+FM0oaL1uEnkUVxpuiSXCTSG0Rd/VgGtYFuc449xwUhxJS9rbRhbjYQhyAwx6BDstMAKicTq7i5xLF4srrug7w==}
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      pako: 2.1.0
+      typescript: 5.1.6
+      webpack: 5.89.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/bundle-size-tools/0.29.0-225750:
+    resolution: {integrity: sha512-53SYvkYn8orQuecoI5WUcx8/viy8SEloaha08LNQbGpQmc9pRhno9p857jbHwxtiWfJ5SrFQXtABNqC7ShYuPA==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
