@@ -62,7 +62,7 @@ export class OdspDelayLoadedDeltaStream {
 	private _relayServiceTenantAndSessionId: string | undefined;
 
 	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
-	// between label updates from the join session and the fluid signals. We could also receive stale data from join
+	// between label updates from the join session and the Fluid signals. We could also receive stale data from join
 	// session as that call is made at intervals, so we need to update with only most recent data.
 	private labelUpdateTimestamp: number = -1;
 
