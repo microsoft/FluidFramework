@@ -8,7 +8,6 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { ConnectionState as ConnectionState_2 } from '@fluidframework/container-definitions';
 import { ContainerErrorTypes } from '@fluidframework/container-definitions';
-import { DriverErrorTypes } from '@fluidframework/driver-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -63,7 +62,30 @@ export type DataObjectClass<T extends IFluidLoadable> = {
 // @public
 export const disposeSymbol: unique symbol;
 
-export { DriverErrorTypes }
+// @public
+export const DriverErrorTypes: {
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
