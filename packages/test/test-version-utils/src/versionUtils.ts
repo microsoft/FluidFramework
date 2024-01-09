@@ -309,13 +309,14 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 			primaryExport = pkgJson.exports;
 		} else {
 			const exp = pkgJson.exports["."];
-			console.log("testing string", exp, (pkgJson as any).version, typeof exp);
-			primaryExport =
-				typeof exp === "string"
-					? exp
-					: exp.require.default !== undefined
-					? exp.require.default
-					: exp.default;
+			console.log(
+				"testing string",
+				exp,
+				(pkgJson as any).version,
+				typeof exp,
+				(pkgJson as any).name,
+			);
+			primaryExport = typeof exp === "string" ? exp : exp.require.default;
 			if (primaryExport === undefined) {
 				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
 			}
