@@ -4,9 +4,7 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { ContainerErrorTypes } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DriverErrorTypes } from '@fluidframework/driver-definitions';
@@ -17,7 +15,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IConnection } from '@fluidframework/fluid-static';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
@@ -51,11 +49,27 @@ export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Requir
 // @public
 export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
-export { AttachState }
+// @public
+export enum AttachState {
+    Attached = "Attached",
+    Attaching = "Attaching",
+    Detached = "Detached"
+}
 
 export { ConnectionState }
 
-export { ContainerErrorTypes }
+// @alpha
+export const ContainerErrorTypes: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @alpha (undocumented)
+export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 export { ContainerSchema }
 
@@ -98,7 +112,8 @@ export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUni
 
 export { IConnection }
 
-export { ICriticalContainerError }
+// @public
+export type ICriticalContainerError = IErrorBase;
 
 // @public
 export interface IDisposable {
