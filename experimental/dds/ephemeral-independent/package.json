@@ -11,14 +11,21 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		"./alpha": {
+			"import": "./lib/index.js",
+			"require": "./dist/index.js"
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc --project ./tsconfig.esm.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -27,7 +34,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc"
+		"tsc": "tsc --project ./tsconfig.cjs.json && echo {\\\"module\\\": \\\"commonjs\\\"} > dist/package.json"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",

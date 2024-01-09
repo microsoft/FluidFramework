@@ -39,6 +39,8 @@ const initialCaret = { id: "", pos: 0 };
 dirImpl.add("caret", createValueManager(initialCaret));
 
 const fakeAdd = dirImpl.camera.z + dirImpl.cursor.x + dirImpl.caret.pos;
+
+// @ts-expect-error should error on typo detection
 console.log(dirImpl.curso.x); // error to highlight typo detection (proper typing in effect)
 
 // example of second add at existing path - results in union of types (should throw at runtime)

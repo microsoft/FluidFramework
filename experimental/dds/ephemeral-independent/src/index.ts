@@ -17,7 +17,6 @@ export type {
 	RoundTrippable,
 } from "./types.js";
 
-// eslint-disable-next-line import/no-internal-modules
 export { EphemeralIndependentDirectory } from "./independentDirectory/index.js";
 
 export {
