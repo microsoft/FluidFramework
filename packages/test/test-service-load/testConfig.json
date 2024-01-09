@@ -3,7 +3,7 @@
 		"ci": {
 			"opRatePerMin": 10,
 			"signalsPerMin": 10,
-			"futureOpRatePerMin": 2,
+			"futureOpRatePerMin": 0.5,
 			"progressIntervalMs": 15000,
 			"numClients": 120,
 			"totalSendCount": 10000,
@@ -58,7 +58,7 @@
 		},
 		"ci_frs": {
 			"opRatePerMin": 10,
-			"futureOpRatePerMin": 2,
+			"futureOpRatePerMin": 0.5,
 			"progressIntervalMs": 15000,
 			"numClients": 100,
 			"totalSendCount": 10000,
@@ -85,7 +85,7 @@
 		},
 		"full": {
 			"opRatePerMin": 1920,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 1,
 			"progressIntervalMs": 1500000,
 			"numClients": 60,
 			"totalSendCount": 200000,
@@ -97,7 +97,7 @@
 		},
 		"mini": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 1,
 			"progressIntervalMs": 5000,
 			"numClients": 2,
 			"totalSendCount": 30,
@@ -118,7 +118,7 @@
 		},
 		"debug": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 10,
 			"progressIntervalMs": 5000,
 			"numClients": 1,
 			"totalSendCount": 30,
@@ -130,7 +130,7 @@
 		},
 		"ci_nofault": {
 			"opRatePerMin": 10,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 0,
 			"progressIntervalMs": 15000,
 			"numClients": 120,
 			"totalSendCount": 10000,
@@ -138,7 +138,7 @@
 		},
 		"scale": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 1,
 			"progressIntervalMs": 20000,
 			"numClients": 10,
 			"totalSendCount": 70000,
@@ -150,7 +150,7 @@
 		},
 		"scale_nofault": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 0,
 			"progressIntervalMs": 20000,
 			"numClients": 10,
 			"totalSendCount": 70000,
@@ -181,7 +181,7 @@
 		},
 		"offline": {
 			"opRatePerMin": 60,
-			"futureOpRatePerMin": 6,
+			"futureOpRatePerMin": 3,
 			"progressIntervalMs": 5000,
 			"numClients": 4,
 			"totalSendCount": 300,
