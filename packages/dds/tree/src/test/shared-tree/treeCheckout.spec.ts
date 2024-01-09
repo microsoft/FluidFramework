@@ -15,18 +15,32 @@ import {
 	flexTreeViewWithContent,
 	checkoutWithContent,
 	requiredBooleanRootSchema,
+	validateTreeContent,
+	numberSequenceRootSchema,
 } from "../utils.js";
 import {
 	AllowedUpdateType,
+	FieldUpPath,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	TreeValue,
 	Value,
 	moveToDetachedField,
+	rootFieldKey,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
-import { ContextuallyTypedNodeData, FieldKinds } from "../../feature-libraries/index.js";
+import {
+	ContextuallyTypedNodeData,
+	FieldKinds,
+	cursorForJsonableTreeField,
+	intoStoredSchema,
+} from "../../feature-libraries/index.js";
+
+const rootField: FieldUpPath = {
+	parent: undefined,
+	field: rootFieldKey,
+};
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
@@ -543,6 +557,73 @@ describe("sharedTreeView", () => {
 				"O",
 			]);
 		});
+	});
+
+	it("schema edits cause all clients to purge all repair data and all revertibles", () => {
+		const provider = new TestTreeProviderLite(2);
+		const checkout1 = provider.trees[0].checkout;
+		const checkout2 = provider.trees[1].checkout;
+
+		checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+		checkout1.editor.sequenceField(rootField).insert(
+			0,
+			cursorForJsonableTreeField([
+				{ type: leaf.string.name, value: "A" },
+				{ type: leaf.number.name, value: 1 },
+				{ type: leaf.string.name, value: "B" },
+				{ type: leaf.number.name, value: 2 },
+			]),
+		);
+
+		provider.processMessages();
+		const checkout1Revertibles = createTestUndoRedoStacks(checkout1.events);
+
+		// Simulate the presence of a host application that retains the revertibles in multiple ways
+		const checkout1RevertiblesReadonly = createTestUndoRedoStacks(checkout1.events);
+
+		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
+		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
+		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
+		provider.processMessages();
+
+		const checkout2Revertibles = createTestUndoRedoStacks(checkout2.events);
+		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove "B"
+		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove 2
+		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
+		provider.processMessages();
+
+		const expectedContent = {
+			schema: jsonSequenceRootSchema,
+			initialTree: [1, 2],
+		};
+		validateTreeContent(checkout1, expectedContent);
+		validateTreeContent(checkout2, expectedContent);
+
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
+		assert.equal(checkout1Revertibles.redoStack.length, 1);
+		assert.equal(checkout1.getRemovedRoots().length, 2);
+
+		assert.equal(checkout2Revertibles.undoStack.length, 1);
+		assert.equal(checkout2Revertibles.redoStack.length, 1);
+		assert.equal(checkout2.getRemovedRoots().length, 2);
+
+		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
+
+		// The undo stack is not empty because it contains the schema change
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
+		assert.equal(checkout1Revertibles.redoStack.length, 0);
+		assert.equal(checkout1RevertiblesReadonly.undoStack.length, 1);
+		assert.equal(checkout1RevertiblesReadonly.redoStack.length, 0);
+		assert.deepEqual(checkout1.getRemovedRoots(), []);
+
+		provider.processMessages();
+
+		assert.equal(checkout2Revertibles.undoStack.length, 0);
+		assert.equal(checkout2Revertibles.redoStack.length, 0);
+		assert.deepEqual(checkout2.getRemovedRoots(), []);
+
+		checkout1Revertibles.unsubscribe();
+		checkout2Revertibles.unsubscribe();
 	});
 });
 
