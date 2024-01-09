@@ -70,10 +70,7 @@ menu:
   main:
     - name: "Getting started"
       url: "/docs/start/quick-start/"
-      weight: -100
-    - name: "Recipes"
-      url: "/docs/recipes/react/"
-      weight: -90
+      weight: -100    
     - name: "Docs"
       url: "/docs/"
       weight: -80
@@ -99,10 +96,7 @@ menu:
   docs:
     - identifier: "start"
       name: "Getting started"
-      weight: -800
-    - identifier: "recipes"
-      name: "Recipes"
-      weight: -700
+      weight: -800    
     - identifier: "build"
       name: "Build with Fluid"
       weight: -600
