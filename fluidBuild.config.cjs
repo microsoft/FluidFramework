@@ -289,7 +289,10 @@ module.exports = {
 				"^tools/test-tools/",
 
 				// TODO: add api-extractor infra and remove
+				"^build-tools/packages/",
 				"^tools/bundle-size-tools/",
+				"^server/historian/",
+				"^server/gitrest/",
 				"^server/routerlicious/",
 				"^examples/data-objects/table-document/",
 				"^experimental/framework/data-objects/",
@@ -388,10 +391,11 @@ module.exports = {
 		publicPackageRequirements: {
 			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
 			requiredScripts: [
-				{
-					name: "api",
-					body: "fluid-build . --task api",
-				},
+				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
+				// {
+				// 	name: "api",
+				// 	body: "fluid-build . --task api",
+				// },
 				{
 					name: "build:docs",
 					body: "fluid-build . --task api",
