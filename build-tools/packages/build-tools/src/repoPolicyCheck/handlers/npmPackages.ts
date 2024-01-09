@@ -1421,7 +1421,7 @@ export const handlers: Handler[] = [
 	},
 	{
 		// TODO: docs
-		name: "public-package-requirements",
+		name: "npm-public-package-requirements",
 		match,
 		handler: async (packageJsonFilePath, rootDirectoryPath) => {
 			let packageJson: PackageJson;
