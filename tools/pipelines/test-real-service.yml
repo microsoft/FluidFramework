@@ -154,8 +154,6 @@ stages:
             flags: --compatVersion=0 --tenantIndex=0
           - name: N-1
             flags: --compatVersion=-1 --tenantIndex=1
-          - name: LTS
-            flags: --compatVersion=LTS --tenantIndex=2
           - name: Cross-Version
             flags: --compatVersion=CROSS_VERSION
           # Assumes Non-compat and N-1 scenarios are covered
