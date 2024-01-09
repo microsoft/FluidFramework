@@ -242,7 +242,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisOptions: redisOptions2,
 						slotsRefreshTimeout: 5000,
 						dnsLookup: (address, callback) => callback(null, address),
-						scaleReads: 'slave'
+						scaleReads: 'slave',
+						showFriendlyErrorStack: true
 					},
 			  )
 			: new Redis.default(redisOptions2);
@@ -255,7 +256,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisOptions: redisOptions2,
 						slotsRefreshTimeout: 5000,
 						dnsLookup: (address, callback) => callback(null, address),
-						scaleReads: 'slave'
+						scaleReads: 'slave',
+						showFriendlyErrorStack: true
 					},
 			  )
 			: new Redis.default(redisOptions2);
@@ -367,7 +369,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 							redisOptions: redisOptionsForThrottling,
 							slotsRefreshTimeout: 5000,
 							dnsLookup: (address, callback) => callback(null, address),
-							scaleReads: 'slave'
+							scaleReads: 'slave',
+							showFriendlyErrorStack: true
 						},
 				  )
 				: new Redis.default(redisOptionsForThrottling);
@@ -568,7 +571,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 								redisOptions: redisOptions2,
 								slotsRefreshTimeout: 5000,
 								dnsLookup: (address, callback) => callback(null, address),
-								scaleReads: 'slave'
+								scaleReads: 'slave',
+								showFriendlyErrorStack: true
 							},
 					  )
 					: new Redis.default(redisOptions);

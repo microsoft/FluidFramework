@@ -112,6 +112,7 @@
 			const clusterOptions = _.clone(this._clusterOptions);
 
 			clusterOptions.redisOptions = redisOptions;
+			clusterOptions.showFriendlyErrorStack = true;
 			this.redis = new Redis.Cluster(this._nodes, clusterOptions);
 		} else {
 			this.redis = new Redis(redisOptions);

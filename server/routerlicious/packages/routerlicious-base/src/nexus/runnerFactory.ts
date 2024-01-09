@@ -216,7 +216,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisOptions: redisOptions2,
 						slotsRefreshTimeout: 5000,
 						dnsLookup: (address, callback) => callback(null, address),
-						scaleReads: 'slave'
+						scaleReads: 'slave',
+						showFriendlyErrorStack: true
 					},
 			  )
 			: new Redis.default(redisOptions2);
@@ -230,7 +231,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisOptions: redisOptions2,
 						slotsRefreshTimeout: 5000,
 						dnsLookup: (address, callback) => callback(null, address),
-						scaleReads: 'slave'
+						scaleReads: 'slave',
+						showFriendlyErrorStack: true
 					},
 			  )
 			: new Redis.default(redisOptions2);
@@ -344,7 +346,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 							redisOptions: redisOptionsForThrottling,
 							slotsRefreshTimeout: 5000,
 							dnsLookup: (address, callback) => callback(null, address),
-							scaleReads: 'slave'
+							scaleReads: 'slave',
+							showFriendlyErrorStack: true
 						},
 				  )
 				: new Redis.default(redisOptionsForThrottling);
@@ -488,7 +491,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 								redisOptions: redisOptions,
 								slotsRefreshTimeout: 5000,
 								dnsLookup: (address, callback) => callback(null, address),
-								scaleReads: 'slave'
+								scaleReads: 'slave',
+								showFriendlyErrorStack: true
 							},
 					  )
 					: new Redis.default(redisOptions);

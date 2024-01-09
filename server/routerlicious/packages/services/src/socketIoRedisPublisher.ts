@@ -34,7 +34,8 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 				redisOptions: options,
 				slotsRefreshTimeout: 5000,
 				dnsLookup: (address, callback) => callback(null, address),
-				scaleReads: 'slave'
+				scaleReads: 'slave',
+				showFriendlyErrorStack: true
 			})
 			: new Redis.default(options);
 

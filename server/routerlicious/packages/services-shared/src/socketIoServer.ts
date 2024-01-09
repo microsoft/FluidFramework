@@ -168,7 +168,8 @@ export function create(
 			redisOptions: clone(options),
 			slotsRefreshTimeout: 5000,
 			dnsLookup: (address, callback) => callback(null, address),
-			scaleReads: 'slave'
+			scaleReads: 'slave',
+			showFriendlyErrorStack: true
 		})
 		: new Redis.default(clone(options));
 	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
@@ -176,7 +177,8 @@ export function create(
 			redisOptions: clone(options),
 			slotsRefreshTimeout: 5000,
 			dnsLookup: (address, callback) => callback(null, address),
-			scaleReads: 'slave'
+			scaleReads: 'slave',
+			showFriendlyErrorStack: true
 		})
 		: new Redis.default(clone(options));
 
