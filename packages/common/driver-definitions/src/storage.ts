@@ -211,7 +211,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
  * @alpha
  */
 export interface IDocumentServiceEvents extends IEvent {
-	(event: "metadataUpdate", listener: (metadata?: Record<string, unknown>) => void);
+	(event: "metadataUpdate", listener: (metadata?: Record<string, unknown> | undefined) => void);
 }
 
 /**
