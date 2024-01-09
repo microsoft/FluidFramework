@@ -319,6 +319,8 @@ module.exports = {
 				"@fluidframework/services-shared",
 				"@fluidframework/services-telemetry",
 				"@fluidframework/services-utils",
+				"@fluid-example/table-document",
+				"@fluid-experimental/data-objects",
 				"@fluid-tools/telemetry-generator",
 				"@fluid-tools/webpack-fluid-loader",
 			],
