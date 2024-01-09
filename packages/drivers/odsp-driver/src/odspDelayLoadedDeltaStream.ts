@@ -45,6 +45,7 @@ import { fetchJoinSession } from "./vroom";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { OdspDocumentService } from "./odspDocumentService";
+import { policyLabelsUpdatesSignalType } from "./contracts";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection
@@ -61,7 +62,8 @@ export class OdspDelayLoadedDeltaStream {
 	private _relayServiceTenantAndSessionId: string | undefined;
 
 	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
-	// between label updates from the join session and the fluid signals.
+	// between label updates from the join session and the fluid signals. We could also receive stale data from join
+	// session as that call is made at intervals, so we need to update with only most recent data.
 	private labelUpdateTimestamp: number = -1;
 
 	/**
@@ -172,6 +174,11 @@ export class OdspDelayLoadedDeltaStream {
 					!requestWebsocketTokenFromJoinSession,
 				);
 			}
+			if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
+				this.emitMetaDataUpdateEvent({
+					sensitivityLabelsInfo: JSON.parse(websocketEndpoint.sensitivityLabelsInfo),
+				});
+			}
 			try {
 				const connection = await this.createDeltaConnection(
 					websocketEndpoint.tenantId,
@@ -184,6 +191,8 @@ export class OdspDelayLoadedDeltaStream {
 					this.opsReceived(ops);
 				});
 				connection.on("signal", this.signalHandler);
+				// Also process the initial signals
+				this.signalHandler(connection.initialSignals);
 				// On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
 				// get the auth error on reconnecting and face latency.
 				connection.once("disconnect", (error: any) => {
@@ -202,11 +211,6 @@ export class OdspDelayLoadedDeltaStream {
 					this.currentConnection = undefined;
 				});
 				this.currentConnection = connection;
-				if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
-					this.emitMetaDataUpdateEvent({
-						sensitivityLabelsInfo: JSON.parse(websocketEndpoint.sensitivityLabelsInfo),
-					});
-				}
 				return connection;
 			} catch (error) {
 				this.clearJoinSessionTimer();
@@ -230,11 +234,14 @@ export class OdspDelayLoadedDeltaStream {
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
 		signals.forEach((signal: ISignalMessage) => {
-			const envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
-			if (envelope.contents.type === "PolicyLabelsUpdate") {
-				this.emitMetaDataUpdateEvent({
-					sensitivityLabelsInfo: envelope.contents.content,
-				});
+			// Make sure it is not for a specific client as `PolicyLabelsUpdate` is meant for all clients.
+			if (signal.clientId === null) {
+				const envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
+				if (envelope.contents.type === policyLabelsUpdatesSignalType) {
+					this.emitMetaDataUpdateEvent({
+						sensitivityLabelsInfo: envelope.contents.content,
+					});
+				}
 			}
 		});
 	};
@@ -437,18 +444,16 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	private emitMetaDataUpdateEvent(metadata: Record<string, unknown>) {
-		if (this.currentConnection !== undefined) {
-			const label = metadata.sensitivityLabelsInfo as {
-				labels: unknown;
-				timestamp: string;
-			};
-			const time = Date.parse(label.timestamp);
-			if (time > this.labelUpdateTimestamp) {
-				this.labelUpdateTimestamp = time;
-				this.docService.emit("metadataUpdate", {
-					sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
-				});
-			}
+		const label = metadata.sensitivityLabelsInfo as {
+			labels: unknown;
+			timestamp: string;
+		};
+		const time = Date.parse(label.timestamp);
+		if (time > this.labelUpdateTimestamp) {
+			this.labelUpdateTimestamp = time;
+			this.docService.emit("metadataUpdate", {
+				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
+			});
 		}
 	}
 
