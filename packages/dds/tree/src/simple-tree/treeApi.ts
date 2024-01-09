@@ -56,7 +56,7 @@ export interface TreeApi {
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
-	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the list (a `number`).
+	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key(node: TreeNode): string | number;
@@ -97,7 +97,7 @@ export const nodeApi: TreeApi = {
 	key: (node: TreeNode) => {
 		const parentField = getFlexNode(node).parentField;
 		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
-			// The parent of `node` is a list
+			// The parent of `node` is an array node
 			return parentField.index;
 		}
 
