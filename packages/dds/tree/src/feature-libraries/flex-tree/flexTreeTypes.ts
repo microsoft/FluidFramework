@@ -591,13 +591,13 @@ export const fieldKeysToEscapeSet: ReadonlySet<string> = new Set(fieldKeysToEsca
 export const fieldApiPrefixes = ["set", "boxed", "field", "Field"] as const;
 
 /**
- * Convert and object node's field key into a escaped string usable as a property name.
+ * Convert an object node's field key into an escaped string usable as a property name.
  * @internal
  */
 export type EscapedFieldKeys = (typeof fieldKeysToEscape)[number];
 
 /**
- * Convert and object node's field key into a escaped string usable as a property name.
+ * Convert an object node's field key into an escaped string usable as a property name.
  * @internal
  */
 export type FieldApiPrefixes = (typeof fieldApiPrefixes)[number];
