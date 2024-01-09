@@ -5,7 +5,7 @@
 
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
-import { ClientId, Latest } from "../index.js";
+import { Latest, type LatestValueClientData } from "../index.js";
 
 // Proper clients use EphemeralIndependentDirectory from @fluid-experimental/ephemeral-independent
 // eslint-disable-next-line import/no-internal-modules
@@ -31,7 +31,10 @@ const fakeAdd = directory.caret.local.pos + directory.camera.local.z + directory
 // TODO: make direct write to local an error. The object returned by local should be readonly.
 directory.caret.local.pos = 0; // error
 
-function logClientValue<T>(clientId: ClientId, value: T) {
+function logClientValue<T>({
+	clientId,
+	value,
+}: Pick<LatestValueClientData<T>, "clientId" | "value">) {
 	console.log(clientId, value);
 }
 
@@ -41,9 +44,9 @@ cursor.on("update", logClientValue);
 cursor.off("update", logClientValue);
 
 cursor.clients().forEach((clientId) => {
-	logClientValue(clientId, cursor.clientValue(clientId));
+	logClientValue({ clientId, ...cursor.clientValue(clientId) });
 });
 
-for (const [clientId, value] of cursor.clientValues()) {
-	logClientValue(clientId, value);
+for (const { clientId, value } of cursor.clientValues()) {
+	logClientValue({ clientId, value });
 }

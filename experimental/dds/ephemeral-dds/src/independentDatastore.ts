@@ -35,6 +35,7 @@ export interface IndependentDatastore<
 		path: TPath,
 		clientId: ClientId,
 		rev: number,
+		timestamp: number,
 		value: RoundTrippable<TSchema[TPath]>,
 	): void;
 	knownValues(path: TPath): {

@@ -111,6 +111,7 @@ class IndependentDirectoryImpl<TSchema extends IndependentDirectoryNodeSchema>
 			});
 		});
 		runtime.on("signal", (message) => {
+			const timestamp = Date.now();
 			assert(message.clientId !== null, "Directory received signal without clientId");
 			// TODO: Probably most messages can just be general state update and merged.
 			if (message.type === "IndependentDirectoryValueUpdate") {
@@ -118,13 +119,13 @@ class IndependentDirectoryImpl<TSchema extends IndependentDirectoryNodeSchema>
 					message.content as IndependentDirectoryValueUpdate;
 				if (path in this.nodes) {
 					const node = unbrandIVM(this.nodes[path]);
-					node.update(message.clientId, rev, value);
+					node.update(message.clientId, rev, timestamp, value);
 				} else if (keepUnregistered) {
 					if (!(path in this.datastore)) {
 						this.datastore[path] = {};
 					}
 					const allKnownState = this.datastore[path];
-					allKnownState[message.clientId] = { rev, value };
+					allKnownState[message.clientId] = { rev, timestamp, value };
 				}
 			} else if (message.type === "CompleteIndependentDirectory") {
 				const remoteDatastore = message.content as ValueElementDirectory<TSchema>;
@@ -179,6 +180,7 @@ class IndependentDirectoryImpl<TSchema extends IndependentDirectoryNodeSchema>
 		path: keyof TSchema,
 		clientId: string,
 		rev: number,
+		timestamp: number,
 		value: RoundTrippable<unknown>,
 	): void {
 		throw new Error("Method not implemented.");

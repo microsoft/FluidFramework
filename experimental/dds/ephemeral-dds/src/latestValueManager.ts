@@ -20,13 +20,36 @@ import type {
 /**
  * @alpha
  */
+export interface LatestValueMetadata {
+	revision: number;
+	timestamp: number;
+}
+
+/**
+ * @alpha
+ */
+export interface LatestValueData<T> {
+	value: RoundTrippable<T>;
+	metadata: LatestValueMetadata;
+}
+
+/**
+ * @alpha
+ */
+export interface LatestValueClientData<T> extends LatestValueData<T> {
+	clientId: ClientId;
+}
+
+/**
+ * @alpha
+ */
 export interface LatestValueManagerEvents<T> extends IEvent {
 	/**
 	 * .
 	 *
 	 * @eventProperty
 	 */
-	(event: "update", listener: (clientId: ClientId, value: RoundTrippable<T>) => void);
+	(event: "update", listener: (update: LatestValueClientData<T>) => void);
 }
 
 /**
@@ -35,9 +58,9 @@ export interface LatestValueManagerEvents<T> extends IEvent {
 export interface LatestValueManager<T> extends IEventProvider<LatestValueManagerEvents<T>> {
 	get local(): RoundTrippable<T>;
 	set local(value: Serializable<T>);
-	clientValues(): IterableIterator<[ClientId, RoundTrippable<T>]>;
+	clientValues(): IterableIterator<LatestValueClientData<T>>;
 	clients(): ClientId[];
-	clientValue(clientId: ClientId): RoundTrippable<T>;
+	clientValue(clientId: ClientId): LatestValueData<T>;
 }
 
 class LatestValueManagerImpl<T, Path extends string>
@@ -52,7 +75,7 @@ class LatestValueManagerImpl<T, Path extends string>
 		value: Serializable<T>,
 	) {
 		super();
-		this.value = { rev: 0, value };
+		this.value = { rev: 0, timestamp: Date.now(), value };
 	}
 
 	get local(): RoundTrippable<T> {
@@ -64,7 +87,7 @@ class LatestValueManagerImpl<T, Path extends string>
 		this.datastore.localUpdate(this.path, /* forceUpdate */ false);
 	}
 
-	clientValues(): IterableIterator<[ClientId, RoundTrippable<T>]> {
+	clientValues(): IterableIterator<LatestValueClientData<T>> {
 		throw new Error("Method not implemented.");
 	}
 
@@ -75,24 +98,25 @@ class LatestValueManagerImpl<T, Path extends string>
 		);
 	}
 
-	clientValue(clientId: ClientId): RoundTrippable<T> {
+	clientValue(clientId: ClientId): LatestValueData<T> {
 		const allKnownStates = this.datastore.knownValues(this.path);
 		if (clientId in allKnownStates.states) {
-			return allKnownStates.states[clientId].value;
+			const { value, rev: revision } = allKnownStates.states[clientId];
+			return { value, metadata: { revision, timestamp: Date.now() } };
 		}
 		throw new Error("No entry for clientId");
 	}
 
-	update(clientId: string, rev: number, value: RoundTrippable<T>): void {
+	update(clientId: string, revision: number, timestamp: number, value: RoundTrippable<T>): void {
 		const allKnownStates = this.datastore.knownValues(this.path);
 		if (clientId in allKnownStates.states) {
 			const currentState = allKnownStates.states[clientId];
-			if (currentState.rev >= rev) {
+			if (currentState.rev >= revision) {
 				return;
 			}
 		}
-		this.datastore.update(this.path, clientId, rev, value);
-		this.emit("update", clientId, value);
+		this.datastore.update(this.path, clientId, revision, timestamp, value);
+		this.emit("update", { clientId, value, metadata: { revision, timestamp } });
 	}
 }
 

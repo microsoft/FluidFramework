@@ -22,6 +22,9 @@ export { EphemeralIndependentDirectory } from "./independentDirectory/index.js";
 
 export {
 	Latest,
+	type LatestValueClientData,
+	type LatestValueData,
 	type LatestValueManagerEvents,
 	type LatestValueManager,
+	type LatestValueMetadata,
 } from "./latestValueManager.js";

@@ -10,6 +10,7 @@ import type { ClientId, RoundTrippable } from "./types.js";
  */
 export interface ValueState<TValue> {
 	rev: number;
+	timestamp: number;
 	value: RoundTrippable<TValue>;
 }
 
@@ -25,5 +26,10 @@ export interface ValueElement<TValue> {
  */
 export interface ValueManager<TValue> {
 	get value(): ValueState<TValue>;
-	update(clientId: ClientId, rev: number, value: RoundTrippable<TValue>): void;
+	update(
+		clientId: ClientId,
+		revision: number,
+		timestamp: number,
+		value: RoundTrippable<TValue>,
+	): void;
 }
