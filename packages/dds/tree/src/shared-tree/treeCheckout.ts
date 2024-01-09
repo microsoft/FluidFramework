@@ -41,8 +41,8 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
- * Events for {@link TreeView}.
- * @public
+ * Events for {@link ITreeCheckout}.
+ * @internal
  */
 export interface CheckoutEvents {
 	/**
@@ -55,14 +55,24 @@ export interface CheckoutEvents {
 	afterBatch(): void;
 
 	/**
-	 * A revertible change has been made to this view.
-	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire, if they so choose (failure to do so will leak memory).
+	 * Fired when a revertible change has been made to this view.
+	 *
+	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire (failure to do so will leak memory).
 	 * The provided revertible is inherently bound to the view that raised the event, calling `revert` won't apply to forked views.
 	 *
-	 * @remarks
-	 * This event provides a {@link Revertible} object that can be used to revert the change.
+	 * @param revertible - The revertible that can be used to revert the change.
 	 */
-	revertible(revertible: Revertible): void;
+	newRevertible(revertible: Revertible): void;
+
+	/**
+	 * Fired when a revertible is either reverted or discarded.
+	 *
+	 * This event can be used to maintain a list or set of active revertibles.
+	 * @param revertible - The revertible that was disposed.
+	 * This revertible was previously passed to the `newRevertible` event.
+	 * Calling `discard` on this revertible is not necessary but is safe to do.
+	 */
+	revertibleDisposed(revertible: Revertible): void;
 }
 
 /**
@@ -173,6 +183,7 @@ export interface ITreeCheckout extends AnchorLocator {
  */
 export function createTreeCheckout(
 	idCompressor: IIdCompressor,
+	revisionTagCodec: RevisionTagCodec,
 	args?: {
 		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
 		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
@@ -191,7 +202,7 @@ export function createTreeCheckout(
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
-			idCompressor,
+			revisionTagCodec,
 			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
 			{ jsonValidator: noopValidator },
 		);
@@ -216,7 +227,7 @@ export function createTreeCheckout(
 		schema,
 		forest,
 		events,
-		idCompressor,
+		revisionTagCodec,
 		args?.removedRoots,
 	);
 }
@@ -317,10 +328,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
-		private readonly idCompressor: IIdCompressor,
+		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
-			idCompressor,
+			revisionTagCodec,
 		),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
@@ -359,13 +370,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		branch.on("revertible", (revertible) => {
-			// if there are no listeners, discard the revertible to avoid memory leaks
-			if (!this.events.hasListeners("revertible")) {
-				revertible.discard();
-			} else {
-				this.events.emit("revertible", revertible);
-			}
+		branch.on("newRevertible", (revertible) => {
+			this.events.emit("newRevertible", revertible);
+		});
+		branch.on("revertibleDisposed", (revertible, revision) => {
+			// We do not expose the revision in this API
+			this.events.emit("revertibleDisposed", revertible);
 		});
 	}
 
@@ -394,7 +404,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			storedSchema,
 			forest,
 			createEmitter(),
-			this.idCompressor,
+			this.revisionTagCodec,
 			this.removedRoots.clone(),
 		);
 	}
@@ -436,7 +446,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
-		const revisionTagCodec = new RevisionTagCodec(this.idCompressor);
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
 		const cursor = this.forest.allocateCursor();
 		for (const { id, root } of this.removedRoots.entries()) {
@@ -449,7 +458,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			if (tree !== undefined) {
 				// This method is used for tree consistency comparison.
 				const { major, minor } = id;
-				const finalizedMajor = major !== undefined ? revisionTagCodec.encode(major) : major;
+				const finalizedMajor =
+					major !== undefined ? this.revisionTagCodec.encode(major) : major;
 				trees.push([finalizedMajor, minor, tree]);
 			}
 		}

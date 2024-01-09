@@ -43,7 +43,7 @@ describe("sharedTreeView", () => {
 					x: 24,
 				},
 			});
-			const root = view.editableTree.content ?? fail("missing root");
+			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
 			const unsubscribe = root.on("changing", () => log.push("change"));
 			const unsubscribeSubtree = root.on("subtreeChanging", () => {
@@ -84,7 +84,7 @@ describe("sharedTreeView", () => {
 					x: 24,
 				},
 			});
-			const root = view.editableTree.content ?? fail("missing root");
+			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
 			const unsubscribe = root.on("changing", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
@@ -118,35 +118,6 @@ describe("sharedTreeView", () => {
 				"unsubscribe",
 				"editStart",
 			]);
-		});
-
-		// TODO: unskip once forking revertibles is supported
-		it.skip("triggers a revertible event for a changes merged into the local branch", () => {
-			const tree1 = checkoutWithContent({
-				schema: jsonSequenceRootSchema,
-				initialTree: [],
-			});
-			const branch = tree1.fork();
-
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-				tree1.events,
-			);
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-				branch.events,
-			);
-
-			// Insert node
-			insertFirstNode(branch, "42");
-
-			assert.equal(undoStack1.length, 0);
-			assert.equal(undoStack2.length, 1);
-
-			tree1.merge(branch);
-			assert.equal(undoStack1.length, 1);
-			assert.equal(undoStack2.length, 1);
-
-			unsubscribe1();
-			unsubscribe2();
 		});
 	});
 

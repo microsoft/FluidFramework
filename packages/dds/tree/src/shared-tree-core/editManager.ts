@@ -22,6 +22,7 @@ import {
 	GraphCommit,
 	mintCommit,
 	rebaseChange,
+	Revertible,
 	RevisionTag,
 } from "../core/index.js";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch.js";
@@ -141,7 +142,7 @@ export class EditManager<
 			mintRevisionTag,
 		);
 
-		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
+		this.localBranch.on("revertibleDisposed", this.onRevertibleDisposed.bind(this));
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -225,19 +226,17 @@ export class EditManager<
 		return this._oldestRevertibleSequenceId;
 	}
 
-	private onRevertibleDisposed(): (revision: RevisionTag) => void {
-		return (revision: RevisionTag) => {
-			const metadata = this.trunkMetadata.get(revision);
+	private onRevertibleDisposed(revertible: Revertible, revision: RevisionTag): void {
+		const metadata = this.trunkMetadata.get(revision);
 
-			// if this revision hasn't been sequenced, it won't be evicted
-			if (metadata !== undefined) {
-				const { sequenceId: id } = metadata;
-				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
-				if (id === this._oldestRevertibleSequenceId) {
-					this._oldestRevertibleSequenceId = undefined;
-				}
+		// if this revision hasn't been sequenced, it won't be evicted
+		if (metadata !== undefined) {
+			const { sequenceId: id } = metadata;
+			// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
+			if (id === this._oldestRevertibleSequenceId) {
+				this._oldestRevertibleSequenceId = undefined;
 			}
-		};
+		}
 	}
 
 	/**

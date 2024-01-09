@@ -88,7 +88,10 @@ export const nodeApi: TreeApi = {
 		}
 
 		const output = getOrCreateNodeProxy(editNode);
-		assert(!isTreeValue(output), "Parent can't be a leaf, so it should be a node not a value");
+		assert(
+			!isTreeValue(output),
+			0x87f /* Parent can't be a leaf, so it should be a node not a value */,
+		);
 		return output;
 	},
 	key: (node: TreeNode) => {
