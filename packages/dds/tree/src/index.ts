@@ -226,10 +226,10 @@ export {
 	ExtractItemType,
 	LazyItem,
 	PropertyNameFromFieldKey,
-	EscapedFieldKeys,
-	FieldApiPrefixes,
-	fieldKeysToEscape,
-	fieldApiPrefixes,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
 } from "./feature-libraries/index.js";
 

@@ -560,10 +560,10 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends Fields> = FlattenKeys<
 >;
 
 /**
- * Reserved field property names to avoid collisions with the API.
+ * Reserved object node field property names to avoid collisions with the rest of the object node API.
  * @internal
  */
-export const fieldKeysToEscape = [
+export const reservedObjectNodeFieldPropertyNames = [
 	"constructor",
 	"context",
 	"is",
@@ -580,37 +580,50 @@ export const fieldKeysToEscape = [
 ] as const;
 
 /**
- * Reserved field property names to avoid collisions with the API.
- */
-export const fieldKeysToEscapeSet: ReadonlySet<string> = new Set(fieldKeysToEscape);
-
-/**
- * Field names starting with these must be followed by a lowercase letter.
+ * Reserved object node field property names prefixes.
+ * These are reserved to avoid collisions with properties derived from field other field names.
+ *
+ * Field names starting with these must be followed by a lowercase letter, or be escaped.
  * @internal
  */
-export const fieldApiPrefixes = ["set", "boxed", "field", "Field"] as const;
+export const reservedObjectNodeFieldPropertyNamePrefixes = [
+	"set",
+	"boxed",
+	"field",
+	"Field",
+] as const;
+
+/**
+ * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
+ * @internal
+ */
+export type ReservedObjectNodeFieldPropertyNames =
+	(typeof reservedObjectNodeFieldPropertyNames)[number];
+
+/**
+ * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
+ * @internal
+ */
+export type ReservedObjectNodeFieldPropertyNamePrefixes =
+	(typeof reservedObjectNodeFieldPropertyNamePrefixes)[number];
 
 /**
  * Convert an object node's field key into an escaped string usable as a property name.
+ *
+ * @privateRemarks
+ * TODO:
+ * Collisions are still possible.
+ * For example fields named "foo" and "Foo" would both produce a setter "setFoo".
+ * Consider naming schemes to avoid this, ensure that there is a good workaround for these cases.
+ *
  * @internal
  */
-export type EscapedFieldKeys = (typeof fieldKeysToEscape)[number];
-
-/**
- * Convert an object node's field key into an escaped string usable as a property name.
- * @internal
- */
-export type FieldApiPrefixes = (typeof fieldApiPrefixes)[number];
-
-/**
- * Convert an object node's field key into an escaped string usable as a property name.
- * @internal
- */
-export type PropertyNameFromFieldKey<T extends string> = T extends EscapedFieldKeys
-	? `field${Capitalize<T>}`
-	: T extends `${FieldApiPrefixes}${Capitalize<string>}`
-	? `field${Capitalize<T>}`
-	: T;
+export type PropertyNameFromFieldKey<T extends string> =
+	T extends ReservedObjectNodeFieldPropertyNames
+		? `field${Capitalize<T>}`
+		: T extends `${ReservedObjectNodeFieldPropertyNamePrefixes}${Capitalize<string>}`
+		? `field${Capitalize<T>}`
+		: T;
 
 /**
  * Field kinds that allow value assignment.

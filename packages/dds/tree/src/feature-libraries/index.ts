@@ -275,10 +275,10 @@ export {
 	FlexTreeEntityKind,
 	NodeKeys,
 	PropertyNameFromFieldKey,
-	EscapedFieldKeys,
-	FieldApiPrefixes,
-	fieldKeysToEscape,
-	fieldApiPrefixes,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
 } from "./flex-tree/index.js";
 

@@ -60,8 +60,8 @@ import {
 	FlexTreeEntityKind,
 	flexTreeMarker,
 	PropertyNameFromFieldKey,
-	fieldKeysToEscapeSet,
-	fieldApiPrefixes,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
 } from "./flexTreeTypes.js";
 import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import {
@@ -507,11 +507,18 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	}
 }
 
+/**
+ * {@link reservedObjectNodeFieldPropertyNames} but as a set.
+ */
+const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new Set(
+	reservedObjectNodeFieldPropertyNames,
+);
+
 export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
-	if (fieldKeysToEscapeSet.has(key)) {
+	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
 		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
 	}
-	for (const prefix of fieldApiPrefixes) {
+	for (const prefix of reservedObjectNodeFieldPropertyNamePrefixes) {
 		if (key.startsWith(prefix)) {
 			const afterPrefix = key.slice(prefix.length);
 			if (afterPrefix === capitalize(afterPrefix)) {
