@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 import { type IndependentDatastore, handleFromDatastore } from "../independentDatastore.js";
 import { unbrandIVM } from "../independentValue.js";
@@ -110,28 +111,7 @@ class IndependentDirectoryImpl<TSchema extends IndependentDirectoryNodeSchema>
 				}
 			});
 		});
-		runtime.on("signal", (message) => {
-			const timestamp = Date.now();
-			assert(message.clientId !== null, "Directory received signal without clientId");
-			// TODO: Probably most messages can just be general state update and merged.
-			if (message.type === "IndependentDirectoryValueUpdate") {
-				const { path, keepUnregistered, rev, value } =
-					message.content as IndependentDirectoryValueUpdate;
-				if (path in this.nodes) {
-					const node = unbrandIVM(this.nodes[path]);
-					node.update(message.clientId, rev, timestamp, value);
-				} else if (keepUnregistered) {
-					if (!(path in this.datastore)) {
-						this.datastore[path] = {};
-					}
-					const allKnownState = this.datastore[path];
-					allKnownState[message.clientId] = { rev, timestamp, value };
-				}
-			} else if (message.type === "CompleteIndependentDirectory") {
-				const remoteDatastore = message.content as ValueElementDirectory<TSchema>;
-				// TODO: Merge remoteDatastore into this.datastore
-			}
-		});
+		runtime.on("signal", this.processSignal.bind(this));
 
 		// Prepare initial directory content from initial state
 		{
@@ -172,21 +152,26 @@ class IndependentDirectoryImpl<TSchema extends IndependentDirectoryNodeSchema>
 		};
 	}
 
-	localUpdate(path: keyof TSchema, forceBroadcast: boolean): void {
-		throw new Error("Method not implemented.");
+	localUpdate(path: keyof TSchema & string, _forceBroadcast: boolean): void {
+		const content = {
+			path,
+			...unbrandIVM(this.nodes[path]).value,
+		} satisfies IndependentDirectoryValueUpdate;
+		this.runtime.submitSignal("IndependentDirectoryValueUpdate", content);
 	}
 
 	update(
-		path: keyof TSchema,
+		path: keyof TSchema & string,
 		clientId: string,
 		rev: number,
 		timestamp: number,
 		value: RoundTrippable<unknown>,
 	): void {
-		throw new Error("Method not implemented.");
+		const allKnownState = this.datastore[path];
+		allKnownState[clientId] = { rev, timestamp, value };
 	}
 
-	public add<TPath extends string, TValue, TValueManager>(
+	add<TPath extends string, TValue, TValueManager>(
 		path: TPath,
 		nodeFactory: ManagerFactory<TPath, TValue, TValueManager>,
 	): asserts this is IndependentDirectory<
@@ -206,6 +191,50 @@ class IndependentDirectoryImpl<TSchema extends IndependentDirectoryNodeSchema>
 			// Should be able to use .value from factory, but Jsonable allowance for undefined appears
 			// to cause a problem. Or it could be that datastore is not precisely typed.
 			this.datastore[path][this.runtime.clientId] = unbrandIVM(node).value;
+		}
+	}
+
+	private processSignal(message: IInboundSignalMessage, local: boolean) {
+		if (local) {
+			return;
+		}
+
+		const timestamp = Date.now();
+		assert(message.clientId !== null, "Directory received signal without clientId");
+
+		// TODO: Maybe most messages can just be general state update and merged.
+		if (message.type === "IndependentDirectoryValueUpdate") {
+			const { path, keepUnregistered, rev, value } =
+				message.content as IndependentDirectoryValueUpdate;
+			if (path in this.nodes) {
+				const node = unbrandIVM(this.nodes[path]);
+				node.update(message.clientId, rev, timestamp, value);
+			} else if (keepUnregistered) {
+				if (!(path in this.datastore)) {
+					this.datastore[path] = {};
+				}
+				const allKnownState = this.datastore[path];
+				allKnownState[message.clientId] = { rev, timestamp, value };
+			}
+		} else if (message.type === "CompleteIndependentDirectory") {
+			const remoteDatastore = message.content as ValueElementDirectory<TSchema>;
+			for (const [path, remoteAllKnownState] of Object.entries(remoteDatastore)) {
+				if (path in this.nodes) {
+					const node = unbrandIVM(this.nodes[path]);
+					for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
+						node.update(clientId, value.rev, value.timestamp, value.value);
+					}
+				} else {
+					// Assume all broadcast state is meant to be kept even if not currently registered.
+					if (!(path in this.datastore)) {
+						this.datastore[path] = {};
+					}
+					const localAllKnownState = this.datastore[path];
+					for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
+						localAllKnownState[clientId] = value;
+					}
+				}
+			}
 		}
 	}
 }

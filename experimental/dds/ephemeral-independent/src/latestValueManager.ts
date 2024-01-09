@@ -49,7 +49,7 @@ export interface LatestValueManagerEvents<T> extends IEvent {
 	 *
 	 * @eventProperty
 	 */
-	(event: "update", listener: (update: LatestValueClientData<T>) => void);
+	(event: "update", listener: (update: LatestValueClientData<T>) => void): void;
 }
 
 /**
@@ -83,6 +83,8 @@ class LatestValueManagerImpl<T, Path extends string>
 	}
 
 	set local(value: Serializable<T>) {
+		this.value.rev += 1;
+		this.value.timestamp = Date.now();
 		this.value.value = value;
 		this.datastore.localUpdate(this.path, /* forceUpdate */ false);
 	}
