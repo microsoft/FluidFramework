@@ -264,6 +264,7 @@ export {
 	TreeNodeSchema,
 	TreeConfiguration,
 	TreeView,
+	TreeViewEvents,
 	SchemaFactory,
 	Tree,
 	TreeApi,

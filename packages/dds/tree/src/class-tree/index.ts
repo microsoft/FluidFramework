@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeConfiguration, WrapperTreeView } from "./tree";
+export { ITree, TreeView, TreeViewEvents, TreeConfiguration, WrapperTreeView } from "./tree";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,
