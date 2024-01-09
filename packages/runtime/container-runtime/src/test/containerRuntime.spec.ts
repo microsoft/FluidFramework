@@ -35,7 +35,6 @@ import {
 	IErrorBase,
 	IResponse,
 	FluidObject,
-	IGenericError,
 	ConfigTypes,
 	IConfigProviderBase,
 } from "@fluidframework/core-interfaces";
