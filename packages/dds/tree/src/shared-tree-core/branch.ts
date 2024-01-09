@@ -620,7 +620,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.abortTransaction();
 		}
 
-		this.revertibles.forEach((revertible) => revertible.discard());
+		this.revertibles.forEach((revertible) => revertible.dispose());
 
 		this.disposed = true;
 		this.emit("dispose");
