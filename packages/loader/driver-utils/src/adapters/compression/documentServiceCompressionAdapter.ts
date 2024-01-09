@@ -14,9 +14,12 @@ export class DocumentServiceCompressionAdapter extends DocumentServiceProxy {
 		private readonly _config: ICompressionStorageConfig,
 	) {
 		super(service);
-		service.on("metadataUpdate", (metadata?: Record<string, unknown> | undefined) =>
-			this.emit("metadataUpdate", metadata),
-		);
+		// Back-compat Old driver
+		if (service.on !== undefined) {
+			service.on("metadataUpdate", (metadata?: Record<string, unknown> | undefined) =>
+				this.emit("metadataUpdate", metadata),
+			);
+		}
 	}
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
