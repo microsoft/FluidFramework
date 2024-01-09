@@ -510,7 +510,7 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 /**
  * {@link reservedObjectNodeFieldPropertyNames} but as a set.
  */
-const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new Set(
+export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new Set(
 	reservedObjectNodeFieldPropertyNames,
 );
 

@@ -615,6 +615,9 @@ export type ReservedObjectNodeFieldPropertyNamePrefixes =
  * Collisions are still possible.
  * For example fields named "foo" and "Foo" would both produce a setter "setFoo".
  * Consider naming schemes to avoid this, ensure that there is a good workaround for these cases.
+ * Another approach would be to support custom field names (separate from keys),
+ * and do the escaping (if needed) when creating the flex tree schema (both when manually creating them and when doing so automatically):
+ * this would enable better intellisense for escaped fields, as well as allow the feature of custom field property names.
  *
  * @internal
  */

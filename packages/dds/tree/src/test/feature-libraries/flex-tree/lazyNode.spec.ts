@@ -15,6 +15,7 @@ import {
 	LazyTreeNode,
 	buildLazyObjectNode,
 	propertyNameFromFieldKey,
+	reservedObjectNodeFieldPropertyNameSet,
 } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	Any,
@@ -53,9 +54,8 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
-	fieldKeysToEscapeSet,
-	fieldApiPrefixes,
 	PropertyNameFromFieldKey,
+	reservedObjectNodeFieldPropertyNamePrefixes,
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import { contextWithContentReadonly } from "./utils.js";
 
@@ -140,7 +140,7 @@ describe("LazyNode", () => {
 			const existingPropertiesExtended = new Set(existingProperties);
 
 			for (const name of existingProperties) {
-				for (const prefix of fieldApiPrefixes) {
+				for (const prefix of reservedObjectNodeFieldPropertyNamePrefixes) {
 					// Ensure properties won't collide with prefixed field name based properties.
 					if (name.startsWith(prefix)) {
 						// If the property does have a reserved prefix, that's okay as long as the rest of name after the prefix is also banned.
@@ -148,7 +148,10 @@ describe("LazyNode", () => {
 						const lowercaseBannedName = `${bannedName[0].toLowerCase()}${bannedName.substring(
 							1,
 						)}`;
-						assert(fieldKeysToEscapeSet.has(lowercaseBannedName), lowercaseBannedName);
+						assert(
+							reservedObjectNodeFieldPropertyNameSet.has(lowercaseBannedName),
+							lowercaseBannedName,
+						);
 						existingPropertiesExtended.add(lowercaseBannedName);
 					}
 				}
@@ -160,7 +163,10 @@ describe("LazyNode", () => {
 			// Ensure all existing properties are banned as field names:
 			// Note that this currently also ensure that there are no names that are unnecessary banned:
 			// this restriction may need to be relaxed in the future to reserve names so they can be used in the API later as a non breaking change.
-			assert.deepEqual(fieldKeysToEscapeSet, new Set(existingPropertiesExtended));
+			assert.deepEqual(
+				reservedObjectNodeFieldPropertyNameSet,
+				new Set(existingPropertiesExtended),
+			);
 		});
 
 		it("is", () => {

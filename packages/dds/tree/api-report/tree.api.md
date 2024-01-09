@@ -430,9 +430,6 @@ export abstract class ErasedType<out Name extends string> {
     protected abstract brand(dummy: never): Name;
 }
 
-// @internal
-export type EscapedFieldKeys = (typeof fieldKeysToEscape)[number];
-
 // @public
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -458,19 +455,10 @@ export interface FieldAnchor {
 }
 
 // @internal
-export type FieldApiPrefixes = (typeof fieldApiPrefixes)[number];
-
-// @internal
-export const fieldApiPrefixes: readonly ["set", "boxed", "field", "Field"];
-
-// @internal
 export type FieldGenerator = () => MapTree[];
 
 // @internal
 export type FieldKey = Brand<string, "tree.FieldKey">;
-
-// @internal
-export const fieldKeysToEscape: readonly ["constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
 
 // @public
 export enum FieldKind {
@@ -1330,7 +1318,7 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
 // @internal
-export type PropertyNameFromFieldKey<T extends string> = T extends EscapedFieldKeys ? `field${Capitalize<T>}` : T extends `${FieldApiPrefixes}${Capitalize<string>}` ? `field${Capitalize<T>}` : T;
+export type PropertyNameFromFieldKey<T extends string> = T extends ReservedObjectNodeFieldPropertyNames ? `field${Capitalize<T>}` : T extends `${ReservedObjectNodeFieldPropertyNamePrefixes}${Capitalize<string>}` ? `field${Capitalize<T>}` : T;
 
 // @internal
 export type ProtoNodes = readonly DeltaProtoNode[];
@@ -1366,6 +1354,18 @@ export type RequiredFields<T> = [
     [P in keyof T as undefined extends T[P] ? never : P]: T[P];
 }
 ][_InlineTrick];
+
+// @internal
+export type ReservedObjectNodeFieldPropertyNamePrefixes = (typeof reservedObjectNodeFieldPropertyNamePrefixes)[number];
+
+// @internal
+export const reservedObjectNodeFieldPropertyNamePrefixes: readonly ["set", "boxed", "field", "Field"];
+
+// @internal
+export type ReservedObjectNodeFieldPropertyNames = (typeof reservedObjectNodeFieldPropertyNames)[number];
+
+// @internal
+export const reservedObjectNodeFieldPropertyNames: readonly ["constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
