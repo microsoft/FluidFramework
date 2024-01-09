@@ -288,7 +288,7 @@ module.exports = {
 				"^packages/tools/fetch-tool/",
 				"^tools/test-tools/",
 
-				// TODO: add api-extractor infra and remove
+				// TODO: add api-extractor infra and remove these overrides
 				"^build-tools/packages/",
 				"^tools/bundle-size-tools/",
 				"^server/historian/",
