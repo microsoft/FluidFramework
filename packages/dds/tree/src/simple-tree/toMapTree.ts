@@ -67,7 +67,7 @@ export function cursorFromNodeData(
 type InsertableTreeField = InsertableContent | undefined | InsertableContent[];
 
 /**
- * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
+ * Transforms an input {@link TreeField} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
  * @param globalSchema - Schema for the whole tree for interperting `Any`.
  */
@@ -132,7 +132,7 @@ export function nodeDataToMapTree(
 }
 
 /**
- * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s.
+ * Transforms an input {@link TreeField} tree to an array of {@link MapTree}s.
  * @param data - The input tree to be converted.
  * If the input is a sequence containing 1 or more `undefined` values, those values will be mapped as `null` if supported.
  * Othewise, an error will be thrown.
@@ -164,7 +164,7 @@ export function fieldDataToMapTrees(
 				if (typeSet === Any || typeSet.has(leaf.null)) {
 					childWithFallback = null;
 				} else {
-					throw new TypeError(`Received unsupported list entry value: ${child}.`);
+					throw new TypeError(`Received unsupported array entry value: ${child}.`);
 				}
 			}
 			return nodeDataToMapTree(childWithFallback, globalSchema, typeSet);
@@ -250,7 +250,7 @@ function arrayToMapTree(
 	const fieldsEntries: [FieldKey, MapTree[]][] =
 		mappedChildren.length === 0 ? [] : [[EmptyKey, mappedChildren]];
 
-	// List children are represented as a single field entry denoted with `EmptyKey`
+	// Array node children are represented as a single field entry denoted with `EmptyKey`
 	const fields = new Map<FieldKey, MapTree[]>(fieldsEntries);
 
 	return {
