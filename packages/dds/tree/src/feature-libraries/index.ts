@@ -145,9 +145,6 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
 	markEager,
@@ -277,6 +274,12 @@ export {
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	NodeKeys,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
