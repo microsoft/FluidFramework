@@ -44,7 +44,7 @@ export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	static readonly eventsToForward = ["nack", "op", "signal", "pong", "deltaConnectionUpdated"];
+	static readonly eventsToForward = ["nack", "op", "signal", "pong"];
 
 	// WARNING: These are critical events that we can't miss, so registration for them has to be in place at all times!
 	// Including before handshake is over, and after that (but before DeltaManager had a chance to put its own handlers)
