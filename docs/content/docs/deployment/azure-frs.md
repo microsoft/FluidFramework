@@ -1,6 +1,6 @@
 ---
 title: Connect to Azure Fluid Relay
-menuPosition: 4
+menuPosition: 2
 ---
 
 [Azure Fluid Relay](https://aka.ms/azurefluidrelay) is a cloud-hosted Fluid service.
