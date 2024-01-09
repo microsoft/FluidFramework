@@ -191,7 +191,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	public readonly null = nullSchema;
 
 	/**
-	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
 	 */
 	public readonly handle = handleSchema;
 
