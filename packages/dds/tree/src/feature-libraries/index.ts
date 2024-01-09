@@ -145,9 +145,6 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
 	markEager,
@@ -181,13 +178,7 @@ export {
 } from "./schemaBuilderBase.js";
 export { SchemaBuilderInternal } from "./schemaBuilder.js";
 
-export {
-	mapRootChanges,
-	mapFieldChanges,
-	mapFieldsChanges,
-	mapMark,
-	mapMarkList,
-} from "./deltaUtils.js";
+export { mapRootChanges } from "./deltaUtils.js";
 
 export {
 	TreeChunk,
@@ -277,6 +268,12 @@ export {
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	NodeKeys,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
