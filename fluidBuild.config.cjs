@@ -297,7 +297,7 @@ module.exports = {
 				"@fluid-tools/fetch-tool",
 				"@fluidframework/test-tools",
 
-				// TODO: add api-extractor infra and remove
+				// TODO: add api-extractor infra and remove these overrides
 				"@fluidframework/bundle-size-tools",
 				"@fluidframework/gitrest",
 				"@fluidframework/gitrest-base",
