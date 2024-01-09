@@ -178,13 +178,7 @@ export {
 } from "./schemaBuilderBase.js";
 export { SchemaBuilderInternal } from "./schemaBuilder.js";
 
-export {
-	mapRootChanges,
-	mapFieldChanges,
-	mapFieldsChanges,
-	mapMark,
-	mapMarkList,
-} from "./deltaUtils.js";
+export { mapRootChanges } from "./deltaUtils.js";
 
 export {
 	TreeChunk,

@@ -304,9 +304,9 @@ export interface DeltaDetachedNodeBuild<TTree = DeltaProtoNode> {
 }
 
 // @internal
-export interface DeltaDetachedNodeChanges<TTree = DeltaProtoNode> {
+export interface DeltaDetachedNodeChanges {
     // (undocumented)
-    readonly fields: DeltaFieldMap<TTree>;
+    readonly fields: DeltaFieldMap;
     // (undocumented)
     readonly id: DeltaDetachedNodeId;
 }
@@ -338,21 +338,21 @@ export interface DeltaDetachedNodeRename {
 }
 
 // @internal
-export interface DeltaFieldChanges<TTree = DeltaProtoNode> {
-    readonly global?: readonly DeltaDetachedNodeChanges<TTree>[];
-    readonly local?: readonly DeltaMark<TTree>[];
+export interface DeltaFieldChanges {
+    readonly global?: readonly DeltaDetachedNodeChanges[];
+    readonly local?: readonly DeltaMark[];
     readonly rename?: readonly DeltaDetachedNodeRename[];
 }
 
 // @internal (undocumented)
-export type DeltaFieldMap<TTree = DeltaProtoNode> = ReadonlyMap<FieldKey, DeltaFieldChanges<TTree>>;
+export type DeltaFieldMap = ReadonlyMap<FieldKey, DeltaFieldChanges>;
 
 // @internal
-export interface DeltaMark<TTree = DeltaProtoNode> {
+export interface DeltaMark {
     readonly attach?: DeltaDetachedNodeId;
     readonly count: number;
     readonly detach?: DeltaDetachedNodeId;
-    readonly fields?: DeltaFieldMap<TTree>;
+    readonly fields?: DeltaFieldMap;
 }
 
 // @internal
@@ -362,7 +362,7 @@ export type DeltaProtoNode = ITreeCursorSynchronous;
 export interface DeltaRoot<TTree = DeltaProtoNode> {
     readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
     readonly destroy?: readonly DeltaDetachedNodeDestruction[];
-    readonly fields?: DeltaFieldMap<TTree>;
+    readonly fields?: DeltaFieldMap;
 }
 
 // @internal
