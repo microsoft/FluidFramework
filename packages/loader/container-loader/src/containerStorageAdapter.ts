@@ -190,28 +190,33 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
-		return this.notCalled();
+		return undefined;
 	}
 
 	public get repositoryUrl(): string {
-		return this.notCalled();
+		return this.notCalled("repositoryUrl");
 	}
 
 	/* eslint-disable @typescript-eslint/unbound-method */
-	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
-	public getVersions: () => Promise<IVersion[]> = this.notCalled;
-	public write: () => Promise<IVersion> = this.notCalled;
-	public uploadSummaryWithContext: () => Promise<string> = this.notCalled;
-	public downloadSummary: () => Promise<ISummaryTree> = this.notCalled;
+	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled("getSnapshotTree");
+	public getVersions: () => Promise<IVersion[]> = this.notCalled("getVersions");
+	public write: () => Promise<IVersion> = this.notCalled("write");
+	public uploadSummaryWithContext: () => Promise<string> = this.notCalled(
+		"uploadSummaryWithContext",
+	);
+	public downloadSummary: () => Promise<ISummaryTree> = this.notCalled("downloadSummary");
 	/* eslint-enable @typescript-eslint/unbound-method */
 
-	private notCalled(): never {
+	private notCalled(calledBy: string): never {
 		this.verifyStorage();
 		try {
 			// some browsers may not populate stack unless exception is thrown
 			throw new Error("BlobOnlyStorage not implemented method used");
 		} catch (err) {
-			this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
+			this.logger.sendTelemetryEvent(
+				{ eventName: "BlobOnlyStorageWrongCall", calledBy },
+				err,
+			);
 			throw err;
 		}
 	}
