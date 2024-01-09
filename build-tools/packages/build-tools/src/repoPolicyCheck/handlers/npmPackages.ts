@@ -1420,7 +1420,9 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
-		// TODO: docs
+		/**
+		 * Handler for {@link PolicyConfig.publicPackageRequirements}
+		 */
 		name: "npm-public-package-requirements",
 		match,
 		handler: async (packageJsonFilePath, rootDirectoryPath) => {
