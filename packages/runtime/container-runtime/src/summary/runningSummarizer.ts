@@ -680,6 +680,11 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				await delay(delaySeconds * 1000);
 			}
 		}
+		this.mc.logger.sendErrorEvent({
+			eventName: "SummarizeFailed",
+			maxAttempts: attemptOptions.length,
+			summaryAttempts: summaryAttemptPhase,
+		});
 		this.stopSummarizerCallback("failToSummarize");
 	}
 
@@ -817,6 +822,11 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 
 		// If summarization is still unsuccessful, stop the summarizer.
 		if (status === "failure") {
+			this.mc.logger.sendErrorEvent({
+				eventName: "SummarizeFailed",
+				maxAttempts,
+				summaryAttempts: currentAttempt,
+			});
 			this.stopSummarizerCallback("failToSummarize");
 		}
 		return results;
