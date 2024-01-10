@@ -50,4 +50,4 @@ export {
 } from "./testRecursiveDomain.js";
 
 export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent } from "./treeListNode.js";
+export { TreeArrayNode, IterableTreeArrayContent } from "./treeArrayNode.js";

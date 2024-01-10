@@ -119,6 +119,12 @@ export const anyFields = builder.object("anyFields", {
 	valueField: Any,
 	sequence: builder.sequence(Any),
 });
+export const escapedFieldProperties = builder.object("escapedFieldProperties", {
+	value: builder.optional(leaf.number),
+	set: builder.optional(leaf.number),
+	setValue: builder.optional(leaf.number),
+	field: builder.optional(leaf.number),
+});
 
 export const numericMap = builder.map("numericMap", builder.optional(leaf.number));
 
@@ -189,6 +195,12 @@ export const testTrees: readonly TestTree[] = [
 			{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 5 },
 			{ [typeNameSymbol]: minimal.name },
 		],
+	}),
+	testTree("escapedFields", library, escapedFieldProperties, {
+		value: 5,
+		set: 6,
+		setValue: 7,
+		field: 8,
 	}),
 
 	testTree("numericMap-empty", library, numericMap, {}),
