@@ -13,17 +13,17 @@ import {
 	jsonableTreeFromCursor,
 	cursorForTypedData,
 	cursorForTypedTreeData,
-} from "../../feature-libraries";
-import { singleJsonCursor } from "../../domains";
+} from "../../feature-libraries/index.js";
+import { singleJsonCursor } from "../../domains/index.js";
 import {
 	insert,
 	TestTreeProviderLite,
 	toJsonableTree,
 	flexTreeViewWithContent,
 	checkoutWithContent,
-} from "../utils";
-import { FlexTreeView } from "../../shared-tree";
-import { rootFieldKey } from "../../core";
+} from "../utils.js";
+import { FlexTreeView } from "../../shared-tree/index.js";
+import { rootFieldKey } from "../../core/index.js";
 import {
 	deepPath,
 	deepSchema,
@@ -42,7 +42,7 @@ import {
 	readWideTreeAsJSObject,
 	wideRootSchema,
 	wideSchema,
-} from "../scalableTestTrees";
+} from "../scalableTestTrees.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -299,8 +299,8 @@ describe("SharedTree benchmarks", () => {
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							editor.delete(nodeIndex, 1);
-							editor.insert(nodeIndex, [singleJsonCursor(value)]);
+							editor.remove(nodeIndex, 1);
+							editor.insert(nodeIndex, singleJsonCursor(value));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -344,7 +344,7 @@ describe("SharedTree benchmarks", () => {
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
-							insert(tree.view, i, "test");
+							insert(tree.checkout, i, "test");
 						}
 
 						// Measure
@@ -382,7 +382,7 @@ describe("SharedTree benchmarks", () => {
 						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
 							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
 								const peer = provider.trees[iPeer];
-								insert(peer.view, 0, `p${iPeer}c${iCommit}`);
+								insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
 							}
 						}
 

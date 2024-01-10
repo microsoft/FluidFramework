@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";
+export { Revertible, RevertibleKind, RevertibleStatus, RevertibleResult } from "./revertible.js";

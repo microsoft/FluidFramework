@@ -50,9 +50,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0-223006",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.1.0",
 		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",
@@ -132,6 +132,12 @@
 			"ClassDeclaration_RiddlerResources": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_AlfredResources": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAlfredResourcesCustomizations": {
+				"forwardCompat": false
 			}
 		}
 	}

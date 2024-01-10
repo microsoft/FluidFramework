@@ -3,24 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeSubscriptionCursor, inCursorNode } from "../../core";
-import { FieldKind } from "../modular-schema";
-import { FieldKinds } from "../default-schema";
-import { AllowedTypes, TreeFieldSchema, TreeNodeSchema, schemaIsLeaf } from "../typed-schema";
-import { Context } from "./context";
+import { ITreeSubscriptionCursor, inCursorNode } from "../../core/index.js";
+import { FieldKind } from "../modular-schema/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import {
+	AllowedTypes,
+	TreeFieldSchema,
+	FlexTreeNodeSchema,
+	schemaIsLeaf,
+} from "../typed-schema/index.js";
+import { Context } from "./context.js";
 import {
 	FlexTreeNode,
 	FlexTreeUnboxField,
 	FlexTreeUnboxNode,
 	FlexTreeUnboxNodeUnion,
-} from "./flexTreeTypes";
-import { makeTree } from "./lazyNode";
-import { makeField } from "./lazyField";
+} from "./flexTreeTypes.js";
+import { makeTree } from "./lazyNode.js";
+import { makeField } from "./lazyField.js";
 
 /**
  * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.
  */
-export function unboxedTree<TSchema extends TreeNodeSchema>(
+export function unboxedTree<TSchema extends FlexTreeNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

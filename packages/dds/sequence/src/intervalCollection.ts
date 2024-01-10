@@ -736,12 +736,6 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	): void;
 }
 
-// solely for type checking in the implementation of add - will be removed once
-// deprecated signatures are removed
-const isSequencePlace = (place: any): place is SequencePlace => {
-	return typeof place === "number" || typeof place === "string" || place.pos !== undefined;
-};
-
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
@@ -858,23 +852,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @returns the removed interval
 	 */
 	removeIntervalById(id: string): TInterval | undefined;
-	/**
-	 * Changes the properties on an existing interval.
-	 * @deprecated - call change with the id and and object containing the new properties
-	 * @param id - Id of the interval whose properties should be changed
-	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
-	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
-	 */
-	changeProperties(id: string, props: PropertySet): void;
-	/**
-	 * Changes the endpoints of an existing interval.
-	 * @deprecated - call change with the start and end parameters encapsulated in an object
-	 * @param id - Id of the interval to change
-	 * @param start - New start value. To leave the endpoint unchanged, pass the current value.
-	 * @param end - New end value. To leave the endpoint unchanged, pass the current value.
-	 * @returns the interval that was changed, if it existed in the collection.
-	 */
-	change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
 	/**
 	 * Changes the endpoints, properties, or both of an existing interval.
 	 * @param id - Id of the Interval to change
@@ -1353,45 +1330,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 		return interval;
 	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.changeProperties}
-	 * @deprecated - call change with the id and an object containing the new props values
-	 */
-	public changeProperties(id: string, props: PropertySet) {
-		this.change(id, { props });
-	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.change}
-	 * @deprecated - call change with the id and an object containing the new start, end, and/or props values
-	 */
-	public change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
 	/**
 	 * {@inheritdoc IIntervalCollection.change}
 	 */
 	public change(
 		id: string,
 		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
-	): TInterval | undefined;
-	public change(
-		arg1: string,
-		arg2: SequencePlace | { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
-		arg3?: SequencePlace,
 	): TInterval | undefined {
-		const id: string = arg1;
-		let start: SequencePlace | undefined;
-		let end: SequencePlace | undefined;
-		let props: PropertySet | undefined;
-		if (isSequencePlace(arg2)) {
-			start = arg2;
-			end = arg3;
-		} else {
-			start = arg2.start;
-			end = arg2.end;
-			props = arg2.props;
-		}
-
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
@@ -1717,8 +1662,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		let intervalId: string;
 		switch (op.opName) {
 			case IntervalDeltaOpType.ADD: {
-				assert(op.value.start !== undefined, "start is undefined");
-				assert(op.value.end !== undefined, "end is undefined");
+				assert(op.value.start !== undefined, 0x87a /* start is undefined */);
+				assert(op.value.end !== undefined, 0x87b /* end is undefined */);
 				interval = this.add({
 					start: op.value.start,
 					end: op.value.end,
@@ -1738,7 +1683,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					localSeq: this.getNextLocalSeq(),
 				};
 			case IntervalDeltaOpType.CHANGE: {
-				assert(op.value.properties !== undefined, "properties is undefined");
+				assert(op.value.properties !== undefined, 0x87c /* properties is undefined */);
 				({ intervalId, ...props } = op.value.properties);
 				interval = this.change(intervalId, {
 					start: op.value.start,

@@ -10,8 +10,8 @@ import {
 	SchemaFactory,
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
-} from "../../class-tree";
-import { getRoot, makeSchema, pretty } from "./utils";
+} from "../../simple-tree/index.js";
+import { getRoot, makeSchema, pretty } from "./utils.js";
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	schema: TSchema;
@@ -291,6 +291,27 @@ const tcs: TestCase[] = [
 			return _.array(_.string);
 		})(),
 		initialTree: ["A", "B"],
+	},
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("special keys", {
+				value: _.number,
+				[""]: _.number,
+				set: _.number,
+				__proto__: _.number,
+				constructor: _.number,
+				setting: _.number,
+			});
+		})(),
+		initialTree: {
+			value: 1,
+			[""]: 2,
+			set: 3,
+			__proto__: 4,
+			constructor: 5,
+			setting: 6,
+		},
 	},
 ];
 

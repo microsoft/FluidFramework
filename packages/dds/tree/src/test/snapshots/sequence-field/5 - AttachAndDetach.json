@@ -5,25 +5,28 @@
       "attachAndDetach": {
         "attach": {
           "moveIn": {
-            "revision": "beefbeef-beef-4000-8000-000000000001",
-            "finalEndpoint": {
-              "localId": 0,
-              "revision": "beefbeef-beef-4000-8000-000000000001"
-            },
+            "revision": 0,
+            "finalEndpoint": [
+              0,
+              0
+            ],
             "id": 0
           }
         },
         "detach": {
           "moveOut": {
-            "revision": "beefbeef-beef-4000-8000-000000000001",
-            "finalEndpoint": {
-              "localId": 0,
-              "revision": "beefbeef-beef-4000-8000-000000000001"
-            },
+            "revision": 0,
+            "finalEndpoint": [
+              0,
+              0
+            ],
             "idOverride": {
               "type": 0,
               "id": {
-                "localId": 0,
+                "atom": [
+                  0,
+                  0
+                ],
                 "adjacentCells": [
                   [
                     0,
@@ -32,13 +35,12 @@
                 ],
                 "lineage": [
                   [
-                    "beefbeef-beef-4000-8000-000000000001",
+                    0,
                     0,
                     2,
                     1
                   ]
-                ],
-                "revision": "beefbeef-beef-4000-8000-000000000001"
+                ]
               }
             },
             "id": 0
@@ -47,7 +49,10 @@
       }
     },
     "cellId": {
-      "localId": 0,
+      "atom": [
+        0,
+        0
+      ],
       "adjacentCells": [
         [
           0,
@@ -56,13 +61,12 @@
       ],
       "lineage": [
         [
-          "beefbeef-beef-4000-8000-000000000001",
+          0,
           0,
           2,
           1
         ]
-      ],
-      "revision": "beefbeef-beef-4000-8000-000000000001"
+      ]
     },
     "changes": {
       "inputContext": [],

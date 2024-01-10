@@ -15,7 +15,7 @@ import {
 	TreeNodeStoredSchema,
 	ValueSchema,
 	storedEmptyFieldSchema,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	Any,
 	FieldKinds,
@@ -23,16 +23,16 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 import {
 	fieldSchemaFromStoredSchema,
 	treeSchemaFromStoredSchema,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../feature-libraries/storedToViewSchema";
-import { brand } from "../../util";
+} from "../../feature-libraries/storedToViewSchema.js";
+import { brand } from "../../util/index.js";
 
 describe("storedToViewSchema", () => {
 	describe("fieldSchemaFromStoredSchema", () => {
@@ -46,7 +46,7 @@ describe("storedToViewSchema", () => {
 			brand<TreeNodeSchemaIdentifier>("y"),
 			ValueSchema.Number,
 		);
-		const schemaMap = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>([
+		const schemaMap = new Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>([
 			[schemaX.name, schemaX],
 			[schemaY.name, schemaY],
 		]);

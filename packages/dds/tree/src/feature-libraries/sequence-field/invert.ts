@@ -4,9 +4,9 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
-import { IdAllocator, Mutable, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core/index.js";
+import { IdAllocator, Mutable, fail } from "../../util/index.js";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import {
 	Changeset,
 	Mark,
@@ -14,14 +14,13 @@ import {
 	NoopMarkType,
 	MoveOut,
 	NoopMark,
-	Delete,
+	Remove,
 	CellMark,
 	MoveIn,
 	MarkEffect,
 	CellId,
-	DetachIdOverrideType,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
 import {
 	extractMarkEffect,
 	getDetachOutputId,
@@ -35,7 +34,8 @@ import {
 	normalizeCellRename,
 	splitMark,
 	withNodeChange,
-} from "./utils";
+} from "./utils.js";
+import { DetachIdOverrideType } from "./format.js";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -106,7 +106,7 @@ function invertMark<TNodeChange>(
 			}
 			return [inverse];
 		}
-		case "Delete": {
+		case "Remove": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const outputId = getOutputCellId(mark, revision, revisionMetadata);
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
@@ -119,7 +119,7 @@ function invertMark<TNodeChange>(
 							count: mark.count,
 					  }
 					: {
-							type: "Delete",
+							type: "Remove",
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
@@ -133,20 +133,20 @@ function invertMark<TNodeChange>(
 		case "Insert": {
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
 			assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
-			const deleteMark: Mutable<CellMark<Delete, TNodeChange>> = {
-				type: "Delete",
+			const removeMark: Mutable<CellMark<Remove, TNodeChange>> = {
+				type: "Remove",
 				count: mark.count,
 				id: inputId.localId,
 			};
 
-			deleteMark.idOverride = {
+			removeMark.idOverride = {
 				type: isReattach(mark)
 					? DetachIdOverrideType.Redetach
 					: DetachIdOverrideType.Unattach,
 				id: inputId,
 			};
 
-			const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, invertChild));
+			const inverse = withNodeChange(removeMark, invertNodeChange(mark.changes, invertChild));
 			return [inverse];
 		}
 		case "MoveOut": {
@@ -191,7 +191,7 @@ function invertMark<TNodeChange>(
 					type: "AttachAndDetach",
 					attach: moveIn,
 					detach: {
-						type: "Delete",
+						type: "Remove",
 						id: mark.id,
 						idOverride: {
 							type: DetachIdOverrideType.Redetach,
@@ -204,7 +204,7 @@ function invertMark<TNodeChange>(
 		}
 		case "MoveIn": {
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
-			assert(inputId !== undefined, "Active move-ins should target empty cells");
+			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
 			const invertedMark: Mutable<CellMark<MoveOut, TNodeChange>> = {
 				type: "MoveOut",
 				id: mark.id,

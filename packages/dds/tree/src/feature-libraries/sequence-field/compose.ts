@@ -11,9 +11,9 @@ import {
 	RevisionTag,
 	tagChange,
 	TaggedChange,
-} from "../../core";
-import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
+} from "../../core/index.js";
+import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util/index.js";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import {
 	Changeset,
 	Mark,
@@ -23,9 +23,9 @@ import {
 	NoopMark,
 	CellMark,
 	Detach,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
-import { MarkQueue } from "./markQueue";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
+import { MarkQueue } from "./markQueue.js";
 import {
 	getMoveEffect,
 	setMoveEffect,
@@ -36,7 +36,7 @@ import {
 	isMoveIn,
 	isMoveOut,
 	getMoveIn,
-} from "./moveEffectTable";
+} from "./moveEffectTable.js";
 import {
 	getInputLength,
 	getOutputLength,
@@ -68,9 +68,9 @@ import {
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	CellOrder,
-} from "./utils";
-import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
-import { CellOrderingMethod, sequenceConfig } from "./config";
+} from "./utils.js";
+import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes.js";
+import { CellOrderingMethod, sequenceConfig } from "./config.js";
 
 /**
  * @internal
@@ -576,7 +576,7 @@ export class ComposeQueue<T> {
 						this.newRevision,
 						this.revisionMetadata,
 					);
-					assert(newCellId !== undefined, "Both marks should have cell IDs");
+					assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
 					const comparison = compareCellPositionsUsingTombstones(
 						baseCellId,
 						newCellId,

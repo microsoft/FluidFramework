@@ -63,16 +63,14 @@
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
                                 "change": {
-                                  "d": {
-                                    "localId": 0
-                                  }
+                                  "d": 0
                                 }
                               }
                             ]
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                      "revision": 2,
                       "sequenceNumber": -9007199254740990,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     },
@@ -88,16 +86,12 @@
                                 "change": {
                                   "m": [
                                     [
-                                      {
-                                        "localId": 1
-                                      },
-                                      0,
+                                      1,
+                                      null,
                                       true
                                     ]
                                   ],
-                                  "d": {
-                                    "localId": 0
-                                  }
+                                  "d": 0
                                 }
                               }
                             ],
@@ -118,8 +112,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1,
-                                      "fields": []
+                                      "extraFields": 1
                                     }
                                   },
                                   {
@@ -145,12 +138,13 @@
                           }
                         }
                       ],
-                      "revision": "beefbeef-beef-4000-8000-000000000005",
+                      "revision": 3,
                       "sequenceNumber": -9007199254740989,
                       "sessionId": "beefbeef-beef-4000-8000-000000000001"
                     }
                   ],
-                  "branches": []
+                  "branches": [],
+                  "version": 1
                 },
                 "encoding": "utf-8"
               }
@@ -214,8 +208,7 @@
                     "shapes": [
                       {
                         "c": {
-                          "extraFields": 1,
-                          "fields": []
+                          "extraFields": 1
                         }
                       },
                       {

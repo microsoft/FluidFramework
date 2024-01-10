@@ -12,23 +12,23 @@ import {
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
-} from "../../../core";
-import { SchemaBuilder, leaf as leafDomain } from "../../../domains";
+} from "../../../core/index.js";
+import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
 import {
 	AllowedTypes,
 	Any,
 	FieldKind,
 	FieldKinds,
 	TreeFieldSchema,
-} from "../../../feature-libraries";
-import { Context } from "../../../feature-libraries/flex-tree/context";
+} from "../../../feature-libraries/index.js";
+import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	unboxedField,
 	unboxedTree,
 	unboxedUnion,
-} from "../../../feature-libraries/flex-tree/unboxed";
-import { type TreeContent } from "../../../shared-tree";
-import { contextWithContentReadonly } from "./utils";
+} from "../../../feature-libraries/flex-tree/unboxed.js";
+import { type TreeContent } from "../../../shared-tree/index.js";
+import { contextWithContentReadonly } from "./utils.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
@@ -112,12 +112,12 @@ describe("unboxedField", () => {
 
 		const unboxed = unboxedField(context, fieldSchema, cursor);
 		assert(unboxed !== undefined);
-		assert.equal(unboxed.type, "test.object");
+		assert.equal(unboxed.schema, objectSchema);
 		assert.equal(unboxed.name, "Foo");
 
 		const unboxedChild = unboxed.child;
 		assert(unboxedChild !== undefined);
-		assert.equal(unboxedChild.type, "test.object");
+		assert.equal(unboxedChild.schema, objectSchema);
 		assert.equal(unboxedChild.name, "Bar");
 		assert.equal(unboxedChild.child, undefined);
 	});
@@ -134,7 +134,7 @@ describe("unboxedField", () => {
 
 		const unboxed = unboxedField(context, fieldSchema, cursor);
 
-		assert.deepEqual(unboxed.asArray, ["Hello", "world"]);
+		assert.deepEqual([...unboxed], ["Hello", "world"]);
 	});
 
 	it("Schema: Any", () => {
@@ -147,7 +147,7 @@ describe("unboxedField", () => {
 		// Type is not known based on schema, so node will not be unboxed.
 		const unboxed = unboxedField(context, fieldSchema, cursor);
 		assert(unboxed !== undefined);
-		assert.equal(unboxed.type, "com.fluidframework.leaf.number");
+		assert.equal(unboxed.schema, leaf.number);
 		assert.equal(unboxed.value, 42);
 	});
 });
@@ -227,7 +227,7 @@ describe("unboxedUnion", () => {
 
 		// Type is not known based on schema, so node will not be unboxed.
 		const unboxed = unboxedUnion(context, fieldSchema, cursor);
-		assert.equal(unboxed.type, "com.fluidframework.leaf.number");
+		assert.equal(unboxed.schema, leaf.number);
 		assert.equal(unboxed.value, 42);
 	});
 
@@ -258,7 +258,7 @@ describe("unboxedUnion", () => {
 
 		// Type is not known based on schema, so node will not be unboxed.
 		const unboxed = unboxedUnion(context, fieldSchema, cursor);
-		assert.equal(unboxed.type, "com.fluidframework.leaf.string");
+		assert.equal(unboxed.schema, leaf.string);
 		assert.equal(unboxed.value, "Hello world");
 	});
 });
