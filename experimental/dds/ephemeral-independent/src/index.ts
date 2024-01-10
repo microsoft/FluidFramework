@@ -17,7 +17,10 @@ export type {
 	RoundTrippable,
 } from "./types.js";
 
-export { EphemeralIndependentDirectory } from "./independentDirectory/index.js";
+export {
+	type EmptyIndependentDirectory,
+	EphemeralIndependentDirectory,
+} from "./independentDirectory/index.js";
 
 export {
 	Latest,

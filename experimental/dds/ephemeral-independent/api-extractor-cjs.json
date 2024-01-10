@@ -1,0 +1,10 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "../../../common/build/build-common/api-extractor-base.cjs.primary.json",
+	"compiler": {
+		"tsconfigFilePath": "<projectFolder>/tsconfig.cjs.json"
+	},
+	"apiReport": {
+		"enabled": false
+	}
+}

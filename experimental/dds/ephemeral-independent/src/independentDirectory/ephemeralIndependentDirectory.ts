@@ -13,8 +13,11 @@ import type { IndependentDirectory } from "../types.js";
 
 import { createEphemeralIndependentDirectory } from "./independentDirectory.js";
 
+/**
+ * @alpha
+ */
 // eslint-disable-next-line @typescript-eslint/ban-types
-type EmptyIndependentDirectory = IndependentDirectory<{}>;
+export type EmptyIndependentDirectory = IndependentDirectory<{}>;
 
 /**
  * @alpha

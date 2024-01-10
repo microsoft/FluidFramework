@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { EphemeralIndependentDirectory } from "./ephemeralIndependentDirectory.js";
+export {
+	type EmptyIndependentDirectory,
+	EphemeralIndependentDirectory,
+} from "./ephemeralIndependentDirectory.js";

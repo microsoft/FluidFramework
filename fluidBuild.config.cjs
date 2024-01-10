@@ -235,7 +235,8 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
-				"experimental/dds/ephemeral-independent/package.json", // Policy is incorrect about "module" in package.json
+				// Policy is incorrect about "main", "module", and "types" in package.json when "exports" is present.
+				"experimental/dds/ephemeral-independent/package.json",
 				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",
