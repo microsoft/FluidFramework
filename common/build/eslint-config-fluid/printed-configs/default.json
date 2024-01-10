@@ -598,7 +598,8 @@
             "error",
             {
                 "allow": [
-                    "@fluidframework/*/internal"
+                    "@fluidframework/*/internal",
+                    "*/index.js"
                 ]
             }
         ],

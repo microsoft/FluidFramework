@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, JsonableTree } from "../../../core";
-import { DownPath } from "../../../feature-libraries";
+import { FieldKey, JsonableTree } from "../../../core/index.js";
+import { DownPath } from "../../../feature-libraries/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -25,7 +25,7 @@ export interface UndoRedo {
 	contents: FuzzUndoRedoType;
 }
 
-export type FuzzFieldChange = FuzzInsert | FuzzDelete | FuzzMove;
+export type FuzzFieldChange = FuzzInsert | FuzzRemove | FuzzMove;
 
 export interface FieldEdit {
 	type: "fieldEdit";
@@ -60,7 +60,7 @@ export interface FuzzSet {
 	 */
 	key: FieldKey;
 	/**
-	 * @privateRemarks - Optional fields use {@link FuzzDelete} to mean "delete the field's contents" rather than
+	 * @privateRemarks - Optional fields use {@link FuzzRemove} to mean "remove the field's contents" rather than
 	 * a `FuzzSet` with undefined value, hence why this property is required.
 	 */
 	value: JsonableTree;
@@ -70,7 +70,7 @@ export type FieldEditTypes = SequenceFieldEdit | RequiredFieldEdit | OptionalFie
 
 export interface SequenceFieldEdit {
 	type: "sequence";
-	edit: FuzzInsert | FuzzDelete | FuzzMove;
+	edit: FuzzInsert | FuzzRemove | FuzzMove;
 }
 
 export interface RequiredFieldEdit {
@@ -80,11 +80,11 @@ export interface RequiredFieldEdit {
 
 export interface OptionalFieldEdit {
 	type: "optional";
-	edit: FuzzSet | FuzzDelete;
+	edit: FuzzSet | FuzzRemove;
 }
 
-export interface FuzzDelete extends NodeRangePath {
-	type: "delete";
+export interface FuzzRemove extends NodeRangePath {
+	type: "remove";
 }
 
 export interface FuzzMove extends NodeRangePath {
@@ -133,7 +133,7 @@ export interface NodeRangePath {
 
 export interface EditGeneratorOpWeights {
 	insert: number;
-	delete: number;
+	remove: number;
 	start: number;
 	commit: number;
 	abort: number;

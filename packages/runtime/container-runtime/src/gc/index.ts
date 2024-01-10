@@ -34,6 +34,7 @@ export {
 	stableGCVersion,
 	disableAttachmentBlobSweepKey,
 	disableDatastoreSweepKey,
+	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,

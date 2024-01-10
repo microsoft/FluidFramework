@@ -13,8 +13,8 @@ import {
 	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
+import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -202,7 +202,7 @@ describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProv
 			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
 				error: "RollbackError: rollback not supported",
-				errorType: ContainerErrorType.dataProcessingError,
+				errorType: ContainerErrorTypes.dataProcessingError,
 			},
 		],
 		async () => {

@@ -48,26 +48,14 @@ use_old_TypeAliasDeclaration_DriverError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_DriverErrorType": {"forwardCompat": false}
+* "RemovedEnumDeclaration_DriverErrorType": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_DriverErrorType():
-    TypeOnly<old.DriverErrorType>;
-declare function use_current_EnumDeclaration_DriverErrorType(
-    use: TypeOnly<current.DriverErrorType>): void;
-use_current_EnumDeclaration_DriverErrorType(
-    get_old_EnumDeclaration_DriverErrorType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_DriverErrorType": {"backCompat": false}
+* "RemovedEnumDeclaration_DriverErrorType": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_DriverErrorType():
-    TypeOnly<current.DriverErrorType>;
-declare function use_old_EnumDeclaration_DriverErrorType(
-    use: TypeOnly<old.DriverErrorType>): void;
-use_old_EnumDeclaration_DriverErrorType(
-    get_current_EnumDeclaration_DriverErrorType());
 
 /*
 * Validate forward compat by using old type in place of current type

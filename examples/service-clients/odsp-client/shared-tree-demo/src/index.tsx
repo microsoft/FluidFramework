@@ -5,13 +5,12 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { ITree } from "@fluidframework/tree";
-import { IFluidContainer } from "@fluidframework/fluid-static";
-import { loadFluidData, containerSchema, createFluidData } from "./fluid";
-import { treeConfiguration, Letter } from "./schema";
+import { ITree, IFluidContainer } from "fluid-framework";
+import { loadFluidData, containerSchema, createFluidData } from "./fluid.js";
+import { treeConfiguration, Letter } from "./schema.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./output.css";
-import { ReactApp } from "./reactApp";
+import { ReactApp } from "./reactApp.js";
 
 async function start(): Promise<void> {
 	const app = document.createElement("div");

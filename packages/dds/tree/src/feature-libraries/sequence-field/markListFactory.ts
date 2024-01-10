@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { sequenceConfig } from "./config";
-import { isVestigialEndpoint } from "./helperTypes";
-import { Mark, MarkList } from "./types";
-import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils";
+import { sequenceConfig } from "./config.js";
+import { isVestigialEndpoint } from "./helperTypes.js";
+import { Mark, MarkList } from "./types.js";
+import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
 
 /**
  * Helper class for constructing an offset list of marks that...

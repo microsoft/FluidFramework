@@ -16,8 +16,8 @@ import {
 	DeltaMark,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeChanges,
-} from "../../core";
-import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
+} from "../../core/index.js";
+import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util/index.js";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -32,10 +32,10 @@ import {
 	FieldChangeHandler,
 	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
-} from "../modular-schema";
-import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes";
-import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
+} from "../modular-schema/index.js";
+import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes.js";
+import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 
 interface IRegisterMap<T> {
 	set(id: RegisterId, childChange: T): void;

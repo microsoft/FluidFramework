@@ -4,15 +4,16 @@
  */
 
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedTree, SharedTreeFactory } from "../../shared-tree";
-import { typeboxValidator } from "../../external-utilities";
-import { SchemaFactory, TreeConfiguration } from "../../class-tree";
+import { SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
@@ -31,7 +32,9 @@ const config = new TreeConfiguration(SomeType, () => ({
 }));
 
 function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory) {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
+	});
 	const tree = new SharedTree(
 		id,
 		dataStoreRuntime,
@@ -51,7 +54,10 @@ function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFac
 
 function createLocalTree(id: string) {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		id,
+	);
 }
 
 describe("Garbage Collection", () => {

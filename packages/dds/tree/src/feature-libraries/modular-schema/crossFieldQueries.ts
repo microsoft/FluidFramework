@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, RevisionTag } from "../../core";
+import { ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import {
 	RangeMap,
 	RangeQueryResult,
 	getFromRangeMap,
 	getOrAddInMap,
 	setInRangeMap,
-} from "../../util";
+} from "../../util/index.js";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;

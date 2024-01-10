@@ -4,9 +4,9 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { brandedNumberType } from "../../util";
-import { RevisionTagSchema } from "../rebase";
-import { ForestRootId } from "./detachedFieldIndex";
+import { brandedNumberType } from "../../util/index.js";
+import { RevisionTagSchema } from "../rebase/index.js";
+import { ForestRootId } from "./detachedFieldIndex.js";
 
 export const version = 1.0;
 

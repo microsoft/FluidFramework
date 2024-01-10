@@ -20,6 +20,7 @@ import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager } from "../blobManager";
 import {
@@ -262,7 +263,7 @@ export class GarbageCollector implements IGarbageCollector {
 			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 			assert(
 				currentReferenceTimestampMs !== undefined,
-				"Trying to initialize GC state without current timestamp",
+				0x8a4 /* Trying to initialize GC state without current timestamp */,
 			);
 
 			/**
@@ -1005,6 +1006,18 @@ export class GarbageCollector implements IGarbageCollector {
 		if (!this.configs.shouldRunGC) {
 			return;
 		}
+
+		if (!toNodePath.startsWith("/")) {
+			// A long time ago we stored handles with relatives paths. We don't expect to see these cases though
+			// because GC was enabled only after we made the switch to always using absolute paths.
+			this.mc.logger.sendErrorEvent({
+				eventName: "InvalidRelativeOutboundRoute",
+				...tagCodeArtifacts({ fromId: fromNodePath, id: toNodePath }),
+			});
+			return;
+		}
+
+		assert(fromNodePath.startsWith("/"), 0x8a5 /* fromNodePath must be an absolute path */);
 
 		const outboundRoutes = this.newReferencesSinceLastRun.get(fromNodePath) ?? [];
 		outboundRoutes.push(toNodePath);

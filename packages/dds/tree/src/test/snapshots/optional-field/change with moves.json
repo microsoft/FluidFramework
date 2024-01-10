@@ -1,28 +1,24 @@
 {
   "m": [
     [
-      {
-        "localId": 42,
-        "revision": "beefbeef-beef-4000-8000-000000000001"
-      },
-      0,
+      [
+        42,
+        0
+      ],
+      null,
       true
     ],
     [
-      0,
-      {
-        "localId": 42,
-        "revision": "beefbeef-beef-4000-8000-000000000001"
-      },
+      null,
+      [
+        42,
+        0
+      ],
       false
     ],
     [
-      {
-        "localId": 42
-      },
-      {
-        "localId": 42
-      },
+      42,
+      42,
       true
     ]
   ]

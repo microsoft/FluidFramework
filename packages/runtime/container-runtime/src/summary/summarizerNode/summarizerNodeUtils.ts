@@ -4,8 +4,8 @@
  */
 
 import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISnapshotTree, SummaryObject } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions";
 
 export interface IRefreshSummaryResult {
 	/** Tells whether this summary is tracked by this client. */
@@ -136,20 +136,9 @@ export class SummaryNode {
 }
 
 /**
- * Information about the initial summary tree found from an attach op.
- */
-export interface IInitialSummary {
-	sequenceNumber: number;
-	id: string;
-	summary: ISummaryTreeWithStats | undefined;
-}
-
-/**
  * Represents the details needed to create a child summarizer node.
  */
 export interface ICreateChildDetails {
-	/** Summary from attach op if known */
-	initialSummary: IInitialSummary | undefined;
 	/** Latest summary from server node data */
 	latestSummary: SummaryNode | undefined;
 	/** Sequence number of latest known change to the node */
@@ -181,26 +170,6 @@ export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInf
 	}
 	return {
 		childrenTree: baseSummary,
-		childrenPathPart: undefined,
-	};
-}
-
-/**
- * Checks if the summary contains .channels subtree where the children subtrees
- * would be located if exists.
- * @param baseSummary - summary to check
- */
-export function parseSummaryTreeForSubtrees(summary: ISummaryTree): ISubtreeInfo<SummaryObject> {
-	// New versions of snapshots have child nodes isolated in .channels subtree
-	const channelsSubtree = summary.tree[channelsTreeName];
-	if (channelsSubtree !== undefined) {
-		return {
-			childrenTree: channelsSubtree,
-			childrenPathPart: channelsTreeName,
-		};
-	}
-	return {
-		childrenTree: summary,
 		childrenPathPart: undefined,
 	};
 }

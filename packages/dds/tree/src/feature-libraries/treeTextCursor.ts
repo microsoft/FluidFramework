@@ -19,8 +19,8 @@ import {
 	DetachedField,
 	rootField,
 	detachedFieldAsKey,
-} from "../core";
-import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils";
+} from "../core/index.js";
+import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils.js";
 
 /**
  * This module provides support for reading and writing a human readable (and
