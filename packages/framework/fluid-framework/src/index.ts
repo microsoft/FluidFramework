@@ -22,12 +22,14 @@ export type {
 	IFluidContainer,
 	IFluidContainerEvents,
 	IMember,
+	InitialObjects,
 	IServiceAudience,
 	IServiceAudienceEvents,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectCtor,
 	MemberChangedListener,
+	Myself,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
 export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";

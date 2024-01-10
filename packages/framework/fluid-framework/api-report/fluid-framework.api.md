@@ -6,41 +6,30 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
+import { ConnectionState as ConnectionState_2 } from '@fluidframework/container-definitions';
 import { ContainerErrorTypes } from '@fluidframework/container-definitions';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { DataObjectClass } from '@fluidframework/fluid-static';
-import { DriverErrorTypes } from '@fluidframework/driver-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IConnection } from '@fluidframework/fluid-static';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IFluidContainerEvents } from '@fluidframework/fluid-static';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IMember } from '@fluidframework/fluid-static';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IServiceAudience } from '@fluidframework/fluid-static';
-import { IServiceAudienceEvents } from '@fluidframework/fluid-static';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { LoadableObjectClass } from '@fluidframework/fluid-static';
-import { LoadableObjectClassRecord } from '@fluidframework/fluid-static';
-import { LoadableObjectCtor } from '@fluidframework/fluid-static';
-import { MemberChangedListener } from '@fluidframework/fluid-static';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { SharedObjectClass } from '@fluidframework/fluid-static';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -57,14 +46,46 @@ export { ConnectionState }
 
 export { ContainerErrorTypes }
 
-export { ContainerSchema }
+// @public
+export interface ContainerSchema {
+    dynamicObjectTypes?: LoadableObjectClass<any>[];
+    initialObjects: LoadableObjectClassRecord;
+}
 
-export { DataObjectClass }
+// @public
+export type DataObjectClass<T extends IFluidLoadable> = {
+    readonly factory: {
+        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+    };
+} & LoadableObjectCtor<T>;
 
 // @public
 export const disposeSymbol: unique symbol;
 
-export { DriverErrorTypes }
+// @public
+export const DriverErrorTypes: {
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
@@ -96,7 +117,11 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
-export { IConnection }
+// @public
+export interface IConnection {
+    id: string;
+    mode: "write" | "read";
+}
 
 export { ICriticalContainerError }
 
@@ -105,17 +130,45 @@ export interface IDisposable {
     [disposeSymbol](): void;
 }
 
-export { IFluidContainer }
+// @public @sealed
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
+    attach(): Promise<string>;
+    readonly attachState: AttachState;
+    connect(): void;
+    readonly connectionState: ConnectionState_2;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): void;
+    dispose(): void;
+    readonly disposed: boolean;
+    readonly initialObjects: InitialObjects<TContainerSchema>;
+    readonly isDirty: boolean;
+}
 
-export { IFluidContainerEvents }
+// @public @sealed
+export interface IFluidContainerEvents extends IEvent {
+    (event: "connected", listener: () => void): void;
+    (event: "disconnected", listener: () => void): void;
+    (event: "saved", listener: () => void): void;
+    (event: "dirty", listener: () => void): void;
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+}
 
-export { IMember }
+// @public
+export interface IMember {
+    connections: IConnection[];
+    userId: string;
+}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @public
+export type InitialObjects<T extends ContainerSchema> = {
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+};
 
 // @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
@@ -133,9 +186,21 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
-export { IServiceAudience }
+// @public
+export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
+    getMembers(): Map<string, M>;
+    getMyself(): Myself<M> | undefined;
+}
 
-export { IServiceAudienceEvents }
+// @public
+export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
+    // @eventProperty
+    (event: "membersChanged", listener: () => void): void;
+    // @eventProperty
+    (event: "memberAdded", listener: MemberChangedListener<M>): void;
+    // @eventProperty
+    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
+}
 
 // @public
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
@@ -176,17 +241,26 @@ export interface IValueChanged {
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-export { LoadableObjectClass }
+// @public
+export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
-export { LoadableObjectClassRecord }
+// @public
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
-export { LoadableObjectCtor }
+// @public
+export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 // @public
 export interface MakeNominal {
 }
 
-export { MemberChangedListener }
+// @public
+export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+
+// @public
+export type Myself<M extends IMember = IMember> = M & {
+    currentConnection: string;
+};
 
 // @public
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
@@ -266,7 +340,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     values(): IterableIterator<any>;
 }
 
-export { SharedObjectClass }
+// @public
+export type SharedObjectClass<T extends IFluidLoadable> = {
+    readonly getFactory: () => IChannelFactory;
+} & LoadableObjectCtor<T>;
 
 // @public
 export class SharedTree implements ITree {
