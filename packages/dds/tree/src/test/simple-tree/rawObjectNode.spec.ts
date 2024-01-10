@@ -11,7 +11,7 @@ import { leaf, SchemaBuilder } from "../../domains/index.js";
 import { brand } from "../../util/index.js";
 import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
 import { extractRawNodeContent, RawObjectNode } from "../../simple-tree/rawNode.js";
-import { ObjectNodeSchema } from "../../feature-libraries/index.js";
+import { FlexObjectNodeSchema } from "../../feature-libraries/index.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {
@@ -29,7 +29,7 @@ describe("raw object nodes", () => {
 		});
 
 		assert(context.root.is(rootFieldSchema));
-		const rawObjectNode = new RawObjectNode(objectSchema as ObjectNodeSchema, {
+		const rawObjectNode = new RawObjectNode(objectSchema as FlexObjectNodeSchema, {
 			foo: 42,
 			bar: undefined,
 			baz: [],

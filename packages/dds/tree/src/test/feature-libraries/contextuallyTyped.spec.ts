@@ -17,7 +17,7 @@ import {
 } from "../../feature-libraries/contextuallyTyped.js";
 import {
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import { leaf, SchemaBuilder } from "../../domains/index.js";
@@ -109,7 +109,7 @@ describe("ContextuallyTyped", () => {
 			builder.fixRecursiveReference(recursiveReference);
 			const nodeSchema = builder.object("node", {
 				foo: builder.required(leaf.string),
-				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [recursiveReference]),
+				child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [recursiveReference]),
 			});
 
 			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));
