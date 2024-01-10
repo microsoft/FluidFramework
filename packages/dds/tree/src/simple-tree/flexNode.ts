@@ -49,7 +49,7 @@ export function getFlexNode(
 export function getFlexNode(target: TreeMapNode, allowFreed?: true): FlexTreeMapNode<MapNodeSchema>;
 export function getFlexNode(target: TreeNode, allowFreed?: true): FlexTreeNode;
 export function getFlexNode(target: TreeNode, allowFreed = false): FlexTreeNode {
-	const node = flexNodeMap.get(target) ?? fail("Target is not associated with an flex node");
+	const node = flexNodeMap.get(target) ?? fail("Target is not associated with a flex node");
 	if (!(node instanceof RawTreeNode) && !allowFreed) {
 		assertFlexTreeEntityNotFreed(node);
 	}
