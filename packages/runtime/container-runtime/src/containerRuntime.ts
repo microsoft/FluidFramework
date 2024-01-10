@@ -3668,6 +3668,7 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
+		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store

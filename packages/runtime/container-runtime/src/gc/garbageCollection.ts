@@ -876,8 +876,6 @@ export class GarbageCollector implements IGarbageCollector {
 					break;
 				}
 
-				//* NOTE: In separate PR... Then also run full GC - Otherwise if it's our bug it won't resolve (the object with the handle we missed doesn't change)
-
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
 				this.addedOutboundReference("/", tombstonedNodePath);
@@ -981,6 +979,12 @@ export class GarbageCollector implements IGarbageCollector {
 			headers: headerData,
 		});
 
+		// Any time we log a Tombstone error (via Telemetry Tracker),
+		// we want to also trigger autorecovery to avoid the object being deleted
+		if (isTombstoned) {
+			this.triggerAutoRecovery(nodePath);
+		}
+
 		const nodeType = this.runtime.getNodeType(nodePath);
 
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
@@ -989,19 +993,14 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		const errorRequest: IRequest = request ?? { url: nodePath };
-		if (isTombstoned) {
-			this.submitTombstoneLoadedMessage(nodePath);
-
-			// If tombstone enforcement is configured and allowTombstone is not true, throw an error
-			if (this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
-				// The requested data store is removed by gc. Create a 404 gc response exception.
-				throw responseToException(
-					createResponseError(404, `${nodeType} was tombstoned`, errorRequest, {
-						[TombstoneResponseHeaderKey]: true,
-					}),
-					errorRequest,
-				);
-			}
+		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
+			// The requested data store is removed by gc. Create a 404 gc response exception.
+			throw responseToException(
+				createResponseError(404, `${nodeType} was tombstoned`, errorRequest, {
+					[TombstoneResponseHeaderKey]: true,
+				}),
+				errorRequest,
+			);
 		}
 
 		// If the object is inactive and inactive enforcement is configured, throw an error.
@@ -1022,26 +1021,36 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
-	 * Broadcasting this information in the op stream allows other clients to prevent
-	 * this object from being deleted by Sweep (after the Grace Period), by clearing
-	 * all unreferenced / tombstone state for this object.
+	 * The given node should have its unreferenced state reset in the next GC,
+	 * even if the true GC graph shows it is unreferenced. This will
+	 * prevent it from being deleted by Sweep (after the Grace Period).
+	 *
+	 * Summarizer Clients: Call addedOutboundReference to reset the unreferenced state (don't submit the GC op)
+	 *
+	 * Interactive Clients: Submit a GC op indicating that the Tombstone with the given path has been loaded.
+	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
+	 * before runnint GC next.
 	 */
-	private submitTombstoneLoadedMessage(nodePath: string) {
+	private triggerAutoRecovery(nodePath: string) {
 		if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
 			return;
 		}
 
-		const contents: GarbageCollectionMessage = {
-			type: "TombstoneLoaded",
-			nodePath,
-		};
+		// Summarize does this directly rather than using the op
+		// to avoid difficult edge cases that can arise from Summarizer submitting ops.
+		if (this.isSummarizerClient) {
+			this.addedOutboundReference("/", nodePath);
+			return;
+		}
 
 		// Use compat behavior "Ignore" since this is an optimization to opportunistically protect
 		// objects from deletion, so it's fine for older clients to ignore this op.
 		const containerGCMessage: ContainerRuntimeGCMessage = {
 			type: ContainerMessageType.GC,
-			contents,
+			contents: {
+				type: "TombstoneLoaded",
+				nodePath,
+			},
 			compatDetails: { behavior: "Ignore" },
 		};
 		this.submitMessage(containerGCMessage);

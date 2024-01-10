@@ -262,7 +262,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		}
 	}
 
-	// If these tests start failing due to "runtime is closed" errors try first adjusting `tombstoneTimeoutMs` above
 	describe("Using tombstone data stores not allowed (per config)", () => {
 		beforeEach(() => {
 			// Allow Loading but not Usage
@@ -446,7 +445,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		);
 	});
 
-	// If these tests start failing due to "runtime is closed" errors try first adjusting `tombstoneTimeoutMs` above
 	describe("Loading tombstoned data stores", () => {
 		const expectedHeadersLogged = {
 			request: "{}",
