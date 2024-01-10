@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IErrorBase, IResponse, FluidObject, IGenericError } from "@fluidframework/core-interfaces";
+import { IErrorBase, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
@@ -203,7 +203,7 @@ describe("Runtime", () => {
 				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					let mockContext: Partial<IContainerContext>;
-					const submittedOpsMetdata: any[] = [];
+					const submittedOpsMetadata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
 						return {
@@ -227,10 +227,10 @@ describe("Runtime", () => {
 							) => {
 								if (contents.type === "groupedBatch") {
 									for (const subMessage of contents.contents) {
-										submittedOpsMetdata.push(subMessage.metadata);
+										submittedOpsMetadata.push(subMessage.metadata);
 									}
 								} else {
-									submittedOpsMetdata.push(appData);
+									submittedOpsMetadata.push(appData);
 								}
 								return opFakeSequenceNumber++;
 							},
@@ -265,7 +265,7 @@ describe("Runtime", () => {
 							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
-						submittedOpsMetdata.length = 0;
+						submittedOpsMetadata.length = 0;
 					});
 
 					it("Can't call flush() inside orderSequentially's callback", () => {
@@ -276,8 +276,16 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							1,
+						);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -290,8 +298,16 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
@@ -306,8 +322,16 @@ describe("Runtime", () => {
 						});
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Errors propagate to the container", () => {
@@ -320,8 +344,14 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual((error as IGenericError).error.message, "Any");
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: Any`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							1,
+						);
 					});
 
 					it("Errors propagate to the container when nested", () => {
@@ -336,8 +366,14 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual((error as IGenericError).error.message, "Any");
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: Any`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Batching property set properly", () => {
@@ -349,22 +385,22 @@ describe("Runtime", () => {
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							3,
 							"3 messages should be sent",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[0].batch,
+							submittedOpsMetadata[0].batch,
 							true,
 							"first message should be the batch start",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[1],
+							submittedOpsMetadata[1],
 							undefined,
 							"second message should not hold batch info",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[2].batch,
+							submittedOpsMetadata[2].batch,
 							false,
 							"third message should be the batch end",
 						);
@@ -401,7 +437,7 @@ describe("Runtime", () => {
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							0,
 							"no messages should be sent",
 						);
@@ -409,7 +445,7 @@ describe("Runtime", () => {
 						containerRuntime.setConnectionState(true);
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							6,
 							"6 messages should be sent",
 						);
@@ -424,7 +460,7 @@ describe("Runtime", () => {
 						];
 
 						assert.deepStrictEqual(
-							submittedOpsMetdata,
+							submittedOpsMetadata,
 							expectedBatchMetadata,
 							"batch metadata does not match",
 						);
