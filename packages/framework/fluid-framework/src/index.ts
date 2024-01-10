@@ -11,7 +11,10 @@
  * @packageDocumentation
  */
 
-export type { ICriticalContainerError } from "@fluidframework/container-definitions";
+export type {
+	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 export { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";

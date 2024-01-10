@@ -62,3 +62,5 @@ export {
 } from "./flexTreeTypes.js";
 
 export { NodeKeys } from "./nodeKeys.js";
+
+export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
