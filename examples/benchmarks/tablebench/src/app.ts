@@ -16,12 +16,12 @@ import { generateTable } from "./data";
 export { generateTable };
 export { Table };
 
-export async function start() {
+export async function initApp() {
 	const { tree } = await initFluid();
-
 	const view = tree.schematize(new TreeConfiguration(Table, () => generateTable(10000)));
 
-	document?.getElementById("run")?.addEventListener("click", () => {
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	document.getElementById("run")!.addEventListener("click", () => {
 		performance.mark("start");
 
 		for (const row of view.root) {
@@ -46,6 +46,6 @@ export async function start() {
 	});
 }
 
-start().catch((error) => {
+initApp().catch((error) => {
 	console.error(error);
 });
