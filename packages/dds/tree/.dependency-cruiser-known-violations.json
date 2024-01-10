@@ -37,18 +37,5 @@
       "src/feature-libraries/flex-tree/unboxed.ts",
       "src/feature-libraries/flex-tree/lazyNode.ts"
     ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/modular-schema/comparison.ts",
-    "to": "src/feature-libraries/modular-schema/fieldKind.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/modular-schema/fieldKind.ts",
-      "src/feature-libraries/modular-schema/comparison.ts"
-    ]
   }
 ]

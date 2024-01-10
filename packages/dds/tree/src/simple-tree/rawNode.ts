@@ -218,11 +218,11 @@ export class RawFieldNode<TSchema extends FieldNodeSchema>
 	implements FlexTreeFieldNode<TSchema>
 {
 	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of a list");
+		throw rawError("Reading content of an array node");
 	}
 
 	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of a list");
+		throw rawError("Reading boxed content of an array node");
 	}
 }
 

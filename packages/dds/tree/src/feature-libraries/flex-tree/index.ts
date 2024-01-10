@@ -29,6 +29,12 @@ export {
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./flexTreeTypes.js";
 
 export {

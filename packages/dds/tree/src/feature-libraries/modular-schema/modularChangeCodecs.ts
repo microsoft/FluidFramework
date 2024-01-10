@@ -36,7 +36,7 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 } from "./modularChangeTypes.js";
-import { FieldKindWithEditor } from "./fieldKind.js";
+import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	EncodedBuilds,

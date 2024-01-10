@@ -95,4 +95,5 @@ gitssh:
 
 lumberjack:
   options:
+    enableGlobalTelemetryContext: true
     enableSanitization: false

@@ -84,8 +84,8 @@ export {
 	MapTree,
 	Revertible,
 	RevertibleKind,
-	RevertResult,
-	DiscardResult,
+	RevertibleStatus,
+	RevertibleResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
@@ -225,6 +225,12 @@ export {
 	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./feature-libraries/index.js";
 
 export {

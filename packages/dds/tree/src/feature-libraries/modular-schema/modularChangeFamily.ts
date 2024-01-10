@@ -74,7 +74,8 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind.js";
+import { FieldKind } from "./fieldKind.js";
+import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
