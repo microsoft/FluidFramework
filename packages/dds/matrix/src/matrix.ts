@@ -521,20 +521,32 @@ export class SharedMatrix<T = any>
 			SnapshotPath.cols,
 			this.cols.summarize(this.runtime, this.handle, serializer),
 		);
+		const cellsSnapshot = this.cells.snapshot();
+		const props: Record<string, number> = {
+			cellsSnapshotSize: cellsSnapshot.length,
+			rowCount: this.rowCount,
+			colCount: this.colCount,
+		};
 		const artifactsToSummarize = [
-			this.cells.snapshot(),
+			cellsSnapshot,
 			this.pending.snapshot(),
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber,
 		];
 
 		// Only need to store it in the snapshot if we have switched the policy already.
 		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1) {
-			artifactsToSummarize.push(this.cellLastWriteTracker.snapshot());
+			const trackerMatrixSnapshot = this.cellLastWriteTracker.snapshot();
+			artifactsToSummarize.push(trackerMatrixSnapshot);
+			props.trackerMatrixSnapshotSize = trackerMatrixSnapshot.length;
 		}
 		builder.addBlob(
 			SnapshotPath.cells,
 			serializer.stringify(artifactsToSummarize, this.handle),
 		);
+		this.logger.sendTelemetryEvent({
+			eventName: "SharedMatrixInfo",
+			details: JSON.stringify(props),
+		});
 		return builder.getSummaryTree();
 	}
 
