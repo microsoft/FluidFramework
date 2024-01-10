@@ -218,6 +218,7 @@ module.exports = {
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
 				"examples/apps/attributable-map/package.json",
+				"experimental/dds/ephemeral-independent/package.json", // Compile only tests currently
 			],
 			"npm-package-json-test-scripts-split": [
 				"server/",
