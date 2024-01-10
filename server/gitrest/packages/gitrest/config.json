@@ -24,6 +24,7 @@
 		]
 	},
 	"requestSizeLimit": "1gb",
+	"enableResponseCloseLatencyMetric": true,
 	"storageDir": {
 		"baseDir": "/home/node/documents",
 		"useRepoOwner": true
