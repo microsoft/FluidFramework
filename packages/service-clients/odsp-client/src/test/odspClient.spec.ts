@@ -45,6 +45,7 @@ function createOdspClient(): OdspClient {
 		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
 		siteUrl: "<site_url>",
 		driveId: "<raas_drive_id>",
+		filePath: "<file_path>",
 	};
 
 	return new OdspClient({ connection: connectionProperties });

@@ -167,7 +167,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 
@@ -198,7 +198,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 
@@ -224,7 +224,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 
@@ -321,8 +321,8 @@ describe("SharedTreeCore", () => {
 		const view1 = tree1.schematizeInternal(config);
 		containerRuntimeFactory.processAllMessages();
 		const view2 = tree2.schematizeInternal(config);
-		const editable1 = view1.editableTree;
-		const editable2 = view2.editableTree;
+		const editable1 = view1.flexTree;
+		const editable2 = view2.flexTree;
 
 		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
 		editable1.content = { [typeNameSymbol]: node.name, child: undefined };

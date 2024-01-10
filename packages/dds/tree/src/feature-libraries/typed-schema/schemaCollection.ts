@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core/index.js";
-import { capitalize, fail, requireAssignableTo } from "../../util/index.js";
+import { fail, requireAssignableTo } from "../../util/index.js";
 import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
 import { Multiplicity } from "../multiplicity.js";
 import {
@@ -183,7 +183,6 @@ export function validateSchemaCollection(
 				const description = () =>
 					`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
 				validateField(lintConfiguration, collection, field, description, errors);
-				validateObjectNodeFieldName(key, description, errors);
 			}
 		} else {
 			// TODO: there should be a common fallback that works for cases without a specialized implementation.
@@ -253,57 +252,4 @@ export function validateField(
 	// 		`${describeField()} explicitly uses "counter" kind, which is finished.`,
 	// 	);
 	// }
-}
-
-/**
- * Reserved field names to avoid collisions with the API.
- */
-export const bannedFieldNames = new Set([
-	"constructor",
-	"context",
-	"is",
-	"on",
-	"parentField",
-	"schema",
-	"treeStatus",
-	"tryGetField",
-	"type",
-	"value",
-	"localNodeKey",
-]);
-
-/**
- * Field names starting with these must not be followed by an upper case letter
- */
-export const fieldApiPrefixes = new Set(["set", "boxed"]);
-
-export function validateObjectNodeFieldName(
-	name: string,
-	describeField: () => string,
-	errors: string[],
-): void {
-	// TODO: Remove conflicts between possible field keys and editable-tree API members.
-	const suggestion =
-		"Pick a different field name to avoid property name collisions in the implementation. In the future this list of reserved names will be removed.";
-
-	if (bannedFieldNames.has(name)) {
-		errors.push(
-			`${describeField()} uses "${name}" one of the banned field names (${[
-				...bannedFieldNames,
-			]}). ${suggestion}`,
-		);
-	}
-
-	for (const prefix of fieldApiPrefixes) {
-		if (name.startsWith(prefix)) {
-			const afterPrefix = name.slice(prefix.length);
-			if (afterPrefix === capitalize(afterPrefix)) {
-				errors.push(
-					`${describeField()} has name that starts with one of the banned prefixes (${[
-						...fieldApiPrefixes,
-					]}) followed by something other than a lowercase letter. ${suggestion}`,
-				);
-			}
-		}
-	}
 }

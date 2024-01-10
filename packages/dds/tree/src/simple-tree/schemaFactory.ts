@@ -48,7 +48,7 @@ import {
 	type,
 } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
-import { TreeArrayNode } from "./treeListNode.js";
+import { TreeArrayNode } from "./treeArrayNode.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -108,7 +108,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			if (value === null) {
 				return nullSchema;
 			}
-			assert(isFluidHandle(value), "invalid TreeValue");
+			assert(isFluidHandle(value), 0x87e /* invalid TreeValue */);
 			return handleSchema;
 		}
 		default:

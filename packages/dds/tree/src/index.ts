@@ -84,8 +84,8 @@ export {
 	MapTree,
 	Revertible,
 	RevertibleKind,
-	RevertResult,
-	DiscardResult,
+	RevertibleStatus,
+	RevertibleResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
@@ -225,15 +225,13 @@ export {
 	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./feature-libraries/index.js";
-
-export {
-	TreeArrayNode,
-	Unhydrated,
-	IterableTreeArrayContent,
-	TreeNode,
-	TreeArrayNodeBase,
-} from "./simple-tree/index.js";
 
 export {
 	ISharedTree,
@@ -258,10 +256,16 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	TreeArrayNode,
+	Unhydrated,
+	IterableTreeArrayContent,
+	TreeNode,
+	TreeArrayNodeBase,
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
 	TreeView,
+	TreeViewEvents,
 	SchemaFactory,
 	Tree,
 	TreeApi,

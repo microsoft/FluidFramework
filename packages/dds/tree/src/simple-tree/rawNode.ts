@@ -17,7 +17,6 @@ import {
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
-	boxedIterator,
 	flexTreeMarker,
 	onNextChange,
 	LocalNodeKey,
@@ -112,7 +111,7 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 		throw rawError("Reading fields");
 	}
 
-	public [boxedIterator](): IterableIterator<FlexTreeField> {
+	public boxedIterator(): IterableIterator<FlexTreeField> {
 		throw rawError("Boxed iteration");
 	}
 
@@ -206,7 +205,7 @@ export class RawMapNode<TSchema extends MapNodeSchema>
 		return this.entries();
 	}
 
-	public [boxedIterator](): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
+	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
 		throw rawError("Boxed iteration");
 	}
 }
@@ -219,11 +218,11 @@ export class RawFieldNode<TSchema extends FieldNodeSchema>
 	implements FlexTreeFieldNode<TSchema>
 {
 	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of a list");
+		throw rawError("Reading content of an array node");
 	}
 
 	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of a list");
+		throw rawError("Reading boxed content of an array node");
 	}
 }
 
