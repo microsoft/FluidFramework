@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	TestFluidObject,
 	ITestObjectProvider,
@@ -19,7 +19,8 @@ import {
 } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
-describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider) => {
+describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
 	beforeEach(function () {
 		provider = getTestObjectProvider();

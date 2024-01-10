@@ -3,12 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { TreeStoredSchema, TreeNodeSchemaIdentifier, TreeFieldStoredSchema } from "../core";
-import { fail } from "../util";
-import { defaultSchemaPolicy } from "./default-schema";
+import { assert } from "@fluidframework/core-utils";
+import {
+	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeFieldStoredSchema,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+} from "../core/index.js";
+import { fail } from "../util/index.js";
+import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	FlexTreeSchema,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	MapFieldSchema,
 	TreeFieldSchema,
 	AllowedTypes,
@@ -16,7 +24,7 @@ import {
 	LeafNodeSchema,
 	MapNodeSchema,
 	ObjectNodeSchema,
-} from "./typed-schema";
+} from "./typed-schema/index.js";
 
 /**
  * Creates a new view schema using the stored schema.
@@ -25,12 +33,12 @@ import {
  * If the input schema came from a view schema, it will not return the same view schema, and will not be compatible:
  * the returned TreeSchema is simply one which schematize will not object to.
  * Assumes the schema uses the default field kinds.
- * @alpha
+ * @internal
  */
 export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema {
-	const map: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const map: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	for (const [identifier, innerSchema] of schema.nodeSchema) {
-		if (innerSchema.leafValue !== undefined) {
+		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
 				identifier,
 				LeafNodeSchema.create(
@@ -39,7 +47,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 					innerSchema.leafValue,
 				),
 			);
-		} else if (innerSchema.mapFields !== undefined) {
+		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(
 				identifier,
 				MapNodeSchema.create(
@@ -49,6 +57,10 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 				),
 			);
 		} else {
+			assert(
+				innerSchema instanceof ObjectNodeStoredSchema,
+				0x882 /* unsupported node kind */,
+			);
 			const fields = new Map<string, TreeFieldSchema>();
 			for (const [key, field] of innerSchema.objectNodeFields) {
 				fields.set(key, fieldSchemaFromStoredSchema(field, map));
@@ -84,7 +96,7 @@ function mapToObject<MapValue>(map: Map<string, MapValue>): Record<string, MapVa
 
 export function fieldSchemaFromStoredSchema(
 	schema: TreeFieldStoredSchema,
-	map: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
+	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 ): TreeFieldSchema {
 	const kind =
 		defaultSchemaPolicy.fieldKinds.get(schema.kind.identifier) ?? fail("missing field kind");

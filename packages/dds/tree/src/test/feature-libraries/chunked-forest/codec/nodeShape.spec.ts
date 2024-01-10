@@ -5,26 +5,26 @@
 
 import { strict as assert, fail } from "assert";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
+import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
 import {
 	EncoderCache,
 	FieldEncoder,
 	asFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
+} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	Counter,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	IdentifierToken,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-import { JsonableTree } from "../../../../core";
-import { brand } from "../../../../util";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+import { JsonableTree } from "../../../../core/index.js";
+import { brand } from "../../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema";
-import { checkNodeEncode } from "./checkEncode";
+import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+import { checkNodeEncode } from "./checkEncode.js";
 
 describe("nodeShape", () => {
 	describe("NodeShape", () => {

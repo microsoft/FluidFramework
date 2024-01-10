@@ -67,7 +67,6 @@ export {
 	forEachField,
 	PathRootPrefix,
 	deltaForRootInitialization,
-	deltaForSet,
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,
@@ -98,7 +97,7 @@ export {
 	DeltaDetachedNodeDestruction,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
-} from "./tree";
+} from "./tree/index.js";
 
 export {
 	TreeNavigationResult,
@@ -113,20 +112,17 @@ export {
 	FieldAnchor,
 	moveToDetachedField,
 	ForestEvents,
-} from "./forest";
+} from "./forest/index.js";
 
 export {
 	FieldKey,
-	FieldKeySchema,
 	TreeNodeSchemaIdentifier,
-	TreeSchemaIdentifierSchema,
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
 	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	FieldKindIdentifier,
-	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 	TreeStoredSchema,
@@ -136,20 +132,34 @@ export {
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
-} from "./schema-stored";
+	schemaFormat,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	BrandedTreeNodeSchemaDataFormat,
+	decodeFieldSchema,
+	encodeFieldSchema,
+	storedSchemaDecodeDispatcher,
+	ErasedTreeNodeSchemaDataFormat,
+} from "./schema-stored/index.js";
 
-export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
+export {
+	ChangeFamily,
+	ChangeFamilyCodec,
+	ChangeEncodingContext,
+	ChangeFamilyEditor,
+	EditBuilder,
+} from "./change-family/index.js";
 
 export {
 	areEqualChangeAtomIds,
-	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
-	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
+	RevisionTagCodec,
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -161,10 +171,8 @@ export {
 	OutputType,
 	verifyChangeRebaser,
 	tagRollbackInverse,
-	SessionId,
 	SessionIdSchema,
 	mintCommit,
-	mintRevisionTag,
 	rebaseBranch,
 	BranchRebaseResult,
 	rebaseChange,
@@ -174,7 +182,7 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
-} from "./rebase";
+} from "./rebase/index.js";
 
 export {
 	Adapters,
@@ -182,6 +190,11 @@ export {
 	Compatibility,
 	TreeAdapter,
 	AllowedUpdateType,
-} from "./schema-view";
+} from "./schema-view/index.js";
 
-export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";
+export {
+	Revertible,
+	RevertibleKind,
+	RevertibleStatus,
+	RevertibleResult,
+} from "./revertible/index.js";

@@ -51,10 +51,10 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0-223006",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.1.0",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
@@ -76,7 +76,7 @@
 		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
 		"@types/string-hash": "^1.1.1",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",

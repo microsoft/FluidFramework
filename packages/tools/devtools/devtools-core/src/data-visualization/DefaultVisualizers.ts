@@ -13,7 +13,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { type IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedTreeFactory, type ISharedTree, encodeTreeSchema } from "@fluidframework/tree";
+import { SharedTree, type ISharedTree, encodeTreeSchema } from "@fluidframework/tree";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces";
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization";
@@ -278,6 +278,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
-	[new SharedTreeFactory().type]: visualizeSharedTree,
+	[SharedTree.getFactory().type]: visualizeSharedTree,
 	// TODO: the others
 };

@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IModelLoader } from "./interfaces";
+import { IDetachedModel, IModelLoader } from "./interfaces";
 import { ModelLoader } from "./modelLoader";
 
 const urlResolver = new LocalResolver();
@@ -45,7 +45,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		return true;
 	}
 
-	public async createDetached(version: string) {
+	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
 		const documentId = uuid();
 		const modelLoader = new ModelLoader<ModelType>({
 			urlResolver,
@@ -56,7 +56,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		});
 		return modelLoader.createDetached(version);
 	}
-	public async loadExisting(id: string) {
+	public async loadExisting(id: string): Promise<ModelType> {
 		const documentId = id;
 		const modelLoader = new ModelLoader<ModelType>({
 			urlResolver,

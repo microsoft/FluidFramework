@@ -8,40 +8,10 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-} from "../../core";
-import { fail, disposeSymbol, IDisposable } from "../../util";
-import { Context } from "./context";
-import {
-	FlexTreeEntity,
-	FlexTreeEntityKind,
-	TreeStatus,
-	boxedIterator,
-	flexTreeMarker,
-} from "./flexTreeTypes";
-
-/**
- * Declare an enumerable own property on `T` under the key `key` using the implementation of one on `from`.
- */
-export function makePropertyEnumerableOwn<T extends object>(
-	target: T,
-	key: keyof T,
-	from: object,
-): void {
-	assert(
-		Object.getOwnPropertyDescriptor(target, key) === undefined,
-		0x776 /* preexisting property */,
-	);
-
-	const descriptor = Object.getOwnPropertyDescriptor(from, key) ?? fail("missing property");
-	Object.defineProperty(target, key, { ...descriptor, enumerable: true });
-}
-
-/**
- * Modify a property on `T` under the key `key` to be not-enumerable
- */
-export function makePropertyNotEnumerable<T extends object>(target: T, key: keyof T): void {
-	makePrivatePropertyNotEnumerable(target, key);
-}
+} from "../../core/index.js";
+import { disposeSymbol, IDisposable } from "../../util/index.js";
+import { Context } from "./context.js";
+import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
 
 /**
  * Like {@link makePropertyNotEnumerable}, but less type safe so it works on private properties.
@@ -65,6 +35,17 @@ export const cursorSymbol = Symbol("cursor");
 export const anchorSymbol = Symbol("anchor");
 
 /**
+ * Assert `entity` is not deleted.
+ * @privateRemarks
+ * This can be faster than getting the tree status and checking that since that can require computing removed vs deleted.
+ * TODO: provide a non implementation dependent way to leverage this optimization.
+ */
+export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
+	assert(entity instanceof LazyEntity, "unexpected implementation");
+	assert(!entity[isFreedSymbol](), "Use after free");
+}
+
+/**
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
 export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
@@ -83,14 +64,9 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		this.#lazyCursor = cursor.fork();
 		context.withCursors.add(this);
 		this.context.withAnchors.add(this);
-
-		// Setup JS Object API:
-		makePropertyNotEnumerable(this, "context");
-		makePropertyNotEnumerable(this, "schema");
-		makePropertyNotEnumerable(this, anchorSymbol);
 	}
 
-	public abstract [boxedIterator](): IterableIterator<FlexTreeEntity>;
+	public abstract boxedIterator(): IterableIterator<FlexTreeEntity>;
 	public abstract get [flexTreeMarker](): FlexTreeEntityKind;
 
 	public abstract treeStatus(): TreeStatus;

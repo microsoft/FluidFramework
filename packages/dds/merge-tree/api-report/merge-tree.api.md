@@ -5,7 +5,6 @@
 ```ts
 
 import { AttributionKey } from '@fluidframework/runtime-definitions';
-import { Heap } from '@fluidframework/core-utils';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -114,11 +113,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
-    // @deprecated (undocumented)
-    findTile(startPos: number, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
     // (undocumented)
     getClientId(): number;
     // (undocumented)
@@ -164,7 +158,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     longClientId: string | undefined;
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
-    peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
+    peekPendingSegmentGroups(): SegmentGroup | undefined;
+    // (undocumented)
+    peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
@@ -589,15 +585,13 @@ export interface KeyComparer<TKey> {
     (a: TKey, b: TKey): number;
 }
 
-// @alpha
+// @alpha @sealed
 export class LocalReferenceCollection {
     // (undocumented)
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReferencePosition>;
         [Symbol.iterator](): any;
     };
-    constructor(
-    segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // (undocumented)
@@ -616,6 +610,8 @@ export class LocalReferenceCollection {
     isAfterTombstone(lref: LocalReferencePosition): boolean;
     // (undocumented)
     removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    static setOrGet(segment: ISegment): LocalReferenceCollection;
     split(offset: number, splitSeg: ISegment): void;
     // (undocumented)
     walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
@@ -930,7 +926,7 @@ export interface SegmentGroup {
     // (undocumented)
     refSeq: number;
     // (undocumented)
-    segments: ISegmentLeaf[];
+    segments: ISegment[];
 }
 
 // @alpha (undocumented)
@@ -946,6 +942,8 @@ export class SegmentGroupCollection {
     enqueue(segmentGroup: SegmentGroup): void;
     // (undocumented)
     pop?(): SegmentGroup | undefined;
+    // (undocumented)
+    remove?(segmentGroup: SegmentGroup): boolean;
     // (undocumented)
     get size(): number;
 }

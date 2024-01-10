@@ -4,8 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema, SchemaFactory, TreeFieldFromImplicitField } from "../../class-tree";
-import { getRoot, makeSchema, pretty } from "./utils";
+import {
+	ImplicitFieldSchema,
+	NodeKind,
+	SchemaFactory,
+	TreeFieldFromImplicitField,
+	TreeNodeSchema,
+} from "../../simple-tree/index.js";
+import { getRoot, makeSchema, pretty } from "./utils.js";
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	schema: TSchema;
@@ -286,9 +292,32 @@ const tcs: TestCase[] = [
 		})(),
 		initialTree: ["A", "B"],
 	},
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("special keys", {
+				value: _.number,
+				[""]: _.number,
+				set: _.number,
+				__proto__: _.number,
+				constructor: _.number,
+				setting: _.number,
+			});
+		})(),
+		initialTree: {
+			value: 1,
+			[""]: 2,
+			set: 3,
+			__proto__: 4,
+			constructor: 5,
+			setting: 6,
+		},
+	},
 ];
 
 testObjectLike(tcs);
+
+const factory = new SchemaFactory("test");
 
 describe("Object-like", () => {
 	describe("setting an invalid field", () => {
@@ -308,17 +337,15 @@ describe("Object-like", () => {
 
 	describe("supports setting", () => {
 		describe("primitives", () => {
-			function check<const TSchema extends ImplicitFieldSchema>(
-				schema: TSchema,
-				before: TreeFieldFromImplicitField<TSchema>,
-				after: TreeFieldFromImplicitField<TSchema>,
+			function check<const TNode>(
+				schema: TreeNodeSchema<string, NodeKind, TNode>,
+				before: TNode,
+				after: TNode,
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							makeSchema((_) => _.object("", { _value: schema })),
-							() => ({ _value: before }),
-						);
+						const Root = factory.object("", { _value: schema });
+						const root = getRoot(Root, () => ({ _value: before }));
 						assert.equal(root._value, before);
 						root._value = after;
 						assert.equal(root._value, after);
@@ -328,9 +355,7 @@ describe("Object-like", () => {
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
 						const root = getRoot(
-							// Is there a way to avoid the cast to 'any' when using 'class-schema'?
-							// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6551
-							makeSchema((_) => _.object("", { _value: _.optional(schema as any) })),
+							makeSchema((_) => _.object("", { _value: _.optional(schema) })),
 							() => ({ _value: undefined }),
 						);
 						assert.equal(root._value, undefined);
@@ -360,45 +385,41 @@ describe("Object-like", () => {
 		});
 
 		describe("required object", () => {
-			const schema = makeSchema((_) =>
-				_.object("parent", {
-					child: _.object("child", {
-						objId: _.number,
-					}),
-				}),
-			);
+			const Child = factory.object("child", {
+				objId: factory.number,
+			});
+			const Schema = factory.object("parent", {
+				child: Child,
+			});
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
 
 			it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, () => ({ child: before }));
+				const root = getRoot(Schema, () => ({ child: before }));
 				assert.equal(root.child.objId, 0);
-				root.child = after;
+				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
 			});
 		});
 
 		describe("optional object", () => {
-			const schema = makeSchema((_) =>
-				_.object("parent", {
-					child: _.optional(
-						_.object("child", {
-							objId: _.number,
-						}),
-					),
-				}),
-			);
+			const Child = factory.object("child", {
+				objId: factory.number,
+			});
+			const Schema = factory.object("parent", {
+				child: factory.optional(Child),
+			});
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
 
 			it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, () => ({ child: undefined }));
+				const root = getRoot(Schema, () => ({ child: undefined }));
 				assert.equal(root.child, undefined);
-				root.child = before;
+				root.child = new Child(before);
 				assert.equal(root.child.objId, 0);
-				root.child = after;
+				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
 			});
 		});

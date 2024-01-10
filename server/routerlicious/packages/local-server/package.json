@@ -57,8 +57,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0-223006",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/common-utils": "^3.1.0",
+		"@fluidframework/protocol-definitions": "^3.1.0",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
 		"@fluidframework/server-services-client": "workspace:~",
@@ -82,7 +82,7 @@
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.27.0",

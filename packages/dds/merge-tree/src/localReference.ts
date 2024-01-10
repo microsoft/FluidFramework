@@ -212,6 +212,8 @@ export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection)
  * Represents a collection of {@link LocalReferencePosition}s associated with
  * one segment in a merge-tree.
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
+ * @sealed
+ *
  * @alpha
  */
 export class LocalReferenceCollection {
@@ -234,11 +236,15 @@ export class LocalReferenceCollection {
 		validateRefCount?.(seg2.localRefs);
 	}
 
+	public static setOrGet(segment: ISegment) {
+		return (segment.localRefs ??= new LocalReferenceCollection(segment));
+	}
+
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
 	private refCount: number = 0;
 
 	/***/
-	constructor(
+	private constructor(
 		/** Segment this `LocalReferenceCollection` is associated to. */
 		private readonly segment: ISegment,
 		initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength),

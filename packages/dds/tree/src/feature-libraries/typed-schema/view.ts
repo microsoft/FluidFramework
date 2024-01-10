@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { Named, fail } from "../../util";
+import { Named, fail } from "../../util/index.js";
 import {
 	TreeFieldStoredSchema,
-	FieldKey,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeStoredSchema,
 	Adapters,
 	AdaptedViewSchema,
 	Compatibility,
-} from "../../core";
-import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema";
-import { FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema";
+} from "../../core/index.js";
+import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema/index.js";
+import { FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema.js";
 
 /**
  * A collection of View information for schema, including policy.
@@ -144,24 +143,14 @@ export class ViewSchema {
 	}
 
 	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
-		const objectNodeFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-		for (const [key, schema] of original.objectNodeFields) {
-			// TODO: support missing field adapters.
-			objectNodeFields.set(key, this.adaptField(schema));
-		}
-		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
-		// so copying the data over manually is better.
-		return {
-			mapFields: original.mapFields,
-			leafValue: original.leafValue,
-			objectNodeFields,
-		};
+		// TODO: support adapters like missing field adapters.
+		return original;
 	}
 }
 
 /**
  * Record where a schema came from for error reporting purposes.
- * @alpha
+ * @internal
  */
 export interface Sourced {
 	readonly builder: Named<string>;

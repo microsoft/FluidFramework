@@ -8,6 +8,13 @@ aliases:
 
 In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at <https://github.com/microsoft/FluidHelloWorld>. To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
 
+{{< callout note >}}
+
+The demo app uses Fluid Framework 2.0, which is in preview.
+
+{{< /callout >}}
+
+
 {{< fluid_bundle_loader idPrefix="dice-roller"
     bundleName="dice-roller.2021-09-24.js" >}}
 
@@ -29,16 +36,13 @@ The app creates Fluid containers using a schema that defines a set of *initial o
 Lastly, `root` defines the HTML element that the Dice will render on.
 
 ```js
-import { SharedMap } from "fluid-framework";
+import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-export const diceValueKey = "dice-value-key";
-
 const client = new TinyliciousClient();
-
 const containerSchema = {
-      initialObjects: { diceMap: SharedMap }
-  };
+	initialObjects: { diceTree: SharedTree },
+};
 
 const root = document.getElementById("content");
 ```
@@ -63,15 +67,12 @@ The `renderDiceRoller` function is created in a later step. It renders the UI of
 
 ```js
 const createNewDice = async () => {
-    const { container } = await client.createContainer(containerSchema);
-    // Set default data
-    container.initialObjects.diceMap.set(diceValueKey, 1);
-    // Attach container to service and return assigned ID
-    const id = container.attach();
-    // Load the dice roller
-    renderDiceRoller(container.initialObjects.diceMap, root);
-    return id;
-  }
+	const { container } = await client.createContainer(containerSchema);
+	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+	const id = await container.attach();
+	renderDiceRoller(dice, root);
+	return id;
+}
 ```
 
 ### Loading an existing container
@@ -80,10 +81,10 @@ Loading a container is more straightforward than creating a new one. When loadin
 
 ```js
 const loadExistingDice = async (id) => {
-  const { container } = await client.getContainer(id, containerSchema);
-  renderDiceRoller(container.initialObjects.diceMap, root);
+	const { container } = await client.getContainer(id, containerSchema);
+	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+	renderDiceRoller(dice, root);
 }
-
 ```
 
 ### Switching between loading and creating
@@ -99,12 +100,12 @@ The decision logic is implemented in a `start` function which is immediately cal
 
 ```js
 async function start() {
-  if (location.hash) {
-    await loadExistingDice(location.hash.substring(1))
-  } else {
-    const id = await createNewDice();
-    location.hash = id;
-  }
+	if (location.hash) {
+		await loadExistingDice(location.hash.substring(1));
+	} else {
+		const id = await createNewDice();
+		location.hash = id;
+	}
 }
 
 start().catch((error) => console.error(error));
@@ -131,11 +132,11 @@ diceTemplate.innerHTML = `
     <button class="roll"> Roll </button>
   </div>
 `
-const renderDiceRoller = (diceMap, elem) => {
-    elem.appendChild(template.content.cloneNode(true));
+const renderDiceRoller = (dice, elem) => {
+	elem.appendChild(template.content.cloneNode(true));
 
-    const rollButton = elem.querySelector(".roll");
-    const dice = elem.querySelector(".dice");
+	const rollButton = elem.querySelector(".roll");
+	const diceElem = elem.querySelector(".dice");
 
     /* REMAINDER OF THE FUNCTION IS DESCRIBED BELOW */
 }
@@ -147,12 +148,14 @@ Let's go through the rest of the `renderDiceRoller` function line-by-line.
 
 ### Create the Roll button handler
 
-The next line of the `renderDiceRoller` function assigns a handler to the click event of the "Roll" button. Instead of updating the local state directly, the button updates the number stored in the `value` key of the passed in `diceMap`. Because the `diceMap` is a Fluid `SharedMap`, changes will be distributed to all clients. Any changes to the `diceMap` will cause a `valueChanged` event to be emitted, and an event handler, defined below, can trigger an update of the view.
+The next line of the `renderDiceRoller` function assigns a handler to the click event of the "Roll" button. Instead of updating the local state directly, the button updates the number stored in the `value` property of the  `dice` object. Because `dice` is the root object of Fluid `SharedTree`, changes will be distributed to all clients. Any changes to `dice` will cause a `afterChanged` event to be emitted, and an event handler, defined below, can trigger an update of the view.
 
 This pattern is common in Fluid because it enables the view to behave the same way for both local and remote changes.
 
 ```js
-    rollButton.onclick = () => diceMap.set(diceValueKey, Math.floor(Math.random() * 6) + 1);
+  rollButton.onclick = () => {
+		dice.value = Math.floor(Math.random() * 6) + 1;
+	}
 ```
 
 ### Relying on Fluid data
@@ -165,30 +168,28 @@ The next line creates the function that will rerender the local view with the la
 Note that the current value is retrieved from the `SharedMap` each time `updateDice` is called. It is *not* read from the `textContent` of the local `dice` HTML element.
 
 ```js
-    const updateDice = () => {
-        const diceValue = diceMap.get(diceValueKey);
-        // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-        dice.textContent = String.fromCodePoint(0x267f + diceValue);
-        dice.style.color = `hsl(${diceValue * 60}, 70%, 30%)`;
-    };
+  const updateDice = () => {
+		const diceValue = dice.value;
+		// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+		diceElem.textContent = String.fromCodePoint(0x267f + diceValue);
+		diceElem.style.color = `hsl(${diceValue * 60}, 70%, 30%)`;
+	}
 ```
 
 ### Update on creation or load of container
 
-The next line ensures that the dice gets an initial value as soon as `renderDiceRoller` is called, which is when the container is created or loaded.
+The next line ensures that the dice is rendered as soon as `renderDiceRoller` is called, which is when the container is created or loaded.
 
 ```js
-    updateDice();
+  updateDice();
 ```
 
 ### Handling remote changes
 
-To keep the data up to date as it changes an event handler must be set on the `diceMap` to call `updateDice` each time that the `valueChanged` event is sent. Note that the `valueChanged` event fires whenever the `diceMap` value changes on *any* client; that is, when the "Roll" button is clicked on any client.
-
-See the [documentation for SharedMap][SharedMap] to get a list of events fired and the values passed to those events.
+To keep the data up to date as it changes, an event handler must be set on the `dice` object to call `updateDice` each time that the `afterChanged` event is sent. Use the built-in `Tree` object to subscribe to the event. Note that the `afterChanged` event fires whenever the `dice` object changes on *any* client; that is, when the "Roll" button is clicked on any client.
 
 ```js
-    diceMap.on("valueChanged", updateDice);
+    Tree.on(dice, "afterChange", updateDice);
 ```
 
 ## Run the app
@@ -212,19 +213,20 @@ The [full code for this application is available](https://github.com/microsoft/F
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
-[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
+[Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
+[@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
+[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
-[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
+[TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
 
-[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
-[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
+[IFluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
 
 <!-- prettier-ignore-end -->
 

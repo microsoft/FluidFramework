@@ -13,10 +13,10 @@ import {
 	TreeValue,
 	Value,
 	PathRootPrefix,
-} from "../../core";
-import { fail, ReferenceCountedBase } from "../../util";
-import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
+} from "../../core/index.js";
+import { fail, ReferenceCountedBase } from "../../util/index.js";
+import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
+import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk.js";
 
 /**
  * Create a tree chunk with ref count 1.

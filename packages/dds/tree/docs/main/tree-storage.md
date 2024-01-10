@@ -481,7 +481,7 @@ Drawbacks:
 
 ### Sequence Tree
 
-The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is in the [B-tree](https://en.wikipedia.org/wiki/B-tree) family; it organizes the child chunks as leaves in a balanced tree to guarantee that each chunk in the sequence is at most `log(C)` chunks away from the parent chunk, where `C` is the number of children. It is also optimized for range operations; it can insert, delete, and move a large range of children atomically without resorting to doing an individual insert/delete/move for each node in the range. It can scale to be arbitrarily large and can accommodate any number of children, which a parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. The Sequence Tree has been successfully prototyped although its implementation details are outside the scope of this document.
+The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is in the [B-tree](https://en.wikipedia.org/wiki/B-tree) family; it organizes the child chunks as leaves in a balanced tree to guarantee that each chunk in the sequence is at most `log(C)` chunks away from the parent chunk, where `C` is the number of children. It is also optimized for range operations; it can insert, remove, and move a large range of children atomically without resorting to doing an individual insert/remove/move for each node in the range. It can scale to be arbitrarily large and can accommodate any number of children, which a parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. The Sequence Tree has been successfully prototyped although its implementation details are outside the scope of this document.
 
 A Simple Chunk Tree could, for example, leverage a Sequence Tree whenever it encounters a node with a number of children that exceeds the threshold of possible children under a single parent. This would give a Simple Chunk Tree ideal performance for this scenario, although it does not help the Simple Chunk Tree's poor handling of deep trees.
 
@@ -550,7 +550,7 @@ graph TD;
     end
 ```
 
-> These diagrams only show the keys for each node, but the value/content of each node can be stored either inline alongside the keys, or out of line in separate blobs, depending on the size and consistency of the data. As nodes are added or deleted the tree rebalances automatically just like any B-tree.
+> These diagrams only show the keys for each node, but the value/content of each node can be stored either inline alongside the keys, or out of line in separate blobs, depending on the size and consistency of the data. As nodes are added or removed the tree rebalances automatically just like any B-tree.
 
 Every so many consecutive nodes in sorted order comprise a leaf chunk, and interior nodes are stored in chunks as well:
 

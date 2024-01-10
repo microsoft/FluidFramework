@@ -4,15 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeNodeSchemaIdentifier } from "../core";
-import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
+import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
 import {
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
 	AllowedTypes,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	TreeFieldSchema,
 	FlexTreeSchema,
 	FlexList,
@@ -24,17 +24,17 @@ import {
 	MapNodeSchema,
 	FieldNodeSchema,
 	TreeNodeSchemaBase,
-} from "./typed-schema";
-import { FieldKind } from "./modular-schema";
-import { defaultSchemaPolicy } from "./default-schema";
+} from "./typed-schema/index.js";
+import { FieldKind } from "./modular-schema/index.js";
+import { defaultSchemaPolicy } from "./default-schema/index.js";
 
 /**
  * Configuration for a SchemaBuilder.
- * @alpha
+ * @internal
  */
 export interface SchemaBuilderOptions<TScope extends string = string> {
 	/**
-	 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+	 * Prefix appended to the identifiers of all {@link FlexTreeNodeSchema} produced by this builder.
 	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
 	 */
 	scope: TScope;
@@ -68,7 +68,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 
 /**
  * Builds schema libraries, and the schema within them.
- * @alpha
+ * @internal
  *
  * @privateRemarks
  * This class does not directly depend on any specific field kinds,
@@ -83,10 +83,10 @@ export class SchemaBuilderBase<
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
-	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	private readonly adapters: Adapters = {};
 	/**
-	 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+	 * Prefix appended to the identifiers of all {@link FlexTreeNodeSchema} produced by this builder.
 	 */
 	public readonly scope: TScope;
 
@@ -133,7 +133,7 @@ export class SchemaBuilderBase<
 		}
 	}
 
-	protected addNodeSchema<T extends TreeNodeSchema>(schema: T): void {
+	protected addNodeSchema<T extends FlexTreeNodeSchema>(schema: T): void {
 		assert(!this.treeNodeSchema.has(schema.name), 0x799 /* Conflicting TreeNodeSchema names */);
 		this.treeNodeSchema.set(schema.name, schema);
 	}
@@ -330,7 +330,7 @@ export class SchemaBuilderBase<
 	public static fieldRecursive<
 		Kind extends FieldKind,
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-		T extends FlexList<Unenforced<TreeNodeSchema>>,
+		T extends FlexList<Unenforced<FlexTreeNodeSchema>>,
 	>(kind: Kind, ...allowedTypes: T): TreeFieldSchema<Kind, T> {
 		return TreeFieldSchema.createUnsafe(kind, allowedTypes);
 	}
@@ -348,7 +348,7 @@ export class SchemaBuilderBase<
 /**
  * Schema information collected by a SchemaBuilder, including referenced libraries.
  * Can be aggregated into other libraries by adding to their builders.
- * @alpha
+ * @internal
  */
 export interface SchemaLibrary extends SchemaCollection {
 	/**
@@ -359,16 +359,16 @@ export interface SchemaLibrary extends SchemaCollection {
 
 /**
  * Generalized version of AllowedTypes allowing for more concise expressions in some cases.
- * @alpha
+ * @internal
  */
-export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema | Any;
+export type ImplicitAllowedTypes = AllowedTypes | FlexTreeNodeSchema | Any;
 
 /**
  * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
- * @alpha
+ * @internal
  */
 export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> =
-	TSchema extends TreeNodeSchema
+	TSchema extends FlexTreeNodeSchema
 		? readonly [TSchema]
 		: TSchema extends Any
 		? readonly [Any]
@@ -392,7 +392,7 @@ export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
 
 /**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
- * @alpha
+ * @internal
  */
 export type NormalizeField<
 	TSchema extends ImplicitFieldSchema,
@@ -420,6 +420,6 @@ export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault ext
 
 /**
  * Type that when combined with a default {@link FieldKind} can be normalized into a {@link TreeFieldSchema}.
- * @alpha
+ * @internal
  */
 export type ImplicitFieldSchema = TreeFieldSchema | ImplicitAllowedTypes;

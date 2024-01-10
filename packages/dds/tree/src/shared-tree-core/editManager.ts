@@ -3,11 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import BTree from "sorted-btree";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assert } from "@fluidframework/core-utils";
-import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
-	assertIsRevisionTag,
+	brand,
+	fail,
+	getOrCreate,
+	mapIterable,
+	Mutable,
+	RecursiveReadonly,
+} from "../util/index.js";
+import {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	findAncestor,
@@ -15,22 +22,24 @@ import {
 	GraphCommit,
 	mintCommit,
 	rebaseChange,
+	Revertible,
 	RevisionTag,
-	SessionId,
-} from "../core";
-import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
+} from "../core/index.js";
+import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch.js";
 import {
 	Commit,
-	SeqNumber,
 	SequenceId,
+	SummarySessionBranch,
+	SeqNumber,
+	SequencedCommit,
+} from "./editManagerFormat.js";
+import {
 	sequenceIdComparator,
 	equalSequenceIds,
 	minSequenceId,
-	SequencedCommit,
-	SummarySessionBranch,
 	decrementSequenceId,
 	maxSequenceId,
-} from "./editManagerFormat";
+} from "./sequenceIdUtils.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -118,18 +127,22 @@ export class EditManager<
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
-		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
+		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		this.trunkBase = {
-			revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
+			revision: "root",
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
-		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
+		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, mintRevisionTag);
+		this.localBranch = new SharedTreeBranch(
+			this.trunk.getHead(),
+			changeFamily,
+			mintRevisionTag,
+		);
 
-		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
+		this.localBranch.on("revertibleDisposed", this.onRevertibleDisposed.bind(this));
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -213,19 +226,17 @@ export class EditManager<
 		return this._oldestRevertibleSequenceId;
 	}
 
-	private onRevertibleDisposed(): (revision: RevisionTag) => void {
-		return (revision: RevisionTag) => {
-			const metadata = this.trunkMetadata.get(revision);
+	private onRevertibleDisposed(revertible: Revertible, revision: RevisionTag): void {
+		const metadata = this.trunkMetadata.get(revision);
 
-			// if this revision hasn't been sequenced, it won't be evicted
-			if (metadata !== undefined) {
-				const { sequenceId: id } = metadata;
-				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
-				if (id === this._oldestRevertibleSequenceId) {
-					this._oldestRevertibleSequenceId = undefined;
-				}
+		// if this revision hasn't been sequenced, it won't be evicted
+		if (metadata !== undefined) {
+			const { sequenceId: id } = metadata;
+			// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
+			if (id === this._oldestRevertibleSequenceId) {
+				this._oldestRevertibleSequenceId = undefined;
 			}
-		};
+		}
 	}
 
 	/**
@@ -458,7 +469,11 @@ export class EditManager<
 
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(branch.commits.reduce(mintCommit, commit), this.changeFamily),
+				new SharedTreeBranch(
+					branch.commits.reduce(mintCommit, commit),
+					this.changeFamily,
+					this.mintRevisionTag,
+				),
 			);
 		}
 	}
@@ -544,7 +559,8 @@ export class EditManager<
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			newCommit.sessionId,
-			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
+			() =>
+				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
@@ -559,6 +575,7 @@ export class EditManager<
 				newCommit.change,
 				peerLocalBranch.getHead(),
 				this.trunk.getHead(),
+				this.mintRevisionTag,
 			);
 
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);

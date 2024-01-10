@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../core";
+import { FieldKey } from "../core/index.js";
 import {
 	TreeFieldSchema,
 	FlexTreeSchema,
@@ -12,9 +12,9 @@ import {
 	NodeKeyManager,
 	getTreeContext,
 	Context,
-} from "../feature-libraries";
-import { IDisposable, disposeSymbol } from "../util";
-import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
+} from "../feature-libraries/index.js";
+import { IDisposable, disposeSymbol } from "../util/index.js";
+import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
@@ -22,11 +22,11 @@ import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
  * TODO:
  * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
- * @alpha
+ * @internal
  */
 export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.editableTree}.
+	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.flexTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
@@ -44,7 +44,7 @@ export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDis
 	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 */
-	readonly editableTree: FlexTreeTypedField<TRoot>;
+	readonly flexTree: FlexTreeTypedField<TRoot>;
 
 	/**
 	 * Spawn a new view which is based off of the current state of this view.
@@ -57,7 +57,7 @@ export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDis
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
- * @alpha
+ * @internal
  */
 export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
@@ -72,7 +72,7 @@ export class CheckoutFlexTreeView<
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
-	public readonly editableTree: FlexTreeTypedField<TRoot>;
+	public readonly flexTree: FlexTreeTypedField<TRoot>;
 	public constructor(
 		public readonly checkout: TCheckout,
 		public readonly schema: FlexTreeSchema<TRoot>,
@@ -87,7 +87,7 @@ export class CheckoutFlexTreeView<
 			nodeKeyManager,
 			nodeKeyFieldKey,
 		);
-		this.editableTree = this.context.root as FlexTreeTypedField<TRoot>;
+		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
 
 	public [disposeSymbol](): void {

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Changeset } from "./types";
-import { MarkListFactory } from "./markListFactory";
-import { withNodeChange } from "./utils";
-import { VestigialEndpoint, isVestigialEndpoint } from "./helperTypes";
+import { Changeset } from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
+import { withNodeChange } from "./utils.js";
+import { VestigialEndpoint, isVestigialEndpoint } from "./helperTypes.js";
 
 export type NodeChangePruner<TNodeChange> = (change: TNodeChange) => TNodeChange | undefined;
 
