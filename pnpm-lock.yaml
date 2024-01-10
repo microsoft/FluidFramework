@@ -1517,7 +1517,7 @@ importers:
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.2.0
+      '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/id-compressor': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
