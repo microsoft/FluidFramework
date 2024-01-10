@@ -5,6 +5,7 @@
 		},
 	],
 	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
 
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
