@@ -5,5 +5,12 @@
 
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
-	rules: {},
+	rules: {
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: ["@fluid-experimental/*/alpha"],
+			},
+		],
+	},
 };

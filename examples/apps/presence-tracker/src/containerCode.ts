@@ -7,6 +7,7 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Signaler } from "@fluid-experimental/data-objects";
+import { EphemeralIndependentDirectory } from "@fluid-experimental/ephemeral-independent/alpha";
 import { createServiceAudience } from "@fluidframework/fluid-static";
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
@@ -25,11 +26,16 @@ class TrackerAppModel implements ITrackerAppModel {
 }
 
 const signalerId = "signaler";
+const ephemDirId = "ephemeralDirectory";
 
 export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory<ITrackerAppModel> {
 	constructor() {
 		super(
-			new Map([Signaler.factory.registryEntry]), // registryEntries
+			new Map([
+				// registryEntries
+				Signaler.factory.registryEntry,
+				EphemeralIndependentDirectory.factory.registryEntry,
+			]),
 		);
 	}
 
@@ -37,22 +43,31 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const signaler = await runtime.createDataStore(Signaler.factory.type);
-		await signaler.trySetAlias(signalerId);
+		await Promise.all([
+			runtime
+				.createDataStore(Signaler.factory.type)
+				.then(async (signaler) => signaler.trySetAlias(signalerId)),
+			runtime
+				.createDataStore(EphemeralIndependentDirectory.factory.type)
+				.then(async (ephemDir) => ephemDir.trySetAlias(ephemDirId)),
+		]);
 	}
 
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const signaler = await getDataStoreEntryPoint<Signaler>(runtime, signalerId);
+		const focusTracker = getDataStoreEntryPoint<Signaler>(runtime, signalerId).then(
+			(signaler) => new FocusTracker(container, audience, signaler),
+		);
+
+		const mouseTracker = getDataStoreEntryPoint<EphemeralIndependentDirectory>(
+			runtime,
+			ephemDirId,
+		).then((ephemDir) => new MouseTracker(audience, ephemDir.directory));
 
 		const audience = createServiceAudience({
 			container,
 			createServiceMember: createMockServiceMember,
 		});
 
-		const focusTracker = new FocusTracker(container, audience, signaler);
-
-		const mouseTracker = new MouseTracker(audience, signaler);
-
-		return new TrackerAppModel(focusTracker, mouseTracker);
+		return new TrackerAppModel(await focusTracker, await mouseTracker);
 	}
 }
