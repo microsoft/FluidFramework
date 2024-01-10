@@ -34,6 +34,7 @@ data:
             ]
         },
         "requestSizeLimit": "1gb",
+	    "enableResponseCloseLatencyMetric": {{ .Values.gitrest.enableResponseCloseLatencyMetric }},
         "storageDir": {
             "baseDir": "/home/node/documents",
             "useRepoOwner": true
