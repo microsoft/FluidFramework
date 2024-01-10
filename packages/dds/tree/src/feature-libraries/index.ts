@@ -274,6 +274,7 @@ export {
 	reservedObjectNodeFieldPropertyNames,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
+	assertFlexTreeEntityNotFreed,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
