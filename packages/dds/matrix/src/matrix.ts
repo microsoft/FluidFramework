@@ -153,6 +153,8 @@ export class SharedMatrix<T = any>
 
 	// Used to track if there is any reentrancy in setCell code.
 	private reentrantCount: number = 0;
+	// This is just for telemetry purpose to understand behavior and get stats.
+	private setCellsCountFromLastSummary: number = 0;
 
 	/**
 	 * Constructor for the Shared Matrix
@@ -330,7 +332,7 @@ export class SharedMatrix<T = any>
 
 				this.undo.cellSet(rowHandle, colHandle, oldValue);
 			}
-
+			this.setCellsCountFromLastSummary += 1;
 			this.cells.setCell(rowHandle, colHandle, value);
 
 			if (this.isAttached()) {
@@ -526,7 +528,9 @@ export class SharedMatrix<T = any>
 			cellsSnapshotSize: cellsSnapshot.length,
 			rowCount: this.rowCount,
 			colCount: this.colCount,
+			setCellsCountFromLastSummary: this.setCellsCountFromLastSummary,
 		};
+		this.setCellsCountFromLastSummary = 0;
 		const artifactsToSummarize = [
 			cellsSnapshot,
 			this.pending.snapshot(),
