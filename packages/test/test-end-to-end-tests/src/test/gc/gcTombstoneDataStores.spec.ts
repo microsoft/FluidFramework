@@ -133,7 +133,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	// datastore was unreferenced in.
 	const summarizationWithUnreferencedDataStoreAfterTime = async (
 		approximateUnreferenceTimestampMs: number,
-		includeDds: boolean = false,
 	) => {
 		const container = await makeContainer();
 		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
@@ -143,11 +142,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		const testDataObject = await createDataStore(defaultDataObject);
 		const unreferencedId = testDataObject._context.id;
 
-		if (includeDds) {
-			// Create/reference a DDS under the datastore, it will become Tombstoned with it
-			const map = SharedMap.create(testDataObject._runtime);
-			testDataObject._root.set("dds1", map.handle);
-		}
+		// Create/reference a DDS under the datastore, it will become Tombstoned with it
+		const map = SharedMap.create(testDataObject._runtime);
+		testDataObject._root.set("dds1", map.handle);
 
 		// Reference a datastore - important for making it live
 		defaultDataObject._root.set(handleKey, testDataObject.handle);
@@ -159,15 +156,10 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
-		// If we added a DDS above, this trailing op will trigger a codepath that over-eagerly detects that
-		// DDS reference as if it's new, and wipes out the unreference tracking for the datastore.
-		// So we must skip the trailing op to avoid that case.
-		if (!includeDds) {
-			// TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,
-			// but it is detected - it's stored in the pending queue and the container closes before the error is sent.
-			testDataObject._root.set("send while unreferenced", "op");
-			await provider.ensureSynchronized();
-		}
+		// TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,
+		// but it is detected - it's stored in the pending queue and the container closes before the error is sent.
+		testDataObject._root.set("send while unreferenced", "op");
+		await provider.ensureSynchronized();
 
 		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
 		container.close();
@@ -486,10 +478,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			],
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(
-						tombstoneTimeoutMs,
-						/* includeDds */ true,
-					);
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
