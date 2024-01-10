@@ -205,7 +205,8 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 // @internal
 export interface CheckoutEvents {
     afterBatch(): void;
-    revertible(revertible: Revertible): void;
+    newRevertible(revertible: Revertible): void;
+    revertibleDisposed(revertible: Revertible): void;
 }
 
 // @internal
@@ -303,9 +304,9 @@ export interface DeltaDetachedNodeBuild<TTree = DeltaProtoNode> {
 }
 
 // @internal
-export interface DeltaDetachedNodeChanges<TTree = DeltaProtoNode> {
+export interface DeltaDetachedNodeChanges {
     // (undocumented)
-    readonly fields: DeltaFieldMap<TTree>;
+    readonly fields: DeltaFieldMap;
     // (undocumented)
     readonly id: DeltaDetachedNodeId;
 }
@@ -337,21 +338,21 @@ export interface DeltaDetachedNodeRename {
 }
 
 // @internal
-export interface DeltaFieldChanges<TTree = DeltaProtoNode> {
-    readonly global?: readonly DeltaDetachedNodeChanges<TTree>[];
-    readonly local?: readonly DeltaMark<TTree>[];
+export interface DeltaFieldChanges {
+    readonly global?: readonly DeltaDetachedNodeChanges[];
+    readonly local?: readonly DeltaMark[];
     readonly rename?: readonly DeltaDetachedNodeRename[];
 }
 
 // @internal (undocumented)
-export type DeltaFieldMap<TTree = DeltaProtoNode> = ReadonlyMap<FieldKey, DeltaFieldChanges<TTree>>;
+export type DeltaFieldMap = ReadonlyMap<FieldKey, DeltaFieldChanges>;
 
 // @internal
-export interface DeltaMark<TTree = DeltaProtoNode> {
+export interface DeltaMark {
     readonly attach?: DeltaDetachedNodeId;
     readonly count: number;
     readonly detach?: DeltaDetachedNodeId;
-    readonly fields?: DeltaFieldMap<TTree>;
+    readonly fields?: DeltaFieldMap;
 }
 
 // @internal
@@ -361,7 +362,7 @@ export type DeltaProtoNode = ITreeCursorSynchronous;
 export interface DeltaRoot<TTree = DeltaProtoNode> {
     readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
     readonly destroy?: readonly DeltaDetachedNodeDestruction[];
-    readonly fields?: DeltaFieldMap<TTree>;
+    readonly fields?: DeltaFieldMap;
 }
 
 // @internal
@@ -387,12 +388,6 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 
 // @internal
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
-
-// @internal
-export enum DiscardResult {
-    Failure = 1,
-    Success = 0
-}
 
 // @public
 export const disposeSymbol: unique symbol;
@@ -679,7 +674,14 @@ export interface FlexTreeObjectNode extends FlexTreeNode {
 }
 
 // @internal
-export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<{
+export type FlexTreeObjectNodeFields<TFields extends Fields> = FlexTreeObjectNodeFieldsInner<FlattenKeys<{
+    [key in keyof TFields as key extends PropertyNameFromFieldKey<key & string> ? key : never]: TFields[key];
+} & {
+    [key in keyof TFields as key extends PropertyNameFromFieldKey<key & string> ? never : PropertyNameFromFieldKey<key & string>]: TFields[key];
+}>>;
+
+// @internal
+export type FlexTreeObjectNodeFieldsInner<TFields extends Fields> = FlattenKeys<{
     readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<TFields[key]>;
 } & {
     readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: FlexTreeUnboxField<TFields[key]>;
@@ -1316,6 +1318,9 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
 // @internal
+export type PropertyNameFromFieldKey<T extends string> = T extends ReservedObjectNodeFieldPropertyNames ? `field${Capitalize<T>}` : T extends `${ReservedObjectNodeFieldPropertyNamePrefixes}${Capitalize<string>}` ? `field${Capitalize<T>}` : T;
+
+// @internal
 export type ProtoNodes = readonly DeltaProtoNode[];
 
 // @internal
@@ -1350,6 +1355,18 @@ export type RequiredFields<T> = [
 }
 ][_InlineTrick];
 
+// @internal
+export type ReservedObjectNodeFieldPropertyNamePrefixes = (typeof reservedObjectNodeFieldPropertyNamePrefixes)[number];
+
+// @internal
+export const reservedObjectNodeFieldPropertyNamePrefixes: readonly ["set", "boxed", "field", "Field"];
+
+// @internal
+export type ReservedObjectNodeFieldPropertyNames = (typeof reservedObjectNodeFieldPropertyNames)[number];
+
+// @internal
+export const reservedObjectNodeFieldPropertyNames: readonly ["constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
+
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
@@ -1357,12 +1374,14 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @internal
 export interface Revertible {
-    discard(): DiscardResult;
+    discard(): RevertibleResult;
     readonly kind: RevertibleKind;
     readonly origin: {
         readonly isLocal: boolean;
     };
-    revert(): RevertResult;
+    retain(): RevertibleResult;
+    revert(): RevertibleResult;
+    readonly status: RevertibleStatus;
 }
 
 // @internal
@@ -1374,9 +1393,15 @@ export enum RevertibleKind {
 }
 
 // @internal
-export enum RevertResult {
+export enum RevertibleResult {
     Failure = 1,
     Success = 0
+}
+
+// @internal
+export enum RevertibleStatus {
+    Disposed = 1,
+    Valid = 0
 }
 
 // @internal

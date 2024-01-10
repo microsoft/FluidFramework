@@ -48,7 +48,7 @@ import {
 	type,
 } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
-import { TreeArrayNode } from "./treeListNode.js";
+import { TreeArrayNode } from "./treeArrayNode.js";
 
 /**
  * Instances of this class are schema for leaf nodes.

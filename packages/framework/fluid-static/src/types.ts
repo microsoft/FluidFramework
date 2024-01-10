@@ -14,7 +14,7 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
- * or `SharedObject` in a {@link LoadableObjectRecord}.
+ * or `SharedObject`.
  * @public
  */
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;

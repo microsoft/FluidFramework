@@ -11,7 +11,7 @@ import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root<never> = {};
 
-export const emptyFieldChanges: FieldChanges<never> = {};
+export const emptyFieldChanges: FieldChanges = {};
 
 export function isAttachMark(mark: Mark): boolean {
 	return mark.attach !== undefined && mark.detach === undefined;

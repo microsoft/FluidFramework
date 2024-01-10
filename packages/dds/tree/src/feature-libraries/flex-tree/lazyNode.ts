@@ -59,6 +59,9 @@ import {
 	onNextChange,
 	FlexTreeEntityKind,
 	flexTreeMarker,
+	PropertyNameFromFieldKey,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
 } from "./flexTreeTypes.js";
 import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import {
@@ -504,6 +507,28 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	}
 }
 
+/**
+ * {@link reservedObjectNodeFieldPropertyNames} but as a set.
+ */
+export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new Set(
+	reservedObjectNodeFieldPropertyNames,
+);
+
+export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
+	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
+		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
+	}
+	for (const prefix of reservedObjectNodeFieldPropertyNamePrefixes) {
+		if (key.startsWith(prefix)) {
+			const afterPrefix = key.slice(prefix.length);
+			if (afterPrefix === capitalize(afterPrefix)) {
+				return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
+			}
+		}
+	}
+	return key as PropertyNameFromFieldKey<T>;
+}
+
 export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FlexTreeObjectNode
@@ -580,6 +605,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
+		const escapedKey = propertyNameFromFieldKey(key);
 		let setter: ((newContent: FlexibleNodeContent<AllowedTypes>) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
@@ -616,7 +642,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 		}
 
 		// Create getter and setter (when appropriate) for property
-		propertyDescriptorMap[key] = {
+		propertyDescriptorMap[escapedKey] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
@@ -628,7 +654,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 
 		// Create set method for property (when appropriate)
 		if (setter !== undefined) {
-			propertyDescriptorMap[`set${capitalize(key)}`] = {
+			propertyDescriptorMap[`set${capitalize(escapedKey)}`] = {
 				enumerable: false,
 				get(this: CustomStruct) {
 					return setter;
@@ -636,7 +662,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 			};
 		}
 
-		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
+		propertyDescriptorMap[`boxed${capitalize(escapedKey)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
 				return getBoxedField(this, key, fieldSchema);
