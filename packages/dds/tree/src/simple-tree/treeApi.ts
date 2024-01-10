@@ -112,7 +112,7 @@ export const nodeApi: TreeApi = {
 		return getFlexNode(node).on(eventName, listener);
 	},
 	status: (node: TreeNode) => {
-		return getFlexNode(node).treeStatus();
+		return getFlexNode(node, true).treeStatus();
 	},
 	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
