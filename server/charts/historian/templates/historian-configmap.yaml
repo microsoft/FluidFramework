@@ -29,6 +29,7 @@ data:
             "secretNamesToRedactInConfigDump": {{ .Values.historian.config.secretNamesToRedactInConfigDump }}
         },
         "requestSizeLimit": "1gb",
+	    "enableResponseCloseLatencyMetric": {{ .Values.historian.enableResponseCloseLatencyMetric }},
         "riddler": "{{ .Values.historian.riddler }}",
         "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},
         "redis": {
