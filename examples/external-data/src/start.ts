@@ -8,9 +8,9 @@ import ReactDOM from "react-dom";
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import type { IAppModel, ITaskList } from "./model-interface";
-import { DebugView, AppView } from "./view";
-import { BaseDocumentContainerRuntimeFactory } from "./model";
+import type { IAppModel, ITaskList } from "./model-interface/index.js";
+import { DebugView, AppView } from "./view/index.js";
+import { BaseDocumentContainerRuntimeFactory } from "./model/index.js";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
