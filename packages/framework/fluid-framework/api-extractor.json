@@ -4,6 +4,7 @@
 	"bundledPackages": [
 		"@fluidframework/container-definitions",
 		"@fluidframework/driver-definitions",
+		"@fluidframework/fluid-static",
 		"@fluidframework/map",
 		"@fluidframework/tree"
 	],

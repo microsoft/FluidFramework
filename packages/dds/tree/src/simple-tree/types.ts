@@ -5,7 +5,7 @@
 
 import { FieldNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../feature-libraries/index.js";
 import { type, WithType } from "./schemaTypes.js";
-import { IterableTreeArrayContent } from "./treeListNode.js";
+import { IterableTreeArrayContent } from "./treeArrayNode.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -19,7 +19,7 @@ import { IterableTreeArrayContent } from "./treeListNode.js";
 export type Unhydrated<T> = T;
 
 /**
- * A non-leaf SharedTree node. Includes objects, lists, and maps.
+ * A non-leaf SharedTree node. Includes objects, arrays, and maps.
  *
  * @remarks
  * Base type which all nodes implement.
@@ -111,7 +111,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 
 	/**
 	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the list.
+	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the array.
 	 * @param end - The ending index of the range to remove (exclusive).
 	 * @throws Throws if `start` is not in the range [0, `array.length`).
 	 * @throws Throws if `end` is less than `start`.

@@ -41,7 +41,7 @@ import {
 	NodeKind,
 	TreeMapNode,
 } from "./schemaTypes.js";
-import { IterableTreeArrayContent, TreeArrayNode } from "./treeListNode.js";
+import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { Unhydrated, TreeNode } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
@@ -79,8 +79,8 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
-			// 'getProxyForNode' handles FieldNodes by unconditionally creating a list proxy, making
-			// this case unreachable as long as users follow the 'list recipe'.
+			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
+			// this case unreachable as long as users follow the 'array recipe'.
 			fail("'sequence' field is unexpected.");
 		}
 		default:
@@ -149,7 +149,7 @@ export function createNodeProxy(
 	if (schemaIsMap(schema)) {
 		proxy = createMapProxy(allowAdditionalProperties, targetObject);
 	} else if (schemaIsFieldNode(schema)) {
-		proxy = createListProxy(allowAdditionalProperties, targetObject);
+		proxy = createArrayNodeProxy(allowAdditionalProperties, targetObject);
 	} else if (schemaIsObjectNode(schema)) {
 		proxy = createObjectProxy(schema, allowAdditionalProperties, targetObject);
 	} else {
@@ -268,14 +268,14 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 }
 
 /**
- * Given a list proxy, returns its underlying LazySequence field.
+ * Given a array node proxy, returns its underlying LazySequence field.
  */
-export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeArrayNode) =>
-	getFlexNode(list).content as FlexTreeSequenceField<TTypes>;
+export const getSequenceField = <TTypes extends AllowedTypes>(arrayNode: TreeArrayNode) =>
+	getFlexNode(arrayNode).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
-function contextualizeInsertedListContent(
+function contextualizeInsertedArrayContent(
 	insertedAtIndex: number,
 	content: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
 ): ExtractedFactoryContent {
@@ -287,12 +287,12 @@ function contextualizeInsertedListContent(
 	);
 }
 
-// #region Create dispatch map for lists
+// #region Create dispatch map for array nodes
 
 // TODO: Experiment with alternative dispatch methods to see if we can improve performance.
 
 /**
- * PropertyDescriptorMap used to build the prototype for our SharedListNode dispatch object.
+ * PropertyDescriptorMap used to build the prototype for our array node dispatch object.
  */
 export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
@@ -321,7 +321,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		): void {
 			const sequenceField = getSequenceField(this);
 
-			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
+			const { content, hydrateProxies } = contextualizeInsertedArrayContent(index, value);
 			const cursor = cursorFromFieldData(
 				content,
 				sequenceField.context.schema,
@@ -342,7 +342,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		): void {
 			const sequenceField = getSequenceField(this);
 
-			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
+			const { content, hydrateProxies } = contextualizeInsertedArrayContent(0, value);
 			const cursor = cursorFromFieldData(
 				content,
 				sequenceField.context.schema,
@@ -363,7 +363,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 		): void {
 			const sequenceField = getSequenceField(this);
 
-			const { content, hydrateProxies } = contextualizeInsertedListContent(
+			const { content, hydrateProxies } = contextualizeInsertedArrayContent(
 				this.length,
 				value,
 			);
@@ -483,7 +483,7 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 /* eslint-disable @typescript-eslint/unbound-method */
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
-// to the list proxy.  Over time, we should replace these with efficient implementations on LazySequence
+// to the array node proxy.  Over time, we should replace these with efficient implementations on LazySequence
 // to avoid re-entering the proxy as these methods access 'length' and the indexed properties.
 //
 // For brevity, the current implementation dynamically builds a property descriptor map from a list of
@@ -554,10 +554,10 @@ function asIndex(key: string | symbol, length: number) {
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * @param customTargetObject - Target object of the proxy.
- * If not provided `[]` is used for the target and a separate object created to dispatch list methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the list functionality from {@link arrayNodePrototype}.
+ * If not provided `[]` is used for the target and a separate object created to dispatch array methods.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the array functionality from {@link arrayNodePrototype}.
  */
-function createListProxy(
+function createArrayNodeProxy(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
 ): TreeArrayNode {
@@ -617,7 +617,7 @@ function createListProxy(
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
-				// For MVP, we otherwise disallow setting properties (mutation is only available via the list mutation APIs).
+				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
 				return false;
 			}
 			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
@@ -818,10 +818,10 @@ export function createRawNodeProxy(
 		flexNode = createRawNode(schema, contentCopy);
 		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
 	} else if (schema instanceof FieldNodeSchema) {
-		// simple-tree uses field nodes exclusively to represent lists
+		// simple-tree uses field nodes exclusively to represent array nodes
 		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
-		proxy = createListProxy(allowAdditionalProperties, target);
+		proxy = createArrayNodeProxy(allowAdditionalProperties, target);
 	} else if (schema instanceof MapNodeSchema) {
 		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
@@ -864,7 +864,7 @@ interface ExtractedFactoryContent<out T = FactoryContent> {
  * Given a content tree that is to be inserted into the shared tree, replace all subtrees that were created by factories
  * (via {@link SharedTreeObjectFactory.create}) with the content that was passed to those factories.
  * @param content - the content being inserted which may be, and/or may contain, factory-created content
- * @param insertedAtIndex - if the content being inserted is list content, this must be the index in the list at which the content is being inserted
+ * @param insertedAtIndex - if the content being inserted is array node content, this must be the index in the array node at which the content is being inserted
  * @returns the result of the content replacement and a {@link ExtractedFactoryContent.hydrateProxies} function which must be invoked if present.
  * @remarks
  * This functions works recursively.
@@ -948,7 +948,7 @@ export function extractFactoryContent(
 }
 
 /**
- * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
+ * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing array node in the tree.
  */
 function extractContentArray(
 	input: readonly FactoryContent[],
@@ -972,15 +972,15 @@ function extractContentArray(
 		hydrateProxies: (flexNode: FlexTreeNode | undefined) => {
 			assert(
 				flexNode !== undefined,
-				0x7f6 /* Expected edit node to be defined when hydrating list */,
+				0x7f6 /* Expected edit node to be defined when hydrating array node */,
 			);
 			assert(
 				schemaIsFieldNode(flexNode.schema),
-				0x7f7 /* Expected field node when hydrating list */,
+				0x7f7 /* Expected field node when hydrating array node */,
 			);
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
-					getListChildNode(
+					getArrayNodeChildNode(
 						flexNode as FlexTreeFieldNode<FieldNodeSchema>,
 						insertedAtIndex + i,
 					),
@@ -1078,14 +1078,14 @@ export type FactoryContent =
  */
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
 
-function getListChildNode(
-	listNode: FlexTreeFieldNode<FieldNodeSchema>,
+function getArrayNodeChildNode(
+	arrayNode: FlexTreeFieldNode<FieldNodeSchema>,
 	index: number,
 ): FlexTreeNode | undefined {
-	const field = listNode.tryGetField(EmptyKey);
+	const field = arrayNode.tryGetField(EmptyKey);
 	assert(
 		field?.schema.kind === FieldKinds.sequence,
-		0x7fc /* Expected sequence field when hydrating list */,
+		0x7fc /* Expected sequence field when hydrating array node */,
 	);
 	return (field as FlexTreeSequenceField<AllowedTypes>).boxedAt(index);
 }
@@ -1125,7 +1125,7 @@ function modifyChildren<T extends FlexTreeNode>(
 	const offNextChange = parent[onNextChange](() => after?.(parent));
 	modify(parent);
 	// `onNextChange` unsubscribes itself after firing once. However, there is no guarantee that it will fire.
-	// For example, the `modify` function may result in a no-op that doesn't trigger an edit (e.g. inserting `[]` into a list).
+	// For example, the `modify` function may result in a no-op that doesn't trigger an edit (e.g. inserting `[]` into an array node).
 	// In those cases, we must unsubscribe manually here. If `modify` was not a no-op, it does no harm to call this function anyway.
 	offNextChange();
 }
