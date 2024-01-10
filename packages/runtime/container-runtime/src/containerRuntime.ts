@@ -2444,9 +2444,13 @@ export class ContainerRuntime
 					wrapError(
 						error,
 						(errorMessage) =>
-							new GenericError(`orderSequentially callback exception: ${errorMessage}`, error, {
-								orderSequentiallyCalls: this._orderSequentiallyCalls,
-							}),
+							new GenericError(
+								`orderSequentially callback exception: ${errorMessage}`,
+								error,
+								{
+									orderSequentiallyCalls: this._orderSequentiallyCalls,
+								},
+							),
 					),
 				);
 			}
