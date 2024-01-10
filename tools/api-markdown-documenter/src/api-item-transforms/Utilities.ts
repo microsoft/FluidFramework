@@ -111,8 +111,10 @@ function resolveSymbolicLink(
 		const linkSource =
 			contextApiItem.kind === ApiItemKind.Package
 				? (contextApiItem as ApiPackage).displayName
-				: `${contextApiItem.getAssociatedPackage()
-						?.displayName}/${contextApiItem.getScopedNameWithinPackage()}`;
+				: `${
+						contextApiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
+				  }#${contextApiItem.getScopedNameWithinPackage()}`;
+
 		logger.warning(
 			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${linkSource}":`,
 			resolvedReference.errorMessage,
