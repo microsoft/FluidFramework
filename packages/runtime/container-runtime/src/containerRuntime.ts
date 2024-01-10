@@ -2406,6 +2406,9 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
+	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
@@ -2437,9 +2440,21 @@ export class ContainerRuntime
 					throw error2;
 				}
 			} else {
-				// pre-0.58 error message: orderSequentiallyCallbackException
-				this.closeFn(new GenericError("orderSequentially callback exception", error));
+				this.closeFn(
+					wrapError(
+						error,
+						(errorMessage) =>
+							new GenericError(
+								`orderSequentially callback exception: ${errorMessage}`,
+								error,
+								{
+									orderSequentiallyCalls: this._orderSequentiallyCalls,
+								},
+							),
+					),
+				);
 			}
+
 			throw error; // throw the original error for the consumer of the runtime
 		} finally {
 			this._orderSequentiallyCalls--;
