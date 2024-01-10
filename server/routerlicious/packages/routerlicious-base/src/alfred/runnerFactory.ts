@@ -235,31 +235,37 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
+		let redisOptionsCopy = { ...redisOptions2 };
+		redisOptionsCopy.password = "REDACTED";
+		Lumberjack.info("test123 Redis Client Params, redisOptions2, CE: "+redisConfig2.enableClustering, {
+			redisOptionsCopy,
+			slotsRefreshTimeout: 5000,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			dnsLookup: (adr, callback) => callback(undefined, adr),
+			scaleReads: "slave",
+			showFriendlyErrorStack: true,
+		});
+		Lumberjack.info("test123 Redis Client Options, redisOptions2, CE: "+redisConfig2.enableClustering, redisOptionsCopy);
+
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
-			? new Redis.Cluster(
-					[{ port: redisConfig2.port, host: redisConfig2.host }],
-					{
-						redisOptions: redisOptions2,
-						slotsRefreshTimeout: 5000,
-						dnsLookup: (address, callback) => callback(null, address),
-						scaleReads: 'slave',
-						showFriendlyErrorStack: true
-					},
-			  )
+			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
+					redisOptions: redisOptions2,
+					slotsRefreshTimeout: 5000,
+					dnsLookup: (adr, callback) => callback(null, adr),
+					scaleReads: "slave",
+					showFriendlyErrorStack: true,
+			  })
 			: new Redis.default(redisOptions2);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
 		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
-			? new Redis.Cluster(
-					[{ port: redisConfig2.port, host: redisConfig2.host }],
-					{
-						redisOptions: redisOptions2,
-						slotsRefreshTimeout: 5000,
-						dnsLookup: (address, callback) => callback(null, address),
-						scaleReads: 'slave',
-						showFriendlyErrorStack: true
-					},
-			  )
+			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
+					redisOptions: redisOptions2,
+					slotsRefreshTimeout: 5000,
+					dnsLookup: (adr, callback) => callback(null, adr),
+					scaleReads: "slave",
+					showFriendlyErrorStack: true,
+			  })
 			: new Redis.default(redisOptions2);
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
@@ -356,6 +362,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
+		redisOptionsCopy = { ...redisOptionsForThrottling };
+		redisOptionsCopy.password = "REDACTED";
+		Lumberjack.info("test123 Redis Client Params, redisOptionsForThrottling, CE: "+redisConfigForThrottling.enableClustering, {
+			redisOptionsCopy,
+			slotsRefreshTimeout: 5000,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			dnsLookup: (adr, callback) => callback(undefined, adr),
+			scaleReads: "slave",
+			showFriendlyErrorStack: true,
+		});
+		Lumberjack.info(
+			"test123 Redis Client Options, redisOptionsForThrottling, CE: "+redisConfigForThrottling.enableClustering,
+			redisOptionsCopy,
+		);
+
 		const redisClientForThrottling: Redis.default | Redis.Cluster =
 			redisConfigForThrottling.enableClustering
 				? new Redis.Cluster(
@@ -368,9 +389,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						{
 							redisOptions: redisOptionsForThrottling,
 							slotsRefreshTimeout: 5000,
-							dnsLookup: (address, callback) => callback(null, address),
-							scaleReads: 'slave',
-							showFriendlyErrorStack: true
+							dnsLookup: (adr, callback) => callback(null, adr),
+							scaleReads: "slave",
+							showFriendlyErrorStack: true,
 						},
 				  )
 				: new Redis.default(redisOptionsForThrottling);
@@ -565,16 +586,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 			const redisClientForLogging: Redis.default | Redis.Cluster =
 				redisConfig.enableClustering
-					? new Redis.Cluster(
-							[{ port: redisConfig.port, host: redisConfig.host }],
-							{
-								redisOptions: redisOptions2,
-								slotsRefreshTimeout: 5000,
-								dnsLookup: (address, callback) => callback(null, address),
-								scaleReads: 'slave',
-								showFriendlyErrorStack: true
-							},
-					  )
+					? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
+							redisOptions: redisOptions2,
+							slotsRefreshTimeout: 5000,
+							dnsLookup: (adr, callback) => callback(null, adr),
+							scaleReads: "slave",
+							showFriendlyErrorStack: true,
+					  })
 					: new Redis.default(redisOptions);
 
 			redisCache = new services.RedisCache(redisClientForLogging);
