@@ -88,14 +88,20 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
+# TODO: include release/* branches as trigger. Currently, the website docs builds and deploys on each commit.
+# However, inconsistencies between the release branches and main is causing the website to change unexpectedly
+# we can re include the release/* branch to the trigger after separating the deploy step to another pipeline
 # no PR triggers
 trigger:
   branches:
     include:
-    - release/*
+    # - release/*
     - main
 pr: none
 
+# TODO: the download artifact step is currently targetting the latest pipeline run from each resource.
+# However, this is causing inconsistencies in the doc in scenarios where the latest runs on each pipeline
+# is not the same (e.g. mix of main and lts). Temporarily setting the branch to main explicitly.
 resources:
   pipelines:
   - pipeline: common_definitions
