@@ -6,7 +6,7 @@ import {
 	ApiItemKind,
 	type ApiItem,
 	type IResolveDeclarationReferenceResult,
-	ApiPackage,
+	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 import { type DocDeclarationReference } from "@microsoft/tsdoc";
 
