@@ -22,10 +22,13 @@ export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {
 		["Fruits", 9.33, 6.92],
 		["Baby Food", 255.28, 159.42],
 	]);
+
+	const toDollars = (n: number) => Math.round(n * 100) / 100;
+
 	const unitsSold = random.integer(2, 10000);
-	const totalRevenue = unitPrice * unitsSold;
-	const totalCost = unitCost * unitsSold;
-	const totalProfit = totalRevenue - totalCost;
+	const totalRevenue = toDollars(unitPrice * unitsSold);
+	const totalCost = toDollars(unitCost * unitsSold);
+	const totalProfit = toDollars(totalRevenue - totalCost);
 	const orderDate = random.integer(1262332800000, 1501225200000);
 	const shippingDate = orderDate + random.integer(0, 4323600000);
 
