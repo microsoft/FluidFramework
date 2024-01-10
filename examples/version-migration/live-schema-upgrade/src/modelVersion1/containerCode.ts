@@ -7,7 +7,7 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
+import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller.js";
 
 const diceRollerId = "dice-roller";
 
