@@ -7,18 +7,21 @@ import { SchemaFactory } from "@fluidframework/tree";
 
 const _ = new SchemaFactory("com.fluidframework.benchmarks.table");
 
-export class Row extends _.object("Row", {
-	id: _.number,
-	class: _.string,
-	part: [_.string, _.number],
-	description: _.string,
-	for: [_.string, _.number],
-	substitute: [_.number, _.string],
-	substituteDescription: [_.string],
-	price: _.number,
-	quantity: _.number,
-}) {}
+export const Row = _.object("Row", {
+	"Order ID": _.number,
+	"Region": _.string,
+	"Country": _.string,
+	"Item Type": _.string,
+	"Sales Channel": _.string,
+	"Order Priority": _.string,
+	"Units Sold": _.number,
+	"Unit Price": _.number,
+	"Unit Cost": _.number,
+	"Total Revenue": _.number,
+	"Total Cost": _.number,
+	"Total Profit": _.number,
+	"Order Date": _.number,
+	"Ship Date": _.number,
+});
 
-export class Table extends _.object("Table", {
-	rows: _.array(Row),
-}) {}
+export const Table = _.array(Row);

@@ -1,15 +1,25 @@
 /*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { SharedTree } from "@fluidframework/tree";
 
-const localConnectionConfig = {
+const userId = Math.random().toString(36).slice(2);
+
+const localConnectionConfig: AzureLocalConnectionConfig = {
 	type: "local",
-	tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", { name: "test user" }),
+	tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", {
+		id: userId,
+		name: `TestUser-${userId}`,
+	}),
 	endpoint: "http://localhost:7070",
 };
 
@@ -24,7 +34,9 @@ export async function initFluid() {
 
 	if (!location.hash) {
 		({ container } = await client.createContainer(containerSchema));
-		location.hash = await container.attach();
+
+		// TODO: Waiting for 'attach()' is a work around for https://dev.azure.com/fluidframework/internal/_workitems/edit/6805
+		await container.attach().then((containerId) => (location.hash = containerId));
 	} else {
 		({ container } = await client.getContainer(location.hash.substring(1), containerSchema));
 	}

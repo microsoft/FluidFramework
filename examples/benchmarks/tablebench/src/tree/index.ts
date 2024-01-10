@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Table } from "./schema";
+export { Table, Row } from "./schema";

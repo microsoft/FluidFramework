@@ -1617,6 +1617,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.2.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -1632,9 +1633,17 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
+      tinylicious: ^3.0.0
+      ts-loader: ^9.3.0
       typescript: ~5.1.6
+      webpack: ^5.82.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
+      '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluidframework/azure-client': link:../../../azure/packages/azure-client
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
@@ -1642,11 +1651,11 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree': link:../../../packages/dds/tree
     devDependencies:
-      '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0-225750_@types+node@18.19.1
+      '@fluidframework/build-tools': 0.29.0-225750_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/id-compressor': link:../../../packages/runtime/id-compressor
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/test-tools': 1.0.195075
       '@types/mocha': 9.1.1
@@ -1659,7 +1668,14 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      start-server-and-test: 1.15.5
+      tinylicious: 3.0.0
+      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
+      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
+      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
+      webpack-merge: 5.10.0
 
   examples/client-logger/app-insights-logger:
     specifiers:
@@ -16231,13 +16247,13 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools/0.29.0-225750_@types+node@18.19.1:
+  /@fluidframework/build-tools/0.29.0-225750_h467wi3sy6j67ifywrn7x7qf4m:
     resolution: {integrity: sha512-IH5ZWmAeRpgzlXJ0OTEjHdGlJdO4PA48Odb3DN9hPYun8US0XcFesdFkwGh1yqNB2+4FGqJ7NfOdhyTgXdPh0Q==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
       '@fluid-tools/version-tools': 0.29.0-225750
-      '@fluidframework/bundle-size-tools': 0.29.0-225750
+      '@fluidframework/bundle-size-tools': 0.29.0-225750_webpack-cli@4.10.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.61.0_@types+node@18.19.1
@@ -16419,7 +16435,7 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.29.0-225750:
+  /@fluidframework/bundle-size-tools/0.29.0-225750_webpack-cli@4.10.0:
     resolution: {integrity: sha512-53SYvkYn8orQuecoI5WUcx8/viy8SEloaha08LNQbGpQmc9pRhno9p857jbHwxtiWfJ5SrFQXtABNqC7ShYuPA==}
     dependencies:
       azure-devops-node-api: 11.2.0
@@ -16427,7 +16443,7 @@ packages:
       msgpack-lite: 0.1.26
       pako: 2.1.0
       typescript: 5.1.6
-      webpack: 5.89.0
+      webpack: 5.89.0_webpack-cli@4.10.0
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
@@ -18475,7 +18491,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-mock: 29.7.0
     dev: true
 
@@ -18514,7 +18530,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -33229,7 +33245,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-util: 29.7.0
     dev: true
 
@@ -33421,7 +33437,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11

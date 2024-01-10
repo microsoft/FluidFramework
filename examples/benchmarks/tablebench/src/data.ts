@@ -5,7 +5,7 @@
 
 import { IRandom, createWeightedGenerator, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { InsertableTypedNode } from "@fluidframework/tree";
-import { Row } from "./schema";
+import { Row } from "./tree";
 
 const regionGenerator = createWeightedGenerator([
 	["Europe", 2633],
