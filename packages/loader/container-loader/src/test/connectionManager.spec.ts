@@ -202,7 +202,7 @@ describe("connectionManager", () => {
 				code: 429,
 				type: NackErrorType.ThrottlingError,
 				message: "throttled",
-				retryAfter: 1, // 1 second
+				retryAfter: 0.5, // 500 ms
 			},
 		};
 		connection.emitNack("docId", [nack]);
@@ -211,16 +211,16 @@ describe("connectionManager", () => {
 		assert(connection.disposed, "Expect connection to be disconnected");
 		assert.strictEqual(disconnectCount, 1, "Expect 1 disconnect from emitting a Nack");
 
-		// Async test we aren't connected within 800 ms
+		// Async test we aren't connected within 300 ms
 		let checkedTimeout = false;
 		setTimeout(() => {
 			assert.strictEqual(connectionCount, 1, "Expect there to still not be a connection yet");
 			checkedTimeout = true;
-		}, 800);
+		}, 300);
 
 		connection = await waitForConnection();
 		assert.strictEqual(connectionCount, 2, "Expect there to be a connection after waiting");
-		assert(checkedTimeout);
+		assert(checkedTimeout, "Expected to have checked 300ms timeout");
 	});
 
 	describe("readonly", () => {
