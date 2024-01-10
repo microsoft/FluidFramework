@@ -78,6 +78,8 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 	eventName: string;
 	category?: TelemetryEventCategory;
+	sessionID?: string | undefined;
+	browserID?: string | undefined;
 }
 
 /**

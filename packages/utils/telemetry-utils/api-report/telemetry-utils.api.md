@@ -216,9 +216,13 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 // @public
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
+    browserID?: string | undefined;
+    // (undocumented)
     category?: TelemetryEventCategory;
     // (undocumented)
     eventName: string;
+    // (undocumented)
+    sessionID?: string | undefined;
 }
 
 // @public
