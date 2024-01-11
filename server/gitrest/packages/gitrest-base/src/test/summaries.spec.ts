@@ -169,12 +169,6 @@ const getFsManagerFactory = (
 			},
 			fsCleanup: async () => {
 				const redisClient = (redisFs as RedisFs).redisFsClient;
-				const keys = await redisClient.keysByPrefix("");
-				const deletePs: Promise<boolean>[] = [];
-				for (const key of keys) {
-					deletePs.push(redisClient.del(key));
-				}
-				await Promise.all(deletePs);
 				await redisClient.delAll("");
 			},
 		};
