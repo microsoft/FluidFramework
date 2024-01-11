@@ -247,7 +247,7 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		intervalCollection.removeIntervalById(id);
 	}
 }
-describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedInterval", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
 	beforeEach(() => {

@@ -231,8 +231,6 @@ function createCompatDescribe(): DescribeCompat {
 		switch (compatVersion) {
 			case "FullCompat":
 				return createCompatSuite(tests, undefined);
-			case "NoCompat":
-				return createCompatSuite(tests, [CompatKind.None]);
 			case "LoaderCompat":
 				return createCompatSuite(tests, [CompatKind.None, CompatKind.Loader]);
 			default:

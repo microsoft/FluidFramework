@@ -301,7 +301,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedCell orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

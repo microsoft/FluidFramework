@@ -76,7 +76,7 @@ type SharedObjCallback = (
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("stashed ops", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
@@ -1728,7 +1728,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("stashed ops", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],

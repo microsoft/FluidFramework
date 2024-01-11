@@ -163,7 +163,7 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedCounter orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

@@ -889,7 +889,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 });
 
 // Review: Run with Full Compat?
-describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Detached Container", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [

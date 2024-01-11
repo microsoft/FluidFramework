@@ -146,7 +146,7 @@ function getNewTreeView(tree: ITree): TreeView<HandleType> {
 	);
 }
 
-describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Storing handles", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

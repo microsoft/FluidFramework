@@ -9,10 +9,6 @@ import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
 import { codeVersion } from "../baseVersion.js";
 
 describe("Minimum Compat Version", () => {
-	// const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
-	// 	encoding: "utf-8",
-	// });
-	// const allVersions: string[] = JSON.parse(allVersionsFromNpm);
 	const latestVersion = codeVersion;
 
 	it("bad min compat string", () => {
@@ -58,7 +54,7 @@ describe("Minimum Compat Version", () => {
 		});
 	}
 
-	it("cross compat", () => {
+	it("cross compat. filters out if loadVersion is lower than minVersion", () => {
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion(latestVersion, {
 				name: "test",
@@ -68,6 +64,9 @@ describe("Minimum Compat Version", () => {
 			}),
 			true,
 		);
+	});
+
+	it("cross compat. filters out if compatVersion is lower than minVersion", () => {
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion(latestVersion, {
 				name: "test",
@@ -77,6 +76,9 @@ describe("Minimum Compat Version", () => {
 			}),
 			true,
 		);
+	});
+
+	it("cross compat. does not filter out valid versions", () => {
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion("1.3.7", {
 				name: "test",
@@ -85,6 +87,7 @@ describe("Minimum Compat Version", () => {
 				loadVersion: "1.3.7",
 			}),
 			false,
+			`fails with minVersion: 1.3.7 compatversion: ${latestVersion} loadVersion: 1.3.7`,
 		);
 		assert.strictEqual(
 			isCompatVersionBelowMinVersion("1.3.7", {
@@ -94,6 +97,7 @@ describe("Minimum Compat Version", () => {
 				loadVersion: latestVersion,
 			}),
 			false,
+			`fails with minVersion: 1.3.7 compatversion: 1.3.7 loadVersion: ${latestVersion}`,
 		);
 	});
 });

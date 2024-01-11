@@ -68,7 +68,7 @@ function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDat
  */
 describeCompat(
 	"Summary where data store is loaded out of order",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap } = apis.dds;
 

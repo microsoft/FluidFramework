@@ -254,7 +254,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 
 // this functionality was added in 0.47 and can be added to the compat-enabled
 // tests above when the LTS version is bumped > 0.47
-describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
+describeCompat("blobs", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();

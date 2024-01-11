@@ -16,7 +16,7 @@ import {
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider) => {
 		const settings = {};
 		const testContainerConfig: ITestContainerConfig = {
