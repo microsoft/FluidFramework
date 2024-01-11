@@ -598,7 +598,7 @@ export class Container
 	private readonly visibilityEventHandler: (() => void) | undefined;
 	private readonly connectionStateHandler: IConnectionStateHandler;
 	private readonly clientsWhoShouldHaveLeft = new Set<string>();
-	private _containerMetadata: Record<string, unknown> | undefined;
+	private _containerMetadata: Readonly<Record<string, string>> = {};
 
 	private setAutoReconnectTime = performance.now();
 
@@ -627,9 +627,8 @@ export class Container
 		return this._deltaManager.readOnlyInfo;
 	}
 
-	public get containerMetadata(): Record<string, unknown> | undefined {
-		// Provide a copy instead of the actual object.
-		return { ...this._containerMetadata };
+	public get containerMetadata(): Record<string, string> {
+		return this._containerMetadata;
 	}
 
 	/**
@@ -1559,7 +1558,7 @@ export class Container
 		this._deltaManager.connect(args);
 	}
 
-	private readonly metadataUpdateHandler = (metadata?: Record<string, unknown> | undefined) => {
+	private readonly metadataUpdateHandler = (metadata: Record<string, string>) => {
 		this._containerMetadata = { ...this._containerMetadata, ...metadata };
 		this.emit("metadataUpdate", metadata);
 	};

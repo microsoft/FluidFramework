@@ -44,7 +44,6 @@ import {
 import { fetchJoinSession } from "./vroom";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { OdspDocumentService } from "./odspDocumentService";
 import { policyLabelsUpdatesSignalType } from "./contracts";
 
 /**
@@ -62,8 +61,9 @@ export class OdspDelayLoadedDeltaStream {
 	private _relayServiceTenantAndSessionId: string | undefined;
 
 	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
-	// between label updates from the join session and the Fluid signals. We could also receive stale data from join
-	// session as that call is made at intervals, so we need to update with only most recent data.
+	// between label updates from the join session and the Fluid signals and they could have same or different timestamps.
+	// So this timestamp is updated with timestamp from the service/signals with the most recent timestamp. We could also
+	// receive stale data from join session as that call is made at intervals, so we need to update with only most recent data.
 	private labelUpdateTimestamp: number = -1;
 
 	/**
@@ -93,7 +93,7 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
-		private readonly docService: OdspDocumentService,
+		private readonly metadataUpdateHandler: (metadata: Record<string, string>) => void,
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
 		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
@@ -176,7 +176,7 @@ export class OdspDelayLoadedDeltaStream {
 			}
 			if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
 				this.emitMetaDataUpdateEvent({
-					sensitivityLabelsInfo: JSON.parse(websocketEndpoint.sensitivityLabelsInfo),
+					sensitivityLabelsInfo: websocketEndpoint.sensitivityLabelsInfo,
 				});
 			}
 			try {
@@ -239,7 +239,7 @@ export class OdspDelayLoadedDeltaStream {
 				const envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
 				if (envelope.contents.type === policyLabelsUpdatesSignalType) {
 					this.emitMetaDataUpdateEvent({
-						sensitivityLabelsInfo: envelope.contents.content,
+						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
 					});
 				}
 			}
@@ -377,7 +377,7 @@ export class OdspDelayLoadedDeltaStream {
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
 				this.emitMetaDataUpdateEvent({
-					sensitivityLabelsInfo: JSON.parse(joinSessionResponse.sensitivityLabelsInfo),
+					sensitivityLabelsInfo: joinSessionResponse.sensitivityLabelsInfo,
 				});
 			}
 			return {
@@ -443,15 +443,16 @@ export class OdspDelayLoadedDeltaStream {
 		return response.joinSessionResponse;
 	}
 
-	private emitMetaDataUpdateEvent(metadata: Record<string, unknown>) {
-		const label = metadata.sensitivityLabelsInfo as {
+	private emitMetaDataUpdateEvent(metadata: Record<string, string>) {
+		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
 			labels: unknown;
-			timestamp: string;
+			timestamp: number;
 		};
-		const time = Date.parse(label.timestamp);
+		const time = label.timestamp;
+		assert(time > 0, "time should be positive");
 		if (time > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = time;
-			this.docService.emit("metadataUpdate", {
+			this.metadataUpdateHandler({
 				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
 			});
 		}

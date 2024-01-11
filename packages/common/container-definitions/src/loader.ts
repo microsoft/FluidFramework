@@ -248,8 +248,10 @@ export interface IContainerEvents extends IEvent {
 
 	/**
 	 * Emitted when the some of the properties related to the container are initialized or updated.
+	 * This emitted metadata will the props which are updated. If consumer wants to read full set of
+	 * metadata then they can read it off the container from {@link IContainer.containerMetadata} prop.
 	 */
-	(event: "metadataUpdate", listener: (metadata?: Record<string, unknown> | undefined) => void);
+	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
 }
 
 /**
@@ -474,9 +476,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	getEntryPoint(): Promise<FluidObject>;
 
 	/**
-	 * Exposes any metadata/props related to the container.
+	 * Exposes any metadata/props related to the container. This is full set of metadata props which the container wants to
+	 * expose. Whenever container receives updates from `IContainerEvents.metadataUpdate` event, we overwrite only those
+	 * updated props in the update and rest remains the same.
 	 */
-	containerMetadata: Record<string, unknown> | undefined;
+	containerMetadata: Record<string, string>;
 }
 
 /**

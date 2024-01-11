@@ -16,7 +16,7 @@ export class DocumentServiceCompressionAdapter extends DocumentServiceProxy {
 		super(service);
 		// Back-compat Old driver
 		if (service.on !== undefined) {
-			service.on("metadataUpdate", (metadata?: Record<string, unknown> | undefined) =>
+			service.on("metadataUpdate", (metadata: Record<string, string>) =>
 				this.emit("metadataUpdate", metadata),
 			);
 		}

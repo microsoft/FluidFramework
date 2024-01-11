@@ -211,7 +211,11 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
  * @alpha
  */
 export interface IDocumentServiceEvents extends IEvent {
-	(event: "metadataUpdate", listener: (metadata?: Record<string, unknown> | undefined) => void);
+	/**
+	 * This event is used to communicate any metadata related to the container. We might have received metadata from the service.
+	 * Read more info on this event from here `IContainer.containerMetadata`.
+	 */
+	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
 }
 
 /**

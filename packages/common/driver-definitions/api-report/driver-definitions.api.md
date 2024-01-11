@@ -163,8 +163,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 
 // @alpha
 export interface IDocumentServiceEvents extends IEvent {
-    // (undocumented)
-    (event: "metadataUpdate", listener: (metadata?: Record<string, unknown> | undefined) => void): any;
+    (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 
 // @alpha (undocumented)
