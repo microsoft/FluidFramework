@@ -201,7 +201,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 		let containerRuntime: ContainerRuntime;
 		let mainDataStore: ITestDataObject;
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "local") {
 				this.skip();
@@ -388,26 +388,26 @@ describeCompat(
 			let containerRuntime: ContainerRuntime;
 			let mainDataStore: ITestDataObject;
 
-			beforeEach(async function () {
-				provider = getTestObjectProvider({ syncSummarizer: true });
-				if (provider.driver.type !== "local") {
-					this.skip();
-				}
-				const testContainerConfig: ITestContainerConfig = {
-					...defaultGCConfig,
-					runtimeOptions: {
-						...defaultGCConfig.runtimeOptions,
-						gcOptions: {
-							gcAllowed: true,
-							runGCInTestMode: deleteContent,
-						},
+		beforeEach("setup", async function () {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
+			const testContainerConfig: ITestContainerConfig = {
+				...defaultGCConfig,
+				runtimeOptions: {
+					...defaultGCConfig.runtimeOptions,
+					gcOptions: {
+						gcAllowed: true,
+						runGCInTestMode: deleteContent,
 					},
-				};
-				const container = await provider.makeTestContainer(testContainerConfig);
-				mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
-				containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
-				await waitForContainerConnection(container);
-			});
+				},
+			};
+			const container = await provider.makeTestContainer(testContainerConfig);
+			mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
+			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+			await waitForContainerConnection(container);
+		});
 
 			it("marks attachment blobs as referenced / unreferenced correctly", async () => {
 				// Upload couple of attachment blobs and mark them referenced.

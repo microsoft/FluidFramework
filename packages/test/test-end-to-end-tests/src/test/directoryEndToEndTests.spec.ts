@@ -35,7 +35,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	let dataObject1: ITestFluidObject;
@@ -43,7 +43,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 	let sharedDirectory2: ISharedDirectory;
 	let sharedDirectory3: ISharedDirectory;
 
-	beforeEach(async () => {
+	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
@@ -512,7 +512,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 			let root1SubDir;
 			let root2SubDir;
 			let root3SubDir;
-			beforeEach(async () => {
+			beforeEach("createSubdirectories", async () => {
 				sharedDirectory1.createSubDirectory("testSubDir").set("dummyKey", "dummyValue");
 
 				await provider.ensureSynchronized();
@@ -844,10 +844,10 @@ describeCompat(
 			registry,
 		};
 
-		let provider: ITestObjectProvider;
-		beforeEach(() => {
-			provider = getTestObjectProvider();
-		});
+	let provider: ITestObjectProvider;
+	beforeEach("getTestObjectProvider", () => {
+		provider = getTestObjectProvider();
+	});
 
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
@@ -865,38 +865,38 @@ describeCompat(
 		});
 		const errorMessage = "callback failure";
 
-		beforeEach(async () => {
-			const configWithFeatureGates = {
-				...testContainerConfig,
-				loaderProps: {
-					configProvider: configProvider({
-						"Fluid.ContainerRuntime.EnableRollback": true,
-					}),
-				},
-			};
-			container = await provider.makeTestContainer(configWithFeatureGates);
-			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
-			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
-			clearEventCount = 0;
-			changedEventData = [];
-			subDirCreatedEventData = [];
-			subDirDeletedEventData = [];
-			undisposedEventData = [];
-			disposedEventData = [];
-			sharedDir.on("valueChanged", (changed, _local, _target) => {
-				changedEventData.push(changed);
-			});
-			sharedDir.on("clear", (local, target) => {
-				clearEventCount++;
-			});
-			sharedDir.on("subDirectoryCreated", (path, _local, _target) => {
-				subDirCreatedEventData.push(path);
-			});
-			sharedDir.on("subDirectoryDeleted", (path, _local, _target) => {
-				subDirDeletedEventData.push(path);
-			});
+	beforeEach("setup", async () => {
+		const configWithFeatureGates = {
+			...testContainerConfig,
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.ContainerRuntime.EnableRollback": true,
+				}),
+			},
+		};
+		container = await provider.makeTestContainer(configWithFeatureGates);
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
+		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+		clearEventCount = 0;
+		changedEventData = [];
+		subDirCreatedEventData = [];
+		subDirDeletedEventData = [];
+		undisposedEventData = [];
+		disposedEventData = [];
+		sharedDir.on("valueChanged", (changed, _local, _target) => {
+			changedEventData.push(changed);
 		});
+		sharedDir.on("clear", (local, target) => {
+			clearEventCount++;
+		});
+		sharedDir.on("subDirectoryCreated", (path, _local, _target) => {
+			subDirCreatedEventData.push(path);
+		});
+		sharedDir.on("subDirectoryDeleted", (path, _local, _target) => {
+			subDirDeletedEventData.push(path);
+		});
+	});
 
 		it("Should rollback set", () => {
 			let error: Error | undefined;
@@ -1293,14 +1293,14 @@ describeCompat(
 		};
 
 		let provider: ITestObjectProvider;
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
 		});
 		let sharedDirectory1: ISharedDirectory;
 		let sharedDirectory2: ISharedDirectory;
 		let sharedDirectory3: ISharedDirectory;
 
-		beforeEach(async () => {
+		beforeEach("createSharedDirectories", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;

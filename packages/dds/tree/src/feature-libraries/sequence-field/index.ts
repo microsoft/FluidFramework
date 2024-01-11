@@ -45,7 +45,6 @@ export {
 	getInputLength,
 	isDetach,
 	newCrossFieldTable,
-	newMoveEffectTable,
 	CrossFieldTable,
 	cloneMark,
 	extractMarkEffect,

@@ -63,7 +63,7 @@ describeCompat("Cache CreateNewSummary", "2.0.0-rc.1.0.0", (getTestObjectProvide
 
 	let mockLogger: MockLogger;
 
-	beforeEach(function () {
+	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
 		// Currently, only ODSP caches new summary.
 		if (provider.driver.type !== "odsp") {

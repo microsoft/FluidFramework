@@ -44,10 +44,10 @@ describeCompat(
 			registry,
 		};
 
-		let provider: ITestObjectProvider;
-		beforeEach(() => {
-			provider = getTestObjectProvider();
-		});
+	let provider: ITestObjectProvider;
+	beforeEach("getTestObjectProvider", () => {
+		provider = getTestObjectProvider();
+	});
 
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
@@ -65,22 +65,22 @@ describeCompat(
 		});
 		const errorMessage = "callback failure";
 
-		beforeEach(async () => {
-			const configWithFeatureGates = {
-				...testContainerConfig,
-				loaderProps: {
-					configProvider: configProvider({
-						"Fluid.ContainerRuntime.EnableRollback": true,
-					}),
-				},
-			};
-			container = await provider.makeTestContainer(configWithFeatureGates);
-			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			sharedString = await dataObject.getSharedObject<SharedString>(stringId);
-			sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
-			sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);
-			sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
-			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+	beforeEach("setup", async () => {
+		const configWithFeatureGates = {
+			...testContainerConfig,
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.ContainerRuntime.EnableRollback": true,
+				}),
+			},
+		};
+		container = await provider.makeTestContainer(configWithFeatureGates);
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
+		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
+		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);
+		sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
+		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
 			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 			changedEventData = [];

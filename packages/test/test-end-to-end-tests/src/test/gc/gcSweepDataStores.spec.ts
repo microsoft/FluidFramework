@@ -117,7 +117,7 @@ describeCompat("GC data store sweep tests", "2.0.0-rc.1.0.0", (getTestObjectProv
 	let settings = {};
 	let testContainerConfig: ITestContainerConfig;
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
 			this.skip();
@@ -548,7 +548,7 @@ describeCompat("GC data store sweep tests", "2.0.0-rc.1.0.0", (getTestObjectProv
 	});
 
 	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {
-		beforeEach(() => {
+		beforeEach("setValidateSummaryBeforeUpload", () => {
 			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
 		});
 

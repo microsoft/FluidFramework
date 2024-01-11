@@ -87,7 +87,7 @@ describeCompat(
 
 		let provider: ITestObjectProvider;
 
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
 		});
 

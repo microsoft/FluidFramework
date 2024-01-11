@@ -28,7 +28,7 @@ describeCompat(
 			return provider.makeTestContainer(testContainerConfig);
 		};
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 		});
 

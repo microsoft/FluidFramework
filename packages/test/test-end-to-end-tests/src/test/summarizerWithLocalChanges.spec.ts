@@ -225,7 +225,7 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 describeCompat("Summarizer with local changes", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 
 		// These tests validate client logic. Testing against multiple services won't make a difference.

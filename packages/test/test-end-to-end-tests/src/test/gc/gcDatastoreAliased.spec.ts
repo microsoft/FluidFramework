@@ -28,7 +28,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
@@ -98,7 +98,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 describeCompat("GC Data Store Aliased No Compat", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 

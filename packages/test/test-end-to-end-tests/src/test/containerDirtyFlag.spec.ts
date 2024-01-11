@@ -105,7 +105,7 @@ describeCompat("Container dirty flag", "2.0.0-rc.1.0.0", (getTestObjectProvider,
 			);
 		};
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			provider = getTestObjectProvider();
 			loader = provider.makeTestLoader(testContainerConfig);
 			container1 = await createAndAttachContainer(

@@ -38,7 +38,7 @@ describeCompat("GC Data Store Duplicates", "2.0.0-rc.1.0.0", (getTestObjectProvi
 		return summarizeNow(summarizer);
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
 		mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;

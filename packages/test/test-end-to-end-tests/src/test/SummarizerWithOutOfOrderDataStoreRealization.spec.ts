@@ -206,7 +206,7 @@ describeCompat(
 			return summaryResult.summaryVersion;
 		}
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			mainContainer = await createContainer();
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

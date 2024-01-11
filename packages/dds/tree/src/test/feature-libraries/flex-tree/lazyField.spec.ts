@@ -10,7 +10,7 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import {
-	type AllowedTypes,
+	type FlexAllowedTypes,
 	Any,
 	FieldKinds,
 	cursorForJsonableTreeNode,
@@ -39,7 +39,7 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
 /**
  * Test {@link LazyField} implementation.
  */
-class TestLazyField<TTypes extends AllowedTypes> extends LazyField<
+class TestLazyField<TTypes extends FlexAllowedTypes> extends LazyField<
 	typeof FieldKinds.optional,
 	TTypes
 > {}

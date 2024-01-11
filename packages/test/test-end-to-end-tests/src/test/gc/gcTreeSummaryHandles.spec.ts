@@ -293,7 +293,7 @@ describeCompat(
 		}
 
 		describe("Stores handle in summary when GC state does not change", () => {
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.

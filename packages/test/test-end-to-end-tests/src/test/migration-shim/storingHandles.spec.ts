@@ -222,7 +222,7 @@ describeCompat("Storing handles", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code
 		const container = await provider.createContainer(runtimeFactory1);

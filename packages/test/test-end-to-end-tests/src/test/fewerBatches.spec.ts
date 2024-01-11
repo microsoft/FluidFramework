@@ -32,7 +32,7 @@ describeCompat("Fewer batches", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) 
 	let provider: ITestObjectProvider;
 	const capturedBatches: IDocumentMessage[][] = [];
 
-	beforeEach(() => {
+	beforeEach("setup", () => {
 		provider = getTestObjectProvider();
 		capturedBatches.splice(0);
 	});

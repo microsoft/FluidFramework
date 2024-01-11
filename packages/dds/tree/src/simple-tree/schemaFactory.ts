@@ -9,11 +9,11 @@ import {
 	FlexTreeNode,
 	LeafNodeSchema as FlexLeafNodeSchema,
 	isFlexTreeNode,
-	ObjectNodeSchema,
+	FlexObjectNodeSchema,
 	isLazy,
 	markEager,
-	MapNodeSchema,
-	FieldNodeSchema,
+	FlexMapNodeSchema,
+	FlexFieldNodeSchema,
 	isFluidHandle,
 } from "../feature-libraries/index.js";
 import { leaf } from "../domains/index.js";
@@ -48,7 +48,7 @@ import {
 	type,
 } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
-import { TreeArrayNode } from "./treeListNode.js";
+import { TreeArrayNode } from "./treeArrayNode.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -191,7 +191,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	public readonly null = nullSchema;
 
 	/**
-	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
 	 */
 	public readonly handle = handleSchema;
 
@@ -270,7 +270,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as ObjectNodeSchema,
+						flexSchema as FlexObjectNodeSchema,
 						input,
 						allowAdditionalProperties,
 						this,
@@ -418,7 +418,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as MapNodeSchema,
+						flexSchema as FlexMapNodeSchema,
 						input,
 						customizable,
 						customizable ? this : undefined,
@@ -575,7 +575,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as FieldNodeSchema,
+						flexSchema as FlexFieldNodeSchema,
 						[...input],
 						customizable,
 						customizable ? this : undefined,

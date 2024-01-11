@@ -104,7 +104,7 @@ describeCompat("CodeProposal.EndToEnd", "2.0.0-rc.1.0.0", (getTestObjectProvider
 
 	let provider: ITestObjectProvider;
 	let containers: IContainer[];
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		containers = [];
 

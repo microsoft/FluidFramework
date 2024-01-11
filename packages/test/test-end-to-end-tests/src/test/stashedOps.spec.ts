@@ -233,7 +233,7 @@ describeCompat("stashed ops", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) =>
 	let collection1: IIntervalCollection<SequenceInterval>;
 	let waitForSummary: () => Promise<void>;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		loader = provider.makeTestLoader(testContainerConfig);
 		container1 = await createAndAttachContainer(

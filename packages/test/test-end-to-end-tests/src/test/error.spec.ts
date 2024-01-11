@@ -28,7 +28,7 @@ describeCompat("Errors Types", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const loader = new Loader({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,

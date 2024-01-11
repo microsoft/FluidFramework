@@ -35,6 +35,17 @@ export const cursorSymbol = Symbol("cursor");
 export const anchorSymbol = Symbol("anchor");
 
 /**
+ * Assert `entity` is not deleted.
+ * @privateRemarks
+ * This can be faster than getting the tree status and checking that since that can require computing removed vs deleted.
+ * TODO: provide a non implementation dependent way to leverage this optimization.
+ */
+export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
+	assert(entity instanceof LazyEntity, "unexpected implementation");
+	assert(!entity[isFreedSymbol](), "Use after free");
+}
+
+/**
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
 export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>

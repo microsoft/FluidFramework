@@ -162,7 +162,7 @@ describeCompat("GC attachment blob sweep tests", "2.0.0-rc.1.0.0", (getTestObjec
 		return { dataStore, summarizer, summarizerContainer };
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 		testContainerConfig = {
@@ -183,7 +183,7 @@ describeCompat("GC attachment blob sweep tests", "2.0.0-rc.1.0.0", (getTestObjec
 	});
 
 	describe("Attachment blobs in attached container", () => {
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -437,7 +437,7 @@ describeCompat("GC attachment blob sweep tests", "2.0.0-rc.1.0.0", (getTestObjec
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach(async function () {
+		beforeEach("conditionalSkip", async function () {
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
@@ -795,7 +795,7 @@ describeCompat("GC attachment blob sweep tests", "2.0.0-rc.1.0.0", (getTestObjec
 			return { summarizer, summarizerContainer };
 		}
 
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -1088,7 +1088,7 @@ describeCompat("GC attachment blob sweep tests", "2.0.0-rc.1.0.0", (getTestObjec
 	});
 
 	describe("Deleted blob in summary", () => {
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}

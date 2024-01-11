@@ -49,7 +49,7 @@ describeCompat(
 		let sharedCounter: SharedCounter;
 		let sharedMatrix: SharedMatrix;
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 

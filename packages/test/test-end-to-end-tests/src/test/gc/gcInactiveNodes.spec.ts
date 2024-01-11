@@ -128,7 +128,7 @@ describeCompat("GC inactive nodes tests", "2.0.0-rc.1.0.0", (getTestObjectProvid
 			return dataStore.entryPoint.get() as Promise<ITestDataObject>;
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// These tests validate the end-to-end behavior of GC features by generating ops and summaries. However,
 			// it does not post these summaries or download them. So, it doesn't need to run against real services.

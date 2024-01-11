@@ -117,7 +117,7 @@ describeCompat("Storing handles detached", "2.0.0-rc.1.0.0", (getTestObjectProvi
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 

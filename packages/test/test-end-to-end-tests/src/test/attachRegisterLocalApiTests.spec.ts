@@ -79,7 +79,7 @@ describeCompat(
 		}
 
 		let provider: ITestObjectProvider;
-		beforeEach(async () => {
+		beforeEach("createLoader", async () => {
 			provider = getTestObjectProvider();
 			const documentId = createDocumentId();
 			const driver = provider.driver;

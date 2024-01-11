@@ -59,7 +59,7 @@ describeCompat("GC attachment blob tombstone tests", "2.0.0-rc.1.0.0", (getTestO
 		});
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
@@ -89,7 +89,7 @@ describeCompat("GC attachment blob tombstone tests", "2.0.0-rc.1.0.0", (getTestO
 			return { dataStore, summarizer };
 		}
 
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -474,7 +474,7 @@ describeCompat("GC attachment blob tombstone tests", "2.0.0-rc.1.0.0", (getTestO
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach(async function () {
+		beforeEach("conditionalSkip", async function () {
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
@@ -828,7 +828,7 @@ describeCompat("GC attachment blob tombstone tests", "2.0.0-rc.1.0.0", (getTestO
 			return summarizer;
 		}
 
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}

@@ -29,7 +29,7 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -41,7 +41,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	let sharedCell2: ISharedCell;
 	let sharedCell3: ISharedCell;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
@@ -303,7 +303,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 
 describeCompat("SharedCell orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -318,7 +318,7 @@ describeCompat("SharedCell orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectP
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const configWithFeatureGates = {
 			...testContainerConfig,
 			loaderProps: {

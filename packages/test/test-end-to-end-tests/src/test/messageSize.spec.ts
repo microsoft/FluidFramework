@@ -42,7 +42,7 @@ describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) =
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async () => provider.reset());
