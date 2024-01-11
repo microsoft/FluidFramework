@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { Lazy, assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
@@ -123,6 +123,7 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
+import { AttachmentData } from "./attachmentData";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -372,6 +373,11 @@ export interface IPendingDetachedContainerState {
 	hasAttachmentBlobs: boolean;
 }
 
+const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
+	let runningP: Promise<R> | undefined;
+	return async (...args: A) => (runningP ??= func(...args).finally(() => (runningP = undefined)));
+};
+
 const summarizerClientType = "summarizer";
 
 interface IContainerLifecycleEvents extends IEvent {
@@ -560,8 +566,6 @@ export class Container
 		return this._lifecycleState === "disposing" || this._lifecycleState === "disposed";
 	}
 
-	private _attachState = AttachState.Detached;
-
 	private readonly storageAdapter: ContainerStorageAdapter;
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
@@ -587,11 +591,9 @@ export class Container
 	private firstConnection = true;
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
-	private attachStarted = false;
 	private _dirtyContainer = false;
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
-	private baseSnapshot?: ISnapshotTree;
-	private baseSnapshotBlobs?: ISerializableBlobContents;
+	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
@@ -838,7 +840,7 @@ export class Container
 					clientType, // Differentiating summarizer container from main container
 					containerId: this._containerId,
 					docId: () => this.resolvedUrl?.id,
-					containerAttachState: () => this._attachState,
+					containerAttachState: () => this.attachState,
 					containerLifecycleState: () => this._lifecycleState,
 					containerConnectionState: () => ConnectionState[this.connectionState],
 					serializedContainer: pendingLocalState !== undefined,
@@ -1156,20 +1158,19 @@ export class Container
 					);
 				}
 				assert(
-					this.attachState === AttachState.Attached,
+					this.attachmentData.state === AttachState.Attached,
 					0x0d1 /* "Container should be attached before close" */,
 				);
 				assert(
 					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 					0x0d2 /* "resolved url should be valid Fluid url" */,
 				);
-				assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
-				assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+				assert(!!this.attachmentData.baseSnapshotAndBlobs?.value, 0x5d5 /* no base data */);
 				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
-					baseSnapshot: this.baseSnapshot,
-					snapshotBlobs: this.baseSnapshotBlobs,
+					baseSnapshot: this.attachmentData.baseSnapshotAndBlobs.value[0],
+					snapshotBlobs: this.attachmentData.baseSnapshotAndBlobs.value[1],
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
@@ -1182,7 +1183,7 @@ export class Container
 	}
 
 	public get attachState(): AttachState {
-		return this._attachState;
+		return this.attachmentData.state;
 	}
 
 	public serialize(): string {
@@ -1207,63 +1208,83 @@ export class Container
 		return JSON.stringify(detachedContainerState);
 	}
 
-	public async attach(
-		request: IRequest,
-		attachProps?: { deltaConnection?: "none" | "delayed" },
-	): Promise<void> {
-		await PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "Attach" },
-			async () => {
-				if (this._lifecycleState !== "loaded") {
-					// pre-0.58 error message: containerNotValidForAttach
-					throw new UsageError(
-						`The Container is not in a valid state for attach [${this._lifecycleState}]`,
-					);
-				}
+	public attach = runSingle(
+		async (
+			request: IRequest,
+			attachProps?: { deltaConnection?: "none" | "delayed" },
+		): Promise<void> => {
+			await PerformanceEvent.timedExecAsync(
+				this.mc.logger,
+				{ eventName: "Attach" },
+				async () => {
+					if (this._lifecycleState !== "loaded") {
+						// pre-0.58 error message: containerNotValidForAttach
+						throw new UsageError(
+							`The Container is not in a valid state for attach [${this._lifecycleState}]`,
+						);
+					}
 
-				// If container is already attached or attach is in progress, throw an error.
-				assert(
-					this._attachState === AttachState.Detached && !this.attachStarted,
-					0x205 /* "attach() called more than once" */,
-				);
-				this.attachStarted = true;
+					const startAttaching = (redirectTable?: Map<string, string>) => {
+						try {
+							// Get the document state post attach - possibly can just call attach but we need to change the
+							// semantics around what the attach means as far as async code goes.
+							const appSummary: ISummaryTree =
+								this.runtime.createSummary(redirectTable);
+							const protocolSummary = this.captureProtocolSummary();
+							const summary = combineAppAndProtocolSummary(
+								appSummary,
+								protocolSummary,
+							);
 
-				// If attachment blobs were uploaded in detached state we will go through a different attach flow
-				const hasAttachmentBlobs =
-					this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0;
+							this.attachmentData = {
+								state: AttachState.Attaching,
+								summary,
+								blobs: redirectTable === undefined ? "none" : "done",
+							};
 
-				try {
-					assert(
-						this.deltaManager.inbound.length === 0,
-						0x0d6 /* "Inbound queue should be empty when attaching" */,
-					);
+							this.runtime.setAttachState(AttachState.Attaching);
+							this.emit("attaching");
+						} catch (error) {
+							// add resolved URL on error object so that host has the ability to find this document and delete it
+							const newError = normalizeError(error);
+							newError.addTelemetryProperties({ resolvedUrl: this.resolvedUrl?.url });
+							this.close(newError);
+							throw newError;
+						}
+					};
 
-					let summary: ISummaryTree;
-					if (!hasAttachmentBlobs) {
-						// Get the document state post attach - possibly can just call attach but we need to change the
-						// semantics around what the attach means as far as async code goes.
-						const appSummary: ISummaryTree = this.runtime.createSummary();
-						const protocolSummary = this.captureProtocolSummary();
-						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-
-						// Set the state as attaching as we are starting the process of attaching container.
-						// This should be fired after taking the summary because it is the place where we are
-						// starting to attach the container to storage.
-						// Also, this should only be fired in detached container.
-						this._attachState = AttachState.Attaching;
-						this.runtime.setAttachState(AttachState.Attaching);
-						this.emit("attaching");
-						if (this.offlineLoadEnabled) {
-							const [snapshot, snapshotBlobs] =
-								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
-							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs = snapshotBlobs;
+					if (
+						this.attachmentData.state === AttachState.Detached &&
+						this.attachmentData.blobs === undefined
+					) {
+						// If attachment blobs were uploaded in detached state we will go through a different attach flow
+						const outstandingAttachmentBlobs =
+							this.detachedBlobStorage !== undefined &&
+							this.detachedBlobStorage.size > 0;
+						if (!outstandingAttachmentBlobs) {
+							// Set the state as attaching as we are starting the process of attaching container.
+							// This should be fired after taking the summary because it is the place where we are
+							// starting to attach the container to storage.
+							// Also, this should only be fired in detached container.
+							startAttaching();
+						} else {
+							// build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
+							// support blob handles that only know about the local IDs
+							this.attachmentData = {
+								state: AttachState.Detached,
+								blobs: "outstanding",
+								redirectTable: new Map<string, string>(),
+							};
 						}
 					}
 
 					// Actually go and create the resolved document
 					if (this.service === undefined) {
+						const attachmentData = this.attachmentData;
+						assert(
+							attachmentData.state !== AttachState.Attached,
+							"must be attaching or detached with outstanding to be missing service",
+						);
 						const createNewResolvedUrl = await this.urlResolver.resolve(request);
 						assert(
 							this.client.details.type !== summarizerClientType &&
@@ -1273,7 +1294,7 @@ export class Container
 						this.service = await runWithRetry(
 							async () =>
 								this.serviceFactory.createContainer(
-									summary,
+									attachmentData.summary,
 									createNewResolvedUrl,
 									this.subLogger,
 									false, // clientIsSummarizer
@@ -1284,57 +1305,60 @@ export class Container
 								cancel: this._deltaManager.closeAbortController.signal,
 							}, // progress
 						);
+						this.storageAdapter.connectToService(this.service);
 					}
-					this.storageAdapter.connectToService(this.service);
 
-					if (hasAttachmentBlobs) {
+					if (
+						this.attachmentData.state === AttachState.Detached &&
+						this.attachmentData.blobs === "outstanding"
+					) {
+						const detachedData = this.attachmentData;
 						// upload blobs to storage
 						assert(
 							!!this.detachedBlobStorage,
 							0x24e /* "assertion for type narrowing" */,
 						);
 
-						// build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
-						// support blob handles that only know about the local IDs
-						const redirectTable = new Map<string, string>();
 						// if new blobs are added while uploading, upload them too
-						while (redirectTable.size < this.detachedBlobStorage.size) {
+						while (detachedData.redirectTable.size < this.detachedBlobStorage.size) {
 							const newIds = this.detachedBlobStorage
 								.getBlobIds()
-								.filter((id) => !redirectTable.has(id));
+								.filter((id) => !detachedData.redirectTable.has(id));
 							for (const id of newIds) {
 								const blob = await this.detachedBlobStorage.readBlob(id);
 								const response = await this.storageAdapter.createBlob(blob);
-								redirectTable.set(id, response.id);
+								detachedData.redirectTable.set(id, response.id);
 							}
 						}
+						startAttaching(detachedData.redirectTable);
+					}
 
-						// take summary and upload
-						const appSummary: ISummaryTree = this.runtime.createSummary(redirectTable);
-						const protocolSummary = this.captureProtocolSummary();
-						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+					assert(
+						this.attachmentData.state === AttachState.Attaching,
+						"must be attaching by this point",
+					);
+					const attachingData = this.attachmentData;
 
-						this._attachState = AttachState.Attaching;
-						this.runtime.setAttachState(AttachState.Attaching);
-						this.emit("attaching");
-						if (this.offlineLoadEnabled) {
-							const [snapshot, snapshotBlobs] =
-								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
-							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs = snapshotBlobs;
-						}
-
-						await this.storageAdapter.uploadSummaryWithContext(summary, {
+					if (attachingData.blobs === "done") {
+						await this.storageAdapter.uploadSummaryWithContext(attachingData.summary, {
 							referenceSequenceNumber: 0,
 							ackHandle: undefined,
 							proposalHandle: undefined,
 						});
 					}
 
-					this._attachState = AttachState.Attached;
+					this.attachmentData = {
+						state: AttachState.Attached,
+						baseSnapshotAndBlobs: this.offlineLoadEnabled
+							? new Lazy(() =>
+									getSnapshotTreeAndBlobsFromSerializedContainer(
+										attachingData.summary,
+									),
+							  )
+							: undefined,
+					};
 					this.runtime.setAttachState(AttachState.Attached);
 					this.emit("attached");
-
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
@@ -1344,17 +1368,11 @@ export class Container
 							attachProps?.deltaConnection,
 						);
 					}
-				} catch (error) {
-					// add resolved URL on error object so that host has the ability to find this document and delete it
-					const newError = normalizeError(error);
-					newError.addTelemetryProperties({ resolvedUrl: this.resolvedUrl?.url });
-					this.close(newError);
-					throw newError;
-				}
-			},
-			{ start: true, end: true, cancel: "generic" },
-		);
-	}
+				},
+				{ start: true, end: true, cancel: "generic" },
+			);
+		},
+	);
 
 	private setAutoReconnectInternal(mode: ReconnectMode, reason: IConnectionStateChangeReason) {
 		const currentMode = this._deltaManager.connectionManager.reconnectMode;
@@ -1381,7 +1399,7 @@ export class Container
 	public connect() {
 		if (this.closed) {
 			throw new UsageError(`The Container is closed and cannot be connected`);
-		} else if (this._attachState !== AttachState.Attached) {
+		} else if (this.attachState !== AttachState.Attached) {
 			throw new UsageError(`The Container is not attached and cannot be connected`);
 		} else if (!this.connected) {
 			// Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
@@ -1397,7 +1415,7 @@ export class Container
 	private connectInternal(args: IConnectionArgs) {
 		assert(!this.closed, 0x2c5 /* "Attempting to connect() a closed Container" */);
 		assert(
-			this._attachState === AttachState.Attached,
+			this.attachState === AttachState.Attached,
 			0x2c6 /* "Attempting to connect() a container that is not attached" */,
 		);
 
@@ -1585,7 +1603,9 @@ export class Container
 
 		this.storageAdapter.connectToService(this.service);
 
-		this._attachState = AttachState.Attached;
+		this.attachmentData = {
+			state: AttachState.Attached,
+		};
 
 		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
@@ -1595,17 +1615,21 @@ export class Container
 				: { snapshot: pendingLocalState.baseSnapshot, versionId: undefined };
 
 		if (pendingLocalState) {
-			this.baseSnapshot = pendingLocalState.baseSnapshot;
-			this.baseSnapshotBlobs = pendingLocalState.snapshotBlobs;
+			this.attachmentData = {
+				state: AttachState.Attached,
+				baseSnapshotAndBlobs: new Lazy(() => [
+					pendingLocalState.baseSnapshot,
+					pendingLocalState.snapshotBlobs,
+				]),
+			};
 		} else {
 			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
 			if (this.offlineLoadEnabled) {
-				this.baseSnapshot = snapshot;
-				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
-				this.baseSnapshotBlobs = await getBlobContentsFromTree(
-					snapshot,
-					this.storageAdapter,
-				);
+				const blobs = await getBlobContentsFromTree(snapshot, this.storageAdapter);
+				this.attachmentData = {
+					state: AttachState.Attached,
+					baseSnapshotAndBlobs: new Lazy(() => [snapshot, blobs]),
+				};
 			}
 		}
 
