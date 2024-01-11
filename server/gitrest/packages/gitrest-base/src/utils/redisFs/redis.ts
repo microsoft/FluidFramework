@@ -7,10 +7,6 @@ import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as IoRedis from "ioredis";
 
-export const debug = (msg: string) => {
-	process.stdout.write(`${msg}\n`);
-};
-
 export interface RedisParams {
 	enableHashmapRedisFs: boolean;
 	expireAfterSeconds: number;
