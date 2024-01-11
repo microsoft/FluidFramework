@@ -54,8 +54,8 @@ extends:
       jobs:
       - job: job
         steps:
-        - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
-        - template: /tools/pipelines/templates/1ES/include-install-pnpm.yml@self
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: .
 
