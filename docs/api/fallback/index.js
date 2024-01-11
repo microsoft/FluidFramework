@@ -23,18 +23,14 @@ const routes = new Map([
  */
 module.exports = async (context, { headers }) => {
 	const { pathname, search } = new URL(headers["x-ms-original-url"], `http://${headers.host}`);
-	const route = findRoute(pathname);
+	const route = [...routes].find(([path, _]) => new RegExp(path).test(pathname));
 
 	context.res = {
 		status: route ? 302 : 404,
 		headers: {
 			location: route
-				? getRedirectUrl(pathname, search, route)
+				? `${pathname.replace(...route)}${search}`
 				: headers["x-ms-original-url"],
 		},
 	};
 };
-
-const findRoute = (pathname) => [...routes].find(([path, _]) => new RegExp(path).test(pathname));
-
-const getRedirectUrl = (pathname, search, route) => `${pathname.replace(...route)}${search}`;
