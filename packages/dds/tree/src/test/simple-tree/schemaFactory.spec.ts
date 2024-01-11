@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { TreeNode, Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -25,7 +25,6 @@ import {
 } from "../../simple-tree/schemaFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { TreeNode } from "../../simple-tree/index.js";
 
 {
 	const schema = new SchemaFactory("Blah");

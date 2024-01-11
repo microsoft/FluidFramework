@@ -6,10 +6,16 @@
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
-import { OpSpaceCompressedId, SessionId, SessionSpaceCompressedId, StableId } from "../";
-import { IdCompressor } from "../idCompressor";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	OpSpaceCompressedId,
+	SerializedIdCompressorWithNoSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "../";
+import { IdCompressor, deserializeIdCompressor } from "../idCompressor";
 import { createSessionId } from "../utilities";
-import { ghostClusterInitialSize } from "../types";
 import {
 	performFuzzActions,
 	sessionIds,
@@ -372,30 +378,15 @@ describe("IdCompressor", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			const range = compressor.takeNextCreationRange();
 			compressor.beginGhostSession(createSessionId(), () => {
-				assert.throws(
-					() => compressor.takeNextCreationRange(),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.finalizeCreationRange(range),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.serialize(false),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
+				assert.throws(() => compressor.takeNextCreationRange());
+				assert.throws(() => compressor.finalizeCreationRange(range));
+				assert.throws(() => compressor.serialize(false));
 			});
 		});
 
 		it("can generate IDs during a ghost session", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
-			const idCount = ghostClusterInitialSize * 2;
+			const idCount = 10;
 			const ids = new Set<SessionSpaceCompressedId>();
 			const ghostSession = createSessionId();
 			compressor.beginGhostSession(ghostSession, () => {
@@ -407,6 +398,39 @@ describe("IdCompressor", () => {
 				}
 			});
 			assert.equal(ids.size, idCount);
+		});
+
+		it("does not create a cluster for a no-op ghost session", () => {
+			const mockLogger = new MockLogger();
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 5, mockLogger);
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 0,
+					sessionCount: 0,
+				},
+			]);
+			compressor.beginGhostSession(createSessionId(), () => {});
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 0,
+					sessionCount: 0,
+				},
+			]);
+			compressor.beginGhostSession(createSessionId(), () => {
+				compressor.generateCompressedId();
+			});
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 1,
+					sessionCount: 1,
+				},
+			]);
 		});
 	});
 
@@ -779,6 +803,22 @@ describe("IdCompressor", () => {
 					roundtrippedCompressor2,
 					false, // don't compare local state
 				),
+			);
+		});
+
+		it("can detect and fails to load 1.0 documents", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			const base64Content = compressor.serialize(false);
+			const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
+			// Change the version to 1.0
+			floatView[0] = 1.0;
+			const docString1 = bufferToString(
+				floatView.buffer,
+				"base64",
+			) as SerializedIdCompressorWithNoSession;
+			assert.throws(
+				() => deserializeIdCompressor(docString1, createSessionId()),
+				(e: Error) => e.message === "IdCompressor version 1.0 is no longer supported.",
 			);
 		});
 	});

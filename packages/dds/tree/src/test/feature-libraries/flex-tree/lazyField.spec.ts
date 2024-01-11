@@ -10,7 +10,7 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import {
-	type AllowedTypes,
+	type FlexAllowedTypes,
 	Any,
 	FieldKinds,
 	cursorForJsonableTreeNode,
@@ -39,7 +39,7 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
 /**
  * Test {@link LazyField} implementation.
  */
-class TestLazyField<TTypes extends AllowedTypes> extends LazyField<
+class TestLazyField<TTypes extends FlexAllowedTypes> extends LazyField<
 	typeof FieldKinds.optional,
 	TTypes
 > {}
@@ -216,7 +216,7 @@ describe("LazyOptionalField", () => {
 
 		it("boxedAt", () => {
 			const boxedResult = field.boxedAt(0) ?? assert.fail();
-			assert.equal(boxedResult.type, leafDomain.number.name);
+			assert.equal(boxedResult.schema, leafDomain.number);
 			assert.equal(boxedResult.value, 42);
 		});
 
@@ -278,16 +278,16 @@ describe("LazyOptionalField", () => {
 			schema,
 			initialTree: 5,
 		});
-		assert.equal(view.editableTree.content, 5);
-		view.editableTree.content = 6;
-		assert.equal(view.editableTree.content, 6);
-		view.editableTree.content = undefined;
-		assert.equal(view.editableTree.content, undefined);
-		view.editableTree.content = cursorForJsonableTreeNode({
+		assert.equal(view.flexTree.content, 5);
+		view.flexTree.content = 6;
+		assert.equal(view.flexTree.content, 6);
+		view.flexTree.content = undefined;
+		assert.equal(view.flexTree.content, undefined);
+		view.flexTree.content = cursorForJsonableTreeNode({
 			type: leaf.string.name,
 			value: 7,
 		});
-		assert.equal(view.editableTree.content, 7);
+		assert.equal(view.flexTree.content, 7);
 	});
 });
 
@@ -308,7 +308,7 @@ describe("LazyValueField", () => {
 
 	it("boxedAt", () => {
 		const boxedResult = field.boxedAt(0) ?? assert.fail();
-		assert.equal(boxedResult.type, leafDomain.string.name);
+		assert.equal(boxedResult.schema, leafDomain.string);
 		assert.equal(boxedResult.value, initialTree);
 	});
 
@@ -334,12 +334,12 @@ describe("LazyValueField", () => {
 			schema,
 			initialTree: "X",
 		});
-		assert.equal(view.editableTree.content, "X");
-		view.editableTree.content = "Y";
-		assert.equal(view.editableTree.content, "Y");
+		assert.equal(view.flexTree.content, "X");
+		view.flexTree.content = "Y";
+		assert.equal(view.flexTree.content, "Y");
 		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
-		view.editableTree.content = zCursor;
-		assert.equal(view.editableTree.content, "Z");
+		view.flexTree.content = zCursor;
+		assert.equal(view.flexTree.content, "Z");
 	});
 });
 
@@ -364,7 +364,7 @@ describe("LazySequence", () => {
 			schema,
 			initialTree: data,
 		});
-		return view.editableTree;
+		return view.flexTree;
 	}
 
 	it("atIndex", () => {
@@ -389,15 +389,15 @@ describe("LazySequence", () => {
 	it("boxedAt", () => {
 		const sequence = testSequence([37, 42]);
 		const boxedResult0 = sequence.boxedAt(0) ?? assert.fail();
-		assert.equal(boxedResult0.type, leafDomain.number.name);
+		assert.equal(boxedResult0.schema, leafDomain.number);
 		assert.equal(boxedResult0.value, 37);
 
 		const boxedResult1 = sequence.boxedAt(1) ?? assert.fail();
-		assert.equal(boxedResult1.type, leafDomain.number.name);
+		assert.equal(boxedResult1.schema, leafDomain.number);
 		assert.equal(boxedResult1.value, 42);
 
 		const boxedResultNeg1 = sequence.boxedAt(-1) ?? assert.fail();
-		assert.equal(boxedResultNeg1.type, leafDomain.number.name);
+		assert.equal(boxedResultNeg1.schema, leafDomain.number);
 		assert.equal(boxedResultNeg1.value, 42);
 
 		assert.equal(sequence.boxedAt(2), undefined);
@@ -419,34 +419,34 @@ describe("LazySequence", () => {
 		const sequence = testSequence([37, 42]);
 		const mapResult = sequence.mapBoxed((value) => value);
 		assert.equal(mapResult.length, 2);
-		assert.equal(mapResult[0].type, leafDomain.number.name);
+		assert.equal(mapResult[0].schema, leafDomain.number);
 		assert.equal(mapResult[0].value, 37);
-		assert.equal(mapResult[1].type, leafDomain.number.name);
+		assert.equal(mapResult[1].schema, leafDomain.number);
 		assert.equal(mapResult[1].value, 42);
 	});
 
 	it("asArray", () => {
 		const sequence = testSequence([37, 42]);
-		const array = sequence.asArray;
+		const array = [...sequence];
 		assert.deepEqual(array, [37, 42]);
 	});
 
 	describe("insertAt", () => {
 		it("basic use", () => {
 			const sequence = testMutableSequence([]);
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(0, []);
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(0, [10]);
-			assert.deepEqual(sequence.asArray, [10]);
+			assert.deepEqual([...sequence], [10]);
 			sequence.insertAt(0, [11]);
-			assert.deepEqual(sequence.asArray, [11, 10]);
+			assert.deepEqual([...sequence], [11, 10]);
 			sequence.insertAt(1, [12]);
-			assert.deepEqual(sequence.asArray, [11, 12, 10]);
+			assert.deepEqual([...sequence], [11, 12, 10]);
 			sequence.insertAt(3, [13]);
-			assert.deepEqual(sequence.asArray, [11, 12, 10, 13]);
+			assert.deepEqual([...sequence], [11, 12, 10, 13]);
 			sequence.insertAt(1, [1, 2, 3]);
-			assert.deepEqual(sequence.asArray, [11, 1, 2, 3, 12, 10, 13]);
+			assert.deepEqual([...sequence], [11, 1, 2, 3, 12, 10, 13]);
 			assert.throws(
 				() => sequence.insertAt(-1, []),
 				(e: Error) => validateAssertionError(e, /index/),
@@ -471,14 +471,14 @@ describe("LazySequence", () => {
 
 		it("with cursors", () => {
 			const sequence = testMutableSequence([]);
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(0, cursorForJsonableTreeField([]));
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(
 				0,
 				cursorForJsonableTreeField([{ type: leaf.number.name, value: 10 }]),
 			);
-			assert.deepEqual(sequence.asArray, [10]);
+			assert.deepEqual([...sequence], [10]);
 			sequence.insertAt(
 				0,
 				cursorForJsonableTreeField([
@@ -486,7 +486,7 @@ describe("LazySequence", () => {
 					{ type: leaf.number.name, value: 12 },
 				]),
 			);
-			assert.deepEqual(sequence.asArray, [11, 12, 10]);
+			assert.deepEqual([...sequence], [11, 12, 10]);
 		});
 	});
 });

@@ -21,6 +21,7 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import {
+	areComposable,
 	assertChangesetsEqual,
 	compose,
 	composeNoVerify,
@@ -63,7 +64,7 @@ export function testCompose() {
 						if (
 							title.startsWith("((remove, insert), revive)") ||
 							title.startsWith("((move, insert), revive)") ||
-							!SF.areComposable([taggedA, taggedB, taggedC])
+							!areComposable([taggedA, taggedB, taggedC])
 						) {
 							// These changes do not form a valid sequence of composable changes
 						} else if (

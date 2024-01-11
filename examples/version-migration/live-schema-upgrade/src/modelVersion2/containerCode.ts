@@ -8,8 +8,8 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
-import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter";
+import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller.js";
+import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter.js";
 
 const diceRollerId = "dice-roller";
 const diceCounterId = "dice-counter";
