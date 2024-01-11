@@ -526,9 +526,9 @@ export class SharedMatrix<T = any>
 		);
 		const cellsSnapshot = this.cells.snapshot();
 		const props: Record<string, number> = {
-			cellsSnapshotSize: cellsSnapshot.length,
-			rowCount: this.rowCount,
-			colCount: this.colCount,
+			csSize: cellsSnapshot.length, // cellsSnapshotSize
+			rc: this.rowCount, // rowCount
+			cc: this.colCount, // colCount
 		};
 		const artifactsToSummarize = [
 			cellsSnapshot,
@@ -540,7 +540,7 @@ export class SharedMatrix<T = any>
 		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1) {
 			const trackerMatrixSnapshot = this.cellLastWriteTracker.snapshot();
 			artifactsToSummarize.push(trackerMatrixSnapshot);
-			props.trackerMatrixSnapshotSize = trackerMatrixSnapshot.length;
+			props.tmsSize = trackerMatrixSnapshot.length; // trackerMatrixSnapshotSize
 		}
 		builder.addBlob(
 			SnapshotPath.cells,
