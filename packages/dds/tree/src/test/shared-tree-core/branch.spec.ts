@@ -808,6 +808,38 @@ describe("Branches", () => {
 			unsubscribe();
 		});
 
+		it("Disposing of a branch also disposes of its revertibles", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe1 = branch.on("newRevertible", (r) => {
+				assert.equal(r.status, RevertibleStatus.Valid);
+				const retainResult = r.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated.push(r);
+			});
+
+			const revertiblesDisposed: Revertible[] = [];
+			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Disposed);
+				revertiblesDisposed.push(revertible);
+			});
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 0);
+
+			branch.dispose();
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesCreated[0], revertiblesDisposed[0]);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
 		it.skip("triggers revertible events for each change merged into the local branch", () => {
 			const parentBranch = create();
 			const childBranch = parentBranch.fork();

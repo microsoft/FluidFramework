@@ -7,7 +7,7 @@ import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver"
 import { assert } from "@fluidframework/core-utils";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { OdspSampleCache } from "./odspPersistantCache";
+import { OdspSampleCache } from "./odspPersistantCache.js";
 
 export function start(div: HTMLDivElement, odspAccessToken: string) {
 	const binaryDiv = document.createElement("div");
