@@ -26,3 +26,5 @@ export {
 } from "./defaultEditBuilder.js";
 
 export { defaultSchemaPolicy } from "./defaultSchema.js";
+
+export { isNodeInSchema, isFieldInSchema } from "./schemaChecker.js";
