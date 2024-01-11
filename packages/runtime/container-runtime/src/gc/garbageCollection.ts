@@ -56,7 +56,7 @@ import {
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+import { UnreferencedNodeTrackers, UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 import { GCTelemetryTracker } from "./gcTelemetry";
 
 /**
@@ -111,7 +111,7 @@ export class GarbageCollector implements IGarbageCollector {
 	// The GC details generated from the base snapshot.
 	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 	// Map of node ids to their unreferenced state tracker.
-	private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
+	private readonly unreferencedNodesState: UnreferencedNodeTrackers;
 	// The Timer responsible for closing the container when the session has expired
 	private sessionExpiryTimer: Timer | undefined;
 
@@ -174,6 +174,7 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 
 		this.configs = generateGCConfigs(this.mc, createParams);
+		this.unreferencedNodesState = new UnreferencedNodeTrackers(this.configs);
 
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
 		if (this.configs.sessionExpiryTimeoutMs !== undefined) {
@@ -383,9 +384,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
 		// reference timestamp.
-		for (const [, nodeStateTracker] of this.unreferencedNodesState) {
-			nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-		}
+		this.unreferencedNodesState.updateAllTracking(currentReferenceTimestampMs);
 	}
 
 	/**
@@ -592,43 +591,23 @@ export class GarbageCollector implements IGarbageCollector {
 	): { tombstoneReadyNodeIds: Set<string>; sweepReadyNodeIds: Set<string> } {
 		// 1. Marks all referenced nodes by clearing their unreferenced tracker, if any.
 		for (const nodeId of allReferencedNodeIds) {
-			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
-			if (nodeStateTracker !== undefined) {
-				// Stop tracking so as to clear out any running timers.
-				nodeStateTracker.stopTracking();
-				// Delete the node as we don't need to track it any more.
-				this.unreferencedNodesState.delete(nodeId);
-			}
+			this.unreferencedNodesState.delete(nodeId);
 		}
 
-		// 2. Mark unreferenced nodes in this run by starting unreferenced tracking for them.
+		// 2. Mark unreferenced nodes in this run by starting or updating unreferenced tracking for them.
 		const tombstoneReadyNodeIds: Set<string> = new Set();
 		const sweepReadyNodeIds: Set<string> = new Set();
 		for (const nodeId of gcResult.deletedNodeIds) {
-			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
-			if (nodeStateTracker === undefined) {
-				this.unreferencedNodesState.set(
-					nodeId,
-					new UnreferencedStateTracker(
-						currentReferenceTimestampMs,
-						this.configs.inactiveTimeoutMs,
-						currentReferenceTimestampMs,
-						this.configs.tombstoneTimeoutMs,
-						this.configs.sweepGracePeriodMs,
-					),
-				);
-			} else {
-				// If a node was already unreferenced, update its tracking information. Since the current reference time
-				// is from the ops seen, this will ensure that we keep updating unreferenced state as time moves forward.
-				nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-
-				// If a node is tombstone or sweep-ready, store it so it can be returned.
-				if (nodeStateTracker.state === UnreferencedState.TombstoneReady) {
-					tombstoneReadyNodeIds.add(nodeId);
-				}
-				if (nodeStateTracker.state === UnreferencedState.SweepReady) {
-					sweepReadyNodeIds.add(nodeId);
-				}
+			const state = this.unreferencedNodesState.startOrUpdateTracking(
+				nodeId,
+				currentReferenceTimestampMs,
+			);
+			// If a node is tombstone or sweep-ready, store it so it can be returned.
+			if (state === UnreferencedState.TombstoneReady) {
+				tombstoneReadyNodeIds.add(nodeId);
+			}
+			if (state === UnreferencedState.SweepReady) {
+				sweepReadyNodeIds.add(nodeId);
 			}
 		}
 
@@ -911,13 +890,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// Clear unreferenced state tracking for deleted nodes.
 		for (const nodeId of deletedNodeIds) {
-			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
-			if (nodeStateTracker !== undefined) {
-				// Stop tracking so as to clear out any running timers.
-				nodeStateTracker.stopTracking();
-				// Delete the node as we don't need to track it any more.
-				this.unreferencedNodesState.delete(nodeId);
-			}
+			this.unreferencedNodesState.delete(nodeId);
 			this.deletedNodes.add(nodeId);
 		}
 	}

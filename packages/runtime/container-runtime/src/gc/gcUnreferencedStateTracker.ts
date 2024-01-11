@@ -5,7 +5,7 @@
 
 import { assert, Timer } from "@fluidframework/core-utils";
 import { validatePrecondition } from "@fluidframework/telemetry-utils";
-import { UnreferencedState } from "./gcDefinitions";
+import { IGarbageCollectorConfigs, UnreferencedState } from "./gcDefinitions";
 
 /** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
 class TimerWithNoDefaultTimeout extends Timer {
@@ -22,6 +22,54 @@ class TimerWithNoDefaultTimeout extends Timer {
 
 	restart(timeoutMs: number): void {
 		super.restart(timeoutMs, this.callback);
+	}
+}
+
+/** The collection of UnreferencedStateTrackers for all unreferenced nodes */
+export class UnreferencedNodeTrackers extends Map<string, UnreferencedStateTracker> {
+	constructor(private readonly configs: IGarbageCollectorConfigs) {
+		super();
+	}
+
+	/** Update tracking for all nodes, using the given timestamp as the current time */
+	updateAllTracking(currentReferenceTimestampMs: number) {
+		for (const nodeStateTracker of this.values()) {
+			nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+		}
+	}
+
+	/**
+	 * Start or Update tracking for the given node, using the given timestamp as the current time
+	 * @returns the current state of the given node, after updating tracking info. Will be "Active" for newly tracked nodes.
+	 */
+	startOrUpdateTracking(nodeId: string, currentReferenceTimestampMs: number) {
+		const nodeStateTracker = this.get(nodeId);
+		if (nodeStateTracker === undefined) {
+			this.set(
+				nodeId,
+				new UnreferencedStateTracker(
+					currentReferenceTimestampMs,
+					this.configs.inactiveTimeoutMs,
+					currentReferenceTimestampMs,
+					this.configs.tombstoneTimeoutMs,
+					this.configs.sweepGracePeriodMs,
+				),
+			);
+			return UnreferencedState.Active;
+		}
+
+		// If a node was already unreferenced, update its tracking information. Since the current reference time
+		// is from the ops seen, this will ensure that we keep updating unreferenced state as time moves forward.
+		nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+		return nodeStateTracker.state;
+	}
+
+	/** Delete the given key, and stop tracking if that node was actually unreferenced */
+	delete(key: string): boolean {
+		// Stop tracking so as to clear out any running timers.
+		this.get(key)?.stopTracking();
+		// Delete the node as we don't need to track it any more.
+		return super.delete(key);
 	}
 }
 
