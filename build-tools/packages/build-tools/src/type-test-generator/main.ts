@@ -42,8 +42,34 @@ if (typeRollupFilePath) {
 	}
 	typeDefinitionFilePath = typeRollupFilePath;
 } else {
-	// Default to using index.d.ts and other .d.ts files under dist
-	typeDefinitionFilePath = "dist/index.d.ts";
+	// Try to read the 'types' field from the package.json of the previous package
+	const previousPackageJson: PackageJson = readJsonSync(`${previousBasePath}/package.json`);
+	if (previousPackageJson.types) {
+		typeDefinitionFilePath = path.join(previousBasePath, previousPackageJson.types);
+	} else if (previousPackageJson.exports) {
+		// Function to extract types path from an export entry
+		const extractTypesPath = (exportEntry: any): string | undefined => {
+			return exportEntry?.types ? path.join(previousBasePath, exportEntry.types) : undefined;
+		};
+
+		const defaultSubpath = ".";
+		const exportEntry = previousPackageJson.exports[defaultSubpath];
+
+		// Check both 'import' and 'require' resolution methods
+		typeDefinitionFilePath =
+			extractTypesPath(exportEntry?.import) || extractTypesPath(exportEntry?.require);
+
+		if (!typeDefinitionFilePath) {
+			// If no valid path is found, throw an error
+			throw new Error(
+				"Type definition file path could not be determined from the 'exports' field of the package.json of the previous version.",
+			);
+		}
+	} else {
+		throw new Error(
+			"Type definition file path could not be determined from the package.json of the previous version.",
+		);
+	}
 }
 const testPath = `./src/test/types`;
 // remove scope if it exists
