@@ -50,9 +50,9 @@ extends:
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
-    - stage: primary stage
+    - stage: run_policy_check
       jobs:
-      - job: job
+      - job: run_policy_check
         steps:
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
