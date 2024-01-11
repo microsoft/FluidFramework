@@ -10,8 +10,9 @@
 export interface IClusterDrainingChecker {
 	/**
 	 * Check if cluster is draining
+	 * cluster: optional. Use current cluster name if not provided.
 	 */
-	isClusterDraining(): Promise<boolean>;
+	isClusterDraining(cluster?: string): Promise<boolean>;
 }
 
 export class DummyClusterDrainingChecker implements IClusterDrainingChecker {
