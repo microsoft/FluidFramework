@@ -26,12 +26,11 @@ module.exports = async (context, { headers }) => {
 	const route = findRoute(pathname);
 
 	context.res = {
-		status: route === undefined ? 404 : 302,
+		status: route ? 302 : 404,
 		headers: {
-			location:
-				route === undefined
-					? headers["x-ms-original-url"]
-					: getRedirectUrl(pathname, search, route),
+			location: route
+				? getRedirectUrl(pathname, search, route)
+				: headers["x-ms-original-url"],
 		},
 	};
 };
