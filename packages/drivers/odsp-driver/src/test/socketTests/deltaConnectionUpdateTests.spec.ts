@@ -122,6 +122,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 	}
 
 	it("Delta connection metadata should be updated via Fluid signals and join session response", async () => {
+		await tickClock(1);
 		socket = new ClientSocketMock();
 		let eventRaised = false;
 		let content: Record<string, unknown>;
@@ -129,7 +130,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		const handler = (metadata: Record<string, unknown>) => {
 			eventRaised = true;
 			assert.strictEqual(
-				(metadata?.sensitivityLabelsInfo as any).labels,
+				JSON.parse(metadata?.sensitivityLabelsInfo as string).labels,
 				content.labels,
 				"label via event should match",
 			);
