@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ISharedCounter():
     TypeOnly<old.ISharedCounter>;
 declare function use_current_InterfaceDeclaration_ISharedCounter(
-    use: TypeOnly<current.ISharedCounter>);
+    use: TypeOnly<current.ISharedCounter>): void;
 use_current_InterfaceDeclaration_ISharedCounter(
     get_old_InterfaceDeclaration_ISharedCounter());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ISharedCounter(
 declare function get_current_InterfaceDeclaration_ISharedCounter():
     TypeOnly<current.ISharedCounter>;
 declare function use_old_InterfaceDeclaration_ISharedCounter(
-    use: TypeOnly<old.ISharedCounter>);
+    use: TypeOnly<old.ISharedCounter>): void;
 use_old_InterfaceDeclaration_ISharedCounter(
     get_current_InterfaceDeclaration_ISharedCounter());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ISharedCounter(
 declare function get_old_InterfaceDeclaration_ISharedCounterEvents():
     TypeOnly<old.ISharedCounterEvents>;
 declare function use_current_InterfaceDeclaration_ISharedCounterEvents(
-    use: TypeOnly<current.ISharedCounterEvents>);
+    use: TypeOnly<current.ISharedCounterEvents>): void;
 use_current_InterfaceDeclaration_ISharedCounterEvents(
     get_old_InterfaceDeclaration_ISharedCounterEvents());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_ISharedCounterEvents(
 declare function get_current_InterfaceDeclaration_ISharedCounterEvents():
     TypeOnly<current.ISharedCounterEvents>;
 declare function use_old_InterfaceDeclaration_ISharedCounterEvents(
-    use: TypeOnly<old.ISharedCounterEvents>);
+    use: TypeOnly<old.ISharedCounterEvents>): void;
 use_old_InterfaceDeclaration_ISharedCounterEvents(
     get_current_InterfaceDeclaration_ISharedCounterEvents());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_ISharedCounterEvents(
 declare function get_old_ClassDeclaration_SharedCounter():
     TypeOnly<old.SharedCounter>;
 declare function use_current_ClassDeclaration_SharedCounter(
-    use: TypeOnly<current.SharedCounter>);
+    use: TypeOnly<current.SharedCounter>): void;
 use_current_ClassDeclaration_SharedCounter(
     get_old_ClassDeclaration_SharedCounter());
 
@@ -89,6 +89,6 @@ use_current_ClassDeclaration_SharedCounter(
 declare function get_current_ClassDeclaration_SharedCounter():
     TypeOnly<current.SharedCounter>;
 declare function use_old_ClassDeclaration_SharedCounter(
-    use: TypeOnly<old.SharedCounter>);
+    use: TypeOnly<old.SharedCounter>): void;
 use_old_ClassDeclaration_SharedCounter(
     get_current_ClassDeclaration_SharedCounter());

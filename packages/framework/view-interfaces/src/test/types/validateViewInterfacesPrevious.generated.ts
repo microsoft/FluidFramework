@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_VariableDeclaration_IFluidMountableView():
     TypeOnly<typeof old.IFluidMountableView>;
 declare function use_current_VariableDeclaration_IFluidMountableView(
-    use: TypeOnly<typeof current.IFluidMountableView>);
+    use: TypeOnly<typeof current.IFluidMountableView>): void;
 use_current_VariableDeclaration_IFluidMountableView(
     get_old_VariableDeclaration_IFluidMountableView());
 
@@ -41,7 +41,7 @@ use_current_VariableDeclaration_IFluidMountableView(
 declare function get_current_VariableDeclaration_IFluidMountableView():
     TypeOnly<typeof current.IFluidMountableView>;
 declare function use_old_VariableDeclaration_IFluidMountableView(
-    use: TypeOnly<typeof old.IFluidMountableView>);
+    use: TypeOnly<typeof old.IFluidMountableView>): void;
 use_old_VariableDeclaration_IFluidMountableView(
     get_current_VariableDeclaration_IFluidMountableView());
 
@@ -53,7 +53,7 @@ use_old_VariableDeclaration_IFluidMountableView(
 declare function get_old_InterfaceDeclaration_IFluidMountableView():
     TypeOnly<old.IFluidMountableView>;
 declare function use_current_InterfaceDeclaration_IFluidMountableView(
-    use: TypeOnly<current.IFluidMountableView>);
+    use: TypeOnly<current.IFluidMountableView>): void;
 use_current_InterfaceDeclaration_IFluidMountableView(
     get_old_InterfaceDeclaration_IFluidMountableView());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IFluidMountableView(
 declare function get_current_InterfaceDeclaration_IFluidMountableView():
     TypeOnly<current.IFluidMountableView>;
 declare function use_old_InterfaceDeclaration_IFluidMountableView(
-    use: TypeOnly<old.IFluidMountableView>);
+    use: TypeOnly<old.IFluidMountableView>): void;
 use_old_InterfaceDeclaration_IFluidMountableView(
     get_current_InterfaceDeclaration_IFluidMountableView());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IFluidMountableView(
 declare function get_old_InterfaceDeclaration_IFluidMountableViewClass():
     TypeOnly<old.IFluidMountableViewClass>;
 declare function use_current_InterfaceDeclaration_IFluidMountableViewClass(
-    use: TypeOnly<current.IFluidMountableViewClass>);
+    use: TypeOnly<current.IFluidMountableViewClass>): void;
 use_current_InterfaceDeclaration_IFluidMountableViewClass(
     get_old_InterfaceDeclaration_IFluidMountableViewClass());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IFluidMountableViewClass(
 declare function get_current_InterfaceDeclaration_IFluidMountableViewClass():
     TypeOnly<current.IFluidMountableViewClass>;
 declare function use_old_InterfaceDeclaration_IFluidMountableViewClass(
-    use: TypeOnly<old.IFluidMountableViewClass>);
+    use: TypeOnly<old.IFluidMountableViewClass>): void;
 use_old_InterfaceDeclaration_IFluidMountableViewClass(
     get_current_InterfaceDeclaration_IFluidMountableViewClass());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IFluidMountableViewClass(
 declare function get_old_InterfaceDeclaration_IProvideFluidMountableView():
     TypeOnly<old.IProvideFluidMountableView>;
 declare function use_current_InterfaceDeclaration_IProvideFluidMountableView(
-    use: TypeOnly<current.IProvideFluidMountableView>);
+    use: TypeOnly<current.IProvideFluidMountableView>): void;
 use_current_InterfaceDeclaration_IProvideFluidMountableView(
     get_old_InterfaceDeclaration_IProvideFluidMountableView());
 
@@ -113,6 +113,6 @@ use_current_InterfaceDeclaration_IProvideFluidMountableView(
 declare function get_current_InterfaceDeclaration_IProvideFluidMountableView():
     TypeOnly<current.IProvideFluidMountableView>;
 declare function use_old_InterfaceDeclaration_IProvideFluidMountableView(
-    use: TypeOnly<old.IProvideFluidMountableView>);
+    use: TypeOnly<old.IProvideFluidMountableView>): void;
 use_old_InterfaceDeclaration_IProvideFluidMountableView(
     get_current_InterfaceDeclaration_IProvideFluidMountableView());

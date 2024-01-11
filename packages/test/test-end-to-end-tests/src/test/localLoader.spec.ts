@@ -11,11 +11,10 @@ import {
 	IDataObjectProps,
 } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	createAndAttachContainer,
@@ -27,7 +26,7 @@ import {
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 const counterKey = "count";
@@ -96,7 +95,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeNoCompat("LocalLoader", (getTestObjectProvider) => {
+describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -116,12 +115,9 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		documentId: string,
 		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [innerRequestHandler],
 		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],
@@ -143,12 +139,9 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		containerUrl: IResolvedUrl | undefined,
 		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
-		const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [inner],
 		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],
@@ -165,16 +158,16 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 	describe("1 dataObject", () => {
 		let dataObject: TestDataObject;
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			const documentId = createDocumentId();
 			const container = await createContainer(documentId, testDataObjectFactory);
-			dataObject = await requestFluidObject<TestDataObject>(container, "default");
+			dataObject = (await container.getEntryPoint()) as TestDataObject;
 		});
 
 		it("opened", async () => {
 			assert(
 				dataObject instanceof TestDataObject,
-				"requestFluidObject() must return the expected dataObject type.",
+				"getEntryPoint() must return the expected dataObject type.",
 			);
 		});
 	});
@@ -185,14 +178,14 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 
 			// Create / load both instance of TestDataObject before applying ops.
 			const container1 = await createContainer(documentId, testDataObjectFactory);
-			const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 
 			const container2 = await loadContainer(
 				documentId,
 				container1.resolvedUrl,
 				testDataObjectFactory,
 			);
-			const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 			assert(
 				dataObject1 !== dataObject2,
@@ -231,7 +224,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		it("late open / early close", async () => {
 			const documentId = createDocumentId();
 			const container1 = await createContainer(documentId, testDataObjectFactory);
-			const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 
 			dataObject1.increment();
 			assert.equal(
@@ -246,7 +239,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 				container1.resolvedUrl,
 				testDataObjectFactory,
 			);
-			const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 			assert(
 				dataObject1 !== dataObject2,
 				"Each container must return a separate TestDataObject instance.",
@@ -279,11 +272,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		describe("1 data type", () => {
 			let text: SharedString;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 				const container = await createContainer(documentId, factory);
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				text = await dataObject.getSharedObject("text");
 			});
 
@@ -301,16 +294,16 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 			let text1: SharedString;
 			let text2: SharedString;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
 				const container1 = await createContainer(documentId, factory);
-				dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+				dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 				text1 = await dataObject1.getSharedObject<SharedString>("text");
 
 				const container2 = await loadContainer(documentId, container1.resolvedUrl, factory);
-				dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+				dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				text2 = await dataObject2.getSharedObject<SharedString>("text");
 			});
 
@@ -349,11 +342,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 			let dataObject1: TestDataObject;
 			let dataObject2: TestDataObject;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 
 				container1 = await createContainer(documentId, testDataObjectFactory);
-				dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
+				dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 				await waitForContainerConnection(container1);
 
 				container2 = await loadContainer(
@@ -361,7 +354,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 					container1.resolvedUrl,
 					testDataObjectFactory,
 				);
-				dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+				dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 				await waitForContainerConnection(container2);
 			});
 

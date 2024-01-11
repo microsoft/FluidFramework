@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
-import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy";
 import {
@@ -22,7 +22,7 @@ import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId }, undefined);
+	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });
 
 const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
 	{

@@ -16,7 +16,7 @@ import { SequencePlace, Side } from "../intervalCollection";
 
 /**
  * Basic interval abstraction
- * @public
+ * @alpha
  */
 export interface IInterval {
 	/**
@@ -45,7 +45,6 @@ export interface IInterval {
 	compareEnd(b: IInterval): number;
 	/**
 	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
-	 * @internal
 	 */
 	modify(
 		label: string,
@@ -64,32 +63,41 @@ export interface IInterval {
 	 * Unions this interval with `b`, returning a new interval.
 	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
 	 * intermediate values between the two intervals.
-	 * @internal
 	 */
 	union(b: IInterval): IInterval;
 }
 
 /**
- * Values are used in persisted formats (ops) and revertibles.
- * @alpha
+ * Values are used in persisted formats (ops).
+ * @internal
  */
-export const IntervalOpType = {
+export const IntervalDeltaOpType = {
 	ADD: "add",
 	DELETE: "delete",
 	CHANGE: "change",
+} as const;
+
+export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof IntervalDeltaOpType];
+
+/**
+ * Values are used in revertibles.
+ * @internal
+ */
+export const IntervalOpType = {
+	...IntervalDeltaOpType,
 	PROPERTY_CHANGED: "propertyChanged",
 	POSITION_REMOVE: "positionRemove",
 } as const;
+/**
+ * @internal
+ */
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
- * @public
+ * @alpha
  */
 export enum IntervalType {
 	Simple = 0x0,
-	/**
-	 * @deprecated this functionality is no longer supported and will be removed
-	 */
-	Nest = 0x1,
 
 	/**
 	 * SlideOnRemove indicates that the ends of the interval will slide if the segment
@@ -109,7 +117,7 @@ export enum IntervalType {
 /**
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
- * @internal
+ * @alpha
  */
 export interface ISerializedInterval {
 	/**
@@ -137,16 +145,16 @@ export interface ISerializedInterval {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
-	/** @internal */
+	/***/
 	propertyManager: PropertiesManager;
-	/** @internal */
+	/***/
 	serialize(): ISerializedInterval;
-	/** @internal */
+	/***/
 	addProperties(
 		props: PropertySet,
 		collaborating?: boolean,
@@ -201,7 +209,7 @@ export type CompressedSerializedInterval =
 /**
  * @sealed
  * @deprecated The methods within have substitutions
- * @public
+ * @internal
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	/**
@@ -223,6 +231,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
+
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
@@ -238,7 +247,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  *
- * @internal
+ * @alpha
  */
 export const IntervalStickiness = {
 	/**
@@ -270,8 +279,7 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
- *
- * @internal
+ * @alpha
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 

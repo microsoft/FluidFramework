@@ -10,7 +10,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Manages the state and the members for {@link IAudience}
- * @public
+ * @alpha
  */
 export interface IAudienceOwner extends IAudience {
 	/**

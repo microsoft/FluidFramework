@@ -7,6 +7,9 @@ import { createWeightedGenerator } from "./generators";
 import { makeRandom } from "./random";
 import { IRandom } from "./types";
 
+/**
+ * @internal
+ */
 export abstract class MarkovChain<PredictionPointType, OutputType> {
 	public static readonly MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
 	public static readonly MARKOV_SENTENCE_END_KEY = "MARKOV_SENTENCE_END_KEY_01$#@%^#";
@@ -61,12 +64,18 @@ export abstract class MarkovChain<PredictionPointType, OutputType> {
 	}
 }
 
+/**
+ * @internal
+ */
 export enum WordSpacing {
 	Spaced,
 	Unspaced,
 	Unknown,
 }
 
+/**
+ * @internal
+ */
 export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	chain: Record<string, [string, number][]>;
 	readonly random: IRandom;
@@ -202,6 +211,9 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	}
 }
 
+/**
+ * @internal
+ */
 export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 	readonly chain: Record<string, string[]>;
 	readonly random: IRandom;

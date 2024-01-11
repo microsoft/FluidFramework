@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_MountableView():
     TypeOnly<old.MountableView>;
 declare function use_current_ClassDeclaration_MountableView(
-    use: TypeOnly<current.MountableView>);
+    use: TypeOnly<current.MountableView>): void;
 use_current_ClassDeclaration_MountableView(
     get_old_ClassDeclaration_MountableView());
 
@@ -41,6 +41,6 @@ use_current_ClassDeclaration_MountableView(
 declare function get_current_ClassDeclaration_MountableView():
     TypeOnly<current.MountableView>;
 declare function use_old_ClassDeclaration_MountableView(
-    use: TypeOnly<old.MountableView>);
+    use: TypeOnly<old.MountableView>): void;
 use_old_ClassDeclaration_MountableView(
     get_current_ClassDeclaration_MountableView());

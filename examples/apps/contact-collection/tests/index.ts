@@ -5,11 +5,11 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { renderContactCollection } from "../src/view";
+import { renderContactCollection } from "../src/view.js";
 import {
 	ContactCollectionContainerRuntimeFactory,
 	IContactCollectionAppModel,
-} from "../src/containerCode";
+} from "../src/containerCode.js";
 
 const getContactUrl = (contactId: string): string => {
 	const contactUrl = new URL(location.toString());
@@ -20,6 +20,7 @@ const getContactUrl = (contactId: string): string => {
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
+ * @internal
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<IContactCollectionAppModel>(

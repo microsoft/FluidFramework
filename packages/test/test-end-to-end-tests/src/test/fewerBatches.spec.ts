@@ -4,11 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -19,9 +18,10 @@ import {
 } from "@fluidframework/test-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 
-describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -32,7 +32,7 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const capturedBatches: IDocumentMessage[][] = [];
 
-	beforeEach(() => {
+	beforeEach("setup", () => {
 		provider = getTestObjectProvider();
 		capturedBatches.splice(0);
 	});
@@ -62,12 +62,12 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(localContainer, "default");
+		dataObject1 = (await localContainer.getEntryPoint()) as ITestFluidObject;
 		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
+		dataObject2 = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);

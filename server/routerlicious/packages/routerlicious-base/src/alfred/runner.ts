@@ -36,6 +36,9 @@ import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
+/**
+ * @internal
+ */
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
@@ -169,12 +172,12 @@ export class AlfredRunner implements IRunner {
 
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
-			Lumberjack.info("AlfredRunner.stop already called, returning early.");
+			Lumberjack.info("AlfredRunner.stop already called, returning early.", { caller });
 			return;
 		}
 
 		this.stopped = true;
-		Lumberjack.info("AlfredRunner.stop starting.");
+		Lumberjack.info("AlfredRunner.stop starting.", { caller });
 
 		const runnerServerCloseTimeoutMs =
 			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
@@ -225,15 +228,15 @@ export class AlfredRunner implements IRunner {
 	 * on all socket events: "upgrade", "close", "error".
 	 */
 	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
-		const metric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+		const metric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 			origin: "upgrade",
-			connections: socket.server._connections,
+			metricValue: socket.server._connections,
 		});
 		metric.success("WebSockets: connection upgraded");
 		socket.on("close", (hadError: boolean) => {
-			const closeMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			const closeMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 				origin: "close",
-				connections: socket.server._connections,
+				metricValue: socket.server._connections,
 				hadError: hadError.toString(),
 			});
 			closeMetric.success(
@@ -242,9 +245,9 @@ export class AlfredRunner implements IRunner {
 			);
 		});
 		socket.on("error", (error) => {
-			const errorMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			const errorMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 				origin: "error",
-				connections: socket.server._connections,
+				metricValue: socket.server._connections,
 				bytesRead: socket.bytesRead,
 				bytesWritten: socket.bytesWritten,
 				error: error.toString(),

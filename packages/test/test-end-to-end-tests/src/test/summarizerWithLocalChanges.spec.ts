@@ -25,9 +25,8 @@ import {
 	timeoutAwait,
 	createSummarizer,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -41,7 +40,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/summary/index.js";
+} from "@fluidframework/container-runtime/test/summary";
 
 /**
  * Data object that creates another data object during initialization. This is used to create a scenario
@@ -223,10 +222,10 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	});
 }
 
-describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
+describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 
 		// These tests validate client logic. Testing against multiple services won't make a difference.
@@ -251,7 +250,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		async () => {
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
@@ -299,7 +298,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = false;
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
@@ -355,10 +354,14 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				mockLogger,
 			);
 
-			const defaultDataStore1 = await requestFluidObject<ITestDataObject>(
-				summarizerContainer,
-				"default",
-			);
+			const runtime = (summarizer as any).runtime as ContainerRuntime;
+			const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+				| IFluidHandle<ITestDataObject>
+				| undefined;
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			const defaultDataStore1 = await entryPoint.get();
 
 			// Pause op processing and send ops so there are pending ops in the summarizer.
 			const pendingOpCount = 10;
@@ -409,7 +412,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 
 			// This data object will send ops during summarization because the factory uses mixinSummaryHandler
 			// to do so on every summarize.
@@ -449,12 +452,6 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 
 	const dynamicSummarizationRetries = [true, false];
 	for (const tryDynamicRetry of dynamicSummarizationRetries) {
-		/**
-		 * This test results in gcUnknownOutboundReferences error - A data store is created in summarizer and its handle
-		 * is stored in the root data store's DDS. This results in a reference to the new data store but it is not
-		 * explicitly notified to GC. The notification to GC happens when op containing handle is processed and the
-		 * handle is parsed in remote clients. Local clients do not parse handle as its not serialized in it.
-		 */
 		itExpects(
 			`ValidateSummaryBeforeUpload = true. TryDynamicRetires = ${tryDynamicRetry}. ` +
 				`Heuristic based summaries should pass on retry when NodeDidNotRunGC is hit`,
@@ -463,10 +460,6 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 					clientType: "noninteractive/summarizer",
 					error: "NodeDidNotRunGC",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences",
-					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
@@ -477,10 +470,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 					false /* disableSummary */,
 					logger,
 				);
-				const rootDataObject = await requestFluidObject<RootTestDataObject>(
-					mainContainer,
-					"/",
-				);
+				const rootDataObject = (await mainContainer.getEntryPoint()) as RootTestDataObject;
 				const dataObject = await dataStoreFactory1.createInstance(
 					rootDataObject.containerRuntime,
 				);
@@ -586,7 +576,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
@@ -670,7 +660,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
@@ -730,7 +720,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			try {

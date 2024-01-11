@@ -61,31 +61,27 @@ export class NexusRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
+		// Create an HTTP server with a blank request listener
 		this.server = this.serverFactory.create();
 
-		const httpServer = this.server.httpServer;
+		const usingClusterModule: boolean | undefined = this.config.get("nexus:useNodeCluster");
+		// Don't include application logic in primary thread when Node.js cluster module is enabled.
+		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
-		const maxNumberOfClientsPerDocument = this.config.get(
-			"nexus:maxNumberOfClientsPerDocument",
-		);
-		const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
-		const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
-		const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
-		const isClientConnectivityCountingEnabled = this.config.get(
-			"usage:clientConnectivityCountingEnabled",
-		);
-		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
+		if (includeAppLogic) {
+			const maxNumberOfClientsPerDocument = this.config.get(
+				"nexus:maxNumberOfClientsPerDocument",
+			);
+			const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
+			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
+			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
+			const isClientConnectivityCountingEnabled = this.config.get(
+				"usage:clientConnectivityCountingEnabled",
+			);
+			const isSignalUsageCountingEnabled = this.config.get(
+				"usage:signalUsageCountingEnabled",
+			);
 
-		httpServer.on("error", (error) => this.onError(error));
-		httpServer.on("listening", () => this.onListening());
-		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
-			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
-		);
-
-		if (cluster.isPrimary && this.server.webSocketServer === null) {
-			// Listen on provided port, on all network interfaces.
-			httpServer.listen(this.port);
-		} else {
 			// Register all the socket.io stuff
 			configureWebSocketServices(
 				this.server.webSocketServer,
@@ -113,9 +109,6 @@ export class NexusRunner implements IRunner {
 				this.collaborationSessionEventEmitter,
 			);
 
-			// Listen on primary thread port, on all network interfaces.
-			httpServer.listen(cluster.isPrimary ? this.port : 0);
-
 			if (this.tokenRevocationManager) {
 				this.tokenRevocationManager.start().catch((error) => {
 					// Prevent service crash if token revocation manager fails to start
@@ -123,6 +116,17 @@ export class NexusRunner implements IRunner {
 				});
 			}
 		}
+
+		const httpServer = this.server.httpServer;
+		httpServer.on("error", (error) => this.onError(error));
+		httpServer.on("listening", () => this.onListening());
+		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
+			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
+		);
+		// Listen on primary thread port, on all network interfaces,
+		// or allow cluster module to assign random port for worker thread.
+		httpServer.listen(cluster.isPrimary ? this.port : 0);
+
 		this.stopped = false;
 
 		return this.runningDeferred.promise;
@@ -185,15 +189,15 @@ export class NexusRunner implements IRunner {
 	 * on all socket events: "upgrade", "close", "error".
 	 */
 	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
-		const metric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+		const metric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 			origin: "upgrade",
-			connections: socket.server._connections,
+			metricValue: socket.server._connections,
 		});
 		metric.success("WebSockets: connection upgraded");
 		socket.on("close", (hadError: boolean) => {
-			const closeMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			const closeMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 				origin: "close",
-				connections: socket.server._connections,
+				metricValue: socket.server._connections,
 				hadError: hadError.toString(),
 			});
 			closeMetric.success(
@@ -202,9 +206,9 @@ export class NexusRunner implements IRunner {
 			);
 		});
 		socket.on("error", (error) => {
-			const errorMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			const errorMetric = Lumberjack.newLumberMetric(LumberEventName.SocketConnectionCount, {
 				origin: "error",
-				connections: socket.server._connections,
+				metricValue: socket.server._connections,
 				bytesRead: socket.bytesRead,
 				bytesWritten: socket.bytesWritten,
 				error: error.toString(),

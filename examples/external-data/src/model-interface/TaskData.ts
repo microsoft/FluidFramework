@@ -36,8 +36,9 @@ export function assertValidTaskData(input: unknown): ITaskData {
 		const jsonValue = value as Record<string | number | symbol, unknown>;
 		if (!Object.prototype.hasOwnProperty.call(jsonValue, "name")) {
 			throw new Error(
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				`Input task entry under ID "${key}" does not contain required "name" property. Received: "${jsonValue}".`,
+				`Input task entry under ID "${key}" does not contain required "name" property. Received: "${JSON.stringify(
+					jsonValue,
+				)}".`,
 			);
 		}
 		if (typeof jsonValue.name !== "string") {
@@ -45,8 +46,9 @@ export function assertValidTaskData(input: unknown): ITaskData {
 		}
 		if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
 			throw new Error(
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				`Input task entry under ID "${key}" does not contain required "priority" property. Received: "${jsonValue}".`,
+				`Input task entry under ID "${key}" does not contain required "priority" property. Received: "${JSON.stringify(
+					jsonValue,
+				)}".`,
 			);
 		}
 		if (typeof jsonValue.priority !== "number") {

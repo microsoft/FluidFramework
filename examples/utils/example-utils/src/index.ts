@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { ContainerViewRuntimeFactory, ViewCallback } from "./containerViewRuntimeFactory";
+export {
+	ContainerViewRuntimeFactory,
+	ViewCallback,
+	getDataStoreEntryPoint,
+	IFluidMountableViewEntryPoint,
+} from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,
 	IImportExportModel,
@@ -22,22 +27,21 @@ export type {
 	IVersionedModel,
 	MigrationState,
 	SameContainerMigrationState,
-} from "./migrationInterfaces";
+} from "./migrationInterfaces/index.js";
 export {
 	MigrationTool,
 	MigrationToolInstantiationFactory,
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,
-} from "./migrationTool";
-export { Migrator, SameContainerMigrator } from "./migrator";
+} from "./migrationTool/index.js";
+export { Migrator, SameContainerMigrator } from "./migrator/index.js";
 export {
 	IDetachedModel,
 	IModelLoader,
-	makeModelRequestHandler,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
-	ModelMakerCallback,
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,
-} from "./modelLoader";
+	IModelContainerRuntimeEntryPoint,
+} from "./modelLoader/index.js";

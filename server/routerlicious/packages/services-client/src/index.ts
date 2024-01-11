@@ -42,6 +42,7 @@ export {
 } from "./scribeHelper";
 export {
 	ICreateRefParamsExternal,
+	IExternalWriterConfig,
 	IGetRefParamsExternal,
 	IGitCache,
 	IGitManager,

@@ -9,7 +9,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 
 /**
- * @public
+ * @internal
  */
 export interface ISharedStringHelperTextChangedEventArgs {
 	/**
@@ -27,8 +27,7 @@ export interface ISharedStringHelperTextChangedEventArgs {
 
 /**
  * Events emitted by {@link SharedStringHelper}.
- *
- * @public
+ * @internal
  */
 export interface ISharedStringHelperEvents extends IEvent {
 	(event: "textChanged", listener: (event: ISharedStringHelperTextChangedEventArgs) => void);
@@ -36,8 +35,7 @@ export interface ISharedStringHelperEvents extends IEvent {
 
 /**
  * Given a {@link @fluidframework/sequence#SharedString}, will provide a friendly API for use.
- *
- * @public
+ * @internal
  */
 export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEvents> {
 	private readonly _sharedString: SharedString;

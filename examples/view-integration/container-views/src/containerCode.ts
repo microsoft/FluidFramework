@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 
-import { IDiceRoller } from "./interface";
-import { DiceRollerInstantiationFactory } from "./model";
-import { DiceRollerView } from "./view";
+import { IDiceRoller } from "./interface.js";
+import { DiceRollerInstantiationFactory } from "./model.js";
+import { DiceRollerView } from "./view.js";
 
 /**
  * The data model for our application.
@@ -35,6 +33,7 @@ const diceRollerId = "dice-roller";
 
 /**
  * The runtime factory for our Fluid container.
+ * @internal
  */
 export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFactory<IMountableViewAppModel> {
 	constructor() {
@@ -55,11 +54,8 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		// eslint-disable-next-line import/no-deprecated
-		const diceRoller = await requestFluidObject<IDiceRoller>(
-			await runtime.getRootDataStore(diceRollerId),
-			"",
-		);
+		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId);
+
 		const mountableView = new MountableView(
 			React.createElement(DiceRollerView, { model: diceRoller }),
 		);

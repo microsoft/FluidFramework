@@ -50,8 +50,6 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
-	IIdCompressor,
-	IIdCompressorCore,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
@@ -67,6 +65,7 @@ import {
 	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -78,7 +77,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent } from "./gc";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -200,8 +199,8 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Tombstone is a temporary feature that prevents a data store from sending / receiving ops, signals and from
-	 * loading.
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
 	 */
 	private _tombstoned = false;
 	public get tombstoned() {
@@ -487,7 +486,16 @@ export abstract class FluidDataStoreContext
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.verifyNotClosed("process", true, extractSafePropertiesFromMessage(messageArg));
+		const safeTelemetryProps = extractSafePropertiesFromMessage(messageArg);
+		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
+		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
+		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
+		if (this.tombstoned && this.throwOnTombstoneUsage) {
+			throw new DataCorruptionError(
+				"Context is tombstoned! Call site [process]",
+				safeTelemetryProps,
+			);
+		}
 
 		const innerContents = messageArg.contents as FluidDataStoreMessage;
 		const message = {
@@ -641,13 +649,20 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
-		this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
+		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
+		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
+			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
+			this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
+		}
 	}
 
 	/**
@@ -721,11 +736,17 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	public submitSignal(type: string, content: any) {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
-		return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
+		return this._containerRuntime.submitDataStoreSignal(this.id, type, content, targetClientId);
 	}
 
 	/**
@@ -926,8 +947,7 @@ export abstract class FluidDataStoreContext
 				summarizeInternal,
 				id,
 				createParam,
-				// DDS will not create failure summaries
-				{ throwOnFailure: true },
+				undefined /* config */,
 				getGCDataFn,
 			);
 	}
@@ -1090,7 +1110,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return message;
 	}
 
-	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
@@ -1123,6 +1143,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			isRootDataStore,
 			snapshot,
 		};
+	});
+
+	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+		return this.initialSnapshotDetailsP;
 	}
 
 	/**

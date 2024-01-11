@@ -15,12 +15,17 @@ import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
 import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
+/**
+ * @internal
+ */
 export interface DriverApiType {
 	LocalDriverApi: LocalDriverApiType;
 	OdspDriverApi: OdspDriverApiType;
 	RouterliciousDriverApi: RouterliciousDriverApiType;
 }
-
+/**
+ * @internal
+ */
 export const DriverApi: DriverApiType = {
 	LocalDriverApi,
 	OdspDriverApi,
@@ -36,6 +41,9 @@ export const DriverApi: DriverApiType = {
 // immediately react to the server closing the socket.
 http.globalAgent = new Agent();
 
+/**
+ * @internal
+ */
 export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> = T extends (
 	config: infer P,
 	...args: any
@@ -43,11 +51,17 @@ export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => an
 	? P
 	: never;
 
+/**
+ * @internal
+ */
 export interface FluidTestDriverConfig {
 	odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>;
 	r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>;
 }
 
+/**
+ * @internal
+ */
 export async function createFluidTestDriver(
 	fluidTestDriverType: TestDriverTypes = "local",
 	config?: FluidTestDriverConfig,

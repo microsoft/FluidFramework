@@ -4,7 +4,8 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IRandom, makeRandom, describeFuzz } from "@fluid-internal/stochastic-test-utils";
+import { strict as assert } from "assert";
+import { IRandom, makeRandom, describeFuzz } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";
@@ -40,12 +41,9 @@ function applyMessagesWithReconnect(
 	// log and apply all the ops created in the round
 	while (messageDatas.length > 0) {
 		const [message, sg] = messageDatas.shift()!;
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		if (reconnectingClientIds.includes(message.clientId as string)) {
-			reconnectClientMsgs
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-				.get(message.clientId as string)!
-				.push([message.contents as IMergeTreeOp, sg]);
+		assert(message.clientId, "expected clientId to be defined");
+		if (reconnectingClientIds.includes(message.clientId)) {
+			reconnectClientMsgs.get(message.clientId)!.push([message.contents as IMergeTreeOp, sg]);
 		} else {
 			message.sequenceNumber = ++seq;
 			clients.forEach((c) => c.applyMsg(message));

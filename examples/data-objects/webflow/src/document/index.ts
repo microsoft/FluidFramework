@@ -11,25 +11,9 @@ import {
 } from "@fluidframework/data-object-base";
 import {
 	createDetachedLocalReferencePosition,
-	createInsertSegmentOp,
 	createRemoveRangeOp,
 	IMergeTreeRemoveMsg,
-	ISegment,
-	LocalReferencePosition,
-	Marker,
-	MergeTreeDeltaType,
-	PropertySet,
-	ReferencePosition,
-	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	refGetRangeLabels,
 	refGetTileLabels,
-	// eslint-disable-next-line import/no-deprecated
-	refHasRangeLabels,
-	reservedMarkerIdKey,
-	reservedRangeLabelsKey,
-	reservedTileLabelsKey,
-	TextSegment,
 } from "@fluidframework/merge-tree";
 import {
 	IFluidDataStoreContext,
@@ -40,9 +24,18 @@ import {
 	SharedStringSegment,
 	SequenceMaintenanceEvent,
 	SequenceDeltaEvent,
+	ISegment,
+	LocalReferencePosition,
+	Marker,
+	MergeTreeDeltaType,
+	PropertySet,
+	ReferencePosition,
+	ReferenceType,
+	reservedTileLabelsKey,
+	TextSegment,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { clamp, emptyArray, randomId, TagName, TokenList } from "../util/index.js";
+import { clamp, TagName, TokenList } from "../util/index.js";
 import { IHTMLAttributes } from "../util/attr.js";
 import { documentType } from "../package.js";
 import { debug } from "./debug.js";
@@ -86,32 +79,11 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 		const markerType = segment.refType;
 		switch (markerType) {
 			case ReferenceType.Tile:
-			case ReferenceType.Tile | ReferenceType.NestBegin:
-				// eslint-disable-next-line import/no-deprecated
-				const hasRangeLabels = refHasRangeLabels(segment);
-				const kind = (
-					hasRangeLabels
-						? // eslint-disable-next-line import/no-deprecated
-						  refGetRangeLabels(segment)[0]
-						: refGetTileLabels(segment)[0]
-				) as DocSegmentKind;
-
+				const kind = refGetTileLabels(segment)[0] as DocSegmentKind;
 				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
 				return kind;
 			default:
-				assert(
-					markerType === (ReferenceType.Tile | ReferenceType.NestEnd),
-					"unexpected marker type",
-				);
-
-				// Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
-				// will not close the range.)
-				assert(
-					// eslint-disable-next-line import/no-deprecated
-					refGetRangeLabels(segment)[0] === DocSegmentKind.beginTags,
-					`Unknown refType '${markerType}'.`,
-				);
 				return DocSegmentKind.endTags;
 		}
 	}
@@ -167,6 +139,9 @@ export interface IFlowDocumentEvents extends IEvent {
 
 const textId = "text";
 
+/**
+ * @internal
+ */
 export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
 	private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
 		documentType,
@@ -193,10 +168,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 	});
 	private static readonly lineBreakProperties = Object.freeze({
 		[reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint],
-	});
-	private static readonly tagsProperties = Object.freeze({
-		[reservedTileLabelsKey]: [DocTile.checkpoint],
-		[reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
 	});
 
 	private sharedString: SharedString;
@@ -393,41 +364,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 		this.insertParagraph(start, tag);
 	}
 
-	public insertTags(tags: TagName[], start: number, end = start) {
-		const ops = [];
-		const id = randomId();
-
-		const endMarker = new Marker(ReferenceType.Tile | ReferenceType.NestEnd);
-		endMarker.properties = Object.freeze({
-			...FlowDocument.tagsProperties,
-			[reservedMarkerIdKey]: `end-${id}`,
-		});
-		ops.push(createInsertSegmentOp(end, endMarker));
-
-		const beginMarker = new Marker(ReferenceType.Tile | ReferenceType.NestBegin);
-		beginMarker.properties = Object.freeze({
-			...FlowDocument.tagsProperties,
-			tags,
-			[reservedMarkerIdKey]: `begin-${id}`,
-		});
-		ops.push(createInsertSegmentOp(start, beginMarker));
-
-		// Note: Insert the endMarker prior to the beginMarker to avoid needing to compensate for the
-		//       change in positions.
-		this.sharedString.groupOperation({
-			ops,
-			type: MergeTreeDeltaType.GROUP,
-		});
-	}
-
-	public getTags(position: number): Readonly<Marker[]> {
-		const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[
-			DocSegmentKind.beginTags
-		];
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return tags?.items || emptyArray;
-	}
-
 	public getStart(marker: Marker) {
 		return this.getOppositeMarker(marker, /* "end".length = */ 3, "begin");
 	}
@@ -481,20 +417,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public findTile(
-		position: number,
-		tileType: DocTile,
-		preceding: boolean,
-	): { tile: ReferencePosition; pos: number } {
-		return this.sharedString.findTile(position, tileType as unknown as string, preceding);
+	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean) {
+		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
 	public findParagraph(position: number) {
-		const maybeStart = this.findTile(position, DocTile.paragraph, /* preceding: */ true);
-		const start = maybeStart ? maybeStart.pos : 0;
+		const maybeStart = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ true);
+		const start = maybeStart
+			? this.sharedString.localReferencePositionToPosition(maybeStart)
+			: 0;
 
-		const maybeEnd = this.findTile(position, DocTile.paragraph, /* preceding: */ false);
-		const end = maybeEnd ? maybeEnd.pos + 1 : this.length;
+		const maybeEnd = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ false);
+		const end = maybeEnd
+			? this.sharedString.localReferencePositionToPosition(maybeEnd) + 1
+			: this.length;
 
 		return { start, end };
 	}

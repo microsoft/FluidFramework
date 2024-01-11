@@ -5,10 +5,17 @@
 
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
+// eslint-disable-next-line import/no-deprecated
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
+/**
+ * @alpha
+ */
 export type Trackable = ISegment | LocalReferencePosition;
 
+/**
+ * @alpha
+ */
 export interface ITrackingGroup {
 	tracked: readonly Trackable[];
 	size: number;
@@ -17,10 +24,15 @@ export interface ITrackingGroup {
 	unlink(trackable: Trackable): boolean;
 }
 
+/**
+ * @alpha
+ */
 export class TrackingGroup implements ITrackingGroup {
+	// eslint-disable-next-line import/no-deprecated
 	private readonly trackedSet: SortedSegmentSet<Trackable>;
 
 	constructor() {
+		// eslint-disable-next-line import/no-deprecated
 		this.trackedSet = new SortedSegmentSet<Trackable>();
 	}
 
@@ -90,6 +102,10 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 	}
 }
 
+/**
+ * A collection of {@link ITrackingGroup}.
+ * @alpha
+ */
 export class TrackingGroupCollection {
 	private readonly _trackingGroups: Set<ITrackingGroup>;
 

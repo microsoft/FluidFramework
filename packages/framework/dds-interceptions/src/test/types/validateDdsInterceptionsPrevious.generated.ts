@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_FunctionDeclaration_createDirectoryWithInterception():
     TypeOnly<typeof old.createDirectoryWithInterception>;
 declare function use_current_FunctionDeclaration_createDirectoryWithInterception(
-    use: TypeOnly<typeof current.createDirectoryWithInterception>);
+    use: TypeOnly<typeof current.createDirectoryWithInterception>): void;
 use_current_FunctionDeclaration_createDirectoryWithInterception(
     get_old_FunctionDeclaration_createDirectoryWithInterception());
 
@@ -41,7 +41,7 @@ use_current_FunctionDeclaration_createDirectoryWithInterception(
 declare function get_current_FunctionDeclaration_createDirectoryWithInterception():
     TypeOnly<typeof current.createDirectoryWithInterception>;
 declare function use_old_FunctionDeclaration_createDirectoryWithInterception(
-    use: TypeOnly<typeof old.createDirectoryWithInterception>);
+    use: TypeOnly<typeof old.createDirectoryWithInterception>): void;
 use_old_FunctionDeclaration_createDirectoryWithInterception(
     get_current_FunctionDeclaration_createDirectoryWithInterception());
 
@@ -53,7 +53,7 @@ use_old_FunctionDeclaration_createDirectoryWithInterception(
 declare function get_old_FunctionDeclaration_createSharedMapWithInterception():
     TypeOnly<typeof old.createSharedMapWithInterception>;
 declare function use_current_FunctionDeclaration_createSharedMapWithInterception(
-    use: TypeOnly<typeof current.createSharedMapWithInterception>);
+    use: TypeOnly<typeof current.createSharedMapWithInterception>): void;
 use_current_FunctionDeclaration_createSharedMapWithInterception(
     get_old_FunctionDeclaration_createSharedMapWithInterception());
 
@@ -65,7 +65,7 @@ use_current_FunctionDeclaration_createSharedMapWithInterception(
 declare function get_current_FunctionDeclaration_createSharedMapWithInterception():
     TypeOnly<typeof current.createSharedMapWithInterception>;
 declare function use_old_FunctionDeclaration_createSharedMapWithInterception(
-    use: TypeOnly<typeof old.createSharedMapWithInterception>);
+    use: TypeOnly<typeof old.createSharedMapWithInterception>): void;
 use_old_FunctionDeclaration_createSharedMapWithInterception(
     get_current_FunctionDeclaration_createSharedMapWithInterception());
 
@@ -77,7 +77,7 @@ use_old_FunctionDeclaration_createSharedMapWithInterception(
 declare function get_old_FunctionDeclaration_createSharedStringWithInterception():
     TypeOnly<typeof old.createSharedStringWithInterception>;
 declare function use_current_FunctionDeclaration_createSharedStringWithInterception(
-    use: TypeOnly<typeof current.createSharedStringWithInterception>);
+    use: TypeOnly<typeof current.createSharedStringWithInterception>): void;
 use_current_FunctionDeclaration_createSharedStringWithInterception(
     get_old_FunctionDeclaration_createSharedStringWithInterception());
 
@@ -89,6 +89,6 @@ use_current_FunctionDeclaration_createSharedStringWithInterception(
 declare function get_current_FunctionDeclaration_createSharedStringWithInterception():
     TypeOnly<typeof current.createSharedStringWithInterception>;
 declare function use_old_FunctionDeclaration_createSharedStringWithInterception(
-    use: TypeOnly<typeof old.createSharedStringWithInterception>);
+    use: TypeOnly<typeof old.createSharedStringWithInterception>): void;
 use_old_FunctionDeclaration_createSharedStringWithInterception(
     get_current_FunctionDeclaration_createSharedStringWithInterception());

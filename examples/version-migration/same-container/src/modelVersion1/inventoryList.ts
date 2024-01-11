@@ -9,7 +9,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
 class InventoryItem extends EventEmitter implements IInventoryItem {
 	public get id() {
@@ -48,6 +48,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.
+ * @internal
  */
 export class InventoryList extends DataObject implements IInventoryList {
 	private readonly inventoryItems = new Map<string, InventoryItem>();
@@ -132,6 +133,7 @@ export class InventoryList extends DataObject implements IInventoryList {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
+ * @internal
  */
 export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
 	"inventory-list",

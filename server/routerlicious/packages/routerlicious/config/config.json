@@ -7,6 +7,17 @@
 		"timestamp": true,
 		"label": "winston"
 	},
+	"config": {
+		"configDumpEnabled": false,
+		"secretNamesToRedactInConfigDump": [
+			"mongo.globalDbEndpoint",
+			"mongo.operationsDbEndpoint",
+			"redis.pass",
+			"redisForTenantCache.pass",
+			"redis2.pass",
+			"redisForThrottling.pass"
+		]
+	},
 	"lumberjack": {
 		"options": {
 			"enableGlobalTelemetryContext": true,
@@ -60,7 +71,7 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"checkpointsTTLInSeconds": 864000,
+		"checkpointsTTLInSeconds": -1,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
 	},
@@ -124,7 +135,8 @@
 			"enable": true
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
-		"useNodeCluster": false
+		"useNodeCluster": false,
+		"enableLatencyMetric": false
 	},
 	"riddler": {
 		"useNodeCluster": false

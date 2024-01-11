@@ -1,4 +1,25 @@
-# @fluid-internal/stochastic-test-utils
+# @fluid-private/stochastic-test-utils
+
+## 2.0.0-internal.8.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   @fluid-internal/stochastic-test-utils renamed to @fluid-private/stochastic-test-utils ([#17697](https://github.com/microsoft/FluidFramework/issues/17697)) [92941a780f](https://github.com/microsoft/FluidFramework/commits/92941a780f7c60be4087b3280a6c4da36359ae5b)
+
+    The @fluid-internal/stochastic-test-utils has been renamed to @fluid-private/stochastic-test-utils. This package is
+    intended for use within the Fluid Framework repo and is not published externally.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
 
 ## 2.0.0-internal.7.1.0
 

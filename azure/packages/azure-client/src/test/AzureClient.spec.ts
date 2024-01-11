@@ -4,6 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 
+import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 import { AttachState } from "@fluidframework/container-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -42,7 +43,7 @@ describe("AzureClient", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
 		schema = {
 			initialObjects: {
@@ -75,7 +76,7 @@ describe("AzureClient", () => {
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it("Created container is detached", async () => {
+	it("created container is detached", async () => {
 		const { container } = await client.createContainer(schema);
 		assert.strictEqual(
 			container.attachState,
@@ -250,5 +251,51 @@ describe("AzureClient", () => {
 			"write",
 			"Getting a container with only write permission is not in write mode",
 		);
+	});
+
+	/**
+	 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
+	 * schema type is statically known.
+	 */
+	describe("'initialObjects'", () => {
+		it("preserves 'SharedMap' type", async () => {
+			const { container } = await client.createContainer({
+				initialObjects: {
+					map: SharedMap,
+				},
+			});
+
+			// Ensure that the 'map' API is accessible without casting or suppressing lint rules:
+			assert.equal(container.initialObjects.map.get("nonexistent"), undefined);
+		});
+
+		it("preserves 'SharedTree' type", async () => {
+			const { container } = await client.createContainer({
+				initialObjects: {
+					tree: SharedTree,
+				},
+			});
+
+			// Ensure that the 'tree' API is accessible without casting or suppressing lint rules:
+			const tree = container.initialObjects.tree;
+
+			// Apply Schema to returned SharedTree.
+			const _ = new SchemaFactory("test");
+
+			class RootNode extends _.object("Root", {
+				itWorks: _.string,
+			}) {}
+
+			const view = tree.schematize({
+				schema: RootNode,
+				initialTree: () =>
+					new RootNode({
+						itWorks: "yes",
+					}),
+			});
+
+			// Ensure root node is correctly typed.
+			assert.equal(view.root.itWorks, "yes");
+		});
 	});
 });

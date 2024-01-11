@@ -10,7 +10,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 /**
  * This type is used as the base generic input to DataObject and PureDataObject.
- * @public
+ * @alpha
  */
 export interface DataObjectTypes {
 	/**
@@ -28,7 +28,7 @@ export interface DataObjectTypes {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 	readonly runtime: IFluidDataStoreRuntime;

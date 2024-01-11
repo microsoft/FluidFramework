@@ -10,10 +10,31 @@ import {
 	ICriticalContainerError,
 	ConnectionState,
 } from "@fluidframework/container-definitions";
-import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
+import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./types";
+
+/**
+ * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
+ * @public
+ */
+export type InitialObjects<T extends ContainerSchema> = {
+	// Construct a LoadableObjectRecord type by enumerating the keys of
+	// 'ContainerSchema.initialObjects' and infering the value type of each key.
+	//
+	// The '? TChannel : never' is required because infer can only be used in
+	// a conditional 'extends' expression.
+	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<
+		infer TChannel
+	>
+		? TChannel
+		: never;
+};
 
 /**
  * Events emitted from {@link IFluidContainer}.
+ *
+ * @remarks Note: external implementations of this interface are not supported.
+ * @sealed
+ * @public
  */
 export interface IFluidContainerEvents extends IEvent {
 	/**
@@ -75,9 +96,14 @@ export interface IFluidContainerEvents extends IEvent {
  * Provides an entrypoint into the client side of collaborative Fluid data.
  * Provides access to the data as well as status on the collaboration session.
  *
+ * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
+ *
  * @remarks Note: external implementations of this interface are not supported.
+ * @sealed
+ * @public
  */
-export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+	extends IEventProvider<IFluidContainerEvents> {
 	/**
 	 * Provides the current connected state of the container
 	 */
@@ -115,7 +141,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 	 *
 	 * @remarks These data objects and DDSes exist for the lifetime of the container.
 	 */
-	readonly initialObjects: LoadableObjectRecord;
+	readonly initialObjects: InitialObjects<TContainerSchema>;
 
 	/**
 	 * The current attachment state of the container.
@@ -150,7 +176,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
+	 * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Disconnected} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.connectionState}.
 	 */
@@ -162,7 +188,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
+	 * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Connected} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.connectionState}.
 	 */
@@ -190,16 +216,31 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 }
 
 /**
+ * @internal
+ */
+export function createFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+>(props: {
+	container: IContainer;
+	rootDataObject: IRootDataObject;
+}): IFluidContainer<TContainerSchema> {
+	return new FluidContainer<TContainerSchema>(props.container, props.rootDataObject);
+}
+
+/**
  * Base {@link IFluidContainer} implementation.
  *
+ * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
  * @remarks
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
+ * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
+ * @internal
  */
-export class FluidContainer
+class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
-	implements IFluidContainer
+	implements IFluidContainer<TContainerSchema>
 {
 	private readonly connectedHandler = () => this.emit("connected");
 	private readonly disconnectedHandler = () => this.emit("disconnected");
@@ -251,8 +292,8 @@ export class FluidContainer
 	/**
 	 * {@inheritDoc IFluidContainer.initialObjects}
 	 */
-	public get initialObjects() {
-		return this.rootDataObject.initialObjects;
+	public get initialObjects(): InitialObjects<TContainerSchema> {
+		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
 	}
 
 	/**
@@ -314,8 +355,6 @@ export class FluidContainer
 	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
 	 *
 	 * @remarks Used to power debug tooling.
-	 *
-	 * @internal
 	 */
 	public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
 		return this.container;

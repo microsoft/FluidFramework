@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import process from "process";
+
 function createFuzzSuite(
 	tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void,
 	args: FuzzSuiteArguments,
@@ -12,11 +14,17 @@ function createFuzzSuite(
 	};
 }
 
+/**
+ * @internal
+ */
 export type DescribeFuzzSuite = (
 	name: string,
 	tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void,
 ) => Mocha.Suite | void;
 
+/**
+ * @internal
+ */
 export interface FuzzSuiteArguments {
 	/**
 	 * The number of tests this suite should produce up to a constant factor.
@@ -32,24 +40,36 @@ export interface FuzzSuiteArguments {
 	isStress: boolean;
 }
 
+/**
+ * @internal
+ */
 export type DescribeFuzz = DescribeFuzzSuite & Record<"skip" | "only", DescribeFuzzSuite>;
 
+/**
+ * @internal
+ */
 export interface FuzzDescribeOptions {
 	defaultTestCount?: number;
 }
 
+/**
+ * @internal
+ */
 export const defaultOptions: Required<FuzzDescribeOptions> = {
 	defaultTestCount: 1,
 };
 
+/**
+ * @internal
+ */
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz {
 	const options = { ...defaultOptions, ...optionsArg };
 	const testCountFromEnv =
-		process.env.FUZZ_TEST_COUNT !== undefined
+		process.env?.FUZZ_TEST_COUNT !== undefined
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
 	const testCount = testCountFromEnv ?? options.defaultTestCount;
-	const isStress = process.env.FUZZ_STRESS_RUN !== undefined && !!process.env.FUZZ_STRESS_RUN;
+	const isStress = process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
 	const args = { testCount, isStress };
 	const d: DescribeFuzz = (name, tests) =>
 		(isStress ? describe.only : describe)(name, createFuzzSuite(tests, args));
@@ -62,5 +82,7 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
  * Like `Mocha.describe`, but enables injection of suite size at runtime.
  * The test creation callback receives a `testCount` parameter which it should use to support
  * this functionality.
+ *
+ * @internal
  */
 export const describeFuzz: DescribeFuzz = createFuzzDescribe();

@@ -55,6 +55,7 @@ var STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS = [
 
 /**
  * A primitive property for a string value.
+ * @internal
  */
 export class StringProperty extends ValueArrayProperty {
 	/**

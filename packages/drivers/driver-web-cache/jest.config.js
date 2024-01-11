@@ -6,7 +6,7 @@
 module.exports = {
 	roots: ["<rootDir>/dist"],
 	testEnvironment: "jsdom",
-	testMatch: ["**/?(*.)+(spec|test).[j]s"],
+	testMatch: ["**/?(*.)+(spec|test).*js"],
 	testPathIgnorePatterns: ["/node_modules/"],
 	verbose: true,
 	reporters: [

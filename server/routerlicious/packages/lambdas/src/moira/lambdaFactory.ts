@@ -14,6 +14,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { MoiraLambda } from "./lambda";
 
+/**
+ * @internal
+ */
 export class MoiraLambdaFactory
 	extends EventEmitter
 	implements IPartitionLambdaFactory<IPartitionLambdaConfig>

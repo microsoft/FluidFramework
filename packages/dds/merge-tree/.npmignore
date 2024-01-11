@@ -2,8 +2,18 @@ nyc
 *.log
 **/*.tsbuildinfo
 src/test
-dist/test
 **/_api-extractor-temp/**
 
 docs/
 .vscode/
+
+# These are large test files that we don't need to distribute.
+**/*.test-files.tar
+**/mergeTreeExample1.pdf
+
+# We technically don't need to distribute the compiled test code, but because it's imported in the sequence package,
+# including it in the package makes it a lot easier to test using standardized tools. If we don't include the test code,
+# then the ./test export is invalid, so it will fail to import anywhere outside the repo. However, some of the contents
+# of the test folder is not needed for testing, so we exclude additional paths.
+# dist/test
+dist/test/types

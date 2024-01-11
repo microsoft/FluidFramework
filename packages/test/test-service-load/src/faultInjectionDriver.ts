@@ -12,6 +12,7 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
@@ -23,7 +24,7 @@ import {
 	INack,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, wrapError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
@@ -64,7 +65,10 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 	}
 }
 
-export class FaultInjectionDocumentService implements IDocumentService {
+export class FaultInjectionDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	private _currentDeltaStream?: FaultInjectionDocumentDeltaConnection;
 	private _currentDeltaStorage?: FaultInjectionDocumentDeltaStorageService;
 	private _currentStorage?: FaultInjectionDocumentStorageService;
@@ -95,6 +99,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
 	}
 
 	constructor(private readonly internal: IDocumentService) {
+		super();
 		this.onlineP.resolve();
 	}
 
@@ -115,6 +120,9 @@ export class FaultInjectionDocumentService implements IDocumentService {
 	}
 
 	public dispose(error?: any) {
+		this.onlineP.reject(
+			wrapError(error, (message) => new FaultInjectionError(`disposed: ${message}`, false)),
+		);
 		this.internal.dispose(error);
 	}
 
@@ -123,11 +131,12 @@ export class FaultInjectionDocumentService implements IDocumentService {
 			this._currentDeltaStream?.disposed !== false,
 			"Document service factory should only have one open connection",
 		);
-		const internal = await this.internal.connectToDeltaStream(client);
-
 		// this method is not expected to resolve until connected
 		await this.onlineP.promise;
-		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal, this.online);
+		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(
+			await this.internal.connectToDeltaStream(client),
+			this.online,
+		);
 		return this._currentDeltaStream;
 	}
 

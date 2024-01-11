@@ -7,16 +7,16 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import {
-	ContainerKey,
-	DevtoolsLogger,
+	type ContainerKey,
+	createDevtoolsLogger,
 	initializeDevtools,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
 
 // Initialize the Devtools logger
-const logger = new DevtoolsLogger();
+const logger = createDevtoolsLogger();
 
 // Initialize Devtools
 const devtools = initializeDevtools({ logger });

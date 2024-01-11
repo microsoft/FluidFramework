@@ -173,6 +173,7 @@ const getRandomRowsNum = () => {
  * The default implementation for the InspectorTable `childGetter` callback.
  * @param child - The hierarchical child of the property the row represents.
  * @returns The passed in child.
+ * @internal
  */
 export const defaultInspectorTableChildGetter = (child: any): any => child;
 
@@ -180,12 +181,14 @@ export const defaultInspectorTableChildGetter = (child: any): any => child;
  * The default implementation for the InspectorTable `nameGetter` callback.
  * @param name - The id of the property the row represents.
  * @returns The passed in id.
+ * @internal
  */
 export const defaultInspectorTableNameGetter = (name: string): any => name;
 
 /**
  * The default implementation of the `dataGetter` callback for the Inspector table
  * @param params - function handle
+ * @internal
  */
 export const defaultInspectorTableDataGetter = (
 	params: IDataGetterParameter,
@@ -954,5 +957,8 @@ class InspectorTable<
 	};
 }
 
+/**
+ * @internal
+ */
 const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable as any);
 export { StyledInspectorTable as InspectorTable };

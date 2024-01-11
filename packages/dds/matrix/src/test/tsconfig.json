@@ -1,18 +1,18 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
-	"compilerOptions": {
-		"declaration": false,
-		"declarationMap": false,
-		"rootDir": "./",
-		"outDir": "../../dist/test",
-		"types": ["node", "mocha"],
-		"skipLibCheck": true,
-		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory
-	},
-	"include": ["./**/*", "memory/.mocharc.js"],
+	"extends": [
+		"../../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../../common/build/build-common/tsconfig.test.json",
+	],
+	"include": ["./**/*"],
 	"references": [
 		{
 			"path": "../..",
 		},
 	],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../dist/test",
+		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory
+		"types": ["mocha", "node"],
+	},
 }

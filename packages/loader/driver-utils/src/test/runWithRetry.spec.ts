@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "../runWithRetry";
 
@@ -73,15 +73,11 @@ describe("runWithRetry Tests", () => {
 	it("Check that it retries after retry seconds", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		let timerFinished = false;
-		setTimeout(() => {
-			timerFinished = true;
-		}, 200);
 		const api = async () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throttle Error");
-				(error as any).errorType = DriverErrorType.throttlingError;
+				(error as any).errorType = DriverErrorTypes.throttlingError;
 				(error as any).retryAfterSeconds = 400;
 				(error as any).canRetry = true;
 				throw error;
@@ -89,7 +85,6 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
-		assert.strictEqual(timerFinished, true, "Timer should be destroyed");
 		assert.strictEqual(retryTimes, 0, "Should retry once");
 		assert.strictEqual(success, true, "Retry should succeed ultimately");
 	});

@@ -7,8 +7,7 @@ import React from "react";
 
 /**
  * {@link CollaborativeInput} input props.
- *
- * @public
+ * @internal
  */
 export interface ICollaborativeInputProps {
 	/**
@@ -35,8 +34,7 @@ export interface ICollaborativeInputProps {
 
 /**
  * {@link CollaborativeInput} component state.
- *
- * @public
+ * @internal
  */
 export interface ICollaborativeInputState {
 	selectionEnd: number;
@@ -45,8 +43,7 @@ export interface ICollaborativeInputState {
 
 /**
  * Given a {@link @fluidframework/sequence#SharedString}, will produce a collaborative input element.
- *
- * @public
+ * @internal
  */
 export class CollaborativeInput extends React.Component<
 	ICollaborativeInputProps,

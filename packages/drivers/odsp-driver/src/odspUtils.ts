@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
 	OnlineStatus,
@@ -29,7 +29,7 @@ import {
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	tokenFromResponse,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
@@ -51,7 +51,7 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
- * @public
+ * @alpha
  */
 export interface IOdspResponse<T> {
 	content: T;
@@ -86,11 +86,11 @@ export async function getWithRetryForTokenRefresh<T>(
 		const options: TokenFetchOptionsEx = { refresh: true, previousError: e };
 		switch (e.errorType) {
 			// If the error is 401 or 403 refresh the token and try once more.
-			case DriverErrorType.authorizationError:
+			case OdspErrorTypes.authorizationError:
 				return get({ ...options, claims: e.claims, tenantId: e.tenantId });
 
-			case DriverErrorType.incorrectServerResponse: // some error on the wire, retry once
-			case OdspErrorType.fetchTokenError: // If the token was null, then retry once.
+			case OdspErrorTypes.incorrectServerResponse: // some error on the wire, retry once
+			case OdspErrorTypes.fetchTokenError: // If the token was null, then retry once.
 				return get(options);
 
 			default:
@@ -118,7 +118,7 @@ export async function fetchHelper(
 				throw new NonRetryableError(
 					// pre-0.58 error message: No response from fetch call
 					"No response from ODSP fetch call",
-					DriverErrorType.incorrectServerResponse,
+					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion },
 				);
 			}
@@ -154,13 +154,17 @@ export async function fetchHelper(
 
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			if (error.name === "AbortError") {
-				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, {
-					driverVersion,
-				});
+				throw new RetryableError(
+					"Fetch Timeout (AbortError)",
+					OdspErrorTypes.fetchTimeout,
+					{
+						driverVersion,
+					},
+				);
 			}
 			// TCP/IP timeout
 			if (redactedErrorText.includes("ETIMEDOUT")) {
-				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, {
+				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorTypes.fetchTimeout, {
 					driverVersion,
 				});
 			}
@@ -170,7 +174,7 @@ export async function fetchHelper(
 				throw new RetryableError(
 					// pre-0.58 error message prefix: Offline
 					`ODSP fetch failure (Offline): ${redactedErrorText}`,
-					DriverErrorType.offlineError,
+					OdspErrorTypes.offlineError,
 					{
 						driverVersion,
 						rawErrorMessage: taggedErrorMessage,
@@ -182,7 +186,7 @@ export async function fetchHelper(
 				throw new RetryableError(
 					// pre-0.58 error message prefix: Fetch error
 					`ODSP fetch failure: ${redactedErrorText}`,
-					DriverErrorType.fetchFailure,
+					OdspErrorTypes.fetchFailure,
 					{
 						driverVersion,
 						rawErrorMessage: taggedErrorMessage,
@@ -305,6 +309,13 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 	return resolvedUrl as IOdspResolvedUrl;
 }
 
+/**
+ * @internal
+ */
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
+	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
+}
+
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
 	createChildLogger({
 		logger,
@@ -384,7 +395,7 @@ export function toInstrumentedOdspTokenFetcher(
 							throw new NonRetryableError(
 								// pre-0.58 error message: Token is null for ${name} call
 								`The Host-provided token fetcher returned null`,
-								OdspErrorType.fetchTokenError,
+								OdspErrorTypes.fetchTokenError,
 								{ method: name, driverVersion },
 							);
 						}
@@ -399,7 +410,7 @@ export function toInstrumentedOdspTokenFetcher(
 							(errorMessage) =>
 								new NetworkErrorBasic(
 									`The Host-provided token fetcher threw an error`,
-									OdspErrorType.fetchTokenError,
+									OdspErrorTypes.fetchTokenError,
 									typeof rawCanRetry === "boolean"
 										? rawCanRetry
 										: false /* canRetry */,

@@ -10,10 +10,14 @@ import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
-import { FluidObject, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	ITelemetryLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
 	excludeChannelContentDdsFactories,
@@ -34,6 +38,7 @@ const normalizeOpts: ISnapshotNormalizerConfig = {
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
+ * @internal
  */
 export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
 	const normalizedSnapshot: IFileSnapshot = {
@@ -49,6 +54,9 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 	return normalizedSnapshot;
 }
 
+/**
+ * @internal
+ */
 export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
@@ -101,6 +109,9 @@ export function compareWithReferenceSnapshot(
 	}
 }
 
+/**
+ * @internal
+ */
 export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
@@ -170,6 +181,8 @@ export async function loadContainer(
 	};
 	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
 	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
+	// Due to a bug where references added by an attach op are missed, we need to keep the old code for now.
+	settings["Fluid.GarbageCollection.DetectOutboundRoutesViaDDS"] = true;
 
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
@@ -186,6 +199,9 @@ export async function loadContainer(
 	return loader.resolve({ url: resolved.url });
 }
 
+/**
+ * @internal
+ */
 export async function uploadSummary(container: IContainer) {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;

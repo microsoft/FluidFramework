@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -15,7 +14,7 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -30,10 +29,13 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) => {
-	const sweepTimeoutMs = 200;
-	const settings = {};
-	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
+describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectProvider) => {
+	const tombstoneTimeoutMs = 200;
+	let settings = {};
+	const gcOptions: IGCRuntimeOptions = {
+		inactiveTimeoutMs: 0,
+		gcThrowOnTombstoneLoad: true,
+	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -43,21 +45,37 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			},
 			gcOptions,
 		},
-		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
 
 	let provider: ITestObjectProvider;
 
 	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
+		const testConfigWithProvider: ITestContainerConfig = {
+			...testContainerConfig,
+			loaderProps: { configProvider: mockConfigProvider(settings) },
+		};
+		return provider.loadTestContainer(testConfigWithProvider, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
 
+	beforeEach("setup", async function () {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
+	});
+
+	afterEach(() => {
+		settings = {};
+	});
+
 	describe("Attachment blobs in attached container", () => {
 		async function createDataStoreAndSummarizer() {
-			const container = await provider.makeTestContainer(testContainerConfig);
-			const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+			const testConfigWithProvider: ITestContainerConfig = {
+				...testContainerConfig,
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			};
+			const container = await provider.makeTestContainer(testConfigWithProvider);
+			const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 
 			// Send an op to transition the container to write mode.
 			dataStore._root.set("transition to write", "true");
@@ -71,24 +89,24 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			return { dataStore, summarizer };
 		}
 
-		beforeEach(async function () {
-			provider = getTestObjectProvider({ syncSummarizer: true });
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
-
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
-			settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 		});
 
 		itExpects(
 			"fails retrieval of tombstones attachment blobs",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
@@ -109,8 +127,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blobs are tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blobs are tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -122,26 +140,32 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle since it loaded after the blob was tombstoned.
-				const response = await container2.request({ url: blobHandle.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
+					url: blobHandle.absolutePath,
+				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
 				assert.equal(
 					response.value,
-					`Blob was deleted: ${blobHandle.absolutePath.substring(8)}`,
+					`Blob was tombstoned: ${blobHandle.absolutePath}`,
 					`Unexpected response value`,
 				);
 				assert(container2.closed !== true, "Container should not have closed");
 
 				// But the summarizing container should succeed (logging and error)
-				const { container: summarizingContainer } = await createSummarizer(
-					provider,
-					container2,
-					{
-						runtimeOptions: { gcOptions },
-						loaderProps: { configProvider: mockConfigProvider(settings) },
-					},
-					summary2.summaryVersion,
-				);
-				const summarizingResponse = await summarizingContainer.request({
+				const { container: summarizingContainer, summarizer: summarizer2 } =
+					await createSummarizer(
+						provider,
+						container2,
+						{
+							runtimeOptions: { gcOptions },
+							loaderProps: { configProvider: mockConfigProvider(settings) },
+						},
+						summary2.summaryVersion,
+					);
+				const summarizer2Runtime = (summarizer2 as any).runtime as ContainerRuntime;
+				const summarizingResponse = await summarizer2Runtime.resolveHandle({
 					url: blobHandle.absolutePath,
 				});
 				assert.strictEqual(summarizingResponse?.status, 200, `Expecting a 200 response`);
@@ -154,10 +178,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"fails retrieval of blobs that are de-duped in same container and are tombstoned",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -183,8 +211,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blobs are tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blobs are tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -196,25 +224,31 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Load a container from the above summary. Retrieving the blob via any of the handles should fail. Note
 				// that the blob is requested via its url since this container does not have access to the blob's handle.
 				const container2 = await loadContainer(summary2.summaryVersion);
-				const response1 = await container2.request({ url: blobHandle1.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response1 = await containerRuntime2.resolveHandle({
+					url: blobHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					response1?.status,
 					404,
 					`Expecting a 404 response for blob handle 1`,
 				);
 				assert(
-					response1.value.startsWith("Blob was deleted:"),
+					response1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected response value for blob handle 1`,
 				);
 
-				const response2 = await container2.request({ url: blobHandle2.absolutePath });
+				const response2 = await containerRuntime2.resolveHandle({
+					url: blobHandle2.absolutePath,
+				});
 				assert.strictEqual(
 					response2?.status,
 					404,
 					`Expecting a 404 response for blob handle 2`,
 				);
 				assert(
-					response2.value.startsWith("Blob was deleted:"),
+					response2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected response value for blob handle 2`,
 				);
 			},
@@ -224,9 +258,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"Can un-tombstone attachment blob by storing a handle",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
-				{ eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" },
 			],
 			async () => {
 				const { dataStore: mainDataStore, summarizer } =
@@ -246,8 +281,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blob is tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -259,20 +294,24 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Load a container from the above summary. Retrieving the blob should fail. Note that the blob is requested
 				// via its url since this container does not have access to the blob's handle.
 				const container2 = await loadContainer(summary2.summaryVersion);
-				const response1 = await container2.request({ url: blobHandle1.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response1 = await containerRuntime2.resolveHandle({
+					url: blobHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					response1?.status,
 					404,
 					`Expecting a 404 response for blob handle 1`,
 				);
 				assert(
-					response1.value.startsWith("Blob was deleted:"),
+					response1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected response value for blob handle 1`,
 				);
 				container2.close();
 
 				// Reference the blob in the main container where it's not a tombstone yet. This should un-tombstone the
-				// blob. It will result in a SweepReadyObject_Revived error log.
+				// blob.
 				mainDataStore._root.set("blob1", blobHandle1);
 
 				// Summarize so that the blob is not a tombstone in the summary.
@@ -282,7 +321,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Load a container from the above summary. Retrieving the blob should now pass. Note that the blob is
 				// requested via its url since this container does not have access to the blob's handle.
 				const container3 = await loadContainer(summary3.summaryVersion);
-				const response2 = await container3.request({ url: blobHandle1.absolutePath });
+				const entryPoint3 = (await container3.getEntryPoint()) as ITestDataObject;
+				const containerRuntime3 = entryPoint3._context.containerRuntime as ContainerRuntime;
+				const response2 = await containerRuntime3.resolveHandle({
+					url: blobHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					response2?.status,
 					200,
@@ -295,12 +338,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneUsage is not enabled",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
-				// Turn ThrowOnTombstoneUsage setting off.
-				settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
+				// Override ThrowOnTombstoneLoad setting to off.
+				settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 
 				const { dataStore: mainDataStore, summarizer } =
 					await createDataStoreAndSummarizer();
@@ -319,8 +364,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blobs are tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blobs are tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -332,7 +377,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle.
-				const response = await container2.request({ url: blobHandle.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
+					url: blobHandle.absolutePath,
+				});
 				assert.strictEqual(response?.status, 200, `Expecting a 200 response`);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
@@ -360,22 +409,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			await provider.ensureSynchronized();
 			const summary1 = await summarizeNow(summarizer);
 
-			// Wait for half sweep timeout and load a container. This container will upload a blob with the same content
+			// Wait for half tombstone timeout and load a container. This container will upload a blob with the same content
 			// as above so that it is de-duped. This container should be able to use this blob until its session
 			// expires.
-			await delay(sweepTimeoutMs / 2);
+			await delay(tombstoneTimeoutMs / 2);
 			const container2 = await loadContainer(summary1.summaryVersion);
-			const container2MainDataStore = await requestFluidObject<ITestDataObject>(
-				container2,
-				"default",
-			);
+			const container2MainDataStore = (await container2.getEntryPoint()) as ITestDataObject;
 			// Upload the blob and keep the handle around until the blob uploaded by first container is tombstoned.
 			const container2BlobHandle = await container2MainDataStore._runtime.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
 			);
 
-			// Wait for sweep timeout so that the blob uploaded by the first container is tombstoned.
-			await delay(sweepTimeoutMs / 2 + 10);
+			// Wait for tombstone timeout so that the blob uploaded by the first container is tombstoned.
+			await delay(tombstoneTimeoutMs / 2 + 10);
 
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
@@ -388,10 +434,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			// This blob will get de-duped but it should be fine to use it because from this container's perspective
 			// it uploaded a brand new blob.
 			const container3 = await loadContainer(summary2.summaryVersion);
-			const container3MainDataStore = await requestFluidObject<ITestDataObject>(
-				container3,
-				"default",
-			);
+			const container3MainDataStore = (await container3.getEntryPoint()) as ITestDataObject;
 
 			const container3BlobHandle = await container3MainDataStore._runtime.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
@@ -413,35 +456,37 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 	});
 
 	describe("Attachment blobs in detached container", () => {
+		const testConfigWithProvider: ITestContainerConfig = {
+			...testContainerConfig,
+			loaderProps: { configProvider: mockConfigProvider(settings) },
+		};
 		/**
 		 * Creates a detached container and returns it along with the default data store.
 		 */
 		async function createDetachedContainerAndDataStore() {
 			const detachedBlobStorage = new MockDetachedBlobStorage();
 			const loader = provider.makeTestLoader({
-				...testContainerConfig,
-				loaderProps: { ...testContainerConfig.loaderProps, detachedBlobStorage },
+				...testConfigWithProvider,
+				loaderProps: { ...testConfigWithProvider.loaderProps, detachedBlobStorage },
 			});
 			const mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
-			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
+			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach(async function () {
-			provider = getTestObjectProvider({ syncSummarizer: true });
+		beforeEach("conditionalSkip", async function () {
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
-
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
-			settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 		});
 
 		itExpects(
 			"tombstones blobs uploaded in detached container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -476,8 +521,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blob is tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -488,16 +533,23 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Load a new container from the above summary which should have the blob tombstoned.
 				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
-				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
+				const container2 = await provider.makeTestLoader(testConfigWithProvider).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
 				});
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle.
-				const response = await container2.request({ url: blobHandle.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
+					url: blobHandle.absolutePath,
+				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(response.value.startsWith("Blob was deleted:"), `Unexpected response value`);
+				assert(
+					response.value.startsWith("Blob was tombstoned:"),
+					`Unexpected response value`,
+				);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);
@@ -506,10 +558,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded in detached and de-duped in attached container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -558,8 +614,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blob is tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -570,32 +626,38 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Load a new container from the above summary which should have the blob tombstoned.
 				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
-				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
+				const container2 = await provider.makeTestLoader(testConfigWithProvider).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
 				});
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
+					url: localHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse1?.status,
 					404,
 					`Expecting a 404 response for local handle`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
+				const localResponse2 = await containerRuntime2.resolveHandle({
+					url: localHandle2.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse2?.status,
 					404,
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 			},
@@ -605,13 +667,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded and de-duped in detached container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -667,8 +735,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blob is tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -679,43 +747,51 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Load a new container from the above summary which should have the blobs tombstoned.
 				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
-				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
+				const container2 = await provider.makeTestLoader(testConfigWithProvider).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
 				});
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
+					url: localHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse1?.status,
 					404,
 					`Expecting a 404 response for local handle 1`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
+				const localResponse2 = await containerRuntime2.resolveHandle({
+					url: localHandle2.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse2?.status,
 					404,
 					`Expecting a 404 response for local handle 2`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 
-				const localResponse3 = await container2.request({ url: localHandle3.absolutePath });
+				const localResponse3 = await containerRuntime2.resolveHandle({
+					url: localHandle3.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse3?.status,
 					404,
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse3.value.startsWith("Blob was deleted:"),
+					localResponse3.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 3`,
 				);
 			},
@@ -727,8 +803,12 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		 * Creates a container and returns it along with the default data store.
 		 */
 		async function createContainerAndDataStore() {
-			const mainContainer = await provider.makeTestContainer(testContainerConfig);
-			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
+			const testConfigWithProvider: ITestContainerConfig = {
+				...testContainerConfig,
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			};
+			const mainContainer = await provider.makeTestContainer(testConfigWithProvider);
+			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer);
 			return { mainContainer, mainDataStore };
 		}
@@ -748,21 +828,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			return summarizer;
 		}
 
-		beforeEach(async function () {
-			provider = getTestObjectProvider({ syncSummarizer: true });
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
-
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
-			settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 		});
 
 		itExpects(
 			"tombstones blobs uploaded in disconnected container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -792,8 +870,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blob is tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -807,9 +885,16 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle.
-				const response = await container2.request({ url: blobHandle.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
+					url: blobHandle.absolutePath,
+				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(response.value.startsWith("Blob was deleted:"), `Unexpected response value`);
+				assert(
+					response.value.startsWith("Blob was tombstoned:"),
+					`Unexpected response value`,
+				);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);
@@ -818,10 +903,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded in disconnected and de-duped in connected container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -864,8 +953,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blob is tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -879,25 +968,31 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
+					url: localHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse1?.status,
 					404,
 					`Expecting a 404 response for local handle`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
+				const localResponse2 = await containerRuntime2.resolveHandle({
+					url: localHandle2.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse2?.status,
 					404,
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 			},
@@ -907,13 +1002,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded and de-duped in disconnected container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -964,8 +1065,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await provider.ensureSynchronized();
 				await summarizeNow(summarizer);
 
-				// Wait for sweep timeout so that the blob is tombstoned.
-				await delay(sweepTimeoutMs + 10);
+				// Wait for tombstone timeout so that the blob is tombstoned.
+				await delay(tombstoneTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -979,36 +1080,44 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
+					url: localHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse1?.status,
 					404,
 					`Expecting a 404 response for local handle 1`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
+				const localResponse2 = await containerRuntime2.resolveHandle({
+					url: localHandle2.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse2?.status,
 					404,
 					`Expecting a 404 response for local handle 2`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 
-				const localResponse3 = await container2.request({ url: localHandle3.absolutePath });
+				const localResponse3 = await containerRuntime2.resolveHandle({
+					url: localHandle3.absolutePath,
+				});
 				assert.strictEqual(
 					localResponse3?.status,
 					404,
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse3.value.startsWith("Blob was deleted:"),
+					localResponse3.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 			},

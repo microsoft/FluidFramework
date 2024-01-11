@@ -5,7 +5,6 @@
 
 export {
 	DriverError,
-	DriverErrorType,
 	DriverErrorTypes,
 	IAnyDriverError,
 	IAuthorizationError,
@@ -24,6 +23,7 @@ export {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IDocumentStorageService,

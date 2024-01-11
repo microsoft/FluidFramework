@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import {
 	ITestDataObject,
 	TestDataObjectType,
-	describeNoCompat,
-} from "@fluid-internal/test-version-utils";
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ITestContainerConfig,
@@ -17,13 +17,13 @@ import {
 	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ContainerRuntime, ISubmitSummaryOptions } from "@fluidframework/container-runtime";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
-describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
+describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const settings = {};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -48,14 +48,14 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 		});
 	};
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
 	// This test was written to prevent future regressions to this scenario.
 	it("Summarization should still succeed when a datastore and its DDSes are realized between submit and ack", async () => {
 		const container1 = await createContainer();
-		const defaultDataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
+		const defaultDataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
 		const { summarizer: summarizer1 } = await createSummarizer(provider, container1, {
 			loaderProps: { configProvider: mockConfigProvider(settings) },
 		});
@@ -79,13 +79,12 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 		summarizer1.close();
 
 		// Load a summarizer that hasn't realized the datastore yet
-		const { container: summarizingContainer2, summarizer: summarizer2 } =
-			await createSummarizer(
-				provider,
-				container1,
-				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
-				summaryVersion1,
-			);
+		const { summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			container1,
+			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+			summaryVersion1,
+		);
 
 		// Override the submit summary function to realize a datastore before receiving an ack
 		const summarizerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
@@ -93,10 +92,14 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 		const func = async (options: ISubmitSummaryOptions) => {
 			const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
 			const result = await submitSummaryFuncBound(options);
-			const defaultDatastore2 = await requestFluidObject<ITestDataObject>(
-				summarizingContainer2,
+
+			const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint(
 				"default",
-			);
+			)) as IFluidHandle<ITestDataObject> | undefined;
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			const defaultDatastore2 = await entryPoint.get();
 			const handle2 = defaultDatastore2._root.get("handle");
 			// this realizes the datastore before we get the ack
 			await handle2.get();
@@ -122,7 +125,7 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 
 		// This verifies that we can correctly load the container in the right state
 		const container3 = await loadContainer(summaryVersion3);
-		const defaultDatastore3 = await requestFluidObject<ITestDataObject>(container3, "default");
+		const defaultDatastore3 = (await container3.getEntryPoint()) as ITestDataObject;
 		const handle3 = defaultDatastore3._root.get<IFluidHandle<ITestDataObject>>("handle");
 		assert(handle3 !== undefined, "Should be able to retrieve stored datastore Fluid handle");
 

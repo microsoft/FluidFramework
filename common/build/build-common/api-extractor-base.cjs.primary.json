@@ -1,0 +1,15 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "./api-extractor-base.json",
+	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+	"dtsRollup": {
+		"enabled": true,
+		"alphaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-alpha.d.ts",
+		"betaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-beta.d.ts",
+		"publicTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-public.d.ts",
+		"untrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-untrimmed.d.ts"
+	},
+	"apiReport": {
+		"enabled": true
+	}
+}

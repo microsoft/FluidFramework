@@ -2,19 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as path from "path";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
-} from "@fluid-internal/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
 	IChannelServices,
@@ -25,7 +20,7 @@ import { revertSharedStringRevertibles, SharedStringRevertible } from "../../rev
 import { SharedStringFactory } from "../../sequenceFactory";
 import { SharedString } from "../../sharedString";
 import { Side } from "../../intervalCollection";
-import { assertEquivalentSharedStrings } from "../intervalUtils";
+import { assertEquivalentSharedStrings } from "../intervalTestUtils";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];
@@ -56,6 +51,10 @@ export interface RemoveRange extends RangeSpec {
 	type: "removeRange";
 }
 
+export interface ObliterateRange extends RangeSpec {
+	type: "obliterateRange";
+}
+
 // For non-interval collection fuzzing, annotating text would also be useful.
 export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	type: "addInterval";
@@ -67,22 +66,19 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	endSide: Side;
 }
 
-export interface ChangeInterval extends IntervalCollectionSpec, RangeSpec {
+export interface ChangeInterval extends IntervalCollectionSpec {
 	type: "changeInterval";
+	start: number | undefined;
+	end: number | undefined;
 	id: string;
 	startSide: Side;
 	endSide: Side;
+	properties: PropertySet | undefined;
 }
 
 export interface DeleteInterval extends IntervalCollectionSpec {
 	type: "deleteInterval";
 	id: string;
-}
-
-export interface ChangeProperties extends IntervalCollectionSpec {
-	type: "changeProperties";
-	id: string;
-	properties: PropertySet;
 }
 
 export interface RevertSharedStringRevertibles {
@@ -94,15 +90,15 @@ export interface RevertibleWeights {
 	revertWeight: number;
 	addText: number;
 	removeRange: number;
+	obliterateRange: number;
 	addInterval: number;
 	deleteInterval: number;
 	changeInterval: number;
-	changeProperties: number;
 }
 
-export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
+export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
-export type TextOperation = AddText | RemoveRange;
+export type TextOperation = AddText | RemoveRange | ObliterateRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
@@ -121,6 +117,7 @@ export interface SharedStringOperationGenerationConfig {
 	weights?: {
 		addText: number;
 		removeRange: number;
+		obliterateRange: number;
 	};
 }
 
@@ -143,6 +140,7 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 		weights: {
 			addText: 2,
 			removeRange: 1,
+			obliterateRange: 1,
 		},
 	};
 export const defaultIntervalOperationGenerationConfig: Required<IntervalOperationGenerationConfig> =
@@ -158,7 +156,7 @@ export const defaultIntervalOperationGenerationConfig: Required<IntervalOperatio
 			addInterval: 2,
 			deleteInterval: 2,
 			changeInterval: 2,
-			changeProperties: 2,
+			obliterateRange: 0,
 		},
 	};
 
@@ -218,6 +216,9 @@ export function makeReducer(
 		removeRange: async ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
 		},
+		obliterateRange: async ({ client }, { start, end }) => {
+			client.channel.obliterateRange(start, end);
+		},
 		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.add({
@@ -232,14 +233,18 @@ export function makeReducer(
 		},
 		changeInterval: async (
 			{ client },
-			{ id, start, end, collectionName, startSide, endSide },
+			{ id, start, end, collectionName, startSide, endSide, properties },
 		) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.change(id, { pos: start, side: startSide }, { pos: end, side: endSide });
-		},
-		changeProperties: async ({ client }, { id, properties, collectionName }) => {
-			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.changeProperties(id, { ...properties });
+			if (start !== undefined && end !== undefined) {
+				collection.change(id, {
+					start: { pos: start, side: startSide },
+					end: { pos: end, side: endSide },
+					props: properties,
+				});
+			} else {
+				collection.change(id, { props: properties });
+			}
 		},
 		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(client.channel));
@@ -284,6 +289,13 @@ export function createSharedStringGeneratorOperations(
 		};
 	}
 
+	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+		return {
+			type: "obliterateRange",
+			...exclusiveRange(state),
+		};
+	}
+
 	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
 	}
@@ -304,6 +316,7 @@ export function createSharedStringGeneratorOperations(
 		exclusiveRange,
 		exclusiveRangeLeaveChar,
 		addText,
+		obliterateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -320,11 +333,13 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
 		runtime.options.intervalStickinessEnabled = true;
+		runtime.options.mergeTreeEnableObliterate = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
 		document.options.intervalStickinessEnabled = true;
+		document.options.mergeTreeEnableObliterate = true;
 		return super.create(document, id);
 	}
 }
@@ -356,10 +371,10 @@ export const baseModel: Omit<
 				case "removeRange":
 				case "addInterval":
 				case "changeInterval":
-					if (op.start > 0) {
+					if (op.start !== undefined && op.start > 0) {
 						op.start -= 1;
 					}
-					if (op.end > 0) {
+					if (op.end !== undefined && op.end > 0) {
 						op.end -= 1;
 					}
 					break;
@@ -375,7 +390,7 @@ export const baseModel: Omit<
 			) {
 				return;
 			}
-			if (op.end > 0) {
+			if (op.end !== undefined && op.end > 0) {
 				op.end -= 1;
 			}
 		},

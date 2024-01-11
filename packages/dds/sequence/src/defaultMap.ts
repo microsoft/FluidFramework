@@ -18,14 +18,19 @@ import {
 	ISerializableValue,
 	ISerializedValue,
 	IValueChanged,
+	// eslint-disable-next-line import/no-deprecated
 	IValueOpEmitter,
 	IValueType,
-	IValueTypeOperationValue,
 	ISharedDefaultMapEvents,
 	IMapMessageLocalMetadata,
 	SequenceOptions,
+	IValueTypeOperationValue,
 } from "./defaultMapInterfaces";
+import { SerializedIntervalDelta, IntervalDeltaOpType } from "./intervals";
 
+function isMapOperation(op: unknown): op is IMapOperation {
+	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
+}
 /**
  * Defines the means to process and submit a given op on a map.
  */
@@ -53,7 +58,7 @@ interface IMapMessageHandler {
 
 	resubmit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
 
-	getStashedOpLocalMetadata(op: IMapOperation): unknown;
+	getStashedOpLocalMetadata(op: IMapOperation): IMapMessageLocalMetadata;
 }
 
 /**
@@ -131,7 +136,7 @@ export class DefaultMap<T> {
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
 		private readonly submitMessage: (
-			op: any,
+			op: IMapValueTypeOperation,
 			localOpMetadata: IMapMessageLocalMetadata,
 		) => void,
 		private readonly type: IValueType<T>,
@@ -292,23 +297,25 @@ export class DefaultMap<T> {
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(op: any, localOpMetadata: IMapMessageLocalMetadata): boolean {
+	public tryResubmitMessage(
+		op: IMapOperation,
+		localOpMetadata: IMapMessageLocalMetadata,
+	): boolean {
 		const type: string = op.type;
 		const handler = this.messageHandlers.get(type);
 		if (handler !== undefined) {
-			handler.resubmit(op as IMapOperation, localOpMetadata);
+			handler.resubmit(op, localOpMetadata);
 			return true;
 		}
 		return false;
 	}
 
-	public tryGetStashedOpLocalMetadata(op: any): unknown {
-		const type: string = op.type;
-		if (this.messageHandlers.has(type)) {
+	public tryGetStashedOpLocalMetadata(op: unknown): IMapMessageLocalMetadata | undefined {
+		if (isMapOperation(op) && this.messageHandlers.has(op.type)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op as IMapOperation);
+			return this.messageHandlers.get(op.type)!.getStashedOpLocalMetadata(op);
 		}
-		throw new Error("no apply stashed op handler");
+		return undefined;
 	}
 
 	/**
@@ -406,18 +413,20 @@ export class DefaultMap<T> {
 				assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
 
 				const handler = localValue.getOpHandler(op.value.opName);
-				const { rebasedOp, rebasedLocalOpMetadata } = handler.rebase(
-					localValue.value,
-					op.value,
-					localOpMetadata,
-				);
-				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
+				const rebased = handler.rebase(localValue.value, op.value, localOpMetadata);
+				if (rebased !== undefined) {
+					const { rebasedOp, rebasedLocalOpMetadata } = rebased;
+					this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
+				}
 			},
-			getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
+			getStashedOpLocalMetadata: (op: IMapValueTypeOperation): IMapMessageLocalMetadata => {
+				const localValue = this.data.get(op.key) ?? this.createCore(op.key, true);
 				assert(
-					false,
-					0x016 /* "apply stashed op not implemented for custom value type ops" */,
+					localValue !== undefined,
+					0x879 /* Local value expected on applying stashed op */,
 				);
+				const handler = localValue.getOpHandler(op.value.opName);
+				return handler.applyStashedOp(localValue.value, op.value);
 			},
 		});
 
@@ -430,13 +439,15 @@ export class DefaultMap<T> {
 	 * @param key - The key of the map that the value type will be stored on
 	 * @returns A value op emitter for the given key
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private makeMapValueOpEmitter(key: string): IValueOpEmitter {
-		const emit = (
-			opName: string,
-			previousValue: any,
-			params: any,
+		// eslint-disable-next-line import/no-deprecated
+		const emit: IValueOpEmitter["emit"] = (
+			opName: IntervalDeltaOpType,
+			previousValue: unknown,
+			params: SerializedIntervalDelta,
 			localOpMetadata: IMapMessageLocalMetadata,
-		) => {
+		): void => {
 			const translatedParams = makeHandlesSerializable(params, this.serializer, this.handle);
 
 			const op: IMapValueTypeOperation = {

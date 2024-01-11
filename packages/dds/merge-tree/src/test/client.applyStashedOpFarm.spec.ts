@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";
@@ -36,7 +36,6 @@ function applyMessagesWithReconnect(
 		if (messageData[0].clientId !== clients[1].longClientId) {
 			const index = clients
 				.map((c) => c.longClientId)
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 				.indexOf(messageData[0].clientId as string);
 			const localMetadata = stashClients[index].applyStashedOp(
 				messageData[0].contents as IMergeTreeOp,

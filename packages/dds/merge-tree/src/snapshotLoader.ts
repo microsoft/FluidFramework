@@ -19,6 +19,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
@@ -33,6 +34,7 @@ export class SnapshotLoader {
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
 		logger: ITelemetryLoggerExt,
@@ -106,6 +108,12 @@ export class SnapshotLoader {
 			if (spec.removedSeq !== undefined) {
 				seg.removedSeq = spec.removedSeq;
 			}
+			if (spec.movedSeq !== undefined) {
+				seg.movedSeq = spec.movedSeq;
+			}
+			if (spec.movedSeqs !== undefined) {
+				seg.movedSeqs = spec.movedSeqs;
+			}
 			// this format had a bug where it didn't store all the overlap clients
 			// this is for back compat, so we change the singular id to an array
 			// this will only cause problems if there is an overlapping delete
@@ -118,6 +126,11 @@ export class SnapshotLoader {
 			}
 			if (spec.removedClientIds !== undefined) {
 				seg.removedClientIds = spec.removedClientIds?.map((sid) =>
+					this.client.getOrAddShortClientId(sid),
+				);
+			}
+			if (spec.movedClientIds !== undefined) {
+				seg.movedClientIds = spec.movedClientIds?.map((sid) =>
 					this.client.getOrAddShortClientId(sid),
 				);
 			}

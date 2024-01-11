@@ -101,16 +101,9 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		}
 	}
 
-	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
-		this.getBlobContents(snapshotTree);
-	}
-
-	private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
-		for (const [id, value] of Object.entries(snapshotTree.blobsContents)) {
+	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents) {
+		for (const [id, value] of Object.entries(snapshotBlobs)) {
 			this.blobContents[id] = value;
-		}
-		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
-			this.getBlobContents(tree);
 		}
 	}
 
@@ -302,7 +295,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 		}
 	}
 	for (const id of Object.values(tree.blobs)) {
-		const blob = tree.blobsContents[id];
+		const blob = tree.blobsContents?.[id];
 		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
@@ -315,7 +308,7 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	blobs: ISerializableBlobContents,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
-	const blob = tree.blobsContents[id];
+	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()
 	blobs[id] = bufferToString(blob, "utf8");

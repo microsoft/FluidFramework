@@ -38,7 +38,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			env: "VERSION_RELEASE",
 		}),
 		patch: Flags.string({
-			description: "Indicates the build is a patch build.",
+			description: `Indicates the build should use "simple patch versioning" where the value of the --build flag is used as the patch version.`,
 			env: "VERSION_PATCH",
 		}),
 		base: Flags.string({
@@ -142,7 +142,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				this.errorLog(
 					"This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
 				);
-				this.exit();
+				this.exit(1);
 			} else if (!useTestVersion) {
 				// For prereleases, update the version string with `alphabetaTypePrefix` prefix.
 				version = `${simpleVersion}-${alphabetaTypePrefix}`;

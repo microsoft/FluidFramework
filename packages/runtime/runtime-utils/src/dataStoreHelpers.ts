@@ -4,8 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-// eslint-disable-next-line import/no-deprecated
-import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -21,6 +20,9 @@ interface IResponseException extends Error {
 	underlyingResponseHeaders?: { [key: string]: any };
 }
 
+/**
+ * @internal
+ */
 export function exceptionToResponse(err: any): IResponse {
 	const status = 500;
 	if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
@@ -49,6 +51,9 @@ export function exceptionToResponse(err: any): IResponse {
 	};
 }
 
+/**
+ * @internal
+ */
 export function responseToException(response: IResponse, request: IRequest): Error {
 	const message = response.value;
 	const errWithStack = generateErrorWithStack();
@@ -67,27 +72,14 @@ export function responseToException(response: IResponse, request: IRequest): Err
 }
 
 /**
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @internal
  */
-export async function requestFluidObject<T = FluidObject>(
-	// eslint-disable-next-line import/no-deprecated
-	router: IFluidRouter,
-	url: string | IRequest,
-): Promise<T> {
-	const request = typeof url === "string" ? { url } : url;
-	const response = await router.request(request);
-
-	if (response.status !== 200 || response.mimeType !== "fluid/object") {
-		throw responseToException(response, request);
-	}
-
-	assert(response.value, 0x19a /* "Invalid response value for Fluid object request" */);
-	return response.value as T;
-}
-
 export const create404Response = (request: IRequest) =>
 	createResponseError(404, "not found", request);
 
+/**
+ * @internal
+ */
 export function createResponseError(
 	status: number,
 	value: string,
@@ -112,8 +104,14 @@ export function createResponseError(
 	};
 }
 
+/**
+ * @internal
+ */
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
+/**
+ * @internal
+ */
 export function createDataStoreFactory(
 	type: string,
 	factory: Factory | Promise<Factory>,

@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IClearOperation():
     TypeOnly<old.IClearOperation>;
 declare function use_current_InterfaceDeclaration_IClearOperation(
-    use: TypeOnly<current.IClearOperation>);
+    use: TypeOnly<current.IClearOperation>): void;
 use_current_InterfaceDeclaration_IClearOperation(
     get_old_InterfaceDeclaration_IClearOperation());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IClearOperation(
 declare function get_current_InterfaceDeclaration_IClearOperation():
     TypeOnly<current.IClearOperation>;
 declare function use_old_InterfaceDeclaration_IClearOperation(
-    use: TypeOnly<old.IClearOperation>);
+    use: TypeOnly<old.IClearOperation>): void;
 use_old_InterfaceDeclaration_IClearOperation(
     get_current_InterfaceDeclaration_IClearOperation());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IClearOperation(
 declare function get_old_InterfaceDeclaration_IColor():
     TypeOnly<old.IColor>;
 declare function use_current_InterfaceDeclaration_IColor(
-    use: TypeOnly<current.IColor>);
+    use: TypeOnly<current.IColor>): void;
 use_current_InterfaceDeclaration_IColor(
     get_old_InterfaceDeclaration_IColor());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IColor(
 declare function get_current_InterfaceDeclaration_IColor():
     TypeOnly<current.IColor>;
 declare function use_old_InterfaceDeclaration_IColor(
-    use: TypeOnly<old.IColor>);
+    use: TypeOnly<old.IColor>): void;
 use_old_InterfaceDeclaration_IColor(
     get_current_InterfaceDeclaration_IColor());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IColor(
 declare function get_old_InterfaceDeclaration_ICreateStrokeOperation():
     TypeOnly<old.ICreateStrokeOperation>;
 declare function use_current_InterfaceDeclaration_ICreateStrokeOperation(
-    use: TypeOnly<current.ICreateStrokeOperation>);
+    use: TypeOnly<current.ICreateStrokeOperation>): void;
 use_current_InterfaceDeclaration_ICreateStrokeOperation(
     get_old_InterfaceDeclaration_ICreateStrokeOperation());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_ICreateStrokeOperation(
 declare function get_current_InterfaceDeclaration_ICreateStrokeOperation():
     TypeOnly<current.ICreateStrokeOperation>;
 declare function use_old_InterfaceDeclaration_ICreateStrokeOperation(
-    use: TypeOnly<old.ICreateStrokeOperation>);
+    use: TypeOnly<old.ICreateStrokeOperation>): void;
 use_old_InterfaceDeclaration_ICreateStrokeOperation(
     get_current_InterfaceDeclaration_ICreateStrokeOperation());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_ICreateStrokeOperation(
 declare function get_old_InterfaceDeclaration_IInk():
     TypeOnly<old.IInk>;
 declare function use_current_InterfaceDeclaration_IInk(
-    use: TypeOnly<current.IInk>);
+    use: TypeOnly<current.IInk>): void;
 use_current_InterfaceDeclaration_IInk(
     get_old_InterfaceDeclaration_IInk());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IInk(
 declare function get_current_InterfaceDeclaration_IInk():
     TypeOnly<current.IInk>;
 declare function use_old_InterfaceDeclaration_IInk(
-    use: TypeOnly<old.IInk>);
+    use: TypeOnly<old.IInk>): void;
 use_old_InterfaceDeclaration_IInk(
     get_current_InterfaceDeclaration_IInk());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IInk(
 declare function get_old_InterfaceDeclaration_IInkEvents():
     TypeOnly<old.IInkEvents>;
 declare function use_current_InterfaceDeclaration_IInkEvents(
-    use: TypeOnly<current.IInkEvents>);
+    use: TypeOnly<current.IInkEvents>): void;
 use_current_InterfaceDeclaration_IInkEvents(
     get_old_InterfaceDeclaration_IInkEvents());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IInkEvents(
 declare function get_current_InterfaceDeclaration_IInkEvents():
     TypeOnly<current.IInkEvents>;
 declare function use_old_InterfaceDeclaration_IInkEvents(
-    use: TypeOnly<old.IInkEvents>);
+    use: TypeOnly<old.IInkEvents>): void;
 use_old_InterfaceDeclaration_IInkEvents(
     get_current_InterfaceDeclaration_IInkEvents());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IInkEvents(
 declare function get_old_TypeAliasDeclaration_IInkOperation():
     TypeOnly<old.IInkOperation>;
 declare function use_current_TypeAliasDeclaration_IInkOperation(
-    use: TypeOnly<current.IInkOperation>);
+    use: TypeOnly<current.IInkOperation>): void;
 use_current_TypeAliasDeclaration_IInkOperation(
     get_old_TypeAliasDeclaration_IInkOperation());
 
@@ -161,7 +161,7 @@ use_current_TypeAliasDeclaration_IInkOperation(
 declare function get_current_TypeAliasDeclaration_IInkOperation():
     TypeOnly<current.IInkOperation>;
 declare function use_old_TypeAliasDeclaration_IInkOperation(
-    use: TypeOnly<old.IInkOperation>);
+    use: TypeOnly<old.IInkOperation>): void;
 use_old_TypeAliasDeclaration_IInkOperation(
     get_current_TypeAliasDeclaration_IInkOperation());
 
@@ -173,7 +173,7 @@ use_old_TypeAliasDeclaration_IInkOperation(
 declare function get_old_InterfaceDeclaration_IInkPoint():
     TypeOnly<old.IInkPoint>;
 declare function use_current_InterfaceDeclaration_IInkPoint(
-    use: TypeOnly<current.IInkPoint>);
+    use: TypeOnly<current.IInkPoint>): void;
 use_current_InterfaceDeclaration_IInkPoint(
     get_old_InterfaceDeclaration_IInkPoint());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_IInkPoint(
 declare function get_current_InterfaceDeclaration_IInkPoint():
     TypeOnly<current.IInkPoint>;
 declare function use_old_InterfaceDeclaration_IInkPoint(
-    use: TypeOnly<old.IInkPoint>);
+    use: TypeOnly<old.IInkPoint>): void;
 use_old_InterfaceDeclaration_IInkPoint(
     get_current_InterfaceDeclaration_IInkPoint());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_IInkPoint(
 declare function get_old_InterfaceDeclaration_IInkStroke():
     TypeOnly<old.IInkStroke>;
 declare function use_current_InterfaceDeclaration_IInkStroke(
-    use: TypeOnly<current.IInkStroke>);
+    use: TypeOnly<current.IInkStroke>): void;
 use_current_InterfaceDeclaration_IInkStroke(
     get_old_InterfaceDeclaration_IInkStroke());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IInkStroke(
 declare function get_current_InterfaceDeclaration_IInkStroke():
     TypeOnly<current.IInkStroke>;
 declare function use_old_InterfaceDeclaration_IInkStroke(
-    use: TypeOnly<old.IInkStroke>);
+    use: TypeOnly<old.IInkStroke>): void;
 use_old_InterfaceDeclaration_IInkStroke(
     get_current_InterfaceDeclaration_IInkStroke());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IInkStroke(
 declare function get_old_InterfaceDeclaration_IPen():
     TypeOnly<old.IPen>;
 declare function use_current_InterfaceDeclaration_IPen(
-    use: TypeOnly<current.IPen>);
+    use: TypeOnly<current.IPen>): void;
 use_current_InterfaceDeclaration_IPen(
     get_old_InterfaceDeclaration_IPen());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IPen(
 declare function get_current_InterfaceDeclaration_IPen():
     TypeOnly<current.IPen>;
 declare function use_old_InterfaceDeclaration_IPen(
-    use: TypeOnly<old.IPen>);
+    use: TypeOnly<old.IPen>): void;
 use_old_InterfaceDeclaration_IPen(
     get_current_InterfaceDeclaration_IPen());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IPen(
 declare function get_old_InterfaceDeclaration_IStylusOperation():
     TypeOnly<old.IStylusOperation>;
 declare function use_current_InterfaceDeclaration_IStylusOperation(
-    use: TypeOnly<current.IStylusOperation>);
+    use: TypeOnly<current.IStylusOperation>): void;
 use_current_InterfaceDeclaration_IStylusOperation(
     get_old_InterfaceDeclaration_IStylusOperation());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_IStylusOperation(
 declare function get_current_InterfaceDeclaration_IStylusOperation():
     TypeOnly<current.IStylusOperation>;
 declare function use_old_InterfaceDeclaration_IStylusOperation(
-    use: TypeOnly<old.IStylusOperation>);
+    use: TypeOnly<old.IStylusOperation>): void;
 use_old_InterfaceDeclaration_IStylusOperation(
     get_current_InterfaceDeclaration_IStylusOperation());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_IStylusOperation(
 declare function get_old_ClassDeclaration_Ink():
     TypeOnly<old.Ink>;
 declare function use_current_ClassDeclaration_Ink(
-    use: TypeOnly<current.Ink>);
+    use: TypeOnly<current.Ink>): void;
 use_current_ClassDeclaration_Ink(
     get_old_ClassDeclaration_Ink());
 
@@ -281,7 +281,7 @@ use_current_ClassDeclaration_Ink(
 declare function get_current_ClassDeclaration_Ink():
     TypeOnly<current.Ink>;
 declare function use_old_ClassDeclaration_Ink(
-    use: TypeOnly<old.Ink>);
+    use: TypeOnly<old.Ink>): void;
 use_old_ClassDeclaration_Ink(
     get_current_ClassDeclaration_Ink());
 
@@ -293,7 +293,7 @@ use_old_ClassDeclaration_Ink(
 declare function get_old_ClassDeclaration_InkCanvas():
     TypeOnly<old.InkCanvas>;
 declare function use_current_ClassDeclaration_InkCanvas(
-    use: TypeOnly<current.InkCanvas>);
+    use: TypeOnly<current.InkCanvas>): void;
 use_current_ClassDeclaration_InkCanvas(
     get_old_ClassDeclaration_InkCanvas());
 
@@ -305,7 +305,7 @@ use_current_ClassDeclaration_InkCanvas(
 declare function get_current_ClassDeclaration_InkCanvas():
     TypeOnly<current.InkCanvas>;
 declare function use_old_ClassDeclaration_InkCanvas(
-    use: TypeOnly<old.InkCanvas>);
+    use: TypeOnly<old.InkCanvas>): void;
 use_old_ClassDeclaration_InkCanvas(
     get_current_ClassDeclaration_InkCanvas());
 
@@ -317,7 +317,7 @@ use_old_ClassDeclaration_InkCanvas(
 declare function get_old_ClassDeclaration_InkFactory():
     TypeOnly<old.InkFactory>;
 declare function use_current_ClassDeclaration_InkFactory(
-    use: TypeOnly<current.InkFactory>);
+    use: TypeOnly<current.InkFactory>): void;
 use_current_ClassDeclaration_InkFactory(
     get_old_ClassDeclaration_InkFactory());
 
@@ -329,6 +329,6 @@ use_current_ClassDeclaration_InkFactory(
 declare function get_current_ClassDeclaration_InkFactory():
     TypeOnly<current.InkFactory>;
 declare function use_old_ClassDeclaration_InkFactory(
-    use: TypeOnly<old.InkFactory>);
+    use: TypeOnly<old.InkFactory>): void;
 use_old_ClassDeclaration_InkFactory(
     get_current_ClassDeclaration_InkFactory());

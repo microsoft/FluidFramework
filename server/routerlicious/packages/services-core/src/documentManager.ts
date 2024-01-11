@@ -5,6 +5,9 @@
 
 import { IDocument, IDocumentStaticProperties } from "./document";
 
+/**
+ * @internal
+ */
 export interface IDocumentManager {
 	/**
 	 * Reads the data from a specific document, in the form of an IDocument object

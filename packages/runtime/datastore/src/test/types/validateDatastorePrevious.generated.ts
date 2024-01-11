@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_EnumDeclaration_DataStoreMessageType():
     TypeOnly<old.DataStoreMessageType>;
 declare function use_current_EnumDeclaration_DataStoreMessageType(
-    use: TypeOnly<current.DataStoreMessageType>);
+    use: TypeOnly<current.DataStoreMessageType>): void;
 use_current_EnumDeclaration_DataStoreMessageType(
     get_old_EnumDeclaration_DataStoreMessageType());
 
@@ -41,7 +41,7 @@ use_current_EnumDeclaration_DataStoreMessageType(
 declare function get_current_EnumDeclaration_DataStoreMessageType():
     TypeOnly<current.DataStoreMessageType>;
 declare function use_old_EnumDeclaration_DataStoreMessageType(
-    use: TypeOnly<old.DataStoreMessageType>);
+    use: TypeOnly<old.DataStoreMessageType>): void;
 use_old_EnumDeclaration_DataStoreMessageType(
     get_current_EnumDeclaration_DataStoreMessageType());
 
@@ -53,7 +53,7 @@ use_old_EnumDeclaration_DataStoreMessageType(
 declare function get_old_ClassDeclaration_FluidDataStoreRuntime():
     TypeOnly<old.FluidDataStoreRuntime>;
 declare function use_current_ClassDeclaration_FluidDataStoreRuntime(
-    use: TypeOnly<current.FluidDataStoreRuntime>);
+    use: TypeOnly<current.FluidDataStoreRuntime>): void;
 use_current_ClassDeclaration_FluidDataStoreRuntime(
     get_old_ClassDeclaration_FluidDataStoreRuntime());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_FluidDataStoreRuntime(
 declare function get_current_ClassDeclaration_FluidDataStoreRuntime():
     TypeOnly<current.FluidDataStoreRuntime>;
 declare function use_old_ClassDeclaration_FluidDataStoreRuntime(
-    use: TypeOnly<old.FluidDataStoreRuntime>);
+    use: TypeOnly<old.FluidDataStoreRuntime>): void;
 use_old_ClassDeclaration_FluidDataStoreRuntime(
     get_current_ClassDeclaration_FluidDataStoreRuntime());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_FluidDataStoreRuntime(
 declare function get_old_ClassDeclaration_FluidObjectHandle():
     TypeOnly<old.FluidObjectHandle>;
 declare function use_current_ClassDeclaration_FluidObjectHandle(
-    use: TypeOnly<current.FluidObjectHandle>);
+    use: TypeOnly<current.FluidObjectHandle>): void;
 use_current_ClassDeclaration_FluidObjectHandle(
     get_old_ClassDeclaration_FluidObjectHandle());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_FluidObjectHandle(
 declare function get_current_ClassDeclaration_FluidObjectHandle():
     TypeOnly<current.FluidObjectHandle>;
 declare function use_old_ClassDeclaration_FluidObjectHandle(
-    use: TypeOnly<old.FluidObjectHandle>);
+    use: TypeOnly<old.FluidObjectHandle>): void;
 use_old_ClassDeclaration_FluidObjectHandle(
     get_current_ClassDeclaration_FluidObjectHandle());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_FluidObjectHandle(
 declare function get_old_InterfaceDeclaration_ISharedObjectRegistry():
     TypeOnly<old.ISharedObjectRegistry>;
 declare function use_current_InterfaceDeclaration_ISharedObjectRegistry(
-    use: TypeOnly<current.ISharedObjectRegistry>);
+    use: TypeOnly<current.ISharedObjectRegistry>): void;
 use_current_InterfaceDeclaration_ISharedObjectRegistry(
     get_old_InterfaceDeclaration_ISharedObjectRegistry());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ISharedObjectRegistry(
 declare function get_current_InterfaceDeclaration_ISharedObjectRegistry():
     TypeOnly<current.ISharedObjectRegistry>;
 declare function use_old_InterfaceDeclaration_ISharedObjectRegistry(
-    use: TypeOnly<old.ISharedObjectRegistry>);
+    use: TypeOnly<old.ISharedObjectRegistry>): void;
 use_old_InterfaceDeclaration_ISharedObjectRegistry(
     get_current_InterfaceDeclaration_ISharedObjectRegistry());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ISharedObjectRegistry(
 declare function get_old_VariableDeclaration_mixinRequestHandler():
     TypeOnly<typeof old.mixinRequestHandler>;
 declare function use_current_VariableDeclaration_mixinRequestHandler(
-    use: TypeOnly<typeof current.mixinRequestHandler>);
+    use: TypeOnly<typeof current.mixinRequestHandler>): void;
 use_current_VariableDeclaration_mixinRequestHandler(
     get_old_VariableDeclaration_mixinRequestHandler());
 
@@ -137,7 +137,7 @@ use_current_VariableDeclaration_mixinRequestHandler(
 declare function get_current_VariableDeclaration_mixinRequestHandler():
     TypeOnly<typeof current.mixinRequestHandler>;
 declare function use_old_VariableDeclaration_mixinRequestHandler(
-    use: TypeOnly<typeof old.mixinRequestHandler>);
+    use: TypeOnly<typeof old.mixinRequestHandler>): void;
 use_old_VariableDeclaration_mixinRequestHandler(
     get_current_VariableDeclaration_mixinRequestHandler());
 
@@ -149,7 +149,7 @@ use_old_VariableDeclaration_mixinRequestHandler(
 declare function get_old_VariableDeclaration_mixinSummaryHandler():
     TypeOnly<typeof old.mixinSummaryHandler>;
 declare function use_current_VariableDeclaration_mixinSummaryHandler(
-    use: TypeOnly<typeof current.mixinSummaryHandler>);
+    use: TypeOnly<typeof current.mixinSummaryHandler>): void;
 use_current_VariableDeclaration_mixinSummaryHandler(
     get_old_VariableDeclaration_mixinSummaryHandler());
 
@@ -161,6 +161,6 @@ use_current_VariableDeclaration_mixinSummaryHandler(
 declare function get_current_VariableDeclaration_mixinSummaryHandler():
     TypeOnly<typeof current.mixinSummaryHandler>;
 declare function use_old_VariableDeclaration_mixinSummaryHandler(
-    use: TypeOnly<typeof old.mixinSummaryHandler>);
+    use: TypeOnly<typeof old.mixinSummaryHandler>): void;
 use_old_VariableDeclaration_mixinSummaryHandler(
     get_current_VariableDeclaration_mixinSummaryHandler());
