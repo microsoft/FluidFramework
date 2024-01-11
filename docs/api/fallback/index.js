@@ -7,11 +7,11 @@ const {
 	params: { currentVersion, ltsVersion },
 } = require("../../data/versions.json");
 
-const routes = {
-	"/docs/apis": `/docs/api/${currentVersion}`,
-	"/docs/api/current": `/docs/api/${currentVersion}`,
-	"/docs/api/lts": `/docs/api/${ltsVersion}`,
-};
+const routes = new Map([
+	["/docs/apis", `/docs/api/${currentVersion}`],
+	["/docs/api/current", `/docs/api/${currentVersion}`],
+	["/docs/api/lts", `/docs/api/${ltsVersion}`],
+]);
 
 /**
  * Handles incoming HTTP requests and redirects them to the appropriate URL based on the current and LTS versions.
@@ -23,7 +23,7 @@ const routes = {
  */
 module.exports = async (context, { headers }) => {
 	const { pathname, search } = new URL(headers["x-ms-original-url"], `http://${headers.host}`);
-	const route = findRoute(pathname, routes);
+	const route = findRoute(pathname);
 
 	context.res = {
 		status: route === undefined ? 404 : 302,
@@ -36,7 +36,6 @@ module.exports = async (context, { headers }) => {
 	};
 };
 
-const findRoute = (pathname) =>
-	Object.entries(routes).find(([path, _]) => new RegExp(path).test(pathname));
+const findRoute = (pathname) => [...routes].find(([path, _]) => new RegExp(path).test(pathname));
 
 const getRedirectUrl = (pathname, search, route) => `${pathname.replace(...route)}${search}`;
