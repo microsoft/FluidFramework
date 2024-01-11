@@ -86,8 +86,5 @@
 				"node-fetch"
 			]
 		}
-	},
-	"devDependencies": {
-		"@azure/static-web-apps-cli": "^1.1.6"
 	}
 }

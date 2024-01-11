@@ -338,7 +338,6 @@ The following npm scripts are supported in this directory:
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
-| `build:redirects` | `node ./build-redirects.js` |
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `ci:build` | `npm run download && npm run build` |
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
