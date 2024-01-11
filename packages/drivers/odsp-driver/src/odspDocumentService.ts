@@ -288,10 +288,7 @@ export class OdspDocumentService
 			this.hostPolicy,
 			this.epochTracker,
 			(ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
-			(metadata: Record<string, string>) =>
-				this.emit("metadataUpdate", {
-					sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
-				}),
+			(metadata: Record<string, string>) => this.emit("metadataUpdate", metadata),
 			this.socketReferenceKeyPrefix,
 		);
 		return this.odspDelayLoadedDeltaStream;
