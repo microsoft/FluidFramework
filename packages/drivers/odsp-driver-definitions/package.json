@@ -128,6 +128,10 @@
 			"RemovedEnumDeclaration_OdspErrorType": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedEnumDeclaration_ShareLinkTypes": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

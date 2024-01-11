@@ -13,8 +13,6 @@ import {
 import {
 	IOdspResolvedUrl,
 	OdspErrorTypes,
-	ShareLinkTypes,
-	ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { createOdspUrl } from "./createOdspUrl";
