@@ -57,7 +57,7 @@ describeCompat(
 		const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
 			a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 

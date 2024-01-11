@@ -27,7 +27,7 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 
 describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -96,7 +96,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	}
 
 	describe("Legacy APIs", () => {
-		beforeEach(async () => setupContainers(testContainerConfig));
+		beforeEach("setupContainers", async () => setupContainers(testContainerConfig));
 		afterEach(async () => reset());
 
 		it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
@@ -107,7 +107,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	});
 
 	describe("Aliasing", () => {
-		beforeEach(async () => setupContainers());
+		beforeEach("setupContainers", async () => setupContainers());
 		afterEach(async () => reset());
 
 		const alias = "alias";

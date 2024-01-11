@@ -60,7 +60,7 @@ import {
 import {
 	buildForest,
 	createMockNodeKeyManager,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	jsonableTreeFromFieldCursor,
 	mapTreeFromCursor,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
@@ -652,7 +652,7 @@ export function checkoutWithContent(
 	return flexTreeViewWithContent(content, args).checkout;
 }
 
-export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -691,7 +691,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;

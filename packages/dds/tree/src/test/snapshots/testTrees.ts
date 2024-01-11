@@ -16,7 +16,7 @@ import {
 import {
 	Any,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
 	FlexTreeNodeSchema,
@@ -428,7 +428,7 @@ export function generateTestTrees() {
 				});
 				const seqMapSchema = innerBuilder.mapRecursive(
 					"SeqMap",
-					TreeFieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
+					FlexFieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.sequence(seqMapSchema));
 

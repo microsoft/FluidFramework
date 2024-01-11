@@ -26,9 +26,15 @@ data:
         },
         "config": {
             "configDumpEnabled": {{ .Values.gitrest.config.configDumpEnabled }},
-            "secretNamesToRedactInConfigDump": {{ .Values.gitrest.config.secretNamesToRedactInConfigDump }}
+            "secretNamesToRedactInConfigDump": [
+                {{- $lastIndex := sub (len .Values.gitrest.config.secretNamesToRedactInConfigDump) 1}}
+                {{- range $i, $secret := .Values.gitrest.config.secretNamesToRedactInConfigDump }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
         },
         "requestSizeLimit": "1gb",
+	    "enableResponseCloseLatencyMetric": {{ .Values.gitrest.enableResponseCloseLatencyMetric }},
         "storageDir": {
             "baseDir": "/home/node/documents",
             "useRepoOwner": true

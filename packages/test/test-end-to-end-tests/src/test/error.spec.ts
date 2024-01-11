@@ -28,7 +28,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const loader = new Loader({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,

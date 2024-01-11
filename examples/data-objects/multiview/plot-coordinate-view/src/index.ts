@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { PlotCoordinateView } from "./view";
+export { PlotCoordinateView } from "./view.js";

@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ConnectionState } from '@fluidframework/container-loader';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -44,7 +43,13 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-export { ConnectionState }
+// @public (undocumented)
+export enum ConnectionState {
+    CatchingUp = 1,
+    Connected = 2,
+    Disconnected = 0,
+    EstablishingConnection = 3
+}
 
 // @public
 export namespace ConnectionStateType {
