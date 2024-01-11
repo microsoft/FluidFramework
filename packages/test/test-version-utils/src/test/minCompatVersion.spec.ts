@@ -4,16 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { execSync } from "child_process";
 import { CompatKind } from "../../compatOptions.cjs";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
+import { codeVersion } from "../baseVersion.js";
 
 describe("Minimum Compat Version", () => {
-	const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
-		encoding: "utf-8",
-	});
-	const allVersions: string[] = JSON.parse(allVersionsFromNpm);
-	const latestVersion = allVersions[allVersions.length - 1];
+	// const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
+	// 	encoding: "utf-8",
+	// });
+	// const allVersions: string[] = JSON.parse(allVersionsFromNpm);
+	const latestVersion = codeVersion;
 
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
@@ -30,6 +30,18 @@ describe("Minimum Compat Version", () => {
 				`Error while running: npm v @fluidframework/container-loader@"${invalidString}" version --json`,
 			);
 		}
+	});
+
+	it(`compatVersion N-0 == latest version ${latestVersion}`, () => {
+		assert.strictEqual(
+			isCompatVersionBelowMinVersion(latestVersion, {
+				name: `test`,
+				kind: CompatKind.None,
+				compatVersion: 0,
+			}),
+			false,
+			`N-0 is lower than latestVersion`,
+		);
 	});
 
 	for (let i = 1; i < 9; i++) {

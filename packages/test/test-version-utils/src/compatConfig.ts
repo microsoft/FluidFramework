@@ -53,6 +53,10 @@ export interface CompatConfig {
 	 * (Same version will be used across all layers).
 	 */
 	loadWith?: CompatVersion;
+	/**
+	 * Cross Version Compat Only
+	 * Resolved version from loadWith used to calculate min compat version to test against.
+	 */
 	loadVersion?: string;
 }
 
@@ -211,26 +215,21 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 
 /**
  * Returns true if compat test version is below the one provided as minimum version.
- * It helps to filter lower verions configs that the ones intended to be tested on a
+ * It helps to filter out lower verions configs that the ones intended to be tested on a
  * particular suite.
- * @param minVersion -
- * @param config -
- * @returns boolean
  */
 export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
-	let lowerVersion: string | number;
+	let lowerVersion: string | number = config.compatVersion;
 	// For CrossVersion there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossVersion) {
 		lowerVersion =
 			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
 				? (config.loadVersion as string)
 				: config.compatVersion;
-	} else {
-		lowerVersion = config.compatVersion;
-	}
+	} 
 	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
 	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
-	return semver.compare(minReqVersion, compatVersion) > 0;
+	return semver.compare(compatVersion, minReqVersion ) < 0;
 }
 
 /**
