@@ -238,14 +238,15 @@ export class OdspDelayLoadedDeltaStream {
 			if (signal.clientId === null) {
 				// We could have some issues/irregularities in parsing signals, so put it in try/catch block
 				// and ignore the error as we can have labels update later on through join session response.
+				let envelope: ISignalEnvelope | undefined;
 				try {
-					const envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
-					if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
-						this.emitMetaDataUpdateEvent({
-							sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
-						});
-					}
+					envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
 				} catch (err) {}
+				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
+					this.emitMetaDataUpdateEvent({
+						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
+					});
+				}
 			}
 		});
 	};
