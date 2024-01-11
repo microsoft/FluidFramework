@@ -92,7 +92,10 @@ export interface IFluidContainerEvents extends IEvent {
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
 
-interface AttachResult {
+/**
+ * @public
+ */
+export interface AttachResult {
 	[key: string]: string;
 }
 

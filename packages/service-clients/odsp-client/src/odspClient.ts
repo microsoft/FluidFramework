@@ -32,22 +32,12 @@ import type {
 	TokenResponse,
 } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-<<<<<<< HEAD
-import { Loader } from "@fluidframework/container-loader";
-import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
-import type { ITokenResponse } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	OdspClientProps,
 	OdspContainerServices,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
 } from "./interfaces";
-=======
-import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
->>>>>>> origin
 import { createOdspAudienceMember } from "./odspAudience";
 
 /**
@@ -173,8 +163,8 @@ export class OdspClient {
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
-				connection.filePath,
-				uuid(),
+				odspProps.filePath ?? "",
+				odspProps.fileName ?? uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
