@@ -37,6 +37,7 @@
 		"@typescript-eslint/parser": "~6.7.2",
 		"eslint-config-prettier": "~9.0.0",
 		"eslint-import-resolver-typescript": "~3.6.1",
+		"eslint-plugin-custom-rules": "file:./src/custom-rules",
 		"eslint-plugin-eslint-comments": "~3.2.0",
 		"eslint-plugin-import": "npm:eslint-plugin-i@~2.29.0",
 		"eslint-plugin-jsdoc": "~46.8.1",
@@ -60,6 +61,11 @@
 		"rimraf": "^4.4.0",
 		"sort-json": "^2.0.1",
 		"typescript": "~5.1.6"
+	},
+	"dependenciesMeta": {
+		"eslint-plugin-custom-rules": {
+			"injected": true
+		}
 	},
 	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f"
 }
