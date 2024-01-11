@@ -6381,6 +6381,7 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.29.0
@@ -6403,12 +6404,14 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@tiny-calc/nano': 0.0.0-alpha.5
+      '@types/double-ended-queue': ^2.1.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
+      double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
       events: ^3.1.0
       hotloop: ^1.2.0
@@ -6437,10 +6440,12 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@tiny-calc/nano': 0.0.0-alpha.5
+      double-ended-queue: 2.1.0-0
       events: 3.3.0
       tslib: 1.14.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
@@ -6452,6 +6457,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@tiny-calc/micro': 0.0.0-alpha.5
+      '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
@@ -18343,7 +18349,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-mock: 29.7.0
     dev: true
 
@@ -18382,7 +18388,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -33097,7 +33103,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-util: 29.7.0
     dev: true
 

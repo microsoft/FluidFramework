@@ -18,6 +18,7 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
 
 describe("client.applyMsg", () => {
 	const localUserLongId = "localUser";
+	const remoteUserLongId = "remoteUser";
 	let client: TestClient;
 
 	beforeEach(() => {
@@ -669,5 +670,107 @@ describe("client.applyMsg", () => {
 		);
 
 		logger.validate({ baseText: "DDDDDDcbD" });
+	});
+
+	describe("updates minSeq", () => {
+		it("to the message's minSeq with no ops in flight", () => {
+			const localClient = new TestClient();
+			const remoteClient = new TestClient();
+			const ops: ISequencedDocumentMessage[] = [];
+			localClient.startOrUpdateCollaboration(localUserLongId);
+			remoteClient.startOrUpdateCollaboration(remoteUserLongId);
+			ops.push(
+				localClient.makeOpMessage(
+					localClient.insertTextLocal(0, "hello world"),
+					1,
+					0,
+					localUserLongId,
+					0,
+				),
+			);
+
+			ops.splice(0).forEach((op) => {
+				localClient.applyMsg(op);
+				remoteClient.applyMsg(op);
+			});
+
+			assert.equal(localClient.getCollabWindow().minSeq, 0);
+			assert.equal(remoteClient.getCollabWindow().minSeq, 0);
+
+			ops.push(
+				localClient.makeOpMessage(
+					localClient.insertTextLocal(0, "abc"),
+					/* seq */ 17,
+					/* refSeq */ 16,
+					localUserLongId,
+					/* minSeq */ 16,
+				),
+			);
+
+			ops.splice(0).forEach((op) => {
+				localClient.applyMsg(op);
+				remoteClient.applyMsg(op);
+			});
+
+			assert.equal(localClient.getCollabWindow().minSeq, 16);
+			assert.equal(remoteClient.getCollabWindow().minSeq, 16);
+		});
+
+		it("to the minimum of in-flight messages and the acked message's minSeq", () => {
+			let localInFlightRefSeq: number | undefined;
+			const localClient = new TestClient(undefined, undefined, () => localInFlightRefSeq);
+			const remoteClient = new TestClient();
+			const ops: ISequencedDocumentMessage[] = [];
+			localClient.startOrUpdateCollaboration(localUserLongId);
+			remoteClient.startOrUpdateCollaboration(remoteUserLongId);
+			localInFlightRefSeq = 0;
+
+			const resubmittedOp = localClient.insertTextLocal(0, "hello world");
+			// Note: *don't* add this to list of sequenced ops, since if the refSeq of an in-flight op trails
+			// behind the minSeq of an acked op, the in-flight op must eventually be nacked.
+			// This call to make a message is unnecessary for the test purposes, but would happen in a production scenario
+			// (it's the message that would be sent to the server and nacked).
+			localClient.makeOpMessage(resubmittedOp, 1, localInFlightRefSeq, localUserLongId, 0);
+
+			ops.push(
+				remoteClient.makeOpMessage(
+					remoteClient.insertTextLocal(0, "abc"),
+					/* seq */ 17,
+					/* refSeq */ 16,
+					remoteUserLongId,
+					/* minSeq */ 16,
+				),
+			);
+
+			ops.splice(0).forEach((op) => {
+				localClient.applyMsg(op);
+				remoteClient.applyMsg(op);
+			});
+
+			assert.equal(localClient.getCollabWindow().minSeq, 0);
+			assert.equal(remoteClient.getCollabWindow().minSeq, 16);
+
+			ops.push(
+				localClient.makeOpMessage(
+					localClient.regeneratePendingOp(
+						resubmittedOp!,
+						localClient.peekPendingSegmentGroups()!,
+					),
+					/* seq */ 18,
+					/* refSeq */ 16,
+					localUserLongId,
+					/* minSeq */ 16,
+				),
+			);
+			localInFlightRefSeq = 16;
+
+			ops.splice(0).forEach((op) => {
+				localClient.applyMsg(op);
+				remoteClient.applyMsg(op);
+			});
+
+			assert.equal(localClient.getCollabWindow().minSeq, 16);
+			assert.equal(remoteClient.getCollabWindow().minSeq, 16);
+		});
 	});
 });
