@@ -43,12 +43,13 @@ extends:
           serviceConnection: Arrow_FluidFramework_internal
         ${{ else }}:
           serviceConnection: Arrow_FluidFramework_public
-      settings:
-        skipBuildTagsForGitHubPullRequests: "true"
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
+    # Skip tagging if Github PR coming from a fork
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
