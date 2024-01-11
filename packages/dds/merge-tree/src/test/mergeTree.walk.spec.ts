@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IMergeBlock, IMergeLeaf, MaxNodesInBlock } from "../mergeTreeNodes";
+import { IMergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes";
 import { TextSegment } from "../textSegment";
 import { LocalClientId, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
@@ -56,7 +56,7 @@ describe("MergeTree walks", () => {
 		it("visits only descendants", () => {
 			for (const block of getAllDescendantBlocks(mergeTree.root)) {
 				let walkedAnySegments = false;
-				walkAllChildSegments(block, (seg: IMergeLeaf) => {
+				walkAllChildSegments(block, (seg: ISegmentLeaf) => {
 					walkedAnySegments = true;
 					let current = seg.parent;
 					while (current !== block && current !== undefined) {

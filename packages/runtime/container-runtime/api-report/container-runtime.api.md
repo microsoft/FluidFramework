@@ -22,6 +22,7 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
@@ -231,6 +232,9 @@ export interface ContainerRuntimeMessage {
 
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
+
+// @internal
+export function detectOutboundReferences(envelope: IEnvelope, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
 
 // @alpha (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
@@ -488,6 +492,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 // @alpha (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
+    readonly retryOnFailure?: boolean;
 }
 
 // @alpha
@@ -854,6 +859,12 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 // @alpha
 export const TombstoneResponseHeaderKey = "isTombstoned";
+
+// @internal
+export interface UnknownContainerRuntimeMessage extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
+    contents: unknown;
+    type: "__unknown_container_message_type__never_use_as_value__";
+}
 
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;

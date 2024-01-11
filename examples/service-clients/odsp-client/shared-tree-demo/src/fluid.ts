@@ -3,16 +3,8 @@
  * Licensed under the MIT License.
  */
 import { OdspClient, OdspContainerServices } from "@fluid-experimental/odsp-client";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedTreeFactory } from "@fluidframework/tree";
-import { clientProps } from "./clientProps";
-
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-class SharedTree {
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();
-	}
-}
+import { ContainerSchema, IFluidContainer, SharedTree } from "fluid-framework";
+import { clientProps } from "./clientProps.js";
 
 const client = new OdspClient(clientProps);
 

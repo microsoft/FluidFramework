@@ -8,7 +8,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
-import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface";
+import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface/index.js";
 
 /**
  * In this demo, the AppModel just needs to hold the taskList.  In a real scenario, this may have further

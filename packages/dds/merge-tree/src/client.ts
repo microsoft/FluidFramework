@@ -24,7 +24,7 @@ import {
 	CollaborationWindow,
 	compareStrings,
 	IMoveInfo,
-	IMergeLeaf,
+	ISegmentLeaf,
 	ISegment,
 	ISegmentAction,
 	Marker,
@@ -163,6 +163,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * It is used to get the segment group(s) for the previous operations.
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
 	 */
+	// eslint-disable-next-line import/no-deprecated
+	public peekPendingSegmentGroups(): SegmentGroup | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
 	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
@@ -360,7 +364,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		const mergeSegment: IMergeLeaf | undefined = segment;
+		const mergeSegment: ISegmentLeaf | undefined = segment;
 		if (mergeSegment?.parent === undefined) {
 			return -1;
 		}
@@ -746,10 +750,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		for (const segment of segmentGroup.segments.sort((a, b) =>
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
-			const segmentSegGroup = segment.segmentGroups.dequeue();
 			assert(
-				segmentGroup === segmentSegGroup,
-				0x035 /* "Segment group not at head of segment pending queue" */,
+				segment.segmentGroups.remove?.(segmentGroup) === true,
+				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
 				segmentGroup.localSeq !== undefined,
@@ -1231,14 +1234,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				this.shortClientIdMap[oldData] = longClientId;
 			}
 		}
-	}
-
-	/**
-	 * @deprecated Use searchForMarker instead.
-	 */
-	findTile(startPos: number, tileLabel: string, preceding = true) {
-		const clientId = this.getClientId();
-		return this._mergeTree.findTile(startPos, clientId, tileLabel, preceding);
 	}
 
 	/**

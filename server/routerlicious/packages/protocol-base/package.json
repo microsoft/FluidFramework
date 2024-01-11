@@ -59,9 +59,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0-223006",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.1.0",
 		"events": "^3.1.0"
 	},
 	"devDependencies": {
@@ -74,7 +74,7 @@
 		"@types/assert": "^1.5.1",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.27.0",

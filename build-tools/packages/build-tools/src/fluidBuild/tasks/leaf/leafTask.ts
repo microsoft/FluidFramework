@@ -490,14 +490,16 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
-				this.traceTrigger("mismatched compare file");
+				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
 				traceTaskTrigger(doneFileExpectedContent);
 				traceTaskTrigger(doneFileContent);
 			} else {
-				this.traceTrigger("unable to generate done file expected content");
+				this.traceTrigger(
+					"unable to generate done file expected content (getDoneFileContent returned undefined)",
+				);
 			}
 		} catch {
-			this.traceTrigger("unable to read compare file");
+			this.traceTrigger(`unable to read compare file: ${doneFileFullPath}`);
 		}
 		return false;
 	}
@@ -540,7 +542,13 @@ export class UnknownLeafTask extends LeafTask {
 }
 
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
+	/**
+	 * @returns the list of files that this task depends on. The files are relative to the package directory.
+	 */
 	protected abstract getInputFiles(): Promise<string[]>;
+	/**
+	 * @returns the list of files that this task generates. The files are relative to the package directory.
+	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
 	protected get useHashes(): boolean {
 		return false;
@@ -555,8 +563,16 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		try {
 			const srcFiles = await this.getInputFiles();
 			const dstFiles = await this.getOutputFiles();
-			const srcTimesP = Promise.all(srcFiles.map((match) => statAsync(match)));
-			const dstTimesP = Promise.all(dstFiles.map((match) => statAsync(match)));
+			const srcTimesP = Promise.all(
+				srcFiles
+					.map((match) => this.getPackageFileFullPath(match))
+					.map((match) => statAsync(match)),
+			);
+			const dstTimesP = Promise.all(
+				dstFiles
+					.map((match) => this.getPackageFileFullPath(match))
+					.map((match) => statAsync(match)),
+			);
 			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
 			const srcInfo = srcTimes.map((srcTime) => {

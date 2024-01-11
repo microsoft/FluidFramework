@@ -11,10 +11,14 @@ import {
 	FieldKey,
 	MapTree,
 	TreeNodeSchemaIdentifier,
-} from "../../core";
-import { mapTreeFromCursor, cursorForMapTreeNode, mapRootChanges } from "../../feature-libraries";
-import { brand } from "../../util";
-import { deepFreeze } from "../utils";
+} from "../../core/index.js";
+import {
+	mapTreeFromCursor,
+	cursorForMapTreeNode,
+	mapRootChanges,
+} from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
+import { deepFreeze } from "../utils.js";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const emptyMap = new Map();
@@ -30,7 +34,6 @@ describe("DeltaUtils", () => {
 				[
 					fooField,
 					{
-						build: [{ id: detachId, trees: [nodeXCursor] }],
 						local: [
 							{ count: 42 },
 							{
@@ -47,7 +50,6 @@ describe("DeltaUtils", () => {
 					[
 						fooField,
 						{
-							build: [{ id: detachId, trees: [nodeXCursor] }],
 							local: [
 								{
 									count: 1,
@@ -61,11 +63,10 @@ describe("DeltaUtils", () => {
 			};
 			deepFreeze(input);
 			const actual = mapRootChanges(input, mapTreeFromCursor);
-			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges<MapTree>>([
+			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
 					{
-						build: [{ id: detachId, trees: [nodeX] }],
 						local: [
 							{ count: 42 },
 							{
@@ -78,11 +79,10 @@ describe("DeltaUtils", () => {
 			]);
 			const expected: DeltaRoot<MapTree> = {
 				build: [{ id: detachId, trees: [nodeX] }],
-				fields: new Map<FieldKey, DeltaFieldChanges<MapTree>>([
+				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
 						{
-							build: [{ id: detachId, trees: [nodeX] }],
 							local: [
 								{
 									count: 1,

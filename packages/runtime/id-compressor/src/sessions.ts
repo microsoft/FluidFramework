@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from "sorted-btree";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assert } from "@fluidframework/core-utils";
 import { SessionId, StableId } from "./types";
 import {

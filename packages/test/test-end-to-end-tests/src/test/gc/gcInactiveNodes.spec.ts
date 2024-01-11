@@ -12,7 +12,7 @@ import {
 	InactiveResponseHeaderKey,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -29,30 +29,17 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { SharedMap } from "@fluidframework/map";
-import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
-
-/**
- * We manufacture a handle to simulate a bug where an object is unreferenced in GC's view
- * (and reminder, interactive clients never update their GC data after loading),
- * but someone still has a handle to it.
- *
- * It's possible to achieve this truly with multiple clients where one revives it mid-session
- * after it was unreferenced for the inactive timeout, but that's more complex to implement
- * in a test and is no better than this approach
- */
-function manufactureHandle<T>(handleContext: IFluidHandleContext, url: string): IFluidHandle<T> {
-	const serializer = new FluidSerializer(handleContext, () => {});
-	const handle: IFluidHandle<T> = parseHandles({ type: "__fluid_handle__", url }, serializer);
-	return handle;
-}
+import {
+	manufactureHandle,
+	waitForContainerWriteModeConnectionWrite,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
-describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
 	const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
 	const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
@@ -141,7 +128,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider) =>
 			return dataStore.entryPoint.get() as Promise<ITestDataObject>;
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// These tests validate the end-to-end behavior of GC features by generating ops and summaries. However,
 			// it does not post these summaries or download them. So, it doesn't need to run against real services.

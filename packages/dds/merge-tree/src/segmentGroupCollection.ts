@@ -39,6 +39,16 @@ export class SegmentGroupCollection {
 	}
 
 	// eslint-disable-next-line import/no-deprecated
+	public remove?(segmentGroup: SegmentGroup): boolean {
+		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
+		if (found === undefined) {
+			return false;
+		}
+		this.segmentGroups.remove(found);
+		return true;
+	}
+
+	// eslint-disable-next-line import/no-deprecated
 	public pop?(): SegmentGroup | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}

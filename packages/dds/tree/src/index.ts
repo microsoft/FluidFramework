@@ -41,6 +41,7 @@ export {
 	DeltaDetachedNodeDestruction,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
+	RevisionTag,
 	rootFieldKey,
 	rootField,
 	ITreeCursor,
@@ -83,12 +84,12 @@ export {
 	MapTree,
 	Revertible,
 	RevertibleKind,
-	RevertResult,
-	DiscardResult,
+	RevertibleStatus,
+	RevertibleResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
-} from "./core";
+} from "./core/index.js";
 
 export {
 	Brand,
@@ -111,7 +112,7 @@ export {
 	oneFromSet,
 	disposeSymbol,
 	IDisposable,
-} from "./util";
+} from "./util/index.js";
 
 export {
 	Events,
@@ -121,12 +122,12 @@ export {
 	IEmitter,
 	NoListenersCallback,
 	HasListeners,
-} from "./events";
+} from "./events/index.js";
 
-export { leaf } from "./domains";
+export { leaf } from "./domains/index.js";
 
 export {
-	FieldKind,
+	FlexFieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
@@ -147,22 +148,21 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
-	cursorForJsonableTreeNode as singleTextCursor,
+	cursorForJsonableTreeNode,
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
 	EditableTreeEvents,
-	InternalTypedSchemaTypes,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
-	AllowedTypes,
-	TreeNodeSchema as FlexTreeNodeSchema,
+	FlexAllowedTypes,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	Any,
 	NewFieldContent,
 	NodeExistsConstraint,
@@ -184,7 +184,7 @@ export {
 	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
 	AssignableFieldKinds,
-	FlexTreeContext as TreeContext,
+	FlexTreeContext,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
@@ -192,14 +192,14 @@ export {
 	FlexTreeField,
 	FlexTreeNode,
 	TreeNodeSchemaBase,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
-	ImplicitFieldSchema as FlexImplicitFieldSchema,
-	ImplicitAllowedTypes,
+	FlexImplicitFieldSchema,
+	FlexImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -220,17 +220,18 @@ export {
 	ApplyMultiplicity,
 	NormalizeObjectNodeFields,
 	NormalizeFieldSchema,
-	Fields,
-	MapFieldSchema,
-} from "./feature-libraries";
-
-export {
-	TreeArrayNode,
-	TreeMapNodeBase,
-	Unhydrated,
-	IterableTreeListContent,
-	TreeNode,
-} from "./simple-tree";
+	FlexObjectNodeFields,
+	FlexMapFieldSchema,
+	ArrayToUnion,
+	ExtractItemType,
+	LazyItem,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
+} from "./feature-libraries/index.js";
 
 export {
 	ISharedTree,
@@ -252,13 +253,19 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
-} from "./shared-tree";
+} from "./shared-tree/index.js";
 
 export {
+	TreeArrayNode,
+	Unhydrated,
+	IterableTreeArrayContent,
+	TreeNode,
+	TreeArrayNodeBase,
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
 	TreeView,
+	TreeViewEvents,
 	SchemaFactory,
 	Tree,
 	TreeApi,
@@ -269,6 +276,23 @@ export {
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
+	type,
+	WithType,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	ImplicitAllowedTypes,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeKind,
+	ObjectFromSchemaRecord,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -279,16 +303,12 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
-} from "./class-tree";
-export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
+} from "./simple-tree/index.js";
+export { SharedTree, TreeFactory } from "./treeFactory.js";
 
-export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
-export { noopValidator } from "./codec";
-export { typeboxValidator } from "./external-utilities";
-
-// Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalTypes from "./internal";
-export { InternalTypes };
+export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
+export { noopValidator } from "./codec/index.js";
+export { typeboxValidator } from "./external-utilities/index.js";
 
 // TODO: When previously tagged '@internal', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
 export {
@@ -309,7 +329,9 @@ export {
 	BrandedKeyContent,
 	ErasedType,
 	Erased,
-} from "./util";
+	RestrictiveReadonlyRecord,
+	MakeNominal,
+} from "./util/index.js";
 
 export {
 	NormalizeField,
@@ -330,6 +352,8 @@ export {
 	TypedFields,
 	UnbrandedName,
 	EmptyObject,
+	FlexList,
+	FlexListToUnion,
 
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
@@ -338,4 +362,4 @@ export {
 	NodeKeyFieldKind,
 	Forbidden,
 	Sequence,
-} from "./feature-libraries";
+} from "./feature-libraries/index.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeAtomId,
 	makeAnonChange,
@@ -11,9 +11,9 @@ import {
 	RevisionTag,
 	tagChange,
 	TaggedChange,
-} from "../../core";
-import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
+} from "../../core/index.js";
+import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util/index.js";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import {
 	Changeset,
 	Mark,
@@ -23,9 +23,9 @@ import {
 	NoopMark,
 	CellMark,
 	Detach,
-} from "./types";
-import { MarkListFactory } from "./markListFactory";
-import { MarkQueue } from "./markQueue";
+} from "./types.js";
+import { MarkListFactory } from "./markListFactory.js";
+import { MarkQueue } from "./markQueue.js";
 import {
 	getMoveEffect,
 	setMoveEffect,
@@ -36,7 +36,7 @@ import {
 	isMoveIn,
 	isMoveOut,
 	getMoveIn,
-} from "./moveEffectTable";
+} from "./moveEffectTable.js";
 import {
 	getInputLength,
 	getOutputLength,
@@ -65,8 +65,12 @@ import {
 	isImpactfulCellRename,
 	settleMark,
 	compareCellsFromSameRevision,
-} from "./utils";
-import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
+	cellSourcesFromMarks,
+	compareCellPositionsUsingTombstones,
+	CellOrder,
+} from "./utils.js";
+import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes.js";
+import { CellOrderingMethod, sequenceConfig } from "./config.js";
 
 /**
  * @internal
@@ -488,6 +492,8 @@ function amendComposeI<TNodeChange>(
 export class ComposeQueue<T> {
 	private readonly baseMarks: MarkQueue<T>;
 	private readonly newMarks: MarkQueue<T>;
+	private readonly baseMarksCellSources: ReadonlySet<RevisionTag | undefined>;
+	private readonly newMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,
@@ -514,6 +520,18 @@ export class ComposeQueue<T> {
 			true,
 			genId,
 			composeChanges,
+		);
+		this.baseMarksCellSources = cellSourcesFromMarks(
+			baseMarks,
+			baseRevision,
+			revisionMetadata,
+			getOutputCellId,
+		);
+		this.newMarksCellSources = cellSourcesFromMarks(
+			newMarks,
+			undefined,
+			revisionMetadata,
+			getInputCellId,
 		);
 	}
 
@@ -551,19 +569,50 @@ export class ComposeQueue<T> {
 				return this.dequeueNew();
 			}
 
-			const cmp = compareCellPositions(
-				baseCellId,
-				baseMark.count,
-				newMark,
-				this.newRevision,
-				this.revisionMetadata,
-			);
-			if (cmp < 0) {
-				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
-			} else if (cmp > 0) {
-				return { newMark: this.newMarks.dequeueUpTo(cmp) };
-			} else {
-				return this.dequeueBoth();
+			switch (sequenceConfig.cellOrdering) {
+				case CellOrderingMethod.Tombstone: {
+					const newCellId = getInputCellId(
+						newMark,
+						this.newRevision,
+						this.revisionMetadata,
+					);
+					assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
+					const comparison = compareCellPositionsUsingTombstones(
+						baseCellId,
+						newCellId,
+						this.baseMarksCellSources,
+						this.newMarksCellSources,
+						this.revisionMetadata,
+					);
+					switch (comparison) {
+						case CellOrder.SameCell:
+							return this.dequeueBoth();
+						case CellOrder.OldThenNew:
+							return this.dequeueBase();
+						case CellOrder.NewThenOld:
+							return this.dequeueNew();
+						default:
+							unreachableCase(comparison);
+					}
+				}
+				case CellOrderingMethod.Lineage: {
+					const cmp = compareCellPositions(
+						baseCellId,
+						baseMark.count,
+						newMark,
+						this.newRevision,
+						this.revisionMetadata,
+					);
+					if (cmp < 0) {
+						return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
+					} else if (cmp > 0) {
+						return { newMark: this.newMarks.dequeueUpTo(cmp) };
+					} else {
+						return this.dequeueBoth();
+					}
+				}
+				default:
+					unreachableCase(sequenceConfig.cellOrdering);
 			}
 		} else if (areOutputCellsEmpty(baseMark)) {
 			return this.dequeueBase();

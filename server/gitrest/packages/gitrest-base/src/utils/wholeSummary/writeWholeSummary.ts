@@ -8,7 +8,10 @@ import {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
+	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { GitRestLumberEventName } from "../gitrestTelemetryDefinitions";
 import { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
 import { convertFullGitTreeToFullSummaryTree } from "./conversions";
 import { computeLowIoSummaryTreeEntries } from "./lowIoWriteUtils";
@@ -83,6 +86,37 @@ async function getDocRef(options: IWholeSummaryOptions): Promise<IRef | undefine
 	return ref;
 }
 
+async function computeSummaryTreeEntries(
+	payload: IWholeSummaryPayload,
+	documentRef: IRef | undefined,
+	writeSummaryTreeOptions: IWriteSummaryTreeOptions,
+	options: IWholeSummaryOptions,
+): Promise<WholeSummaryTreeEntry[]> {
+	if (!writeSummaryTreeOptions.enableLowIoWrite) {
+		return payload.entries;
+	}
+
+	const computeSummaryTreeEntriesMetric = Lumberjack.newLumberMetric(
+		GitRestLumberEventName.ComputeSummaryTreeEntries,
+		options.lumberjackProperties,
+	);
+	try {
+		const treeEntries = await computeLowIoSummaryTreeEntries(
+			payload,
+			documentRef,
+			writeSummaryTreeOptions,
+			options,
+		);
+		computeSummaryTreeEntriesMetric.success(
+			"Successfully computed low-io summary tree entries.",
+		);
+		return treeEntries;
+	} catch (error) {
+		Lumberjack.error("Failed to compute low-io summary tree entries.", error);
+		throw error;
+	}
+}
+
 /**
  * Write a summary tree as a Git tree in storage.
  * @returns the written git tree as an {@link IFullGitTree}, which contains all the tree entries, blob entries and their shas.
@@ -94,6 +128,7 @@ async function writeSummaryTree(
 ): Promise<IFullGitTree> {
 	const writeSummaryTreeOptions: IWriteSummaryTreeOptions = {
 		repoManager: options.repoManager,
+		sourceOfTruthRepoManager: options.repoManager,
 		precomputeFullTree: options.precomputeFullTree,
 		currentPath: "",
 		enableLowIoWrite: options.useLowIoWrite,
@@ -102,16 +137,25 @@ async function writeSummaryTree(
 		entryHandleToObjectShaCache: new Map<string, string>(),
 	};
 
-	if (options.useLowIoWrite) {
-		const lowIoWriteSummaryTreeEntries = await computeLowIoSummaryTreeEntries(
-			payload,
-			documentRef,
-			writeSummaryTreeOptions,
-			options,
-		);
-		return writeSummaryTreeCore(lowIoWriteSummaryTreeEntries, writeSummaryTreeOptions);
+	const treeEntries = await computeSummaryTreeEntries(
+		payload,
+		documentRef,
+		writeSummaryTreeOptions,
+		options,
+	);
+
+	const writeSummaryTreeMetric = Lumberjack.newLumberMetric(
+		GitRestLumberEventName.WriteSummaryTree,
+		options.lumberjackProperties,
+	);
+	try {
+		const gitTree = await writeSummaryTreeCore(treeEntries, writeSummaryTreeOptions);
+		writeSummaryTreeMetric.success("Successfully wrote summary tree as Git tree.");
+		return gitTree;
+	} catch (error) {
+		Lumberjack.error("Failed to write summary tree as Git tree.", error);
+		throw error;
 	}
-	return writeSummaryTreeCore(payload.entries, writeSummaryTreeOptions);
 }
 
 /**
@@ -165,11 +209,75 @@ async function createNewSummaryVersion(
 		parents: parentCommitSha ? [parentCommitSha] : [],
 		tree: treeSha,
 	};
-	const commit = await options.repoManager.createCommit(commitParams);
-	return {
-		id: commit.sha,
-		treeId: treeSha,
-	};
+	const writeSummaryVersionMetric = Lumberjack.newLumberMetric(
+		GitRestLumberEventName.CreateSummaryVersion,
+		options.lumberjackProperties,
+	);
+	try {
+		const commit = await options.repoManager.createCommit(commitParams);
+		writeSummaryVersionMetric.success("Successfully created summary version as Git commit.");
+		return {
+			id: commit.sha,
+			treeId: treeSha,
+		};
+	} catch (error) {
+		writeSummaryVersionMetric.error("Failed to create summary version as Git commit.", error);
+		throw error;
+	}
+}
+
+/**
+ * Create or update the document ref to reference the given commit.
+ */
+async function createOrUpdateRef(
+	documentRef: IRef | undefined,
+	commitSha: string,
+	options: IWholeSummaryOptions,
+): Promise<IRef> {
+	if (documentRef) {
+		// Ref already exists, so update it to reference the new commit.
+		const updateDocumenRefMetric = Lumberjack.newLumberMetric(
+			GitRestLumberEventName.UpdateDocumentRef,
+			options.lumberjackProperties,
+		);
+		try {
+			const updatedRef = await options.repoManager.patchRef(
+				`refs/heads/${options.documentId}`,
+				{
+					force: true,
+					sha: commitSha,
+				},
+				{ enabled: options.externalStorageEnabled },
+			);
+			updateDocumenRefMetric.success("Successfully updated document ref.");
+			return updatedRef;
+		} catch (error) {
+			updateDocumenRefMetric.error("Failed to update document ref.", error);
+			throw error;
+		}
+	}
+
+	// Ref does not exist, so create one to reference the new commit.
+	const createDocumenRefMetric = Lumberjack.newLumberMetric(
+		GitRestLumberEventName.CreateDocumentRef,
+		options.lumberjackProperties,
+	);
+	try {
+		const createdRef = await options.repoManager.createRef(
+			{
+				ref: `refs/heads/${options.documentId}`,
+				sha: commitSha,
+				// Bypass internal check for ref existance if possible, because we already know the ref does not exist.
+				force: true,
+			},
+			{ enabled: options.externalStorageEnabled },
+		);
+		createDocumenRefMetric.success("Successfully created document ref.");
+		return createdRef;
+	} catch (error) {
+		createDocumenRefMetric.error("Failed to create document ref.", error);
+		throw error;
+	}
 }
 
 /**
@@ -191,12 +299,15 @@ export async function writeContainerSummary(
 	const useLowIoWrite =
 		featureFlags.enableLowIoWrite === true ||
 		(isNewDocument && featureFlags.enableLowIoWrite === "initial");
+
+	// Write the container summary tree into storage.
 	const fullGitTree = await writeSummaryTree(payload, documentRef, {
 		...options,
 		precomputeFullTree: true,
 		useLowIoWrite,
 	});
 
+	// Create a new commit referencing the container summary tree.
 	const { id: versionId, treeId } = await createNewSummaryVersion(
 		fullGitTree.tree.sha,
 		documentRef?.object.sha,
@@ -205,27 +316,8 @@ export async function writeContainerSummary(
 		options,
 	);
 
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (documentRef) {
-		await options.repoManager.patchRef(
-			`refs/heads/${options.documentId}`,
-			{
-				force: true,
-				sha: versionId,
-			},
-			{ enabled: options.externalStorageEnabled },
-		);
-	} else {
-		await options.repoManager.createRef(
-			{
-				ref: `refs/heads/${options.documentId}`,
-				sha: versionId,
-				// Bypass internal check for ref existance if possible, because we already know the ref does not exist.
-				force: true,
-			},
-			{ enabled: options.externalStorageEnabled },
-		);
-	}
+	// Create or update the document ref to reference the new commit.
+	await createOrUpdateRef(documentRef, versionId, options);
 
 	const fullSummaryTree = convertFullGitTreeToFullSummaryTree(fullGitTree);
 	const wholeFlatSummary: IWholeFlatSummary = {

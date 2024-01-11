@@ -16,11 +16,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import {
-	IIdCompressor,
-	SessionSpaceCompressedId,
-	StableId,
-} from "@fluidframework/runtime-definitions";
+import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -108,7 +104,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory);
 
-	beforeEach(async () => {
+	beforeEach("setupContainers", async () => {
 		provider = getTestObjectProvider();
 		container1 = await createContainer();
 		mainDataStore = (await container1.getEntryPoint()) as TestDataObject;
@@ -618,11 +614,13 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	});
 });
 
+// No-compat: 2.0.0-internal.8.x and earlier versions of container-runtime don't finalize ids prior to attaching.
+// Even older versions of the runtime also don't have an id compression feature enabled.
 describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
 	});
@@ -665,10 +663,11 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 
 		await provider.ensureSynchronized();
 
-		// Compressor from second container will get the first 512 Ids (0-511)
-		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
-		// Compressor from first container gets second cluster starting at 512 after sending an op
-		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 513);
+		// Compressor from first container will get the first 512 Ids (0-511) as its id should be finalized
+		// on attach
+		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
+		// Compressor from second container gets second cluster starting at 512 after sending an op
+		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 513);
 	});
 });
 
@@ -681,7 +680,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 	const createContainer = async (config?: ITestContainerConfig): Promise<IContainer> =>
 		provider.makeTestContainer(config);
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 

@@ -4,23 +4,23 @@
  */
 
 export {
-	TreeNodeSchema,
-	TreeFieldSchema,
+	FlexTreeNodeSchema,
+	FlexFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
-	AllowedTypes,
+	FlexAllowedTypes,
 	LazyTreeNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	FieldNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldNodeSchema,
 	FlexTreeSchema,
 	Unenforced,
 	AllowedTypeSet,
-	MapFieldSchema,
+	FlexMapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
-	Fields,
+	FlexObjectNodeFields,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -30,22 +30,25 @@ export {
 	intoStoredSchema,
 	allowedTypesSchemaSet,
 	intoStoredSchemaCollection,
-} from "./typedTreeSchema";
+} from "./typedTreeSchema.js";
 
-export { ViewSchema } from "./view";
+export { ViewSchema } from "./view.js";
 
 export {
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
-} from "./schemaCollection";
+} from "./schemaCollection.js";
 
-export { FlexList, markEager, FlexListToUnion, LazyItem, isLazy } from "./flexList";
+export {
+	FlexList,
+	markEager,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
+	ExtractItemType,
+	NormalizeLazyItem,
+} from "./flexList.js";
 
-// Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalTypedSchemaTypes from "./internal";
-export { InternalTypedSchemaTypes };
+export { ArrayToUnion } from "./typeUtils.js";

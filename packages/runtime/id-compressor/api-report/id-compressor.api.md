@@ -27,43 +27,6 @@ export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNo
 // @internal
 export function generateStableId(): StableId;
 
-// @alpha @deprecated
-export class IdCompressor implements IIdCompressor, IIdCompressorCore {
-    // @deprecated (undocumented)
-    static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-    // @deprecated (undocumented)
-    static create(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-    // (undocumented)
-    decompress(id: SessionSpaceCompressedId): StableId;
-    // (undocumented)
-    static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
-    // (undocumented)
-    static deserialize(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId): IdCompressor;
-    // (undocumented)
-    equals(other: IdCompressor, includeLocalState: boolean): boolean;
-    // (undocumented)
-    finalizeCreationRange(range: IdCreationRange): void;
-    // (undocumented)
-    generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
-    readonly localSessionId: SessionId;
-    static readonly maxClusterSize: number;
-    // (undocumented)
-    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    // (undocumented)
-    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    // (undocumented)
-    recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    // (undocumented)
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    // (undocumented)
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    // (undocumented)
-    takeNextCreationRange(): IdCreationRange;
-    // (undocumented)
-    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
-}
-
 // @alpha
 export interface IdCreationRange {
     // (undocumented)
@@ -90,6 +53,7 @@ export interface IIdCompressor {
 
 // @alpha (undocumented)
 export interface IIdCompressorCore {
+    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): any;
     finalizeCreationRange(range: IdCreationRange): void;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;

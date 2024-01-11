@@ -4,8 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import {
+	ContainerMessageType,
+	ContainerRuntime,
+	IGCRuntimeOptions,
+} from "@fluidframework/container-runtime";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -18,8 +22,17 @@ import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import {
+	blobsTreeName,
+	defaultMaxAttemptsForSubmitFailures,
+	ISummarizeEventProps,
+	ISummarizer,
+	RetriableSummaryError,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/test/summary";
 // eslint-disable-next-line import/no-internal-modules
-import { blobsTreeName } from "@fluidframework/container-runtime/test/summary";
+import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -28,8 +41,59 @@ import {
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
+	manufactureHandle,
 	waitForContainerWriteModeConnectionWrite,
 } from "./gcTestSummaryUtils.js";
+
+/**
+ * Validates that the given blob state is correct in the summary based on expectDelete and expectGCStateHandle.
+ * - If expectDelete is true, there should be no blob tree in the summary. Otherwise, there should be.
+ * - If expectGCStateHandle is true, the GC summary tree should be handle. Otherwise, the blob should or should not be
+ * present in the GC summary tree as per expectDelete.
+ * - The blob should or should not be present in the deleted nodes in GC summary tree as per expectDelete.
+ */
+function validateBlobStateInSummary(
+	summaryTree: ISummaryTree,
+	blobNodePath: string,
+	expectDelete: boolean,
+	expectGCStateHandle: boolean,
+) {
+	const shouldShouldNot = expectDelete ? "should" : "should not";
+
+	// Validate that the blob tree should not be in the summary since there should be no attachment blobs.
+	const blobsTree = summaryTree.tree[blobsTreeName] as ISummaryTree;
+	assert.equal(
+		blobsTree === undefined,
+		expectDelete,
+		`Blobs tree ${shouldShouldNot} be present in the summary`,
+	);
+
+	if (expectGCStateHandle) {
+		assert.equal(
+			summaryTree.tree[gcTreeKey].type,
+			SummaryType.Handle,
+			"Expecting the GC tree to be handle",
+		);
+		return;
+	}
+
+	// Validate that the GC state does not contain an entry for the deleted blob.
+	const gcState = getGCStateFromSummary(summaryTree);
+	assert(gcState !== undefined, "GC tree is not available in the summary");
+	assert.notEqual(
+		Object.keys(gcState.gcNodes).includes(blobNodePath),
+		expectDelete,
+		`Blob ${blobNodePath} ${shouldShouldNot} have been removed from GC state`,
+	);
+
+	// Validate that the deleted nodes in the GC data has the deleted blob node.
+	const deletedNodesState = getGCDeletedStateFromSummary(summaryTree);
+	assert.equal(
+		deletedNodesState?.includes(blobNodePath) ?? false,
+		expectDelete,
+		`Blob ${blobNodePath} ${shouldShouldNot} be in deleted nodes`,
+	);
+}
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly swept. Swept attachment blobs should be
@@ -38,25 +102,16 @@ import {
 describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const sweepGracePeriodMs = 50;
 	const tombstoneTimeoutMs = 150;
-	const settings = {};
+	const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		enableGCSweep: true,
 		sweepGracePeriodMs,
 	};
-	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disabled",
-				},
-			},
-			gcOptions,
-		},
-		loaderProps: { configProvider: mockConfigProvider(settings) },
-	};
 
 	let provider: ITestObjectProvider;
+	let settings = {};
+	let testContainerConfig: ITestContainerConfig;
 
 	async function loadContainer(summaryVersion: string) {
 		return provider.loadTestContainer(testContainerConfig, {
@@ -107,13 +162,28 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		return { dataStore, summarizer, summarizerContainer };
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
+		testContainerConfig = {
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+				gcOptions,
+			},
+			loaderProps: { configProvider: mockConfigProvider(settings) },
+		};
+	});
+
+	afterEach(() => {
+		settings = {};
 	});
 
 	describe("Attachment blobs in attached container", () => {
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -154,7 +224,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				assert(summary1 !== undefined);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -232,7 +302,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -296,11 +366,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			await provider.ensureSynchronized();
 			const summary1 = await summarizeNow(summarizer);
 
-			const sweepFullTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
 			// Wait for half sweep timeout and load a container. This container will upload a blob with the same content
 			// as above so that it is de-duped. This container should be able to use this blob until its session
 			// expires.
-			await delay(sweepFullTimeoutMs / 2);
+			await delay(sweepTimeoutMs / 2);
 			const container2 = await loadContainer(summary1.summaryVersion);
 			const container2MainDataStore = (await container2.getEntryPoint()) as ITestDataObject;
 			// Upload the blob and keep the handle around until the blob uploaded by first container is deleted.
@@ -309,7 +378,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			);
 
 			// Wait for sweep timeout so that the blob uploaded by the first container is ready to be deleted.
-			await delay(sweepFullTimeoutMs / 2 + 10);
+			await delay(sweepTimeoutMs / 2 + 10);
 
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
@@ -368,7 +437,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach(async function () {
+		beforeEach("conditionalSkip", async function () {
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
@@ -423,7 +492,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -528,7 +597,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -650,7 +719,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -726,7 +795,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			return { summarizer, summarizerContainer };
 		}
 
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -773,7 +842,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -866,7 +935,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -976,7 +1045,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await summarizeNow(summarizer);
 
 				// Wait for sweep full timeout so that blob is ready to be deleted.
-				await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+				await delay(sweepTimeoutMs + 10);
 
 				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 				mainDataStore._root.set("key", "value");
@@ -1019,35 +1088,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 	});
 
 	describe("Deleted blob in summary", () => {
-		/**
-		 * Validates that the given blob state is correct in the summary:
-		 * - It should be no blob tree in the summary.
-		 * - The blob should not be present in the GC state in GC summary tree.
-		 * - The blob should be present in the deleted nodes in GC summary tree.
-		 */
-		function validateBlobStateInSummary(summaryTree: ISummaryTree, blobNodePath: string) {
-			// Validate that the blob tree should not be in the summary since there should be no attachment blobs.
-			const blobsTree = summaryTree.tree[blobsTreeName] as ISummaryTree;
-			assert(blobsTree === undefined, "Blobs tree should not be present in the summary");
-
-			// Validate that the GC state does not contain an entry for the deleted blob.
-			const gcState = getGCStateFromSummary(summaryTree);
-			assert(gcState !== undefined, "GC tree is not available in the summary");
-			for (const [nodePath] of Object.entries(gcState.gcNodes)) {
-				if (nodePath === blobNodePath) {
-					assert(false, `Blob ${nodePath} should not present be in GC state`);
-				}
-			}
-
-			// Validate that the deleted nodes in the GC data has the deleted blob node.
-			const deletedNodesState = getGCDeletedStateFromSummary(summaryTree);
-			assert(
-				deletedNodesState?.includes(blobNodePath),
-				`Blob ${blobNodePath} should be in deleted nodes`,
-			);
-		}
-
-		beforeEach(async function () {
+		beforeEach("skipNonLocal", async function () {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
@@ -1072,7 +1113,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			await summarizeNow(summarizer);
 
 			// Wait for sweep full timeout so that blob is ready to be deleted.
-			await delay(tombstoneTimeoutMs + sweepGracePeriodMs + 10);
+			await delay(sweepTimeoutMs + 10);
 
 			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
 			mainDataStore._root.set("key", "value");
@@ -1085,7 +1126,265 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			// Summarize again so that the sweep ready blobs are now deleted from the GC data.
 			const summary3 = await summarizeNow(summarizer);
 			// Validate that the deleted blob's state is correct in the summary.
-			validateBlobStateInSummary(summary3.summaryTree, blob1NodePath);
+			validateBlobStateInSummary(
+				summary3.summaryTree,
+				blob1NodePath,
+				true /* expectDelete */,
+				false /* expectGCStateHandle */,
+			);
 		});
+	});
+
+	describe("Sweep with summarize failures and retries", () => {
+		const summarizeErrorMessage = "SimulatedTestFailure";
+		/**
+		 * This function does the following:
+		 * 1. Overrides the summarize function of the given container runtime to fail until final summarize attempt.
+		 *
+		 * 2. If "blockInboundGCOp" is true, pauses the inbound queue until the final summarize attempt is completed
+		 * so that the GC op is not processed until then.
+		 *
+		 * 3. Generates and returns a promise which resolves with ISummarizeEventProps on successful summarization.
+		 */
+		async function overrideSummarizeAndGetCompletionPromise(
+			summarizer: ISummarizer,
+			containerRuntime: ContainerRuntime,
+			blockInboundGCOp: boolean = false,
+		) {
+			let latestAttemptProps: ISummarizeEventProps | undefined;
+			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve, reject) => {
+				const handler = (eventProps: ISummarizeEventProps) => {
+					latestAttemptProps = eventProps;
+					if (eventProps.result !== "failure") {
+						summarizer.off("summarize", handler);
+						resolve(eventProps);
+					} else {
+						if (eventProps.error?.message !== summarizeErrorMessage) {
+							reject(new Error("Unexpected summarization failure"));
+						}
+						if (eventProps.currentAttempt === eventProps.maxAttempts) {
+							summarizer.off("summarize", handler);
+							resolve(eventProps);
+						}
+					}
+				};
+				summarizer.on("summarize", handler);
+			});
+
+			// Pause the inbound queue so that GC ops are not processed in between failures. This will be resumed
+			// before the final attempt.
+			if (blockInboundGCOp) {
+				await containerRuntime.deltaManager.inbound.pause();
+			}
+
+			let summarizeFunc = containerRuntime.summarize;
+			const summarizeOverride = async (options: any) => {
+				summarizeFunc = summarizeFunc.bind(containerRuntime);
+				const results = await summarizeFunc(options);
+				// If this is not the last attempt, throw an error so that summarize fails.
+				if (
+					latestAttemptProps === undefined ||
+					latestAttemptProps.maxAttempts - latestAttemptProps.currentAttempt > 1
+				) {
+					throw new RetriableSummaryError(summarizeErrorMessage, 0.1);
+				}
+				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
+				if (blockInboundGCOp) {
+					containerRuntime.deltaManager.inbound.resume();
+				}
+				return results;
+			};
+			containerRuntime.summarize = summarizeOverride;
+			return { originalSummarize: summarizeFunc, summarizePromiseP };
+		}
+
+		/**
+		 * In these test, summarize fails until the final attempt but GC succeeds in each of the attempts.
+		 * - In case of "multiple" gcOps, in every attempt, GC sends a sweep op with the same deleted blob.
+		 * - In case of "one+" gcOps, in the first attempt, GC sends a sweep op. Depending on when this op is
+		 * processed, there will be one or more GC ops for the summarization.
+		 * It validates that in these scenario, the blob is correctly deleted and nothing unexpected happens.
+		 */
+		for (const gcOps of ["one+", "multiple"]) {
+			itExpects(
+				`sweep with multiple successful GC runs and [${gcOps}] GC op(s) for a single successful summarization`,
+				[
+					{
+						eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+						clientType: "noninteractive/summarizer",
+						summaryAttempts: 1,
+						finalAttempt: false,
+						error: summarizeErrorMessage,
+					},
+					{
+						eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+						clientType: "noninteractive/summarizer",
+						summaryAttempts: 2,
+						finalAttempt: false,
+						error: summarizeErrorMessage,
+					},
+					{
+						eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+						clientType: "noninteractive/summarizer",
+						summaryAttempts: 3,
+						finalAttempt: false,
+						error: summarizeErrorMessage,
+					},
+					{
+						eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+						clientType: "noninteractive/summarizer",
+						summaryAttempts: 4,
+						finalAttempt: false,
+						error: summarizeErrorMessage,
+					},
+					{
+						eventName: "fluid:telemetry:BlobManager:GC_Deleted_Blob_Requested",
+						clientType: "interactive",
+					},
+				],
+				async () => {
+					const { dataStore: mainDataStore, summarizer } =
+						await createDataStoreAndSummarizer();
+
+					// Upload an attachment blob.
+					const blob1Contents = "Blob contents 1";
+					const blob1Handle = await mainDataStore._runtime.uploadBlob(
+						stringToBuffer(blob1Contents, "utf-8"),
+					);
+					const blob1NodePath = blob1Handle.absolutePath;
+
+					// Reference and then unreference the blob so that it's unreferenced in the next summary.
+					mainDataStore._root.set("blob1", blob1Handle);
+					mainDataStore._root.delete("blob1");
+
+					// Summarize so that blob is marked unreferenced.
+					await provider.ensureSynchronized();
+					await summarizeNow(summarizer);
+
+					// Wait for sweep timeout so that blob is ready to be deleted.
+					await delay(sweepTimeoutMs + 10);
+
+					// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+					mainDataStore._root.set("key", "value");
+					await provider.ensureSynchronized();
+
+					const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+
+					// Set up event handle to count number of GC sweep ops sent to validate that the correct number of
+					// sweep ops are generated.
+					let gcSweepOpCount = 0;
+					containerRuntime.on("op", (op) => {
+						if (op.type === ContainerMessageType.GC) {
+							if ((op.contents as ISweepMessage).type === "Sweep") {
+								gcSweepOpCount++;
+							}
+						}
+					});
+
+					// Set up summarize to fail until the final attempt.
+					// If there should be multiple GC ops, pause the Inbound queue so that GC ops are not processed
+					// between summarize attempts and they are sent on every GC run.
+					const { originalSummarize, summarizePromiseP } =
+						await overrideSummarizeAndGetCompletionPromise(
+							summarizer,
+							containerRuntime,
+							gcOps === "multiple",
+						);
+
+					// Summarize. There will be multiple summary attempts and in each, GC runs successfully.
+					// In "one+" gcOps scenario, a GC op will be sent in first attempt and it may be processed by the
+					// time next attempt starts. The blob may be deleted in this summary itself.
+					// In "multiple" gcOps scenario, a GC op will be sent in every attempt and will not be processed
+					// until the summary successfully completes. The blob will be deleted in the next summary.
+					let summary = await summarizeNow(summarizer, {
+						reason: "test",
+						retryOnFailure: true,
+					});
+
+					// Validate that the summary succeeded on final attempt.
+					const props = await summarizePromiseP;
+					assert.equal(
+						props.result,
+						"success",
+						"The summary should have been successful",
+					);
+					assert.equal(
+						props.currentAttempt,
+						defaultMaxAttemptsForSubmitFailures,
+						`The summary should have succeeded at attempt number ${defaultMaxAttemptsForSubmitFailures}`,
+					);
+
+					if (gcOps === "multiple") {
+						assert.equal(
+							gcSweepOpCount,
+							props.currentAttempt,
+							"Incorrect number of GC ops",
+						);
+					} else {
+						assert(gcSweepOpCount >= 1, "Incorrect number of GC ops");
+					}
+
+					// If the number of GC ops sent is equal to the number of summarize attempts, then the blob
+					// won't be deleted in this summary. That's because the final GC run didn't know about the deletion
+					// and sent a GC op.
+					const expectedDeletedInFirstSummary =
+						gcSweepOpCount !== defaultMaxAttemptsForSubmitFailures;
+
+					// In "one+" gcOps scenario, the blob may or may not have been deleted depending on how many
+					// ops were sent out as described above.
+					// In "multiple" gcOps scenario, the blob will not be deleted yet because the inbound queue
+					// was paused and GC sweep ops will be processed later.
+					// The GC state will be a handle if blob is not deleted because it would not have changed
+					// since last time.
+					validateBlobStateInSummary(
+						summary.summaryTree,
+						blob1NodePath,
+						expectedDeletedInFirstSummary /* expectDelete */,
+						gcOps === "multiple" /* expectGCStateHandle */,
+					);
+
+					// Load a container from the above summary, process all ops (including any GC ops) and validate that
+					// the deleted blob cannot be retrieved.
+					const container2 = await loadContainer(summary.summaryVersion);
+					await waitForContainerConnection(container2);
+
+					await provider.ensureSynchronized();
+					const defaultDataStoreContainer2 =
+						(await container2.getEntryPoint()) as ITestDataObject;
+					const handle = manufactureHandle<ITestDataObject>(
+						defaultDataStoreContainer2._context.IFluidHandleContext,
+						blob1NodePath,
+					);
+					await assert.rejects(
+						async () => handle.get(),
+						(error: any) => {
+							const correctErrorType = error.code === 404;
+							const correctErrorMessage = error.message as string;
+							return (
+								correctErrorType &&
+								correctErrorMessage.startsWith("Blob was deleted:")
+							);
+						},
+						`Should not be able to get deleted blob`,
+					);
+
+					// Revert summarize to not fail anymore.
+					containerRuntime.summarize = originalSummarize;
+
+					// Summarize again.
+					summary = await summarizeNow(summarizer);
+
+					// The blob should be deleted from the summary / GC tree.
+					// The GC state will be a handle if the blob was deleted in the previous summary because it
+					// would not have changed since last time.
+					validateBlobStateInSummary(
+						summary.summaryTree,
+						blob1NodePath,
+						true /* expectDelete */,
+						expectedDeletedInFirstSummary /* expectGCStateHandle */,
+					);
+				},
+			);
+		}
 	});
 });

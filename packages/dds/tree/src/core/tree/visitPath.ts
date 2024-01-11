@@ -8,8 +8,8 @@ import {
 	PlaceUpPath,
 	RangeUpPath,
 	UpPath,
-} from "./pathTree";
-import { ProtoNodes } from "./delta";
+} from "./pathTree.js";
+import { ProtoNodes } from "./delta.js";
 
 /**
  * Delta visitor for the path tree.
@@ -102,18 +102,18 @@ export interface PathVisitor {
 	beforeDestroy(content: DetachedRangeUpPath): void;
 
 	/**
-	 * A sequence of nodes of length `count` is being deleted starting with `path`.
+	 * A sequence of nodes of length `count` is being removed starting with `path`.
 	 * Called when these nodes are no longer parented under their previous parent, and do not have a new parent.
-	 * It is possible they may be un-deleted in the future (for example by a conflicted merge or undo).
+	 * It is possible they may be restored in the future (for example by a conflicted merge or undo).
 	 *
-	 * Not called for children of deleted nodes.
+	 * Not called for children of removed nodes.
 	 *
-	 * @param path - first node in the deleted range.
-	 * @param count - length of deleted range.
+	 * @param path - first node in the removed range.
+	 * @param count - length of removed range.
 	 *
 	 * @deprecated Migrate to using the other events.
 	 */
-	onDelete(path: UpPath, count: number): void;
+	onRemove(path: UpPath, count: number): void;
 	/**
 	 * @param path - location which first node of inserted range will have after insert.
 	 * Any nodes at this index (or after it) will be moved to the right (have their indexes increased by `content.length`).

@@ -20,7 +20,7 @@ import {
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import {
 	type ITree,
-	TreeFactory,
+	SharedTree,
 	type TreeView,
 	disposeSymbol,
 	SchemaFactory,
@@ -57,14 +57,13 @@ function getQuantity(tree: LegacySharedTree): number {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const nodeId = rootNode.traits.get(legacyNodeId)![0];
 	const legacyNode = tree.currentView.getViewNode(nodeId);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return legacyNode.payload.quantity as number;
 }
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	private channel?: IChannel;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+
 	public get _root() {
 		return this.root;
 	}
@@ -132,6 +131,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V1 of the registry -----------------------------------------
@@ -148,12 +148,13 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory1,
 		registryEntries: [dataObjectFactory1.registryEntry],
+		runtimeOptions,
 	});
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new TreeFactory({});
+	const newSharedTreeFactory = SharedTree.getFactory();
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacySharedTreeFactory,
@@ -199,7 +200,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	const originalValue = 3;
 	const newValue = 4;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
@@ -261,7 +262,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
 
 		// Super hacky way to check to see if the v1 ops were dropped. We enable submission even though its disabled
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(shim1 as any).preMigrationDeltaConnection.canSubmit = true;
 		updateQuantity(legacyTree1, 123);
 		await provider.ensureSynchronized();
@@ -326,7 +326,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
 
 		// Super hacky way to check to see if the v1 ops were dropped. We enable submission even though its disabled
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(shim1 as any).preMigrationDeltaConnection.canSubmit = true;
 		// Catch a remote shim2 op
 		const opSent = new Promise<ISequencedDocumentMessage>((resolve) =>
@@ -340,15 +339,12 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 
 		// Check if the shim2 received the op
 		const op2 = await opSent;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
 		const env = op2.contents as any;
 		assert.equal(
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			env.contents.address,
 			testObj2.id,
 			"Expected an op to be sent to the data object",
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const address = env.contents.contents.content.address as string;
 		assert.equal(address, shim2.id, "Expected an op to be sent to the shim2");
 

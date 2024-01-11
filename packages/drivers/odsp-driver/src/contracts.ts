@@ -211,3 +211,8 @@ export interface IFlushOpsResponse {
 export interface ISnapshotCachedEntry extends ISnapshotContents {
 	cacheEntryTime: number;
 }
+
+/**
+ * Represents the type of signal containing the sensitivity policy labels for the container.
+ */
+export const policyLabelsUpdatesSignalType = "PolicyLabelsUpdate";

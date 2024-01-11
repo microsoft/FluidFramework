@@ -16,28 +16,15 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree";
+import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
 import {
 	ITree,
 	ImplicitFieldSchema,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "./class-tree";
-
-/**
- * Configuration to specialize a Tree DDS for a particular use.
- * @internal
- */
-export interface TreeOptions extends SharedTreeOptions {
-	/**
-	 * Name appended to {@link @fluidframework/datastore-definitions#IChannelFactory."type"} to identify this factory configuration.
-	 * @privateRemarks
-	 * TODO: evaluate if this design is a good idea, or if "subtype" should be removed.
-	 * TODO: evaluate if schematize should be separated from DDS construction.
-	 */
-	readonly subtype?: string;
-}
+} from "./simple-tree/index.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
@@ -47,13 +34,13 @@ export class TreeFactory implements IChannelFactory {
 	public readonly type: string;
 	public readonly attributes: IChannelAttributes;
 
-	public constructor(private readonly options: TreeOptions) {
-		this.type = `https://graph.microsoft.com/types/tree/${options.subtype ?? "default"}`;
+	public constructor(private readonly options: SharedTreeOptions) {
+		this.type = "https://graph.microsoft.com/types/tree";
 
 		this.attributes = {
 			type: this.type,
 			snapshotFormatVersion: "0.0.0",
-			packageVersion: "0.0.0",
+			packageVersion: pkgVersion,
 		};
 	}
 
@@ -79,7 +66,7 @@ export class TreeFactory implements IChannelFactory {
  * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
  * of objects, arrays, and other data types.
  *
- * @internal
+ * @public
  */
 export class SharedTree implements ITree {
 	// The IFluidContainer ContainerSchema currently requires a constructable class that
@@ -88,7 +75,7 @@ export class SharedTree implements ITree {
 	// Temporarily, we provide one until the following work items is addressed:
 	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 
-	public static getFactory(): TreeFactory {
+	public static getFactory(): IChannelFactory {
 		return new TreeFactory({});
 	}
 

@@ -34,7 +34,7 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 		return provider.makeTestContainer(testContainerConfig);
 	};
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
 	});
@@ -160,7 +160,7 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 	);
 
 	itExpects(
-		"Closes the summarizing client instead of refreshing when loading from an older summary",
+		"Closes the summarizing client instead of refreshing when failing to summarize",
 		[
 			{ eventName: "fluid:telemetry:Summarizer:Running:GarbageCollection_cancel" },
 			{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },

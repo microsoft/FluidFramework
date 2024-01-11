@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key";
-import { FlexTreeObjectNode } from "./flexTreeTypes";
+import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key/index.js";
+import { FlexTreeObjectNode } from "./flexTreeTypes.js";
 
 /**
  * A collection of utilities for managing {@link StableNodeKey}s.

@@ -28,7 +28,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 
 const counterKey = "count";
 
@@ -96,7 +96,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -108,7 +108,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 	let container1: IContainer;
 	let dataObject1: TestDataObject;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
 		dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -335,7 +335,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 		const mapId = "mapKey";
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [[mapId, SharedMap.getFactory()]],
+			registry: [[mapId, apis.dds.SharedMap.getFactory()]],
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
 		const do1 = (await created.getEntryPoint()) as ITestFluidObject;

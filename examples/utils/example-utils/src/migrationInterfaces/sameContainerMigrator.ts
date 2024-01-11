@@ -8,7 +8,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type {
 	ISameContainerMigratableModel,
 	SameContainerMigrationState,
-} from "../migrationInterfaces";
+} from "../migrationInterfaces/index.js";
 
 /**
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import

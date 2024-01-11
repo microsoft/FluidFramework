@@ -74,6 +74,8 @@ export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgrade
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
 /** Config key to disable GC sweep for attachment blobs. */
 export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
+/** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
+export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -467,7 +469,7 @@ export interface IGarbageCollectorConfigs {
 	readonly runFullGC: boolean | undefined;
 	/** The time in ms to expire a session for a client for gc. */
 	readonly sessionExpiryTimeoutMs: number | undefined;
-	/** The time after which an unreferenced node is ready to be swept. */
+	/** The time after which an unreferenced node can be Tombstoned - i.e. GC knows it can't be referenced again (revived). */
 	readonly tombstoneTimeoutMs: number | undefined;
 	/**
 	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
