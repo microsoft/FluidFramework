@@ -24,7 +24,7 @@ describe("Container create scenarios", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
 		schema = {
 			initialObjects: {
@@ -165,7 +165,7 @@ describe("Container create with feature flags", () => {
 	let schema: ContainerSchema;
 	let mockLogger: MockLogger;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		mockLogger = new MockLogger();
 		client = createAzureClient(
 			undefined,

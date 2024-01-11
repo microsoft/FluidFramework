@@ -93,6 +93,9 @@
 			"RemovedEnumDeclaration_DriverErrorType": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDocumentService": {
+				"forwardCompat": false
 			}
 		}
 	}

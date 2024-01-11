@@ -7,7 +7,7 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events/index.js";
 import { IDisposable, disposeSymbol } from "../util/index.js";
 import { FlexTreeView } from "../shared-tree/index.js";
-import { TreeFieldSchema as FlexTreeFieldSchema } from "../feature-libraries/index.js";
+import { FlexFieldSchema } from "../feature-libraries/index.js";
 import { getProxyForField } from "./proxies.js";
 import {
 	ImplicitFieldSchema,
@@ -115,7 +115,7 @@ export interface TreeViewEvents {
  */
 export class WrapperTreeView<
 	in out TSchema extends ImplicitFieldSchema,
-	TView extends FlexTreeView<FlexTreeFieldSchema>,
+	TView extends FlexTreeView<FlexFieldSchema>,
 > implements TreeView<TreeFieldFromImplicitField<TSchema>>
 {
 	public constructor(public readonly view: TView) {}

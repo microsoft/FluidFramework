@@ -243,7 +243,7 @@ describeCompat(
 			];
 		}
 
-		beforeEach(async function () {
+		beforeEach("createLoader", async function () {
 			provider = getTestObjectProvider();
 			if (
 				compare(provider.driver.version, "0.46.0") === -1 &&
@@ -256,7 +256,7 @@ describeCompat(
 			loader = createTestLoader();
 		});
 
-		afterEach(() => {
+		afterEach("resetLoaderContainerTracker", () => {
 			loaderContainerTracker.reset();
 		});
 
