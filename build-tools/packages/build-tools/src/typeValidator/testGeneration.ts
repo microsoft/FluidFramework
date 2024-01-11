@@ -15,6 +15,7 @@ export function buildTestCase(
 	useType: TestCaseTypeData,
 	isCompatible: boolean,
 ) {
+	// Checks if test is compatible and old/current types exist
 	if (!isCompatible && (getAsType.removed || useType.removed)) {
 		return "";
 	}
@@ -29,7 +30,7 @@ export function buildTestCase(
 	testString.push(`declare function ${useSig}(`);
 	testString.push(`    use: ${toTypeString(useType.prefix, useType)}): void;`);
 	testString.push(`${useSig}(`);
-	if (!isCompatible || (getAsType && useType)) {
+	if (!isCompatible) {
 		testString.push(expectErrorString);
 	}
 	testString.push(`    ${getSig}());`);

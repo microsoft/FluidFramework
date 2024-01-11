@@ -32,6 +32,7 @@ if (!existsSync(previousPackageJsonPath)) {
 const typeRollupFilePath = ExtractorConfig.tryLoadForFolder({
 	startingFolder: previousBasePath,
 });
+
 let typeDefinitionFilePath;
 
 if (typeRollupFilePath) {
@@ -92,7 +93,7 @@ const project = new Project({
 // Check for existence of alpha and add appropriate file
 if (existsSync(typeDefinitionFilePath)) {
 	project.addSourceFilesAtPaths(typeDefinitionFilePath);
-	previousFile = project.getSourceFileOrThrow("<package-name>-alpha.d.ts");
+	previousFile = project.getSourceFileOrThrow(`${previousPackageName}-alpha.d.ts`);
 	// Fall back to using .d.ts
 } else {
 	project.addSourceFilesAtPaths(`${previousBasePath}/dist/**/*.d.ts`);
@@ -101,8 +102,8 @@ if (existsSync(typeDefinitionFilePath)) {
 
 /**
  * Extracts type data from a TS source file and creates a map where each key is a type name and the value is its type data.
- * @param file
- * @returns Map<string, TypeData> mapping between item and its type
+ * @param file - The source code file containing type data
+ * @returns The mapping between item and its type
  */
 function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 	const typeData = new Map<string, TypeData>();
@@ -148,8 +149,6 @@ import type * as current from "../../index";
 ];
 
 for (const oldTypeData of previousData) {
-	// Check if the type is from an alpha file
-
 	const oldType: TestCaseTypeData = {
 		prefix: "old",
 		...oldTypeData,
