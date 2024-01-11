@@ -844,10 +844,10 @@ describeCompat(
 			registry,
 		};
 
-	let provider: ITestObjectProvider;
-	beforeEach("getTestObjectProvider", () => {
-		provider = getTestObjectProvider();
-	});
+		let provider: ITestObjectProvider;
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+		});
 
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
@@ -865,38 +865,38 @@ describeCompat(
 		});
 		const errorMessage = "callback failure";
 
-	beforeEach("setup", async () => {
-		const configWithFeatureGates = {
-			...testContainerConfig,
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.ContainerRuntime.EnableRollback": true,
-				}),
-			},
-		};
-		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
-		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
-		clearEventCount = 0;
-		changedEventData = [];
-		subDirCreatedEventData = [];
-		subDirDeletedEventData = [];
-		undisposedEventData = [];
-		disposedEventData = [];
-		sharedDir.on("valueChanged", (changed, _local, _target) => {
-			changedEventData.push(changed);
+		beforeEach("setup", async () => {
+			const configWithFeatureGates = {
+				...testContainerConfig,
+				loaderProps: {
+					configProvider: configProvider({
+						"Fluid.ContainerRuntime.EnableRollback": true,
+					}),
+				},
+			};
+			container = await provider.makeTestContainer(configWithFeatureGates);
+			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
+			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+			clearEventCount = 0;
+			changedEventData = [];
+			subDirCreatedEventData = [];
+			subDirDeletedEventData = [];
+			undisposedEventData = [];
+			disposedEventData = [];
+			sharedDir.on("valueChanged", (changed, _local, _target) => {
+				changedEventData.push(changed);
+			});
+			sharedDir.on("clear", (local, target) => {
+				clearEventCount++;
+			});
+			sharedDir.on("subDirectoryCreated", (path, _local, _target) => {
+				subDirCreatedEventData.push(path);
+			});
+			sharedDir.on("subDirectoryDeleted", (path, _local, _target) => {
+				subDirDeletedEventData.push(path);
+			});
 		});
-		sharedDir.on("clear", (local, target) => {
-			clearEventCount++;
-		});
-		sharedDir.on("subDirectoryCreated", (path, _local, _target) => {
-			subDirCreatedEventData.push(path);
-		});
-		sharedDir.on("subDirectoryDeleted", (path, _local, _target) => {
-			subDirDeletedEventData.push(path);
-		});
-	});
 
 		it("Should rollback set", () => {
 			let error: Error | undefined;

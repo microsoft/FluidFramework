@@ -623,10 +623,10 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		let request: IRequest;
 
-	beforeEach("getTestObjectProvider", () => {
-		provider = getTestObjectProvider();
-		request = provider.driver.createCreateNewRequest(provider.documentId);
-	});
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+			request = provider.driver.createCreateNewRequest(provider.documentId);
+		});
 
 		it("Compressors sync after detached container attaches and sends an op", async () => {
 			const testConfig: ITestContainerConfig = {

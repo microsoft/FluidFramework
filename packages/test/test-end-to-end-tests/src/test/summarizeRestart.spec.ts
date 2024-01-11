@@ -37,10 +37,10 @@ describeCompat(
 			return provider.makeTestContainer(testContainerConfig);
 		};
 
-	beforeEach("setup", async () => {
-		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
-	});
+		beforeEach("setup", async () => {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+			settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
+		});
 
 		itExpects(
 			"Closes the summarizing client instead of refreshing",
@@ -162,30 +162,30 @@ describeCompat(
 			},
 		);
 
-	itExpects(
-		"Closes the summarizing client instead of refreshing when failing to summarize",
-		[
-			{ eventName: "fluid:telemetry:Summarizer:Running:GarbageCollection_cancel" },
-			{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
-			{
-				eventName:
-					"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				category: "generic",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-				category: "generic",
-				error: "summary state stale - Unsupported option 'refreshLatestAck'",
-			},
-		],
-		async () => {
-			const container = await createContainer();
-			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			const counter = SharedCounter.create(dataObject.runtime, "counter");
-			dataObject.root.set("counter", counter.handle);
+		itExpects(
+			"Closes the summarizing client instead of refreshing when failing to summarize",
+			[
+				{ eventName: "fluid:telemetry:Summarizer:Running:GarbageCollection_cancel" },
+				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
+				{
+					eventName:
+						"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerDispose",
+					category: "generic",
+				},
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+					category: "generic",
+					error: "summary state stale - Unsupported option 'refreshLatestAck'",
+				},
+			],
+			async () => {
+				const container = await createContainer();
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const counter = SharedCounter.create(dataObject.runtime, "counter");
+				dataObject.root.set("counter", counter.handle);
 
 				// summary1
 				await provider.ensureSynchronized();

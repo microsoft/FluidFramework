@@ -346,15 +346,15 @@ describeCompat(
 			});
 		}
 
-	describe("Realize DataStore during Search while waiting for Summary Ack", () => {
-		beforeEach("setup", async () => {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-			// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
-			// time the summarizer client uploads a summary.
-			(provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-				provider.documentServiceFactory,
-				uploadSummaryCb,
-			);
+		describe("Realize DataStore during Search while waiting for Summary Ack", () => {
+			beforeEach("setup", async () => {
+				provider = getTestObjectProvider({ syncSummarizer: true });
+				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
+				// time the summarizer client uploads a summary.
+				(provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
+					provider.documentServiceFactory,
+					uploadSummaryCb,
+				);
 
 				mainContainer = await createContainer();
 				// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
