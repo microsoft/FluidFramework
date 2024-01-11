@@ -256,11 +256,9 @@ function createCompatDescribe(): DescribeCompat {
  * There are three compatVersion options to generate different combinations, depending of the need of the tests:
  * `FullCompat`: generate test variants with compat combinations that varies the version for all layers.
  * `LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
- * `NoCompat` - generate one test variant that doesn't varies version of any layers.
+ * Specific version (String) : specify a minimum compat version (e.g. "2.0.0-rc.1.0.0") which will be the minimum version a
+ * test suite will test against. This should be equal to the value of pkgVersion at the time you're writing the new test suite.
  *
- * New tests should not use `NoCompat` option and specify a minimum compat version (e.g. "2.0.0-rc.1.0.0")
- * which will be the minimum version a test suite will test against. This should be equal to the value of
- * pkgVersion at the time you're writing the new test suite.
  *
  * @internal
  */
