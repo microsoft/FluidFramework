@@ -66,7 +66,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 				Authorization: `Bearer ${this.bearer}`,
 			};
 			const resolvedP = Axios.post<IResolvedUrl>(
-				`${this.hostUrl}/api/v1/load`,
+				`${this.hostUrl}/apis/load`,
 				{
 					url: request.url,
 				},

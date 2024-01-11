@@ -90,7 +90,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		}
 	}
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 

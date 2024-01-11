@@ -199,7 +199,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		options: { enableOfflineLoad: true },
 	};
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);

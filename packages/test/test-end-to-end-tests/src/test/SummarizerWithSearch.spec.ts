@@ -340,7 +340,7 @@ describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObje
 	}
 
 	describe("Realize DataStore during Search while waiting for Summary Ack", () => {
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 			// time the summarizer client uploads a summary.

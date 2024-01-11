@@ -22,13 +22,22 @@ export interface Revertible {
 		readonly isLocal: boolean;
 	};
 	/**
-	 * Can be called in order to revert a change. A successful revert will automatically discard resources.
+	 * The current status of the revertible.
 	 */
-	revert(): RevertResult;
+	readonly status: RevertibleStatus;
 	/**
-	 * Should be called to garbage collect any resources associated with the revertible.
+	 * Reverts the associated change and decrements the reference count of the revertible.
 	 */
-	discard(): DiscardResult;
+	revert(): RevertibleResult;
+	/**
+	 * Increments the reference count of the revertible.
+	 * Should be called to prevent/delay the garbage collection of the resources associated with this revertible.
+	 */
+	retain(): RevertibleResult;
+	/**
+	 * Decrements the reference count of the revertible.
+	 */
+	discard(): RevertibleResult;
 }
 
 /**
@@ -51,25 +60,25 @@ export enum RevertibleKind {
 }
 
 /**
+ * The status of a {@link Revertible}.
+ *
+ * @internal
+ */
+export enum RevertibleStatus {
+	/** The revertible can be reverted. */
+	Valid,
+	/** The revertible has been disposed. Reverting it will have no effect. */
+	Disposed,
+}
+
+/**
  * The result of a revert operation.
  *
  * @internal
  */
-export enum RevertResult {
-	/** The revert was successful. */
+export enum RevertibleResult {
+	/** The operation was successful. */
 	Success,
-	/** The revert failed. */
-	Failure,
-}
-
-/**
- * The result of a discard operation.
- *
- * @internal
- */
-export enum DiscardResult {
-	/** The discard was successful. */
-	Success,
-	/** The discard failed. */
+	/** The operation failed. This occurs when attempting an operation on a disposed revertible */
 	Failure,
 }

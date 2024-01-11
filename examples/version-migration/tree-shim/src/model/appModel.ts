@@ -7,7 +7,7 @@ import type {
 	IInventoryList,
 	IInventoryListAppModel,
 	IMigrateBackingData,
-} from "../modelInterfaces";
+} from "../modelInterfaces.js";
 
 /**
  * The InventoryListAppModel just provides the inventory list, which is also capable of migrating its backing data.

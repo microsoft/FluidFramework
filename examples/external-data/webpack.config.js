@@ -18,6 +18,9 @@ module.exports = (env) => {
 				start: "./src/start.ts",
 			},
 			resolve: {
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+				},
 				extensions: [".ts", ".tsx", ".js"],
 				fallback: {
 					http: require.resolve("stream-http"),
