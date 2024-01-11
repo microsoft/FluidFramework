@@ -395,9 +395,11 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				MaxRetryAttempts, // maxRetries
 				InitialRetryIntervalInMs, // retryAfterMs
 				telemetryProperties,
+				undefined, // shouldIgnoreError
 				(e) =>
-					e.code === 11000 || e.message?.toString()?.indexOf("E11000 duplicate key") >= 0, // shouldIgnoreError
-				(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
+					(this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e)) ||
+					e.code === 11000 ||
+					e.message?.toString()?.indexOf("E11000 duplicate key") >= 0, // ShouldRetry
 				(error: any, numRetries: number, retryAfterInterval: number) =>
 					numRetries * retryAfterInterval, // calculateIntervalMs
 				(error) => {
