@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree-react-api",
-	"version": "2.0.0-internal.7.4.1",
+	"version": "2.0.0-internal.7.4.2",
 	"description": "Experimental SharedTree API for React integration.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
