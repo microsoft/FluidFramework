@@ -5,11 +5,9 @@
 export {
 	createChildMonitoringContext,
 	MonitoringContext,
-	IConfigProviderBase,
 	sessionStorageConfigProvider,
 	mixinMonitoringContext,
 	IConfigProvider,
-	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
 export {
@@ -18,6 +16,7 @@ export {
 	extractSafePropertiesFromMessage,
 	GenericError,
 	UsageError,
+	validatePrecondition,
 } from "./error";
 export {
 	extractLogSafeErrorProperties,
@@ -56,6 +55,7 @@ export {
 	IPerformanceEventMarkers,
 	ITelemetryLoggerPropertyBag,
 	ITelemetryLoggerPropertyBags,
+	MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,

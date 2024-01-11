@@ -10,8 +10,7 @@ import { ITokenClaims } from "./tokens";
 
 /**
  * Message sent to connect to the given document.
- *
- * @public
+ * @internal
  */
 export interface IConnect {
 	/**
@@ -80,8 +79,7 @@ export interface IConnect {
 
 /**
  * Message sent to indicate a client has connected to the server.
- *
- * @public
+ * @alpha
  */
 export interface IConnected {
 	/**

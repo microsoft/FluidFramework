@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { Change, SharedTree } from "@fluid-experimental/tree";
 import {
 	IAppState,
@@ -12,7 +11,7 @@ import {
 	makeBubble,
 	makeClient,
 } from "@fluid-example/bubblebench-common";
-import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy";
+import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy/index.js";
 
 interface IApp {
 	clients: IArrayish<IClient>;
@@ -48,7 +47,7 @@ export class AppState implements IAppState {
 		this.root = TreeObjectProxy<IApp>(this.tree, this.tree.currentView.root, this.update);
 
 		const json = makeClient(_width, _height, numBubbles);
-		const clientNode = fromJson<IClient>(tree, json as Serializable<IClient>);
+		const clientNode = fromJson(tree, json);
 		(this.clients as unknown as TreeArrayProxy<IClient>).pushNode(clientNode);
 		this.localClient = TreeObjectProxy(this.tree, clientNode.identifier, this.update);
 

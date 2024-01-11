@@ -5,20 +5,15 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { ConnectionState } from '@fluidframework/container-definitions';
-import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export interface ContainerSchema {
@@ -26,18 +21,18 @@ export interface ContainerSchema {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
 }): IRuntimeFactory;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(props: {
     container: IContainer;
     rootDataObject: IRootDataObject;
 }): IFluidContainer<TContainerSchema>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createServiceAudience<M extends IMember = IMember>(props: {
     container: IContainer;
     createServiceMember: (audienceMember: IClient) => M;
@@ -45,32 +40,10 @@ export function createServiceAudience<M extends IMember = IMember>(props: {
 
 // @public
 export type DataObjectClass<T extends IFluidLoadable> = {
-    readonly factory: IFluidDataStoreFactory;
+    readonly factory: {
+        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+    };
 } & LoadableObjectCtor<T>;
-
-// @public @deprecated
-export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    constructor(schema: ContainerSchema);
-    // (undocumented)
-    protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
-}
-
-// @public @deprecated
-export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<TContainerSchema> {
-    constructor(container: IContainer, rootDataObject: IRootDataObject);
-    attach(): Promise<string>;
-    get attachState(): AttachState;
-    connect(): Promise<void>;
-    get connectionState(): ConnectionState;
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    disconnect(): Promise<void>;
-    dispose(): void;
-    get disposed(): boolean;
-    get initialObjects(): InitialObjects<TContainerSchema>;
-    // @internal
-    readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
-    get isDirty(): boolean;
-}
 
 // @public
 export interface IConnection {
@@ -78,7 +51,7 @@ export interface IConnection {
     mode: "write" | "read";
 }
 
-// @public
+// @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
@@ -92,7 +65,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     readonly isDirty: boolean;
 }
 
-// @public
+// @public @sealed
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: () => void): void;
     (event: "disconnected", listener: () => void): void;
@@ -112,8 +85,14 @@ export type InitialObjects<T extends ContainerSchema> = {
     [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
 };
 
-// @public
-export interface IRootDataObject {
+// @internal (undocumented)
+export interface IProvideRootDataObject {
+    // (undocumented)
+    readonly IRootDataObject: IRootDataObject;
+}
+
+// @internal
+export interface IRootDataObject extends IProvideRootDataObject {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     readonly initialObjects: LoadableObjectRecord;
 }
@@ -143,7 +122,7 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-// @public
+// @internal
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @public
@@ -153,19 +132,6 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 export type Myself<M extends IMember = IMember> = M & {
     currentConnection: string;
 };
-
-// @public @deprecated
-export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
-    constructor(
-    container: IContainer);
-    protected readonly audience: IAudience;
-    protected readonly container: IContainer;
-    protected abstract createServiceMember(audienceMember: IClient): M;
-    getMembers(): Map<string, M>;
-    getMyself(): Myself<M> | undefined;
-    protected lastMembers: Map<string, M>;
-    protected shouldIncludeAsMember(member: IClient): boolean;
-}
 
 // @public
 export type SharedObjectClass<T extends IFluidLoadable> = {

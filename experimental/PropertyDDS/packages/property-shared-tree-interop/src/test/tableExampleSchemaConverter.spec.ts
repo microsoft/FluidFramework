@@ -7,13 +7,15 @@ import { strict as assert } from "assert";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	brand,
-	EmptyKey,
 	FieldKinds,
 	TreeNodeSchemaIdentifier,
 	schemaIsFieldNode,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	leaf,
-} from "@fluid-experimental/tree2";
+	FlexObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexFieldNodeSchema,
+} from "@fluidframework/tree";
 import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 
 const tableTypeName: TreeNodeSchemaIdentifier = brand("Test:Table-1.0.0");
@@ -105,7 +107,7 @@ describe("LlsSchemaConverter", () => {
 	it("Enum", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = fullSchemaData.nodeSchema.get(brand(`converted.${tableTypeName}`));
-		assert(table !== undefined);
+		assert(table instanceof FlexObjectNodeSchema);
 		const encoding = table.objectNodeFields.get(brand("encoding"));
 		assert(encoding !== undefined);
 		assert(encoding.types !== undefined);
@@ -118,21 +120,29 @@ describe("LlsSchemaConverter", () => {
 		for (const typeName of typeNames) {
 			const nodeSchema = fullSchemaData.nodeSchema.get(typeName);
 			assert(nodeSchema !== undefined);
-			nodeSchema.objectNodeFields.forEach((field, fieldKey) => {
-				if (field.types) {
-					field.types.forEach((type) => {
-						assert(
-							typeNames.has(type),
-							`Missing type "${type}" in tree schema "${typeName}" for a local field "${fieldKey}"`,
-						);
-					});
-				}
-			});
-			if (nodeSchema.mapFields?.types) {
+			if (nodeSchema instanceof FlexObjectNodeSchema) {
+				nodeSchema.objectNodeFields.forEach((field, fieldKey) => {
+					if (field.types) {
+						field.types.forEach((type) => {
+							assert(
+								typeNames.has(type),
+								`Missing type "${type}" in tree schema "${typeName}" for a local field "${fieldKey}"`,
+							);
+						});
+					}
+				});
+			} else if (nodeSchema instanceof FlexMapNodeSchema && nodeSchema.mapFields.types) {
 				nodeSchema.mapFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
-						`Missing type "${type}" in tree schema "${typeName}" for extra local fields`,
+						`Missing type "${type}" in tree schema "${typeName}" for map fields`,
+					);
+				});
+			} else if (nodeSchema instanceof FlexFieldNodeSchema && nodeSchema.info.types) {
+				nodeSchema.info.types.forEach((type) => {
+					assert(
+						typeNames.has(type),
+						`Missing type "${type}" in tree schema "${typeName}" for primary field`,
 					);
 				});
 			}
@@ -142,8 +152,7 @@ describe("LlsSchemaConverter", () => {
 	it("Check Structure", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = fullSchemaData.nodeSchema.get(brand(`converted.${tableTypeName}`));
-		assert(table !== undefined);
-		assert(table.objectNodeFields !== undefined);
+		assert(table instanceof FlexObjectNodeSchema);
 
 		const extendedRows = table.objectNodeFields.get(brand("extendedRows"));
 		assert(extendedRows !== undefined);
@@ -153,13 +162,13 @@ describe("LlsSchemaConverter", () => {
 		const extendedRowsSchema = fullSchemaData.nodeSchema.get(
 			brand("converted.Test:ExtendedRow-1.0.0"),
 		);
-		assert(extendedRowsSchema !== undefined);
+		assert(extendedRowsSchema instanceof FlexObjectNodeSchema);
 		const info = extendedRowsSchema.objectNodeFields.get(brand("info"));
 		assert(info !== undefined);
 		assert(info.types !== undefined);
 		assert(info.types.has(brand("converted.map<Test:RowInfo-1.0.0>")));
 		const infoType = fullSchemaData.nodeSchema.get(brand("converted.Test:RowInfo-1.0.0"));
-		assert(infoType !== undefined);
+		assert(infoType instanceof FlexObjectNodeSchema);
 
 		const uint64 = infoType.objectNodeFields.get(brand("data"));
 		assert(uint64 !== undefined);
@@ -170,18 +179,17 @@ describe("LlsSchemaConverter", () => {
 			fullSchemaData.nodeSchema.get(brand("converted.Uint64")) ?? fail("missing schema");
 		assert(schemaIsFieldNode(uint64Type));
 		assert(
-			uint64Type.objectNodeFields
-				.get(EmptyKey)
-				?.equals(TreeFieldSchema.create(FieldKinds.required, [leaf.number])),
+			uint64Type
+				.getFieldSchema()
+				.equals(FlexFieldSchema.create(FieldKinds.required, [leaf.number])),
 		);
 	});
 
 	it("Inheritance Translation", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const row = fullSchemaData.nodeSchema.get(brand("converted.array<Test:Row-1.0.0>"));
-		assert(row !== undefined);
-		assert(row.objectNodeFields !== undefined);
-		const field = row.objectNodeFields.get(EmptyKey);
+		assert(row instanceof FlexFieldNodeSchema);
+		const field = row.getFieldSchema();
 		assert(field !== undefined);
 		assert(field.types !== undefined);
 		assert(field.types.has(brand("converted.Test:Row-1.0.0")));

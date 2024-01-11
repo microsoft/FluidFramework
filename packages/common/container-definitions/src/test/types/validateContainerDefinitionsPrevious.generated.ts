@@ -168,26 +168,14 @@ use_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerErrorType": {"forwardCompat": false}
+* "RemovedEnumDeclaration_ContainerErrorType": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_ContainerErrorType():
-    TypeOnly<old.ContainerErrorType>;
-declare function use_current_EnumDeclaration_ContainerErrorType(
-    use: TypeOnly<current.ContainerErrorType>): void;
-use_current_EnumDeclaration_ContainerErrorType(
-    get_old_EnumDeclaration_ContainerErrorType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerErrorType": {"backCompat": false}
+* "RemovedEnumDeclaration_ContainerErrorType": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_ContainerErrorType():
-    TypeOnly<current.ContainerErrorType>;
-declare function use_old_EnumDeclaration_ContainerErrorType(
-    use: TypeOnly<old.ContainerErrorType>): void;
-use_old_EnumDeclaration_ContainerErrorType(
-    get_current_EnumDeclaration_ContainerErrorType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1052,30 +1040,6 @@ declare function use_old_TypeAliasDeclaration_ILoaderOptions(
     use: TypeOnly<old.ILoaderOptions>): void;
 use_old_TypeAliasDeclaration_ILoaderOptions(
     get_current_TypeAliasDeclaration_ILoaderOptions());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IPendingLocalState():
-    TypeOnly<old.IPendingLocalState>;
-declare function use_current_InterfaceDeclaration_IPendingLocalState(
-    use: TypeOnly<current.IPendingLocalState>): void;
-use_current_InterfaceDeclaration_IPendingLocalState(
-    get_old_InterfaceDeclaration_IPendingLocalState());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingLocalState": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IPendingLocalState():
-    TypeOnly<current.IPendingLocalState>;
-declare function use_old_InterfaceDeclaration_IPendingLocalState(
-    use: TypeOnly<old.IPendingLocalState>): void;
-use_old_InterfaceDeclaration_IPendingLocalState(
-    get_current_InterfaceDeclaration_IPendingLocalState());
 
 /*
 * Validate forward compat by using old type in place of current type

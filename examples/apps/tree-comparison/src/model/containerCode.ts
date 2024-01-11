@@ -7,14 +7,17 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
-import { InventoryListAppModel } from "./appModel";
-import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList";
-import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import { InventoryListAppModel } from "./appModel.js";
+import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList.js";
+import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
 
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
 export const newTreeInventoryListId = "new-tree-inventory-list";
 
+/**
+ * @internal
+ */
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(
@@ -22,6 +25,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 				LegacyTreeInventoryListFactory.registryEntry,
 				NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
+			{ enableRuntimeIdCompressor: true },
 		);
 	}
 

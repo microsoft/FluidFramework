@@ -29,12 +29,6 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
-
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -79,6 +73,8 @@ forming its own release group):
 Dependencies between packages in various layers of the system are enforced via a build step called
 [layer-check](./build-tools/packages/build-tools/src/layerCheck). You can view the full list of packages and layers in
 [PACKAGES.md](./PACKAGES.md).
+
+-   Note: to update the contents of `PACKAGES.md` for local package changes, run `pnpm layer-check --md .`.
 
 ## Setup and Building
 

@@ -4,51 +4,58 @@
  */
 
 import {
-	AllowedUpdateType,
-	ForestType,
-	ISharedTree,
 	Tree,
-	TypedNode,
-	SchemaBuilder,
-	SharedTreeFactory,
-	typeboxValidator,
-} from "@fluid-experimental/tree2";
+	TreeConfiguration,
+	SchemaFactory,
+	SharedTree,
+	NodeFromSchema,
+} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
-const builder = new SchemaBuilder({ scope: "inventory app" });
+const builder = new SchemaFactory("inventory app");
 
-const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
+export class InventoryItem extends builder.object("Contoso:InventoryItem-1.0.0", {
 	// Some unique identifier appropriate for the inventory scenario (e.g. a UPC or model number)
 	id: builder.string,
 	// A user-friendly name
 	name: builder.string,
 	// The number in stock
 	quantity: builder.number,
-});
-type InventoryItemNode = TypedNode<typeof inventoryItemSchema>;
+}) {}
+const InventoryItemList = builder.array(InventoryItem);
+type InventoryItemList = NodeFromSchema<typeof InventoryItemList>;
 
-const inventoryItemList = builder.list(inventoryItemSchema);
-type InventoryItemList = TypedNode<typeof inventoryItemList>;
+export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
+	inventoryItemList: InventoryItemList,
+}) {}
 
-const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
-	inventoryItemList,
-});
+export const treeConfiguration = new TreeConfiguration(
+	InventorySchema,
+	() =>
+		new InventorySchema({
+			inventoryItemList: [
+				{
+					id: uuid(),
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					id: uuid(),
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		}),
+);
 
-// This call finalizes the schema into an object we can pass to schematize.
-const schema = builder.intoSchema(inventorySchema);
-
-const newTreeFactory = new SharedTreeFactory({
-	jsonValidator: typeboxValidator,
-	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
-	forest: ForestType.Reference,
-});
+const newTreeFactory = SharedTree.getFactory();
 
 const sharedTreeKey = "sharedTree";
 
@@ -73,14 +80,14 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		this._inventoryItemNode.quantity = newQuantity;
 	}
 	public constructor(
-		private readonly _inventoryItemNode: InventoryItemNode,
+		private readonly _inventoryItemNode: InventoryItem,
 		private readonly _removeItemFromTree: () => void,
 	) {
 		super();
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "changing", () => {
+		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "afterChange", () => {
 			this.emit("quantityChanged");
 		});
 	}
@@ -93,8 +100,8 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 }
 
 export class NewTreeInventoryList extends DataObject implements IInventoryList {
-	private _sharedTree: ISharedTree | undefined;
-	private get sharedTree(): ISharedTree {
+	private _sharedTree: SharedTree | undefined;
+	private get sharedTree(): SharedTree {
 		if (this._sharedTree === undefined) {
 			throw new Error("Not initialized properly");
 		}
@@ -124,10 +131,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(
-			undefined,
-			newTreeFactory.type,
-		) as ISharedTree;
+		this._sharedTree = this.runtime.createChannel(undefined, newTreeFactory.type) as SharedTree;
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 		// Convenient repro for bug AB#5975
 		// const retrievedSharedTree = await this._sharedTree.handle.get();
@@ -140,7 +144,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	// This would usually live in hasInitialized - I'm using initializingFromExisting here due to bug AB#5975.
 	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		this._sharedTree = await this.root.get<IFluidHandle<SharedTree>>(sharedTreeKey)!.get();
 	}
 
 	protected async hasInitialized(): Promise<void> {
@@ -152,27 +156,8 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		// 3. On all loads, gets an (untyped) view of the data (the contents can't be accessed directly from the sharedTree).
 		// Then the root2() call applies a typing to the untyped view based on our schema.  After that we can actually
 		// reach in and grab the inventoryItems list.
-		this._inventoryItemList = this.sharedTree.schematize({
-			initialTree: {
-				inventoryItemList: {
-					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
-					"": [
-						{
-							id: uuid(),
-							name: "nut",
-							quantity: 0,
-						},
-						{
-							id: uuid(),
-							name: "bolt",
-							quantity: 0,
-						},
-					],
-				},
-			},
-			allowedSchemaModifications: AllowedUpdateType.None,
-			schema,
-		}).root.inventoryItemList;
+		this._inventoryItemList =
+			this.sharedTree.schematize(treeConfiguration).root.inventoryItemList;
 		// afterChange will fire for any change of any type anywhere in the subtree.  In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
 		// Since "afterChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
@@ -213,7 +198,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	}
 
 	private makeInventoryItemFromInventoryItemNode(
-		inventoryItemNode: InventoryItemNode,
+		inventoryItemNode: InventoryItem,
 	): NewTreeInventoryItem {
 		const removeItemFromTree = () => {
 			// We pass in the delete capability as a callback to withold this.inventory access from the

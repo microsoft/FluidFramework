@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { ClientWrapper } from "./client";
-import { ClientsField, FlexClient, FlexBubble } from "./schema";
+import { ClientWrapper } from "./client.js";
+import { ClientsField, FlexClient, FlexBubble } from "./schema.js";
 
 export class AppState implements IAppState {
 	readonly localClient: ClientWrapper;
@@ -16,7 +16,9 @@ export class AppState implements IAppState {
 		numBubbles: number,
 	) {
 		clientsSequence.insertAtEnd([this.createInitialClientNode(numBubbles)]);
-		const lastCLient = clientsSequence.boxedAt(clientsSequence.length - 1);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const lastCLient = clientsSequence.boxedAt(clientsSequence.length - 1)!;
+
 		this.localClient = new ClientWrapper(lastCLient);
 
 		console.log(

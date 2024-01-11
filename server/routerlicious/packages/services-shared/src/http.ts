@@ -10,6 +10,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Check a given path string for path traversal (e.g. "../" or "/").
+ * @internal
  */
 export function containsPathTraversal(path: string): boolean {
 	const parsedPath = parse(path);
@@ -18,6 +19,7 @@ export function containsPathTraversal(path: string): boolean {
 
 /**
  * Validate specific request parameters to prevent directory traversal.
+ * @internal
  */
 export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
 	return (req, res, next) => {
@@ -39,6 +41,7 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 
 /**
  * Converts the request param to a boolean
+ * @internal
  */
 export function getBooleanParam(param: any): boolean {
 	return param === undefined ? false : typeof param === "boolean" ? param : param === "true";
@@ -46,11 +49,13 @@ export function getBooleanParam(param: any): boolean {
 
 /**
  * Default error message sent to API consumer when an unknown error is encountered.
+ * @internal
  */
 export const defaultErrorMessage = "Internal Server Error";
 
 /**
  * Header to denote that the container is ephemeral.
+ * @internal
  */
 export const IsEphemeralContainer = "Is-Ephemeral-Container";
 
@@ -62,6 +67,7 @@ export const IsEphemeralContainer = "Is-Ephemeral-Container";
  * @param errorStatus - Overrides any error status code; leave undefined for pass-through error codes or 400 default.
  * @param successStatus - Status to send when result is successful. Default: 200
  * @param onSuccess - Additional callback fired when response is successful before sending response.
+ * @internal
  */
 export function handleResponse<T>(
 	resultP: Promise<T>,

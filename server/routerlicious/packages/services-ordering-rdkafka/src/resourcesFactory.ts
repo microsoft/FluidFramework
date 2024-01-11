@@ -15,6 +15,9 @@ import sillyname from "sillyname";
 import { Provider } from "nconf";
 import { RdkafkaConsumer } from "./rdkafkaConsumer";
 
+/**
+ * @internal
+ */
 export interface IRdkafkaResources extends IResources {
 	lambdaFactory: IPartitionLambdaFactory;
 
@@ -23,6 +26,9 @@ export interface IRdkafkaResources extends IResources {
 	config: Provider;
 }
 
+/**
+ * @internal
+ */
 export class RdkafkaResources implements IRdkafkaResources {
 	constructor(
 		public lambdaFactory: IPartitionLambdaFactory,
@@ -36,6 +42,9 @@ export class RdkafkaResources implements IRdkafkaResources {
 	}
 }
 
+/**
+ * @internal
+ */
 export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResources> {
 	constructor(
 		private readonly name: string,

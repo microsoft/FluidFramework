@@ -52,10 +52,6 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 			const { start, end } = editor.selection;
 			return start < end;
 		};
-		const insertTags = (tags: TagName[]) => {
-			const selection = editor.selection;
-			flowDocument.insertTags(tags, selection.start, selection.end);
-		};
 		const setFormat = (tag: TagName) => {
 			const { end } = editor.selection;
 
@@ -150,13 +146,6 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 					},
 				},
 				{
-					name: "ol",
-					enabled: always,
-					exec: () => {
-						insertTags([TagName.ol, TagName.li]);
-					},
-				},
-				{
 					name: "p",
 					enabled: always,
 					exec: () => {
@@ -168,13 +157,6 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 					enabled: always,
 					exec: () => {
 						switchFormatter(htmlFormatter);
-					},
-				},
-				{
-					name: "ul",
-					enabled: always,
-					exec: () => {
-						insertTags([TagName.ul, TagName.li]);
 					},
 				},
 				{

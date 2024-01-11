@@ -20,6 +20,7 @@ import {
 	LocationRedirectionError,
 } from "@fluidframework/driver-utils";
 import {
+	OdspErrorTypes,
 	snapshotKey,
 	ICacheEntry,
 	IEntry,
@@ -29,7 +30,6 @@ import {
 	IOdspErrorAugmentations,
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	fetchAndParseAsJSONHelper,
 	fetchArray,
@@ -44,7 +44,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection";
 
 /**
- * @public
+ * @alpha
  */
 export type FetchType =
 	| "blob"
@@ -60,7 +60,7 @@ export type FetchType =
 	| "versions";
 
 /**
- * @public
+ * @alpha
  */
 export type FetchTypeInternal = FetchType | "cache";
 
@@ -83,7 +83,7 @@ export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
- * @public
+ * @alpha
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
@@ -292,7 +292,7 @@ export class EpochTracker implements IPersistedFileCache {
 				// location info.
 				if (
 					isFluidError(error) &&
-					error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
+					error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 				) {
 					const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
 					if (redirectLocation !== undefined) {
@@ -436,7 +436,7 @@ export class EpochTracker implements IPersistedFileCache {
 		fetchType: FetchTypeInternal,
 		fromCache: boolean = false,
 	) {
-		if (isFluidError(error) && error.errorType === DriverErrorType.fileOverwrittenInStorage) {
+		if (isFluidError(error) && error.errorType === OdspErrorTypes.fileOverwrittenInStorage) {
 			const epochError = this.checkForEpochErrorCore(epochFromResponse);
 			if (epochError !== undefined) {
 				epochError.addTelemetryProperties({
@@ -470,7 +470,7 @@ export class EpochTracker implements IPersistedFileCache {
 			// Difference - client detected mismatch, instead of server detecting it.
 			return new NonRetryableError(
 				"Epoch mismatch",
-				DriverErrorType.fileOverwrittenInStorage,
+				OdspErrorTypes.fileOverwrittenInStorage,
 				{ driverVersion, serverEpoch: epochFromResponse, clientEpoch: this.fluidEpoch },
 			);
 		}
@@ -603,7 +603,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ICacheAndTracker {
 	cache: IOdspCache;

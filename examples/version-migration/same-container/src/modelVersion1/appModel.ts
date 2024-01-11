@@ -10,12 +10,12 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { parseStringDataVersionOne, readVersion } from "../dataTransform";
+import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type {
 	IInventoryListAppModel,
 	IInventoryListAppModelEvents,
 	IInventoryList,
-} from "../modelInterfaces";
+} from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListAppModelExportFormat1 = string;

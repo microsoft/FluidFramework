@@ -6,7 +6,7 @@
 import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
 /**
- * @public
+ * @alpha
  */
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 	dataStorePath: string;
@@ -17,7 +17,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 }
 
 /**
- * @public
+ * @internal
  */
 export enum SharingLinkHeader {
 	// Can be used in request made to resolver, to tell the resolver that the passed in URL is a sharing link
@@ -26,13 +26,13 @@ export enum SharingLinkHeader {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISharingLinkHeader {
 	[SharingLinkHeader.isSharingLinkToRedeem]: boolean;
 }
 /**
- * @public
+ * @internal
  */
 export enum ClpCompliantAppHeader {
 	// Can be used in request made to resolver, to tell the resolver that the host app is CLP compliant.
@@ -41,7 +41,7 @@ export enum ClpCompliantAppHeader {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IClpCompliantAppHeader {
 	[ClpCompliantAppHeader.isClpCompliantApp]: boolean;

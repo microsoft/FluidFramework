@@ -6,6 +6,9 @@
 import { fetch } from "./fetch";
 import { IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth";
 
+/**
+ * @internal
+ */
 export async function getAsync(
 	url: string,
 	authRequestInfo: IOdspAuthRequestInfo,
@@ -13,6 +16,9 @@ export async function getAsync(
 	return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config));
 }
 
+/**
+ * @internal
+ */
 export async function putAsync(
 	url: string,
 	authRequestInfo: IOdspAuthRequestInfo,
@@ -26,6 +32,9 @@ export async function putAsync(
 	});
 }
 
+/**
+ * @internal
+ */
 export async function postAsync(
 	url: string,
 	body: any,
@@ -41,6 +50,9 @@ export async function postAsync(
 	});
 }
 
+/**
+ * @internal
+ */
 export async function unauthPostAsync(url: string, body: any): Promise<Response> {
 	return safeRequestCore(async () => {
 		return fetch(url, { body, method: "POST" });

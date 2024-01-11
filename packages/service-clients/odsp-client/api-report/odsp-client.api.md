@@ -5,17 +5,23 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITokenProvider } from '@fluidframework/azure-client';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
-// @alpha
+// @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-// @alpha @sealed
+// @beta
+export interface IOdspTokenProvider {
+    fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+    fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+}
+
+// @beta @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
@@ -30,33 +36,33 @@ export class OdspClient {
     }>;
 }
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export interface OdspClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: OdspConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 
-// @alpha
+// @beta
 export interface OdspConnectionConfig {
     driveId: string;
+    filePath: string;
     siteUrl: string;
-    tokenProvider: ITokenProvider;
+    tokenProvider: IOdspTokenProvider;
 }
 
-// @alpha
+// @beta
 export interface OdspContainerServices {
     audience: IOdspAudience;
 }
 
-// @alpha
+// @beta
 export interface OdspMember extends IMember {
-    // (undocumented)
     email: string;
-    // (undocumented)
     name: string;
+    userId: string;
 }
 
-// (No @packageDocumentation comment for this package)
+export { TokenResponse }
 
 ```

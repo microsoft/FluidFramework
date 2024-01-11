@@ -65,16 +65,3 @@ export {
 	SummarizeInternalFn,
 	totalBlobSizePropertyName,
 } from "./summary";
-export {
-	IIdCompressorCore,
-	IIdCompressor,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithOngoingSession,
-	SerializedIdCompressorWithNoSession,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
-	SessionId,
-	StableId,
-	IdCreationRange,
-	initialClusterCapacity,
-} from "./id-compressor";

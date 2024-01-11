@@ -18,6 +18,7 @@ historian:
   ingressClass: ingress_class
   riddler: riddler_url
   ignoreEphemeralFlag: true
+  enableResponseCloseLatencyMetric: true
   storageUrl: historian_storage_url
   error:
     track: true
@@ -35,6 +36,15 @@ historian:
   system:
     httpServer:
       connectionTimeoutMs: 0
+  config:
+    configDumpEnabled: false
+    secretNamesToRedactInConfigDump:
+      - mongo.globalDbEndpoint
+      - mongo.operationsDbEndpoint
+      - redis.pass
+      - redisForTenantCache.pass
+      - redis2.pass
+      - redisForThrottling.pass
 
 gitrest:
   name: gitrest
@@ -67,9 +77,19 @@ gitrest:
     maxRetriesPerRequest: 20
     enableAutoPipelining: false
     enableOfflineQueue: true
+  enableResponseCloseLatencyMetric: true
   system:
     httpServer:
       connectionTimeoutMs: 0
+  config:
+    configDumpEnabled: false
+    secretNamesToRedactInConfigDump:
+      - mongo.globalDbEndpoint
+      - mongo.operationsDbEndpoint
+      - redis.pass
+      - redisForTenantCache.pass
+      - redis2.pass
+      - redisForThrottling.pass
 
 gitssh:
   name: gitssh
@@ -77,4 +97,5 @@ gitssh:
 
 lumberjack:
   options:
+    enableGlobalTelemetryContext: true
     enableSanitization: false

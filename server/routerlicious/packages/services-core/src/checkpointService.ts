@@ -18,6 +18,9 @@ import { IDeliState, IDocument, IScribe } from "./document";
 
 type DocumentLambda = "deli" | "scribe";
 
+/**
+ * @internal
+ */
 export class CheckpointService implements ICheckpointService {
 	constructor(
 		private readonly checkpointRepository: ICheckpointRepository,
@@ -334,6 +337,9 @@ export class CheckpointService implements ICheckpointService {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface ICheckpointService {
 	writeCheckpoint(
 		documentId: string,

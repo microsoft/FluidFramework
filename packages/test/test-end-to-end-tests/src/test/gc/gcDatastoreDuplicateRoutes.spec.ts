@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -13,23 +12,23 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { SharedMap } from "@fluidframework/map";
 import { gcTreeKey, gcBlobPrefix } from "@fluidframework/runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { IGarbageCollectionState } from "@fluidframework/container-runtime/dist/gc/index.js";
+import { IGarbageCollectionState } from "@fluidframework/container-runtime/test/gc";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
  * Validates this scenario: When two DDSes in the same datastore has one change, gets summarized, and then gc is called
  * from loading a new container. We do not want to allow duplicate GC routes to be created in this scenario.
  */
-describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
+describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let mainDataStore: ITestDataObject;
@@ -42,7 +41,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 	});
 

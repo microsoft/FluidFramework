@@ -8,11 +8,14 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
+/**
+ * @internal
+ */
 export function createServiceAudience<M extends IMember = IMember>(props: {
 	container: IContainer;
 	createServiceMember: (audienceMember: IClient) => M;
 }): IServiceAudience<M> {
-	return new NewServiceAudience<M>(props.container, props.createServiceMember);
+	return new ServiceAudience(props.container, props.createServiceMember);
 }
 
 /**
@@ -24,16 +27,16 @@ export function createServiceAudience<M extends IMember = IMember>(props: {
  * the user and client details returned in {@link IMember}.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
- * @deprecated use {@link createServiceAudience} and {@link IServiceAudience} instead
+ * @internal
  */
-export abstract class ServiceAudience<M extends IMember = IMember>
+class ServiceAudience<M extends IMember = IMember>
 	extends TypedEventEmitter<IServiceAudienceEvents<M>>
 	implements IServiceAudience<M>
 {
 	/**
 	 * Audience object which includes all the existing members of the {@link IFluidContainer | container}.
 	 */
-	protected readonly audience: IAudience;
+	private readonly audience: IAudience;
 
 	/**
 	 * Retain the most recent member list.
@@ -52,13 +55,14 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	 * every `addMember` event. It is mapped `clientId` to `M` to be better work with what the {@link IServiceAudience}
 	 * events provide.
 	 */
-	protected lastMembers = new Map<string, M>();
+	private lastMembers = new Map<string, M>();
 
 	constructor(
 		/**
 		 * Fluid Container to read the audience from.
 		 */
-		protected readonly container: IContainer,
+		private readonly container: IContainer,
+		private readonly createServiceMember: (audienceMember: IClient) => M,
 	) {
 		super();
 		this.audience = container.audience;
@@ -84,13 +88,6 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 
 		this.container.on("connected", () => this.emit("membersChanged"));
 	}
-
-	/**
-	 * Provides ability for inheriting class to modify/extend the audience object.
-	 *
-	 * @param audienceMember - Record of a specific audience member.
-	 */
-	protected abstract createServiceMember(audienceMember: IClient): M;
 
 	/**
 	 * {@inheritDoc IServiceAudience.getMembers}
@@ -160,28 +157,8 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	 *
 	 * @param member - Member to be included/omitted.
 	 */
-	protected shouldIncludeAsMember(member: IClient): boolean {
+	private shouldIncludeAsMember(member: IClient): boolean {
 		// Include only human members
 		return member.details.capabilities.interactive;
-	}
-}
-
-/**
- * this class should be removed, and integrated ServiceAudience after service audience is remove from the exports.
- * this is just to maintain backward compatibility
- */
-class NewServiceAudience<M extends IMember = IMember> extends ServiceAudience<M> {
-	constructor(
-		/**
-		 * Fluid Container to read the audience from.
-		 */
-		container: IContainer,
-		private readonly _createServiceMember: (audienceMember: IClient) => M,
-	) {
-		super(container);
-	}
-
-	protected createServiceMember(audienceMember: IClient): M {
-		return this._createServiceMember(audienceMember);
 	}
 }

@@ -24,7 +24,8 @@ import {
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
-import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { type IConfigProviderBase, type FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { createAzureAudienceMember } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
@@ -51,7 +52,6 @@ const MAX_VERSION_COUNT = 5;
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
  * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
- *
  * @public
  */
 export class AzureClient {
@@ -188,7 +188,7 @@ export class AzureClient {
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
+		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
 			rootDataObject,
@@ -281,7 +281,7 @@ export class AzureClient {
 			getTenantId(connection),
 		);
 
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -302,6 +302,15 @@ export class AzureClient {
 		});
 		fluidContainer.attach = attach;
 		return fluidContainer;
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		assert(
+			rootDataObject.IRootDataObject !== undefined,
+			"entryPoint must be of type IRootDataObject",
+		);
+		return rootDataObject.IRootDataObject;
 	}
 	// #endregion
 }
