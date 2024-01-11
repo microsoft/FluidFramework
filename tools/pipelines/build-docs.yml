@@ -88,9 +88,10 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
-# TODO: include release/* branches as trigger. Currently, the website docs builds and deploys on each commit.
-# However, inconsistencies between the release branches and main is causing the website to change unexpectedly
-# we can re include the release/* branch to the trigger after separating the deploy step to another pipeline
+# TODO: Move trigger to pipeline designated for artifact model generation. Currently, 
+# the website docs builds and deploys on each commit. However, inconsistencies between 
+# the release branches and main is causing the website to change unexpectedly we can 
+# move the release/* trigger after separating the deploy step to another pipeline
 # no PR triggers
 trigger:
   branches:
