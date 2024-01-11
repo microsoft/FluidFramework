@@ -58,7 +58,7 @@ export class RedisFsManager implements IFileSystemManager {
 }
 
 export class RedisFs implements IFileSystemPromises {
-	private static instance: RedisFs;
+	private static redisClientInstance: IoRedis;
 	public readonly redisFsClient: IRedis;
 
 	constructor(
@@ -68,10 +68,17 @@ export class RedisFs implements IFileSystemPromises {
 		fsManagerParams?: IFileSystemManagerParams,
 		createRedisClient: (options: IoRedisOptions) => IoRedis = (opts) => new IoRedis(opts),
 	) {
-		const redisClient = createRedisClient(redisOptions);
-		this.redisFsClient = fsManagerParams?.rootDir
-			? new HashMapRedis(fsManagerParams.rootDir, redisClient, redisParams)
-			: new Redis(redisClient, redisParams);
+		if (!RedisFs.redisClientInstance) {
+			RedisFs.redisClientInstance = createRedisClient(redisOptions);
+		}
+		this.redisFsClient =
+			fsManagerParams?.rootDir && redisParams.enableHashmapRedisFs
+				? new HashMapRedis(
+						fsManagerParams.rootDir,
+						RedisFs.redisClientInstance,
+						redisParams,
+				  )
+				: new Redis(RedisFs.redisClientInstance, redisParams);
 	}
 
 	public static getInstance(
@@ -81,16 +88,13 @@ export class RedisFs implements IFileSystemPromises {
 		fsManagerParams?: IFileSystemManagerParams,
 		createRedisClient?: (options: IoRedisOptions) => IoRedis,
 	): RedisFs {
-		if (!RedisFs.instance) {
-			RedisFs.instance = new RedisFs(
-				redisParams,
-				redisOptions,
-				redisFsConfig,
-				fsManagerParams,
-				createRedisClient,
-			);
-		}
-		return RedisFs.instance;
+		return new RedisFs(
+			redisParams,
+			redisOptions,
+			redisFsConfig,
+			fsManagerParams,
+			createRedisClient,
+		);
 	}
 
 	/**

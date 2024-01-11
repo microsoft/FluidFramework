@@ -7,7 +7,12 @@ import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as IoRedis from "ioredis";
 
+export const debug = (msg: string) => {
+	process.stdout.write(`${msg}\n`);
+};
+
 export interface RedisParams {
+	enableHashmapRedisFs: boolean;
 	expireAfterSeconds: number;
 }
 
@@ -120,6 +125,10 @@ export class HashMapRedis implements IRedis {
 	}
 
 	public async get<T>(key: string): Promise<T> {
+		if (!this.getMapPropertyKey(key) || this.mapKey.startsWith(key)) {
+			// This is a readDir for part of the root directory, so we don't need to get anything in the hash map
+			return "" as unknown as T;
+		}
 		const stringValue = await this.client.hget(this.getMapKey(), this.getMapPropertyKey(key));
 		return JSON.parse(stringValue) as T;
 	}
@@ -129,22 +138,23 @@ export class HashMapRedis implements IRedis {
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		// Set values in the hash map and returns the count of set key/value pairs
-		const result = await this.client.hset(
+		if (!this.getMapPropertyKey(key) || (!value && this.mapKey.startsWith(key))) {
+			// This is a createDirectory for the root directory, so we don't need to set anything in the hash map
+			return;
+		}
+		// Set values in the hash map and returns the count of set key/value pairs.
+		// However, if it's a duplicate key, it will return 0, so we can't rely on the return value to determine success.
+		await this.client.hset(
 			this.getMapKey(),
 			this.getMapPropertyKey(key),
 			JSON.stringify(value),
 		);
 		// Update the expiration time for the hash map
 		await this.client.expire(this.getMapKey(), expireAfterSeconds);
-
-		if (result === 0) {
-			throw new Error(`Failed to write 1 key/value to Redis hash map.`);
-		}
 	}
 
 	public async del(key: string): Promise<boolean> {
-		if (key === this.mapKey) {
+		if (this.mapKey.startsWith(key)) {
 			return this.delAll();
 		}
 		const result = await this.client.hdel(this.getMapKey(), this.getMapPropertyKey(key));

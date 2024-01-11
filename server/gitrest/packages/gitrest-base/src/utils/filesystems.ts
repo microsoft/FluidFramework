@@ -66,8 +66,10 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			};
 		}
 
+		const enableHashmapRedisFs = (config.get("git:enableHashmapRedisFs") as boolean) ?? false;
 		this.redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
+			enableHashmapRedisFs,
 		};
 	}
 

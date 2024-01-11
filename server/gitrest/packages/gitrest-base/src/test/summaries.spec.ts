@@ -108,7 +108,7 @@ const testModes = permuteFlags({
 	enableSlimGitInit: false,
 }) as unknown as ISummaryTestMode[];
 
-type GitFileSystem = "memfs" | "redisfs";
+type GitFileSystem = "memfs" | "redisfs" | "hashmap-redisfs";
 
 const getFsManagerFactory = (
 	fileSystem: GitFileSystem,
@@ -130,10 +130,11 @@ const getFsManagerFactory = (
 			},
 		};
 	}
-	if (fileSystem === "redisfs") {
+	if (fileSystem === "redisfs" || fileSystem === "hashmap-redisfs") {
 		const redisConfig = new Provider({}).use("memory").defaults({
 			git: {
 				enableRedisFsMetrics: false,
+				enableHashmapRedisFs: fileSystem === "hashmap-redisfs",
 				redisApiMetricsSamplingPeriod: 0,
 			},
 			redis: {
@@ -181,13 +182,13 @@ const getFsManagerFactory = (
 	throw new Error(`Unknown file system ${fileSystem}`);
 };
 
-const testFileSystems: GitFileSystem[] = ["memfs", "redisfs"];
+const testFileSystems: GitFileSystem[] = ["memfs", "redisfs", "hashmap-redisfs"];
 testFileSystems.forEach((fileSystem) => {
 	const { fsManagerFactory, fsCleanup, fsCheckSizeBytes, getFsSpy } =
 		getFsManagerFactory(fileSystem);
 	testModes.forEach((testMode) => {
 		describe(`Summaries (${JSON.stringify({ fileSystem, ...testMode })})`, () => {
-			const tenantId = "gitrest-summaries-test";
+			const tenantId = "gitrest-summaries-test-tenantId";
 			let documentId: string;
 			let repoManager: IRepositoryManager;
 			const getWholeSummaryManager = (

@@ -212,7 +212,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 
 		const fileSystemManager = fileSystemManagerFactory.create({
 			...params.fileSystemManagerParams,
-			rootDir: repoPath,
+			rootDir: directoryPath,
 		});
 
 		// We define the function below to be able to call it either on its own or within the mutex.
