@@ -79,11 +79,12 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
 		skipPackage: (apiPackage) => {
-			// Skip `@fluid-internal` and `@fluid-private` packages
 			const packageName = apiPackage.displayName;
 			const packageScope = PackageName.getScope(packageName);
 
-			return ["@fluid-internal", "@fluid-private"].includes(packageScope);
+			// Skip `@fluid-private` packages
+			// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
+			return ["@fluid-private"].includes(packageScope);
 		},
 		frontMatter: (apiItem) =>
 			createHugoFrontMatter(apiItem, config, customRenderers, apiVersionNum),

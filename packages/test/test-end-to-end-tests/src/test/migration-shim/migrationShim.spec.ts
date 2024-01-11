@@ -142,7 +142,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 
