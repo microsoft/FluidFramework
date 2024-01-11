@@ -66,6 +66,9 @@ importers:
       rimraf: 4.4.1
       sort-json: 2.0.1
       typescript: 5.1.6
+    dependenciesMeta:
+      eslint-plugin-custom-rules:
+        injected: true
 
 packages:
 
