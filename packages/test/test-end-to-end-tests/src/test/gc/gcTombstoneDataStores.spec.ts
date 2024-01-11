@@ -156,8 +156,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
-		// TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,
-		// but it is detected - it's stored in the pending queue and the container closes before the error is sent.
+		// Send a trailing op to the unreferenced datastore for additional scenario coverage
 		testDataObject._root.set("send while unreferenced", "op");
 		await provider.ensureSynchronized();
 
