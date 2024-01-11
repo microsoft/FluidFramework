@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/react-inputs",
-	"version": "2.0.0-internal.7.4.1",
+	"version": "2.0.0-internal.7.4.2",
 	"description": "React support for the Aqueduct framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
