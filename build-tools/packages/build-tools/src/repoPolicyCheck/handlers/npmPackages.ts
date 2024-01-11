@@ -1480,7 +1480,7 @@ export const handlers: Handler[] = [
 
 			if (errors.length > 0) {
 				return [
-					`API-Extractor violations for public package "${packageJson.name}":`,
+					`Policy violations for public package "${packageJson.name}":`,
 					...errors,
 				].join(`${newline}* `);
 			}
