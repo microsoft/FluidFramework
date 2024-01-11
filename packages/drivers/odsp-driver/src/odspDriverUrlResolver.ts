@@ -10,10 +10,7 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import {
-	IOdspResolvedUrl,
-	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
