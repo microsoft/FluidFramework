@@ -104,9 +104,13 @@ export function handleIncomingMessage(
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
+	// if(isDevtoolsMessage(message)){
+	// 	console.log("I GOT A DEVTOOLS MESSAGE");
+	// }
 	// TODO: remove loggingOptions once things settle.
-
 	if (message === undefined || !isDevtoolsMessage(message)) {
+		console.log("I GOT SMTH WEIRD");
+		console.log(message);
 		return;
 	}
 

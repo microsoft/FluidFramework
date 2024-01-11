@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { browser } from "../Globals";
-
+import { initializePopupView } from "./InitializePopupView";
 /**
  * This module is the extensions "pop-up" script.
  * It runs when the extension's action button is clicked.
@@ -28,4 +27,5 @@ browser.tabs.query({ active: true, currentWindow: true }, (tab) => {
 		'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Developer Tools" tab.';
 
 	document.body.append(popupElement);
+	initializePopupView(popupElement).then(() => {}, console.error);
 });
