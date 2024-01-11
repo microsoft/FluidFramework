@@ -748,13 +748,12 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * `slide` is true if the change is due to sliding on removal of position.
 	 */
 	(
-		event: "endpointOrPropertyChanged",
+		event: "changed",
 		listener: (
 			interval: TInterval,
 			propertyDeltas: PropertySet,
 			previousInterval: TInterval,
 			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
 			slide: boolean,
 		) => void,
 	): void;
@@ -1223,28 +1222,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			previousInterval.start.refType = ReferenceType.Transient;
 			previousInterval.end.refType = ReferenceType.Transient;
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
-			this.emit(
-				"endpointOrPropertyChanged",
-				interval,
-				undefined,
-				previousInterval ?? interval,
-				local,
-				op,
-				slide,
-			);
+			this.emit("changed", interval, undefined, previousInterval ?? interval, local, slide);
 			previousInterval.start.refType = startRefType;
 			previousInterval.end.refType = endRefType;
 		} else {
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
-			this.emit(
-				"endpointOrPropertyChanged",
-				interval,
-				undefined,
-				previousInterval ?? interval,
-				local,
-				op,
-				slide,
-			);
+			this.emit("changed", interval, undefined, previousInterval ?? interval, local, slide);
 		}
 	}
 
@@ -1439,15 +1422,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
-				this.emit(
-					"endpointOrPropertyChanged",
-					newInterval ?? interval,
-					deltaProps,
-					interval,
-					true,
-					undefined,
-					false,
-				);
+				this.emit("changed", newInterval ?? interval, deltaProps, interval, true, false);
 			}
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
@@ -1606,15 +1581,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const changedProperties = Object.keys(newProps).length > 0;
 			if (changedProperties) {
 				this.emit("propertyChanged", interval, deltaProps, local, op);
-				this.emit(
-					"endpointOrPropertyChanged",
-					newInterval ?? interval,
-					deltaProps,
-					interval,
-					local,
-					op,
-					false,
-				);
+				this.emit("changed", newInterval ?? interval, deltaProps, interval, local, false);
 			}
 		}
 	}

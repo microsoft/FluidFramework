@@ -178,7 +178,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
     (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
     (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "endpointOrPropertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
+    (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval, local: boolean, slide: boolean) => void): void;
 }
 
 // @internal @sealed @deprecated (undocumented)
