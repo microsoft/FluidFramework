@@ -999,21 +999,7 @@ export function testSandwichComposing() {
 					mod,
 					move3,
 				];
-				// Ret3: RF3 -> RT3
-				// -Mod:        Mod
-				// Ret2:        RF2 -> RT2
-				// Ret1:               RF1 -> RT1
-				//  Del:                      Del
-				// Mov1:               MI1 <- MO1
-				// Mov2:        MI2 <- MO2        // MO2 is made to point to RT3, which causes RT3 to be made to point to RF2
-				// +Mod:        Mod
-				// Mov3: MI3 -> MO3
-				// When +Mod is composed, its effect is sent to RF2 instead of RF3.
-				// This happens because, during the composition of RT2 and MO2,
-				// we send effects endpoint updating effects to bridge the temporary location, but MO2 has a finalEndpoint set to RT3,
-				// so we send to RT3 a new finalEndpoint that points to RF2.
-				// This happens because, during the composition of (RT3 + RF2) and MI2,
-				// MO2 gets sent a new finalEndpoint that points to RT3.
+
 				const sandwich = compose(changes);
 				const pruned = prune(sandwich);
 				const noTombstones = withoutTombstones(pruned);
