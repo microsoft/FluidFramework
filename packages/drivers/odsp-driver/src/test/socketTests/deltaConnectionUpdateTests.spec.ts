@@ -125,12 +125,12 @@ describe("DeltaConnectionMetadata update tests", () => {
 		await tickClock(1);
 		socket = new ClientSocketMock();
 		let eventRaised = false;
-		let content: Record<string, unknown>;
+		let content: Record<string, string>;
 
-		const handler = (metadata: Record<string, unknown>) => {
+		const handler = (metadata: Record<string, string>) => {
 			eventRaised = true;
 			assert.strictEqual(
-				JSON.parse(metadata?.sensitivityLabelsInfo as string).labels,
+				JSON.parse(metadata.sensitivityLabelsInfo).labels,
 				content.labels,
 				"label via event should match",
 			);
