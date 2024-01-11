@@ -7,6 +7,7 @@ const {
 	params: { currentVersion, ltsVersion },
 } = require("../../data/versions.json");
 
+// Map of incoming URL paths to redirect URLs
 const routes = new Map([
 	["/docs/apis", `/docs/api/${currentVersion}`],
 	["/docs/api/current", `/docs/api/${currentVersion}`],
@@ -19,11 +20,10 @@ const routes = new Map([
  * If a matching route is found, it constructs and returns the redirect URL. Otherwise, it returns a 404 response.
  */
 module.exports = async (context, { headers }) => {
-	const { pathname, search } = new URL(headers["x-ms-original-url"], `http://${headers.host}`);
-	const route = [...routes].find(([path, _]) => pathname.includes(path));
+	const route = [...routes].find(([path, _]) => headers["x-ms-original-url"].includes(path));
 
 	context.res = {
 		status: route ? 302 : 404,
-		headers: { location: route ? `${pathname.replace(...route)}${search}` : "/404" },
+		headers: { location: route ? headers["x-ms-original-url"].replace(...route) : "/404" },
 	};
 };
