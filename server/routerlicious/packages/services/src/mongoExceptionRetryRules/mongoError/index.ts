@@ -50,7 +50,8 @@ class DuplicateKeyErrorRule extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.code === 11000 || error.message?.toString()?.indexOf(DuplicateKeyErrorRule.errorMsg) >= 0
+			error.code === 11000 ||
+			error.message?.toString()?.indexOf(DuplicateKeyErrorRule.errorMsg) >= 0
 		);
 	}
 }
