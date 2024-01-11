@@ -552,10 +552,6 @@ export class SharedMatrix<T = any>
 			"details",
 			stats.concat(`_${JSON.stringify(props)}`),
 		);
-		this.logger.sendTelemetryEvent({
-			eventName: "SharedMatrixInfo",
-			details: JSON.stringify(props),
-		});
 		return builder.getSummaryTree();
 	}
 
