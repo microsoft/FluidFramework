@@ -973,7 +973,7 @@ export function testSandwichComposing() {
 				assertChangesetsEqual(sandwichParts1to6, []);
 			}),
 		);
-		it.skip("[move, move, modify, move] ↷ [del]", () =>
+		it("[move, move, modify, move] ↷ [del]", () =>
 			withConfig(() => {
 				const [mo1, mi1] = Mark.move(1, brand(1));
 				const move1 = tagChange([mi1, mo1], tag1);
