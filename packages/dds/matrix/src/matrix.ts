@@ -19,7 +19,7 @@ import {
 	parseHandles,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import {
@@ -153,8 +153,6 @@ export class SharedMatrix<T = any>
 
 	// Used to track if there is any reentrancy in setCell code.
 	private reentrantCount: number = 0;
-	// This is just for telemetry purpose to understand behavior and get stats.
-	private setCellsCountFromLastSummary: number = 0;
 
 	/**
 	 * Constructor for the Shared Matrix
@@ -332,7 +330,7 @@ export class SharedMatrix<T = any>
 
 				this.undo.cellSet(rowHandle, colHandle, oldValue);
 			}
-			this.setCellsCountFromLastSummary += 1;
+
 			this.cells.setCell(rowHandle, colHandle, value);
 
 			if (this.isAttached()) {
@@ -513,7 +511,10 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+	protected summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		builder.addWithStats(
 			SnapshotPath.rows,
@@ -528,9 +529,7 @@ export class SharedMatrix<T = any>
 			cellsSnapshotSize: cellsSnapshot.length,
 			rowCount: this.rowCount,
 			colCount: this.colCount,
-			setCellsCountFromLastSummary: this.setCellsCountFromLastSummary,
 		};
-		this.setCellsCountFromLastSummary = 0;
 		const artifactsToSummarize = [
 			cellsSnapshot,
 			this.pending.snapshot(),
@@ -546,6 +545,12 @@ export class SharedMatrix<T = any>
 		builder.addBlob(
 			SnapshotPath.cells,
 			serializer.stringify(artifactsToSummarize, this.handle),
+		);
+		const stats = telemetryContext?.get("fluid:SharedMatrix", "details")?.toString() ?? "";
+		telemetryContext?.set(
+			"fluid:SharedMatrix",
+			"details",
+			stats.concat(`_${JSON.stringify(props)}`),
 		);
 		this.logger.sendTelemetryEvent({
 			eventName: "SharedMatrixInfo",
