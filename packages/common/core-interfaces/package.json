@@ -33,6 +33,7 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
