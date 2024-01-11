@@ -176,7 +176,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
+	 * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Disconnected} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.connectionState}.
 	 */
@@ -188,7 +188,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
+	 * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Connected} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.connectionState}.
 	 */

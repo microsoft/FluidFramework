@@ -117,7 +117,7 @@ export interface NamespaceFilter {
 export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
 /**
- * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
+ * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API.
  * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights()
  * or else logging will not occur.
@@ -304,7 +304,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 }
 
 /**
- * Creates an {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
+ * Creates an {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API.
  *
  * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights(),

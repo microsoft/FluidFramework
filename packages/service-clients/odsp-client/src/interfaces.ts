@@ -28,6 +28,11 @@ export interface OdspConnectionConfig {
 	 * RaaS Drive Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
+
+	/**
+	 * Specifies the file path where Fluid files are created. If passed an empty string, the Fluid files will be created at the root level.
+	 */
+	filePath: string;
 }
 /**
  * @beta
@@ -66,7 +71,7 @@ export interface OdspContainerServices {
 
 /**
  * Since ODSP provides user names and email for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * {@link @fluidframework/fluid-static#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected.
  * @beta
  */

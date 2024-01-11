@@ -19,6 +19,7 @@ const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: "<YOUR_TOKEN_PROVIDER>",
 	siteUrl: "<SITE_URL>",
 	driveId: "<RAAS_DRIVE_ID>",
+	filePath: "<FLUID_FILE_PATH>",
 };
 
 export const clientProps: OdspClientProps = {

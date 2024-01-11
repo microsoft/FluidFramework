@@ -7,9 +7,9 @@ import React from "react";
 import Collapsible from "react-collapsible";
 import { Button } from "@fluentui/react-components";
 import { ChevronUpFilled, ChevronDownFilled, TargetEditFilled } from "@fluentui/react-icons";
-import { IDataObjectGridItemEntry } from "./dataObjectRegistry";
+import { IDataObjectGridItemEntry } from "./dataObjectRegistry.js";
 import "./toolbar.css";
-import { iconMap } from "./icons";
+import { iconMap } from "./icons.js";
 
 interface IToolbarOption {
 	/**
