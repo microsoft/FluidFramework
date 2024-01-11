@@ -64,7 +64,7 @@ export const leaf = {
 	string,
 
 	/**
-	 * {@link LeafNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 * {@link LeafNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
 	 */
 	handle,
 

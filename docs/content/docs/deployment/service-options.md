@@ -7,7 +7,7 @@ The Fluid Framework can be used with any compatible service implementation. Some
 
 ## Tinylicious
 
-[Tinylicious]({{< relref "tinylicious.md" >}}) is a minimal, self-contained implementation of the Fluid Framework service that is much smaller (tinier!) than Routerlicious, the reference implementation of the service.
+[Tinylicious]({{< packageref "tinylicious" >}}) is a minimal, self-contained implementation of the Fluid Framework service that is much smaller (tinier!) than Routerlicious, the reference implementation of the service.
 
 Tinylicious is intended for testing and development only.
 
@@ -19,9 +19,19 @@ The easiest way to try out Fluid is with Tinylicious or Azure Fluid Relay.
 
 ## Azure Fluid Relay
 
-Microsoft [Azure Fluid Relay](https://aka.ms/azurefluidrelay) is a hosted Fluid service. You can [provision Fluid Relay services](https://docs.microsoft.com/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) as part of your Microsoft Azure subscription and use the [@fluidframework/azure-client]({{< relref "azure-client.md" >}}) library to create and load Fluid containers.
+Microsoft [Azure Fluid Relay](https://aka.ms/azurefluidrelay) is a hosted Fluid service. You can [provision Fluid Relay services](https://docs.microsoft.com/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) as part of your Microsoft Azure subscription and use the [@fluidframework/azure-client]({{< packageref "azure-client" >}}) library to create and load Fluid containers.
 
 Learn more in the [Azure Fluid Relay documentation](https://aka.ms/azurefluidrelaydocs).
+
+## SharePoint Embedded
+
+Microsoft [SharePoint Embedded](https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview) is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.
+
+{{% callout note %}}
+
+SharePoint Embedded is currently in public preview and Fluid Framework integration is not enabled for all M365 tenants. This functionality will be broadly available in February, 2024.
+
+{{% /callout %}}
 
 ## Self-hosted Routerlicious
 

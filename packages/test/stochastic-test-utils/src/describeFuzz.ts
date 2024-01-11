@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import process from "process";
+
 function createFuzzSuite(
 	tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void,
 	args: FuzzSuiteArguments,
@@ -63,11 +65,11 @@ export const defaultOptions: Required<FuzzDescribeOptions> = {
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz {
 	const options = { ...defaultOptions, ...optionsArg };
 	const testCountFromEnv =
-		process.env.FUZZ_TEST_COUNT !== undefined
+		process.env?.FUZZ_TEST_COUNT !== undefined
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
 	const testCount = testCountFromEnv ?? options.defaultTestCount;
-	const isStress = process.env.FUZZ_STRESS_RUN !== undefined && !!process.env.FUZZ_STRESS_RUN;
+	const isStress = process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
 	const args = { testCount, isStress };
 	const d: DescribeFuzz = (name, tests) =>
 		(isStress ? describe.only : describe)(name, createFuzzSuite(tests, args));

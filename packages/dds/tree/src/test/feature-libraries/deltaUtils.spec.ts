@@ -63,7 +63,7 @@ describe("DeltaUtils", () => {
 			};
 			deepFreeze(input);
 			const actual = mapRootChanges(input, mapTreeFromCursor);
-			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges<MapTree>>([
+			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
 					{
@@ -79,7 +79,7 @@ describe("DeltaUtils", () => {
 			]);
 			const expected: DeltaRoot<MapTree> = {
 				build: [{ id: detachId, trees: [nodeX] }],
-				fields: new Map<FieldKey, DeltaFieldChanges<MapTree>>([
+				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
 						{
