@@ -3,16 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { Node, ts } from "ts-morph";
+import { JSDoc, Node, SourceFile, SyntaxKind, ts } from "ts-morph";
 
 export interface TypeData {
 	readonly name: string;
 	readonly kind: string;
 	readonly node: Node;
+	readonly tags: ReadonlySet<string>;
 }
 
 export function getFullTypeName(typeData: TypeData) {
 	return `${typeData.kind}_${typeData.name}`;
+}
+
+function getTags(docs: JSDoc[]): ReadonlySet<string> {
+	const tags: string[] = [];
+	for (const comment of docs) {
+		for (const tag of comment.getTags()) {
+			const name = tag.getTagName();
+			tags.push(name);
+		}
+	}
+	return new Set(tags);
 }
 
 export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[] {
@@ -71,20 +83,29 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				  node.getName()!;
 
+		const docs = Node.isVariableDeclaration(node)
+			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
+			: node.getJsDocs();
+
 		const typeData: TypeData[] = [
 			{
 				name,
 				kind: node.getKindName(),
 				node,
+				tags: getTags(docs),
 			},
 		];
 		return typeData;
 	}
 
+	if (Node.isSourceFile(node)) {
+		return [...typeDataFromFile(node, namespacePrefix).values()];
+	}
+
 	throw new Error(`Unknown Export Kind: ${node.getKindName()}`);
 }
 
-export function toTypeString(prefix: string, typeData: TypeData) {
+export function toTypeString(prefix: string, typeData: TypeData, typePreprocessor: string) {
 	const node = typeData.node;
 	let typeParams: string | undefined;
 	if (
@@ -114,9 +135,41 @@ export function toTypeString(prefix: string, typeData: TypeData) {
 		case ts.SyntaxKind.FunctionDeclaration:
 		case ts.SyntaxKind.Identifier:
 			// turn variables and functions into types
-			return `TypeOnly<typeof ${typeStringBase}>`;
+			return `${typePreprocessor}<typeof ${typeStringBase}>`;
 
 		default:
-			return `TypeOnly<${typeStringBase}>`;
+			return `${typePreprocessor}<${typeStringBase}>`;
 	}
+}
+
+export function selectTypePreprocessor(typeData: TypeData): string {
+	if (typeData.tags.has("type-test-minimal")) {
+		return "MinimalType";
+	}
+	if (typeData.tags.has("type-test-full")) {
+		return "FullType";
+	} else {
+		return "TypeOnly";
+	}
+}
+
+export function typeDataFromFile(
+	file: SourceFile,
+	namespacePrefix?: string,
+): Map<string, TypeData> {
+	const typeData = new Map<string, TypeData>();
+	const exportedDeclarations = file.getExportedDeclarations();
+	for (const declarations of exportedDeclarations.values()) {
+		for (const dec of declarations) {
+			getNodeTypeData(dec, namespacePrefix).forEach((td) => {
+				const fullName = getFullTypeName(td);
+				if (typeData.has(fullName)) {
+					// This system does not properly handle overloads: instead it only keeps the last signature.
+					console.warn(`skipping overload for ${fullName}`);
+				}
+				typeData.set(fullName, td);
+			});
+		}
+	}
+	return typeData;
 }

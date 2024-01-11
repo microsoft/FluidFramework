@@ -14,7 +14,7 @@
 type requireAssignableTo<_A extends B, B> = true;
 
 /**
- * Type meta-function which takes in a type, and removes some of its type information to get structural typing.
+ * Type meta-functions which takes in a type, and removes some of its type information to get structural typing.
  * This is necessary since TypeScript does not always treat identical declarations of the same type in two different places as assignable.
  *
  * The most common case of this is with classes where [private and protected members trigger nominal typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#private-and-protected-members-in-classes].
@@ -24,6 +24,12 @@ type requireAssignableTo<_A extends B, B> = true;
  *
  * The `T extends number ? number :` included here is a workaround for how const enums behave (that fixes the case where the value is a number).
  * This will strip some type branding information which ideally would be kept for stricter checking, but without it, const enums show up as breaking when unchanged.
+ *
+ * MinimalType can be used in cases where TypeOnly fails to handle the type properly
+ * and a fallback to something known to conservatively work (by testing nothing but the type exists currently).
+ *
+ * FullType can be explicitly opted into to test the type unmodified.
+ * This will cause issues with symbols, enums, and classes with private or protected members.
  */
 export const typeOnly = `
 // See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
@@ -36,6 +42,8 @@ type TypeOnly<T> = T extends number
 	: {
 			[P in keyof T]: TypeOnly<T[P]>;
 	  };
+type MinimalType<T> = 0;
+type FullType<T> = T;
 `;
 
 type TypeOnly<T> = T extends number

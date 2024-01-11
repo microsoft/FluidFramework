@@ -10,7 +10,11 @@ import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
 import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
-import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
+import {
+	getFullTypeName,
+	selectTypePreprocessor,
+	typeDataFromFile,
+} from "../typeValidator/typeData";
 import { typeOnly } from "./compatibility";
 
 // Do not check that file exists before opening:
@@ -76,26 +80,13 @@ if (existsSync(previousTsConfigPath)) {
 	previousFile = project.getSourceFileOrThrow("index.d.ts");
 }
 
-function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
-	const typeData = new Map<string, TypeData>();
-	const exportedDeclarations = file.getExportedDeclarations();
-	for (const declarations of exportedDeclarations.values()) {
-		for (const dec of declarations) {
-			getNodeTypeData(dec).forEach((td) => {
-				const fullName = getFullTypeName(td);
-				if (typeData.has(fullName)) {
-					// This system does not properly handle overloads: instead it only keeps the last signature.
-					console.warn(`skipping overload for ${fullName}`);
-				}
-				typeData.set(fullName, td);
-			});
-		}
-	}
-	return typeData;
-}
-
 const currentTypeMap = typeDataFromFile(currentFile);
-const previousData = [...typeDataFromFile(previousFile).values()];
+let previousData = [...typeDataFromFile(previousFile).values()];
+
+// Select only "public", "beta" and "alpha" types.
+previousData = previousData.filter(
+	(data) => data.tags.has("public") || data.tags.has("beta") || data.tags.has("alpha"),
+);
 
 function compareString(a: string, b: string): number {
 	return a > b ? 1 : a < b ? -1 : 0;
@@ -146,6 +137,8 @@ for (const oldTypeData of previousData) {
 	// look for settings not under version, then fall back to version for back compat
 	const brokenData = broken?.[getFullTypeName(currentType)];
 
+	const typePreprocessor = selectTypePreprocessor(currentType);
+
 	testString.push(`/*`);
 	testString.push(`* Validate forward compat by using old type in place of current type`);
 	testString.push(
@@ -153,7 +146,9 @@ for (const oldTypeData of previousData) {
 	);
 	testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
 	testString.push("*/");
-	testString.push(...buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true));
+	testString.push(
+		...buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true, typePreprocessor),
+	);
 
 	testString.push("");
 
@@ -164,7 +159,9 @@ for (const oldTypeData of previousData) {
 	);
 	testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
 	testString.push("*/");
-	testString.push(...buildTestCase(currentType, oldType, brokenData?.backCompat ?? true));
+	testString.push(
+		...buildTestCase(currentType, oldType, brokenData?.backCompat ?? true, typePreprocessor),
+	);
 	testString.push("");
 }
 
