@@ -551,7 +551,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	public static deserialize(
 		serialized: SerializedIdCompressorWithOngoingSession,
-		loggerOrSessionId?: ITelemetryLoggerExt | SessionId,
+		logger?: ITelemetryLoggerExt,
 	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressorWithNoSession,
@@ -560,9 +560,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressor,
-		sessionId?: SessionId,
-		logger?: ITelemetryLoggerExt,
+		loggerOrSessionId?: ITelemetryLoggerExt | SessionId,
 	): IdCompressor {
+		let sessionId: SessionId | undefined;
+		let logger: ITelemetryLoggerExt | undefined;
+		if (typeof loggerOrSessionId === "string") {
+			sessionId = loggerOrSessionId;
+		} else {
+			logger = loggerOrSessionId;
+		}
+
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
