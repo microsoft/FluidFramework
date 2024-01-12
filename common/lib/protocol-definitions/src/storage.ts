@@ -43,7 +43,6 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	encoding: "utf-8" | "base64";
 }
 

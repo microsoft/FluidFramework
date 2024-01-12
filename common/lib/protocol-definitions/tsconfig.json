@@ -1,8 +1,5 @@
 {
-	"extends": [
-		"../../build/build-common/tsconfig.base.json",
-		"../../build/build-common/tsconfig.cjs.json",
-	],
+	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"rootDir": "./src",
