@@ -86,6 +86,7 @@ import {
 	formatTick,
 	GenericError,
 	UsageError,
+	IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -1235,11 +1236,38 @@ export class Container
 							`The Container is not in a valid state for attach [${this._lifecycleState}] and [${this.attachState}]`,
 						);
 					}
+
+					const normalizeErrorAndClose = (error: unknown): IFluidErrorBase => {
+						// add resolved URL on error object so that host has the ability to find this document and delete it
+						const newError = normalizeError(error);
+						newError.addTelemetryProperties({
+							resolvedUrl: this.service?.resolvedUrl?.url,
+						});
+						this.close(newError);
+						throw newError;
+					};
+
 					await runRetirableAttachProcess({
 						attachmentData: this.attachmentData,
 						offlineLoadEnabled: this.offlineLoadEnabled,
 						storageAdapter: this.storageAdapter,
 						detachedBlobStorage: this.detachedBlobStorage,
+						setAttachmentData: (attachmentData) => {
+							const previousState = this.attachmentData.state;
+							this.attachmentData = attachmentData;
+							if (
+								this.attachmentData.state !== previousState &&
+								this.attachmentData.state !== AttachState.Detached
+							) {
+								try {
+									this.runtime.setAttachState(this.attachmentData.state);
+									this.emit(this.attachmentData.state.toLocaleLowerCase());
+								} catch (error) {
+									throw normalizeErrorAndClose(error);
+								}
+							}
+							return attachmentData;
+						},
 						createAttachmentSummary: (redirectTable?: Map<string, string>) => {
 							try {
 								assert(
@@ -1252,13 +1280,7 @@ export class Container
 								const protocolSummary = this.captureProtocolSummary();
 								return combineAppAndProtocolSummary(appSummary, protocolSummary);
 							} catch (error) {
-								// add resolved URL on error object so that host has the ability to find this document and delete it
-								const newError = normalizeError(error);
-								newError.addTelemetryProperties({
-									resolvedUrl: this.service?.resolvedUrl?.url,
-								});
-								this.close(newError);
-								throw newError;
+								throw normalizeErrorAndClose(error);
 							}
 						},
 						createServiceIfNotExists: async (data) => {
@@ -1288,19 +1310,8 @@ export class Container
 								this.storageAdapter.connectToService(this.service);
 							}
 						},
-						setAttachmentData: (attachmentData) => {
-							const previousState = this.attachmentData.state;
-							this.attachmentData = attachmentData;
-							if (
-								this.attachmentData.state !== previousState &&
-								this.attachmentData.state !== AttachState.Detached
-							) {
-								this.runtime.setAttachState(this.attachmentData.state);
-								this.emit(this.attachmentData.state.toLocaleLowerCase());
-							}
-							return attachmentData;
-						},
 					});
+
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{

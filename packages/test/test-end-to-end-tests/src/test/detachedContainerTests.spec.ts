@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
@@ -886,6 +886,118 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		await containerP;
 		await defPromise.promise;
 	});
+	itExpects(
+		"Container should be closed when runtime.createSummary fails during attach",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "runtime.createSummary failed!",
+			},
+		],
+		async () => {
+			const loaderWithBadRuntime = provider.createLoader(
+				new Map([
+					[
+						provider.defaultCodeDetails,
+						{
+							IRuntimeFactory: {
+								get IRuntimeFactory() {
+									return this;
+								},
+								instantiateRuntime: async (context, existing) => {
+									const entrypoint = provider.createFluidEntryPoint();
+									const runtimeFactory: FluidObject<IRuntimeFactory> =
+										"fluidExport" in entrypoint
+											? entrypoint.fluidExport
+											: entrypoint;
+
+									assert(
+										runtimeFactory.IRuntimeFactory,
+										"entrypoint is not runtime factory",
+									);
+
+									const runtime =
+										await runtimeFactory.IRuntimeFactory.instantiateRuntime(
+											context,
+											existing,
+										);
+
+									runtime.createSummary = () =>
+										assert.fail("runtime.createSummary failed!");
+
+									return runtime;
+								},
+							},
+						},
+					],
+				]),
+			);
+			const container = await loaderWithBadRuntime.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
+			try {
+				await container.attach(request);
+				assert.fail("expected attach to fail!");
+			} catch (e) {}
+			assert.strictEqual(container.closed, true, "Container should be closed");
+		},
+	);
+	itExpects(
+		"Container should be closed when runtime.setAttachState fails during attach",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "runtime.setAttachState failed!",
+			},
+		],
+		async () => {
+			const loaderWithBadRuntime = provider.createLoader(
+				new Map([
+					[
+						provider.defaultCodeDetails,
+						{
+							IRuntimeFactory: {
+								get IRuntimeFactory() {
+									return this;
+								},
+								instantiateRuntime: async (context, existing) => {
+									const entrypoint = provider.createFluidEntryPoint();
+									const runtimeFactory: FluidObject<IRuntimeFactory> =
+										"fluidExport" in entrypoint
+											? entrypoint.fluidExport
+											: entrypoint;
+
+									assert(
+										runtimeFactory.IRuntimeFactory,
+										"entrypoint is not runtime factory",
+									);
+
+									const runtime =
+										await runtimeFactory.IRuntimeFactory.instantiateRuntime(
+											context,
+											existing,
+										);
+
+									runtime.setAttachState = () =>
+										assert.fail("runtime.setAttachState failed!");
+
+									return runtime;
+								},
+							},
+						},
+					],
+				]),
+			);
+			const container = await loaderWithBadRuntime.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
+			try {
+				await container.attach(request);
+				assert.fail("expected attach to fail!");
+			} catch (e) {}
+			assert.strictEqual(container.closed, true, "Container should be closed");
+		},
+	);
 });
 
 // Review: Run with Full Compat?
@@ -971,8 +1083,8 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 	}).timeout(5000);
 
 	itExpects(
-		"Container should be closed on failed attach with non retryable error",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" }],
+		"Container should not be closed on network failure during attach and succeed on retry",
+		[],
 		async () => {
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
@@ -980,15 +1092,15 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			provider.documentServiceFactory.createContainer = (a, b, c) => {
 				throw new Error("Test Error");
 			};
-			let failedOnce = false;
 			try {
 				await container.attach(request);
+				assert.fail("expected attach to fail!");
 			} catch (e) {
-				failedOnce = true;
 				provider.documentServiceFactory.createContainer = oldFunc;
 			}
-			assert.strictEqual(failedOnce, true, "Attach call should fail");
-			assert.strictEqual(container.closed, true, "Container should be closed");
+			assert.strictEqual(container.closed, false, "Container should not be closed");
+
+			await container.attach(request);
 		},
 	);
 });
