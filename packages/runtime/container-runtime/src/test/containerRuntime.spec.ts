@@ -130,6 +130,31 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("IdCompressor", () => {
+			it("finalizes idRange on attach", async () => {
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const compressor = containerRuntime.idCompressor;
+				assert(compressor !== undefined);
+				compressor.generateCompressedId();
+				containerRuntime.createSummary();
+
+				// This should return an empty range since we should've
+				// taken the next range and finalized it in the createSummary call above
+				const idRange = compressor.takeNextCreationRange();
+				assert.equal(idRange.ids, undefined);
+			});
+		});
+
 		describe("flushMode setting", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
