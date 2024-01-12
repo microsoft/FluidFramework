@@ -11,7 +11,6 @@
 
 export {
 	createFluidContainer,
-	AttachResult,
 	IFluidContainer,
 	IFluidContainerEvents,
 	InitialObjects,

@@ -93,13 +93,6 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
- * @public
- */
-export interface AttachResult {
-	[key: string]: string;
-}
-
-/**
  * Provides an entrypoint into the client side of collaborative Fluid data.
  * Provides access to the data as well as status on the collaboration session.
  *
@@ -173,7 +166,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach<T>(props?: T): Promise<AttachResult>;
+	attach<T>(props?: T): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
@@ -315,7 +308,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
 	 * but internally this separation is not there.
 	 */
-	public async attach<T>(props?: T): Promise<AttachResult> {
+	public async attach<T>(props?: T): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}
