@@ -65,6 +65,7 @@ trigger:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
@@ -97,6 +98,7 @@ pr:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
