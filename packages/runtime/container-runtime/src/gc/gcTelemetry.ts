@@ -189,6 +189,8 @@ export class GCTelemetryTracker {
 		};
 
 		// If the node that is used is tombstoned, log a tombstone telemetry.
+		//* TODO: If we're feeling brave we could assert here that nodeStateTracker !== undefined, or just move the early return back to the top
+		//* I am not feeling that brave - and there's no harm to leave it as-is.
 		if (nodeUsageProps.isTombstoned) {
 			this.logTombstoneUsageTelemetry(nodeUsageProps, unrefEventProps, nodeType, usageType);
 		}
