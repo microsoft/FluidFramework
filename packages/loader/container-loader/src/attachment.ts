@@ -15,7 +15,7 @@ import { IDetachedBlobStorage } from ".";
  * All but the state are optional and undefined, they just exist
  * to make the union easy to deal with for both Detached types
  */
-export interface DefaultDetachedState {
+export interface DetachedDefaultData {
 	readonly state: AttachState.Detached;
 	readonly blobs?: undefined;
 	readonly summary?: undefined;
@@ -72,7 +72,7 @@ export interface AttachedData {
  * tracking across all container attachment states
  */
 export type AttachmentData =
-	| DefaultDetachedState
+	| DetachedDefaultData
 	| DetachedDataWithOutstandingBlobs
 	| AttachingDataWithoutBlobs
 	| AttachingDataWithBlobs
@@ -84,7 +84,7 @@ export interface AttachProcessProps {
 	readonly createServiceIfNotExists: (
 		data: DetachedDataWithOutstandingBlobs | AttachingDataWithoutBlobs,
 	) => Promise<void>;
-	readonly detachedBlobStorage?: IDetachedBlobStorage;
+	readonly detachedBlobStorage?: Pick<IDetachedBlobStorage, "getBlobIds" | "readBlob" | "size">;
 	readonly createAttachmentSummary: (
 		redirectTable?: Map<string, string>,
 	) => CombinedAppAndProtocolSummary;

@@ -1,0 +1,537 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
+import { v4 as uuid } from "uuid";
+import { SummaryType } from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	AttachProcessProps,
+	AttachedData,
+	AttachingDataWithBlobs,
+	DetachedDataWithOutstandingBlobs,
+	runRetirableAttachProcess,
+	DetachedDefaultData,
+	AttachmentData,
+	AttachingDataWithoutBlobs,
+} from "../attachment";
+import { combineAppAndProtocolSummary } from "../utils";
+
+const emptySummary = combineAppAndProtocolSummary(
+	{ tree: {}, type: SummaryType.Tree },
+	{ tree: {}, type: SummaryType.Tree },
+);
+
+type ObjectWithCallCounts<T extends Record<string, any>> = T &
+	Record<"calls", Record<keyof T, number>>;
+
+const addCallCounts = <T extends Record<string, any>>(obj: T): ObjectWithCallCounts<T> => {
+	const calls = Object.keys(obj).reduce((pv, cv) => {
+		pv[cv] = 0;
+		return pv;
+	}, {}) as Record<keyof T, number>;
+
+	return new Proxy<ObjectWithCallCounts<T>>(obj as ObjectWithCallCounts<T>, {
+		get: (t, p, r): any => {
+			if (p === "calls") {
+				return calls;
+			} else {
+				calls[p as keyof T]++;
+				return Reflect.get(t, p, r);
+			}
+		},
+	});
+};
+
+const createDetachStorage = (
+	blobCount: number,
+): ObjectWithCallCounts<Exclude<AttachProcessProps["detachedBlobStorage"], undefined>> => {
+	const blobs = new Map<string, ArrayBufferLike>(
+		Array.from({ length: blobCount }).map((_, i) => [
+			i.toString(),
+			stringToBuffer(`${i}-content`, "utf-8"),
+		]),
+	);
+
+	return addCallCounts({
+		get size() {
+			return blobs.size;
+		},
+		getBlobIds() {
+			return [...blobs.keys()];
+		},
+		async readBlob(id) {
+			const content = blobs.get(id);
+			assert(content !== undefined, `no blob content for [${id}]`);
+			return content;
+		},
+	});
+};
+
+const createProxyWithFailDefault = <T extends Record<string, any> | undefined>(
+	partial: Partial<T> = {},
+): T => {
+	return new Proxy(partial, {
+		get: (t, p, r): any => {
+			if (p in t) {
+				return Reflect.get(t, p, r);
+			}
+			assert.fail(`unexpected call too ${p.toString()}`);
+		},
+	}) as T;
+};
+
+describe("runRetirableAttachProcess", () => {
+	describe("end to end process", () => {
+		it("From DetachedDefaultData without blobs or offline", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: false,
+				setAttachmentData: (data) => (attachmentData = data),
+				createAttachmentSummary: (redirectTable) => {
+					assert.strictEqual(redirectTable, undefined, "redirectTable");
+					return emptySummary;
+				},
+				createServiceIfNotExists: async () => {},
+				storageAdapter: createProxyWithFailDefault(),
+			});
+
+			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData.baseSnapshotAndBlobs,
+				undefined,
+				"should not have baseSnapshotAndBlobs",
+			);
+		});
+
+		it("From DetachedDefaultData with offline and without blobs", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: true,
+				setAttachmentData: (data) => (attachmentData = data),
+				createAttachmentSummary: (redirectTable) => {
+					assert.strictEqual(redirectTable, undefined, "redirectTable");
+					return emptySummary;
+				},
+				createServiceIfNotExists: async () => {},
+				storageAdapter: {
+					createBlob: async () => assert.fail("no blobs should be created"),
+					uploadSummaryWithContext: async () =>
+						assert.fail("no summary should be uploaded outside of create"),
+				},
+			});
+
+			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.notStrictEqual(
+				attachmentData.baseSnapshotAndBlobs,
+				undefined,
+				"should  have baseSnapshotAndBlobs",
+			);
+		});
+
+		it("From DetachedDefaultData with blobs and without offline", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			const blobCount = 10;
+			const detachedBlobStorage = createDetachStorage(blobCount);
+			const storageAdapter = addCallCounts({
+				createBlob: async () => Promise.resolve({ id: uuid() }),
+				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+			});
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: false,
+				setAttachmentData: (data) => (attachmentData = data),
+				createAttachmentSummary: (redirectTable) => {
+					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
+					return emptySummary;
+				},
+				createServiceIfNotExists: async () => {},
+				storageAdapter,
+				detachedBlobStorage,
+			});
+
+			// expect every blob to read, and uploaded
+			assert.strictEqual(
+				detachedBlobStorage.calls.readBlob,
+				blobCount,
+				"detachedBlobStorage.calls.readBlob",
+			);
+			assert.strictEqual(
+				storageAdapter.calls.createBlob,
+				blobCount,
+				"storageAdapter.calls.createBlob",
+			);
+
+			// after blobs are uploaded summary should be
+			assert.strictEqual(
+				storageAdapter.calls.uploadSummaryWithContext,
+				1,
+				"storageAdapter.calls.uploadSummaryWithContext",
+			);
+
+			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData.baseSnapshotAndBlobs,
+				undefined,
+				"should not have baseSnapshotAndBlobs",
+			);
+		});
+
+		it("From DetachedDefaultData with zero blobs and without offline", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: false,
+				setAttachmentData: (data) => (attachmentData = data),
+				createAttachmentSummary: (redirectTable) => {
+					assert.strictEqual(redirectTable, undefined, "redirectTable");
+					return emptySummary;
+				},
+				createServiceIfNotExists: async () => {},
+				// we have blobs storage, but it is empty,
+				// so it should be treat like there are no blobs
+				detachedBlobStorage: createProxyWithFailDefault<
+					AttachProcessProps["detachedBlobStorage"]
+				>({ size: 0 }),
+				storageAdapter: createProxyWithFailDefault(),
+			});
+
+			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData.baseSnapshotAndBlobs,
+				undefined,
+				"should not have baseSnapshotAndBlobs",
+			);
+		});
+	});
+
+	describe("ends in intermediate state due to failure", () => {
+		it("From DetachedDefaultData without blobs with createAttachmentSummary failure", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			try {
+				await runRetirableAttachProcess({
+					attachmentData: initial,
+					offlineLoadEnabled: false,
+					setAttachmentData: (data) => (attachmentData = data),
+					createAttachmentSummary: (redirectTable) => {
+						assert.fail("createAttachmentSummary failure");
+					},
+					createServiceIfNotExists: createProxyWithFailDefault(),
+					storageAdapter: createProxyWithFailDefault(),
+				});
+				assert.fail("failure expected");
+			} catch {}
+
+			assert.deepStrictEqual(
+				attachmentData,
+				undefined,
+				"attachment data shouldn't have been set",
+			);
+		});
+
+		it("From DetachedDefaultData without blobs createServiceIfNotExists failure", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			try {
+				await runRetirableAttachProcess({
+					attachmentData: initial,
+					offlineLoadEnabled: false,
+					setAttachmentData: (data) => (attachmentData = data),
+					createAttachmentSummary: (redirectTable) => {
+						assert.strictEqual(redirectTable, undefined, "redirectTable");
+						return emptySummary;
+					},
+					createServiceIfNotExists: () => {
+						assert.fail("createServiceIfNotExists failure");
+					},
+					storageAdapter: createProxyWithFailDefault(),
+				});
+				assert.fail("failure expected");
+			} catch {}
+
+			assert.deepStrictEqual<AttachingDataWithoutBlobs>(
+				attachmentData,
+				{
+					state: AttachState.Attaching,
+					blobs: "none",
+					summary: emptySummary,
+				},
+				"should have made it to attaching state",
+			);
+		});
+
+		it("From DetachedDefaultData with blobs with createBlob failure", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			const blobCount = 10;
+			const detachedBlobStorage = createDetachStorage(blobCount);
+			try {
+				await runRetirableAttachProcess({
+					attachmentData: initial,
+					offlineLoadEnabled: false,
+					setAttachmentData: (data) => (attachmentData = data),
+					createAttachmentSummary: (redirectTable) => {
+						assert.strictEqual(redirectTable, undefined, "redirectTable");
+						return emptySummary;
+					},
+					createServiceIfNotExists: () => {
+						assert.fail("createServiceIfNotExists failure");
+					},
+					storageAdapter: createProxyWithFailDefault<
+						AttachProcessProps["storageAdapter"]
+					>({
+						createBlob: () => assert.fail("createBlob failure"),
+					}),
+					detachedBlobStorage,
+				});
+				assert.fail("failure expected");
+			} catch {}
+
+			assert.deepStrictEqual<DetachedDataWithOutstandingBlobs>(
+				attachmentData,
+				{
+					state: AttachState.Detached,
+					blobs: "outstanding",
+					redirectTable: new Map(),
+				},
+				"should have made it to attaching state",
+			);
+		});
+
+		it("From DetachedDefaultData with blobs with createAttachmentSummary failure", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			const blobCount = 10;
+			const detachedBlobStorage = createDetachStorage(blobCount);
+			try {
+				await runRetirableAttachProcess({
+					attachmentData: initial,
+					offlineLoadEnabled: false,
+					setAttachmentData: (data) => (attachmentData = data),
+					createAttachmentSummary: (redirectTable) => {
+						assert.fail("createAttachmentSummary failure");
+					},
+					createServiceIfNotExists: async () => {},
+					storageAdapter: createProxyWithFailDefault<
+						AttachProcessProps["storageAdapter"]
+					>({
+						createBlob: async () => Promise.resolve(uuid()),
+					}),
+					detachedBlobStorage,
+				});
+				assert.fail("failure expected");
+			} catch {}
+
+			assert.deepStrictEqual<DetachedDataWithOutstandingBlobs>(
+				// override redirectTable as it makes validation pain, and we have good coverage in other tests
+				{
+					...attachmentData,
+					redirectTable:
+						attachmentData && "redirectTable" in attachmentData ? new Map() : undefined,
+				},
+				{
+					state: AttachState.Detached,
+					blobs: "outstanding",
+					redirectTable: new Map(),
+				},
+				"should have made it to attaching state",
+			);
+		});
+
+		it("From DetachedDefaultData with blobs with uploadSummaryWithContext failure", async () => {
+			const initial: DetachedDefaultData = {
+				state: AttachState.Detached,
+			};
+			let attachmentData: AttachmentData | undefined;
+			const blobCount = 10;
+			const detachedBlobStorage = createDetachStorage(blobCount);
+			try {
+				await runRetirableAttachProcess({
+					attachmentData: initial,
+					offlineLoadEnabled: false,
+					setAttachmentData: (data) => (attachmentData = data),
+					createAttachmentSummary: (redirectTable) => {
+						assert.strictEqual(redirectTable?.size, 10, "redirectTable?.size");
+						return emptySummary;
+					},
+					createServiceIfNotExists: async () => {},
+					storageAdapter: {
+						createBlob: async () => Promise.resolve(uuid()),
+						uploadSummaryWithContext: () =>
+							assert.fail("uploadSummaryWithContext failure"),
+					},
+					detachedBlobStorage,
+				});
+				assert.fail("failure expected");
+			} catch {}
+
+			assert.deepStrictEqual<AttachingDataWithBlobs>(
+				attachmentData,
+				{
+					state: AttachState.Attaching,
+					blobs: "done",
+					summary: emptySummary,
+				},
+				"should have made it to attaching state",
+			);
+		});
+	});
+
+	describe("from intermediate state", () => {
+		it("From DetachedDataWithOutstandingBlobs", async () => {
+			const initial: DetachedDataWithOutstandingBlobs = {
+				state: AttachState.Detached,
+				blobs: "outstanding",
+				redirectTable: new Map(),
+			};
+			let attachmentData: AttachmentData | undefined;
+			const blobCount = 10;
+			const detachedBlobStorage = createDetachStorage(blobCount);
+			const storageAdapter = addCallCounts({
+				createBlob: async () => Promise.resolve({ id: uuid() }),
+				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+			});
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: false,
+				setAttachmentData: (data) => (attachmentData = data),
+				createAttachmentSummary: (redirectTable) => {
+					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
+					return emptySummary;
+				},
+				createServiceIfNotExists: async () => {},
+				storageAdapter,
+				detachedBlobStorage,
+			});
+
+			// expect every blob to read, and uploaded
+			assert.strictEqual(initial.redirectTable.size, blobCount, "initial.redirectTable.size");
+
+			assert.strictEqual(
+				detachedBlobStorage.calls.readBlob,
+				blobCount,
+				"detachedBlobStorage.calls.readBlob",
+			);
+			assert.strictEqual(
+				storageAdapter.calls.createBlob,
+				blobCount,
+				"storageAdapter.calls.createBlob",
+			);
+
+			// after blobs are uploaded summary should be
+			assert.strictEqual(
+				storageAdapter.calls.uploadSummaryWithContext,
+				1,
+				"storageAdapter.calls.uploadSummaryWithContext",
+			);
+
+			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData.baseSnapshotAndBlobs,
+				undefined,
+				"should not have baseSnapshotAndBlobs",
+			);
+		});
+
+		it("From AttachingDataWithBlobs", async () => {
+			const initial: AttachingDataWithBlobs = {
+				state: AttachState.Attaching,
+				blobs: "done",
+				summary: emptySummary,
+			};
+			let attachmentData: AttachmentData | undefined;
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: true,
+				setAttachmentData: (data) => (attachmentData = data),
+				// summary should already be created
+				createAttachmentSummary: createProxyWithFailDefault(),
+				// service should already be created
+				createServiceIfNotExists: createProxyWithFailDefault(),
+				// only the summary should be left to upload
+				storageAdapter: createProxyWithFailDefault<AttachProcessProps["storageAdapter"]>({
+					uploadSummaryWithContext: async () => Promise.resolve(uuid),
+				}),
+			});
+
+			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.notStrictEqual(
+				attachmentData.baseSnapshotAndBlobs,
+				undefined,
+				"should  have baseSnapshotAndBlobs",
+			);
+		});
+
+		it("From AttachingDataWithoutBlobs", async () => {
+			const initial: AttachingDataWithoutBlobs = {
+				state: AttachState.Attaching,
+				blobs: "none",
+				summary: emptySummary,
+			};
+			let attachmentData: AttachmentData | undefined;
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: true,
+				setAttachmentData: (data) => (attachmentData = data),
+				createServiceIfNotExists: async (data) => {
+					assert.notStrictEqual(data.summary, undefined, "data.summary");
+				},
+				// summary should already be created
+				createAttachmentSummary: createProxyWithFailDefault(),
+				// no storage calls should be made as create service does everything
+				storageAdapter: createProxyWithFailDefault(),
+			});
+
+			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.notStrictEqual(
+				attachmentData.baseSnapshotAndBlobs,
+				undefined,
+				"should  have baseSnapshotAndBlobs",
+			);
+		});
+
+		it("From AttachedData", async () => {
+			const initial: AttachedData = {
+				state: AttachState.Attached,
+			};
+			// make all callback fail, as attaching and attaching container is a no-op
+			await runRetirableAttachProcess({
+				attachmentData: initial,
+				offlineLoadEnabled: false,
+				setAttachmentData: createProxyWithFailDefault(),
+				createAttachmentSummary: createProxyWithFailDefault(),
+				createServiceIfNotExists: createProxyWithFailDefault(),
+				// we have blobs storage, but it is empty,
+				// so it should be treat like there are no blobs
+				detachedBlobStorage: createProxyWithFailDefault(),
+				storageAdapter: createProxyWithFailDefault(),
+			});
+		});
+	});
+});

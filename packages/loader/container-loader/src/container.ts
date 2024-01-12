@@ -123,7 +123,7 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
-import { AttachmentData, runRetirableAttachProcess } from "./attachmentData";
+import { AttachmentData, runRetirableAttachProcess } from "./attachment";
 
 const detachedContainerRefSeqNumber = 0;
 
