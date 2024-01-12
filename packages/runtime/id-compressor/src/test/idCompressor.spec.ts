@@ -774,7 +774,7 @@ describe("IdCompressor", () => {
 			]);
 		});
 
-		it.only("correctly passes logger when no session specified", () => {
+		it("correctly passes logger when no session specified", () => {
 			const mockLogger = new MockLogger();
 			const compressor = createIdCompressor(mockLogger);
 			compressor.generateCompressedId();

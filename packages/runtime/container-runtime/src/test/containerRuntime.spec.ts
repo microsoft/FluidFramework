@@ -131,7 +131,7 @@ describe("Runtime", () => {
 
 	describe("Container Runtime", () => {
 		describe("IdCompressor", () => {
-			it.only("finalizes idRange on attach", async () => {
+			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({}, logger) as IContainerContext,
