@@ -1,5 +1,5 @@
 {
-	"name": "eslint-plugin-custom-rules",
+	"name": "eslint-plugin-fluid-custom-rules",
 	"version": "1.0.0",
 	"private": true,
 	"description": "Custom ESLint rules for the Fluid Framework",

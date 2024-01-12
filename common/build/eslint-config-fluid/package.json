@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "3.3.0",
+	"version": "4.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 		"@typescript-eslint/parser": "~6.7.2",
 		"eslint-config-prettier": "~9.0.0",
 		"eslint-import-resolver-typescript": "~3.6.1",
-		"eslint-plugin-custom-rules": "file:./src/custom-rules",
+		"eslint-plugin-fluid-custom-rules": "file:./src/custom-rules",
 		"eslint-plugin-eslint-comments": "~3.2.0",
 		"eslint-plugin-import": "npm:eslint-plugin-i@~2.29.0",
 		"eslint-plugin-jsdoc": "~46.8.1",
@@ -63,7 +63,7 @@
 		"typescript": "~5.1.6"
 	},
 	"dependenciesMeta": {
-		"eslint-plugin-custom-rules": {
+		"eslint-plugin-fluid-custom-rules": {
 			"injected": true
 		}
 	},
