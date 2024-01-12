@@ -53,7 +53,7 @@ describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObje
 		return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });
 	}
 
-	beforeEach(async () => {
+	beforeEach("setupContainer", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await createContainer();
 		dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;

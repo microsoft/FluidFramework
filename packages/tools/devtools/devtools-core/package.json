@@ -136,6 +136,12 @@
 			"RemovedClassDeclaration_DevtoolsLogger": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_FluidDevtoolsProps": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ContainerDevtoolsProps": {
+				"forwardCompat": false
 			}
 		}
 	}

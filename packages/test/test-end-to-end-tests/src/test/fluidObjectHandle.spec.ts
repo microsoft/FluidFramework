@@ -22,7 +22,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
-	beforeEach(function () {
+	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
 	});
 
@@ -30,7 +30,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 	let firstContainerObject2: ITestDataObject;
 	let secondContainerObject1: ITestDataObject;
 
-	beforeEach(async () => {
+	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
 		const firstContainer = await provider.makeTestContainer();
 		firstContainerObject1 =

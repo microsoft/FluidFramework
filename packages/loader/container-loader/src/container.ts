@@ -600,6 +600,7 @@ export class Container
 	private readonly visibilityEventHandler: (() => void) | undefined;
 	private readonly connectionStateHandler: IConnectionStateHandler;
 	private readonly clientsWhoShouldHaveLeft = new Set<string>();
+	private _containerMetadata: Readonly<Record<string, string>> = {};
 
 	private setAutoReconnectTime = performance.now();
 
@@ -626,6 +627,10 @@ export class Container
 
 	public get readOnlyInfo(): ReadOnlyInfo {
 		return this._deltaManager.readOnlyInfo;
+	}
+
+	public get containerMetadata(): Record<string, string> {
+		return this._containerMetadata;
 	}
 
 	/**
@@ -1041,6 +1046,11 @@ export class Container
 
 				this._lifecycleState = "closing";
 
+				// Back-compat for Old driver
+				if (this.service?.off !== undefined) {
+					this.service?.off("metadataUpdate", this.metadataUpdateHandler);
+				}
+
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
@@ -1232,6 +1242,11 @@ export class Container
 						detachedBlobStorage: this.detachedBlobStorage,
 						createAttachmentSummary: (redirectTable?: Map<string, string>) => {
 							try {
+								assert(
+									this.deltaManager.inbound.length === 0,
+									0x0d6 /* "Inbound queue should be empty when attaching" */,
+								);
+
 								const appSummary: ISummaryTree =
 									this.runtime.createSummary(redirectTable);
 								const protocolSummary = this.captureProtocolSummary();
@@ -1491,6 +1506,22 @@ export class Container
 		this._deltaManager.connect(args);
 	}
 
+	private readonly metadataUpdateHandler = (metadata: Record<string, string>) => {
+		this._containerMetadata = { ...this._containerMetadata, ...metadata };
+		this.emit("metadataUpdate", metadata);
+	};
+
+	private async createDocumentService(
+		serviceProvider: () => Promise<IDocumentService>,
+	): Promise<IDocumentService> {
+		const service = await serviceProvider();
+		// Back-compat for Old driver
+		if (service.on !== undefined) {
+			service.on("metadataUpdate", this.metadataUpdateHandler);
+		}
+		return service;
+	}
+
 	/**
 	 * Load container.
 	 *
@@ -1504,10 +1535,12 @@ export class Container
 		loadToSequenceNumber: number | undefined,
 	) {
 		const timings: Record<string, number> = { phase1: performance.now() };
-		this.service = await this.serviceFactory.createDocumentService(
-			resolvedUrl,
-			this.subLogger,
-			this.client.details.type === summarizerClientType,
+		this.service = await this.createDocumentService(async () =>
+			this.serviceFactory.createDocumentService(
+				resolvedUrl,
+				this.subLogger,
+				this.client.details.type === summarizerClientType,
+			),
 		);
 
 		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode

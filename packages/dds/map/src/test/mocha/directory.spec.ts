@@ -67,7 +67,7 @@ describe("Directory", () => {
 		let directory: SharedDirectory;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
-		beforeEach(async () => {
+		beforeEach("createDirectory", async () => {
 			dataStoreRuntime = new MockFluidDataStoreRuntime();
 			dataStoreRuntime.local = true;
 			directory = new SharedDirectory(
@@ -928,7 +928,7 @@ describe("Directory", () => {
 		let directory1: SharedDirectory;
 		let directory2: SharedDirectory;
 
-		beforeEach(async () => {
+		beforeEach("createDirectory", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			// Create the first directory1.
 			directory1 = createConnectedDirectory("directory1", containerRuntimeFactory);
