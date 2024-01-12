@@ -13,7 +13,8 @@ It includes functionality to retrieve the Fluid data contained within, as well a
 
 ### DDS packages
 
-You'll use one or more DDS data structures in your container to model your collaborative data. The `fluid-framework` package comes with three data structures that cover a broad range of scenarios:
+You'll use one or more DDS data structures in your container to model your collaborative data.
+The `fluid-framework` package offers the following data structures:
 
 1. **[SharedTree][]**
 1. **[SharedMap][]**, a map-like data structure for storing key/value pair data
