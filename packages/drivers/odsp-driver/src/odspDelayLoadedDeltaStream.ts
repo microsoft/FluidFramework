@@ -236,8 +236,13 @@ export class OdspDelayLoadedDeltaStream {
 		signals.forEach((signal: ISignalMessage) => {
 			// Make sure it is not for a specific client as `PolicyLabelsUpdate` is meant for all clients.
 			if (signal.clientId === null) {
-				const envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
-				if (envelope.contents.type === policyLabelsUpdatesSignalType) {
+				// We could have some issues/irregularities in parsing signals, so put it in try/catch block
+				// and ignore the error as we can have labels update later on through join session response.
+				let envelope: ISignalEnvelope | undefined;
+				try {
+					envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
+				} catch (err) {}
+				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
 					this.emitMetaDataUpdateEvent({
 						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
 					});
