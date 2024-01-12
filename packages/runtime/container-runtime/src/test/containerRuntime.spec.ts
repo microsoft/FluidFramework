@@ -151,11 +151,12 @@ describe("Runtime", () => {
 				compressor.generateCompressedId();
 				containerRuntime.createSummary();
 
-				logger.assertMatchAny([
-					{
-						eventName: "RuntimeIdCompressor:FirstCluster",
-					},
-				]);
+				const range = compressor.takeNextCreationRange();
+				assert.equal(
+					range.ids,
+					undefined,
+					"All Ids should have been finalized after calling createSummary()",
+				);
 			});
 		});
 
