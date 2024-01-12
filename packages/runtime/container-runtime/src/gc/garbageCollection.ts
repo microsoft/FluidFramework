@@ -159,14 +159,7 @@ export class GarbageCollector implements IGarbageCollector {
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
-		this.getNodePackagePath = async (nodePath: string) => {
-			// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
-			// These have no package path so return undefined.
-			if (nodePath === "/") {
-				return undefined;
-			}
-			return createParams.getNodePackagePath(nodePath);
-		};
+		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
 		this.submitMessage = createParams.submitMessage;
 
@@ -1027,21 +1020,12 @@ export class GarbageCollector implements IGarbageCollector {
 	 * even if the true GC graph shows it is unreferenced. This will
 	 * prevent it from being deleted by Sweep (after the Grace Period).
 	 *
-	 * Summarizer Clients: Call addedOutboundReference to reset the unreferenced state (don't submit the GC op)
-	 *
-	 * Interactive Clients: Submit a GC op indicating that the Tombstone with the given path has been loaded.
+	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
 	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
 	 * before runnint GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
 		if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
-			return;
-		}
-
-		// Summarize does this directly rather than using the op
-		// to avoid difficult edge cases that can arise from Summarizer submitting ops.
-		if (this.isSummarizerClient) {
-			this.addedOutboundReference("/", nodePath);
 			return;
 		}
 

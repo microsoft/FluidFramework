@@ -2920,6 +2920,12 @@ export class ContainerRuntime
 	 * data store or an attachment blob.
 	 */
 	public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
+		// These have no package path so return a special value.
+		if (nodePath === "/") {
+			return ["<GCROOT>"];
+		}
+
 		switch (this.getNodeType(nodePath)) {
 			case GCNodeType.Blob:
 				return [BlobManager.basePath];

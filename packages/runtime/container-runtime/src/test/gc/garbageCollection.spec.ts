@@ -377,10 +377,6 @@ describe("Garbage Collection Tests", () => {
 		}
 
 		beforeEach(async () => {
-			//* This may not be the right "fix" - we may want coverage of these cases with Auto-Recovery
-			// AutoRecovery interferes with the assumptions these tests rely on to validate the logic under test.
-			injectedSettings["Fluid.GarbageCollection.DisableAutoRecovery"] = true;
-
 			// Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
 			// Here's a diagram showing the references:
 			// 0 - 1 - 2 - 3
