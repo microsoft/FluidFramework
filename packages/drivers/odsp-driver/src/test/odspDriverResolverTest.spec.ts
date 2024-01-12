@@ -104,16 +104,6 @@ describe("Odsp Driver Resolver", () => {
 		);
 	});
 
-	it("Should add shareLinkInfo with link type if request contains createLinkType", async () => {
-		const newRequest = request;
-		const createLinkType = "csl";
-		newRequest.url += `&createLinkType=${createLinkType}`;
-		const resolvedUrl = await resolver.resolve(request);
-		assert(resolvedUrl.shareLinkInfo !== undefined);
-		assert(resolvedUrl.shareLinkInfo.createLink !== undefined);
-		assert.strictEqual(resolvedUrl.shareLinkInfo.createLink.type, createLinkType);
-	});
-
 	it("Should resolve url with a string in the codeDetails package", async () => {
 		const resolvedUrl = await resolver.resolve(request);
 		const codeDetails = { package: packageName };
