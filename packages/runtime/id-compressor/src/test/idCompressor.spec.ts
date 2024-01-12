@@ -14,7 +14,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "../";
-import { IdCompressor, deserializeIdCompressor } from "../idCompressor";
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor";
 import { createSessionId } from "../utilities";
 import {
 	performFuzzActions,
@@ -770,6 +770,18 @@ describe("IdCompressor", () => {
 					size: 72,
 					clusterCount: 1,
 					sessionCount: 1,
+				},
+			]);
+		});
+
+		it.only("correctly passes logger when no session specified", () => {
+			const mockLogger = new MockLogger();
+			const compressor = createIdCompressor(mockLogger);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:FirstCluster",
 				},
 			]);
 		});
