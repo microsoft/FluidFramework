@@ -6,6 +6,7 @@
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
+		"declarationDir": "./dist",
 		"rootDir": "./src",
 		"outDir": "./dist",
 	},
