@@ -154,7 +154,10 @@ export class EditManager<
 	 * Make the given branch known to the `EditManager`. The `EditManager` will ensure that all registered
 	 * branches remain usable even as the minimum sequence number advances.
 	 *
-	 * TODO: refactor local branch management into a separate class that encapsulates `trunkBranches` and everything that touches it.
+	 * TODO#AB6926: Refactor local branch management into a separate class that encapsulates `trunkBranches` and everything
+	 * that touches it.
+	 * TODO#AB6925: Maintain the divergence point between each branch and the trunk so that we don't have to recompute
+	 * it so often.
 	 */
 	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
 		this.trackBranch(branch);
