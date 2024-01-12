@@ -7,7 +7,12 @@ import { strict as assert } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
-import { AttachState, IContainer, IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IContainer,
+	IRuntime,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
@@ -922,10 +927,14 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 											existing,
 										);
 
-									runtime.createSummary = () =>
-										assert.fail("runtime.createSummary failed!");
-
-									return runtime;
+									return new Proxy(runtime, {
+										get: (t, p: keyof IRuntime, r): any => {
+											if (p === "createSummary") {
+												assert.fail("runtime.createSummary failed!");
+											}
+											return Reflect.get(t, p, r);
+										},
+									});
 								},
 							},
 						},
@@ -978,10 +987,14 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 											existing,
 										);
 
-									runtime.setAttachState = () =>
-										assert.fail("runtime.setAttachState failed!");
-
-									return runtime;
+									return new Proxy(runtime, {
+										get: (t, p: keyof IRuntime, r): any => {
+											if (p === "setAttachState") {
+												assert.fail("runtime.setAttachState failed!");
+											}
+											return Reflect.get(t, p, r);
+										},
+									});
 								},
 							},
 						},

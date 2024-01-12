@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { Lazy, assert, unreachableCase } from "@fluidframework/core-utils";
+import { Lazy, assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
@@ -374,9 +374,22 @@ export interface IPendingDetachedContainerState {
 	hasAttachmentBlobs: boolean;
 }
 
+/**
+ * Ensures only a single instance of the provided async function is running.
+ * If there are multiple calls they will all get the same promise to wait on.
+ */
 const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
-	let runningP: Promise<R> | undefined;
-	return async (...args: A) => (runningP ??= func(...args).finally(() => (runningP = undefined)));
+	let running: [A, Promise<R>] | undefined;
+	return async (...args: A) => {
+		if (running !== undefined) {
+			if (!compareArrays(running[0], args)) {
+				throw new UsageError("Subsequent calls cannot use different arguments.");
+			}
+			return running[1];
+		}
+		running = [args, func(...args).finally(() => (running = undefined))];
+		return running[1];
+	};
 };
 
 const summarizerClientType = "summarizer";
@@ -1218,6 +1231,7 @@ export class Container
 		};
 		return JSON.stringify(detachedContainerState);
 	}
+
 	public attach = runSingle(
 		async (
 			request: IRequest,
@@ -1244,7 +1258,7 @@ export class Container
 							resolvedUrl: this.service?.resolvedUrl?.url,
 						});
 						this.close(newError);
-						throw newError;
+						return newError;
 					};
 
 					await runRetirableAttachProcess({
