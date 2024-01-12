@@ -977,6 +977,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Note: We don't need to trigger on "Changed" because any change will cause the object
 		// to be loaded by the Summarizer, and auto-recovery will be triggered then.
 		if (isTombstoned && reason === "Loaded") {
+			// Note that when a DataStore and its DDS are all loaded, each will trigger AutoRecovery for itself.
 			this.triggerAutoRecovery(nodePath);
 		}
 
@@ -1048,8 +1049,9 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * @param fromNodePath - The node from which the reference is added.
 	 * @param toNodePath - The node to which the reference is added.
+	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
-	public addedOutboundReference(fromNodePath: string, toNodePath: string) {
+	public addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true) {
 		if (!this.configs.shouldRunGC) {
 			return;
 		}
@@ -1079,6 +1081,7 @@ export class GarbageCollector implements IGarbageCollector {
 			isTombstoned: this.tombstones.includes(toNodePath),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			fromId: fromNodePath,
+			autorecovery,
 		});
 	}
 

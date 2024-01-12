@@ -962,7 +962,17 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const { summaryVersion: summaryVersion2 } = await summarize(summarizer);
 				const container2 = await loadContainer(summaryVersion2);
 
-				//* TODO?: Verify that the object is not Tombstoned in summarizingContainer -- Unsure how to get at Summarizer's ContainerRuntime...
+				// Verify that the object is not Tombstoned in summarizingContainer - it just summarized with the TombstoneLoaded op
+				const summarizerResponse = await (
+					summarizer as unknown as { runtime: ContainerRuntime }
+				).runtime.resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					summarizerResponse.status,
+					200,
+					"Auto-Recovery should have kicked in immediately in Summarizer after summarizing with the TombstoneLoaded op",
+				);
 
 				// Container2 loaded after auto-recovery: These requests succeed because the datastores are no longer tombstoned
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
