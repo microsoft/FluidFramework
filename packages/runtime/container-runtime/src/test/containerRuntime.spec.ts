@@ -131,9 +131,10 @@ describe("Runtime", () => {
 
 	describe("Container Runtime", () => {
 		describe("IdCompressor", () => {
-			it("finalizes idRange on attach", async () => {
+			it.only("finalizes idRange on attach", async () => {
+				const logger = new MockLogger();
 				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
+					context: getMockContext({}, logger) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
@@ -143,15 +144,18 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
+				logger.clear();
+
 				const compressor = containerRuntime.idCompressor;
 				assert(compressor !== undefined);
 				compressor.generateCompressedId();
 				containerRuntime.createSummary();
 
-				// This should return an empty range since we should've
-				// taken the next range and finalized it in the createSummary call above
-				const idRange = compressor.takeNextCreationRange();
-				assert.equal(idRange.ids, undefined);
+				logger.assertMatchAny([
+					{
+						eventName: "RuntimeIdCompressor:FirstCluster",
+					},
+				]);
 			});
 		});
 

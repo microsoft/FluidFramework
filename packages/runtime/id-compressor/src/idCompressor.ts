@@ -684,7 +684,7 @@ export function createIdCompressor(
 			logger = loggerOrUndefined;
 		} else {
 			localSessionId = createSessionId();
-			logger = loggerOrUndefined;
+			logger = sessionIdOrLogger;
 		}
 	}
 	const compressor = new IdCompressor(
