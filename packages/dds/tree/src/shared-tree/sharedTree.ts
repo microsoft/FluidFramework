@@ -32,7 +32,7 @@ import {
 	ForestSummarizer,
 	SchemaSummarizer,
 	buildForest,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
 	DetachedFieldIndexSummarizer,
@@ -119,7 +119,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This has to avoid its name colliding with `schematize`.
 	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
 	 */
-	schematizeInternal<TRoot extends TreeFieldSchema>(
+	schematizeInternal<TRoot extends FlexFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): FlexTreeView<TRoot>;
 
@@ -138,7 +138,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * Once views actually have a view schema, onSchemaIncompatible can become an event on the view (which ends its lifetime),
 	 * instead of a separate callback.
 	 */
-	requireSchema<TRoot extends TreeFieldSchema>(
+	requireSchema<TRoot extends FlexFieldSchema>(
 		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 	): FlexTreeView<TRoot> | undefined;
@@ -260,7 +260,7 @@ export class SharedTree
 		});
 	}
 
-	public requireSchema<TRoot extends TreeFieldSchema>(
+	public requireSchema<TRoot extends FlexFieldSchema>(
 		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
@@ -320,7 +320,7 @@ export class SharedTree
 		}
 	}
 
-	public schematizeInternal<TRoot extends TreeFieldSchema>(
+	public schematizeInternal<TRoot extends FlexFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,

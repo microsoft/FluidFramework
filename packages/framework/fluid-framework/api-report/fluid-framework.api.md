@@ -4,17 +4,13 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionState } from '@fluidframework/container-loader';
-import { ConnectionState as ConnectionState_2 } from '@fluidframework/container-definitions';
-import { ContainerErrorTypes } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
@@ -40,11 +36,44 @@ export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Requir
 // @public
 export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
-export { AttachState }
+// @public
+export enum AttachState {
+    Attached = "Attached",
+    Attaching = "Attaching",
+    Detached = "Detached"
+}
 
-export { ConnectionState }
+// @public (undocumented)
+export enum ConnectionState {
+    CatchingUp = 1,
+    Connected = 2,
+    Disconnected = 0,
+    EstablishingConnection = 3
+}
 
-export { ContainerErrorTypes }
+// @public
+export namespace ConnectionStateType {
+    export type CatchingUp = 1;
+    export type Connected = 2;
+    export type Disconnected = 0;
+    export type EstablishingConnection = 3;
+}
+
+// @public
+export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
+
+// @alpha
+export const ContainerErrorTypes: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @alpha (undocumented)
+export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @public
 export interface ContainerSchema {
@@ -123,7 +152,8 @@ export interface IConnection {
     mode: "write" | "read";
 }
 
-export { ICriticalContainerError }
+// @public
+export type ICriticalContainerError = IErrorBase;
 
 // @public
 export interface IDisposable {
@@ -135,7 +165,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     attach(): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
-    readonly connectionState: ConnectionState_2;
+    readonly connectionState: ConnectionStateType;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     disconnect(): void;
     dispose(): void;

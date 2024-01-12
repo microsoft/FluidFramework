@@ -103,7 +103,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => 
 	const createContainer = async (logger): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory, { logger });
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		mockLogger = new MockLogger();
 		// Create a Container for the first client.

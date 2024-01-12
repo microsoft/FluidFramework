@@ -133,6 +133,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_ReplayDocumentService": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

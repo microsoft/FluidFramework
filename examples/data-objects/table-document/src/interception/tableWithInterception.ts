@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { PropertySet } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { ITable, TableDocumentItem } from "../table";
-import { TableDocument } from "../document";
+import { ITable, TableDocumentItem } from "../table.js";
+import { TableDocument } from "../document.js";
 
 /**
  * Does the following:

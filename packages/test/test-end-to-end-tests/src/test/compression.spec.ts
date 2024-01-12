@@ -40,7 +40,7 @@ const compressionSuite = (getProvider) => {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};
 
-		beforeEach(async () => {
+		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
 
 			const localContainer = await provider.makeTestContainer(testContainerConfig);

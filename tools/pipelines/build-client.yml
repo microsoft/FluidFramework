@@ -152,7 +152,6 @@ extends:
     - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
-    - nyc/azure
     - nyc/examples
     - nyc/experimental
     - nyc/packages

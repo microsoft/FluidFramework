@@ -69,6 +69,9 @@ module.exports = (env) => {
 				],
 			},
 			resolve: {
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+				},
 				extensions: [".tsx", ".ts", ".js"],
 			},
 			resolveLoader: {
@@ -101,7 +104,7 @@ module.exports = (env) => {
 				// new BundleAnalyzerPlugin()
 			],
 		},
-		isProduction ? require("./webpack.prod") : require("./webpack.dev"),
+		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 		fluidRoute.devServerConfig(__dirname, env),
 	);
 };
