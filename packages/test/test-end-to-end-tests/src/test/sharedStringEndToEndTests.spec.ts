@@ -32,7 +32,7 @@ const groupedBatchingContainerConfig: ITestContainerConfig = {
 
 describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -40,7 +40,7 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 	let sharedString2: SharedString;
 	let dataObject1: ITestFluidObject;
 
-	beforeEach(async () => {
+	beforeEach("setupSharedStrings", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
@@ -127,7 +127,7 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 
 describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 

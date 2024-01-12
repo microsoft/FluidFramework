@@ -21,7 +21,7 @@ describe("Loader", () => {
 				const testEvent = "testEvent";
 				const errorEvent = "error";
 
-				beforeEach(() => {
+				beforeEach("setSourceAndForwarder", () => {
 					source = new EventEmitter();
 					forwarder = new EventForwarder<ITestEvents>(source);
 				});

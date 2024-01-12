@@ -11,6 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -76,7 +77,6 @@ import {
 	IGarbageCollectionData,
 	IEnvelope,
 	IInboundSignalMessage,
-	ISignalEnvelope,
 	NamedFluidDataStoreRegistryEntries,
 	ISummaryTreeWithStats,
 	ISummarizeInternalResult,

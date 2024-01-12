@@ -226,6 +226,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerExperimental": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
