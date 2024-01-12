@@ -158,7 +158,7 @@ export class OdspClient {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async <T>(props?: T): Promise<{ itemId: string }> => {
+		const attach = async <T>(props?: T): Promise<string> => {
 			const odspProps = props as OdspContainerAttachProps;
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
@@ -182,7 +182,7 @@ export class OdspClient {
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */
-			return { itemId: resolvedUrl.itemId };
+			return resolvedUrl.itemId;
 		};
 		const fluidContainer = createFluidContainer({ container, rootDataObject });
 		fluidContainer.attach = attach;

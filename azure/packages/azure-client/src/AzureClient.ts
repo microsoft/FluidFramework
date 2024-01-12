@@ -286,7 +286,7 @@ export class AzureClient {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async (): Promise<{ containerId: string }> => {
+		const attach = async <T>(props?: T): Promise<string> => {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
@@ -294,7 +294,7 @@ export class AzureClient {
 			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			return { containerId: container.resolvedUrl.id };
+			return container.resolvedUrl.id;
 		};
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
