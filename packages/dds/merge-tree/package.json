@@ -11,30 +11,8 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./dist/test": {
-			"import": {
-				"types": "./dist/test/index.d.ts",
-				"default": "./dist/test/index.cjs"
-			},
-			"require": {
-				"types": "./dist/test/index.d.ts",
-				"default": "./dist/test/index.cjs"
-			}
-		}
-	},
-	"main": "dist/index.cjs",
-	"module": "lib/index.mjs",
+	"main": "dist/index.js",
+	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -44,9 +22,8 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
-		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
-		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -68,7 +45,7 @@
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=1 npm run test:mocha",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -130,10 +107,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
-		"renamer": "^4.0.0",
-		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
