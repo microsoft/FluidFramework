@@ -568,7 +568,14 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				};
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
-				return summarizeResult.receivedSummaryAckOrNack;
+				const result = await summarizeResult.receivedSummaryAckOrNack;
+				if (!result.success) {
+					this.mc.logger.sendErrorEvent({
+						eventName: "SummarizeFailed",
+						maxAttempts: 1,
+						summaryAttempts: 1,
+					});
+				}
 			},
 			() => {
 				this.afterSummaryAction();
