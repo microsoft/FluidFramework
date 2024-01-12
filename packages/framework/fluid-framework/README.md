@@ -22,7 +22,7 @@ The `fluid-framework` package offers the following data structures:
 
 ## Tutorial
 
-Check out the Hello World tutorial using the `fluid-framework` package [here](https://fluidframework.com/docs/start/tutorial/).
+Check out the [Hello World tutorial](https://fluidframework.com/docs/start/tutorial/) using `fluid-framework`.
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 
