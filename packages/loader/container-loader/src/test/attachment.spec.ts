@@ -8,6 +8,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	AttachProcessProps,
 	AttachedData,
@@ -79,6 +80,11 @@ const createProxyWithFailDefault = <T extends Record<string, any> | undefined>(
 			if (p in t) {
 				return Reflect.get(t, p, r);
 			}
+			// sometimes types get inspected to see if they are promises
+			// and we don't want to fail the inspection process
+			if (p in Promise.resolve()) {
+				return undefined;
+			}
 			assert.fail(`unexpected call too ${p.toString()}`);
 		},
 	}) as T;
@@ -99,8 +105,8 @@ describe("runRetirableAttachProcess", () => {
 					assert.strictEqual(redirectTable, undefined, "redirectTable");
 					return emptySummary;
 				},
-				createServiceIfNotExists: async () => {},
-				storageAdapter: createProxyWithFailDefault(),
+				getStorageService: async () =>
+					createProxyWithFailDefault<IDocumentStorageService>(),
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
@@ -124,12 +130,11 @@ describe("runRetirableAttachProcess", () => {
 					assert.strictEqual(redirectTable, undefined, "redirectTable");
 					return emptySummary;
 				},
-				createServiceIfNotExists: async () => {},
-				storageAdapter: {
+				getStorageService: async () => ({
 					createBlob: async () => assert.fail("no blobs should be created"),
 					uploadSummaryWithContext: async () =>
 						assert.fail("no summary should be uploaded outside of create"),
-				},
+				}),
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
@@ -159,8 +164,7 @@ describe("runRetirableAttachProcess", () => {
 					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
 					return emptySummary;
 				},
-				createServiceIfNotExists: async () => {},
-				storageAdapter,
+				getStorageService: async () => storageAdapter,
 				detachedBlobStorage,
 			});
 
@@ -204,13 +208,12 @@ describe("runRetirableAttachProcess", () => {
 					assert.strictEqual(redirectTable, undefined, "redirectTable");
 					return emptySummary;
 				},
-				createServiceIfNotExists: async () => {},
+				getStorageService: async () => createProxyWithFailDefault(),
 				// we have blobs storage, but it is empty,
 				// so it should be treat like there are no blobs
 				detachedBlobStorage: createProxyWithFailDefault<
 					AttachProcessProps["detachedBlobStorage"]
 				>({ size: 0 }),
-				storageAdapter: createProxyWithFailDefault(),
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
@@ -236,8 +239,7 @@ describe("runRetirableAttachProcess", () => {
 					createAttachmentSummary: (redirectTable) => {
 						assert.fail("createAttachmentSummary failure");
 					},
-					createServiceIfNotExists: createProxyWithFailDefault(),
-					storageAdapter: createProxyWithFailDefault(),
+					getStorageService: createProxyWithFailDefault(),
 				});
 				assert.fail("failure expected");
 			} catch {}
@@ -249,7 +251,7 @@ describe("runRetirableAttachProcess", () => {
 			);
 		});
 
-		it("From DetachedDefaultData without blobs createServiceIfNotExists failure", async () => {
+		it("From DetachedDefaultData without blobs getStorageService failure", async () => {
 			const initial: DetachedDefaultData = {
 				state: AttachState.Detached,
 			};
@@ -263,10 +265,9 @@ describe("runRetirableAttachProcess", () => {
 						assert.strictEqual(redirectTable, undefined, "redirectTable");
 						return emptySummary;
 					},
-					createServiceIfNotExists: () => {
-						assert.fail("createServiceIfNotExists failure");
+					getStorageService: () => {
+						assert.fail("getStorageService failure");
 					},
-					storageAdapter: createProxyWithFailDefault(),
 				});
 				assert.fail("failure expected");
 			} catch {}
@@ -298,14 +299,10 @@ describe("runRetirableAttachProcess", () => {
 						assert.strictEqual(redirectTable, undefined, "redirectTable");
 						return emptySummary;
 					},
-					createServiceIfNotExists: () => {
-						assert.fail("createServiceIfNotExists failure");
-					},
-					storageAdapter: createProxyWithFailDefault<
-						AttachProcessProps["storageAdapter"]
-					>({
-						createBlob: () => assert.fail("createBlob failure"),
-					}),
+					getStorageService: async () =>
+						createProxyWithFailDefault<IDocumentStorageService>({
+							createBlob: () => assert.fail("createBlob failure"),
+						}),
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
@@ -337,12 +334,10 @@ describe("runRetirableAttachProcess", () => {
 					createAttachmentSummary: (redirectTable) => {
 						assert.fail("createAttachmentSummary failure");
 					},
-					createServiceIfNotExists: async () => {},
-					storageAdapter: createProxyWithFailDefault<
-						AttachProcessProps["storageAdapter"]
-					>({
-						createBlob: async () => Promise.resolve(uuid()),
-					}),
+					getStorageService: async () =>
+						createProxyWithFailDefault<IDocumentStorageService>({
+							createBlob: async () => Promise.resolve(uuid()),
+						}),
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
@@ -380,12 +375,11 @@ describe("runRetirableAttachProcess", () => {
 						assert.strictEqual(redirectTable?.size, 10, "redirectTable?.size");
 						return emptySummary;
 					},
-					createServiceIfNotExists: async () => {},
-					storageAdapter: {
+					getStorageService: async () => ({
 						createBlob: async () => Promise.resolve(uuid()),
 						uploadSummaryWithContext: () =>
 							assert.fail("uploadSummaryWithContext failure"),
-					},
+					}),
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
@@ -425,8 +419,7 @@ describe("runRetirableAttachProcess", () => {
 					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
 					return emptySummary;
 				},
-				createServiceIfNotExists: async () => {},
-				storageAdapter,
+				getStorageService: async () => storageAdapter,
 				detachedBlobStorage,
 			});
 
@@ -472,12 +465,11 @@ describe("runRetirableAttachProcess", () => {
 				setAttachmentData: (data) => (attachmentData = data),
 				// summary should already be created
 				createAttachmentSummary: createProxyWithFailDefault(),
-				// service should already be created
-				createServiceIfNotExists: createProxyWithFailDefault(),
-				// only the summary should be left to upload
-				storageAdapter: createProxyWithFailDefault<AttachProcessProps["storageAdapter"]>({
-					uploadSummaryWithContext: async () => Promise.resolve(uuid),
-				}),
+				getStorageService: async () =>
+					// only the summary should be left to upload
+					createProxyWithFailDefault<IDocumentStorageService>({
+						uploadSummaryWithContext: async () => Promise.resolve(uuid),
+					}),
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
@@ -499,13 +491,12 @@ describe("runRetirableAttachProcess", () => {
 				attachmentData: initial,
 				offlineLoadEnabled: true,
 				setAttachmentData: (data) => (attachmentData = data),
-				createServiceIfNotExists: async (data) => {
+				getStorageService: async (data) => {
 					assert.notStrictEqual(data.summary, undefined, "data.summary");
+					return createProxyWithFailDefault();
 				},
 				// summary should already be created
 				createAttachmentSummary: createProxyWithFailDefault(),
-				// no storage calls should be made as create service does everything
-				storageAdapter: createProxyWithFailDefault(),
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
@@ -526,11 +517,10 @@ describe("runRetirableAttachProcess", () => {
 				offlineLoadEnabled: false,
 				setAttachmentData: createProxyWithFailDefault(),
 				createAttachmentSummary: createProxyWithFailDefault(),
-				createServiceIfNotExists: createProxyWithFailDefault(),
+				getStorageService: createProxyWithFailDefault(),
 				// we have blobs storage, but it is empty,
 				// so it should be treat like there are no blobs
 				detachedBlobStorage: createProxyWithFailDefault(),
-				storageAdapter: createProxyWithFailDefault(),
 			});
 		});
 	});

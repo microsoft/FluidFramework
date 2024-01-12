@@ -6,8 +6,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { Lazy, assert } from "@fluidframework/core-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter";
+import { ISerializableBlobContents } from "./containerStorageAdapter";
 import { IDetachedBlobStorage } from ".";
 
 /**
@@ -78,20 +79,40 @@ export type AttachmentData =
 	| AttachingDataWithBlobs
 	| AttachedData;
 
+/**
+ * The data and services necessary for runRetirableAttachProcess.
+ */
 export interface AttachProcessProps {
+	/**
+	 * The initial attachment data this call should start with
+	 */
 	readonly attachmentData: AttachmentData;
+	/**
+	 * The caller should us this callback to keep track of the current
+	 * attachment data, and perform any other operations necessary
+	 * for dealing with attachment state changes.
+	 *
+	 * @param attachmentData - the updated attachment data
+	 * @returns - the updated attachment data
+	 */
 	readonly setAttachmentData: (attachmentData: AttachmentData) => AttachmentData;
-	readonly createServiceIfNotExists: (
-		data: DetachedDataWithOutstandingBlobs | AttachingDataWithoutBlobs,
-	) => Promise<void>;
+	/**
+	 * The caller should create and or get services based on the data, and its own information.
+	 * @param data - the data to create services from,
+	 * the summary property being the most relevant part of the data.
+	 * @returns A compatible storage service
+	 */
+	readonly getStorageService: (
+		data: DetachedDataWithOutstandingBlobs | AttachingDataWithBlobs | AttachingDataWithoutBlobs,
+	) => Promise<Pick<IDocumentStorageService, "createBlob" | "uploadSummaryWithContext">>;
+	/**
+	 * The detached blob storage if it exists
+	 */
 	readonly detachedBlobStorage?: Pick<IDetachedBlobStorage, "getBlobIds" | "readBlob" | "size">;
+
 	readonly createAttachmentSummary: (
 		redirectTable?: Map<string, string>,
 	) => CombinedAppAndProtocolSummary;
-	readonly storageAdapter: Pick<
-		ContainerStorageAdapter,
-		"createBlob" | "uploadSummaryWithContext"
-	>;
 	readonly offlineLoadEnabled: boolean;
 }
 
@@ -125,14 +146,9 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 		);
 	}
 
-	if (
-		(attachmentData.state === AttachState.Detached && attachmentData.blobs === "outstanding") ||
-		(attachmentData.state === AttachState.Attaching && attachmentData.blobs === "none")
-	) {
-		await props.createServiceIfNotExists(attachmentData);
-	}
-
 	if (attachmentData.state === AttachState.Detached && attachmentData.blobs === "outstanding") {
+		const storageAdapter = await props.getStorageService(attachmentData);
+
 		const detachedData = attachmentData;
 		// upload blobs to storage
 		assert(!!props.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
@@ -145,7 +161,7 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 				.filter((id) => !detachedData.redirectTable.has(id));
 			for (const id of newIds) {
 				const blob = await props.detachedBlobStorage.readBlob(id);
-				const response = await props.storageAdapter.createBlob(blob);
+				const response = await storageAdapter.createBlob(blob);
 				detachedData.redirectTable.set(id, response.id);
 			}
 		}
@@ -159,9 +175,10 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 	{
 		assert(attachmentData.state === AttachState.Attaching, "must be attaching by this point");
 		const attachingData = attachmentData;
+		const storageAdapter = await props.getStorageService(attachingData);
 
 		if (attachingData.blobs === "done") {
-			await props.storageAdapter.uploadSummaryWithContext(attachingData.summary, {
+			await storageAdapter.uploadSummaryWithContext(attachingData.summary, {
 				referenceSequenceNumber: 0,
 				ackHandle: undefined,
 				proposalHandle: undefined,

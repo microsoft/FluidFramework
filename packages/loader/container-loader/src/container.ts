@@ -1264,7 +1264,6 @@ export class Container
 					await runRetirableAttachProcess({
 						attachmentData: this.attachmentData,
 						offlineLoadEnabled: this.offlineLoadEnabled,
-						storageAdapter: this.storageAdapter,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData: (attachmentData) => {
 							const previousState = this.attachmentData.state;
@@ -1297,7 +1296,7 @@ export class Container
 								throw normalizeErrorAndClose(error);
 							}
 						},
-						createServiceIfNotExists: async (data) => {
+						getStorageService: async (data) => {
 							// Actually go and create the resolved document
 							if (this.service === undefined) {
 								const createNewResolvedUrl =
@@ -1323,6 +1322,7 @@ export class Container
 								);
 								this.storageAdapter.connectToService(this.service);
 							}
+							return this.storageAdapter;
 						},
 					});
 
