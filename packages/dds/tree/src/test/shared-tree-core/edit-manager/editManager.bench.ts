@@ -238,7 +238,7 @@ describe("EditManager - Bench", () => {
 		});
 	}
 
-	describe.only("No concurrency", () => {
+	describe("No concurrency", () => {
 		describe("Many local edits", () => {
 			for (const [type, count] of [
 				[BenchmarkType.Perspective, 1],
