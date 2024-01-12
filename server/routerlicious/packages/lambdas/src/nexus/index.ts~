@@ -1000,7 +1000,7 @@ export function configureWebSocketServices(
 								}
 
 								const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
-								const sanitizedMessageWithTrace = addAlfredTrace(
+								const sanitizedMessageWithTrace = addNexusTrace(
 									sanitizedMessage,
 									numberOfMessagesPerTrace,
 									connection.clientId,
