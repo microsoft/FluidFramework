@@ -47,6 +47,8 @@ import {
 	ITelemetryLoggerExt,
 	UsageError,
 	LoggingError,
+	createSampledLogger,
+	IEventSampler,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -861,14 +863,34 @@ export class ContainerRuntime
 				"@fluidframework/id-compressor"
 			);
 
-			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+			/**
+			 * Because the IdCompressor emits so much telemetry, this function is used to sample
+			 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
+			 */
+			const idCompressorEventSampler: IEventSampler = (() => {
+				const isIdCompressorTelemetryEnabled = Math.random() < 0.05;
+				return {
+					sample: () => {
+						return isIdCompressorTelemetryEnabled;
+					},
+				};
+			})();
 
+			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
+			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = deserializeIdCompressor(pendingLocalState.pendingIdCompressorState);
+				idCompressor = deserializeIdCompressor(
+					pendingLocalState.pendingIdCompressorState,
+					compressorLogger,
+				);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = deserializeIdCompressor(serializedIdCompressor, createSessionId());
+				idCompressor = deserializeIdCompressor(
+					serializedIdCompressor,
+					createSessionId(),
+					compressorLogger,
+				);
 			} else {
-				idCompressor = createIdCompressor(logger);
+				idCompressor = createIdCompressor(compressorLogger);
 			}
 		}
 
