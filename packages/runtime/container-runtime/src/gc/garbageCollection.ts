@@ -96,6 +96,8 @@ export class GarbageCollector implements IGarbageCollector {
 
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
+	/** Nodes whose state in unreferencedNodesState changed between runs */
+	private readonly updatedNodesSinceLastRun: Set<string> = new Set();
 	// Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
 	// outbound routes from that node.
 	private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -1006,6 +1008,13 @@ export class GarbageCollector implements IGarbageCollector {
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			fromId: fromNodePath,
 		});
+
+		// This node is referenced - Clear its unreferenced state
+		if (this.unreferencedNodesState.delete(toNodePath)) {
+			// If it was deleted, then it moved from unreferenced to referenced.
+			// Add it to the updated nodes list, since otherwise we assume unreferencedNodesState matches the last GC run's state.
+			this.updatedNodesSinceLastRun.add(toNodePath);
+		}
 	}
 
 	/**
@@ -1045,6 +1054,7 @@ export class GarbageCollector implements IGarbageCollector {
 			// Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
 			const stateUpdated =
 				this.gcDataFromLastRun === undefined ||
+				this.updatedNodesSinceLastRun.has(nodeId) ||
 				this.unreferencedNodesState.has(nodeId) === referenced;
 			if (stateUpdated) {
 				markPhaseStats.updatedNodeCount++;
