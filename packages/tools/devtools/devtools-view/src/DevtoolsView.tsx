@@ -524,6 +524,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			details: {
 				target: "Menu_Container",
 				sessionID,
+				browserID
 			},
 		});
 	}
@@ -534,6 +535,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: { target: "Menu_Telemetry" },
 			sessionID,
+			browserID
 		});
 	}
 
@@ -543,6 +545,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: { target: "Menu_Settings" },
 			sessionID,
+			browserID
 		});
 	}
 
@@ -552,6 +555,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: { target: "Menu_Home" },
 			sessionID,
+			browserID
 		});
 	}
 
@@ -560,6 +564,8 @@ function Menu(props: MenuProps): React.ReactElement {
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_OpLatency" },
+			sessionID,
+			browserID
 		});
 	}
 
