@@ -109,6 +109,7 @@ To use a local build of this extension in your browser:
 #### Sending local usage data to Kusto
 
 When using the Devtools browser extension, usage telemetry can be optionally generated and sent to Kusto. To do so, follow these instructions.
+
 1. Create a .env file in the devtools-browser-extension's root folder.
 2. Add the telemetry ingestion key to the env file. Consult Alejandro/Wayne to receive this key.
 3. Run `pnpm run build` to build the extension.
