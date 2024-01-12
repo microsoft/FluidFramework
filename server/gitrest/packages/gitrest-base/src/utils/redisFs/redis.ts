@@ -15,6 +15,10 @@ export interface RedisParams {
 export interface IRedis {
 	get<T>(key: string): Promise<T>;
 	set<T>(key: string, value: T, expireAfterSeconds?: number): Promise<void>;
+	setMany<T>(
+		keyValuePairs: { key: string; value: T }[],
+		expireAfterSeconds?: number,
+	): Promise<void>;
 	del(key: string, appendPrefixToKey?: boolean): Promise<boolean>;
 	delAll(keyPrefix: string): Promise<boolean>;
 	keysByPrefix(keyPrefix: string): Promise<string[]>;
@@ -61,6 +65,16 @@ export class Redis implements IRedis {
 		if (result !== "OK") {
 			throw new Error(result);
 		}
+	}
+
+	public async setMany<T>(
+		keyValuePairs: { key: string; value: T }[],
+		expireAfterSeconds?: number,
+	): Promise<void> {
+		const setPs = keyValuePairs.map(async ({ key, value }) =>
+			this.set(key, value, expireAfterSeconds),
+		);
+		await Promise.all(setPs);
 	}
 
 	public async del(key: string, appendPrefixToKey = true): Promise<boolean> {
@@ -121,10 +135,6 @@ export class HashMapRedis implements IRedis {
 	}
 
 	public async get<T>(key: string): Promise<T> {
-		if (!this.getMapPropertyKey(key) || this.mapKey.startsWith(key)) {
-			// This is a readDir for part of the root directory, so we don't need to get anything in the hash map
-			return "" as unknown as T;
-		}
 		const stringValue = await this.client.hget(this.getMapKey(), this.getMapPropertyKey(key));
 		return JSON.parse(stringValue) as T;
 	}
@@ -134,16 +144,29 @@ export class HashMapRedis implements IRedis {
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		if (!this.getMapPropertyKey(key) || (!value && this.mapKey.startsWith(key))) {
-			// This is a createDirectory for the root directory, so we don't need to set anything in the hash map
-			return;
-		}
 		// Set values in the hash map and returns the count of set key/value pairs.
 		// However, if it's a duplicate key, it will return 0, so we can't rely on the return value to determine success.
 		await this.client.hset(
 			this.getMapKey(),
 			this.getMapPropertyKey(key),
 			JSON.stringify(value),
+		);
+		// Update the expiration time for the hash map
+		await this.client.expire(this.getMapKey(), expireAfterSeconds);
+	}
+
+	public async setMany<T>(
+		keyValuePairs: { key: string; value: T }[],
+		expireAfterSeconds?: number,
+	): Promise<void> {
+		// Set values in the hash map and returns the count of set key/value pairs.
+		// However, if it's a duplicate key, it will return 0, so we can't rely on the return value to determine success.
+		await this.client.hset(
+			this.getMapKey(),
+			...keyValuePairs.flatMap(({ key, value }) => [
+				this.getMapPropertyKey(key),
+				JSON.stringify(value),
+			]),
 		);
 		// Update the expiration time for the hash map
 		await this.client.expire(this.getMapKey(), expireAfterSeconds);
@@ -170,7 +193,7 @@ export class HashMapRedis implements IRedis {
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
 		const result = await this.client.hkeys(this.getMapKey());
-		return result.filter((key) => key.startsWith(keyPrefix));
+		return result.filter((key) => `${this.getMapKey()}/${key}`.startsWith(keyPrefix));
 	}
 
 	/**

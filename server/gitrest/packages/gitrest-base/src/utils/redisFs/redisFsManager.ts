@@ -288,27 +288,28 @@ export class RedisFs implements IFileSystemPromises {
 		if (recursive) {
 			const folderSeparator = "/";
 			const subfolders = folderpathString.split(folderSeparator);
-
+			const subFolderPaths: string[] = [];
 			for (let i = 1; i <= subfolders.length; i++) {
-				const currentPath = subfolders.slice(0, i).join(folderSeparator);
-				await setDirPath(currentPath, this.redisFsClient, this.redisFsConfig);
+				subFolderPaths.push(subfolders.slice(0, i).join(folderSeparator));
 			}
+			await setDirPath(subFolderPaths, this.redisFsClient, this.redisFsConfig);
 		} else {
-			await setDirPath(folderpathString, this.redisFsClient, this.redisFsConfig);
+			await setDirPath([folderpathString], this.redisFsClient, this.redisFsConfig);
 		}
 
 		async function setDirPath(
-			path: string,
+			paths: string[],
 			redisFsClient: IRedis,
 			redisFsConfig: RedisFsConfig,
 		): Promise<void> {
 			await executeRedisFsApi(
-				async (): Promise<void> => redisFsClient.set(path, ""),
+				async (): Promise<void> =>
+					redisFsClient.setMany(paths.map((path) => ({ key: path, value: "" }))),
 				RedisFsApis.Mkdir,
 				RedisFSConstants.RedisFsApi,
 				redisFsConfig.enableRedisFsMetrics,
 				redisFsConfig.redisApiMetricsSamplingPeriod,
-				{ folderpathString: path },
+				{ folderpathString: paths.length > 1 ? paths.join(", ") : paths[0] },
 			);
 		}
 	}
