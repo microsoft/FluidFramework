@@ -105,7 +105,7 @@ describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvi
 	 * If detachedMode is false, the tests creates new data stores in attached container and validates their visibility.
 	 */
 	const tests = (detachedMode: boolean) => {
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			if (provider.driver.type !== "local") {
 				this.skip();

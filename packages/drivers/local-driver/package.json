@@ -177,6 +177,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocalDocumentService": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

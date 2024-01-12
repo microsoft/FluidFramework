@@ -72,7 +72,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
 
 describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(async function () {
+	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
@@ -256,7 +256,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 // tests above when the LTS version is bumped > 0.47
 describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(async function () {
+	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
