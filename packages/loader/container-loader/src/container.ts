@@ -124,7 +124,7 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
-import { AttachmentData, runRetirableAttachProcess } from "./attachment";
+import { AttachProcessProps, AttachmentData, runRetirableAttachProcess } from "./attachment";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1243,7 +1243,7 @@ export class Container
 				async () => {
 					if (
 						this._lifecycleState !== "loaded" ||
-						this.attachState === AttachState.Attached
+						this.attachmentData.state === AttachState.Attached
 					) {
 						// pre-0.58 error message: containerNotValidForAttach
 						throw new UsageError(
@@ -1261,42 +1261,45 @@ export class Container
 						return newError;
 					};
 
-					await runRetirableAttachProcess({
-						attachmentData: this.attachmentData,
-						offlineLoadEnabled: this.offlineLoadEnabled,
-						detachedBlobStorage: this.detachedBlobStorage,
-						setAttachmentData: (attachmentData) => {
-							const previousState = this.attachmentData.state;
-							this.attachmentData = attachmentData;
-							if (
-								this.attachmentData.state !== previousState &&
-								this.attachmentData.state !== AttachState.Detached
-							) {
-								try {
-									this.runtime.setAttachState(this.attachmentData.state);
-									this.emit(this.attachmentData.state.toLocaleLowerCase());
-								} catch (error) {
-									throw normalizeErrorAndClose(error);
-								}
-							}
-							return attachmentData;
-						},
-						createAttachmentSummary: (redirectTable?: Map<string, string>) => {
+					const setAttachmentData: AttachProcessProps["setAttachmentData"] = (
+						attachmentData,
+					) => {
+						const previousState = this.attachmentData.state;
+						this.attachmentData = attachmentData;
+						const currentState = this.attachmentData.state;
+						if (
+							currentState !== previousState &&
+							currentState !== AttachState.Detached
+						) {
 							try {
-								assert(
-									this.deltaManager.inbound.length === 0,
-									0x0d6 /* "Inbound queue should be empty when attaching" */,
-								);
-
-								const appSummary: ISummaryTree =
-									this.runtime.createSummary(redirectTable);
-								const protocolSummary = this.captureProtocolSummary();
-								return combineAppAndProtocolSummary(appSummary, protocolSummary);
+								this.runtime.setAttachState(currentState);
+								this.emit(currentState.toLocaleLowerCase());
 							} catch (error) {
 								throw normalizeErrorAndClose(error);
 							}
-						},
-						getStorageService: async (data) => {
+						}
+					};
+
+					const createAttachmentSummary: AttachProcessProps["createAttachmentSummary"] = (
+						redirectTable?: Map<string, string>,
+					) => {
+						try {
+							assert(
+								this.deltaManager.inbound.length === 0,
+								0x0d6 /* "Inbound queue should be empty when attaching" */,
+							);
+
+							const appSummary: ISummaryTree =
+								this.runtime.createSummary(redirectTable);
+							const protocolSummary = this.captureProtocolSummary();
+							return combineAppAndProtocolSummary(appSummary, protocolSummary);
+						} catch (error) {
+							throw normalizeErrorAndClose(error);
+						}
+					};
+
+					const createOrGetStorageService: AttachProcessProps["createOrGetStorageService"] =
+						async (data) => {
 							// Actually go and create the resolved document
 							if (this.service === undefined) {
 								const createNewResolvedUrl =
@@ -1323,7 +1326,15 @@ export class Container
 								this.storageAdapter.connectToService(this.service);
 							}
 							return this.storageAdapter;
-						},
+						};
+
+					await runRetirableAttachProcess({
+						initialAttachmentData: this.attachmentData,
+						offlineLoadEnabled: this.offlineLoadEnabled,
+						detachedBlobStorage: this.detachedBlobStorage,
+						setAttachmentData,
+						createAttachmentSummary,
+						createOrGetStorageService,
 					});
 
 					if (!this.closed) {

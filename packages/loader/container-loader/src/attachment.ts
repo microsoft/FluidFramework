@@ -86,23 +86,21 @@ export interface AttachProcessProps {
 	/**
 	 * The initial attachment data this call should start with
 	 */
-	readonly attachmentData: AttachmentData;
+	readonly initialAttachmentData: Exclude<AttachmentData, AttachedData>;
 	/**
 	 * The caller should us this callback to keep track of the current
 	 * attachment data, and perform any other operations necessary
-	 * for dealing with attachment state changes.
+	 * for dealing with attachment state changes, like emitting events
 	 *
-	 * @param attachmentData - the updated attachment data
-	 * @returns - the updated attachment data
-	 */
-	readonly setAttachmentData: (attachmentData: AttachmentData) => AttachmentData;
+	 * @param attachmentData - the updated attachment data	 */
+	readonly setAttachmentData: (attachmentData: AttachmentData) => void;
 	/**
 	 * The caller should create and or get services based on the data, and its own information.
 	 * @param data - the data to create services from,
 	 * the summary property being the most relevant part of the data.
 	 * @returns A compatible storage service
 	 */
-	readonly getStorageService: (
+	readonly createOrGetStorageService: (
 		data: DetachedDataWithOutstandingBlobs | AttachingDataWithBlobs | AttachingDataWithoutBlobs,
 	) => Promise<Pick<IDocumentStorageService, "createBlob" | "uploadSummaryWithContext">>;
 	/**
@@ -117,12 +115,7 @@ export interface AttachProcessProps {
 }
 
 export const runRetirableAttachProcess = async (props: AttachProcessProps): Promise<void> => {
-	let { attachmentData } = props;
-
-	// if we are already attached, just do nothing and return
-	if (attachmentData.state === AttachState.Attached) {
-		return;
-	}
+	let attachmentData: AttachmentData = props.initialAttachmentData;
 
 	if (attachmentData.state === AttachState.Detached && attachmentData.blobs === undefined) {
 		// If attachment blobs were uploaded in detached state we will go through a different attach flow
@@ -131,23 +124,22 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 		// Determine the next phase of attaching depend if there are attachment blobs
 		// if there are, we will stay detached, so an empty file can be creates, and the blobs
 		// uploaded, otherwise we will get the summary to create the file with and move to attaching
-		attachmentData = props.setAttachmentData(
-			outstandingAttachmentBlobs
-				? {
-						state: AttachState.Detached,
-						blobs: "outstanding",
-						redirectTable: new Map<string, string>(),
-				  }
-				: {
-						state: AttachState.Attaching,
-						summary: props.createAttachmentSummary(),
-						blobs: "none",
-				  },
-		);
+		attachmentData = outstandingAttachmentBlobs
+			? {
+					state: AttachState.Detached,
+					blobs: "outstanding",
+					redirectTable: new Map<string, string>(),
+			  }
+			: {
+					state: AttachState.Attaching,
+					summary: props.createAttachmentSummary(),
+					blobs: "none",
+			  };
+		props.setAttachmentData(attachmentData);
 	}
 
 	if (attachmentData.state === AttachState.Detached && attachmentData.blobs === "outstanding") {
-		const storageAdapter = await props.getStorageService(attachmentData);
+		const storageAdapter = await props.createOrGetStorageService(attachmentData);
 
 		const detachedData = attachmentData;
 		// upload blobs to storage
@@ -165,17 +157,20 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 				detachedData.redirectTable.set(id, response.id);
 			}
 		}
-		attachmentData = props.setAttachmentData({
+		attachmentData = {
 			state: AttachState.Attaching,
 			summary: props.createAttachmentSummary(detachedData.redirectTable),
 			blobs: "done",
-		});
+		};
+		props.setAttachmentData(attachmentData);
 	}
 
 	{
 		assert(attachmentData.state === AttachState.Attaching, "must be attaching by this point");
 		const attachingData = attachmentData;
-		const storageAdapter = await props.getStorageService(attachingData);
+		// always do this, as of blobs is none, this will create the services with
+		// the summary
+		const storageAdapter = await props.createOrGetStorageService(attachingData);
 
 		if (attachingData.blobs === "done") {
 			await storageAdapter.uploadSummaryWithContext(attachingData.summary, {
@@ -185,13 +180,14 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 			});
 		}
 
-		attachmentData = props.setAttachmentData({
+		attachmentData = {
 			state: AttachState.Attached,
 			baseSnapshotAndBlobs: props.offlineLoadEnabled
 				? new Lazy(() =>
 						getSnapshotTreeAndBlobsFromSerializedContainer(attachingData.summary),
 				  )
 				: undefined,
-		});
+		};
+		props.setAttachmentData(attachmentData);
 	}
 };
