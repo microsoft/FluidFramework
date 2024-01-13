@@ -40,11 +40,7 @@ import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import type { SharedMap } from "@fluidframework/map";
-import {
-	getGCStateFromSummary,
-	getGCTombstoneStateFromSummary,
-	manufactureHandle,
-} from "./gcTestSummaryUtils.js";
+import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
@@ -52,10 +48,8 @@ import {
  */
 describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
-	//* Revert all changes to this file after moving the new test out
-	const remainingTimeUntilSweepMs = 1000;
-	const tombstoneTimeoutMs = 2000;
-	const inactiveTimeoutMs = 100;
+	const remainingTimeUntilSweepMs = 100;
+	const tombstoneTimeoutMs = 200;
 	assert(
 		remainingTimeUntilSweepMs < tombstoneTimeoutMs,
 		"remainingTimeUntilSweepMs should be < tombstoneTimeoutMs",
@@ -64,7 +58,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
-			gcOptions: { enableGCSweep: true, inactiveTimeoutMs },
+			gcOptions: { enableGCSweep: true, inactiveTimeoutMs: 0 },
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
@@ -266,82 +260,41 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		it.only("Send ops fails for tombstoned datastores in summarizing container loaded after tombstone timeout", async () => {
-			const container1 = await makeContainer();
-			const { summarizer: summarizer1 } = await loadSummarizer(container1);
-			const defaultDataObject1 = (await container1.getEntryPoint()) as ITestDataObject;
-			await waitForContainerConnection(container1);
-
-			const dataObjectA_1 = await createDataStore(defaultDataObject1);
-			const dataObjectB_1 = await createDataStore(defaultDataObject1);
-			const idA = dataObjectA_1._context.id;
-			const idB = dataObjectB_1._context.id;
-
-			// Reference A from the container entrypoint, and B from A
-			defaultDataObject1._root.set("A", dataObjectA_1.handle);
-			dataObjectA_1._root.set("B", dataObjectB_1.handle);
-
-			// Then unreference the A-B chain (but leave it intact), and Summarize to start unreferenced tracking
-			defaultDataObject1._root.delete("A");
-			const { summaryVersion } = await summarize(summarizer1);
-
-			// A and B are unreferenced in container2/container3. Timers will be set
-			// We need two containers because each event type is only logged once per container
-			const mockLogger2 = new MockLogger();
-			const container2 = await loadContainer(summaryVersion, false, mockLogger2);
-			const defaultDataObject2 = (await container2.getEntryPoint()) as ITestDataObject;
-			const mockLogger3 = new MockLogger();
-			const container3 = await loadContainer(summaryVersion, false, mockLogger3);
-			const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
-
-			// Wait the Inactive Timeout. Timers will fire
-			await delay(inactiveTimeoutMs);
-
-			// Load A in container2 and ensure InactiveObject_Loaded is logged
-			const handleA_2 = manufactureHandle<ITestDataObject>(
-				defaultDataObject2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
-				idA,
-			);
-			await handleA_2?.get();
-			mockLogger2.assertMatch([
+		itExpects(
+			"Send ops fails for tombstoned datastores in summarizing container loaded after tombstone timeout",
+			[
 				{
 					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-					id: { value: `/${idA}`, tag: "CodeArtifact" },
+						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					callSite: "submitMessage",
+					clientType: "interactive",
 				},
-			]);
+			],
+			async () => {
+				const { unreferencedId, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 
-			// Reference A again in container1. Should be revived on container3
-			defaultDataObject1._root.set("A", dataObjectA_1.handle);
-			await provider.ensureSynchronized();
+				// The datastore should be tombstoned now
+				const { summaryVersion } = await summarize(summarizer);
 
-			// Since A was directly revived, its unreferenced state was cleared immediately so we shouldn't see InactiveObject logs for it
-			const handleA_3 = defaultDataObject3._root.get<IFluidHandle<ITestDataObject>>("A");
-			const dataObjectA_3 = await handleA_3?.get();
-			mockLogger3.assertMatchNone([
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-				},
-			]);
+				const dataObject = await getTombstonedDataObjectFromSummary(
+					summaryVersion,
+					unreferencedId,
+				);
 
-			// Since B wasn't directly revived, it wrongly still thinks it's Inactive. Next GC will clear it up.
-			const handleB_3 = dataObjectA_3?._root.get<IFluidHandle<ITestDataObject>>("B");
-			await handleB_3?.get();
-			mockLogger3.assertMatch([
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-					id: { value: `/${idB}`, tag: "CodeArtifact" },
-				},
-			]);
-		});
+				// Modifying a testDataObject substantiated from the request pattern should fail!
+				assert.throws(
+					() => dataObject._root.set("send", "op"),
+					(error: IErrorBase) => {
+						const correctErrorType = error.errorType === "dataCorruptionError";
+						const correctErrorMessage =
+							error.message?.startsWith(`Context is tombstoned`) === true;
+						return correctErrorType && correctErrorMessage;
+					},
+					`Should not be able to send ops for a tombstoned datastore.`,
+				);
+			},
+		);
 
 		itExpects(
 			"Receive ops fails for tombstoned datastores in summarizing container loaded after sweep time",
