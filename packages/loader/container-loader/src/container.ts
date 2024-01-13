@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { Lazy, assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
+import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
@@ -1189,12 +1189,12 @@ export class Container
 					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 					0x0d2 /* "resolved url should be valid Fluid url" */,
 				);
-				assert(!!this.attachmentData.baseSnapshotAndBlobs?.value, 0x5d5 /* no base data */);
+				assert(!!this.attachmentData.baseSnapshotAndBlobs, 0x5d5 /* no base data */);
 				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
-					baseSnapshot: this.attachmentData.baseSnapshotAndBlobs.value[0],
-					snapshotBlobs: this.attachmentData.baseSnapshotAndBlobs.value[1],
+					baseSnapshot: this.attachmentData.baseSnapshotAndBlobs[0],
+					snapshotBlobs: this.attachmentData.baseSnapshotAndBlobs[1],
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
@@ -1252,12 +1252,12 @@ export class Container
 					}
 
 					const normalizeErrorAndClose = (error: unknown): IFluidErrorBase => {
-						// add resolved URL on error object so that host has the ability to find this document and delete it
 						const newError = normalizeError(error);
+						this.close(newError);
+						// add resolved URL on error object so that host has the ability to find this document and delete it
 						newError.addTelemetryProperties({
 							resolvedUrl: this.service?.resolvedUrl?.url,
 						});
-						this.close(newError);
 						return newError;
 					};
 
@@ -1265,15 +1265,11 @@ export class Container
 						attachmentData,
 					) => {
 						const previousState = this.attachmentData.state;
-						this.attachmentData = attachmentData;
-						const currentState = this.attachmentData.state;
-						if (
-							currentState !== previousState &&
-							currentState !== AttachState.Detached
-						) {
+						const { state } = (this.attachmentData = attachmentData);
+						if (state !== previousState && state !== AttachState.Detached) {
 							try {
-								this.runtime.setAttachState(currentState);
-								this.emit(currentState.toLocaleLowerCase());
+								this.runtime.setAttachState(state);
+								this.emit(state.toLocaleLowerCase());
 							} catch (error) {
 								throw normalizeErrorAndClose(error);
 							}
@@ -1288,11 +1284,10 @@ export class Container
 								this.deltaManager.inbound.length === 0,
 								0x0d6 /* "Inbound queue should be empty when attaching" */,
 							);
-
-							const appSummary: ISummaryTree =
-								this.runtime.createSummary(redirectTable);
-							const protocolSummary = this.captureProtocolSummary();
-							return combineAppAndProtocolSummary(appSummary, protocolSummary);
+							return combineAppAndProtocolSummary(
+								this.runtime.createSummary(redirectTable),
+								this.captureProtocolSummary(),
+							);
 						} catch (error) {
 							throw normalizeErrorAndClose(error);
 						}
@@ -1613,10 +1608,10 @@ export class Container
 		if (pendingLocalState) {
 			this.attachmentData = {
 				state: AttachState.Attached,
-				baseSnapshotAndBlobs: new Lazy(() => [
+				baseSnapshotAndBlobs: [
 					pendingLocalState.baseSnapshot,
 					pendingLocalState.snapshotBlobs,
-				]),
+				],
 			};
 		} else {
 			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
@@ -1624,7 +1619,7 @@ export class Container
 				const blobs = await getBlobContentsFromTree(snapshot, this.storageAdapter);
 				this.attachmentData = {
 					state: AttachState.Attached,
-					baseSnapshotAndBlobs: new Lazy(() => [snapshot, blobs]),
+					baseSnapshotAndBlobs: [snapshot, blobs],
 				};
 			}
 		}
