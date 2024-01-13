@@ -4,7 +4,7 @@
  */
 
 export {
-	Buffer,
+	type Buffer,
 	bufferToString,
 	IsoBuffer,
 	stringToBuffer,
