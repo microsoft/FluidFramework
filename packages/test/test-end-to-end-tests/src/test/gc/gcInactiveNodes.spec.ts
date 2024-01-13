@@ -85,13 +85,13 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 	}
 
 	async function loadContainer(
-		config: ITestContainerConfig,
+		configNoLoaderProps: ITestContainerConfig, // loaderProps gets overwritten
 		summaryVersion: string,
 		logger?: MockLogger,
 	) {
 		return provider.loadTestContainer(
 			{
-				...config,
+				...configNoLoaderProps,
 				loaderProps: { logger },
 			},
 			{
