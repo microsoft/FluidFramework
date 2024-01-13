@@ -33,6 +33,7 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,

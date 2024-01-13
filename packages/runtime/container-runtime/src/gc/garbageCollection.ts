@@ -46,6 +46,7 @@ import {
 	ISweepPhaseStats,
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
+	disableAutoRecoveryKey,
 } from "./gcDefinitions";
 import {
 	cloneGCData,
@@ -872,21 +873,33 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param local - Whether it was send by this client.
 	 */
 	public processMessage(message: ContainerRuntimeGCMessage, local: boolean) {
-		switch (message.contents.type) {
-			case "Sweep": {
+		const gcMessageType = message.contents.type;
+		switch (gcMessageType) {
+			case GarbageCollectionMessageType.Sweep: {
 				// Delete the nodes whose ids are present in the contents.
 				this.deleteSweepReadyNodes(message.contents.deletedNodeIds);
+				break;
+			}
+			case GarbageCollectionMessageType.TombstoneLoaded: {
+				if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+					break;
+				}
+
+				// Mark the node as referenced to ensure it isn't Swept
+				const tombstonedNodePath = message.contents.nodePath;
+				this.addedOutboundReference("/", tombstonedNodePath);
+
 				break;
 			}
 			default: {
 				if (
 					!compatBehaviorAllowsGCMessageType(
-						message.contents.type,
+						gcMessageType,
 						message.compatDetails?.behavior,
 					)
 				) {
 					const error = DataProcessingError.create(
-						`Garbage collection message of unknown type ${message.contents.type}`,
+						`Garbage collection message of unknown type ${gcMessageType}`,
 						"processMessage",
 					);
 					throw error;
@@ -979,6 +992,15 @@ export class GarbageCollector implements IGarbageCollector {
 			headers: headerData,
 		});
 
+		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
+		// we want to also trigger autorecovery to avoid the object being deleted
+		// Note: We don't need to trigger on "Changed" because any change will cause the object
+		// to be loaded by the Summarizer, and auto-recovery will be triggered then.
+		if (isTombstoned && reason === "Loaded") {
+			// Note that when a DataStore and its DDS are all loaded, each will trigger AutoRecovery for itself.
+			this.triggerAutoRecovery(nodePath);
+		}
+
 		const nodeType = this.runtime.getNodeType(nodePath);
 
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
@@ -987,7 +1009,6 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		const errorRequest: IRequest = request ?? { url: nodePath };
-		// If the object is tombstoned and tombstone enforcement is configured, throw an error.
 		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
 			throw responseToException(
@@ -1016,13 +1037,41 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
+	 * The given node should have its unreferenced state reset in the next GC,
+	 * even if the true GC graph shows it is unreferenced. This will
+	 * prevent it from being deleted by Sweep (after the Grace Period).
+	 *
+	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
+	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
+	 * before runnint GC next.
+	 */
+	private triggerAutoRecovery(nodePath: string) {
+		if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+			return;
+		}
+
+		// Use compat behavior "Ignore" since this is an optimization to opportunistically protect
+		// objects from deletion, so it's fine for older clients to ignore this op.
+		const containerGCMessage: ContainerRuntimeGCMessage = {
+			type: ContainerMessageType.GC,
+			contents: {
+				type: "TombstoneLoaded",
+				nodePath,
+			},
+			compatDetails: { behavior: "Ignore" },
+		};
+		this.submitMessage(containerGCMessage);
+	}
+
+	/**
 	 * Called when an outbound reference is added to a node. This is used to identify all nodes that have been
 	 * referenced between summaries so that their unreferenced timestamp can be reset.
 	 *
 	 * @param fromNodePath - The node from which the reference is added.
 	 * @param toNodePath - The node to which the reference is added.
+	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
-	public addedOutboundReference(fromNodePath: string, toNodePath: string) {
+	public addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true) {
 		if (!this.configs.shouldRunGC) {
 			return;
 		}
@@ -1052,6 +1101,7 @@ export class GarbageCollector implements IGarbageCollector {
 			isTombstoned: this.tombstones.includes(toNodePath),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			fromId: fromNodePath,
+			autorecovery,
 		});
 	}
 
