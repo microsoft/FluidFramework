@@ -32,6 +32,7 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
