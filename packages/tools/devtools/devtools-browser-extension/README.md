@@ -108,14 +108,14 @@ To use a local build of this extension in your browser:
 
 #### Sending local usage data to Kusto
 
-When using the Devtools browser extension, usage telemetry can be optionally generated and sent to Kusto. To do so, follow these instructions.
+When doing development on the Devtools browser extension, usage telemetry can be optionally generated and sent to Kusto. To do so, follow these instructions. Note that this is only available to internal Fluid Framework devs.
 
 1. Create a .env file in the devtools-browser-extension's root folder.
-2. Add the telemetry ingestion key to the env file. Consult Alejandro/Wayne to receive this key.
+2. The file should have a single line that reads `DEVTOOLS_TELEMETRY_TOKEN=PLACEHOLDER_KEY`. Replace PLACEHOLDER_KEY with the ingestion key. Currently this Consult Alejandro/Wayne to receive this key.
 3. Run `pnpm run build` to build the extension.
 4. Load the unpacked extension in the browser by following the instructions above.
 5. When using the extension on the Devtools example app, ensure that Send Usage Telemetry is toggled in Settings.
-6. After using the extension, go to the Office Fluid Test database in Kusto & set your queries to the `office_fluid_devtools_generic` table.
+6. After using the extension, go to the Office Fluid Test database in Kusto and query the `office_fluid_devtools_generic` table.
 
 You should now see the Devtools usage telemetry events appear!
 
