@@ -21,7 +21,12 @@ data:
         },
         "config": {
             "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
-            "secretNamesToRedactInConfigDump": {{ .Values.config.secretNamesToRedactInConfigDump }}
+            "secretNamesToRedactInConfigDump": [
+                {{- $lastIndex := sub (len .Values.config.secretNamesToRedactInConfigDump) 1}}
+                {{- range $i, $secret := .Values.config.secretNamesToRedactInConfigDump }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
         },
         "lumberjack": {
             "options": {

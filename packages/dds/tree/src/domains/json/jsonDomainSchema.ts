@@ -11,9 +11,9 @@
 import { ValueSchema } from "../../core/index.js";
 
 import {
-	AllowedTypes,
+	FlexAllowedTypes,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	SchemaBuilderInternal,
 } from "../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../util/index.js";
@@ -33,17 +33,17 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
 
 {
 	// Recursive objects don't get this type checking automatically, so confirm it
-	type _check = requireAssignableTo<typeof jsonRoot, AllowedTypes>;
+	type _check = requireAssignableTo<typeof jsonRoot, FlexAllowedTypes>;
 }
 
 export const jsonObject = builder.mapRecursive(
 	"object",
-	TreeFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
+	FlexFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 export const jsonArray = builder.fieldNodeRecursive(
 	"array",
-	TreeFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+	FlexFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 export const jsonSchema = builder.intoLibrary();
