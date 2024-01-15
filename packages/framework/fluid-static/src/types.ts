@@ -62,9 +62,7 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
 /**
  * @public
  */
-export interface ContainerAttachProps {
-	[key: string]: string | undefined;
-}
+export type ContainerAttachProps<T = unknown> = T;
 
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.

@@ -107,10 +107,8 @@ export interface IFluidContainerEvents extends IEvent {
  * @sealed
  * @public
  */
-export interface IFluidContainer<
-	TContainerSchema extends ContainerSchema = ContainerSchema,
-	IAttachProps extends ContainerAttachProps = ContainerAttachProps,
-> extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+	extends IEventProvider<IFluidContainerEvents> {
 	/**
 	 * Provides the current connected state of the container
 	 */
@@ -173,7 +171,7 @@ export interface IFluidContainer<
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach(props?: IAttachProps): Promise<string>;
+	attach(props?: ContainerAttachProps): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
@@ -245,10 +243,7 @@ export function createFluidContainer<
  * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
  * @internal
  */
-class FluidContainer<
-		TContainerSchema extends ContainerSchema = ContainerSchema,
-		IAttachProps extends ContainerAttachProps = ContainerAttachProps,
-	>
+class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {
@@ -318,7 +313,7 @@ class FluidContainer<
 	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
 	 * but internally this separation is not there.
 	 */
-	public async attach(props?: IAttachProps): Promise<string> {
+	public async attach(props?: ContainerAttachProps): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}
