@@ -93,6 +93,13 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
+ * @public
+ */
+export interface ContainerAttachProps {
+	[key: string]: string | undefined;
+}
+
+/**
  * Provides an entrypoint into the client side of collaborative Fluid data.
  * Provides access to the data as well as status on the collaboration session.
  *
@@ -102,8 +109,10 @@ export interface IFluidContainerEvents extends IEvent {
  * @sealed
  * @public
  */
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
-	extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+	IAttachProps extends ContainerAttachProps = ContainerAttachProps,
+> extends IEventProvider<IFluidContainerEvents> {
 	/**
 	 * Provides the current connected state of the container
 	 */
@@ -166,7 +175,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach<T>(props?: T): Promise<string>;
+	attach(props?: IAttachProps): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.

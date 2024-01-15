@@ -15,6 +15,12 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 
+// @public (undocumented)
+export interface ContainerAttachProps {
+    // (undocumented)
+    [key: string]: string | undefined;
+}
+
 // @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
@@ -52,8 +58,8 @@ export interface IConnection {
 }
 
 // @public @sealed
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
-    attach<T>(props?: T): Promise<string>;
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema, IAttachProps extends ContainerAttachProps = ContainerAttachProps> extends IEventProvider<IFluidContainerEvents> {
+    attach(props?: IAttachProps): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionState;

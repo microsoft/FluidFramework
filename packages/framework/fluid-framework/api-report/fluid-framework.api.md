@@ -62,6 +62,12 @@ export namespace ConnectionStateType {
 // @public
 export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
 
+// @public (undocumented)
+export interface ContainerAttachProps {
+    // (undocumented)
+    [key: string]: string | undefined;
+}
+
 // @alpha
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
@@ -161,8 +167,8 @@ export interface IDisposable {
 }
 
 // @public @sealed
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
-    attach<T>(props?: T): Promise<string>;
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema, IAttachProps extends ContainerAttachProps = ContainerAttachProps> extends IEventProvider<IFluidContainerEvents> {
+    attach(props?: IAttachProps): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionStateType;
