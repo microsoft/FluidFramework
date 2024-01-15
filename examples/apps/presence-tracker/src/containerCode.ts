@@ -8,9 +8,9 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IContainer } from "@fluidframework/container-definitions";
 import { Signaler } from "@fluid-experimental/data-objects";
 import { createServiceAudience } from "@fluidframework/fluid-static";
-import { FocusTracker } from "./FocusTracker";
-import { MouseTracker } from "./MouseTracker";
-import { createMockServiceMember } from "./Audience";
+import { FocusTracker } from "./FocusTracker.js";
+import { MouseTracker } from "./MouseTracker.js";
+import { createMockServiceMember } from "./Audience.js";
 
 export interface ITrackerAppModel {
 	readonly focusTracker: FocusTracker;

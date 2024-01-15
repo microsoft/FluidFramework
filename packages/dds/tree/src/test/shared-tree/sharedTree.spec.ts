@@ -16,7 +16,7 @@ import {
 	cursorForJsonableTreeNode,
 	Any,
 	TreeStatus,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	SchemaBuilderInternal,
 	FieldKinds,
 	typeNameSymbol,
@@ -189,7 +189,7 @@ describe("SharedTree", () => {
 		const schemaEmpty = new SchemaBuilderInternal({
 			scope: "com.fluidframework.test",
 			lint: { rejectEmpty: false, rejectForbidden: false },
-		}).intoSchema(TreeFieldSchema.empty);
+		}).intoSchema(FlexFieldSchema.empty);
 
 		function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
 			tree.checkout.updateSchema(intoStoredSchema(schema));
@@ -401,7 +401,7 @@ describe("SharedTree", () => {
 
 				const b = new SchemaBuilder({ scope: "0x4a6 repro" });
 				const node = b.objectRecursive("test node", {
-					child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
+					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
 						() => node,
 						leaf.number,
 					]),
@@ -1490,7 +1490,7 @@ describe("SharedTree", () => {
 	});
 });
 
-function assertSchema<TRoot extends TreeFieldSchema>(
+function assertSchema<TRoot extends FlexFieldSchema>(
 	tree: ISharedTree,
 	schema: FlexTreeSchema<TRoot>,
 ): FlexTreeView<TRoot> {

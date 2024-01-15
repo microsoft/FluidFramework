@@ -29,6 +29,12 @@ export {
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./flexTreeTypes.js";
 
 export {
@@ -56,3 +62,5 @@ export {
 } from "./flexTreeTypes.js";
 
 export { NodeKeys } from "./nodeKeys.js";
+
+export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";

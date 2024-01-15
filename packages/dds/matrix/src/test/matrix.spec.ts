@@ -122,7 +122,7 @@ describe("Matrix1", () => {
 					return summarize(matrix);
 				}
 
-				beforeEach(async () => {
+				beforeEach("createMatrix", async () => {
 					matrix = new SharedMatrix(
 						new MockFluidDataStoreRuntime(),
 						"matrix1",
@@ -379,7 +379,7 @@ describe("Matrix1", () => {
 					}
 				};
 
-				beforeEach(async () => {
+				beforeEach("createMatrices", async () => {
 					containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 					// Create the first SharedMatrix.
@@ -714,7 +714,7 @@ describe("Matrix1", () => {
 					}
 				};
 
-				beforeEach(async () => {
+				beforeEach("createMatrices", async () => {
 					containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 					// Create the first SharedMatrix.
@@ -1158,7 +1158,7 @@ describe("Matrix1", () => {
 				return { matrix: matrix2, containerRuntime, consumer };
 			}
 
-			beforeEach(async () => {
+			beforeEach("createMatrices", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 				// Create the first SharedMatrix.

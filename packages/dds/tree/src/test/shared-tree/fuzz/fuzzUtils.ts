@@ -23,7 +23,7 @@ import {
 } from "../../../core/index.js";
 import {
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FlexTreeObjectNodeTyped,
 	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
@@ -33,15 +33,15 @@ import { expectEqualPaths } from "../../utils.js";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.objectRecursive("node", {
-	requiredChild: TreeFieldSchema.createUnsafe(FieldKinds.required, [
+	requiredChild: FlexFieldSchema.createUnsafe(FieldKinds.required, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
-	optionalChild: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
+	optionalChild: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
-	sequenceChildren: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
+	sequenceChildren: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),

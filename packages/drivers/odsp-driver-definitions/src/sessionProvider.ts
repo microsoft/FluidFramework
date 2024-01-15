@@ -38,6 +38,13 @@ export interface ISocketStorageDiscovery {
 	 * This is the time within which client has to refresh the session on (ODSP) relay service.
 	 */
 	refreshSessionDurationSeconds?: number;
+
+	/**
+	 * Represent the sensitivity labels info for the file. Keeping it optional for back-compat. The
+	 * response will contain empty labels when the file has no labels, so this field will be there
+	 * even if file has no labels when the service will implement this contract.
+	 */
+	sensitivityLabelsInfo?: string;
 }
 
 /**

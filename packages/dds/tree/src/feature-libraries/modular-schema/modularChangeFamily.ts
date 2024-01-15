@@ -74,7 +74,7 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { FieldKind } from "./fieldKind.js";
+import { FlexFieldKind } from "./fieldKind.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
@@ -116,10 +116,10 @@ export class ModularChangeFamily
 	}
 
 	/**
-	 * Produces an equivalent list of `FieldChangeset`s that all target the same {@link FieldKind}.
+	 * Produces an equivalent list of `FieldChangeset`s that all target the same {@link FlexFieldKind}.
 	 * @param changes - The list of `FieldChange`s whose `FieldChangeset`s needs to be normalized.
 	 * @returns An object that contains both the equivalent list of `FieldChangeset`s that all
-	 * target the same {@link FieldKind}, and the `FieldKind` that they target.
+	 * target the same {@link FlexFieldKind}, and the `FieldKind` that they target.
 	 * The returned `FieldChangeset`s may be a shallow copy of the input `FieldChange`s.
 	 */
 	private normalizeFieldChanges(
@@ -1034,7 +1034,7 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
 ): FieldKindWithEditor {
 	if (kind === genericFieldKind.identifier) {
@@ -1046,7 +1046,7 @@ export function getFieldKind(
 }
 
 export function getChangeHandler(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;

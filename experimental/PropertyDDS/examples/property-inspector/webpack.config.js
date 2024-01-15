@@ -49,6 +49,9 @@ module.exports = (env) => {
 			new HtmlWebpackPlugin({ template: htmlTemplate }),
 		],
 		resolve: {
+			extensionAlias: {
+				".js": [".ts", ".tsx", ".js"],
+			},
 			extensions: [".ts", ".tsx", ".js"],
 		},
 	};

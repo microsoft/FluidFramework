@@ -25,7 +25,7 @@ import { Multiplicity } from "../multiplicity.js";
  * This pattern was picked instead of an interface since we do not have a convention for how to mark interfaces as only allowed to be implemented by the package declaring them,
  * and using a class also gets stronger (nominal) typing for objects which will be down cast.
  */
-export abstract class FieldKind<
+export abstract class FlexFieldKind<
 	TName extends string = string,
 	TMultiplicity extends Multiplicity = Multiplicity,
 > implements FieldKindSpecifier
@@ -54,5 +54,5 @@ export interface FullSchemaPolicy {
 	 * though older applications might be missing some,
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
-	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
 }

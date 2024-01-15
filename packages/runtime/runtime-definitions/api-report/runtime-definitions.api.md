@@ -305,7 +305,7 @@ export interface IProvideFluidDataStoreRegistry {
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export interface ISignalEnvelope {
     address?: string;
     clientSignalSequenceNumber: number;

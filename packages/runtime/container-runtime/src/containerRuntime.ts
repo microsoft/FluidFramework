@@ -11,6 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -76,7 +77,6 @@ import {
 	IGarbageCollectionData,
 	IEnvelope,
 	IInboundSignalMessage,
-	ISignalEnvelope,
 	NamedFluidDataStoreRegistryEntries,
 	ISummaryTreeWithStats,
 	ISummarizeInternalResult,
@@ -1370,15 +1370,17 @@ export class ContainerRuntime
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
-		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
-		if (
-			maxSnapshotCacheDurationMs !== undefined &&
-			maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
-		) {
-			// This is a runtime enforcement of what's already explicit in the policy's type itself,
-			// which dictates the value is either undefined or exactly 5 days in ms.
-			// As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
-			throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+		if (context.attachState === AttachState.Attached) {
+			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
+			if (
+				maxSnapshotCacheDurationMs !== undefined &&
+				maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
+			) {
+				// This is a runtime enforcement of what's already explicit in the policy's type itself,
+				// which dictates the value is either undefined or exactly 5 days in ms.
+				// As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
+				throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+			}
 		}
 
 		this.garbageCollector = GarbageCollector.create({
@@ -2050,6 +2052,8 @@ export class ContainerRuntime
 					this.closeFn(error);
 					throw error;
 				}
+				// Note: Even if its compat behavior allows it, we don't know how to apply this stashed op.
+				// All we can do is ignore it (similar to on process).
 			}
 		}
 	}
@@ -2404,6 +2408,9 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
+	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
@@ -2435,9 +2442,21 @@ export class ContainerRuntime
 					throw error2;
 				}
 			} else {
-				// pre-0.58 error message: orderSequentiallyCallbackException
-				this.closeFn(new GenericError("orderSequentially callback exception", error));
+				this.closeFn(
+					wrapError(
+						error,
+						(errorMessage) =>
+							new GenericError(
+								`orderSequentially callback exception: ${errorMessage}`,
+								error,
+								{
+									orderSequentiallyCalls: this._orderSequentiallyCalls,
+								},
+							),
+					),
+				);
 			}
+
 			throw error; // throw the original error for the consumer of the runtime
 		} finally {
 			this._orderSequentiallyCalls--;
@@ -3691,9 +3710,10 @@ export class ContainerRuntime
 				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
-				// future version of runtime code and now is being applied on an older version
+				// future version of runtime code and now is being applied on an older version.
 				const compatBehavior = message.compatDetails?.behavior;
 				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
+					// We do not ultimately resubmit it, to be consistent with this version of the code.
 					this.logger.sendTelemetryEvent({
 						eventName: "resubmitUnrecognizedMessageTypeAllowed",
 						messageDetails: { type: message.type, compatBehavior },

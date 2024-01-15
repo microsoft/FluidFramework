@@ -18,6 +18,7 @@ historian:
   ingressClass: ingress_class
   riddler: riddler_url
   ignoreEphemeralFlag: true
+  enableResponseCloseLatencyMetric: true
   storageUrl: historian_storage_url
   error:
     track: true
@@ -76,6 +77,7 @@ gitrest:
     maxRetriesPerRequest: 20
     enableAutoPipelining: false
     enableOfflineQueue: true
+  enableResponseCloseLatencyMetric: true
   system:
     httpServer:
       connectionTimeoutMs: 0
