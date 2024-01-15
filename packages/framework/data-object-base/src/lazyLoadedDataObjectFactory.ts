@@ -22,7 +22,7 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 /**
- * @public
+ * @internal
  */
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	implements IFluidDataStoreFactory

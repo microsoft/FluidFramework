@@ -6,7 +6,7 @@ import { Resizable } from "re-resizable";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DevtoolsPanel, WindowMessageRelay } from "@fluid-experimental/devtools-view";
+import { DevtoolsPanel, WindowMessageRelay } from "@fluid-internal/devtools-view";
 
 import { App } from "./App";
 

@@ -12,6 +12,7 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
@@ -64,7 +65,10 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 	}
 }
 
-export class FaultInjectionDocumentService implements IDocumentService {
+export class FaultInjectionDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	private _currentDeltaStream?: FaultInjectionDocumentDeltaConnection;
 	private _currentDeltaStorage?: FaultInjectionDocumentDeltaStorageService;
 	private _currentStorage?: FaultInjectionDocumentStorageService;
@@ -95,6 +99,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
 	}
 
 	constructor(private readonly internal: IDocumentService) {
+		super();
 		this.onlineP.resolve();
 	}
 

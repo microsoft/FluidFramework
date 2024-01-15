@@ -12,7 +12,7 @@
  * The Devtools will automatically dispose of themselves upon Window unload, but if you would like to close them
  * earlier, call {@link IDevtools.dispose}.
  *
- * To enable visualization of Telemetry data, you may create a {@link @fluid-experimental/devtools-core#DevtoolsLogger} and
+ * To enable visualization of Telemetry data, you may create a {@link @fluidframework/devtools-core#DevtoolsLogger} and
  * provide it during Devtools initialization.
  *
  * @packageDocumentation
@@ -22,16 +22,16 @@ import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type IFluidDevtools as IDevtoolsBase,
 	initializeDevtools as initializeDevtoolsBase,
-	type DevtoolsLogger,
+	type IDevtoolsLogger,
 	type HasContainerKey,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 import { type IDisposable } from "@fluidframework/core-interfaces";
-import { type FluidContainer, type IFluidContainer } from "@fluidframework/fluid-static";
+import { type IFluidContainer } from "@fluidframework/fluid-static";
+import { type IContainer } from "@fluidframework/container-definitions";
 
 /**
  * Properties for configuring {@link IDevtools}.
- *
- * @public
+ * @alpha
  */
 export interface DevtoolsProps {
 	/**
@@ -44,7 +44,7 @@ export interface DevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: DevtoolsLogger;
+	logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
@@ -58,8 +58,7 @@ export interface DevtoolsProps {
 
 /**
  * Properties for configuring Devtools for an individual {@link @fluidframework/fluid-static#IFluidContainer}.
- *
- * @public
+ * @alpha
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
@@ -82,8 +81,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
  * disposed of on Window unload.
  * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
- *
- * @public
+ * @alpha
  */
 export interface IDevtools extends IDisposable {
 	/**
@@ -92,7 +90,7 @@ export interface IDevtools extends IDisposable {
 	 * @throws
 	 *
 	 * Will throw if devtools have already been registered for the specified
-	 * {@link @fluid-experimental/devtools-core#HasContainerKey.containerKey}.
+	 * {@link @fluidframework/devtools-core#HasContainerKey.containerKey}.
 	 */
 	registerContainerDevtools(props: ContainerDevtoolsProps): void;
 
@@ -143,9 +141,10 @@ class Devtools implements IDevtools {
 }
 
 /**
- * {@inheritDoc @fluid-experimental/devtools-core#initializeDevtoolsBase}
+ * Initializes the Devtools singleton and returns a handle to it.
  *
- * @public
+ * @see {@link @fluidframework/devtools-core#initializeDevtoolsBase}
+ * @alpha
  */
 export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
@@ -169,14 +168,14 @@ export function initializeDevtools(props: DevtoolsProps): IDevtools {
 }
 
 /**
- * Maps the input props to lower-level {@link @fluid-experimental/devtools-core#ContainerDevtoolsPropsBase},
+ * Maps the input props to lower-level {@link @fluidframework/devtools-core#ContainerDevtoolsPropsBase},
  * to be forwarded on to the base library.
  */
 function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
 ): ContainerDevtoolsPropsBase | undefined {
 	const { container, containerKey } = containerProps;
-	const fluidContainer = container as FluidContainer;
+	const fluidContainer = container as { INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer };
 
 	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
 		console.error("Missing Container accessor on FluidContainer.");
@@ -195,5 +194,5 @@ function mapContainerProps(
 // so consumers don't need to import from this one *and* devtools-core.
 // DevtoolsLogger is necessary for consumers to set up Devtools.
 // ContainerDevtoolsProps extends HasContainerKey, so it needs ContainerKey.
-export type { ContainerKey, HasContainerKey } from "@fluid-experimental/devtools-core";
-export { DevtoolsLogger } from "@fluid-experimental/devtools-core";
+export { type ContainerKey, type HasContainerKey } from "@fluidframework/devtools-core";
+export { createDevtoolsLogger, type IDevtoolsLogger } from "@fluidframework/devtools-core";

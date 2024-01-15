@@ -76,7 +76,9 @@ export function extractLogSafeErrorProperties(
 }
 
 /**
- * type guard for ILoggingError interface
+ * Type-guard for {@link @fluidframework/core-interfaces#ILoggingError}.
+ *
+ * @internal
  */
 export const isILoggingError = (x: unknown): x is ILoggingError =>
 	typeof (x as Partial<ILoggingError>)?.getTelemetryProperties === "function";
@@ -339,7 +341,10 @@ export function isExternalError(error: unknown): boolean {
 }
 
 /**
- * Type guard to identify if a particular telemetry property appears to be a tagged telemetry property
+ * Type guard to identify if a particular telemetry property appears to be a
+ * {@link @fluidframework/core-interfaces#Tagged} telemetry property.
+ *
+ * @internal
  */
 export function isTaggedTelemetryPropertyValue(
 	x: Tagged<TelemetryEventPropertyTypeExt> | TelemetryEventPropertyTypeExt,
@@ -531,7 +536,7 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
  */
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
-	// Note that this matches ContainerErrorType/DriverErrorType's genericError
+	// Note that this matches ContainerErrorTypes/DriverErrorTypes' genericError
 	errorType = NORMALIZED_ERROR_TYPE;
 
 	constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {

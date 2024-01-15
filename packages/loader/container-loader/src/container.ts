@@ -11,9 +11,6 @@ import {
 	ITelemetryProperties,
 	TelemetryEventCategory,
 	IRequest,
-	IResponse,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	FluidObject,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
@@ -105,14 +102,16 @@ import { pkgVersion } from "./packageVersion";
 import {
 	ContainerStorageAdapter,
 	getBlobContentsFromTree,
-	getBlobContentsFromTreeWithBlobContents,
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import {
+	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	getProtocolSnapshotTree,
-	getSnapshotTreeFromSerializedContainer,
+	getSnapshotTreeAndBlobsFromSerializedContainer,
+	combineSnapshotTreeAndSnapshotBlobs,
+	getDetachedContainerStateFromSerializedContainer,
 } from "./utils";
 import { initQuorumValuesFromCodeDetails } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
@@ -131,8 +130,6 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
-
-const hasBlobsSummaryTree = ".hasAttachmentBlobs";
 
 /**
  * @internal
@@ -237,6 +234,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
+ * @alpha
  */
 export async function waitContainerToCatchUp(container: IContainer) {
 	// Make sure we stop waiting if container is closed.
@@ -362,6 +360,18 @@ export interface IPendingContainerState {
 	clientId?: string;
 }
 
+/**
+ * State saved by a container in detached state, to be used to load a new instance
+ * of the container to the same state (rehydrate)
+ * @internal
+ */
+export interface IPendingDetachedContainerState {
+	attached: boolean;
+	baseSnapshot: ISnapshotTree;
+	snapshotBlobs: ISerializableBlobContents;
+	hasAttachmentBlobs: boolean;
+}
+
 const summarizerClientType = "summarizer";
 
 interface IContainerLifecycleEvents extends IEvent {
@@ -473,12 +483,9 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot);
-				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
-					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
-				}
-
-				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
+				const detachedContainerState: IPendingDetachedContainerState =
+					getDetachedContainerStateFromSerializedContainer(snapshot);
+				await container.rehydrateDetachedFromSnapshot(detachedContainerState);
 				return container;
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -497,6 +504,7 @@ export class Container
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
 
@@ -590,6 +598,7 @@ export class Container
 	private readonly visibilityEventHandler: (() => void) | undefined;
 	private readonly connectionStateHandler: IConnectionStateHandler;
 	private readonly clientsWhoShouldHaveLeft = new Set<string>();
+	private _containerMetadata: Readonly<Record<string, string>> = {};
 
 	private setAutoReconnectTime = performance.now();
 
@@ -597,14 +606,6 @@ export class Container
 
 	private get connectionMode() {
 		return this._deltaManager.connectionManager.connectionMode;
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter(): IFluidRouter {
-		return this;
 	}
 
 	public get resolvedUrl(): IResolvedUrl | undefined {
@@ -624,6 +625,10 @@ export class Container
 
 	public get readOnlyInfo(): ReadOnlyInfo {
 		return this._deltaManager.readOnlyInfo;
+	}
+
+	public get containerMetadata(): Record<string, string> {
+		return this._containerMetadata;
 	}
 
 	/**
@@ -716,14 +721,14 @@ export class Container
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
-	public async getEntryPoint(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
 			return this._runtime.getEntryPoint?.();
 		}
-		return new Promise<FluidObject | undefined>((resolve, reject) => {
+		return new Promise<FluidObject>((resolve, reject) => {
 			const runtimeInstantiatedHandler = () => {
 				assert(
 					this._runtime !== undefined,
@@ -814,6 +819,14 @@ export class Container
 			});
 		};
 
+		this._containerId = uuid();
+
+		this.client = Container.setupClient(
+			this._containerId,
+			this.options,
+			this.clientDetailsOverride,
+		);
+
 		// Create logger for data stores to use
 		const type = this.client.details.type;
 		const interactive = this.client.details.capabilities.interactive;
@@ -821,7 +834,6 @@ export class Container
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
 
-		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -1032,6 +1044,11 @@ export class Container
 
 				this._lifecycleState = "closing";
 
+				// Back-compat for Old driver
+				if (this.service?.off !== undefined) {
+					this.service?.off("metadataUpdate", this.metadataUpdateHandler);
+				}
+
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
@@ -1116,7 +1133,6 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
 		const pendingState = await this.getPendingLocalStateCore({
 			notifyImminentClosure: true,
 			stopBlobAttachingSignal,
@@ -1189,13 +1205,16 @@ export class Container
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
-			combinedSummary.tree[hasBlobsSummaryTree] = {
-				type: SummaryType.Blob,
-				content: "true",
-			};
-		}
-		return JSON.stringify(combinedSummary);
+		const [baseSnapshot, snapshotBlobs] =
+			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+
+		const detachedContainerState: IPendingDetachedContainerState = {
+			attached: false,
+			baseSnapshot,
+			snapshotBlobs,
+			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
+		};
+		return JSON.stringify(detachedContainerState);
 	}
 
 	public async attach(
@@ -1246,10 +1265,10 @@ export class Container
 						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
-							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							const [snapshot, snapshotBlobs] =
+								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs =
-								getBlobContentsFromTreeWithBlobContents(snapshot);
+							this.baseSnapshotBlobs = snapshotBlobs;
 						}
 					}
 
@@ -1261,19 +1280,21 @@ export class Container
 								createNewResolvedUrl !== undefined,
 							0x2c4 /* "client should not be summarizer before container is created" */,
 						);
-						this.service = await runWithRetry(
-							async () =>
-								this.serviceFactory.createContainer(
-									summary,
-									createNewResolvedUrl,
-									this.subLogger,
-									false, // clientIsSummarizer
-								),
-							"containerAttach",
-							this.mc.logger,
-							{
-								cancel: this._deltaManager.closeAbortController.signal,
-							}, // progress
+						this.service = await this.createDocumentService(async () =>
+							runWithRetry(
+								async () =>
+									this.serviceFactory.createContainer(
+										summary,
+										createNewResolvedUrl,
+										this.subLogger,
+										false, // clientIsSummarizer
+									),
+								"containerAttach",
+								this.mc.logger,
+								{
+									cancel: this._deltaManager.closeAbortController.signal,
+								}, // progress
+							),
 						);
 					}
 					this.storageAdapter.connectToService(this.service);
@@ -1309,10 +1330,10 @@ export class Container
 						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
-							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							const [snapshot, snapshotBlobs] =
+								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs =
-								getBlobContentsFromTreeWithBlobContents(snapshot);
+							this.baseSnapshotBlobs = snapshotBlobs;
 						}
 
 						await this.storageAdapter.uploadSummaryWithContext(summary, {
@@ -1344,18 +1365,6 @@ export class Container
 				}
 			},
 			{ start: true, end: true, cancel: "generic" },
-		);
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public async request(path: IRequest): Promise<IResponse> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "Request" },
-			async () => this.runtime.request(path),
-			{ end: true, cancel: "error" },
 		);
 	}
 
@@ -1549,6 +1558,22 @@ export class Container
 		this._deltaManager.connect(args);
 	}
 
+	private readonly metadataUpdateHandler = (metadata: Record<string, string>) => {
+		this._containerMetadata = { ...this._containerMetadata, ...metadata };
+		this.emit("metadataUpdate", metadata);
+	};
+
+	private async createDocumentService(
+		serviceProvider: () => Promise<IDocumentService>,
+	): Promise<IDocumentService> {
+		const service = await serviceProvider();
+		// Back-compat for Old driver
+		if (service.on !== undefined) {
+			service.on("metadataUpdate", this.metadataUpdateHandler);
+		}
+		return service;
+	}
+
 	/**
 	 * Load container.
 	 *
@@ -1562,10 +1587,12 @@ export class Container
 		loadToSequenceNumber: number | undefined,
 	) {
 		const timings: Record<string, number> = { phase1: performance.now() };
-		this.service = await this.serviceFactory.createDocumentService(
-			resolvedUrl,
-			this.subLogger,
-			this.client.details.type === summarizerClientType,
+		this.service = await this.createDocumentService(async () =>
+			this.serviceFactory.createDocumentService(
+				resolvedUrl,
+				this.subLogger,
+				this.client.details.type === summarizerClientType,
+			),
 		);
 
 		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
@@ -1822,24 +1849,30 @@ export class Container
 		this.setLoaded();
 	}
 
-	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
+	private async rehydrateDetachedFromSnapshot({
+		attached,
+		baseSnapshot,
+		snapshotBlobs,
+		hasAttachmentBlobs,
+	}: IPendingDetachedContainerState) {
+		if (hasAttachmentBlobs) {
 			assert(
 				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
 		}
-
-		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTree);
-		const attributes = await this.getDocumentAttributes(this.storageAdapter, snapshotTree);
+		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
+			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
+		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
+		const attributes = await this.getDocumentAttributes(
+			this.storageAdapter,
+			snapshotTreeWithBlobContents,
+		);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(snapshotTree);
+		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
@@ -1854,7 +1887,7 @@ export class Container
 		);
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
-		await this.instantiateRuntime(codeDetails, snapshotTree);
+		await this.instantiateRuntime(codeDetails, snapshotTreeWithBlobContents);
 
 		this.setLoaded();
 	}
@@ -1996,10 +2029,15 @@ export class Container
 		return pkg as IFluidCodeDetails;
 	}
 
-	private get client(): IClient {
+	private static setupClient(
+		containerId: string,
+		options?: ILoaderOptions,
+		clientDetailsOverride?: IClientDetails,
+	): IClient {
+		const loaderOptionsClient = structuredClone(options?.client);
 		const client: IClient =
-			this.options?.client !== undefined
-				? (this.options.client as IClient)
+			loaderOptionsClient !== undefined
+				? (loaderOptionsClient as IClient)
 				: {
 						details: {
 							capabilities: { interactive: true },
@@ -2010,21 +2048,22 @@ export class Container
 						user: { id: "" },
 				  };
 
-		if (this.clientDetailsOverride !== undefined) {
+		if (clientDetailsOverride !== undefined) {
 			client.details = {
 				...client.details,
-				...this.clientDetailsOverride,
+				...clientDetailsOverride,
 				capabilities: {
 					...client.details.capabilities,
-					...this.clientDetailsOverride.capabilities,
+					...clientDetailsOverride?.capabilities,
 				},
 			};
 		}
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
-			` containerId:${this._containerId}`,
+			` containerId:${containerId}`,
 		].join(";");
+
 		return client;
 	}
 
@@ -2530,7 +2569,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @alpha
+ * @internal
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2538,16 +2577,12 @@ export interface IContainerExperimental extends IContainer {
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @alpha misuse of this API can result in duplicate op submission and potential document corruption
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
-	 * @alpha
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

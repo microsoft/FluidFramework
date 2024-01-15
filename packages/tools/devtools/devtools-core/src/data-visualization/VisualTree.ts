@@ -33,14 +33,14 @@ export enum VisualNodeKind {
 }
 
 /**
- * Type union representing TypeScript primitives.
+ * Type union representing TypeScript primitives supported in DDSes.
  *
  * @remarks Used for data / metadata in {@link VisualNodeBase}s.
  *
  * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
-export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
+export type Primitive = number | boolean | null | string | undefined;
 
 /**
  * Base interface for all {@link VisualNode}s.

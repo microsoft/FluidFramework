@@ -10,15 +10,15 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
-// @public (undocumented)
+// @internal
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
 
-// @public
+// @internal
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
     flush(): Promise<void>;
 }
 
-// @public (undocumented)
+// @internal
 export interface ITestDriver {
     createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
     createCreateNewRequest(testId?: string): IRequest;
@@ -31,13 +31,13 @@ export interface ITestDriver {
     readonly version: string;
 }
 
-// @public (undocumented)
+// @internal
 export type OdspEndpoint = "odsp" | "odsp-df";
 
-// @public (undocumented)
+// @internal
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
-// @public (undocumented)
+// @internal
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 // (No @packageDocumentation comment for this package)

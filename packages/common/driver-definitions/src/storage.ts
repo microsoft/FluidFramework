@@ -8,6 +8,7 @@ import {
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
+	IEvent,
 } from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
@@ -28,6 +29,9 @@ import {
 import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
+/**
+ * @internal
+ */
 export interface IDeltasFetchResult {
 	/**
 	 * Sequential set of messages starting from 'from' sequence number.
@@ -45,6 +49,7 @@ export interface IDeltasFetchResult {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @internal
  */
 export interface IDeltaStorageService {
 	/**
@@ -66,10 +71,14 @@ export interface IDeltaStorageService {
 	): Promise<IDeltasFetchResult>;
 }
 
+/**
+ * @alpha
+ */
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
+ * @alpha
  */
 export interface IStream<T> {
 	read(): Promise<IStreamResult<T>>;
@@ -77,6 +86,7 @@ export interface IStream<T> {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @alpha
  */
 export interface IDocumentDeltaStorageService {
 	/**
@@ -102,11 +112,15 @@ export interface IDocumentDeltaStorageService {
 // If a driver started using a larger value,
 // internal assumptions of the Runtime's GC feature will be violated
 // DO NOT INCREASE THIS TYPE'S VALUE
+/**
+ * @alpha
+ */
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
 /**
  * Policies describing attributes or characteristics of the driver's storage service,
  * to direct how other components interact with the driver
+ * @alpha
  */
 export interface IDocumentStorageServicePolicies {
 	/**
@@ -127,6 +141,7 @@ export interface IDocumentStorageServicePolicies {
 
 /**
  * Interface to provide access to snapshots saved for a shared object
+ * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	repositoryUrl: string;
@@ -191,6 +206,21 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
+/**
+ * Events emitted by {@link IDocumentService}.
+ * @alpha
+ */
+export interface IDocumentServiceEvents extends IEvent {
+	/**
+	 * This event is used to communicate any metadata related to the container. We might have received metadata from the service.
+	 * Read more info on this event from here `IContainer.containerMetadata`.
+	 */
+	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
+}
+
+/**
+ * @alpha
+ */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
@@ -202,6 +232,9 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "error", listener: (error: any) => void);
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentDeltaConnection
 	extends IDisposable,
 		IEventProvider<IDocumentDeltaConnectionEvents> {
@@ -280,6 +313,9 @@ export interface IDocumentDeltaConnection
 	submitSignal(content: any, targetClientId?: string): void;
 }
 
+/**
+ * @alpha
+ */
 export enum LoaderCachingPolicy {
 	/**
 	 * The loader should not implement any prefetching or caching policy.
@@ -292,6 +328,9 @@ export enum LoaderCachingPolicy {
 	Prefetch,
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentServicePolicies {
 	/**
 	 * Do not connect to delta stream
@@ -304,7 +343,10 @@ export interface IDocumentServicePolicies {
 	readonly summarizeProtocolTree?: boolean;
 }
 
-export interface IDocumentService {
+/**
+ * @alpha
+ */
+export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
 	resolvedUrl: IResolvedUrl;
 
 	/**
@@ -342,6 +384,9 @@ export interface IDocumentService {
 	dispose(error?: any): void;
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentServiceFactory {
 	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
@@ -382,6 +427,7 @@ export interface IDocumentServiceFactory {
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
+ * @alpha
  */
 export interface ISummaryContext {
 	/**
@@ -397,6 +443,9 @@ export interface ISummaryContext {
 	readonly referenceSequenceNumber: number;
 }
 
+/**
+ * @alpha
+ */
 export enum FetchSource {
 	default = "default",
 	noCache = "noCache",

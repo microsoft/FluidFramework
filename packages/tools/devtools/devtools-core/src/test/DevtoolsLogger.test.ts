@@ -8,7 +8,7 @@ import { expect } from "chai";
 import { type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
-import { DevtoolsLogger } from "../DevtoolsLogger";
+import { createDevtoolsLogger, type IDevtoolsLogger } from "../DevtoolsLogger";
 
 // TODOs:
 // - Test window messaging
@@ -16,7 +16,7 @@ import { DevtoolsLogger } from "../DevtoolsLogger";
 describe("DevtoolsLogger unit tests", () => {
 	it("Forwards events to base logger", () => {
 		const baseLogger = new MockLogger();
-		const devtoolsLogger = new DevtoolsLogger(baseLogger);
+		const devtoolsLogger: IDevtoolsLogger = createDevtoolsLogger(baseLogger);
 
 		const event: ITelemetryBaseEvent = {
 			eventName: "test-event",

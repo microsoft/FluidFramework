@@ -10,12 +10,16 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	UnknownContainerRuntimeMessage,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -129,7 +133,9 @@ export class LoadTestDataStoreModel {
 		// If we did not create the data store above, load it by getting its url.
 		if (gcDataStore === undefined) {
 			const gcDataStoreId = root.get(gcDataStoreIdKey);
-			const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
+			const response = await (containerRuntime as ContainerRuntime).resolveHandle({
+				url: `/${gcDataStoreId}`,
+			});
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {
 				throw new Error("GC data store not available");
 			}
@@ -552,6 +558,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite";
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
+		const futureOpPeriod =
+			config.testConfig.futureOpRatePerMin === undefined ||
+			config.testConfig.futureOpRatePerMin <= 0
+				? undefined
+				: Math.floor(config.testConfig.opRatePerMin / config.testConfig.futureOpRatePerMin);
 		const opSizeinBytes =
 			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
@@ -582,6 +593,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
 		let opsSent = 0;
 		let largeOpsSent = 0;
+		let futureOpsSent = 0;
 
 		const reportOpCount = (reason: string, error?: Error) => {
 			config.logger.sendTelemetryEvent(
@@ -592,6 +604,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					documentOpCount: dataModel.counter.value,
 					localOpCount: opsSent,
 					localLargeOpCount: largeOpsSent,
+					localFutureOpCount: futureOpsSent,
 				},
 				error,
 			);
@@ -626,6 +639,19 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				});
 
 				largeOpsSent++;
+			}
+
+			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
+				(
+					this.context.containerRuntime as unknown as {
+						submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					}
+				).submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed, even upon resubmit if that happens
+				});
+				futureOpsSent++;
 			}
 
 			dataModel.counter.increment(1);
@@ -746,9 +772,6 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 	{},
 );
 
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
-
 export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
@@ -758,6 +781,5 @@ export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});

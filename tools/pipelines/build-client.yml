@@ -50,11 +50,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default:
-  - fluid-framework
 
 trigger:
   branches:
@@ -70,6 +65,7 @@ trigger:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
@@ -102,6 +98,7 @@ pr:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
@@ -124,7 +121,6 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
-    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
@@ -135,11 +131,17 @@ extends:
     poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    taskLint: false
+    taskLint: false # Linting is captured by `ci:build` via fluid-build
     taskBuildDocs: true
     publishDocs: true
-    telemetry: true
+    # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
+    # one. And since we don't batch commits for CI pipeline runs, the only reason we see for automated runs is IndividualCI.
+    telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
+    # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
+    # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
+    # packages twice.
+    - check:are-the-types-wrong
     - webpack
     - ci:test:mocha
     - ci:test:jest
@@ -152,7 +154,6 @@ extends:
     - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
-    - nyc/azure
     - nyc/examples
     - nyc/experimental
     - nyc/packages

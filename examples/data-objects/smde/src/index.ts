@@ -17,8 +17,8 @@ import {
 
 import React from "react";
 
-import { SmdeDataObject, SmdeFactory } from "./smde";
-import { SmdeReactView } from "./smdeView";
+import { SmdeDataObject, SmdeFactory } from "./smde.js";
+import { SmdeReactView } from "./smdeView.js";
 
 const defaultComponentId = "default";
 
@@ -71,4 +71,7 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 	}
 }
 
+/**
+ * @internal
+ */
 export const fluidExport = new SmdeContainerFactory();

@@ -29,7 +29,7 @@ describe("Map", () => {
 	describe("Local state", () => {
 		let map: SharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createLocalMap", async () => {
 			map = createLocalMap("testMap");
 		});
 
@@ -410,7 +410,7 @@ describe("Map", () => {
 		let map1: SharedMap;
 		let map2: SharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createConnectedMaps", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			// Create the first map
 			map1 = createConnectedMap("map1", containerRuntimeFactory);

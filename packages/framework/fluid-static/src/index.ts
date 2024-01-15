@@ -10,13 +10,13 @@
  */
 
 export {
-	FluidContainer,
+	createFluidContainer,
 	IFluidContainer,
 	IFluidContainerEvents,
 	InitialObjects,
 } from "./fluidContainer";
-export { DOProviderContainerRuntimeFactory } from "./rootDataObject";
-export { ServiceAudience } from "./serviceAudience";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
+export { createServiceAudience } from "./serviceAudience";
 export {
 	ContainerSchema,
 	DataObjectClass,
@@ -32,4 +32,5 @@ export {
 	MemberChangedListener,
 	Myself,
 	SharedObjectClass,
+	IProvideRootDataObject,
 } from "./types";

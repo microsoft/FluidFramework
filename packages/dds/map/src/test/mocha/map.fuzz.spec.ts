@@ -25,7 +25,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable;
+	value: Jsonable<unknown>;
 }
 
 interface DeleteKey {

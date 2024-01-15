@@ -5,9 +5,12 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IContainer } from "@fluidframework/container-definitions";
-import type { IImportExportModel, IVersionedModel } from "./migratableModel";
-import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool";
+import type { IImportExportModel, IVersionedModel } from "./migratableModel.js";
+import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool.js";
 
+/**
+ * @internal
+ */
 export interface ISameContainerMigratableModelEvents extends IEvent {
 	(event: "connected", listener: () => void);
 }
@@ -15,6 +18,9 @@ export interface ISameContainerMigratableModelEvents extends IEvent {
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
 // supportsDataFormat() on the callers of importData() (and allow implementers of ISameContainerMigratableModel to assume
 // importData() is called with valid data).
+/**
+ * @internal
+ */
 export interface ISameContainerMigratableModel
 	extends IVersionedModel,
 		IImportExportModel<unknown, unknown>,

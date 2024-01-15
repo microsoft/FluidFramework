@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { EventEmitter } from "node:events";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
-import { EventForwarder } from "../..";
+import { EventForwarder } from "../../eventForwarder";
 
 interface ITestEvents extends IErrorEvent {
 	(event: "testEvent", listener: (name: string, count: number) => void);
@@ -21,7 +21,7 @@ describe("Loader", () => {
 				const testEvent = "testEvent";
 				const errorEvent = "error";
 
-				beforeEach(() => {
+				beforeEach("initializeSourceAndForwarder", () => {
 					source = new EventEmitter();
 					forwarder = new EventForwarder<ITestEvents>(source);
 				});

@@ -37,20 +37,17 @@ const attributorTreeName = ".attributor";
 const opBlobName = "op";
 
 /**
- * @alpha
- * Feature Gate Key -
- * Whether or not a container runtime instantiated using `mixinAttributor`'s load should generate an attributor on
- * new files. See package README for more notes on integration.
+ * @internal
  */
 export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
 
 /**
- * @alpha
+ * @internal
  */
 export const IRuntimeAttributor: keyof IProvideRuntimeAttributor = "IRuntimeAttributor";
 
 /**
- * @alpha
+ * @internal
  */
 export interface IProvideRuntimeAttributor {
 	readonly IRuntimeAttributor: IRuntimeAttributor;
@@ -61,7 +58,7 @@ export interface IProvideRuntimeAttributor {
  *
  * Attributors are only populated after the container runtime they are injected into has initialized.
  * @sealed
- * @alpha
+ * @internal
  */
 export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 	/**
@@ -84,7 +81,7 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 /**
  * @returns an IRuntimeAttributor for usage with `mixinAttributor`. The attributor will only be populated with data
  * once it's passed via scope to a container runtime load flow. See {@link mixinAttributor}.
- * @alpha
+ * @internal
  */
 export function createRuntimeAttributor(): IRuntimeAttributor {
 	return new RuntimeAttributor();
@@ -99,37 +96,10 @@ export function createRuntimeAttributor(): IRuntimeAttributor {
  * IRuntimeAttributor is passed via scope to load a document that never previously had attribution information,
  * that attributor's `has` method will always return `false`.
  * @param Base - base class, inherits from FluidAttributorRuntime
- * @alpha
+ * @internal
  */
 export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime) =>
 	class ContainerRuntimeWithAttributor extends Base {
-		public static async load(
-			context: IContainerContext,
-			registryEntries: NamedFluidDataStoreRegistryEntries,
-			requestHandler?:
-				| ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>)
-				| undefined,
-			runtimeOptions: IContainerRuntimeOptions | undefined = {},
-			containerScope: FluidObject | undefined = context.scope,
-			existing?: boolean | undefined,
-			containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
-		): Promise<ContainerRuntime> {
-			return this.loadRuntime({
-				context,
-				registryEntries,
-				existing: existing ?? false,
-				requestHandler,
-				runtimeOptions,
-				containerScope,
-				containerRuntimeCtor,
-				provideEntryPoint: async () => {
-					throw new UsageError(
-						"ContainerRuntime.load is deprecated and should no longer be used",
-					);
-				},
-			});
-		}
-
 		public static async loadRuntime(params: {
 			context: IContainerContext;
 			registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -137,7 +107,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			runtimeOptions?: IContainerRuntimeOptions;
 			containerScope?: FluidObject;
 			containerRuntimeCtor?: typeof ContainerRuntime;
-			/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+			/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		}): Promise<ContainerRuntime> {
@@ -185,11 +155,13 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				registryEntries,
 				requestHandler,
 				provideEntryPoint,
+				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
+				initializeEntryPoint: provideEntryPoint,
 				runtimeOptions,
 				containerScope,
 				existing,
 				containerRuntimeCtor,
-			})) as ContainerRuntimeWithAttributor;
+			} as any)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
 			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });

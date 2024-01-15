@@ -13,17 +13,15 @@ import {
 	SummaryCollection,
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
-describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -59,14 +57,11 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 			gcAllowed: true,
 		},
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		},
 	);
@@ -124,7 +119,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		);
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider();
 		if (provider.driver.type === "odsp") {
 			this.skip();
@@ -134,7 +129,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 
 		// Create and set up a container for the first client.
 		mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
-		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(mainContainer);
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 
@@ -221,7 +216,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 
 		// Load and set up a new main container with the above summary and validate that it loads with summaryNumber 2.
 		mainContainer = await loadContainer(summaryVersion);
-		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(mainContainer);
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 		validateLoadStats(2, 1, 1, "Second container should load with correct data store stats");

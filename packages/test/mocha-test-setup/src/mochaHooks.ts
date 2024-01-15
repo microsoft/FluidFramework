@@ -57,7 +57,7 @@ let currentTestName: string | undefined;
 let originalLogger: ITelemetryBufferedLogger;
 
 /**
- * @public
+ * @internal
  */
 export const mochaHooks = {
 	beforeAll() {

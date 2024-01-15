@@ -24,8 +24,9 @@ import {
 	CompatApis,
 } from "./testApi.js";
 
-/*
+/**
  * Types of documents to be used during the performance runs.
+ * @internal
  */
 export type DocumentType =
 	/** Document with a SharedMap */
@@ -37,22 +38,34 @@ export type DocumentType =
 	/** Document with a SharedMatrix and plain objects */
 	| "DocumentMatrixPlain";
 
+/**
+ * @internal
+ */
 export interface DocumentMapInfo {
 	numberOfItems: number;
 	itemSizeMb: number;
 }
 
+/**
+ * @internal
+ */
 export interface DocumentMultipleDataStoresInfo {
 	numberDataStores: number;
 	numberDataStoresPerIteration: number;
 }
 
+/**
+ * @internal
+ */
 export interface DocumentMatrixInfo {
 	rowSize: number;
 	columnSize: number;
 	stringSize: number;
 }
 
+/**
+ * @internal
+ */
 export interface DocumentMatrixPlainInfo {
 	// Actual matrix size.
 	rowSize: number;
@@ -66,12 +79,18 @@ export interface DocumentMatrixPlainInfo {
 	stringSize: number;
 }
 
+/**
+ * @internal
+ */
 export type DocumentTypeInfo =
 	| DocumentMapInfo
 	| DocumentMultipleDataStoresInfo
 	| DocumentMatrixInfo
 	| DocumentMatrixPlainInfo;
 
+/**
+ * @internal
+ */
 export interface IE2EDocsConfig {
 	documents: DescribeE2EDocInfo[];
 }
@@ -137,9 +156,18 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	},
 ];
 
+/**
+ * @internal
+ */
 export type BenchmarkType = "ExecutionTime" | "MemoryUsage";
+/**
+ * @internal
+ */
 export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
 
+/**
+ * @internal
+ */
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType;
@@ -151,23 +179,39 @@ export interface DescribeE2EDocInfo {
 	minSampleCount?: number;
 }
 
+/**
+ * @internal
+ */
 export function isDocumentMapInfo(info: DocumentTypeInfo): info is DocumentMapInfo {
 	return (info as DocumentMapInfo).numberOfItems !== undefined;
 }
 
+/**
+ * @internal
+ */
 export function isDocumentMultipleDataStoresInfo(
 	info: DocumentTypeInfo,
 ): info is DocumentMultipleDataStoresInfo {
 	return (info as DocumentMultipleDataStoresInfo).numberDataStores !== undefined;
 }
 
+/**
+ * @internal
+ */
 export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMatrixInfo {
 	return (info as DocumentMatrixInfo).rowSize !== undefined;
 }
+
+/**
+ * @internal
+ */
 export function isDocumentMatrixPlainInfo(info: DocumentTypeInfo): info is DocumentMatrixPlainInfo {
 	return (info as DocumentMatrixPlainInfo).rowSize !== undefined;
 }
 
+/**
+ * @internal
+ */
 export function assertDocumentTypeInfo(
 	info: DocumentTypeInfo,
 	type: DocumentType,
@@ -200,10 +244,16 @@ export function assertDocumentTypeInfo(
 	}
 }
 
+/**
+ * @internal
+ */
 export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
 	benchmarkType: BenchmarkType;
 }
 
+/**
+ * @internal
+ */
 export type DescribeE2EDocSuite = (
 	title: string,
 	tests: (
@@ -366,14 +416,26 @@ function createE2EDocCompatSuite(
 	};
 }
 
+/**
+ * @internal
+ */
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe();
 
+/**
+ * @internal
+ */
 export const describeE2EDocsRuntime: DescribeE2EDocSuite =
 	createE2EDocsDescribeWithType("Runtime benchmarks");
 
+/**
+ * @internal
+ */
 export const describeE2EDocsMemory: DescribeE2EDocSuite =
 	createE2EDocsDescribeWithType("Memory benchmarks");
 
+/**
+ * @internal
+ */
 export function isMemoryTest(): boolean {
 	let isMemoryUsageTest: boolean = false;
 	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
@@ -389,7 +451,14 @@ export function isMemoryTest(): boolean {
 	return isMemTest;
 }
 
+/**
+ * @internal
+ */
 export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
+
+/**
+ * @internal
+ */
 export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {
 	return currentType === describeE2EDocsMemory ? "MemoryUsage" : "ExecutionTime";
 };
