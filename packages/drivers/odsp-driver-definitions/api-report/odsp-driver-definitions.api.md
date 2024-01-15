@@ -245,18 +245,11 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @alpha
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes | ISharingLinkKind;
-        link?: string | ISharingLink;
+        link?: ISharingLink;
         error?: any;
         shareId?: string;
     };
     sharingLinkToRedeem?: string;
-}
-
-// @alpha @deprecated (undocumented)
-export enum ShareLinkTypes {
-    // (undocumented)
-    csl = "csl"
 }
 
 // @alpha
