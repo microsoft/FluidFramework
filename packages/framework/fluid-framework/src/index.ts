@@ -4,9 +4,8 @@
  */
 
 /**
- * The **fluid-framework** package bundles a collection of Fluid Framework client libraries for easy use
- * when paired with a corresponding service client library (for example,
- * `\@fluidframework/azure-client` or `\@fluidframework/tinylicious-client`).
+ * Bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client
+ * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
  *
  * @packageDocumentation
  */
