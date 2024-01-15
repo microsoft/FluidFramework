@@ -60,6 +60,13 @@ export type SharedObjectClass<T extends IFluidLoadable> = {
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 /**
+ * @public
+ */
+export interface ContainerAttachProps {
+	[key: string]: string | undefined;
+}
+
+/**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
  *
  * @remarks

@@ -286,7 +286,7 @@ export class AzureClient {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async <T>(props?: T): Promise<string> => {
+		const attach = async (): Promise<string> => {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}

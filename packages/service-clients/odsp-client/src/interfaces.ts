@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type { ContainerAttachProps, IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IOdspTokenProvider } from "./token";
 
@@ -57,7 +57,7 @@ export interface OdspClientProps {
 /**
  * @alpha
  */
-export interface OdspContainerAttachProps {
+export interface OdspContainerAttachProps extends ContainerAttachProps {
 	/**
 	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
 	 */

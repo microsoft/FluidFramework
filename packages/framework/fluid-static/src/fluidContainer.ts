@@ -10,7 +10,12 @@ import {
 	ICriticalContainerError,
 	ConnectionState,
 } from "@fluidframework/container-definitions";
-import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./types";
+import type {
+	ContainerSchema,
+	ContainerAttachProps,
+	IRootDataObject,
+	LoadableObjectClass,
+} from "./types";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
@@ -90,13 +95,6 @@ export interface IFluidContainerEvents extends IEvent {
 	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
-}
-
-/**
- * @public
- */
-export interface ContainerAttachProps {
-	[key: string]: string | undefined;
 }
 
 /**
@@ -247,7 +245,10 @@ export function createFluidContainer<
  * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
  * @internal
  */
-class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+class FluidContainer<
+		TContainerSchema extends ContainerSchema = ContainerSchema,
+		IAttachProps extends ContainerAttachProps = ContainerAttachProps,
+	>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {
@@ -317,7 +318,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
 	 * but internally this separation is not there.
 	 */
-	public async attach<T>(props?: T): Promise<string> {
+	public async attach(props?: IAttachProps): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}

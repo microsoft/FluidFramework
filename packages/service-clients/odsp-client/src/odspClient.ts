@@ -19,6 +19,7 @@ import {
 	createFluidContainer,
 	IRootDataObject,
 	createServiceAudience,
+	ContainerAttachProps,
 } from "@fluidframework/fluid-static";
 import {
 	OdspDocumentServiceFactory,
@@ -39,6 +40,12 @@ import {
 	OdspContainerAttachProps,
 } from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
+
+function isOdspContainerAttachProps(
+	props: ContainerAttachProps,
+): props is OdspContainerAttachProps {
+	return "filePath" in props && "fileName" in props;
+}
 
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
@@ -158,13 +165,14 @@ export class OdspClient {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async <T>(props?: T): Promise<string> => {
-			const odspProps = props as OdspContainerAttachProps;
+		const attach = async (odspProps?: ContainerAttachProps): Promise<string> => {
+			const attachProps = odspProps && isOdspContainerAttachProps(odspProps);
+
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
-				odspProps.filePath ?? "",
-				odspProps.fileName ?? uuid(),
+				attachProps && odspProps.filePath !== undefined ? odspProps.filePath : "",
+				attachProps && odspProps.fileName !== undefined ? odspProps.fileName : uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");

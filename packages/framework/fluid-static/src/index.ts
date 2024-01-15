@@ -11,7 +11,6 @@
 
 export {
 	createFluidContainer,
-	ContainerAttachProps,
 	IFluidContainer,
 	IFluidContainerEvents,
 	InitialObjects,
@@ -20,6 +19,7 @@ export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
 export { createServiceAudience } from "./serviceAudience";
 export {
 	ContainerSchema,
+	ContainerAttachProps,
 	DataObjectClass,
 	IConnection,
 	IMember,
