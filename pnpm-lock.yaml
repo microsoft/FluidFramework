@@ -5437,6 +5437,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^18.19.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -5460,6 +5461,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/node': 18.19.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3

@@ -3,6 +3,8 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./error-override-outdir-in-main-tsconfig",
+		"module": "Node16",
+		"moduleResolution": "Node16",
 		"composite": true,
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
