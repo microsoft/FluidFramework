@@ -14,10 +14,12 @@ import {
 } from "@fluidframework/id-compressor";
 import {
 	BaseFuzzTestState,
+	chainAsync,
 	createFuzzDescribe,
 	defaultOptions,
 	done,
 	ExitBehavior,
+	// remap all of these to not use async
 	AsyncGenerator as Generator,
 	asyncGeneratorFromArray as generatorFromArray,
 	interleaveAsync as interleave,
@@ -27,6 +29,7 @@ import {
 	AsyncReducer as Reducer,
 	SaveInfo,
 	saveOpsToFile,
+	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
@@ -607,23 +610,61 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
-	const { enabled, attachProbability } = options.detachedStartOptions;
+	const { enabled } = options.detachedStartOptions;
 	if (!enabled) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
 	}
 
-	const generatorFactory: () => Generator<TOperation | Attach, TState> = () => {
-		const baseGenerator = model.generatorFactory();
-		return async (state): Promise<TOperation | Attach | typeof done> => {
-			if (state.isDetached && state.random.bool(attachProbability)) {
-				return {
-					type: "attach",
-				};
-			}
+	// const attachOp = async (state): Promise<TOperation | Attach> => {
+	// 	return {
+	// 		type: "attach",
+	// 	};
+	// };
 
-			return baseGenerator(state);
-		};
+	const attachOp = async (): Promise<TOperation | Attach | typeof done> => {
+		return { type: "attach" };
+	};
+	const generatorFactory: () => Generator<TOperation | Attach, TState> = () => {
+		// original code:
+		// const baseGenerator = model.generatorFactory();
+		// return async (state): Promise<TOperation | Attach | typeof done> => {
+		// 	if (state.isDetached && state.random.bool(attachProbability)) {
+		// 		return {
+		// 			type: "attach",
+		// 		};
+		// 	}
+
+		// 	return baseGenerator(state);
+		// };
+
+		// attempts at new code:
+		const baseGenerator = model.generatorFactory();
+
+		const opsBeforeAttach = takeAsync(10, baseGenerator);
+
+		return chainAsync(opsBeforeAttach, attachOp);
+		// return async (state): Promise<TOperation | Attach | typeof done> => {
+		// 	if (state.isDetached) {
+		// 		return {
+		// 			type: "attach",
+		// 		};
+		// 	}
+		// };
+
+		// const opsBeforeAttach = take(10, baseGenerator);
+
+		// const attachOp: Generator<TOperation | Attach, TState> = async (
+		// 	state,
+		// ): Promise<TOperation | Attach | typeof done> => {
+		// 	if (state.isDetached && state.random.bool(attachProbability)) {
+		// 		return {
+		// 			type: "attach",
+		// 		};
+		// 	}
+		// 	return baseGenerator(state);
+		// };
+		// return chain(opsBeforeAttach, attachOp);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
@@ -865,8 +906,6 @@ export function mixinSynchronization<
 		reducer,
 	};
 }
-
-const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clientId !== undefined;
 
 /**
  * Mixes in the ability to select a client to perform an operation on.
