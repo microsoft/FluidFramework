@@ -10,6 +10,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils";
 import { ISerializableBlobContents } from "./containerStorageAdapter";
 import { IDetachedBlobStorage } from ".";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 /**
  * The default state a newly created detached container will have.
@@ -94,6 +95,7 @@ export interface AttachProcessProps {
 	 *
 	 * @param attachmentData - the updated attachment data	 */
 	readonly setAttachmentData: (attachmentData: AttachmentData) => void;
+
 	/**
 	 * The caller should create and or get services based on the data, and its own information.
 	 * @param data - the data to create services from,
@@ -103,11 +105,17 @@ export interface AttachProcessProps {
 	readonly createOrGetStorageService: (
 		data: DetachedDataWithOutstandingBlobs | AttachingDataWithBlobs | AttachingDataWithoutBlobs,
 	) => Promise<Pick<IDocumentStorageService, "createBlob" | "uploadSummaryWithContext">>;
+
 	/**
-	 * The detached blob storage if it exists
+	 * The detached blob storage if it exists.
 	 */
 	readonly detachedBlobStorage?: Pick<IDetachedBlobStorage, "getBlobIds" | "readBlob" | "size">;
 
+	/**
+	 * The caller should create the attachment summary for the container.
+	 * @param redirectTable - Maps local blob ids to remote blobs ids.
+	 * @returns The attachment summary for the container.
+	 */
 	readonly createAttachmentSummary: (
 		redirectTable?: Map<string, string>,
 	) => CombinedAppAndProtocolSummary;
@@ -121,8 +129,8 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 		// If attachment blobs were uploaded in detached state we will go through a different attach flow
 		const outstandingAttachmentBlobs =
 			props.detachedBlobStorage !== undefined && props.detachedBlobStorage.size > 0;
-		// Determine the next phase of attaching depend if there are attachment blobs
-		// if there are, we will stay detached, so an empty file can be creates, and the blobs
+		// Determine the next phase of attaching which depends on if there are attachment blobs
+		// if there are, we will stay detached, so an empty file can be created, and the blobs
 		// uploaded, otherwise we will get the summary to create the file with and move to attaching
 		currentData = outstandingAttachmentBlobs
 			? {
@@ -138,6 +146,8 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 		props.setAttachmentData(currentData);
 	}
 
+	// this has to run here, as it is what creates the file
+	// and we need to file for all possible cases after this point
 	const storage = await props.createOrGetStorageService(currentData);
 
 	if (currentData.blobs === "outstanding") {
@@ -169,6 +179,9 @@ export const runRetirableAttachProcess = async (props: AttachProcessProps): Prom
 	assert(currentData.state === AttachState.Attaching, "must be attaching by this point");
 
 	if (currentData.blobs === "done") {
+		// done means outstanding blobs were uploaded.
+		// in that case an empty file was created, the blobs were uploaded
+		// and now this finally uploads the summary
 		await storage.uploadSummaryWithContext(currentData.summary, {
 			referenceSequenceNumber: 0,
 			ackHandle: undefined,
