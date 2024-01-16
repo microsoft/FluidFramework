@@ -147,6 +147,8 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
+			"common/build/build-common/src/cjs/package.json",
+			"common/build/build-common/src/esm/package.json",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",

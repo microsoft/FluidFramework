@@ -70,7 +70,7 @@
 		"test:snapshots:regen": "npm run test:mocha -- --snapshot",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\" -r @fluidframework/mocha-test-setup",
 		"ts2esm": "ts2esm ./tsconfig.json ./src/test/tsconfig.json",
-		"tsc": "tsc --project ./tsconfig.cjs.json && echo {\\\"module\\\": \\\"commonjs\\\"} > dist/package.json",
+		"tsc": "tsc --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -136,6 +136,7 @@
 		"ajv": "^8.12.0",
 		"ajv-formats": "^2.1.1",
 		"c8": "^8.0.1",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"dependency-cruiser": "^14.1.0",
 		"diff": "^3.5.0",
