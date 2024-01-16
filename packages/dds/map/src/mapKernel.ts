@@ -7,6 +7,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { RedBlackTree } from "@fluidframework/merge-tree";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ISerializableValue,
@@ -146,6 +147,106 @@ function createKeyLocalOpMetadata(
 			: { type: "edit", pendingMessageId, previousValue }
 		: { type: "add", pendingMessageId };
 	return localMetadata;
+}
+
+/**
+ * The comparator essentially performs the following procedure to determine the order of entry creation:
+ * 1. If entry A has a non-negative 'seq' and entry B has a negative 'seq', entry A is always placed first due to
+ * the policy that acknowledged entries precede locally created ones that have not been committed yet.
+ *
+ * 2. When both entries A and B have a non-negative 'seq', they are compared as follows:
+ * - If A and B have different 'seq', they are ordered based on 'seq', and the one with the lower 'seq' will be positioned ahead. Notably this rule
+ * should not be applied in the entries ordering, since the lowest 'seq' is -1, when the directory is created locally but not acknowledged yet.
+ * - In the case where A and B have equal 'seq', the one with the lower 'clientSeq' will be positioned ahead. This scenario occurs when grouped
+ * batching is enabled, and a lower 'clientSeq' indicates that it was processed earlier after the batch was ungrouped.
+ *
+ * 3. When both entries A and B have a negative 'seq', they are compared as follows:
+ * - If A and B have different 'seq', the one with lower 'seq' will be positioned ahead, which indicates the corresponding creation message was
+ * acknowledged by the server earlier.
+ * - If A and B have equal 'seq', the one with lower 'clientSeq' will be placed at the front. This scenario suggests that both entries A
+ * and B were created locally and not acknowledged yet, with the one possessing the lower 'clientSeq' being created earlier.
+ *
+ * 4. A 'seq' value of zero indicates that the entry was created in detached state, and it is considered acknowledged for the
+ * purpose of ordering.
+ */
+const seqDataComparator = (a: SequenceData, b: SequenceData) => {
+	if (isAcknowledgedOrDetached(a)) {
+		if (isAcknowledgedOrDetached(b)) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
+		} else {
+			return -1;
+		}
+	} else {
+		if (!isAcknowledgedOrDetached(b)) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
+		} else {
+			return 1;
+		}
+	}
+};
+
+function isAcknowledgedOrDetached(seqData: SequenceData) {
+	return seqData.seq >= 0;
+}
+
+/**
+ * The combination of sequence numebr and client sequence number of an entry
+ */
+interface SequenceData {
+	seq: number;
+	clientSeq?: number;
+}
+
+class MapCreationTracker {
+	readonly indexToKey: RedBlackTree<SequenceData, string>;
+	readonly keyToIndex: Map<string, SequenceData[]>;
+
+	constructor() {
+		this.indexToKey = new RedBlackTree<SequenceData, string>(seqDataComparator);
+		this.keyToIndex = new Map<string, SequenceData[]>();
+	}
+
+	set(key: string, seqData: SequenceData): void {
+		if (!this.keyToIndex.has(key)) {
+			this.keyToIndex.set(key, []);
+			this.keyToIndex.get(key)?.push(seqData);
+			this.indexToKey.put(seqData, key);
+		} else {
+			this.keyToIndex.get(key)?.push(seqData);
+		}
+	}
+
+	has(keyOrSeqData: string | SequenceData): boolean {
+		return typeof keyOrSeqData === "string"
+			? this.keyToIndex.has(keyOrSeqData)
+			: this.indexToKey.get(keyOrSeqData) !== undefined;
+	}
+
+	delete(key: string): void {
+		if (this.has(key)) {
+			const firstSeqData = this.keyToIndex.get(key)?.[0];
+			this.indexToKey.remove(firstSeqData as SequenceData);
+			this.keyToIndex.delete(key);
+		}
+	}
+
+	/**
+	 * Retrieves all entries with creation order that satisfy an optional constraint function.
+	 * @param constraint - An optional constraint function that filters keys.
+	 * @returns An array of keys that satisfy the constraint (or all keys if no constraint is provided).
+	 */
+	keys(constraint?: (key: string) => boolean): string[] {
+		const keys: string[] = [];
+		this.indexToKey.mapRange((node) => {
+			if (!constraint || constraint(node.data)) {
+				keys.push(node.data);
+			}
+			return true;
+		}, keys);
+		return keys;
+	}
 }
 
 /**
