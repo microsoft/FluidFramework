@@ -582,10 +582,10 @@ extends:
                       publishLocation: pipeline
 
           # Job - Component detection
-          - ${{ if eq(parameters.pollCG, true) }}:
+          - ${{ if eq(parameters.publish, true) }}:
               - job: CG
                 displayName: Component Detection
-                pool: Small-1ES
+                pool: ${{ parameters.poolCG }}
                 steps:
                   - checkout: self
                     clean: true
