@@ -30,14 +30,14 @@ parameters:
 - name: taskTest
   type: object
   default:
-    - ci:test
+  - ci:test
 
 # A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
 # Used to avoid the force merge limit of 100 result files.
 - name: testResultDirs
   type: object
   default:
-    - nyc
+  - nyc
 
 - name: taskBundleAnalysis
   type: boolean
