@@ -29,8 +29,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/historian-base": "^0.0.1",
-		"@fluidframework/server-services-shared": "^3.0.0-211732",
-		"@fluidframework/server-services-utils": "^3.0.0-211732",
+		"@fluidframework/server-services-shared": "^3.0.0",
+		"@fluidframework/server-services-utils": "^3.0.0",
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",

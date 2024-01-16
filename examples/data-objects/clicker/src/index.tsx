@@ -9,7 +9,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import React from "react";
-import { ClickerAgent } from "./agent";
+import { ClickerAgent } from "./agent.js";
 
 export const ClickerName = "Clicker";
 

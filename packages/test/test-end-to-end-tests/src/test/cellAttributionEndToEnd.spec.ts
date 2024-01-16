@@ -78,7 +78,7 @@ function assertAttributionMatches(
 
 describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 

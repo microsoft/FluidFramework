@@ -22,7 +22,7 @@ describe("Timers", () => {
 		sandbox = createSandbox();
 	});
 
-	beforeEach(() => {
+	beforeEach("createTimeoutSpy", () => {
 		timeoutSpy = sandbox.spy(global, "setTimeout");
 	});
 
@@ -41,7 +41,7 @@ describe("Timers", () => {
 		const defaultHandler = (): number => runCount++;
 		let timer: Timer;
 
-		beforeEach(() => {
+		beforeEach("createTimer", () => {
 			runCount = 0;
 			timer = new Timer(defaultTimeout, defaultHandler);
 		});
@@ -291,7 +291,7 @@ describe("Timers", () => {
 		const defaultHandler = (): number => runCount++;
 		let timer: PromiseTimer;
 
-		beforeEach(() => {
+		beforeEach("createTimer", () => {
 			runCount = 0;
 			resolveResult = undefined;
 			timer = new PromiseTimer(defaultTimeout, defaultHandler);

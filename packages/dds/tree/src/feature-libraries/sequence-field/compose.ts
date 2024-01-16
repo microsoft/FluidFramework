@@ -249,6 +249,27 @@ function composeMarks<TNodeChange>(
 		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach, newRev, revisionMetadata);
+
+			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
+				const moveStartId = getEndpoint(baseAttachAndDetach.attach, undefined);
+				const moveEndId = getEndpoint(newAttachAndDetach.detach, newRev);
+				setEndpoint(
+					moveEffects,
+					CrossFieldTarget.Source,
+					moveStartId,
+					baseMark.count,
+					moveEndId,
+				);
+
+				setEndpoint(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					moveEndId,
+					baseMark.count,
+					moveStartId,
+				);
+			}
+
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return withNodeChange(
 					{ count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId },
@@ -576,7 +597,7 @@ export class ComposeQueue<T> {
 						this.newRevision,
 						this.revisionMetadata,
 					);
-					assert(newCellId !== undefined, "Both marks should have cell IDs");
+					assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
 					const comparison = compareCellPositionsUsingTombstones(
 						baseCellId,
 						newCellId,

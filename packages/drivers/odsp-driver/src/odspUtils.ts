@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
 	OnlineStatus,
@@ -29,11 +29,10 @@ import {
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	tokenFromResponse,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	TokenFetcher,
 	ICacheEntry,
@@ -86,11 +85,11 @@ export async function getWithRetryForTokenRefresh<T>(
 		const options: TokenFetchOptionsEx = { refresh: true, previousError: e };
 		switch (e.errorType) {
 			// If the error is 401 or 403 refresh the token and try once more.
-			case DriverErrorType.authorizationError:
+			case OdspErrorTypes.authorizationError:
 				return get({ ...options, claims: e.claims, tenantId: e.tenantId });
 
-			case DriverErrorType.incorrectServerResponse: // some error on the wire, retry once
-			case OdspErrorType.fetchTokenError: // If the token was null, then retry once.
+			case OdspErrorTypes.incorrectServerResponse: // some error on the wire, retry once
+			case OdspErrorTypes.fetchTokenError: // If the token was null, then retry once.
 				return get(options);
 
 			default:
@@ -118,7 +117,7 @@ export async function fetchHelper(
 				throw new NonRetryableError(
 					// pre-0.58 error message: No response from fetch call
 					"No response from ODSP fetch call",
-					DriverErrorType.incorrectServerResponse,
+					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion },
 				);
 			}
@@ -154,13 +153,17 @@ export async function fetchHelper(
 
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			if (error.name === "AbortError") {
-				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, {
-					driverVersion,
-				});
+				throw new RetryableError(
+					"Fetch Timeout (AbortError)",
+					OdspErrorTypes.fetchTimeout,
+					{
+						driverVersion,
+					},
+				);
 			}
 			// TCP/IP timeout
 			if (redactedErrorText.includes("ETIMEDOUT")) {
-				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, {
+				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorTypes.fetchTimeout, {
 					driverVersion,
 				});
 			}
@@ -170,7 +173,7 @@ export async function fetchHelper(
 				throw new RetryableError(
 					// pre-0.58 error message prefix: Offline
 					`ODSP fetch failure (Offline): ${redactedErrorText}`,
-					DriverErrorType.offlineError,
+					OdspErrorTypes.offlineError,
 					{
 						driverVersion,
 						rawErrorMessage: taggedErrorMessage,
@@ -182,7 +185,7 @@ export async function fetchHelper(
 				throw new RetryableError(
 					// pre-0.58 error message prefix: Fetch error
 					`ODSP fetch failure: ${redactedErrorText}`,
-					DriverErrorType.fetchFailure,
+					OdspErrorTypes.fetchFailure,
 					{
 						driverVersion,
 						rawErrorMessage: taggedErrorMessage,
@@ -279,11 +282,8 @@ export interface INewFileInfo extends IFileInfoBase {
 	/**
 	 * application can request creation of a share link along with the creation of a new file
 	 * by passing in an optional param to specify the kind of sharing link
-	 * (at the time of adding this comment Sept/2021), odsp only supports csl
-	 * ShareLinkTypes will deprecated in future. Use ISharingLinkKind instead which specifies both
-	 * share link type and the role type.
 	 */
-	createLinkType?: ShareLinkTypes | ISharingLinkKind;
+	createLinkType?: ISharingLinkKind;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {
@@ -391,7 +391,7 @@ export function toInstrumentedOdspTokenFetcher(
 							throw new NonRetryableError(
 								// pre-0.58 error message: Token is null for ${name} call
 								`The Host-provided token fetcher returned null`,
-								OdspErrorType.fetchTokenError,
+								OdspErrorTypes.fetchTokenError,
 								{ method: name, driverVersion },
 							);
 						}
@@ -406,7 +406,7 @@ export function toInstrumentedOdspTokenFetcher(
 							(errorMessage) =>
 								new NetworkErrorBasic(
 									`The Host-provided token fetcher threw an error`,
-									OdspErrorType.fetchTokenError,
+									OdspErrorTypes.fetchTokenError,
 									typeof rawCanRetry === "boolean"
 										? rawCanRetry
 										: false /* canRetry */,
@@ -443,19 +443,13 @@ export const maxUmpPostBodySize = 79872;
  * @param shareLinkType - Kind of sharing link requested
  * @returns A string of request parameters that can be concatenated with the base URI
  */
-export function buildOdspShareLinkReqParams(
-	shareLinkType: ShareLinkTypes | ISharingLinkKind | undefined,
-) {
+export function buildOdspShareLinkReqParams(shareLinkType: ISharingLinkKind | undefined) {
 	if (!shareLinkType) {
 		return;
 	}
-	const scope = (shareLinkType as ISharingLinkKind).scope;
-	if (!scope) {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		return `createLinkType=${shareLinkType}`;
-	}
+	const scope = shareLinkType.scope;
 	let shareLinkRequestParams = `createLinkScope=${scope}`;
-	const role = (shareLinkType as ISharingLinkKind).role;
+	const role = shareLinkType.role;
 	shareLinkRequestParams = role
 		? `${shareLinkRequestParams}&createLinkRole=${role}`
 		: shareLinkRequestParams;

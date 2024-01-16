@@ -148,7 +148,7 @@ export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
+    readonly errorType: "fileNotFoundOrAccessDeniedError";
     // (undocumented)
     readonly redirectLocation: string | undefined;
 }

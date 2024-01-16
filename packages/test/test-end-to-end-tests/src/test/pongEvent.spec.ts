@@ -24,7 +24,7 @@ describe("Pong", () => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			// only skip local driver
 			if (provider.driver.type === "local") {

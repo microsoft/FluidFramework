@@ -26,8 +26,7 @@ You'll use one or more shared objects in your container to model your collaborat
 three data structures that cover a broad range of scenarios:
 
 1. [SharedMap]({{< relref "/docs/data-structures/map.md" >}}), a map-like data structure for storing key/value pair data.
-2. [SharedDirectory]({{< relref "shareddirectory-class.md" >}}), a map-like data structure with ability to organize keys into subdirectories.
-3. [SharedString]({{< relref "string.md" >}}), a data structure for string data.
+2. [SharedString]({{< relref "/docs/data-structures/string.md" >}}), a data structure for string data.
 
 ## Package scopes
 
@@ -38,7 +37,7 @@ Fluid Framework packages are published under one of the following npm scopes:
 -   @fluid-internal
 -   @fluid-tools
 
-In addition to the scoped packages, two unscoped packages are published: the [fluid-framework[] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}).
+In addition to the scoped packages, two unscoped packages are published: the [fluid-framework[] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "/docs/testing/tinylicious.md" >}}).
 
 Unless you are contributing to the Fluid Framework, you should only need the unscoped packages and packages from the **@fluidframework** scope.
 You can [read more about the scopes and their intent][scopes] in the Fluid Framework wiki.
@@ -62,19 +61,20 @@ You can [read more about the scopes and their intent][scopes] in the Fluid Frame
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
-[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
+[Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/api/v1/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/api/v1/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/api/v1/tinylicious-client.md" >}}
+[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
+[@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
+[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
-[AzureClient]: {{< relref "/docs/api/v1/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/api/v1/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
+[TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
 
-[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
-[IFluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
+[IFluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
 
 <!-- prettier-ignore-end -->
 

@@ -6,6 +6,12 @@
 		"level": "info",
 		"timestamp": true
 	},
+	"lumberjack": {
+		"options": {
+			"enableGlobalTelemetryContext": true,
+			"enableSanitization": false
+		}
+	},
 	"config": {
 		"configDumpEnabled": false,
 		"secretNamesToRedactInConfigDump": [
@@ -18,6 +24,7 @@
 		]
 	},
 	"requestSizeLimit": "1gb",
+	"enableResponseCloseLatencyMetric": true,
 	"storageDir": {
 		"baseDir": "/home/node/documents",
 		"useRepoOwner": true
