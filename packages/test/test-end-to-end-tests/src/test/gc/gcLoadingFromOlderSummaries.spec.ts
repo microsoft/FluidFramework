@@ -9,10 +9,10 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
+	createTestConfigProvider,
 	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
-	mockConfigProvider,
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
@@ -35,12 +35,11 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 	let containerRuntime: IContainerRuntime;
 	let dataStoreA: ITestDataObject;
 
-	const settings = {
-		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
-	};
+	const configProvider = createTestConfigProvider();
+	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
-		loaderProps: { configProvider: mockConfigProvider(settings) },
+		loaderProps: { configProvider },
 	};
 
 	/**
@@ -122,7 +121,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
-			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+			{ loaderProps: { configProvider } },
 			summaryResult1.summaryVersion,
 		);
 

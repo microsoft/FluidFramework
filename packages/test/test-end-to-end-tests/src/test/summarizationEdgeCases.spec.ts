@@ -14,7 +14,6 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
-	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { ContainerRuntime, ISubmitSummaryOptions } from "@fluidframework/container-runtime";
@@ -24,7 +23,6 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
 describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
-	const settings = {};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -34,7 +32,6 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 				gcAllowed: true,
 			},
 		},
-		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
 
 	let provider: ITestObjectProvider;
@@ -56,9 +53,7 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 	it("Summarization should still succeed when a datastore and its DDSes are realized between submit and ack", async () => {
 		const container1 = await createContainer();
 		const defaultDataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
-		const { summarizer: summarizer1 } = await createSummarizer(provider, container1, {
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-		});
+		const { summarizer: summarizer1 } = await createSummarizer(provider, container1);
 
 		// create a datastore with a dds as the default one is always realized
 		const containerRuntime1 = defaultDataStore1._context.containerRuntime;
@@ -82,7 +77,7 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			container1,
-			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+			undefined /* config */,
 			summaryVersion1,
 		);
 
