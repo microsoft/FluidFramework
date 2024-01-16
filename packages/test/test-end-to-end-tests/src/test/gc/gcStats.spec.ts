@@ -13,7 +13,7 @@ import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	mockConfigProvider,
+	createTestConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -36,13 +36,24 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 	const tombstoneTimeoutMs = 200;
 	const sweepGracePeriodMs = 0;
 
-	let settings = {};
+	const configProvider = createTestConfigProvider();
 
 	// GC options with sweep enabled.
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		enableGCSweep: true,
 		sweepGracePeriodMs,
+	};
+	const testContainerConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					state: "disabled",
+				},
+			},
+			gcOptions,
+		},
+		loaderProps: { configProvider },
 	};
 
 	/**
@@ -80,19 +91,11 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings = {};
-		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
-		const testContainerConfig: ITestContainerConfig = {
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-				gcOptions,
-			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-		};
+
+		configProvider.set(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+			tombstoneTimeoutMs,
+		);
 		mainContainer = await provider.makeTestContainer(testContainerConfig);
 		mainDataObject = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
@@ -107,6 +110,10 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		// result in closing the container (GC op can't be resubmitted).
 		summarizerDataObject._root.set("write", "mode");
 		await waitForContainerWriteModeConnectionWrite(summarizerContainer);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	async function createNewDataStore() {

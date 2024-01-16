@@ -20,8 +20,8 @@ import {
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-	mockConfigProvider,
 	ITestContainerConfig,
+	createTestConfigProvider,
 } from "@fluidframework/test-utils";
 import {
 	describeCompat,
@@ -112,32 +112,34 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		enableGCSweep: true,
 		sweepGracePeriodMs,
 	};
+	const configProvider = createTestConfigProvider();
+	const testContainerConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					state: "disabled",
+				},
+			},
+			gcOptions,
+		},
+		loaderProps: { configProvider },
+	};
 
 	let provider: ITestObjectProvider;
-	let settings = {};
-	let testContainerConfig: ITestContainerConfig;
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
-		testContainerConfig = {
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-				gcOptions,
-			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-		};
+		configProvider.set(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+			tombstoneTimeoutMs,
+		);
 	});
 
 	afterEach(() => {
-		settings = {};
+		configProvider.clear();
 	});
 
 	async function loadContainer(summaryVersion: string) {
@@ -152,7 +154,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			container,
 			{
 				runtimeOptions: { gcOptions },
-				loaderProps: { configProvider: mockConfigProvider(settings) },
+				loaderProps: { configProvider },
 			},
 			summaryVersion,
 		);
@@ -519,7 +521,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		});
 
 		it("disableDatastoreSweep true - DOES NOT update deleted data store state in the summary", async () => {
-			settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
+			configProvider.set("Fluid.GarbageCollection.DisableDataStoreSweep", true);
 
 			const { unreferencedId, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime();
@@ -549,7 +551,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {
 		beforeEach("setValidateSummaryBeforeUpload", () => {
-			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
+			configProvider.set("Fluid.Summarizer.ValidateSummaryBeforeUpload", true);
 		});
 
 		it("can run sweep without failing summaries due to local changes", async () => {

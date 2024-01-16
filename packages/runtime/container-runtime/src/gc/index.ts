@@ -33,6 +33,7 @@ export {
 	runSweepKey,
 	stableGCVersion,
 	disableAttachmentBlobSweepKey,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,

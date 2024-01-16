@@ -33,7 +33,6 @@ import {
 	tokenFromResponse,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	TokenFetcher,
 	ICacheEntry,
@@ -283,11 +282,8 @@ export interface INewFileInfo extends IFileInfoBase {
 	/**
 	 * application can request creation of a share link along with the creation of a new file
 	 * by passing in an optional param to specify the kind of sharing link
-	 * (at the time of adding this comment Sept/2021), odsp only supports csl
-	 * ShareLinkTypes will deprecated in future. Use ISharingLinkKind instead which specifies both
-	 * share link type and the role type.
 	 */
-	createLinkType?: ShareLinkTypes | ISharingLinkKind;
+	createLinkType?: ISharingLinkKind;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {
@@ -447,19 +443,13 @@ export const maxUmpPostBodySize = 79872;
  * @param shareLinkType - Kind of sharing link requested
  * @returns A string of request parameters that can be concatenated with the base URI
  */
-export function buildOdspShareLinkReqParams(
-	shareLinkType: ShareLinkTypes | ISharingLinkKind | undefined,
-) {
+export function buildOdspShareLinkReqParams(shareLinkType: ISharingLinkKind | undefined) {
 	if (!shareLinkType) {
 		return;
 	}
-	const scope = (shareLinkType as ISharingLinkKind).scope;
-	if (!scope) {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		return `createLinkType=${shareLinkType}`;
-	}
+	const scope = shareLinkType.scope;
 	let shareLinkRequestParams = `createLinkScope=${scope}`;
-	const role = (shareLinkType as ISharingLinkKind).role;
+	const role = shareLinkType.role;
 	shareLinkRequestParams = role
 		? `${shareLinkRequestParams}&createLinkRole=${role}`
 		: shareLinkRequestParams;
