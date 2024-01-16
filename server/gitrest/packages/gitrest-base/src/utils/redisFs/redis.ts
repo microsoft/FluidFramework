@@ -123,6 +123,20 @@ export class HashMapRedis implements IRedis {
 	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
+			// Set the map key with an empty value to initialize the hash map in Redis
+			// Then, set the expiration time for the hash map.
+			// NOTE: This will never be updated/refreshed, so the `expireAfterSeconds` value will be the
+			// maximum lifetime of the hash map in Redis.
+			client
+				.hset(this.getMapKey(), "", "")
+				.then(async () => this.client.expire(this.getMapKey(), this.expireAfterSeconds))
+				.catch((error) => {
+					Lumberjack.error(
+						"Failed to set initial map key with expiration",
+						undefined,
+						error,
+					);
+				});
 		}
 
 		if (parameters?.prefix) {
@@ -151,8 +165,6 @@ export class HashMapRedis implements IRedis {
 			this.getMapPropertyKey(key),
 			JSON.stringify(value),
 		);
-		// Update the expiration time for the hash map
-		await this.client.expire(this.getMapKey(), expireAfterSeconds);
 	}
 
 	public async setMany<T>(
@@ -168,8 +180,6 @@ export class HashMapRedis implements IRedis {
 				JSON.stringify(value),
 			]),
 		);
-		// Update the expiration time for the hash map
-		await this.client.expire(this.getMapKey(), expireAfterSeconds);
 	}
 
 	public async del(key: string): Promise<boolean> {
