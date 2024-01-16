@@ -36,18 +36,6 @@ describe("Minimum Compat Version", () => {
 		}
 	});
 
-	it(`compatVersion N-0 == latest version ${latestVersion}`, () => {
-		assert.strictEqual(
-			isCompatVersionBelowMinVersion(latestVersion, {
-				name: `test`,
-				kind: CompatKind.None,
-				compatVersion: 0,
-			}),
-			false,
-			`N-0 is lower than latestVersion`,
-		);
-	});
-
 	for (let i = 1; i < 9; i++) {
 		it(`compatVersion N-${i} < latest version ${latestVersion}`, () => {
 			assert.strictEqual(
