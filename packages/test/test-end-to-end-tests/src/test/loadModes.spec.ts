@@ -108,7 +108,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 	let container1: IContainer;
 	let dataObject1: TestDataObject;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
 		dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
