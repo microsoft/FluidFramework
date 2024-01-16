@@ -73,13 +73,13 @@ class RootDataObject
 
 		// Create initial objects provided by the developer
 		const initialObjectsP: Promise<void>[] = [];
-		Object.entries(props.initialObjects).forEach(([id, objectClass]) => {
+		for (const [id, objectClass] of Object.entries(props.initialObjects)) {
 			const createObject = async () => {
 				const obj = await this.create(objectClass);
 				this.initialObjectsDir.set(id, obj.handle);
 			};
 			initialObjectsP.push(createObject());
-		});
+		}
 
 		await Promise.all(initialObjectsP);
 	}
@@ -93,7 +93,7 @@ class RootDataObject
 	protected async hasInitialized() {
 		// We will always load the initial objects so they are available to the developer
 		const loadInitialObjectsP: Promise<void>[] = [];
-		for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
+		for (const [key, value] of this.initialObjectsDir.entries()) {
 			const loadDir = async () => {
 				const obj = await value.get();
 				Object.assign(this._initialObjects, { [key]: obj });

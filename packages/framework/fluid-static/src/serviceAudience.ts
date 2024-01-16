@@ -144,7 +144,7 @@ class ServiceAudience<M extends IMember = IMember>
 		const allMembers = this.getMembers();
 		const member = allMembers.get(internalAudienceMember?.user.id);
 		if (member === undefined) {
-			throw Error(
+			throw new Error(
 				`Attempted to fetch client ${clientId} that is not part of the current member list`,
 			);
 		}

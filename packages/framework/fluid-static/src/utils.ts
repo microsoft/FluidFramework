@@ -70,5 +70,5 @@ export const parseDataObjectsFromSharedObjects = (
 		throw new Error("Container cannot be initialized without any DataTypes");
 	}
 
-	return [Array.from(registryEntries), Array.from(sharedObjects)];
+	return [[...registryEntries], [...sharedObjects]];
 };
