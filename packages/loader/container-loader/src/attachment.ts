@@ -122,6 +122,13 @@ export interface AttachProcessProps {
 	readonly offlineLoadEnabled: boolean;
 }
 
+/**
+ * Executes the attach process state machine based on the provided data and services.
+ * This method is retirable on failure. Based on the provided initialAttachmentData
+ * this method will resume the attachment process and attempt to complete it.
+ *
+ * @param props - The data and services necessary to run the attachment process
+ */
 export const runRetirableAttachProcess = async (props: AttachProcessProps): Promise<void> => {
 	let currentData: AttachmentData = props.initialAttachmentData;
 
