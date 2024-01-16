@@ -117,26 +117,15 @@ export class HashMapRedis implements IRedis {
 	private readonly prefix: string = "fs";
 
 	constructor(
-		private readonly mapKey: string,
+		/**
+		 * Key that points to the HashMap in Redis.
+		 */
+		private readonly hashMapKey: string,
 		private readonly client: IoRedis.default,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
-			// Set the map key with an empty value to initialize the hash map in Redis
-			// Then, set the expiration time for the hash map.
-			// NOTE: This will never be updated/refreshed, so the `expireAfterSeconds` value will be the
-			// maximum lifetime of the hash map in Redis.
-			client
-				.hset(this.getMapKey(), "", "")
-				.then(async () => this.client.expire(this.getMapKey(), this.expireAfterSeconds))
-				.catch((error) => {
-					Lumberjack.error(
-						"Failed to set initial map key with expiration",
-						undefined,
-						error,
-					);
-				});
 		}
 
 		if (parameters?.prefix) {
@@ -148,45 +137,46 @@ export class HashMapRedis implements IRedis {
 		});
 	}
 
-	public async get<T>(key: string): Promise<T> {
-		const stringValue = await this.client.hget(this.getMapKey(), this.getMapPropertyKey(key));
+	public async get<T>(field: string): Promise<T> {
+		const stringValue = await this.client.hget(this.getMapKey(), this.getMapField(field));
 		return JSON.parse(stringValue) as T;
 	}
 
 	public async set<T>(
-		key: string,
+		field: string,
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		// Set values in the hash map and returns the count of set key/value pairs.
-		// However, if it's a duplicate key, it will return 0, so we can't rely on the return value to determine success.
-		await this.client.hset(
-			this.getMapKey(),
-			this.getMapPropertyKey(key),
-			JSON.stringify(value),
-		);
+		// Set values in the hash map and returns the count of set field/value pairs.
+		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
+		await this.client.hset(this.getMapKey(), this.getMapField(field), JSON.stringify(value));
+		this.updateHashMapExpiration([field], expireAfterSeconds);
 	}
 
 	public async setMany<T>(
-		keyValuePairs: { key: string; value: T }[],
+		fieldValuePairs: { key: string; value: T }[],
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		// Set values in the hash map and returns the count of set key/value pairs.
-		// However, if it's a duplicate key, it will return 0, so we can't rely on the return value to determine success.
+		// Set values in the hash map and returns the count of set field/value pairs.
+		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
 		await this.client.hset(
 			this.getMapKey(),
-			...keyValuePairs.flatMap(({ key, value }) => [
-				this.getMapPropertyKey(key),
+			...fieldValuePairs.flatMap(({ key: field, value }) => [
+				this.getMapField(field),
 				JSON.stringify(value),
 			]),
 		);
+		this.updateHashMapExpiration(
+			fieldValuePairs.map(({ key: field }) => field),
+			expireAfterSeconds,
+		);
 	}
 
-	public async del(key: string): Promise<boolean> {
-		if (this.mapKey.startsWith(key)) {
+	public async del(field: string): Promise<boolean> {
+		if (this.hashMapKey.startsWith(field)) {
 			return this.delAll();
 		}
-		const result = await this.client.hdel(this.getMapKey(), this.getMapPropertyKey(key));
+		const result = await this.client.hdel(this.getMapKey(), this.getMapField(field));
 		// The HDEL API in Redis returns the number of keys that were removed.
 		// We always call Redis HDEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.
@@ -203,20 +193,37 @@ export class HashMapRedis implements IRedis {
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
 		const result = await this.client.hkeys(this.getMapKey());
-		return result.filter((key) => `${this.getMapKey()}/${key}`.startsWith(keyPrefix));
+		return result.filter((field) => `${this.getMapKey()}/${field}`.startsWith(keyPrefix));
 	}
 
 	/**
-	 * Translates the input key to the one we will actually store in redis
+	 * Translates the input hashMapKey to the one we will actually store in redis.
 	 */
 	private getMapKey(): string {
-		return `${this.prefix}:${this.mapKey}`;
+		return `${this.prefix}:${this.hashMapKey}`;
 	}
 
 	/**
-	 * Translates the input key to the one we will actually store in redis
+	 * Translates the input field to the one we will actually store in redis within the HashMap.
 	 */
-	private getMapPropertyKey(key: string): string {
-		return `${key}`.replace(this.mapKey, "");
+	private getMapField(field: string): string {
+		return `${field}`.replace(this.hashMapKey, "");
+	}
+
+	/**
+	 * Asynchronously updates the HashMap key's expiration time when the field matching mapKey is set.
+	 */
+	private updateHashMapExpiration(
+		fields: string[],
+		expireAfterSeconds: number = this.expireAfterSeconds,
+	) {
+		if (new Set(fields).has(this.hashMapKey)) {
+			// We need to set the expiration of the HashMap key such that it is deleted after the correct expiration time.
+			// However, we only want to do this _once_, so we set the expiration when the field matching the hashmap key is set.
+			// This means that the expiration will be set when the repository directory is created, then never again.
+			this.client.expire(this.getMapKey(), expireAfterSeconds).catch((error) => {
+				Lumberjack.error("Failed to set initial map key with expiration", undefined, error);
+			});
+		}
 	}
 }
