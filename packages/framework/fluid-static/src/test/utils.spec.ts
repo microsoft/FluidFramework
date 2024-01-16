@@ -8,6 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { MapFactory, SharedMap } from "@fluidframework/map";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { parseDataObjectsFromSharedObjects } from "../utils";
+import { type ContainerSchema } from "../types";
 
 export class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
@@ -101,7 +102,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 	});
 
 	it("should be able to dedup Data Objects even if passed as dynamic types", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				do: TestDataObject,

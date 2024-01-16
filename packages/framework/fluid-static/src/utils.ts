@@ -9,7 +9,7 @@ import {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ContainerSchema, DataObjectClass, LoadableObjectClass, SharedObjectClass } from "./types";
+import { ContainerSchema, DataObjectClass, SharedObjectClass } from "./types";
 
 /**
  * An internal type used by the internal type guard isDataObjectClass to cast a
@@ -23,8 +23,8 @@ export type InternalDataObjectClass<T extends IFluidLoadable> = DataObjectClass<
 /**
  * Runtime check to determine if a class is a DataObject type
  */
-export const isDataObjectClass = (obj: any): obj is InternalDataObjectClass<IFluidLoadable> => {
-	const maybe: Partial<InternalDataObjectClass<IFluidLoadable>> | undefined = obj;
+export const isDataObjectClass = (obj: unknown): obj is InternalDataObjectClass<IFluidLoadable> => {
+	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>>;
 	return (
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
 		maybe?.factory?.IFluidDataStoreFactory === maybe?.factory
@@ -34,8 +34,9 @@ export const isDataObjectClass = (obj: any): obj is InternalDataObjectClass<IFlu
 /**
  * Runtime check to determine if a class is a SharedObject type
  */
-export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => {
-	return obj?.getFactory !== undefined;
+export const isSharedObjectClass = (obj: unknown): obj is SharedObjectClass<IFluidLoadable> => {
+	const maybe = obj as Partial<SharedObjectClass<IFluidLoadable>>;
+	return maybe?.getFactory !== undefined;
 };
 
 /**
@@ -49,7 +50,7 @@ export const parseDataObjectsFromSharedObjects = (
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
 	const sharedObjects = new Set<IChannelFactory>();
 
-	const tryAddObject = (obj: LoadableObjectClass<any>) => {
+	const tryAddObject = (obj: unknown): void => {
 		if (isSharedObjectClass(obj)) {
 			sharedObjects.add(obj.getFactory());
 		} else if (isDataObjectClass(obj)) {
@@ -64,7 +65,9 @@ export const parseDataObjectsFromSharedObjects = (
 		...Object.values(schema.initialObjects),
 		...(schema.dynamicObjectTypes ?? []),
 	]);
-	dedupedObjects.forEach(tryAddObject);
+	for (const obj of dedupedObjects) {
+		tryAddObject(obj);
+	}
 
 	if (registryEntries.size === 0 && sharedObjects.size === 0) {
 		throw new Error("Container cannot be initialized without any DataTypes");
