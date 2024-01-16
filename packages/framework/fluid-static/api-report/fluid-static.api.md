@@ -32,11 +32,11 @@ export function createFluidContainer<TContainerSchema extends ContainerSchema = 
     rootDataObject: IRootDataObject;
 }): IFluidContainer<TContainerSchema>;
 
-// @internal (undocumented)
-export function createServiceAudience<M extends IMember = IMember>(props: {
+// @internal
+export function createServiceAudience<TMember extends IMember = IMember>(props: {
     container: IContainer;
-    createServiceMember: (audienceMember: IClient) => M;
-}): IServiceAudience<M>;
+    createServiceMember: (audienceMember: IClient) => TMember;
+}): IServiceAudience<TMember>;
 
 // @public
 export type DataObjectClass<T extends IFluidLoadable> = {

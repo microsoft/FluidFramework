@@ -9,12 +9,19 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
 /**
+ * Creates a service audience for the provided container.
+ *
+ * @param container - The container with which the audience is associated.
+ * @param createServiceMember - A function for creating audience members.
+ *
+ * @typeParam TMember - The {@link IMember} representation used by the audience.
+ *
  * @internal
  */
-export function createServiceAudience<M extends IMember = IMember>(props: {
+export function createServiceAudience<TMember extends IMember = IMember>(props: {
 	container: IContainer;
-	createServiceMember: (audienceMember: IClient) => M;
-}): IServiceAudience<M> {
+	createServiceMember: (audienceMember: IClient) => TMember;
+}): IServiceAudience<TMember> {
 	return new ServiceAudience(props.container, props.createServiceMember);
 }
 
