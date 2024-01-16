@@ -4,135 +4,135 @@
 # build-npm-package template to build NPM packages/projects
 
 parameters:
-  - name: buildDirectory
-    type: string
+- name: buildDirectory
+  type: string
 
-  - name: taskBuild
-    type: string
-    default: ci:build
+- name: taskBuild
+  type: string
+  default: ci:build
 
-  - name: taskBuildDocs
-    type: boolean
-    default: true
+- name: taskBuildDocs
+  type: boolean
+  default: true
 
-  - name: publishDocs
-    type: boolean
-    default: false
+- name: publishDocs
+  type: boolean
+  default: false
 
-  - name: taskLint
-    type: boolean
-    default: true
+- name: taskLint
+  type: boolean
+  default: true
 
-  - name: taskLintName
-    type: string
-    default: lint
+- name: taskLintName
+  type: string
+  default: lint
 
-  - name: taskTest
-    type: object
-    default:
-      - ci:test
+- name: taskTest
+  type: object
+  default:
+    - ci:test
 
-  # A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
-  # Used to avoid the force merge limit of 100 result files.
-  - name: testResultDirs
-    type: object
-    default:
-      - nyc
+# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
+# Used to avoid the force merge limit of 100 result files.
+- name: testResultDirs
+  type: object
+  default:
+    - nyc
 
-  - name: taskBundleAnalysis
-    type: boolean
-    default: false
+- name: taskBundleAnalysis
+  type: boolean
+  default: false
 
-  - name: taskPublishBundleSizeArtifacts
-    type: boolean
-    default: false
+- name: taskPublishBundleSizeArtifacts
+  type: boolean
+  default: false
 
-  - name: taskPack
-    type: boolean
-    default: true
+- name: taskPack
+  type: boolean
+  default: true
 
-  - name: poolCG
-    type: object
-    default: Small-1ES
+- name: poolCG
+  type: object
+  default: Small-1ES
 
-  - name: poolBuild
-    type: object
-    default: Small-1ES
+- name: poolBuild
+  type: object
+  default: Small-1ES
 
-  - name: preCG
-    type: stepList
-    default: []
+- name: preCG
+  type: stepList
+  default: []
 
-  - name: cgSubDirectory
-    type: string
-    default:
+- name: cgSubDirectory
+  type: string
+  default:
 
-  - name: checkoutSubmodules
-    type: boolean
-    default: false
+- name: checkoutSubmodules
+  type: boolean
+  default: false
 
-  - name: buildNumberInPatch
-    type: string
-    default:
+- name: buildNumberInPatch
+  type: string
+  default:
 
-  - name: publishOverride
-    type: string
+- name: publishOverride
+  type: string
 
-  - name: releaseBuildOverride
-    type: string
+- name: releaseBuildOverride
+  type: string
 
-  - name: tagName
-    type: string
+- name: tagName
+  type: string
 
-  - name: isReleaseGroup
-    type: boolean
-    default: false
+- name: isReleaseGroup
+  type: boolean
+  default: false
 
-  - name: includeInternalVersions
-    type: boolean
-    default: false
+- name: includeInternalVersions
+  type: boolean
+  default: false
 
-  - name: buildToolsVersionToInstall
-    type: string
-    default: repo
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
 
-  - name: packageManager
-    type: string
-    default: npm
+- name: packageManager
+  type: string
+  default: npm
 
-  # Parameter for modifying the 'types' field in the package.json.
-  # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
-  - name: packageTypesOverride
-    type: string
-    default: none
+# Parameter for modifying the 'types' field in the package.json.
+# If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
+- name: packageTypesOverride
+  type: string
+  default: none
 
-  - name: packageManagerInstallCommand
-    type: string
-    default: 'npm ci --unsafe-perm'
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
 
-  - name: additionalBuildSteps
-    type: stepList
-    default: []
+- name: additionalBuildSteps
+  type: stepList
+  default: []
 
-  # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
-  # group
-  - name: interdependencyRange
-    type: string
-    default: "^"
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
 
-  # A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
-  # in a pipeline stage separate from the build stage.
-  - name: checks
-    type: object
-    default: []
+# A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
+# in a pipeline stage separate from the build stage.
+- name: checks
+  type: object
+  default: []
 
-  - name: telemetry
-    type: boolean
-    default: false
+- name: telemetry
+  type: boolean
+  default: false
 
-  # Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
-  - name: publish
-    type: boolean
+# Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
+- name: publish
+  type: boolean
 
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
@@ -582,7 +582,7 @@ extends:
                       publishLocation: pipeline
 
           # Job - Component detection
-          - ${{ if eq(parameters.publish, true) }}:
+          - ${{ if eq(parameters.pollCG, true) }}:
               - job: CG
                 displayName: Component Detection
                 pool: Small-1ES
