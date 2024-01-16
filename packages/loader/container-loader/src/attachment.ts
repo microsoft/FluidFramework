@@ -10,7 +10,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils";
 import { ISerializableBlobContents } from "./containerStorageAdapter";
 import { IDetachedBlobStorage } from ".";
-import { IRequest } from "@fluidframework/core-interfaces";
 
 /**
  * The default state a newly created detached container will have.
@@ -25,7 +24,7 @@ export interface DetachedDefaultData {
 }
 
 /**
- * This always follows DefaultDetachedState when there are
+ * This always follows DetachedDefaultData when there are
  * outstanding blobs in the detached blob storage.
  * The redirect table will get filled up to include data
  * about the blobs as they are uploaded.
@@ -88,6 +87,7 @@ export interface AttachProcessProps {
 	 * The initial attachment data this call should start with
 	 */
 	readonly initialAttachmentData: Exclude<AttachmentData, AttachedData>;
+
 	/**
 	 * The caller should us this callback to keep track of the current
 	 * attachment data, and perform any other operations necessary
@@ -119,6 +119,10 @@ export interface AttachProcessProps {
 	readonly createAttachmentSummary: (
 		redirectTable?: Map<string, string>,
 	) => CombinedAppAndProtocolSummary;
+
+	/**
+	 * Whether offline load is enabled or not.
+	 */
 	readonly offlineLoadEnabled: boolean;
 }
 
