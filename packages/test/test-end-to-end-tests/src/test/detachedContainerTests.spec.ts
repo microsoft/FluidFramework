@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, rejects } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IErrorBase, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
@@ -1114,6 +1114,43 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			assert.strictEqual(container.closed, false, "Container should not be closed");
 
 			await container.attach(request);
+
+			assert.strictEqual(container.closed, false, "Container should not be closed");
 		},
 	);
+
+	itExpects("Attach can be called multiple times with the same parameters", [], async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		const attaches: [Promise<void>, Promise<void>] = [
+			container.attach(request),
+			container.attach(request),
+		];
+
+		assert.strictEqual(attaches[0], attaches[1], "promises should match for parallel calls");
+
+		await Promise.all(attaches);
+		assert.strictEqual(container.closed, false, "Container should not be closed");
+	});
+
+	itExpects("Attach can't be called multiple times with different parameters", [], async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		const firstAttachP = container.attach(request);
+		// the second should fail, as the arguments don't match
+		const failedAttachP = container.attach({ ...request });
+		assert.notStrictEqual(
+			failedAttachP,
+			firstAttachP,
+			"promises should not match for parallel calls with different arguments",
+		);
+
+		await firstAttachP;
+		await assert.rejects(
+			failedAttachP,
+			(err: IErrorBase) => err.message === "Subsequent calls cannot use different arguments.",
+		);
+
+		assert.strictEqual(container.closed, false, "Container should not be closed");
+	});
 });

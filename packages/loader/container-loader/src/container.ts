@@ -380,10 +380,15 @@ export interface IPendingDetachedContainerState {
  */
 const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
 	let running: [A, Promise<R>] | undefined;
-	return async (...args: A) => {
+	// don't mark this function async, so we return the same promise,
+	// rather than one that is wrapped due to async
+	// eslint-disable-next-line @typescript-eslint/promise-function-async
+	return (...args: A) => {
 		if (running !== undefined) {
 			if (!compareArrays(running[0], args)) {
-				throw new UsageError("Subsequent calls cannot use different arguments.");
+				return Promise.reject(
+					new UsageError("Subsequent calls cannot use different arguments."),
+				);
 			}
 			return running[1];
 		}
