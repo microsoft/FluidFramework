@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
 import {
@@ -15,7 +14,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { FluidObject, IErrorBase, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
@@ -1137,12 +1136,13 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		const attachP = container.attach(request);
+
 		// the second should fail, as the arguments don't match
 		try {
 			await container.attach({ ...request });
 			assert.fail("should fail");
 		} catch (e) {
-			assert(isFluidError(e), "should be a fluid error");
+			assert(isFluidError(e), "should be a Fluid error");
 			assert.equal(e.message, "Subsequent calls cannot use different arguments.");
 		}
 
