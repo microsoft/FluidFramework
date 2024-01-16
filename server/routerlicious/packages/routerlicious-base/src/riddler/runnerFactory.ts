@@ -81,7 +81,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				connectTimeout: redisConfig.connectTimeout,
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-				enableOfflineQueue: false, // redisConfig.enableOfflineQueue,
+				enableOfflineQueue: redisConfig.enableOfflineQueue,
 				retryStrategy(times) {
 					const delay = Math.min(times * 50, 2000);
 					return delay;
@@ -114,7 +114,6 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 					slotsRefreshTimeout: 10000,
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					dnsLookup: (adr, callback) => callback(undefined, adr),
-					scaleReads: "slave",
 					showFriendlyErrorStack: true,
 					clusterRetryStrategy(times) {
 						const delay = Math.min(times * 50, 2000);
@@ -129,12 +128,11 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 
 			const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
 				? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-						redisOptions,
-						slotsRefreshTimeout: 10000,
-						dnsLookup: (adr, callback) => callback(null, adr),
-						scaleReads: "slave",
-						showFriendlyErrorStack: true,
-				  })
+				  		redisOptions,
+				  		slotsRefreshTimeout: 10000,
+				  		dnsLookup: (adr, callback) => callback(null, adr),
+				  		showFriendlyErrorStack: true,
+				    })
 				: new Redis.default(redisOptions);
 
 			cache = new RedisCache(redisClient, redisParams);
