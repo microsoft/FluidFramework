@@ -462,6 +462,9 @@ export enum FetchSource {
  * @alpha
  */
 export interface ISnapshotTree2 extends ISnapshotTree {
+	/**
+	 * Represents the group to which the children belongs to.
+	 */
 	groupID?: string;
 
 	trees: { [path: string]: ISnapshotTree2 };

@@ -271,7 +271,6 @@ export interface IResolvedUrl {
 
 // @alpha
 export interface ISnapshotTree2 extends ISnapshotTree {
-    // (undocumented)
     groupID?: string;
     // (undocumented)
     trees: {
